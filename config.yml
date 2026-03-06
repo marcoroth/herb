@@ -32,8 +32,8 @@ errors:
       message:
         template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_friendly_string(found->type)
-          - token_type_to_friendly_string(expected_type)
+          - hb_string(token_type_to_friendly_string(found->type))
+          - hb_string(token_type_to_friendly_string(expected_type))
           - found->location.start.line
           - found->location.start.column
 

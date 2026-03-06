@@ -37,7 +37,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  napi_value <%= field.name %> = CreateString(env, <%= node.human %>-><%= field.name %>);
+  napi_value <%= field.name %> = CreateStringFromHbString(env, <%= node.human %>-><%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>

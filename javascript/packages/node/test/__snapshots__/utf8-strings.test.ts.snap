@@ -1,0 +1,432 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UTF-8 string handling > extractHTML preserves UTF-8 > preserves UTF-8 in attributes 1`] = `"<div title="Тест">🚀</div>"`;
+
+exports[`UTF-8 string handling > extractHTML preserves UTF-8 > preserves multi-byte characters 1`] = `"<p>Café — 🚀 Тест</p>"`;
+
+exports[`UTF-8 string handling > extractRuby preserves UTF-8 > preserves multi-byte characters 1`] = `"    "Café 🚀"  ;"`;
+
+exports[`UTF-8 string handling > handles edge cases > incomplete comment has empty token value not null 1`] = `
+"@ DocumentNode (location: (1:0)-(1:4))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLCommentNode (location: (1:0)-(1:4))
+        ├── errors: (1 item)
+        │   └── @ UnexpectedTokenError (location: (1:4)-(1:4))
+        │       ├── message: "Found end of file when expecting \`-->\` at (1:4)."
+        │       ├── expected_type: "TOKEN_HTML_COMMENT_END"
+        │       └── found: "" (location: (1:4)-(1:4))
+        │       
+        │   
+        ├── comment_start: "<!--" (location: (1:0)-(1:4))
+        ├── children: []
+        └── comment_end: "" (location: (1:4)-(1:4))"
+`;
+
+exports[`UTF-8 string handling > handles edge cases > incomplete comment preserves content 1`] = `
+"@ DocumentNode (location: (1:0)-(1:13))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLCommentNode (location: (1:0)-(1:13))
+        ├── errors: (1 item)
+        │   └── @ UnexpectedTokenError (location: (1:13)-(1:13))
+        │       ├── message: "Found end of file when expecting \`-->\` at (1:13)."
+        │       ├── expected_type: "TOKEN_HTML_COMMENT_END"
+        │       └── found: "" (location: (1:13)-(1:13))
+        │       
+        │   
+        ├── comment_start: "<!--" (location: (1:0)-(1:4))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:4)-(1:13))
+        │       ├── errors: []
+        │       └── content: " content "
+        │       
+        │   
+        └── comment_end: "" (location: (1:13)-(1:13))"
+`;
+
+exports[`UTF-8 string handling > handles edge cases > non-breaking space is preserved 1`] = `
+"@ DocumentNode (location: (1:0)-(1:19))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:19))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:15))
+        │       ├── errors: []
+        │       └── content: "before after"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:15)-(1:19))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:15)-(1:17))
+        │       ├── tag_name: "p" (location: (1:17)-(1:18))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:18)-(1:19))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > Cyrillic in attribute value 1`] = `
+"@ DocumentNode (location: (1:0)-(1:24))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:24))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:18))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:17)-(1:18))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:17))
+        │       │       ├── errors: []
+        │       │       ├── name: 
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       ├── errors: []
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               ├── errors: []
+        │       │       │               └── content: "title"
+        │       │       │               
+        │       │       │           
+        │       │       │       
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value: 
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:17))
+        │       │               ├── errors: []
+        │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:12)-(1:16))
+        │       │               │       ├── errors: []
+        │       │               │       └── content: "Тест"
+        │       │               │       
+        │       │               │   
+        │       │               ├── close_quote: """ (location: (1:16)-(1:17))
+        │       │               └── quoted: true
+        │       │               
+        │       │       
+        │       │   
+        │       └── is_void: false
+        │       
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:18)-(1:24))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+        │       ├── tag_name: "div" (location: (1:20)-(1:23))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:23)-(1:24))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves UTF-8 in attribute values > emoji in attribute value 1`] = `
+"@ DocumentNode (location: (1:0)-(1:21))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:21))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:15))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:14)-(1:15))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:14))
+        │       │       ├── errors: []
+        │       │       ├── name: 
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       ├── errors: []
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               ├── errors: []
+        │       │       │               └── content: "title"
+        │       │       │               
+        │       │       │           
+        │       │       │       
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value: 
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:14))
+        │       │               ├── errors: []
+        │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:12)-(1:13))
+        │       │               │       ├── errors: []
+        │       │               │       └── content: "🚀"
+        │       │               │       
+        │       │               │   
+        │       │               ├── close_quote: """ (location: (1:13)-(1:14))
+        │       │               └── quoted: true
+        │       │               
+        │       │       
+        │       │   
+        │       └── is_void: false
+        │       
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:15)-(1:21))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:15)-(1:17))
+        │       ├── tag_name: "div" (location: (1:17)-(1:20))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:20)-(1:21))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 2-byte characters (Latin Extended) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:24))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:24))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:20))
+        │       ├── errors: []
+        │       └── content: "Café résumé naïve"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:20)-(1:24))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:20)-(1:22))
+        │       ├── tag_name: "p" (location: (1:22)-(1:23))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:23)-(1:24))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 2-byte characters (special symbols) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:22))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:22))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:18))
+        │       ├── errors: []
+        │       └── content: "ç àöü ± Ç ≠ ¿ ´"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:18)-(1:22))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+        │       ├── tag_name: "p" (location: (1:20)-(1:21))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:21)-(1:22))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (CJK) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:17))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:17))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:13))
+        │       ├── errors: []
+        │       └── content: "日本語 中文 한국어"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:13)-(1:17))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:13)-(1:15))
+        │       ├── tag_name: "p" (location: (1:15)-(1:16))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:16)-(1:17))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (Cyrillic) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:22))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:22))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:18))
+        │       ├── errors: []
+        │       └── content: "Тест Привет Мир"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:18)-(1:22))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+        │       ├── tag_name: "p" (location: (1:20)-(1:21))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:21)-(1:22))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 3-byte characters (em dash, en dash) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:26))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:26))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:22))
+        │       ├── errors: []
+        │       └── content: "Em dash — en dash –"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:22)-(1:26))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:22)-(1:24))
+        │       ├── tag_name: "p" (location: (1:24)-(1:25))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:25)-(1:26))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > 4-byte characters (emoji) 1`] = `
+"@ DocumentNode (location: (1:0)-(1:16))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:16))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:12))
+        │       ├── errors: []
+        │       └── content: "🚀 🍰 ✨ 💎 🎉"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:12)-(1:16))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:12)-(1:14))
+        │       ├── tag_name: "p" (location: (1:14)-(1:15))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:15)-(1:16))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;
+
+exports[`UTF-8 string handling > parse preserves multi-byte UTF-8 in text content > mixed multi-byte characters 1`] = `
+"@ DocumentNode (location: (1:0)-(1:20))
+├── errors: []
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:20))
+        ├── errors: []
+        ├── open_tag: 
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── errors: []
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │       
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:16))
+        │       ├── errors: []
+        │       └── content: "Café 🍰 — Тест"
+        │       
+        │   
+        ├── close_tag: 
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:20))
+        │       ├── errors: []
+        │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+        │       ├── tag_name: "p" (location: (1:18)-(1:19))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:19)-(1:20))
+        │       
+        ├── is_void: false
+        └── source: "HTML""
+`;

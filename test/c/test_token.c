@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include "include/test.h"
 #include "../../src/include/herb.h"
+#include "../../src/include/lex_helpers.h"
 #include "../../src/include/token.h"
 #include "../../src/include/util/hb_allocator.h"
 
 TEST(test_token)
-  ck_assert_str_eq(token_type_to_string(TOKEN_IDENTIFIER), "TOKEN_IDENTIFIER");
+  ck_assert(hb_string_equals(token_type_to_string(TOKEN_IDENTIFIER), hb_string("TOKEN_IDENTIFIER")));
 END
 
 TEST(test_token_type_to_friendly_string)

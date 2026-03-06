@@ -4,18 +4,20 @@
 #include "../include/errors.h"
 #include "../include/extract.h"
 #include "../include/prism_helpers.h"
+#include "../include/util/hb_string.h"
 
 #include <prism.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, hb_allocator_T* allocator) {
   if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
   AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
 
-  if (!content_node->content || !content_node->content->value) { return; }
+  if (!content_node->content || hb_string_is_empty(content_node->content->value)) { return; }
 
-  const char* content = content_node->content->value;
-  if (strlen(content) == 0) { return; }
+  char* content = hb_string_to_c_string_using_malloc(content_node->content->value);
+  if (!content) { return; }
 
   pm_parser_t parser;
   pm_options_t options = { 0, .partial_script = true };
@@ -39,6 +41,7 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
   pm_options_free(&options);
+  free(content);
 }
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source, hb_allocator_T* allocator) {

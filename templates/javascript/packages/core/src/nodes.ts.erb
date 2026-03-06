@@ -1,7 +1,6 @@
 import { Location } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError } from "./errors.js"
-import { convertToUTF8 } from "./util.js"
 
 import type { SerializedLocation } from "./location.js"
 import type { SerializedHerbError } from "./errors.js"
@@ -285,7 +284,7 @@ export class <%= node.name %> extends Node {
     <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::StringField -%>
-    this.<%= field.name %> = convertToUTF8(props.<%= field.name %>);
+    this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::BooleanField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::ElementSourceField -%>

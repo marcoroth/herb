@@ -1,6 +1,7 @@
 #include "../include/analyze/helpers.h"
 #include "../include/errors.h"
 #include "../include/util/hb_allocator.h"
+#include "../include/util/hb_string.h"
 
 <%-
   nodes_with_end_node = nodes.select do |node|
@@ -18,9 +19,9 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allo
       if (<%= node.human %>->end_node == NULL) {
         append_missingerb_end_tag_error(
         <%- if keyword == "block" -%>
-          "ERB block",
+          hb_string("ERB block"),
         <%- else -%>
-          "`<" "%" " <%= keyword %> " "%" ">`",
+          hb_string("`<" "%" " <%= keyword %> " "%" ">`"),
         <%- end -%>
           <%= node.human %>->tag_opening->location.start,
           <%= node.human %>->tag_closing->location.end,

@@ -4,6 +4,7 @@
 #include "include/position.h"
 #include "include/util.h"
 #include "include/util/hb_allocator.h"
+#include "include/util/hb_string.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -35,7 +36,7 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_al
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = hb_allocator_strdup(allocator, token->value);
+  literal->content = hb_string_copy(token->value, allocator);
 
   return literal;
 }

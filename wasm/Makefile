@@ -38,6 +38,7 @@ WASM_FLAGS = -s WASM=1 \
              -s MODULARIZE=1 \
              -s EXPORT_NAME="Herb" \
              -s ALLOW_MEMORY_GROWTH=1 \
+             -s EMBIND_STD_STRING_IS_UTF8=1 \
              -flto \
              --bind
 

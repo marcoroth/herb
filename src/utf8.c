@@ -1,4 +1,6 @@
 #include "include/utf8.h"
+#include "include/util/hb_string.h"
+#include <stdint.h>
 
 // UTF-8 byte patterns:
 //   0xxxxxxx = 1 byte (ASCII)
@@ -24,19 +26,18 @@ bool utf8_is_valid_continuation_byte(unsigned char byte) {
   return (byte & 0xC0) == 0x80;
 }
 
-uint32_t utf8_sequence_length(const char* str, size_t position, size_t max_length) {
-  if (position >= max_length) { return 0; }
+uint32_t utf8_sequence_length(hb_string_T value) {
+  if (hb_string_is_empty(value)) { return 0; }
 
-  unsigned char first_byte = (unsigned char) str[position];
-  uint32_t expected_length = utf8_char_byte_length(first_byte);
+  uint32_t expected_length = utf8_char_byte_length((unsigned char) value.data[0]);
 
-  if (position + expected_length > max_length) {
+  if (value.length < expected_length) {
     return 1; // Not enough bytes, treat as single byte
   }
 
   if (expected_length > 1) {
     for (uint32_t i = 1; i < expected_length; i++) {
-      if (!utf8_is_valid_continuation_byte((unsigned char) str[position + i])) {
+      if (!utf8_is_valid_continuation_byte((unsigned char) value.data[i])) {
         return 1; // Invalid continuation byte, treat first byte as single byte
       }
     }

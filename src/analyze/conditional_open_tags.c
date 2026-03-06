@@ -29,8 +29,8 @@ static bool is_non_void_open_tag(AST_NODE_T* node) {
   return !open_tag->is_void;
 }
 
-static const char* get_open_tag_name(AST_HTML_OPEN_TAG_NODE_T* open_tag) {
-  if (!open_tag || !open_tag->tag_name) { return NULL; }
+static hb_string_T get_open_tag_name(AST_HTML_OPEN_TAG_NODE_T* open_tag) {
+  if (!open_tag || !open_tag->tag_name) { return HB_STRING_NULL; }
 
   return open_tag->tag_name->value;
 }
@@ -41,8 +41,8 @@ typedef struct {
   bool has_multiple_tags;
 } single_open_tag_result_T;
 
-static bool has_matching_close_tag_in_statements(hb_array_T* statements, size_t open_tag_index, const char* tag_name) {
-  if (!statements || !tag_name) { return false; }
+static bool has_matching_close_tag_in_statements(hb_array_T* statements, size_t open_tag_index, hb_string_T tag_name) {
+  if (!statements || hb_string_is_empty(tag_name)) { return false; }
 
   int depth = 0;
 
@@ -54,14 +54,14 @@ static bool has_matching_close_tag_in_statements(hb_array_T* statements, size_t 
     if (node->type == AST_HTML_OPEN_TAG_NODE) {
       AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
 
-      if (open_tag->tag_name && open_tag->tag_name->value) {
-        if (hb_string_equals_case_insensitive(hb_string(tag_name), hb_string(open_tag->tag_name->value))) { depth++; }
+      if (open_tag->tag_name && !hb_string_is_empty(open_tag->tag_name->value)) {
+        if (hb_string_equals_case_insensitive(tag_name, open_tag->tag_name->value)) { depth++; }
       }
     } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
       AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      if (close_tag->tag_name && close_tag->tag_name->value) {
-        if (hb_string_equals_case_insensitive(hb_string(tag_name), hb_string(close_tag->tag_name->value))) {
+      if (close_tag->tag_name && !hb_string_is_empty(close_tag->tag_name->value)) {
+        if (hb_string_equals_case_insensitive(tag_name, close_tag->tag_name->value)) {
           if (depth == 0) { return true; }
           depth--;
         }
@@ -89,9 +89,9 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) node;
       bool whitespace_only = true;
 
-      if (text->content) {
-        for (const char* c = text->content; *c; c++) {
-          if (!is_whitespace(*c)) {
+      if (!hb_string_is_empty(text->content)) {
+        for (size_t ci = 0; ci < text->content.length; ci++) {
+          if (!is_whitespace(text->content.data[ci])) {
             whitespace_only = false;
             break;
           }
@@ -101,9 +101,10 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
       if (whitespace_only) { continue; }
 
       if (result.tag) {
-        const char* tag_name = get_open_tag_name(result.tag);
+        hb_string_T tag_name = get_open_tag_name(result.tag);
 
-        if (tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
+        if (!hb_string_is_empty(tag_name)
+            && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
           result.tag = NULL;
           result.has_multiple_tags = false;
           result.second_tag = NULL;
@@ -131,10 +132,10 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
     result.tag = NULL;
 
     if (result.has_multiple_tags && result.second_tag) {
-      const char* first_tag_name =
+      hb_string_T first_tag_name =
         get_open_tag_name((AST_HTML_OPEN_TAG_NODE_T*) hb_array_get(statements, first_tag_index));
-      bool first_has_close =
-        first_tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, first_tag_name);
+      bool first_has_close = !hb_string_is_empty(first_tag_name)
+                          && has_matching_close_tag_in_statements(statements, first_tag_index, first_tag_name);
 
       if (first_has_close) {
         result.has_multiple_tags = false;
@@ -144,24 +145,26 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
   }
 
   if (result.tag) {
-    const char* tag_name = get_open_tag_name(result.tag);
+    hb_string_T tag_name = get_open_tag_name(result.tag);
 
-    if (tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) { result.tag = NULL; }
+    if (!hb_string_is_empty(tag_name) && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
+      result.tag = NULL;
+    }
   }
 
   return result;
 }
 
-static const char* check_erb_if_conditional_open_tag(AST_ERB_IF_NODE_T* if_node) {
-  if (!if_node) { return NULL; }
+static hb_string_T check_erb_if_conditional_open_tag(AST_ERB_IF_NODE_T* if_node) {
+  if (!if_node) { return HB_STRING_NULL; }
 
-  if (!if_node->subsequent) { return NULL; }
+  if (!if_node->subsequent) { return HB_STRING_NULL; }
 
   single_open_tag_result_T if_result = get_single_open_tag_from_statements(if_node->statements);
-  if (!if_result.tag) { return NULL; }
+  if (!if_result.tag) { return HB_STRING_NULL; }
 
-  const char* common_tag_name = get_open_tag_name(if_result.tag);
-  if (!common_tag_name) { return NULL; }
+  hb_string_T common_tag_name = get_open_tag_name(if_result.tag);
+  if (hb_string_is_null(common_tag_name)) { return HB_STRING_NULL; }
 
   AST_NODE_T* current = if_node->subsequent;
   bool ends_with_else = false;
@@ -180,42 +183,42 @@ static const char* check_erb_if_conditional_open_tag(AST_ERB_IF_NODE_T* if_node)
       next_subsequent = NULL;
       ends_with_else = true;
     } else {
-      return NULL;
+      return HB_STRING_NULL;
     }
 
     single_open_tag_result_T branch_result = get_single_open_tag_from_statements(branch_statements);
-    if (!branch_result.tag) { return NULL; }
+    if (!branch_result.tag) { return HB_STRING_NULL; }
 
-    const char* branch_tag_name = get_open_tag_name(branch_result.tag);
-    if (!branch_tag_name) { return NULL; }
+    hb_string_T branch_tag_name = get_open_tag_name(branch_result.tag);
+    if (hb_string_is_null(branch_tag_name)) { return HB_STRING_NULL; }
 
-    if (!hb_string_equals_case_insensitive(hb_string(common_tag_name), hb_string(branch_tag_name))) { return NULL; }
+    if (!hb_string_equals_case_insensitive(common_tag_name, branch_tag_name)) { return HB_STRING_NULL; }
 
     current = next_subsequent;
   }
 
-  if (!ends_with_else) { return NULL; }
+  if (!ends_with_else) { return HB_STRING_NULL; }
 
   return common_tag_name;
 }
 
-static const char* check_erb_unless_conditional_open_tag(AST_ERB_UNLESS_NODE_T* unless_node) {
-  if (!unless_node) { return NULL; }
-  if (!unless_node->else_clause) { return NULL; }
+static hb_string_T check_erb_unless_conditional_open_tag(AST_ERB_UNLESS_NODE_T* unless_node) {
+  if (!unless_node) { return HB_STRING_NULL; }
+  if (!unless_node->else_clause) { return HB_STRING_NULL; }
 
   single_open_tag_result_T unless_result = get_single_open_tag_from_statements(unless_node->statements);
-  if (!unless_result.tag) { return NULL; }
+  if (!unless_result.tag) { return HB_STRING_NULL; }
 
-  const char* common_tag_name = get_open_tag_name(unless_result.tag);
-  if (!common_tag_name) { return NULL; }
+  hb_string_T common_tag_name = get_open_tag_name(unless_result.tag);
+  if (hb_string_is_null(common_tag_name)) { return HB_STRING_NULL; }
 
   single_open_tag_result_T else_result = get_single_open_tag_from_statements(unless_node->else_clause->statements);
-  if (!else_result.tag) { return NULL; }
+  if (!else_result.tag) { return HB_STRING_NULL; }
 
-  const char* else_tag_name = get_open_tag_name(else_result.tag);
-  if (!else_tag_name) { return NULL; }
+  hb_string_T else_tag_name = get_open_tag_name(else_result.tag);
+  if (hb_string_is_null(else_tag_name)) { return HB_STRING_NULL; }
 
-  if (!hb_string_equals_case_insensitive(hb_string(common_tag_name), hb_string(else_tag_name))) { return NULL; }
+  if (!hb_string_equals_case_insensitive(common_tag_name, else_tag_name)) { return HB_STRING_NULL; }
 
   return common_tag_name;
 }
@@ -223,7 +226,7 @@ static const char* check_erb_unless_conditional_open_tag(AST_ERB_UNLESS_NODE_T* 
 static size_t find_matching_close_tag(
   hb_array_T* siblings,
   size_t start_index,
-  const char* tag_name,
+  hb_string_T tag_name,
   AST_HTML_CLOSE_TAG_NODE_T** out_close_tag
 ) {
   *out_close_tag = NULL;
@@ -235,8 +238,8 @@ static size_t find_matching_close_tag(
     if (node->type == AST_HTML_CLOSE_TAG_NODE) {
       AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      if (close_tag->tag_name && close_tag->tag_name->value) {
-        if (hb_string_equals_case_insensitive(hb_string(tag_name), hb_string(close_tag->tag_name->value))) {
+      if (close_tag->tag_name && !hb_string_is_empty(close_tag->tag_name->value)) {
+        if (hb_string_equals_case_insensitive(tag_name, close_tag->tag_name->value)) {
           *out_close_tag = close_tag;
           return i;
         }
@@ -355,7 +358,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (!node) { continue; }
 
-    const char* tag_name = NULL;
+    hb_string_T tag_name = HB_STRING_NULL;
     AST_NODE_T* conditional_node = NULL;
     token_T* tag_name_token = NULL;
 
@@ -363,7 +366,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       AST_ERB_IF_NODE_T* if_node = (AST_ERB_IF_NODE_T*) node;
       tag_name = check_erb_if_conditional_open_tag(if_node);
 
-      if (tag_name) {
+      if (!hb_string_is_null(tag_name)) {
         conditional_node = node;
         tag_name_token = get_first_branch_tag_name_token(if_node);
       } else {
@@ -373,7 +376,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       AST_ERB_UNLESS_NODE_T* unless_node = (AST_ERB_UNLESS_NODE_T*) node;
       tag_name = check_erb_unless_conditional_open_tag(unless_node);
 
-      if (tag_name) {
+      if (!hb_string_is_null(tag_name)) {
         conditional_node = node;
         tag_name_token = get_first_branch_tag_name_token_unless(unless_node);
       } else {
@@ -381,7 +384,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       }
     }
 
-    if (!tag_name || !conditional_node || !tag_name_token) { continue; }
+    if (hb_string_is_null(tag_name) || !conditional_node || !tag_name_token) { continue; }
 
     AST_HTML_CLOSE_TAG_NODE_T* close_tag = NULL;
     size_t close_index = find_matching_close_tag(nodes, i, tag_name, &close_tag);

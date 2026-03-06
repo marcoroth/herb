@@ -69,11 +69,11 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
-    const char* opening = erb_content_node->tag_opening->value;
+    hb_string_T opening = erb_content_node->tag_opening->value;
 
-    if (!string_equals(opening, "<%%") && !string_equals(opening, "<%%=") && !string_equals(opening, "<%#")
-        && !string_equals(opening, "<%graphql")) {
-      analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
+    if (!hb_string_equals(opening, hb_string("<%%")) && !hb_string_equals(opening, hb_string("<%%="))
+        && !hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
+      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;

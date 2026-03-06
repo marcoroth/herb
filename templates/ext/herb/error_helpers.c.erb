@@ -7,6 +7,7 @@
 #include "../../src/include/errors.h"
 #include "../../src/include/herb.h"
 #include "../../src/include/token.h"
+#include "../../src/include/util/hb_string.h"
 
 VALUE rb_error_from_c_struct(ERROR_T* error);
 
@@ -41,9 +42,10 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   <%- when Herb::Template::TokenField -%>
   VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(token_type_to_string(<%= error.human %>-><%= field.name %>));
+  hb_string_T _<%= field.name %>_string = token_type_to_string(<%= error.human %>-><%= field.name %>);
+  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new(_<%= field.name %>_string.data, _<%= field.name %>_string.length);
   <%- when Herb::Template::StringField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= error.human %>-><%= field.name %>);
+  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new(<%= error.human %>-><%= field.name %>.data, <%= error.human %>-><%= field.name %>.length);
   <%- when Herb::Template::SizeTField -%>
   VALUE <%= error.human %>_<%= field.name %> = ULONG2NUM(<%= error.human %>-><%= field.name %>);
   <%- else -%>

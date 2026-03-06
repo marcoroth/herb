@@ -121,10 +121,11 @@ static VALUE Herb_lex_file(int argc, VALUE* argv, VALUE self) {
 
   lex_args_T args = { 0 };
   args.source = read_file_to_ruby_string(file_path);
+  char* string = (char*) check_string(args.source);
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
-  args.tokens = herb_lex_file(file_path, &args.allocator);
+  args.tokens = herb_lex(string, &args.allocator);
 
   if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) args.allocator.context); }
 

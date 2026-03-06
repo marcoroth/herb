@@ -7,6 +7,7 @@
 #include "../include/token_struct.h"
 #include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
+#include "../include/util/hb_string.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -32,7 +33,9 @@ location_T* compute_then_keyword(
   }
 
   token_T* content = erb_node->content;
-  const char* source = content ? content->value : NULL;
+  const char* source = (content && !hb_string_is_empty(content->value))
+                       ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
+                       : NULL;
   location_T* then_keyword = NULL;
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {

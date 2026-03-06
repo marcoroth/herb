@@ -139,7 +139,7 @@ module Herb
       end
 
       def c_type
-        "const char*"
+        "hb_string_T"
       end
     end
 

@@ -6,9 +6,7 @@
 #include "../include/util.h"
 #include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
-#include "../include/util/hb_buffer.h"
 #include "../include/util/hb_string.h"
-#include "../include/util/string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>
@@ -20,8 +18,8 @@ typedef struct {
   hb_allocator_T* allocator;
 } conditional_elements_context_T;
 
-static const char* extract_condition_from_erb_content(AST_NODE_T* erb_node, bool* is_if) {
-  if (!erb_node) { return NULL; }
+static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool* is_if) {
+  if (!erb_node) { return HB_STRING_NULL; }
 
   token_T* content_token = NULL;
 
@@ -34,36 +32,43 @@ static const char* extract_condition_from_erb_content(AST_NODE_T* erb_node, bool
     content_token = unless_node->content;
     *is_if = false;
   } else {
-    return NULL;
+    return HB_STRING_NULL;
   }
 
-  if (!content_token || !content_token->value) { return NULL; }
+  if (!content_token || hb_string_is_empty(content_token->value)) { return HB_STRING_NULL; }
 
-  const char* content = content_token->value;
+  const char* data = content_token->value.data;
+  size_t remaining = content_token->value.length;
 
-  content = skip_whitespace(content);
+  while (remaining > 0 && is_whitespace(*data)) {
+    data++;
+    remaining--;
+  }
 
   if (*is_if) {
-    if (strncmp(content, "if", 2) == 0 && is_whitespace(content[2])) { content += 3; }
+    if (remaining >= 3 && strncmp(data, "if", 2) == 0 && is_whitespace(data[2])) {
+      data += 3;
+      remaining -= 3;
+    }
   } else {
-    if (strncmp(content, "unless", 6) == 0 && is_whitespace(content[6])) { content += 7; }
+    if (remaining >= 7 && strncmp(data, "unless", 6) == 0 && is_whitespace(data[6])) {
+      data += 7;
+      remaining -= 7;
+    }
   }
 
-  content = skip_whitespace(content);
-
-  if (strlen(content) == 0) { return NULL; }
-
-  size_t length = strlen(content);
-
-  while (length > 0 && is_whitespace(content[length - 1])) {
-    length--;
+  while (remaining > 0 && is_whitespace(*data)) {
+    data++;
+    remaining--;
   }
+  if (remaining == 0) { return HB_STRING_NULL; }
 
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, length + 1);
-  hb_buffer_append_with_length(&buffer, content, length);
+  while (remaining > 0 && is_whitespace(data[remaining - 1])) {
+    remaining--;
+  }
+  if (remaining == 0) { return HB_STRING_NULL; }
 
-  return buffer.value;
+  return (hb_string_T) { .data = (char*) data, .length = (uint32_t) remaining };
 }
 
 static bool is_simple_erb_conditional(AST_NODE_T* node) {
@@ -104,9 +109,9 @@ static bool contains_single_open_tag(hb_array_T* statements, AST_HTML_OPEN_TAG_N
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) child;
       bool whitespace_only = true;
 
-      if (text->content) {
-        for (const char* character = text->content; *character; character++) {
-          if (!is_whitespace(*character)) {
+      if (!hb_string_is_empty(text->content)) {
+        for (size_t ci = 0; ci < text->content.length; ci++) {
+          if (!is_whitespace(text->content.data[ci])) {
             whitespace_only = false;
             break;
           }
@@ -153,9 +158,9 @@ static bool contains_single_close_tag(hb_array_T* statements, AST_HTML_CLOSE_TAG
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) child;
       bool whitespace_only = true;
 
-      if (text->content) {
-        for (const char* character = text->content; *character; character++) {
-          if (!is_whitespace(*character)) {
+      if (!hb_string_is_empty(text->content)) {
+        for (size_t ci = 0; ci < text->content.length; ci++) {
+          if (!is_whitespace(text->content.data[ci])) {
             whitespace_only = false;
             break;
           }
@@ -204,18 +209,18 @@ static size_t count_nodes_of_type(hb_array_T* array, ast_node_type_T type) {
   return count;
 }
 
-static bool conditions_are_equivalent(const char* a, const char* b) {
-  if (!a || !b) { return false; }
+static bool conditions_are_equivalent(hb_string_T a, hb_string_T b) {
+  if (hb_string_is_empty(a) || hb_string_is_empty(b)) { return false; }
 
-  return string_equals(a, b);
+  return hb_string_equals(a, b);
 }
 
 typedef struct {
   size_t open_index;
   AST_NODE_T* open_conditional;
   AST_HTML_OPEN_TAG_NODE_T* open_tag;
-  const char* tag_name;
-  const char* condition;
+  hb_string_T tag_name;
+  hb_string_T condition;
   bool is_if;
 } conditional_open_tag_T;
 
@@ -239,9 +244,9 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     if (open_tag_count <= open_close_tag_count) { continue; }
 
     bool open_is_if;
-    const char* open_condition = extract_condition_from_erb_content(open_node, &open_is_if);
+    hb_string_T open_condition = extract_condition_from_erb_content(open_node, &open_is_if);
 
-    if (!open_condition) { continue; }
+    if (hb_string_is_null(open_condition)) { continue; }
 
     for (size_t close_index = open_index + 1; close_index < hb_array_size(nodes); close_index++) {
       AST_NODE_T* close_node = (AST_NODE_T*) hb_array_get(nodes, close_index);
@@ -259,9 +264,9 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       if (close_tag_count <= close_open_tag_count) { continue; }
 
       bool close_is_if;
-      const char* close_condition = extract_condition_from_erb_content(close_node, &close_is_if);
+      hb_string_T close_condition = extract_condition_from_erb_content(close_node, &close_is_if);
 
-      if (!close_condition) { continue; }
+      if (hb_string_is_null(close_condition)) { continue; }
 
       if (open_is_if == close_is_if && conditions_are_equivalent(open_condition, close_condition)) {
         CONDITIONAL_ELEMENT_MULTIPLE_TAGS_ERROR_T* multiple_tags_error = conditional_element_multiple_tags_error_init(
@@ -273,15 +278,9 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
         );
 
         hb_array_append(document_errors, multiple_tags_error);
-
-        free((void*) close_condition);
         break;
       }
-
-      free((void*) close_condition);
     }
-
-    free((void*) open_condition);
   }
 
   hb_array_T* open_stack = hb_array_init(8);
@@ -332,43 +331,32 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     size_t matched_stack_index = (size_t) -1;
 
     conditional_open_tag_T* mismatched_open = NULL;
-    const char* mismatched_close_condition = NULL;
+    hb_string_T mismatched_close_condition = HB_STRING_NULL;
 
     for (size_t stack_index = hb_array_size(open_stack); stack_index > 0; stack_index--) {
       conditional_open_tag_T* entry = (conditional_open_tag_T*) hb_array_get(open_stack, stack_index - 1);
 
       if (!entry) { continue; }
-      if (!hb_string_equals_case_insensitive(hb_string(entry->tag_name), hb_string(close_tag->tag_name->value))) {
-        continue;
-      }
+      if (!hb_string_equals_case_insensitive(entry->tag_name, close_tag->tag_name->value)) { continue; }
 
       bool close_is_if;
-      const char* close_condition = extract_condition_from_erb_content(node, &close_is_if);
+      hb_string_T close_condition = extract_condition_from_erb_content(node, &close_is_if);
 
-      if (entry->is_if != close_is_if) {
-        if (close_condition) { free((void*) close_condition); }
-
-        continue;
-      }
+      if (entry->is_if != close_is_if) { continue; }
 
       if (!conditions_are_equivalent(entry->condition, close_condition)) {
         if (!mismatched_open && entry->open_index < node_index) {
           mismatched_open = entry;
           mismatched_close_condition = close_condition;
-        } else {
-          if (close_condition) { free((void*) close_condition); }
         }
 
         continue;
       }
 
-      if (mismatched_close_condition) {
-        free((void*) mismatched_close_condition);
-        mismatched_close_condition = NULL;
+      if (!hb_string_is_null(mismatched_close_condition)) {
+        mismatched_close_condition = HB_STRING_NULL;
         mismatched_open = NULL;
       }
-
-      if (close_condition) { free((void*) close_condition); }
 
       if (entry->open_index >= node_index) { continue; }
 
@@ -378,7 +366,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       break;
     }
 
-    if (!matched_open && mismatched_open && mismatched_close_condition) {
+    if (!matched_open && mismatched_open && !hb_string_is_null(mismatched_close_condition)) {
       CONDITIONAL_ELEMENT_CONDITION_MISMATCH_ERROR_T* mismatch_error =
         conditional_element_condition_mismatch_error_init(
           mismatched_open->tag_name,
@@ -394,11 +382,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
         );
 
       hb_array_append(document_errors, mismatch_error);
-      free((void*) mismatched_close_condition);
       continue;
     }
-
-    if (mismatched_close_condition) { free((void*) mismatched_close_condition); }
 
     if (!matched_open) { continue; }
 
@@ -450,8 +435,6 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     }
     hb_array_set(nodes, node_index, NULL);
 
-    if (matched_open->condition) { free((void*) matched_open->condition); }
-
     free(matched_open);
     hb_array_set(open_stack, matched_stack_index, NULL);
   }
@@ -459,11 +442,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
   for (size_t stack_index = 0; stack_index < hb_array_size(open_stack); stack_index++) {
     conditional_open_tag_T* entry = (conditional_open_tag_T*) hb_array_get(open_stack, stack_index);
 
-    if (entry) {
-      if (entry->condition) { free((void*) entry->condition); }
-
-      free(entry);
-    }
+    if (entry) { free(entry); }
   }
 
   hb_array_free(&open_stack);

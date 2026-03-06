@@ -9,11 +9,13 @@
 #include "../../src/include/range.h"
 #include "../../src/include/token.h"
 #include "../../src/include/util/hb_array.h"
+#include "../../src/include/util/hb_string.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+jstring CreateStringFromHbString(JNIEnv* env, hb_string_T string);
 jobject CreatePosition(JNIEnv* env, position_T position);
 jobject CreateLocation(JNIEnv* env, location_T location);
 jobject CreateRange(JNIEnv* env, range_T range);

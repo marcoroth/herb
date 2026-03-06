@@ -9,6 +9,7 @@
 #include "../../src/include/location.h"
 #include "../../src/include/position.h"
 #include "../../src/include/token.h"
+#include "../../src/include/util/hb_string.h"
 
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
@@ -44,14 +45,19 @@ VALUE rb_range_from_c_struct(range_T range) {
   return rb_class_new_instance(2, args, cRange);
 }
 
+VALUE rb_string_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  return rb_utf8_str_new(string.data, string.length);
+}
+
 VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
-  VALUE value = token->value ? rb_utf8_str_new_cstr(token->value) : Qnil;
-
+  VALUE value = rb_string_from_hb_string(token->value);
   VALUE range = rb_range_from_c_struct(token->range);
   VALUE location = rb_location_from_c_struct(token->location);
-  VALUE type = rb_utf8_str_new_cstr(token_type_to_string(token->type));
+  VALUE type = rb_string_from_hb_string(token_type_to_string(token->type));
 
   VALUE args[4] = { value, range, location, type };
 

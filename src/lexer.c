@@ -1,10 +1,12 @@
 #include "include/lexer_peek_helpers.h"
+#include "include/macros.h"
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
 #include "include/util/hb_string.h"
 
 #include <ctype.h>
+#include <stdint.h>
 #include <string.h>
 
 #define LEXER_STALL_LIMIT 5
@@ -36,7 +38,7 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {
-    lexer->source = hb_string("");
+    lexer->source = HB_STRING_EMPTY;
   }
 
   lexer->current_character = lexer->source.data[0];
@@ -56,11 +58,11 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
-  char error_message[128];
+  char buffer[128];
 
   snprintf(
-    error_message,
-    sizeof(error_message),
+    buffer,
+    sizeof(buffer),
     "[Lexer] Error: %s (character '%c', line %u, col %u)\n",
     message,
     lexer->current_character,
@@ -68,7 +70,10 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
     lexer->current_column
   );
 
-  return token_init(hb_string(error_message), TOKEN_ERROR, lexer);
+  size_t length = strlen(buffer);
+  char* error_message = hb_allocator_strndup(lexer->allocator, buffer, length);
+
+  return token_init((hb_string_T) { .data = error_message, .length = (uint32_t) length }, TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
@@ -80,8 +85,8 @@ static void lexer_advance(lexer_T* lexer) {
   }
 }
 
-static void lexer_advance_utf8_bytes(lexer_T* lexer, int byte_count) {
-  if (byte_count <= 0) { return; }
+static void lexer_advance_utf8_bytes(lexer_T* lexer, uint32_t byte_count) {
+  if (byte_count == 0) { return; }
 
   if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
     if (!is_newline(lexer->current_character)) { lexer->current_column++; }
@@ -121,19 +126,17 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
 }
 
 static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
-  char buffer[2];
-  buffer[0] = lexer->current_character;
-  buffer[1] = '\0';
-
-  return lexer_advance_with(lexer, hb_string(buffer), type);
+  return lexer_advance_with_next(lexer, 1, type);
 }
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
-  int char_byte_length = utf8_sequence_length(lexer->source.data, lexer->current_position, lexer->source.length);
+  uint32_t char_byte_length = utf8_sequence_length(hb_string_slice(lexer->source, lexer->current_position));
+
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
+
   uint32_t start_position = lexer->current_position;
 
-  for (int i = 0; i < char_byte_length; i++) {
+  for (uint32_t i = 0; i < char_byte_length; i++) {
     if (lexer->current_position + i >= lexer->source.length) { return lexer_advance_current(lexer, type); }
   }
 
@@ -191,8 +194,7 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
                                  hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
-
-  for (size_t i = 0; i < sizeof(erb_patterns) / sizeof(erb_patterns[0]); i++) {
+  for (size_t i = 0; i < 8; i++) {
     token_T* match = lexer_match_and_advance(lexer, erb_patterns[i], TOKEN_ERB_START);
     if (match) { return match; }
   }
@@ -252,7 +254,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {
-  if (lexer_eof(lexer)) { return token_init(hb_string(""), TOKEN_EOF, lexer); }
+  if (lexer_eof(lexer)) { return token_init(HB_STRING_EMPTY, TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }

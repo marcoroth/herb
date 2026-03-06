@@ -69,13 +69,22 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  hb_array_T* tokens = herb_lex_file(file_path, &allocator);
   napi_value source_value = ReadFileToString(env, file_path);
+
+  char* source = CheckString(env, source_value);
+  if (!source) {
+    hb_allocator_destroy(&allocator);
+    free(file_path);
+    return nullptr;
+  }
+
+  hb_array_T* tokens = herb_lex(source, &allocator);
   napi_value result = CreateLexResult(env, tokens, source_value);
 
   herb_free_tokens(&tokens, &allocator);
   hb_allocator_destroy(&allocator);
   free(file_path);
+  free(source);
 
   return result;
 }

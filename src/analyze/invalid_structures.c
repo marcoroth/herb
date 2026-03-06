@@ -7,6 +7,7 @@
 #include "../include/errors.h"
 #include "../include/token_struct.h"
 #include "../include/util/hb_array.h"
+#include "../include/util/hb_string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>
@@ -84,7 +85,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
       if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
         append_erb_control_flow_scope_error(
-          keyword,
+          hb_string(keyword),
           node->location.start,
           node->location.end,
           context->allocator,
@@ -119,7 +120,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
           if (!token_value_empty(content_node->tag_closing)) {
             append_erb_control_flow_scope_error(
-              keyword,
+              hb_string(keyword),
               subsequent->location.start,
               subsequent->location.end,
               context->allocator,

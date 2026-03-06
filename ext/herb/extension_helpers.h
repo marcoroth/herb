@@ -11,6 +11,7 @@
 
 const char* check_string(VALUE value);
 VALUE read_file_to_ruby_string(const char* file_path);
+VALUE rb_string_from_hb_string(hb_string_T string);
 
 VALUE rb_position_from_c_struct(position_T position);
 VALUE rb_location_from_c_struct(location_T location);

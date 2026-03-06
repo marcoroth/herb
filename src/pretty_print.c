@@ -214,8 +214,8 @@ void pretty_print_token_property(
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
-  if (token != NULL && token->value != NULL) {
-    hb_string_T quoted = quoted_string(hb_string(token->value));
+  if (token != NULL && !hb_string_is_empty(token->value)) {
+    hb_string_T quoted = quoted_string(token->value);
     hb_buffer_append_string(buffer, quoted);
     free(quoted.data);
 
@@ -237,7 +237,7 @@ void pretty_print_string_property(
   hb_buffer_T* buffer
 ) {
   hb_string_T value = hb_string("∅");
-  hb_string_T escaped = { .data = NULL, .length = 0 };
+  hb_string_T escaped = HB_STRING_NULL;
   hb_string_T quoted;
 
   if (!hb_string_is_empty(string)) {

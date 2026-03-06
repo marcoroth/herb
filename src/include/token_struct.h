@@ -5,6 +5,7 @@
 
 #include "location.h"
 #include "range.h"
+#include "util/hb_string.h"
 
 typedef enum {
   TOKEN_WHITESPACE, // ' '
@@ -55,7 +56,7 @@ typedef enum {
 #define TOKEN_SENTINEL 99999999
 
 typedef struct TOKEN_STRUCT {
-  char* value;
+  hb_string_T value;
   range_T range;
   location_T location;
   token_type_T type;
