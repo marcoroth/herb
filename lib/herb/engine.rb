@@ -75,9 +75,9 @@ module Herb
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
 
-      unless ["error", "warn", "ignore"].include?(@security_mode)
+      unless [:error, :warn, :ignore].include?(@security_mode)
         raise ArgumentError,
-              "security must be one of \"error\", \"warn\", or \"ignore\", got #{@security_mode.inspect}"
+              "security must be one of :error, :warn, or :ignore, got #{@security_mode.inspect}"
       end
 
       @freeze = properties[:freeze]
