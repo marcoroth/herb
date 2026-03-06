@@ -336,9 +336,8 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
     TOKEN_EOF
   )) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      const char* tag = parser->current_token->value.data;
-      size_t tag_length = parser->current_token->value.length;
-      bool is_output_tag = (tag_length >= 3 && tag[2] == '=');
+      hb_string_T tag = parser->current_token->value;
+      bool is_output_tag = (tag.length >= 3 && tag.data[2] == '=');
 
       if (!is_output_tag) {
         bool is_control_flow = parser_lookahead_erb_is_control_flow(parser);
@@ -921,14 +920,14 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
   } while (true);
 }
 
-static bool starts_with_keyword(const char* pointer, size_t remaining, const char* keyword) {
-  size_t length = strlen(keyword);
-  if (remaining < length) { return false; }
-  if (strncmp(pointer, keyword, length) != 0) { return false; }
+static bool starts_with_keyword(hb_string_T string, const char* keyword) {
+  hb_string_T prefix = hb_string(keyword);
+  if (string.length < prefix.length) { return false; }
+  if (strncmp(string.data, prefix.data, prefix.length) != 0) { return false; }
 
-  if (remaining == length) { return true; }
+  if (string.length == prefix.length) { return true; }
 
-  return is_whitespace(pointer[length]);
+  return is_whitespace(string.data[prefix.length]);
 }
 
 // TODO: ideally we could avoid basing this off of strings, and use the step in analyze.c
@@ -942,18 +941,12 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
     return false;
   }
 
-  const char* data = content->value.data;
-  size_t remaining = content->value.length;
+  hb_string_T trimmed = hb_string_trim_start(content->value);
 
-  while (remaining > 0 && is_whitespace(*data)) {
-    data++;
-    remaining--;
-  }
-
-  bool is_control_flow = starts_with_keyword(data, remaining, "end") || starts_with_keyword(data, remaining, "else")
-                      || starts_with_keyword(data, remaining, "elsif") || starts_with_keyword(data, remaining, "in")
-                      || starts_with_keyword(data, remaining, "when") || starts_with_keyword(data, remaining, "rescue")
-                      || starts_with_keyword(data, remaining, "ensure");
+  bool is_control_flow = starts_with_keyword(trimmed, "end") || starts_with_keyword(trimmed, "else")
+                      || starts_with_keyword(trimmed, "elsif") || starts_with_keyword(trimmed, "in")
+                      || starts_with_keyword(trimmed, "when") || starts_with_keyword(trimmed, "rescue")
+                      || starts_with_keyword(trimmed, "ensure");
 
   token_free(content, parser->allocator);
 
