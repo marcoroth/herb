@@ -145,7 +145,7 @@ export class FileProcessor {
           filesFixed++
 
           if (formatOption !== 'json') {
-            console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} offense(s)`, "green")}`)
+            console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} ${autofixResult.fixed.length === 1 ? "offense" : "offenses"}`, "green")}`)
           }
         }
 
