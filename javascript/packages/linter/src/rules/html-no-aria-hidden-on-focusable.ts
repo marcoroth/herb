@@ -83,7 +83,7 @@ export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 

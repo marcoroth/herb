@@ -25,6 +25,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
         "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a `<button>` instead.",
         node.tag_name!.location,
       )
+
       return
     }
 
