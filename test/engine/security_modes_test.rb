@@ -104,8 +104,8 @@ module Engine
         Herb::Engine.new(@valid_template, security: :invalid)
       end
 
-      assert_includes error.message, 'security must be one of :error, :warn, or :ignore'
-      assert_includes error.message, ':invalid'
+      assert_includes error.message, "security must be one of :error, :warn, or :ignore"
+      assert_includes error.message, ":invalid"
     end
 
     test "security mode works with validation_mode: :overlay" do
