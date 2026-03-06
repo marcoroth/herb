@@ -31,7 +31,6 @@ module Engine
     end
 
     test "security: 'warn' mode logs warning but compiles successfully" do
-      warnings = []
       original_stderr = $stderr
       $stderr = StringIO.new
 
@@ -66,7 +65,7 @@ module Engine
       output = $stderr.read
       $stderr = original_stderr
 
-      assert output.scan(/WARNING: Security issue/).count >= 1
+      assert output.scan("WARNING: Security issue").count >= 1
       assert_kind_of String, engine.src
     end
 

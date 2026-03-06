@@ -394,19 +394,19 @@ module Herb
             column = security_error[:location]&.start&.column
             location_str = @filename ? "#{@filename}:#{line}:#{column}" : "#{line}:#{column}"
 
-            $stderr.puts "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
-            $stderr.puts "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
+            warn "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
+            warn "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
           end
         when "ignore"
           # Skip security errors silently
         end
       end
 
-      if non_security_errors.any?
-        formatter = ErrorFormatter.new(input, non_security_errors, filename: @filename)
-        message = formatter.format_all
-        raise CompilationError, "\n#{message}"
-      end
+      return unless non_security_errors.any?
+      
+      formatter = ErrorFormatter.new(input, non_security_errors, filename: @filename)
+      message = formatter.format_all
+      raise CompilationError, "\n#{message}"
     end
 
     def add_validation_overlay(errors, input = nil)
