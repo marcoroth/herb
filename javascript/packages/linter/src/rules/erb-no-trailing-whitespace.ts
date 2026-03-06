@@ -1,6 +1,8 @@
-import { Location, isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, Visitor } from "@herb-tools/core"
-import { getTagName, findNodeAtPosition } from "./rule-utils.js"
+import { Location, Visitor } from "@herb-tools/core"
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
+
+import { isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, getTagLocalName } from "@herb-tools/core"
+import { findNodeAtPosition } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLTextNode, LiteralNode, ParseResult, DocumentNode, ERBNode } from "@herb-tools/core"
@@ -33,7 +35,7 @@ class SkipZoneCollector extends Visitor {
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (isHTMLOpenTagNode(node.open_tag)) {
-      const tagName = getTagName(node.open_tag)
+      const tagName = getTagLocalName(node.open_tag)
 
       if (tagName && this.SKIP_TAGS.has(tagName)) {
         this.skipZones.push({
@@ -65,7 +67,7 @@ class SkipZoneCollector extends Visitor {
 
 export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitespaceAutofixContext> {
   static autocorrectable = true
-  name = "erb-no-trailing-whitespace"
+  static ruleName = "erb-no-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -89,7 +91,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
         const node = findNodeAtPosition(result.value, candidate.line, candidate.column, (n) => isHTMLTextNode(n) || isLiteralNode(n)) as HTMLTextNode | LiteralNode | null
 
         offenses.push({
-          rule: this.name,
+          rule: this.ruleName,
           message: "Extra whitespace detected at end of line.",
           location,
           autofixContext: node ? { node } : undefined

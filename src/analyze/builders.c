@@ -5,11 +5,11 @@
 #include "../include/position.h"
 #include "../include/prism_helpers.h"
 #include "../include/token_struct.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 #include "../include/util/hb_string.h"
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
@@ -22,30 +22,33 @@ position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   }
 }
 
-location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_t control_type) {
+location_T* compute_then_keyword(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+) {
   if (control_type != CONTROL_TYPE_IF && control_type != CONTROL_TYPE_ELSIF && control_type != CONTROL_TYPE_UNLESS
       && control_type != CONTROL_TYPE_WHEN && control_type != CONTROL_TYPE_IN) {
     return NULL;
   }
 
   token_T* content = erb_node->content;
-  char* source =
-    (content && !hb_string_is_empty(content->value)) ? hb_string_to_c_string_using_malloc(content->value) : NULL;
+  const char* source = (content && !hb_string_is_empty(content->value))
+                       ? hb_allocator_strndup(allocator, content->value.data, content->value.length)
+                       : NULL;
   location_T* then_keyword = NULL;
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
     if (source != NULL && strstr(source, "then") != NULL) {
-      then_keyword = get_then_keyword_location_wrapped(source, control_type == CONTROL_TYPE_IN);
+      then_keyword = get_then_keyword_location_wrapped(source, control_type == CONTROL_TYPE_IN, allocator);
     }
   } else if (control_type == CONTROL_TYPE_ELSIF) {
     if (source != NULL && strstr(source, "then") != NULL) {
-      then_keyword = get_then_keyword_location_elsif_wrapped(source);
+      then_keyword = get_then_keyword_location_elsif_wrapped(source, allocator);
     }
   } else {
-    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source);
+    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source, allocator);
   }
-
-  free(source);
 
   if (then_keyword != NULL && content != NULL) {
     position_T content_start = content->location.start;
@@ -72,6 +75,7 @@ typedef struct {
   position_T end_position;
   hb_array_T* errors;
   control_type_t control_type;
+  hb_allocator_T* allocator;
 } control_builder_context_T;
 
 typedef AST_NODE_T* (*control_builder_fn)(control_builder_context_T* context);
@@ -117,7 +121,8 @@ AST_NODE_T* create_control_node(
   hb_array_T* children,
   AST_NODE_T* subsequent,
   AST_ERB_END_NODE_T* end_node,
-  control_type_t control_type
+  control_type_t control_type,
+  hb_allocator_T* allocator
 ) {
   control_builder_context_T context = { .erb = erb_node,
                                         .children = children,
@@ -126,11 +131,12 @@ AST_NODE_T* create_control_node(
                                         .tag_opening = erb_node->tag_opening,
                                         .content = erb_node->content,
                                         .tag_closing = erb_node->tag_closing,
-                                        .then_keyword = compute_then_keyword(erb_node, control_type),
+                                        .then_keyword = compute_then_keyword(erb_node, control_type, allocator),
                                         .start_position = erb_node->tag_opening->location.start,
                                         .end_position = erb_content_end_position(erb_node),
                                         .errors = erb_node->base.errors,
-                                        .control_type = control_type };
+                                        .control_type = control_type,
+                                        .allocator = allocator };
 
   erb_node->base.errors = NULL;
 
@@ -161,7 +167,8 @@ static AST_NODE_T* build_if_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -173,7 +180,8 @@ static AST_NODE_T* build_else_node(control_builder_context_T* context) {
     context->children,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -186,7 +194,8 @@ static AST_NODE_T* build_when_node(control_builder_context_T* context) {
     context->children,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -199,7 +208,8 @@ static AST_NODE_T* build_in_node(control_builder_context_T* context) {
     context->children,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -218,7 +228,8 @@ static AST_NODE_T* build_rescue_node(control_builder_context_T* context) {
     rescue_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -230,7 +241,8 @@ static AST_NODE_T* build_ensure_node(control_builder_context_T* context) {
     context->children,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -251,7 +263,8 @@ static AST_NODE_T* build_unless_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -264,7 +277,8 @@ static AST_NODE_T* build_while_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -277,7 +291,8 @@ static AST_NODE_T* build_until_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -290,7 +305,8 @@ static AST_NODE_T* build_for_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -303,7 +319,8 @@ static AST_NODE_T* build_block_node(control_builder_context_T* context) {
     context->end_node,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }
 
@@ -314,6 +331,7 @@ static AST_NODE_T* build_yield_node(control_builder_context_T* context) {
     context->tag_closing,
     context->start_position,
     context->end_position,
-    context->errors
+    context->errors,
+    context->allocator
   );
 }

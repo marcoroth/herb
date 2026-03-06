@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getTagName, getAttribute, getStaticAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getAttribute, getStaticAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -11,7 +12,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
   }
 
   private checkATag(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "a") {
       return
@@ -24,6 +25,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
         "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a `<button>` instead.",
         node.tag_name!.location,
       )
+
       return
     }
 
@@ -39,7 +41,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAnchorRequireHrefRule extends ParserRule {
-  name = "html-anchor-require-href"
+  static ruleName = "html-anchor-require-href"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -49,7 +51,7 @@ export class HTMLAnchorRequireHrefRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AnchorRequireHrefVisitor(this.name, context)
+    const visitor = new AnchorRequireHrefVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

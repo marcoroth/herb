@@ -21,17 +21,17 @@ class NoAbstractRolesVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLNoAbstractRolesRule extends ParserRule {
-  name = "html-no-abstract-roles"
+  static ruleName = "html-no-abstract-roles"
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoAbstractRolesVisitor(this.name, context)
+    const visitor = new NoAbstractRolesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

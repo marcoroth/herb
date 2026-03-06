@@ -18,7 +18,7 @@ class RequireClosingTagsVisitor extends BaseRuleVisitor {
 
 export class HTMLRequireClosingTagsRule extends ParserRule {
   static autocorrectable = false
-  name = "html-require-closing-tags"
+  static ruleName = "html-require-closing-tags"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -32,7 +32,7 @@ export class HTMLRequireClosingTagsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new RequireClosingTagsVisitor(this.name, context)
+    const visitor = new RequireClosingTagsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

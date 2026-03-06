@@ -4,6 +4,7 @@
 #include "../include/errors.h"
 #include "../include/token_struct.h"
 #include "../include/util.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 #include "../include/util/hb_string.h"
 #include "../include/visitor.h"
@@ -12,8 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct {
+  hb_array_T* document_errors;
+  hb_allocator_T* allocator;
+} conditional_elements_context_T;
+
 static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool* is_if) {
-  if (!erb_node) { return hb_string(""); }
+  if (!erb_node) { return HB_STRING_NULL; }
 
   token_T* content_token = NULL;
 
@@ -26,10 +32,10 @@ static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool
     content_token = unless_node->content;
     *is_if = false;
   } else {
-    return hb_string("");
+    return HB_STRING_NULL;
   }
 
-  if (!content_token || hb_string_is_empty(content_token->value)) { return hb_string(""); }
+  if (!content_token || hb_string_is_empty(content_token->value)) { return HB_STRING_NULL; }
 
   const char* data = content_token->value.data;
   size_t remaining = content_token->value.length;
@@ -55,12 +61,12 @@ static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool
     data++;
     remaining--;
   }
-  if (remaining == 0) { return hb_string(""); }
+  if (remaining == 0) { return HB_STRING_NULL; }
 
   while (remaining > 0 && is_whitespace(data[remaining - 1])) {
     remaining--;
   }
-  if (remaining == 0) { return hb_string(""); }
+  if (remaining == 0) { return HB_STRING_NULL; }
 
   return (hb_string_T) { .data = (char*) data, .length = (uint32_t) remaining };
 }
@@ -206,9 +212,7 @@ static size_t count_nodes_of_type(hb_array_T* array, ast_node_type_T type) {
 static bool conditions_are_equivalent(hb_string_T a, hb_string_T b) {
   if (hb_string_is_empty(a) || hb_string_is_empty(b)) { return false; }
 
-  if (a.length != b.length) { return false; }
-
-  return memcmp(a.data, b.data, a.length) == 0;
+  return hb_string_equals(a, b);
 }
 
 typedef struct {
@@ -220,7 +224,7 @@ typedef struct {
   bool is_if;
 } conditional_open_tag_T;
 
-static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document_errors) {
+static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document_errors, hb_allocator_T* allocator) {
   if (!nodes || hb_array_size(nodes) == 0) { return; }
   if (!document_errors) { return; }
 
@@ -242,7 +246,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     bool open_is_if;
     hb_string_T open_condition = extract_condition_from_erb_content(open_node, &open_is_if);
 
-    if (hb_string_is_empty(open_condition)) { continue; }
+    if (hb_string_is_null(open_condition)) { continue; }
 
     for (size_t close_index = open_index + 1; close_index < hb_array_size(nodes); close_index++) {
       AST_NODE_T* close_node = (AST_NODE_T*) hb_array_get(nodes, close_index);
@@ -262,14 +266,15 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       bool close_is_if;
       hb_string_T close_condition = extract_condition_from_erb_content(close_node, &close_is_if);
 
-      if (hb_string_is_empty(close_condition)) { continue; }
+      if (hb_string_is_null(close_condition)) { continue; }
 
       if (open_is_if == close_is_if && conditions_are_equivalent(open_condition, close_condition)) {
         CONDITIONAL_ELEMENT_MULTIPLE_TAGS_ERROR_T* multiple_tags_error = conditional_element_multiple_tags_error_init(
           open_node->location.start.line,
           open_node->location.start.column,
           open_node->location.start,
-          open_node->location.end
+          open_node->location.end,
+          allocator
         );
 
         hb_array_append(document_errors, multiple_tags_error);
@@ -326,7 +331,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     size_t matched_stack_index = (size_t) -1;
 
     conditional_open_tag_T* mismatched_open = NULL;
-    hb_string_T mismatched_close_condition = hb_string("");
+    hb_string_T mismatched_close_condition = HB_STRING_NULL;
 
     for (size_t stack_index = hb_array_size(open_stack); stack_index > 0; stack_index--) {
       conditional_open_tag_T* entry = (conditional_open_tag_T*) hb_array_get(open_stack, stack_index - 1);
@@ -348,8 +353,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
         continue;
       }
 
-      if (!hb_string_is_empty(mismatched_close_condition)) {
-        mismatched_close_condition = hb_string("");
+      if (!hb_string_is_null(mismatched_close_condition)) {
+        mismatched_close_condition = HB_STRING_NULL;
         mismatched_open = NULL;
       }
 
@@ -361,7 +366,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       break;
     }
 
-    if (!matched_open && mismatched_open && !hb_string_is_empty(mismatched_close_condition)) {
+    if (!matched_open && mismatched_open && !hb_string_is_null(mismatched_close_condition)) {
       CONDITIONAL_ELEMENT_CONDITION_MISMATCH_ERROR_T* mismatch_error =
         conditional_element_condition_mismatch_error_init(
           mismatched_open->tag_name,
@@ -372,7 +377,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
           node->location.start.line,
           node->location.start.column,
           mismatched_open->open_conditional->location.start,
-          node->location.end
+          node->location.end,
+          allocator
         );
 
       hb_array_append(document_errors, mismatch_error);
@@ -404,7 +410,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       ELEMENT_SOURCE_HTML,
       start_position,
       end_position,
-      errors
+      errors,
+      allocator
     );
 
     for (size_t body_index = matched_open->open_index + 1; body_index < node_index; body_index++) {
@@ -481,39 +488,39 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
 static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void* data);
 
-static void transform_conditional_elements_in_array(hb_array_T* array, hb_array_T* document_errors) {
+static void transform_conditional_elements_in_array(hb_array_T* array, conditional_elements_context_T* context) {
   if (!array) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child = (AST_NODE_T*) hb_array_get(array, i);
 
-    if (child) { herb_visit_node(child, transform_conditional_elements_visitor, document_errors); }
+    if (child) { herb_visit_node(child, transform_conditional_elements_visitor, context); }
   }
 
-  rewrite_conditional_elements(array, document_errors);
+  rewrite_conditional_elements(array, context->document_errors, context->allocator);
 }
 
 static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void* data) {
   if (!node) { return false; }
 
-  hb_array_T* document_errors = (hb_array_T*) data;
+  conditional_elements_context_T* context = (conditional_elements_context_T*) data;
 
   switch (node->type) {
     case AST_DOCUMENT_NODE: {
       AST_DOCUMENT_NODE_T* doc = (AST_DOCUMENT_NODE_T*) node;
-      transform_conditional_elements_in_array(doc->children, document_errors);
+      transform_conditional_elements_in_array(doc->children, context);
       return false;
     }
 
     case AST_HTML_ELEMENT_NODE: {
       AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
-      transform_conditional_elements_in_array(element->body, document_errors);
+      transform_conditional_elements_in_array(element->body, context);
       return false;
     }
 
     case AST_ERB_IF_NODE: {
       AST_ERB_IF_NODE_T* if_node = (AST_ERB_IF_NODE_T*) node;
-      transform_conditional_elements_in_array(if_node->statements, document_errors);
+      transform_conditional_elements_in_array(if_node->statements, context);
 
       if (if_node->subsequent) { herb_visit_node(if_node->subsequent, transform_conditional_elements_visitor, data); }
 
@@ -522,13 +529,13 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_ELSE_NODE: {
       AST_ERB_ELSE_NODE_T* else_node = (AST_ERB_ELSE_NODE_T*) node;
-      transform_conditional_elements_in_array(else_node->statements, document_errors);
+      transform_conditional_elements_in_array(else_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNLESS_NODE: {
       AST_ERB_UNLESS_NODE_T* unless_node = (AST_ERB_UNLESS_NODE_T*) node;
-      transform_conditional_elements_in_array(unless_node->statements, document_errors);
+      transform_conditional_elements_in_array(unless_node->statements, context);
 
       if (unless_node->else_clause) {
         herb_visit_node((AST_NODE_T*) unless_node->else_clause, transform_conditional_elements_visitor, data);
@@ -539,31 +546,31 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_BLOCK_NODE: {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) node;
-      transform_conditional_elements_in_array(block_node->body, document_errors);
+      transform_conditional_elements_in_array(block_node->body, context);
       return false;
     }
 
     case AST_ERB_WHILE_NODE: {
       AST_ERB_WHILE_NODE_T* while_node = (AST_ERB_WHILE_NODE_T*) node;
-      transform_conditional_elements_in_array(while_node->statements, document_errors);
+      transform_conditional_elements_in_array(while_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNTIL_NODE: {
       AST_ERB_UNTIL_NODE_T* until_node = (AST_ERB_UNTIL_NODE_T*) node;
-      transform_conditional_elements_in_array(until_node->statements, document_errors);
+      transform_conditional_elements_in_array(until_node->statements, context);
       return false;
     }
 
     case AST_ERB_FOR_NODE: {
       AST_ERB_FOR_NODE_T* for_node = (AST_ERB_FOR_NODE_T*) node;
-      transform_conditional_elements_in_array(for_node->statements, document_errors);
+      transform_conditional_elements_in_array(for_node->statements, context);
       return false;
     }
 
     case AST_ERB_CASE_NODE: {
       AST_ERB_CASE_NODE_T* case_node = (AST_ERB_CASE_NODE_T*) node;
-      transform_conditional_elements_in_array(case_node->children, document_errors);
+      transform_conditional_elements_in_array(case_node->children, context);
 
       for (size_t i = 0; i < hb_array_size(case_node->conditions); i++) {
         AST_NODE_T* when = (AST_NODE_T*) hb_array_get(case_node->conditions, i);
@@ -579,13 +586,13 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_WHEN_NODE: {
       AST_ERB_WHEN_NODE_T* when_node = (AST_ERB_WHEN_NODE_T*) node;
-      transform_conditional_elements_in_array(when_node->statements, document_errors);
+      transform_conditional_elements_in_array(when_node->statements, context);
       return false;
     }
 
     case AST_ERB_BEGIN_NODE: {
       AST_ERB_BEGIN_NODE_T* begin_node = (AST_ERB_BEGIN_NODE_T*) node;
-      transform_conditional_elements_in_array(begin_node->statements, document_errors);
+      transform_conditional_elements_in_array(begin_node->statements, context);
 
       if (begin_node->rescue_clause) {
         herb_visit_node((AST_NODE_T*) begin_node->rescue_clause, transform_conditional_elements_visitor, data);
@@ -604,7 +611,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_RESCUE_NODE: {
       AST_ERB_RESCUE_NODE_T* rescue_node = (AST_ERB_RESCUE_NODE_T*) node;
-      transform_conditional_elements_in_array(rescue_node->statements, document_errors);
+      transform_conditional_elements_in_array(rescue_node->statements, context);
 
       if (rescue_node->subsequent) {
         herb_visit_node((AST_NODE_T*) rescue_node->subsequent, transform_conditional_elements_visitor, data);
@@ -615,7 +622,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_ENSURE_NODE: {
       AST_ERB_ENSURE_NODE_T* ensure_node = (AST_ERB_ENSURE_NODE_T*) node;
-      transform_conditional_elements_in_array(ensure_node->statements, document_errors);
+      transform_conditional_elements_in_array(ensure_node->statements, context);
       return false;
     }
 
@@ -623,6 +630,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
   }
 }
 
-void herb_transform_conditional_elements(AST_DOCUMENT_NODE_T* document) {
-  herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, document->base.errors);
+void herb_transform_conditional_elements(AST_DOCUMENT_NODE_T* document, hb_allocator_T* allocator) {
+  conditional_elements_context_T context = { .document_errors = document->base.errors, .allocator = allocator };
+  herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, &context);
 }

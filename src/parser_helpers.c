@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
-  token_T* copy = token_copy(tag_name);
+  token_T* copy = token_copy(tag_name, parser->allocator);
   hb_array_push(parser->open_tags_stack, copy);
 }
 
@@ -72,7 +72,7 @@ hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) 
   switch (type) {
     case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
     case FOREIGN_CONTENT_STYLE: return hb_string("style");
-    default: return hb_string("");
+    default: return HB_STRING_EMPTY;
   }
 }
 
@@ -110,11 +110,12 @@ void parser_append_unexpected_error_impl(
     hb_string(token_type_to_friendly_string(token->type)),
     token->location.start,
     token->location.end,
+    parser->allocator,
     errors
   );
 
   free(expected);
-  token_free(token);
+  token_free(token, parser->allocator);
 }
 
 void parser_append_unexpected_error_string(
@@ -131,10 +132,11 @@ void parser_append_unexpected_error_string(
     hb_string(token_type_to_friendly_string(token->type)),
     token->location.start,
     token->location.end,
+    parser->allocator,
     errors
   );
 
-  token_free(token);
+  token_free(token, parser->allocator);
 }
 
 void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T* errors) {
@@ -143,6 +145,7 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
     parser->current_token,
     parser->current_token->location.start,
     parser->current_token->location.end,
+    parser->allocator,
     errors
   );
 }
@@ -157,7 +160,8 @@ void parser_append_literal_node_from_buffer(
 
   hb_string_T content = { .data = buffer->value, .length = (uint32_t) buffer->length };
 
-  AST_LITERAL_NODE_T* literal = ast_literal_node_init(content, start, parser->current_token->location.start, NULL);
+  AST_LITERAL_NODE_T* literal =
+    ast_literal_node_init(content, start, parser->current_token->location.start, NULL, parser->allocator);
 
   if (children != NULL) { hb_array_append(children, literal); }
 
@@ -182,13 +186,21 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
   if (token == NULL) {
     token = parser_advance(parser);
 
-    append_unexpected_token_error(expected_type, token, token->location.start, token->location.end, array);
+    append_unexpected_token_error(
+      expected_type,
+      token,
+      token->location.start,
+      token->location.end,
+      parser->allocator,
+      array
+    );
   }
 
   return token;
 }
 
 AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
+  parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag,
   hb_array_T* body,
   hb_array_T* errors
@@ -197,6 +209,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     open_tag->tag_name,
     open_tag->tag_name->location.start,
     open_tag->tag_name->location.end,
+    parser->allocator,
     errors
   );
 
@@ -209,7 +222,8 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     ELEMENT_SOURCE_HTML,
     open_tag->base.location.start,
     open_tag->base.location.end,
-    errors
+    errors,
+    parser->allocator
   );
 }
 
@@ -227,6 +241,7 @@ void parser_handle_mismatched_tags(
       actual_tag,
       actual_tag->location.start,
       actual_tag->location.end,
+      parser->allocator,
       errors
     );
   } else {
@@ -234,6 +249,7 @@ void parser_handle_mismatched_tags(
       close_tag->tag_name,
       close_tag->tag_name->location.start,
       close_tag->tag_name->location.end,
+      parser->allocator,
       errors
     );
   }
@@ -259,7 +275,7 @@ void parser_synchronize(parser_T* parser, hb_array_T* errors) {
     }
 
     token_T* skipped = parser_advance(parser);
-    token_free(skipped);
+    token_free(skipped, parser->allocator);
   }
 }
 

@@ -1,5 +1,6 @@
 #include "../include/analyze/helpers.h"
 #include "../include/errors.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_string.h"
 
 <%-
@@ -8,7 +9,7 @@
   end
 -%>
 
-void check_erb_node_for_missing_end(const AST_NODE_T* node) {
+void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator) {
   switch (node->type) {
     <%- nodes_with_end_node.each do |node| -%>
     <%- keyword = node.name.gsub(/^ERB/, '').gsub(/Match|Node$/, '').downcase -%>
@@ -24,6 +25,7 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node) {
         <%- end -%>
           <%= node.human %>->tag_opening->location.start,
           <%= node.human %>->tag_closing->location.end,
+          allocator,
           node->errors
         );
       }

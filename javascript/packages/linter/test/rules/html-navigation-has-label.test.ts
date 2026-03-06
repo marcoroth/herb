@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLNavigationHasLabelRule } from "../../src/rules/html-navigation-has-label.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNavigationHasLabelRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNavigationHasLabelRule)
 
 describe("html-navigation-has-label", () => {
   test("passes for nav with aria-label", () => {
@@ -18,7 +18,7 @@ describe("html-navigation-has-label", () => {
   })
 
   test("fails for nav without aria-label or aria-labelledby", () => {
-    expectError("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced.")
+    expectWarning("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced.")
     assertOffenses(`<nav><a href="/">Home</a><a href="/about">About</a></nav>`)
   })
 
@@ -31,7 +31,7 @@ describe("html-navigation-has-label", () => {
   })
 
   test("fails for element with role=navigation without labeling", () => {
-    expectError("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced. Additionally, you can safely drop the `role=\"navigation\"` and replace it with the native HTML `<nav>` element.")
+    expectWarning("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced. Additionally, you can safely drop the `role=\"navigation\"` and replace it with the native HTML `<nav>` element.")
     assertOffenses(`<div role="navigation"><a href="/">Home</a><a href="/about">About</a></div>`)
   })
 
@@ -52,7 +52,7 @@ describe("html-navigation-has-label", () => {
   })
 
   test("handles multiple navigation elements", () => {
-    expectError("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced.")
+    expectWarning("The navigation landmark should have a unique accessible name via `aria-label` or `aria-labelledby`. Remember that the name does not need to include \"navigation\" or \"nav\" since it will already be announced.")
     assertOffenses(`
       <nav aria-label="Primary navigation"><a href="/">Home</a></nav>
       <nav><a href="/sitemap">Sitemap</a></nav>

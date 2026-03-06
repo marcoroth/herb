@@ -7,6 +7,7 @@
 #include "extension_helpers.h"
 
 extern "C" {
+#include "../src/include/util/hb_allocator.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -24,11 +25,17 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  hb_array_T* tokens = herb_lex(source.c_str());
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return val::null();
+  }
+
+  hb_array_T* tokens = herb_lex(source.c_str(), &allocator);
 
   val result = CreateLexResult(tokens, source);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
@@ -56,11 +63,17 @@ val Herb_parse(const std::string& source, val options) {
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return val::null();
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, &allocator);
 
   val result = CreateParseResult(root, source, &parser_options);
 
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
@@ -85,8 +98,14 @@ std::string Herb_extract_ruby(const std::string& source, val options) {
     }
   }
 
-  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return std::string();
+  }
+
+  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }
@@ -95,8 +114,15 @@ std::string Herb_extract_html(const std::string& source) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_html_to_buffer(source.c_str(), &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    return std::string();
+  }
+
+  herb_extract_html_to_buffer(source.c_str(), &output, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }

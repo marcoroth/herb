@@ -12,6 +12,9 @@ typedef struct HB_STRING_STRUCT {
   uint32_t length;
 } hb_string_T;
 
+#define HB_STRING_EMPTY ((hb_string_T){ .data = "", .length = 0 })
+#define HB_STRING_NULL  ((hb_string_T){ .data = NULL, .length = 0 })
+
 hb_string_T hb_string(const char* null_terminated_c_string);
 hb_string_T hb_string_slice(hb_string_T string, uint32_t offset);
 

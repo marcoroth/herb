@@ -72,7 +72,7 @@ public class CLI {
   private static void printUsage() {
     System.out.println("Usage: bin/herb-java [command] [file]");
     System.out.println();
-    System.out.println("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.");
+    System.out.println("Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.");
     System.out.println();
     System.out.println("Commands:");
     System.out.println("  version       - Show version information");

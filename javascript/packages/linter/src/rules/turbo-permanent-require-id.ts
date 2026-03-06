@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getAttribute } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -29,7 +30,7 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
 }
 
 export class TurboPermanentRequireIdRule extends ParserRule {
-  name = "turbo-permanent-require-id"
+  static ruleName = "turbo-permanent-require-id"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -39,7 +40,7 @@ export class TurboPermanentRequireIdRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new TurboPermanentRequireIdVisitor(this.name, context)
+    const visitor = new TurboPermanentRequireIdVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

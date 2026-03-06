@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
+static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, hb_allocator_T* allocator) {
   if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
   AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
 
@@ -28,8 +28,12 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
   const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head;
 
   if (error != NULL) {
-    RUBY_PARSE_ERROR_T* parse_error =
-      ruby_parse_error_from_prism_error_with_positions(error, erb_node->location.start, erb_node->location.end);
+    RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error_with_positions(
+      error,
+      erb_node->location.start,
+      erb_node->location.end,
+      allocator
+    );
 
     hb_array_append(erb_node->errors, parse_error);
   }
@@ -40,8 +44,8 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
   free(content);
 }
 
-void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
-  char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
+void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source, hb_allocator_T* allocator) {
+  char* extracted_ruby = herb_extract_ruby_with_semicolons(source, allocator);
 
   if (!extracted_ruby) { return; }
 
@@ -60,14 +64,15 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
         if (error_offset >= strlen(source) || source[error_offset] != ';') {
           AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
 
-          if (erb_node) { parse_erb_content_errors(erb_node, source); }
+          if (erb_node) { parse_erb_content_errors(erb_node, source, allocator); }
 
           continue;
         }
       }
     }
 
-    RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser);
+    RUBY_PARSE_ERROR_T* parse_error =
+      ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser, allocator);
     hb_array_append(document->base.errors, parse_error);
   }
 

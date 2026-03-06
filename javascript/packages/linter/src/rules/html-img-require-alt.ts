@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -11,7 +12,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "img") {
       return
@@ -22,22 +23,32 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
         'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
         node.tag_name!.location
       )
+      return
+    }
+
+    const altAttribute = getAttribute(node, "alt")
+
+    if (altAttribute && !hasAttributeValue(altAttribute)) {
+      this.addOffense(
+        'The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.',
+        altAttribute.location
+      )
     }
   }
 }
 
 export class HTMLImgRequireAltRule extends ParserRule {
-  name = "html-img-require-alt"
+  static ruleName = "html-img-require-alt"
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ImgRequireAltVisitor(this.name, context)
+    const visitor = new ImgRequireAltVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

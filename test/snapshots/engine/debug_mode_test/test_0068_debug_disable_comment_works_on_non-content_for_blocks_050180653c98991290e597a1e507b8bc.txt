@@ -1,0 +1,9 @@
+---
+source: "Engine::DebugModeTest#test_0068_debug disable comment works on non-content_for blocks"
+input: "{source: \"<%= some_helper do # herb:debug disable %>\\n  <div><%= \\\"Hello\\\" %></div>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << (some_helper do # herb:debug disable
+; _buf << '
+  <div>'.freeze; _buf << ("Hello").to_s; _buf << '</div>
+'.freeze; end )
+_buf.to_s

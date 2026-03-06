@@ -4,6 +4,7 @@
 #include "../include/errors.h"
 #include "../include/token_struct.h"
 #include "../include/util.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 #include "../include/util/hb_string.h"
 #include "../include/visitor.h"
@@ -12,8 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct {
+  hb_array_T* document_errors;
+  hb_allocator_T* allocator;
+} conditional_open_tags_context_T;
+
 static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void* data);
-static void transform_conditional_open_tags_in_array(hb_array_T* array, hb_array_T* document_errors);
+static void transform_conditional_open_tags_in_array(hb_array_T* array, conditional_open_tags_context_T* context);
 
 static bool is_non_void_open_tag(AST_NODE_T* node) {
   if (!node || node->type != AST_HTML_OPEN_TAG_NODE) { return false; }
@@ -24,7 +30,7 @@ static bool is_non_void_open_tag(AST_NODE_T* node) {
 }
 
 static hb_string_T get_open_tag_name(AST_HTML_OPEN_TAG_NODE_T* open_tag) {
-  if (!open_tag || !open_tag->tag_name) { return hb_string(""); }
+  if (!open_tag || !open_tag->tag_name) { return HB_STRING_NULL; }
 
   return open_tag->tag_name->value;
 }
@@ -150,15 +156,15 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 }
 
 static hb_string_T check_erb_if_conditional_open_tag(AST_ERB_IF_NODE_T* if_node) {
-  if (!if_node) { return hb_string(""); }
+  if (!if_node) { return HB_STRING_NULL; }
 
-  if (!if_node->subsequent) { return hb_string(""); }
+  if (!if_node->subsequent) { return HB_STRING_NULL; }
 
   single_open_tag_result_T if_result = get_single_open_tag_from_statements(if_node->statements);
-  if (!if_result.tag) { return hb_string(""); }
+  if (!if_result.tag) { return HB_STRING_NULL; }
 
   hb_string_T common_tag_name = get_open_tag_name(if_result.tag);
-  if (hb_string_is_empty(common_tag_name)) { return hb_string(""); }
+  if (hb_string_is_null(common_tag_name)) { return HB_STRING_NULL; }
 
   AST_NODE_T* current = if_node->subsequent;
   bool ends_with_else = false;
@@ -177,42 +183,42 @@ static hb_string_T check_erb_if_conditional_open_tag(AST_ERB_IF_NODE_T* if_node)
       next_subsequent = NULL;
       ends_with_else = true;
     } else {
-      return hb_string("");
+      return HB_STRING_NULL;
     }
 
     single_open_tag_result_T branch_result = get_single_open_tag_from_statements(branch_statements);
-    if (!branch_result.tag) { return hb_string(""); }
+    if (!branch_result.tag) { return HB_STRING_NULL; }
 
     hb_string_T branch_tag_name = get_open_tag_name(branch_result.tag);
-    if (hb_string_is_empty(branch_tag_name)) { return hb_string(""); }
+    if (hb_string_is_null(branch_tag_name)) { return HB_STRING_NULL; }
 
-    if (!hb_string_equals_case_insensitive(common_tag_name, branch_tag_name)) { return hb_string(""); }
+    if (!hb_string_equals_case_insensitive(common_tag_name, branch_tag_name)) { return HB_STRING_NULL; }
 
     current = next_subsequent;
   }
 
-  if (!ends_with_else) { return hb_string(""); }
+  if (!ends_with_else) { return HB_STRING_NULL; }
 
   return common_tag_name;
 }
 
 static hb_string_T check_erb_unless_conditional_open_tag(AST_ERB_UNLESS_NODE_T* unless_node) {
-  if (!unless_node) { return hb_string(""); }
-  if (!unless_node->else_clause) { return hb_string(""); }
+  if (!unless_node) { return HB_STRING_NULL; }
+  if (!unless_node->else_clause) { return HB_STRING_NULL; }
 
   single_open_tag_result_T unless_result = get_single_open_tag_from_statements(unless_node->statements);
-  if (!unless_result.tag) { return hb_string(""); }
+  if (!unless_result.tag) { return HB_STRING_NULL; }
 
   hb_string_T common_tag_name = get_open_tag_name(unless_result.tag);
-  if (hb_string_is_empty(common_tag_name)) { return hb_string(""); }
+  if (hb_string_is_null(common_tag_name)) { return HB_STRING_NULL; }
 
   single_open_tag_result_T else_result = get_single_open_tag_from_statements(unless_node->else_clause->statements);
-  if (!else_result.tag) { return hb_string(""); }
+  if (!else_result.tag) { return HB_STRING_NULL; }
 
   hb_string_T else_tag_name = get_open_tag_name(else_result.tag);
-  if (hb_string_is_empty(else_tag_name)) { return hb_string(""); }
+  if (hb_string_is_null(else_tag_name)) { return HB_STRING_NULL; }
 
-  if (!hb_string_equals_case_insensitive(common_tag_name, else_tag_name)) { return hb_string(""); }
+  if (!hb_string_equals_case_insensitive(common_tag_name, else_tag_name)) { return HB_STRING_NULL; }
 
   return common_tag_name;
 }
@@ -256,14 +262,19 @@ static token_T* get_first_branch_tag_name_token_unless(AST_ERB_UNLESS_NODE_T* un
   return result.tag ? result.tag->tag_name : NULL;
 }
 
-static void add_multiple_tags_error_to_erb_node(AST_NODE_T* erb_node, AST_HTML_OPEN_TAG_NODE_T* second_tag) {
+static void add_multiple_tags_error_to_erb_node(
+  AST_NODE_T* erb_node,
+  AST_HTML_OPEN_TAG_NODE_T* second_tag,
+  hb_allocator_T* allocator
+) {
   if (!erb_node || !second_tag) { return; }
 
   CONDITIONAL_ELEMENT_MULTIPLE_TAGS_ERROR_T* error = conditional_element_multiple_tags_error_init(
     second_tag->base.location.start.line,
     second_tag->base.location.start.column,
     erb_node->location.start,
-    erb_node->location.end
+    erb_node->location.end,
+    allocator
   );
 
   if (!erb_node->errors) { erb_node->errors = hb_array_init(1); }
@@ -271,13 +282,13 @@ static void add_multiple_tags_error_to_erb_node(AST_NODE_T* erb_node, AST_HTML_O
   hb_array_append(erb_node->errors, error);
 }
 
-static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node) {
+static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node, hb_allocator_T* allocator) {
   if (!if_node || !if_node->subsequent) { return; }
 
   single_open_tag_result_T if_result = get_single_open_tag_from_statements(if_node->statements);
 
   if (if_result.has_multiple_tags) {
-    add_multiple_tags_error_to_erb_node((AST_NODE_T*) if_node, if_result.second_tag);
+    add_multiple_tags_error_to_erb_node((AST_NODE_T*) if_node, if_result.second_tag, allocator);
     return;
   }
 
@@ -305,7 +316,7 @@ static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node) {
 
     single_open_tag_result_T branch_result = get_single_open_tag_from_statements(branch_statements);
     if (branch_result.has_multiple_tags) {
-      add_multiple_tags_error_to_erb_node(current, branch_result.second_tag);
+      add_multiple_tags_error_to_erb_node(current, branch_result.second_tag, allocator);
       return;
     }
     if (!branch_result.tag) { return; }
@@ -316,13 +327,13 @@ static void check_and_report_multiple_tags_in_if(AST_ERB_IF_NODE_T* if_node) {
   (void) ends_with_else;
 }
 
-static void check_and_report_multiple_tags_in_unless(AST_ERB_UNLESS_NODE_T* unless_node) {
+static void check_and_report_multiple_tags_in_unless(AST_ERB_UNLESS_NODE_T* unless_node, hb_allocator_T* allocator) {
   if (!unless_node || !unless_node->else_clause) { return; }
 
   single_open_tag_result_T unless_result = get_single_open_tag_from_statements(unless_node->statements);
 
   if (unless_result.has_multiple_tags) {
-    add_multiple_tags_error_to_erb_node((AST_NODE_T*) unless_node, unless_result.second_tag);
+    add_multiple_tags_error_to_erb_node((AST_NODE_T*) unless_node, unless_result.second_tag, allocator);
     return;
   }
 
@@ -331,12 +342,12 @@ static void check_and_report_multiple_tags_in_unless(AST_ERB_UNLESS_NODE_T* unle
   single_open_tag_result_T else_result = get_single_open_tag_from_statements(unless_node->else_clause->statements);
 
   if (else_result.has_multiple_tags) {
-    add_multiple_tags_error_to_erb_node((AST_NODE_T*) unless_node->else_clause, else_result.second_tag);
+    add_multiple_tags_error_to_erb_node((AST_NODE_T*) unless_node->else_clause, else_result.second_tag, allocator);
     return;
   }
 }
 
-static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* document_errors) {
+static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* document_errors, hb_allocator_T* allocator) {
   (void) document_errors;
 
   if (!nodes || hb_array_size(nodes) == 0) { return; }
@@ -347,7 +358,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (!node) { continue; }
 
-    hb_string_T tag_name = hb_string("");
+    hb_string_T tag_name = HB_STRING_NULL;
     AST_NODE_T* conditional_node = NULL;
     token_T* tag_name_token = NULL;
 
@@ -355,25 +366,25 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       AST_ERB_IF_NODE_T* if_node = (AST_ERB_IF_NODE_T*) node;
       tag_name = check_erb_if_conditional_open_tag(if_node);
 
-      if (!hb_string_is_empty(tag_name)) {
+      if (!hb_string_is_null(tag_name)) {
         conditional_node = node;
         tag_name_token = get_first_branch_tag_name_token(if_node);
       } else {
-        check_and_report_multiple_tags_in_if(if_node);
+        check_and_report_multiple_tags_in_if(if_node, allocator);
       }
     } else if (node->type == AST_ERB_UNLESS_NODE) {
       AST_ERB_UNLESS_NODE_T* unless_node = (AST_ERB_UNLESS_NODE_T*) node;
       tag_name = check_erb_unless_conditional_open_tag(unless_node);
 
-      if (!hb_string_is_empty(tag_name)) {
+      if (!hb_string_is_null(tag_name)) {
         conditional_node = node;
         tag_name_token = get_first_branch_tag_name_token_unless(unless_node);
       } else {
-        check_and_report_multiple_tags_in_unless(unless_node);
+        check_and_report_multiple_tags_in_unless(unless_node, allocator);
       }
     }
 
-    if (hb_string_is_empty(tag_name) || !conditional_node || !tag_name_token) { continue; }
+    if (hb_string_is_null(tag_name) || !conditional_node || !tag_name_token) { continue; }
 
     AST_HTML_CLOSE_TAG_NODE_T* close_tag = NULL;
     size_t close_index = find_matching_close_tag(nodes, i, tag_name, &close_tag);
@@ -398,7 +409,8 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       false,
       conditional_node->location.start,
       conditional_node->location.end,
-      conditional_open_tag_errors
+      conditional_open_tag_errors,
+      allocator
     );
 
     hb_array_T* element_errors = hb_array_init(1);
@@ -412,7 +424,8 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       ELEMENT_SOURCE_HTML,
       start_position,
       end_position,
-      element_errors
+      element_errors,
+      allocator
     );
 
     hb_array_set(nodes, i, element);
@@ -465,44 +478,44 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
   hb_array_free(&consumed_indices);
 }
 
-static void transform_conditional_open_tags_in_array(hb_array_T* array, hb_array_T* document_errors) {
+static void transform_conditional_open_tags_in_array(hb_array_T* array, conditional_open_tags_context_T* context) {
   if (!array) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child = (AST_NODE_T*) hb_array_get(array, i);
-    if (child) { herb_visit_node(child, transform_conditional_open_tags_visitor, document_errors); }
+    if (child) { herb_visit_node(child, transform_conditional_open_tags_visitor, context); }
   }
 
-  rewrite_conditional_open_tags(array, document_errors);
+  rewrite_conditional_open_tags(array, context->document_errors, context->allocator);
 }
 
 static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void* data) {
   if (!node) { return false; }
 
-  hb_array_T* document_errors = (hb_array_T*) data;
+  conditional_open_tags_context_T* context = (conditional_open_tags_context_T*) data;
 
   switch (node->type) {
     case AST_DOCUMENT_NODE: {
       AST_DOCUMENT_NODE_T* doc = (AST_DOCUMENT_NODE_T*) node;
-      transform_conditional_open_tags_in_array(doc->children, document_errors);
+      transform_conditional_open_tags_in_array(doc->children, context);
       return false;
     }
 
     case AST_HTML_ELEMENT_NODE: {
       AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
-      transform_conditional_open_tags_in_array(element->body, document_errors);
+      transform_conditional_open_tags_in_array(element->body, context);
       return false;
     }
 
     case AST_HTML_CONDITIONAL_ELEMENT_NODE: {
       AST_HTML_CONDITIONAL_ELEMENT_NODE_T* conditional = (AST_HTML_CONDITIONAL_ELEMENT_NODE_T*) node;
-      transform_conditional_open_tags_in_array(conditional->body, document_errors);
+      transform_conditional_open_tags_in_array(conditional->body, context);
       return false;
     }
 
     case AST_ERB_IF_NODE: {
       AST_ERB_IF_NODE_T* if_node = (AST_ERB_IF_NODE_T*) node;
-      transform_conditional_open_tags_in_array(if_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(if_node->statements, context);
 
       if (if_node->subsequent) { herb_visit_node(if_node->subsequent, transform_conditional_open_tags_visitor, data); }
 
@@ -511,13 +524,13 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_ELSE_NODE: {
       AST_ERB_ELSE_NODE_T* else_node = (AST_ERB_ELSE_NODE_T*) node;
-      transform_conditional_open_tags_in_array(else_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(else_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNLESS_NODE: {
       AST_ERB_UNLESS_NODE_T* unless_node = (AST_ERB_UNLESS_NODE_T*) node;
-      transform_conditional_open_tags_in_array(unless_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(unless_node->statements, context);
 
       if (unless_node->else_clause) {
         herb_visit_node((AST_NODE_T*) unless_node->else_clause, transform_conditional_open_tags_visitor, data);
@@ -527,31 +540,31 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_BLOCK_NODE: {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) node;
-      transform_conditional_open_tags_in_array(block_node->body, document_errors);
+      transform_conditional_open_tags_in_array(block_node->body, context);
       return false;
     }
 
     case AST_ERB_WHILE_NODE: {
       AST_ERB_WHILE_NODE_T* while_node = (AST_ERB_WHILE_NODE_T*) node;
-      transform_conditional_open_tags_in_array(while_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(while_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNTIL_NODE: {
       AST_ERB_UNTIL_NODE_T* until_node = (AST_ERB_UNTIL_NODE_T*) node;
-      transform_conditional_open_tags_in_array(until_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(until_node->statements, context);
       return false;
     }
 
     case AST_ERB_FOR_NODE: {
       AST_ERB_FOR_NODE_T* for_node = (AST_ERB_FOR_NODE_T*) node;
-      transform_conditional_open_tags_in_array(for_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(for_node->statements, context);
       return false;
     }
 
     case AST_ERB_CASE_NODE: {
       AST_ERB_CASE_NODE_T* case_node = (AST_ERB_CASE_NODE_T*) node;
-      transform_conditional_open_tags_in_array(case_node->children, document_errors);
+      transform_conditional_open_tags_in_array(case_node->children, context);
 
       for (size_t i = 0; i < hb_array_size(case_node->conditions); i++) {
         AST_NODE_T* when_node = (AST_NODE_T*) hb_array_get(case_node->conditions, i);
@@ -567,7 +580,7 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_CASE_MATCH_NODE: {
       AST_ERB_CASE_MATCH_NODE_T* case_match_node = (AST_ERB_CASE_MATCH_NODE_T*) node;
-      transform_conditional_open_tags_in_array(case_match_node->children, document_errors);
+      transform_conditional_open_tags_in_array(case_match_node->children, context);
 
       for (size_t i = 0; i < hb_array_size(case_match_node->conditions); i++) {
         AST_NODE_T* in_node = (AST_NODE_T*) hb_array_get(case_match_node->conditions, i);
@@ -583,19 +596,19 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_WHEN_NODE: {
       AST_ERB_WHEN_NODE_T* when_node = (AST_ERB_WHEN_NODE_T*) node;
-      transform_conditional_open_tags_in_array(when_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(when_node->statements, context);
       return false;
     }
 
     case AST_ERB_IN_NODE: {
       AST_ERB_IN_NODE_T* in_node = (AST_ERB_IN_NODE_T*) node;
-      transform_conditional_open_tags_in_array(in_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(in_node->statements, context);
       return false;
     }
 
     case AST_ERB_BEGIN_NODE: {
       AST_ERB_BEGIN_NODE_T* begin_node = (AST_ERB_BEGIN_NODE_T*) node;
-      transform_conditional_open_tags_in_array(begin_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(begin_node->statements, context);
 
       if (begin_node->rescue_clause) {
         herb_visit_node((AST_NODE_T*) begin_node->rescue_clause, transform_conditional_open_tags_visitor, data);
@@ -614,7 +627,7 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_RESCUE_NODE: {
       AST_ERB_RESCUE_NODE_T* rescue_node = (AST_ERB_RESCUE_NODE_T*) node;
-      transform_conditional_open_tags_in_array(rescue_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(rescue_node->statements, context);
 
       if (rescue_node->subsequent) {
         herb_visit_node((AST_NODE_T*) rescue_node->subsequent, transform_conditional_open_tags_visitor, data);
@@ -625,7 +638,7 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 
     case AST_ERB_ENSURE_NODE: {
       AST_ERB_ENSURE_NODE_T* ensure_node = (AST_ERB_ENSURE_NODE_T*) node;
-      transform_conditional_open_tags_in_array(ensure_node->statements, document_errors);
+      transform_conditional_open_tags_in_array(ensure_node->statements, context);
       return false;
     }
 
@@ -633,6 +646,7 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
   }
 }
 
-void herb_transform_conditional_open_tags(AST_DOCUMENT_NODE_T* document) {
-  herb_visit_node((AST_NODE_T*) document, transform_conditional_open_tags_visitor, document->base.errors);
+void herb_transform_conditional_open_tags(AST_DOCUMENT_NODE_T* document, hb_allocator_T* allocator) {
+  conditional_open_tags_context_T context = { .document_errors = document->base.errors, .allocator = allocator };
+  herb_visit_node((AST_NODE_T*) document, transform_conditional_open_tags_visitor, &context);
 }

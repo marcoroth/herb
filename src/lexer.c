@@ -32,11 +32,13 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source) {
+void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
+  lexer->allocator = allocator;
+
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {
-    lexer->source = hb_string("");
+    lexer->source = HB_STRING_EMPTY;
   }
 
   lexer->current_character = lexer->source.data[0];
@@ -250,7 +252,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {
-  if (lexer_eof(lexer)) { return token_init(hb_string(""), TOKEN_EOF, lexer); }
+  if (lexer_eof(lexer)) { return token_init(HB_STRING_EMPTY, TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }

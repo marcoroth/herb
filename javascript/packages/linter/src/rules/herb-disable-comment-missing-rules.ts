@@ -22,7 +22,7 @@ class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisito
 }
 
 export class HerbDisableCommentMissingRulesRule extends ParserRule {
-  name = "herb-disable-comment-missing-rules"
+  static ruleName = "herb-disable-comment-missing-rules"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -32,7 +32,7 @@ export class HerbDisableCommentMissingRulesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HerbDisableCommentMissingRulesVisitor(this.name, context)
+    const visitor = new HerbDisableCommentMissingRulesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

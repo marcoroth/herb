@@ -47,7 +47,7 @@ class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
 }
 
 export class HerbDisableCommentMalformedRule extends ParserRule {
-  name = "herb-disable-comment-malformed"
+  static ruleName = "herb-disable-comment-malformed"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -57,7 +57,7 @@ export class HerbDisableCommentMalformedRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HerbDisableCommentMalformedVisitor(this.name, context)
+    const visitor = new HerbDisableCommentMalformedVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

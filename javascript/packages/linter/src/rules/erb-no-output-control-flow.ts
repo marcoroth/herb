@@ -50,7 +50,7 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoOutputControlFlowRule extends ParserRule {
-  name = "erb-no-output-control-flow"
+  static ruleName = "erb-no-output-control-flow"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -60,7 +60,7 @@ export class ERBNoOutputControlFlowRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoOutputControlFlowRuleVisitor(this.name, context)
+    const visitor = new ERBNoOutputControlFlowRuleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

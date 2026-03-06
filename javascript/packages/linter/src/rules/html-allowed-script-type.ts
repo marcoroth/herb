@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getAttribute, getStaticAttributeValue, hasAttributeValue } from "./rule-utils.js"
-import { getTagName } from "@herb-tools/core"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -12,7 +12,7 @@ const ALLOW_BLANK = true
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    if (getTagName(node) === "script") {
+    if (getTagLocalName(node) === "script") {
       this.visitScriptNode(node)
     }
   }
@@ -65,7 +65,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAllowedScriptTypeRule extends ParserRule {
-  name = "html-allowed-script-type"
+  static ruleName = "html-allowed-script-type"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -75,7 +75,7 @@ export class HTMLAllowedScriptTypeRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AllowedScriptTypeVisitor(this.name, context)
+    const visitor = new AllowedScriptTypeVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

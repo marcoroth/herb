@@ -1,5 +1,5 @@
-import { isHTMLElementNode, isHTMLOpenTagNode } from "@herb-tools/core"
-import { getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
+import { isHTMLElementNode, isHTMLOpenTagNode, getAttributeName, getAttributeValue, forEachAttribute } from "@herb-tools/core"
+import { getTagLocalName } from "@herb-tools/core"
 
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { ParserRule, BaseAutofixContext } from "../types"
@@ -30,7 +30,7 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
   private controlFlowMetas: MetaTag[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node)?.toLowerCase()
+    const tagName = getTagLocalName(node)
     if (!tagName) return
 
     if (tagName === "head") {
@@ -183,7 +183,7 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
 
 export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
-  name = "html-no-duplicate-meta-names"
+  static ruleName = "html-no-duplicate-meta-names"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -193,7 +193,7 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
+    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

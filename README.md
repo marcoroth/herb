@@ -1,12 +1,12 @@
 <div align="center">
-  <img alt="Herb HTML+ERB parser" style="height: 256px" height="256px" src="https://github.com/user-attachments/assets/d0714ee1-ca33-4aa4-aaa9-d632ba79d54a">
+  <img alt="Herb HTML+ERB Toolchain" style="height: 256px" height="256px" src="https://github.com/user-attachments/assets/d0714ee1-ca33-4aa4-aaa9-d632ba79d54a">
 </div>
 
 <h2 align="center">Herb</h2>
 
-<h4 align="center">HTML+ERB (HTML + Embedded Ruby)</h4>
+<h4 align="center">The HTML+ERB Toolchain</h4>
 
-<div align="center">Powerful and seamless HTML-aware ERB parsing and tooling.</div><br/>
+<div align="center">An ecosystem of powerful and seamless developer tools for HTML+ERB (HTML + Embedded Ruby) templates.</div><br/>
 
 <p align="center">
   <a href="https://rubygems.org/gems/herb"><img alt="Gem Version" src="https://img.shields.io/gem/v/herb"></a>
@@ -25,36 +25,53 @@
 
 ## What is Herb?
 
-**Herb** is an ecosystem of developer tooling built specifically around **HTML+ERB** (`.html.erb`) files. It is designed to simplify and enhance the experience of working with HTML+ERB templates through precise, accurate tooling.
+**Herb** is a powerful and seamless HTML-aware ERB toolchain and an ecosystem of developer tools built specifically for **HTML+ERB** (`.html.erb`) files. It is designed to simplify and enhance the experience of working with HTML+ERB templates through precise, accurate tooling.
 
-At the core of Herb is the **Herb Parser**, a fast, portable, and HTML-aware ERB parser written in C. The parser generates a detailed, accurate syntax tree that serves as the foundation for reliable code analysis, transformations, and developer tooling.
+**Parser**
 
-The Herb ecosystem includes **developer tools** (CLI, language server, formatter, linter), **language bindings** (for Ruby, Node.js, and the Browser using WebAssembly), and **utility libraries** (language service, highlighter, minifier, printer). All these components leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
+At the core of the Herb ecosystem is the **Herb Parser**, a fast, portable, and HTML-aware ERB parser written in C. The parser generates a detailed, accurate syntax tree that serves as the foundation for reliable code analysis, transformations, and developer tooling.
 
-## What Herb Can Do for You
+**Toolchain**
 
-Herb provides a complete ecosystem of HTML+ERB tooling, designed to simplify and enhance your daily workflow. Built on the **Herb Parser**, it offers multiple tools that integrate seamlessly into editors, developer environments, and CI pipelines:
+The Herb toolchain includes **developer tools** (CLI, language server, formatter, linter, browser dev tools), **language bindings** (for Ruby, Node.js, Java, Rust, and the Browser using WebAssembly), and **utility libraries** (language service, highlighter, minifier, printer).
 
-- **Herb Language Server** ([available now](https://herb-tools.dev/projects/language-server)):
-  Rich integration for editors like VS Code, Zed, Neovim, and more. It provides diagnostics and real-time feedback to keep your templates error-free.
+All these components leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
 
-- **Herb Formatter** ([experimental preview](https://herb-tools.dev/projects/formatter)):
-  Automatic, consistent formatting for HTML+ERB files, reducing manual styling and enforcing a standard across projects. Currently in experimental preview - use with caution on version-controlled files.
+**Engine**
 
-- **Herb Linter** ([available now](https://herb-tools.dev/projects/linter)):  
-  Static analysis for your HTML+ERB templates to enforce best practices and quickly identify common mistakes with plenty of rules.
+`Herb::Engine` is a new, HTML-aware ERB rendering engine built on the Herb Parser. It is designed to be API-compatible with [`Erubi::Engine`](https://github.com/jeremyevans/erubi) while adding structural awareness of HTML+ERB content, enabling features like HTML validation, security checks, and precise error reporting.
 
-You can use Herb programmatically in **Ruby**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
+The Engine powers **ReActionView** and lays the foundation for a modern view layer for Rails and other Ruby web frameworks.
+
+| **[ReActionView](https://reactionview.dev)** <br> 🌱 A new ActionView-compatible ERB engine with modern DX, re-imagined with `Herb::Engine`. |
+| --- |
+| [GitHub](https://github.com/marcoroth/reactionview) · [Website](https://reactionview.dev) · [Documentation](https://reactionview.dev/overview) |
+
+## Ecosystem
+
+The Herb ecosystem offers multiple tools that integrate seamlessly into editors, developer environments, and CI pipelines:
+
+| Tool | Description |
+| --- | --- |
+| [Herb Parser](https://herb-tools.dev/projects/parser) | Fast, portable, HTML-aware ERB parser written in C. |
+| [Herb Linter](https://herb-tools.dev/projects/linter) | Static analysis to enforce best practices and identify common mistakes. |
+| [Herb Formatter](https://herb-tools.dev/projects/formatter) | Automatic, consistent formatting for HTML+ERB files. *(experimental)* |
+| [Herb Language Server](https://herb-tools.dev/projects/language-server) | Rich editor integration for VS Code, Zed, Neovim, and more. |
+| [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
+| [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
+| [ReActionView](https://reactionview.dev) | ActionView-compatible ERB engine with modern DX for Rails. |
+
+You can use the Herb Parser programmatically in **Ruby**, **Java**, **Rust**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
 
 For a complete overview of all available tools, libraries, and integrations, visit the [**Projects page**](https://herb-tools.dev/projects) on our documentation site.
 
 ## Motivation
 
-HTML+ERB templates never really had good, accurate, and reliable tooling. While developer tooling for Ruby code improved significantly in the last few years (especially with the introduction of the new Prism parser), HTML+ERB files remained underserved, lacking fundamental support like syntax checking, auto-formatting, linting, and structural understanding.
+HTML+ERB templates never really had good, accurate, and reliable tooling. While developer tooling for Ruby code improved significantly in the last few years (especially with the introduction of the new [Prism parser](https://github.com/ruby/prism)), HTML+ERB files remained underserved, lacking fundamental support like syntax checking, auto-formatting, linting, and structural understanding.
 
 At the same time, with the rise of tools like [Hotwire](https://hotwired.dev), [Stimulus](https://stimulus.hotwired.dev), [Turbo](https://turbo.hotwired.dev), [HTMX](https://htmx.org), [Unpoly](https://unpoly.com), and [Alpine.js](https://alpinejs.dev), advanced HTML templating became increasingly relevant (again). Developers expect modern, reliable, and precise tooling, especially given the robust ecosystem available to JavaScript frameworks and libraries.
 
-Herb was built to close this tooling gap, providing proper tooling for HTML+ERB that matches what modern developers expect in the age of language servers, LLMs, and AI-driven workflows.
+Herb was built to close this tooling gap with an HTML-aware approach, understanding both HTML structure and ERB as first-class citizens, to provide the kind of tooling modern developers expect in the age of language servers, LLMs, and AI-driven workflows.
 
 ## Command-Line Usage
 
@@ -63,6 +80,8 @@ Install the Herb gem via RubyGems:
 ```sh
 gem install herb
 ```
+
+For detailed information, like how you can use Herb programmatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
 
 Basic usage to analyze all HTML+ERB files in your project:
 
@@ -86,30 +105,29 @@ Files with parse errors:
 Results saved to 2025-06-29_12-16-23_erb_parsing_result_rubyevents.log
 ```
 
-Herb also comes with other useful commands:
+Lint your HTML+ERB templates:
 
-```
-Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
-
-Usage:
-  bundle exec herb [command] [options]
-
-Commands:
-  bundle exec herb lex [file]         Lex a file.
-  bundle exec herb parse [file]       Parse a file.
-  bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
-  bundle exec herb ruby [file]        Extract Ruby from a file.
-  bundle exec herb html [file]        Extract HTML from a file.
-  bundle exec herb playground [file]  Open the content of the source file in the playground
-  bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
+```sh
+npx @herb-tools/linter
 ```
 
-For detailed information, like how you can use Herb programmatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
+Format your HTML+ERB templates:
+
+```sh
+npx @herb-tools/formatter
+```
 
 
-## Background and Talk
 
-**Herb** was first introduced at [**RubyKaigi 2025**](https://rubykaigi.org/2025/presentations/marcoroth.html) in April 2025 with the talk [*Empowering Developers with HTML-Aware ERB Tooling*](https://www.rubyevents.org/talks/empowering-developers-with-html-aware-erb-tooling-rubykaigi-2025).
+## Background and Talks
+
+The **Herb Parser** was first introduced at [**RubyKaigi 2025**](https://rubykaigi.org/2025/presentations/marcoroth.html) in April 2025 with the talk [*Empowering Developers with HTML-Aware ERB Tooling*](https://www.rubyevents.org/talks/empowering-developers-with-html-aware-erb-tooling-rubykaigi-2025).
+
+At [**RailsConf 2025**](https://www.rubyevents.org/events/railsconf-2025) in July 2025, the Herb ecosystem was expanded with the talk [*The Modern View Layer Rails Deserves: A Vision for 2025 and Beyond*](https://www.rubyevents.org/talks/the-modern-view-layer-rails-deserves-a-vision-for-2025-and-beyond), introducing the linter, formatter, language server, and the vision for ReActionView.
+
+At [**Rails World 2025**](https://www.rubyevents.org/events/rails-world-2025) in September 2025, `Herb::Engine`, ReActionView, and the visual dev tools were launched with the talk [*Introducing ReActionView: An ActionView-Compatible ERB Engine*](https://www.rubyevents.org/talks/introducing-reactionview-an-actionview-compatible-erb-engine).
+
+At [**San Francisco Ruby Conference 2025**](https://www.rubyevents.org/events/sfruby-2025) in November 2025, the keynote [*Herb to ReActionView: A New Foundation for the View Layer*](https://www.rubyevents.org/talks/keynote-herb-to-reactionview-a-new-foundation-for-the-view-layer) gave an overview of how Herb came to be, what Herb can do for you today, and how it could enable the next generation of the Rails view layer with ReActionView.
 
 ## Contributing
 

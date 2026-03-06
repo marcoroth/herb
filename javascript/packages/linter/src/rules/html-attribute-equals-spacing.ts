@@ -34,7 +34,7 @@ class HTMLAttributeEqualsSpacingVisitor extends BaseRuleVisitor<AttributeEqualsS
 
 export class HTMLAttributeEqualsSpacingRule extends ParserRule<AttributeEqualsSpacingAutofixContext> {
   static autocorrectable = true
-  name = "html-attribute-equals-spacing"
+  static ruleName = "html-attribute-equals-spacing"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -44,7 +44,7 @@ export class HTMLAttributeEqualsSpacingRule extends ParserRule<AttributeEqualsSp
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeEqualsSpacingAutofixContext>[] {
-    const visitor = new HTMLAttributeEqualsSpacingVisitor(this.name, context)
+    const visitor = new HTMLAttributeEqualsSpacingVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

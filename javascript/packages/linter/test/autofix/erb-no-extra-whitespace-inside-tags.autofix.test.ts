@@ -65,7 +65,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     expect(result.fixed).toHaveLength(2)
   })
 
-  test("fixes ERB comment tags with equals and extra spaces", () => {
+  test("fixes after-comment-equals with extra spaces", () => {
     const input = '<%#=  link_to "path", path  %>'
     const expected = '<%#= link_to "path", path %>'
 

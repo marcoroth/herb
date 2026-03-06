@@ -65,6 +65,10 @@ export class Client {
     return await this.client.sendNotification(method, params)
   }
 
+  async sendRequest<T>(method: string, params: any): Promise<T> {
+    return await this.client.sendRequest(method, params)
+  }
+
   async updateConfiguration() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
     let settings: any

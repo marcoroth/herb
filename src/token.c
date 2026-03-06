@@ -13,7 +13,8 @@
 #include <string.h>
 
 token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, sizeof(token_T));
+  hb_allocator_T* allocator = lexer->allocator;
+  token_T* token = hb_allocator_alloc(allocator, sizeof(token_T));
 
   if (!token) { return NULL; }
 
@@ -170,7 +171,7 @@ hb_string_T token_to_string(const token_T* token) {
 
   char* string = calloc(template.length + type_string.length + token->value.length + 16, sizeof(char));
 
-  if (!string) { return hb_string(""); }
+  if (!string) { return HB_STRING_EMPTY; }
 
   hb_string_T escaped;
 
@@ -208,10 +209,10 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
-token_T* token_copy(token_T* token) {
+token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, sizeof(token_T));
+  token_T* new_token = hb_allocator_alloc(allocator, sizeof(token_T));
 
   if (!new_token) { return NULL; }
 
@@ -228,8 +229,8 @@ bool token_value_empty(const token_T* token) {
   return token == NULL || hb_string_is_empty(token->value);
 }
 
-void token_free(token_T* token) {
+void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
 
-  free(token);
+  hb_allocator_dealloc(allocator, token);
 }

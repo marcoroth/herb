@@ -4,6 +4,7 @@
 #include "include/pretty_print.h"
 #include "include/token.h"
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_string.h"
 
@@ -27,10 +28,10 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
+<%- arguments = error_arguments + ["position_T start", "position_T end", "hb_allocator_T* allocator"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
-  <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
+  <%= error.struct_type %>* <%= error.human %> = hb_allocator_alloc(allocator, sizeof(<%= error.struct_type %>));
 
   if (!<%= error.human %>) { return NULL; }
 
@@ -39,41 +40,35 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- if error.message_arguments.any? -%>
   const char* message_template = "<%= error.message_template %>";
 
-  size_t message_size = <%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
-  char* message = (char*) malloc(message_size);
+  <%- error.message_arguments.each_with_index do |argument, i| -%>
+  <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
+  hb_string_T truncated_argument_<%= i %> = hb_string_truncate(<%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
+  char* truncated_cstr_<%= i %> = hb_string_to_c_string_using_malloc(truncated_argument_<%= i %>);
 
-  if (message) {
-    <%- error.message_arguments.each_with_index do |argument, i| -%>
-    <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
-    hb_string_T truncated_argument_<%= i %> = hb_string_truncate(<%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
-    char* truncated_cstr_<%= i %> = hb_string_to_c_string_using_malloc(truncated_argument_<%= i %>);
+  <%- end -%>
+  <%- end -%>
+  char message[<%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>];
+  snprintf(
+    message,
+    sizeof(message),
+    message_template,
+    <%- error.message_arguments.each_with_index do |argument, index| -%>
+    <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[index] == "%s" -%>
+    truncated_cstr_<%= index %> ? truncated_cstr_<%= index %> : ""<% if index != error.message_arguments.length - 1 %>,<% end %>
+    <%- else -%>
+    <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
     <%- end -%>
     <%- end -%>
-    snprintf(
-      message,
-      message_size,
-      message_template,
-      <%- error.message_arguments.each_with_index do |argument, index| -%>
-      <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[index] == "%s" -%>
-      truncated_cstr_<%= index %> ? truncated_cstr_<%= index %> : ""<% if index != error.message_arguments.length - 1 %>,<% end %>
-      <%- else -%>
-      <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
-      <%- end -%>
-      <%- end -%>
-    );
+  );
 
-    <%- error.message_arguments.each_with_index do |argument, i| -%>
-    <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
-    if (truncated_cstr_<%= i %>) { free(truncated_cstr_<%= i %>); }
-    <%- end -%>
-    <%- end -%>
-    <%= error.human %>->base.message = herb_strdup(message);
-    free(message);
-  } else {
-    <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
-  }
+  <%- error.message_arguments.each_with_index do |argument, i| -%>
+  <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
+  if (truncated_cstr_<%= i %>) { free(truncated_cstr_<%= i %>); }
+  <%- end -%>
+  <%- end -%>
+  <%= error.human %>->base.message = hb_allocator_strdup(allocator, message);
   <%- else -%>
-  <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
+  <%= error.human %>->base.message = hb_allocator_strdup(allocator, "<%= error.message_template %>");
   <%- end -%>
 
   <%- error.fields.each do |field| -%>
@@ -81,16 +76,13 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::PositionField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::TokenField -%>
-  <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>, allocator);
   <%- when Herb::Template::TokenTypeField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  {
-    char* _copy = hb_string_to_c_string_using_malloc(<%= field.name %>);
-    <%= error.human %>-><%= field.name %> = (hb_string_T){ .data = _copy, .length = <%= field.name %>.length };
-  }
+  <%= error.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -123,24 +115,23 @@ const char* error_human_type(ERROR_T* error) {
   return "Unknown error_type_T";
 }
 
-void error_free_base_error(ERROR_T* error) {
+void error_free_base_error(ERROR_T* error, hb_allocator_T* allocator) {
   if (error == NULL) { return; }
 
-  if (error->message != NULL) { free(error->message); }
+  if (error->message != NULL) { hb_allocator_dealloc(allocator, error->message); }
 
-  free(error);
+  hb_allocator_dealloc(allocator, error);
 }
 <%- errors.each do |error| -%>
-<%- arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
 
-static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.human %>) {
+static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.human %>, hb_allocator_T* allocator) {
   <%- if error.fields.none? -%>
   /* no <%= error.struct_type %> specific fields to free up */
   <%- end -%>
   <%- error.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>); }
+  if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>, allocator); }
   <%- when Herb::Template::TokenTypeField -%>
   // token_type_T is part of struct
   <%- when Herb::Template::SizeTField -%>
@@ -154,16 +145,16 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- end -%>
   <%- end -%>
 
-  error_free_base_error(&<%= error.human %>->base);
+  error_free_base_error(&<%= error.human %>->base, allocator);
 }
 <%- end -%>
 
-void error_free(ERROR_T* error) {
+void error_free(ERROR_T* error, hb_allocator_T* allocator) {
   if (!error) { return; }
 
   switch (error->type) {
     <%- errors.each do |error| -%>
-    case <%= error.type %>: error_free_<%= error.human %>((<%= error.struct_type %>*) error); break;
+    case <%= error.type %>: error_free_<%= error.human %>((<%= error.struct_type %>*) error, allocator); break;
     <%- end -%>
   }
 }

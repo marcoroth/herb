@@ -21,7 +21,7 @@
     "dedent": "^1.7.0",
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "22.4.4",
-    "oxlint": "^1.50.0",
+    "oxlint": "^1.51.0",
     "picomatch": "^4.0.2",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
@@ -33,7 +33,7 @@
     "vitest": "^4.0.0",
     "yaml": "^2.8.2",
     "yeoman-environment": "^4.4.1",
-    "yeoman-generator": "^7.1.1"
+    "yeoman-generator": "^8.0.0"
   },
   "scripts": {
     "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server",

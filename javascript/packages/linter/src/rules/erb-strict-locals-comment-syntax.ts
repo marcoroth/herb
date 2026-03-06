@@ -264,7 +264,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
 }
 
 export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
-  name = "erb-strict-locals-comment-syntax"
+  static ruleName = "erb-strict-locals-comment-syntax"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -274,7 +274,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.name, context)
+    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

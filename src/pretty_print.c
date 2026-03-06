@@ -237,7 +237,7 @@ void pretty_print_string_property(
   hb_buffer_T* buffer
 ) {
   hb_string_T value = hb_string("∅");
-  hb_string_T escaped = { .data = NULL, .length = 0 };
+  hb_string_T escaped = HB_STRING_NULL;
   hb_string_T quoted;
 
   if (!hb_string_is_empty(string)) {

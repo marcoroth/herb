@@ -4,11 +4,14 @@ import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-conditions.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
+import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
+import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
+import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
@@ -71,11 +74,14 @@ export const rules: RuleClass[] = [
   ERBNoCaseNodeChildrenRule,
   ERBNoInlineCaseConditionsRule,
   ERBNoConditionalHTMLElementRule,
+  ERBNoDuplicateBranchElementsRule,
   ERBNoConditionalOpenTagRule,
   ERBNoEmptyTagsRule,
+  ERBNoInterpolatedClassNamesRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
   ERBNoOutputControlFlowRule,
+  ERBNoThenInControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoTrailingWhitespaceRule,
   ERBPreferImageTagHelperRule,

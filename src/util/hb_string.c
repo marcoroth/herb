@@ -6,7 +6,7 @@
 #include <strings.h>
 
 hb_string_T hb_string(const char* null_terminated_c_string) {
-  if (null_terminated_c_string == NULL) { return (hb_string_T) { .data = NULL, .length = 0 }; }
+  if (null_terminated_c_string == NULL) { return HB_STRING_NULL; }
 
   hb_string_T string;
 
@@ -69,7 +69,7 @@ hb_string_T hb_string_range(hb_string_T string, uint32_t from, uint32_t to) {
 }
 
 hb_string_T hb_string_copy(hb_string_T string) {
-  if (hb_string_is_empty(string)) { return (hb_string_T) { .data = NULL, .length = 0 }; }
+  if (hb_string_is_empty(string)) { return HB_STRING_NULL; }
 
   char* copy = hb_string_to_c_string_using_malloc(string);
 

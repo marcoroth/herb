@@ -4,12 +4,14 @@
 #include "analyzed_ruby.h"
 #include "../ast_nodes.h"
 #include "../parser.h"
+#include "../util/hb_allocator.h"
 #include "../util/hb_array.h"
 
 typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
+  hb_allocator_T* allocator;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -37,10 +39,11 @@ typedef enum {
 typedef struct {
   int loop_depth;
   int rescue_depth;
+  hb_allocator_T* allocator;
 } invalid_erb_context_T;
 
-void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, const parser_options_T* options);
+void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source, hb_allocator_T* allocator);
+void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, const parser_options_T* options, hb_allocator_T* allocator);
 
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context);
 bool transform_erb_nodes(const AST_NODE_T* node, void* data);

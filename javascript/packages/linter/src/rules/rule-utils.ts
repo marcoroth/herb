@@ -2,27 +2,21 @@ import {
   Visitor,
   Location,
   Position,
-  getStaticAttributeName,
-  hasDynamicAttributeName as hasNodeDynamicAttributeName,
-  getCombinedAttributeName,
   hasERBOutput,
-  getStaticContentFromNodes,
-  hasStaticContent,
   isEffectivelyStatic,
-  isLiteralNode,
-  isERBContentNode,
-  isHTMLAttributeNode,
-  isHTMLAttributeValueNode,
-  isHTMLAttributeNameNode,
   getValidatableStaticContent,
-  filterLiteralNodes,
-  filterHTMLAttributeNodes,
+  getAttributeName,
+  getStaticAttributeValue,
+  hasDynamicAttributeNameOnAttribute as hasDynamicAttributeName,
+  getCombinedAttributeNameString,
+  getAttributeValueNodes,
+  getAttributeValue,
+  forEachAttribute,
 } from "@herb-tools/core"
 
 import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
-  HTMLAttributeValueNode,
   HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
@@ -33,7 +27,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
-import type { UnboundLintOffense, LintContext, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -59,7 +53,7 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -67,14 +61,15 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 }
 
@@ -168,215 +163,6 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   protected abstract onExitBranch(stateToRestore: TBranchState): void
 }
 
-/**
- * Gets attributes from an HTMLOpenTagNode
- */
-export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
-  return node.children.filter(isHTMLAttributeNode)
-}
-
-/**
- * Gets the open tag node from an HTMLElementNode, handling both regular and conditional open tags.
- * For conditional open tags, returns null
- */
-export function getOpenTag(element: HTMLElementNode | null | undefined): HTMLOpenTagNode | null {
-  if (!element?.open_tag) return null
-
-  switch (element.open_tag.type) {
-    case "AST_HTML_OPEN_TAG_NODE": return element.open_tag
-    case "AST_HTML_CONDITIONAL_OPEN_TAG_NODE": return null
-    default: return null
-  }
-
-  return null
-}
-
-/**
- * Gets attributes from an element's open tag (handles both regular and conditional open tags)
- */
-export function getAttributesFromElement(element: HTMLElementNode | null | undefined): HTMLAttributeNode[] {
-  const openTag = getOpenTag(element)
-
-  return openTag ? getAttributes(openTag) : []
-}
-
-/**
- * Gets the tag name from an HTML tag node (lowercased)
- */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
-  if (!node) return null
-
-  return node.tag_name?.value.toLowerCase() || null
-}
-
-/**
- * Gets the attribute name from an HTMLAttributeNode (lowercased)
- * Returns null if the attribute name contains dynamic content (ERB)
- */
-export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
-  if (!isHTMLAttributeNameNode(attributeNode.name)) return null
-
-  const staticName = getStaticAttributeName(attributeNode.name)
-
-  if (!lowercase) return staticName
-
-  return staticName ? staticName.toLowerCase() : null
-}
-
-/**
- * Checks if an attribute has a dynamic (ERB-containing) name
- */
-export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
-  if (!isHTMLAttributeNameNode(attributeNode.name)) return false
-
-  return hasNodeDynamicAttributeName(attributeNode.name)
-}
-
-/**
- * Gets the combined string representation of an attribute name (for debugging)
- * This includes both static content and ERB syntax
- */
-export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
-  if (!isHTMLAttributeNameNode(attributeNode.name)) return ""
-
-  return getCombinedAttributeName(attributeNode.name)
-}
-
-/**
- * Checks if an attribute value contains only static content (no ERB)
- */
-export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  if (!attributeNode.value?.children) return false
-
-  return attributeNode.value.children.every(isLiteralNode)
-}
-
-/**
- * Checks if an attribute value contains dynamic content (ERB)
- */
-export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  if (!attributeNode.value?.children) return false
-
-  return attributeNode.value.children.some(isERBContentNode)
-}
-
-/**
- * Gets the static string value of an attribute (returns null if it contains ERB)
- */
-export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  if (!hasStaticAttributeValue(attributeNode)) return null
-
-  const valueNode = attributeNode.value
-  if (!valueNode) return null
-
-  return filterLiteralNodes(valueNode.children).map(child => child.content).join("") || ""
-}
-
-/**
- * Gets the value nodes array for dynamic inspection
- */
-export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
-  return attributeNode.value ?.children || []
-}
-
-/**
- * Checks if an attribute value contains any static content (for validation purposes)
- */
-export function hasStaticAttributeValueContent(attributeNode: HTMLAttributeNode): boolean {
-  const valueNodes = getAttributeValueNodes(attributeNode)
-
-  return hasStaticContent(valueNodes)
-}
-
-/**
- * Gets the static content of an attribute value (all literal parts combined)
- * Returns the concatenated literal content, or null if no literal nodes exist
- */
-export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode): string | null {
-  const valueNodes = getAttributeValueNodes(attributeNode)
-
-  return getStaticContentFromNodes(valueNodes)
-}
-
-/**
- * Gets the attribute value content from an HTMLAttributeValueNode
- */
-export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode = attributeNode.value
-  if (!valueNode) return null
-
-  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
-    return null
-  }
-
-  let result = ""
-
-  for (const child of valueNode.children) {
-    if (isERBContentNode(child)) {
-      if (child.content) {
-        result += `${child.tag_opening?.value}${child.content.value}${child.tag_closing?.value}`
-      }
-    } else if (isLiteralNode(child)) {
-      result += child.content
-    }
-  }
-
-  return result
-}
-
-/**
- * Checks if an attribute has a value
- */
-export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  return isHTMLAttributeValueNode(attributeNode.value)
-}
-
-/**
- * Gets the quote type used for an attribute value
- */
-export function getAttributeValueQuoteType(node: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
-  const valueNode = isHTMLAttributeValueNode(node) ? node : node.value
-  if (!valueNode) return null
-
-  if (valueNode.quoted && valueNode.open_quote) {
-    return valueNode.open_quote.value === '"' ? "double" : "single"
-  }
-
-  return "none"
-}
-
-/**
- * Finds an attribute by name in a list of attributes
- */
-export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
-  for (const attribute of filterHTMLAttributeNodes(attributes)) {
-    const name = getAttributeName(attribute)
-
-    if (name === attributeName.toLowerCase()) {
-      return attribute
-    }
-  }
-
-  return null
-}
-
-/**
- * Checks if a tag has a specific attribute
- */
-export function hasAttribute(node: HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
-  if (!node) return false
-
-  return getAttribute(node, attributeName) !== null
-}
-
-/**
- * Checks if a tag has a specific attribute
- */
-export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
-  const attributes = getAttributes(node)
-
-  return findAttributeByName(attributes, attributeName)
-}
 
 /**
  * Common HTML element categorization
@@ -713,24 +499,6 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
 }
 
 /**
- * Checks if an attribute value is quoted
- */
-export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolean {
-  if (!isHTMLAttributeValueNode(attributeNode.value)) return false
-
-  return !!attributeNode.value.quoted
-}
-
-/**
- * Iterates over all attributes of a tag node, calling the callback for each attribute
- */
-export function forEachAttribute(node: HTMLOpenTagNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
-  for (const attribute of getAttributes(node)) {
-    callback(attribute)
-  }
-}
-
-/**
  * Base lexer visitor class that provides common functionality for lexer-based rule visitors
  */
 export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -747,7 +515,7 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -755,14 +523,15 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 
   /**
@@ -809,7 +578,7 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -817,14 +586,15 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 
   /**

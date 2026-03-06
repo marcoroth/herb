@@ -22,7 +22,7 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoEmptyTagsRule extends ParserRule {
-  name = "erb-no-empty-tags"
+  static ruleName = "erb-no-empty-tags"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -32,7 +32,7 @@ export class ERBNoEmptyTagsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoEmptyTagsVisitor(this.name, context)
+    const visitor = new ERBNoEmptyTagsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

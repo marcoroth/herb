@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -37,7 +38,7 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
   }
 
   private isFocusable(node: HTMLOpenTagNode): boolean {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     if (!tagName) return false
 
     const tabIndexValue = this.getTabIndexValue(node)
@@ -77,17 +78,17 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
-  name = "html-no-aria-hidden-on-focusable"
+  static ruleName = "html-no-aria-hidden-on-focusable"
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoAriaHiddenOnFocusableVisitor(this.name, context)
+    const visitor = new NoAriaHiddenOnFocusableVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

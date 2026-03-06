@@ -83,6 +83,14 @@ jobs:
       - name: Run `test` for all NX packages
         run: yarn test
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run Deno smoke test
+        run: deno run --allow-read --allow-env javascript/packages/node-wasm/test/deno_smoke.ts
+
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:

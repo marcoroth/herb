@@ -84,7 +84,13 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
       if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
 
       if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
-        append_erb_control_flow_scope_error(hb_string(keyword), node->location.start, node->location.end, node->errors);
+        append_erb_control_flow_scope_error(
+          hb_string(keyword),
+          node->location.start,
+          node->location.end,
+          context->allocator,
+          node->errors
+        );
       }
     }
   }
@@ -92,7 +98,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_IF_NODE) {
     const AST_ERB_IF_NODE_T* if_node = (const AST_ERB_IF_NODE_T*) node;
 
-    if (if_node->end_node == NULL) { check_erb_node_for_missing_end(node); }
+    if (if_node->end_node == NULL) { check_erb_node_for_missing_end(node, context->allocator); }
 
     if (if_node->statements != NULL) {
       for (size_t i = 0; i < hb_array_size(if_node->statements); i++) {
@@ -117,6 +123,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
               hb_string(keyword),
               subsequent->location.start,
               subsequent->location.end,
+              context->allocator,
               subsequent->errors
             );
           }
@@ -162,7 +169,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
       || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
-    check_erb_node_for_missing_end(node);
+    check_erb_node_for_missing_end(node, context->allocator);
 
     if (is_loop_node) { context->loop_depth--; }
     if (is_begin_node) { context->rescue_depth--; }
