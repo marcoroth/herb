@@ -17,8 +17,6 @@ size_t ast_node_child_count(AST_NODE_T* node);
 
 ast_node_type_T ast_node_type(const AST_NODE_T* node);
 
-char* ast_node_name(AST_NODE_T* node);
-
 void ast_node_set_start(AST_NODE_T* node, position_T position);
 void ast_node_set_end(AST_NODE_T* node, position_T position);
 
