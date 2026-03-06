@@ -58,12 +58,11 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
-  size_t error_message_length = 128;
-  char* error_message = malloc(sizeof(char) * error_message_length);
+  char buffer[128];
 
   snprintf(
-    error_message,
-    error_message_length,
+    buffer,
+    sizeof(buffer),
     "[Lexer] Error: %s (character '%c', line %u, col %u)\n",
     message,
     lexer->current_character,
@@ -71,7 +70,10 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
     lexer->current_column
   );
 
-  return token_init(hb_string(error_message), TOKEN_ERROR, lexer);
+  size_t length = strlen(buffer);
+  char* error_message = hb_allocator_strndup(lexer->allocator, buffer, length);
+
+  return token_init((hb_string_T) { .data = error_message, .length = (uint32_t) length }, TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
@@ -84,7 +86,7 @@ static void lexer_advance(lexer_T* lexer) {
 }
 
 static void lexer_advance_utf8_bytes(lexer_T* lexer, uint32_t byte_count) {
-  if (byte_count <= 0) { return; }
+  if (byte_count == 0) { return; }
 
   if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
     if (!is_newline(lexer->current_character)) { lexer->current_column++; }

@@ -19,11 +19,11 @@
 jstring CreateStringFromHbString(JNIEnv* env, hb_string_T string) {
   if (hb_string_is_null(string)) { return NULL; }
 
-  char* cstr = hb_string_to_c_string_using_malloc(string);
-  if (!cstr) { return NULL; }
+  char* c_string = hb_string_to_c_string_using_malloc(string);
+  if (!c_string) { return NULL; }
 
-  jstring result = (*env)->NewStringUTF(env, cstr);
-  free(cstr);
+  jstring result = (*env)->NewStringUTF(env, c_string);
+  free(c_string);
 
   return result;
 }

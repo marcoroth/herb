@@ -39,7 +39,7 @@
   <%- when Herb::Template::PrismNodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= node.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>);
+  <%= node.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>, allocator);
   <%- when Herb::Template::AnalyzedRubyField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
@@ -114,7 +114,7 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     hb_array_free(&<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::StringField -%>
-  if (<%= node.human %>-><%= field.name %>.data != NULL) { free(<%= node.human %>-><%= field.name %>.data); }
+  if (<%= node.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
   <%- when Herb::Template::PrismNodeField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
     // The first argument to `pm_node_destroy` is a `pm_parser_t`, but it's currently unused:

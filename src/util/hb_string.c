@@ -55,7 +55,7 @@ bool hb_string_is_null(hb_string_T string) {
 }
 
 bool hb_string_is_empty(hb_string_T string) {
-  return string.length == 0;
+  return string.data == NULL || string.length == 0;
 }
 
 hb_string_T hb_string_truncate(hb_string_T string, uint32_t max_length) {
@@ -68,23 +68,26 @@ hb_string_T hb_string_range(hb_string_T string, uint32_t from, uint32_t to) {
   return hb_string_truncate(hb_string_slice(string, from), to - from);
 }
 
-hb_string_T hb_string_copy(hb_string_T string) {
-  if (hb_string_is_empty(string)) { return HB_STRING_NULL; }
+hb_string_T hb_string_copy(hb_string_T string, hb_allocator_T* allocator) {
+  if (hb_string_is_null(string)) { return HB_STRING_NULL; }
+  if (hb_string_is_empty(string)) { return HB_STRING_EMPTY; }
 
-  char* copy = hb_string_to_c_string_using_malloc(string);
+  char* copy = hb_allocator_strndup(allocator, string.data, string.length);
 
   return (hb_string_T) { .data = copy, .length = string.length };
 }
 
 char* hb_string_to_c_string_using_malloc(hb_string_T string) {
-  size_t string_length_in_bytes = sizeof(char) * (string.length);
-  char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
+  if (hb_string_is_null(string)) { return NULL; }
+
+  size_t length = string.length;
+  char* buffer = malloc(length + 1);
 
   if (!buffer) { return NULL; }
 
-  if (!hb_string_is_empty(string)) { memcpy(buffer, string.data, string_length_in_bytes); }
+  if (length > 0) { memcpy(buffer, string.data, length); }
 
-  buffer[string_length_in_bytes] = '\0';
+  buffer[length] = '\0';
 
   return buffer;
 }

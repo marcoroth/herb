@@ -33,9 +33,9 @@ val CreateStringFromHbString(hb_string_T string) {
     return val::null();
   }
 
-  std::string cppString(string.data, string.length);
+  std::string cpp_string(string.data, string.length);
 
-  return val::u8string(cppString.c_str());
+  return val::u8string(cpp_string.c_str());
 }
 
 val CreatePosition(position_T position) {

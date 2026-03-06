@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "hb_arena.h"
+#include "hb_allocator.h"
 
 typedef struct HB_STRING_STRUCT {
   char* data;
@@ -26,7 +26,7 @@ bool hb_string_is_empty(hb_string_T string);
 
 hb_string_T hb_string_truncate(hb_string_T string, uint32_t max_length);
 hb_string_T hb_string_range(hb_string_T string, uint32_t from, uint32_t to);
-hb_string_T hb_string_copy(hb_string_T string);
+hb_string_T hb_string_copy(hb_string_T string, hb_allocator_T* allocator);
 
 char* hb_string_to_c_string_using_malloc(hb_string_T string);
 char* hb_string_to_c_string(hb_arena_T* allocator, hb_string_T string);

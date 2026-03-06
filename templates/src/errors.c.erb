@@ -43,7 +43,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- error.message_arguments.each_with_index do |argument, i| -%>
   <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
   hb_string_T truncated_argument_<%= i %> = hb_string_truncate(<%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
-  char* truncated_cstr_<%= i %> = hb_string_to_c_string_using_malloc(truncated_argument_<%= i %>);
+  char* truncated_c_string_<%= i %> = hb_string_to_c_string_using_malloc(truncated_argument_<%= i %>);
 
   <%- end -%>
   <%- end -%>
@@ -54,7 +54,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
     message_template,
     <%- error.message_arguments.each_with_index do |argument, index| -%>
     <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[index] == "%s" -%>
-    truncated_cstr_<%= index %> ? truncated_cstr_<%= index %> : ""<% if index != error.message_arguments.length - 1 %>,<% end %>
+    truncated_c_string_<%= index %> ? truncated_c_string_<%= index %> : ""<% if index != error.message_arguments.length - 1 %>,<% end %>
     <%- else -%>
     <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
     <%- end -%>
@@ -63,7 +63,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
 
   <%- error.message_arguments.each_with_index do |argument, i| -%>
   <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
-  if (truncated_cstr_<%= i %>) { free(truncated_cstr_<%= i %>); }
+  if (truncated_c_string_<%= i %>) { free(truncated_c_string_<%= i %>); }
   <%- end -%>
   <%- end -%>
   <%= error.human %>->base.message = hb_allocator_strdup(allocator, message);
@@ -82,7 +82,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= error.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>, allocator);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -139,7 +139,7 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- when Herb::Template::PositionField -%>
   // position_T is part of struct
   <%- when Herb::Template::StringField -%>
-  if (<%= error.human %>-><%= field.name %>.data != NULL) { free(<%= error.human %>-><%= field.name %>.data); }
+  if (<%= error.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= error.human %>-><%= field.name %>.data); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>

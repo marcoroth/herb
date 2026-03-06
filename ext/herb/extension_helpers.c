@@ -55,7 +55,6 @@ VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
   VALUE value = rb_string_from_hb_string(token->value);
-
   VALUE range = rb_range_from_c_struct(token->range);
   VALUE location = rb_location_from_c_struct(token->location);
   VALUE type = rb_string_from_hb_string(token_type_to_string(token->type));
