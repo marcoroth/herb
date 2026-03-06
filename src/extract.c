@@ -99,13 +99,10 @@ void herb_extract_ruby_to_buffer_with_options(
           bool is_inline_comment = false;
 
           if (!extract_options.comments && !is_comment_tag && !hb_string_is_empty(token->value)) {
-            const char* content = token->value.data;
+            hb_string_T trimmed = hb_string_trim_start(token->value);
 
-            while (*content == ' ' || *content == '\t') {
-              content++;
-            }
-
-            if (*content == '#' && token->location.start.line == token->location.end.line) {
+            if (!hb_string_is_empty(trimmed) && trimmed.data[0] == '#'
+                && token->location.start.line == token->location.end.line) {
               is_comment_tag = true;
               is_inline_comment = true;
             }
