@@ -9,6 +9,7 @@
 
 #include "include/extract.h"
 #include "include/herb.h"
+#include "include/lex_helpers.h"
 #include "include/io.h"
 #include "include/macros.h"
 #include "include/ruby_parser.h"

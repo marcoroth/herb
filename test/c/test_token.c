@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "include/test.h"
 #include "../../src/include/herb.h"
+#include "../../src/include/lex_helpers.h"
 #include "../../src/include/token.h"
 #include "../../src/include/util/hb_allocator.h"
 

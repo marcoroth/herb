@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "../src/index-esm.mjs"
+import { Herb } from "../src/index.js"
 
 describe("UTF-8 string handling", () => {
   beforeAll(async () => {
