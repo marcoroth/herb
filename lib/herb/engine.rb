@@ -375,7 +375,7 @@ module Herb
 
       if security_errors.any?
         case @security_mode
-        when "error"
+        when :error
           security_error = security_errors.first
           line = security_error[:location]&.start&.line
           column = security_error[:location]&.start&.column
@@ -388,7 +388,7 @@ module Herb
             filename: @filename,
             suggestion: suggestion
           )
-        when "warn"
+        when :warn
           security_errors.each do |security_error|
             line = security_error[:location]&.start&.line
             column = security_error[:location]&.start&.column
@@ -397,7 +397,7 @@ module Herb
             warn "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
             warn "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
           end
-        when "ignore"
+        when :ignore
           # Skip security errors silently
         end
       end

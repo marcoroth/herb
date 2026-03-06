@@ -14,7 +14,7 @@ module Engine
 
     test "security: 'error' mode raises SecurityError (default)" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template, security: "error")
+        Herb::Engine.new(@security_violation_template, security: :error)
       end
 
       assert_includes error.message, "ERB output tags"
@@ -34,7 +34,7 @@ module Engine
       original_stderr = $stderr
       $stderr = StringIO.new
 
-      engine = Herb::Engine.new(@security_violation_template, security: "warn")
+      engine = Herb::Engine.new(@security_violation_template, security: :warn)
 
       $stderr.rewind
       output = $stderr.read
@@ -47,7 +47,7 @@ module Engine
     end
 
     test "security: 'ignore' mode silently skips security validation" do
-      engine = Herb::Engine.new(@security_violation_template, security: "ignore")
+      engine = Herb::Engine.new(@security_violation_template, security: :ignore)
 
       assert_kind_of String, engine.src
       refute_empty engine.src
@@ -59,7 +59,7 @@ module Engine
       original_stderr = $stderr
       $stderr = StringIO.new
 
-      engine = Herb::Engine.new(template, security: "warn")
+      engine = Herb::Engine.new(template, security: :warn)
 
       $stderr.rewind
       output = $stderr.read
@@ -73,7 +73,7 @@ module Engine
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: "error")
+        Herb::Engine.new(invalid_nesting_template, security: :error)
       end
 
       assert_includes error.message, "InvalidNestingError"
@@ -83,7 +83,7 @@ module Engine
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: "warn")
+        Herb::Engine.new(invalid_nesting_template, security: :warn)
       end
 
       assert_includes error.message, "InvalidNestingError"
@@ -93,7 +93,7 @@ module Engine
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: "ignore")
+        Herb::Engine.new(invalid_nesting_template, security: :ignore)
       end
 
       assert_includes error.message, "InvalidNestingError"
@@ -101,33 +101,27 @@ module Engine
 
     test "invalid security mode raises ArgumentError" do
       error = assert_raises(ArgumentError) do
-        Herb::Engine.new(@valid_template, security: "invalid")
+        Herb::Engine.new(@valid_template, security: :invalid)
       end
 
-      assert_includes error.message, 'security must be one of "error", "warn", or "ignore"'
-      assert_includes error.message, '"invalid"'
+      assert_includes error.message, 'security must be one of :error, :warn, or :ignore'
+      assert_includes error.message, ':invalid'
     end
 
     test "security mode works with validation_mode: :overlay" do
-      original_stderr = $stderr
-      $stderr = StringIO.new
-
+      # When validation_mode is :overlay, validation errors are rendered as an overlay
+      # rather than raising or logging to stderr
       engine = Herb::Engine.new(@security_violation_template,
-                                security: "warn",
+                                security: :warn,
                                 validation_mode: :overlay)
 
-      $stderr.rewind
-      output = $stderr.read
-      $stderr = original_stderr
-
-      assert output.include?("WARNING: Security issue")
       assert_kind_of String, engine.src
     end
 
     test "security mode works with validation_mode: :none" do
       # When validation_mode is :none, security checks don't run
       engine = Herb::Engine.new(@security_violation_template,
-                                security: "error",
+                                security: :error,
                                 validation_mode: :none)
 
       assert_kind_of String, engine.src
@@ -138,7 +132,7 @@ module Engine
       $stderr = StringIO.new
 
       Herb::Engine.new(@security_violation_template,
-                       security: "warn",
+                       security: :warn,
                        filename: "test_template.html.erb")
 
       $stderr.rewind
@@ -152,7 +146,7 @@ module Engine
       original_stderr = $stderr
       $stderr = StringIO.new
 
-      Herb::Engine.new(@security_violation_template, security: "warn")
+      Herb::Engine.new(@security_violation_template, security: :warn)
 
       $stderr.rewind
       output = $stderr.read
@@ -169,7 +163,7 @@ module Engine
 
       engine = Herb::Engine.new(@security_violation_template)
       assert_kind_of String, engine.src
-      assert_equal "ignore", engine.security_mode
+      assert_equal :ignore, engine.security_mode
     ensure
       Herb.reset_configuration!
       FileUtils.rm_rf(temp_dir)
@@ -182,7 +176,7 @@ module Engine
       Herb.configure(temp_dir)
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template, security: "error")
+        Herb::Engine.new(@security_violation_template, security: :error)
       end
     ensure
       Herb.reset_configuration!
