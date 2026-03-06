@@ -49,14 +49,14 @@ module Engine
 
     test "security: 'ignore' mode silently skips security validation" do
       engine = Herb::Engine.new(@security_violation_template, security: "ignore")
-      
+
       assert_kind_of String, engine.src
       refute_empty engine.src
     end
 
     test "security: 'warn' mode logs multiple security violations" do
       template = '<div <%= @attr1 %> data-<%= @name %>="value">Content</div>'
-      
+
       original_stderr = $stderr
       $stderr = StringIO.new
 
@@ -72,7 +72,7 @@ module Engine
 
     test "security: 'error' mode still raises non-security validation errors" do
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
-      
+
       error = assert_raises(Herb::Engine::CompilationError) do
         Herb::Engine.new(invalid_nesting_template, security: "error")
       end
@@ -82,7 +82,7 @@ module Engine
 
     test "security: 'warn' mode still raises non-security validation errors" do
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
-      
+
       error = assert_raises(Herb::Engine::CompilationError) do
         Herb::Engine.new(invalid_nesting_template, security: "warn")
       end
@@ -92,7 +92,7 @@ module Engine
 
     test "security: 'ignore' mode still raises non-security validation errors" do
       invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
-      
+
       error = assert_raises(Herb::Engine::CompilationError) do
         Herb::Engine.new(invalid_nesting_template, security: "ignore")
       end
@@ -113,8 +113,8 @@ module Engine
       original_stderr = $stderr
       $stderr = StringIO.new
 
-      engine = Herb::Engine.new(@security_violation_template, 
-                                security: "warn", 
+      engine = Herb::Engine.new(@security_violation_template,
+                                security: "warn",
                                 validation_mode: :overlay)
 
       $stderr.rewind
@@ -127,8 +127,8 @@ module Engine
 
     test "security mode works with validation_mode: :none" do
       # When validation_mode is :none, security checks don't run
-      engine = Herb::Engine.new(@security_violation_template, 
-                                security: "error", 
+      engine = Herb::Engine.new(@security_violation_template,
+                                security: "error",
                                 validation_mode: :none)
 
       assert_kind_of String, engine.src
@@ -138,9 +138,9 @@ module Engine
       original_stderr = $stderr
       $stderr = StringIO.new
 
-      Herb::Engine.new(@security_violation_template, 
-                      security: "warn",
-                      filename: "test_template.html.erb")
+      Herb::Engine.new(@security_violation_template,
+                       security: "warn",
+                       filename: "test_template.html.erb")
 
       $stderr.rewind
       output = $stderr.read

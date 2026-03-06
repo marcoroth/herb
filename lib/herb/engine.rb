@@ -393,7 +393,7 @@ module Herb
             line = security_error[:location]&.start&.line
             column = security_error[:location]&.start&.column
             location_str = @filename ? "#{@filename}:#{line}:#{column}" : "#{line}:#{column}"
-            
+
             $stderr.puts "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
             $stderr.puts "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
           end
