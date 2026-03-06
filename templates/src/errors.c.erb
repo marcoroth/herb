@@ -66,9 +66,9 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   if (truncated_c_string_<%= i %>) { free(truncated_c_string_<%= i %>); }
   <%- end -%>
   <%- end -%>
-  <%= error.human %>->base.message = hb_allocator_strdup(allocator, message);
+  <%= error.human %>->base.message = hb_string_copy(hb_string(message), allocator);
   <%- else -%>
-  <%= error.human %>->base.message = hb_allocator_strdup(allocator, "<%= error.message_template %>");
+  <%= error.human %>->base.message = hb_string_copy(hb_string("<%= error.message_template %>"), allocator);
   <%- end -%>
 
   <%- error.fields.each do |field| -%>
@@ -95,30 +95,30 @@ void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", 
 }
 <%- end -%>
 
-const char* error_type_to_string(ERROR_T* error) {
+hb_string_T error_type_to_string(ERROR_T* error) {
   switch (error->type) {
     <%- errors.each do |error| -%>
-    case <%= error.type %>: return "<%= error.type %>";
+    case <%= error.type %>: return hb_string("<%= error.type %>");
     <%- end -%>
   }
 
-  return "Unknown error_type_T";
+  return hb_string("Unknown error_type_T");
 }
 
-const char* error_human_type(ERROR_T* error) {
+hb_string_T error_human_type(ERROR_T* error) {
   switch (error->type) {
     <%- errors.each do |error| -%>
-    case <%= error.type %>: return "<%= error.name %>";
+    case <%= error.type %>: return hb_string("<%= error.name %>");
     <%- end -%>
   }
 
-  return "Unknown error_type_T";
+  return hb_string("Unknown error_type_T");
 }
 
 void error_free_base_error(ERROR_T* error, hb_allocator_T* allocator) {
   if (error == NULL) { return; }
 
-  if (error->message != NULL) { hb_allocator_dealloc(allocator, error->message); }
+  if (!hb_string_is_null(error->message)) { hb_allocator_dealloc(allocator, error->message.data); }
 
   hb_allocator_dealloc(allocator, error);
 }
@@ -210,13 +210,13 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   if (!error) { return; }
 
   hb_buffer_append(buffer, "@ ");
-  hb_buffer_append(buffer, error_human_type((ERROR_T*) error));
+  hb_buffer_append_string(buffer, error_human_type((ERROR_T*) error));
   hb_buffer_append(buffer, " ");
 
   pretty_print_location(error->base.location, buffer);
   hb_buffer_append(buffer, "\n");
 
-  pretty_print_quoted_property(hb_string("message"), hb_string(error->base.message), indent, relative_indent, <%= error.fields.none? %>, buffer);
+  pretty_print_quoted_property(hb_string("message"), error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>

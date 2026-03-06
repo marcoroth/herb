@@ -34,8 +34,8 @@ val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("type", CreateString(error_type_to_string(&<%= error.human %>->base)));
-  result.set("message", CreateString(<%= error.human %>->base.message));
+  result.set("type", CreateStringFromHbString(error_type_to_string(&<%= error.human %>->base)));
+  result.set("message", CreateStringFromHbString(<%= error.human %>->base.message));
   result.set("location", CreateLocation(<%= error.human %>->base.location));
   <%- error.fields.each do |field| -%>
   <%- case field -%>

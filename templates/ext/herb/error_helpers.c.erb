@@ -31,9 +31,9 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
 
   ERROR_T* error = &<%= error.human %>->base;
 
-  VALUE type = rb_utf8_str_new_cstr(error_type_to_string(error));
+  VALUE type = rb_string_from_hb_string(error_type_to_string(error));
   VALUE location = rb_location_from_c_struct(error->location);
-  VALUE message = rb_utf8_str_new_cstr(error->message);
+  VALUE message = rb_string_from_hb_string(error->message);
 
   <%- error.fields.each do |field| -%>
   <%- case field -%>
