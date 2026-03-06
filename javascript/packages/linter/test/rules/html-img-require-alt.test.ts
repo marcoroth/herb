@@ -47,7 +47,7 @@ describe("html-img-require-alt", () => {
   })
 
   test("fails for img with alt attribute without value", () => {
-    expectWarning('The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectError('The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<img src="/avatar.jpg" alt>')
   })
 })
