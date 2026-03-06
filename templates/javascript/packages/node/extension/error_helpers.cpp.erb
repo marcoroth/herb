@@ -26,10 +26,10 @@ napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* 
   napi_value result;
   napi_create_object(env, &result);
 
-  napi_value type = CreateString(env, error_type_to_string(&<%= error.human %>->base));
+  napi_value type = CreateStringFromHbString(env, error_type_to_string(&<%= error.human %>->base));
   napi_set_named_property(env, result, "type", type);
 
-  napi_value message = CreateString(env, <%= error.human %>->base.message);
+  napi_value message = CreateStringFromHbString(env, <%= error.human %>->base.message);
   napi_set_named_property(env, result, "message", message);
 
   napi_value location = CreateLocation(env, <%= error.human %>->base.location);

@@ -8,6 +8,7 @@
 #include "util/hb_allocator.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
+#include "util/hb_string.h"
 
 typedef enum {
 <%- errors.each do |error| -%>
@@ -18,7 +19,7 @@ typedef enum {
 typedef struct ERROR_STRUCT {
   error_type_T type;
   location_T location;
-  char* message;
+  hb_string_T message;
 } ERROR_T;
 
 <%- errors.each do |error| -%>
@@ -42,10 +43,10 @@ void error_init(ERROR_T* error, error_type_T type, position_T start, position_T 
 size_t error_sizeof(void);
 error_type_T error_type(ERROR_T* error);
 
-char* error_message(ERROR_T* error);
+hb_string_T error_message(ERROR_T* error);
 
-const char* error_type_to_string(ERROR_T* error);
-const char* error_human_type(ERROR_T* error);
+hb_string_T error_type_to_string(ERROR_T* error);
+hb_string_T error_human_type(ERROR_T* error);
 
 void error_free(ERROR_T* error, hb_allocator_T* allocator);
 
