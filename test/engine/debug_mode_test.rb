@@ -567,5 +567,48 @@ module Engine
 
       assert_compiled_snapshot(template, debug: true)
     end
+
+    test "block with debug disable comment suppresses debug spans for multiple expressions" do
+      template = <<~ERB
+        <%= content_for :title do # herb:debug disable %>
+          <%= [t('app_title.text', app_name: AppSettings.app_name), breadcrumb_trail&.first&.name].compact.join(" | ") %>
+          <%= :subtitle %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "block with debug disable comment suppresses debug spans in nested html" do
+      template = <<~ERB
+        <%= content_for :sidebar do # herb:debug disable %>
+          <div><%= "First" %></div>
+          <p><%= "Second" %></p>
+          <span><%= "Third" %></span>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "debug disable comment works on non-content_for blocks" do
+      template = <<~ERB
+        <%= some_helper do # herb:debug disable %>
+          <div><%= "Hello" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "debug disable comment with extra whitespace" do
+      template = <<~ERB
+        <%= content_for :title do #   herb:debug   disable %>
+          <%= "Title" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
   end
 end
