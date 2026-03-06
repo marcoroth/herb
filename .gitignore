@@ -6,6 +6,7 @@ docs/docs/linter/rules/
 # Herb output
 /herb
 /run_herb_tests
+/bench_allocs
 
 # Herb Ruby extension
 /ext/herb/extconf.h
