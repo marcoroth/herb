@@ -1,5 +1,5 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { hasAttribute, getTagLocalName } from "@herb-tools/core"
+import { hasAttribute, getAttribute, hasAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -22,6 +22,16 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
       this.addOffense(
         'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
         node.tag_name!.location
+      )
+      return
+    }
+
+    const altAttribute = getAttribute(node, "alt")
+
+    if (altAttribute && !hasAttributeValue(altAttribute)) {
+      this.addOffense(
+        'The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.',
+        altAttribute.location
       )
     }
   }
