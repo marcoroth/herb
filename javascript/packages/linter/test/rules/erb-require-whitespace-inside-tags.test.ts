@@ -142,7 +142,7 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
     `
 
-    expectInfo("Add whitespace after `<%#=`. This looks like a temporarily commented ERB output tag.")
+    expectInfo("Add whitespace after `<%#=`. This looks like a temporarily commented ERB tag.")
     expectError("Add whitespace before `%>`.")
     assertOffenses(html)
   })

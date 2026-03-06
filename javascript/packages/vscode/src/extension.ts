@@ -227,8 +227,8 @@ async function sendCommentRequest(editor: vscode.TextEditor, method: string) {
   const edits = await client.sendRequest<TextEdit[]>(method, {
     textDocument: { uri: editor.document.uri.toString() },
     range: {
-      start: { line: selection.start.line, character: 0 },
-      end: { line: selection.end.line, character: 0 }
+      start: { line: selection.start.line, character: selection.start.character },
+      end: { line: selection.end.line, character: selection.end.character }
     }
   })
 

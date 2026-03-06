@@ -175,6 +175,46 @@ describe("CommentService", () => {
         expect(edits[0].range.start.character).toBe(2)
         expect(edits[0].range.end.character).toBe(4)
       })
+
+      it("uncomments <%# - code %> back to <%- code %>", () => {
+        const document = createDocument(`<%# - code %>`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("")
+        expect(edits[0].range.start.character).toBe(2)
+        expect(edits[0].range.end.character).toBe(4)
+      })
+
+      it("uncomments <%# % code %> back to <%% code %>", () => {
+        const document = createDocument(`<%# % code %>`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("")
+        expect(edits[0].range.start.character).toBe(2)
+        expect(edits[0].range.end.character).toBe(4)
+      })
+
+      it("uncomments <%# %= expression %> back to <%%= expression %>", () => {
+        const document = createDocument(`<%# %= expression %>`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("")
+        expect(edits[0].range.start.character).toBe(2)
+        expect(edits[0].range.end.character).toBe(4)
+      })
+
+      it("uncomments <%# graphql query %> back to <%graphql query %>", () => {
+        const document = createDocument(`<%# graphql { user { name } } %>`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("")
+        expect(edits[0].range.start.character).toBe(2)
+        expect(edits[0].range.end.character).toBe(4)
+      })
     })
 
     describe("mixed selection", () => {
@@ -310,6 +350,124 @@ describe("CommentService", () => {
         const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
 
         expect(uncommented).toBe(original)
+      })
+
+      it("round-trips a single ERB control line", () => {
+        const original = `<% if true %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%# if true %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%== raw output tag", () => {
+        const original = `<%== raw_html %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#== raw_html %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%- trim tag", () => {
+        const original = `<%- code %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#- code %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%% literal percent tag", () => {
+        const original = `<%% code %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#% code %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%%= literal percent output tag", () => {
+        const original = `<%%= expression %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#%= expression %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%graphql tag", () => {
+        const original = `<%graphql { user { name } } %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#graphql { user { name } } %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips linter-formatted <%# == raw %>", () => {
+        const linterFormatted = `<%# == raw_html %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%== raw_html %>`)
+      })
+
+      it("round-trips linter-formatted <%# - code %>", () => {
+        const linterFormatted = `<%# - code %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%- code %>`)
+      })
+
+      it("round-trips linter-formatted <%# % code %>", () => {
+        const linterFormatted = `<%# % code %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%% code %>`)
+      })
+
+      it("round-trips linter-formatted <%# %= expression %>", () => {
+        const linterFormatted = `<%# %= expression %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%%= expression %>`)
+      })
+
+      it("round-trips linter-formatted <%# graphql query %>", () => {
+        const linterFormatted = `<%# graphql { user { name } } %>`
+        const document = createDocument(linterFormatted)
+        const uncommented = applyEdits(linterFormatted, service.toggleLineComment(document, lineRange(0)))
+
+        expect(uncommented).toBe(`<%graphql { user { name } } %>`)
       })
 
       it("round-trips a real-world ERB template", () => {

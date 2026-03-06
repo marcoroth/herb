@@ -4,6 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 
+import { lspLine } from "./range_utils"
 import { isERBCommentNode } from "@herb-tools/core"
 
 import type {
@@ -29,7 +30,7 @@ class LineContextCollector extends Visitor {
   visitERBNode(node: ERBNode): void {
     if (!node.tag_opening || !node.tag_closing) return
 
-    const startLine = node.tag_opening.location.start.line - 1
+    const startLine = lspLine(node.tag_opening.location.start)
 
     if (isERBCommentNode(node)) {
       this.setLine(startLine, "erb-comment", node)
@@ -44,8 +45,8 @@ class LineContextCollector extends Visitor {
   }
 
   visitHTMLCommentNode(node: HTMLCommentNode): void {
-    const startLine = node.location.start.line - 1
-    const endLine = node.location.end.line - 1
+    const startLine = lspLine(node.location.start)
+    const endLine = lspLine(node.location.end)
 
     for (let line = startLine; line <= endLine; line++) {
       this.setLine(line, "html-comment", node)
@@ -55,8 +56,8 @@ class LineContextCollector extends Visitor {
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const startLine = node.location.start.line - 1
-    const endLine = node.location.end.line - 1
+    const startLine = lspLine(node.location.start)
+    const endLine = lspLine(node.location.end)
 
     for (let line = startLine; line <= endLine; line++) {
       if (!this.lineMap.has(line)) {
@@ -68,8 +69,8 @@ class LineContextCollector extends Visitor {
   }
 
   visitHTMLTextNode(node: HTMLTextNode): void {
-    const startLine = node.location.start.line - 1
-    const endLine = node.location.end.line - 1
+    const startLine = lspLine(node.location.start)
+    const endLine = lspLine(node.location.end)
 
     for (let line = startLine; line <= endLine; line++) {
       if (!this.lineMap.has(line)) {
@@ -203,7 +204,7 @@ export class CommentService {
       const node = info.node as ERBContentNode
       if (!node?.tag_opening) return null
 
-      if (node.tag_opening.location.start.line - 1 !== info.line) {
+      if (lspLine(node.tag_opening.location.start) !== info.line) {
         return null
       }
 
@@ -238,11 +239,18 @@ export class CommentService {
         return TextEdit.replace(lineRange, `${indent}${trimmedContent}`)
       }
 
-      if (node.tag_opening.location.start.line - 1 !== info.line) return null
+      if (lspLine(node.tag_opening.location.start) !== info.line) return null
 
       const hashColumn = node.tag_opening.location.start.column + 2
 
-      if (contentValue?.startsWith(" == ") || contentValue?.startsWith(" = ")) {
+      if (
+        contentValue?.startsWith(" graphql ") ||
+        contentValue?.startsWith(" %= ") ||
+        contentValue?.startsWith(" == ") ||
+        contentValue?.startsWith(" % ") ||
+        contentValue?.startsWith(" = ") ||
+        contentValue?.startsWith(" - ")
+      ) {
         return TextEdit.del(Range.create(info.line, hashColumn, info.line, hashColumn + 2))
       }
 
@@ -263,6 +271,7 @@ export class CommentService {
 
   private getIndentation(lineText: string): string {
     const match = lineText.match(/^(\s*)/)
+
     return match ? match[1] : ""
   }
 }
