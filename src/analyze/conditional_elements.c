@@ -3,7 +3,6 @@
 #include "../include/element_source.h"
 #include "../include/errors.h"
 #include "../include/token_struct.h"
-#include "../include/util.h"
 #include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 #include "../include/util/hb_string.h"
@@ -37,38 +36,19 @@ static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool
 
   if (!content_token || hb_string_is_empty(content_token->value)) { return HB_STRING_NULL; }
 
-  const char* data = content_token->value.data;
-  size_t remaining = content_token->value.length;
-
-  while (remaining > 0 && is_whitespace(*data)) {
-    data++;
-    remaining--;
-  }
+  hb_string_T value = hb_string_trim_start(content_token->value);
 
   if (*is_if) {
-    if (remaining >= 3 && strncmp(data, "if", 2) == 0 && is_whitespace(data[2])) {
-      data += 3;
-      remaining -= 3;
-    }
+    if (hb_string_starts_with(value, hb_string("if "))) { value = hb_string_slice(value, 3); }
   } else {
-    if (remaining >= 7 && strncmp(data, "unless", 6) == 0 && is_whitespace(data[6])) {
-      data += 7;
-      remaining -= 7;
-    }
+    if (hb_string_starts_with(value, hb_string("unless "))) { value = hb_string_slice(value, 7); }
   }
 
-  while (remaining > 0 && is_whitespace(*data)) {
-    data++;
-    remaining--;
-  }
-  if (remaining == 0) { return HB_STRING_NULL; }
+  value = hb_string_trim(value);
 
-  while (remaining > 0 && is_whitespace(data[remaining - 1])) {
-    remaining--;
-  }
-  if (remaining == 0) { return HB_STRING_NULL; }
+  if (hb_string_is_empty(value)) { return HB_STRING_NULL; }
 
-  return (hb_string_T) { .data = (char*) data, .length = (uint32_t) remaining };
+  return value;
 }
 
 static bool is_simple_erb_conditional(AST_NODE_T* node) {
@@ -107,18 +87,7 @@ static bool contains_single_open_tag(hb_array_T* statements, AST_HTML_OPEN_TAG_N
 
     if (child->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) child;
-      bool whitespace_only = true;
-
-      if (!hb_string_is_empty(text->content)) {
-        for (size_t ci = 0; ci < text->content.length; ci++) {
-          if (!is_whitespace(text->content.data[ci])) {
-            whitespace_only = false;
-            break;
-          }
-        }
-      }
-
-      if (whitespace_only) { continue; }
+      if (hb_string_is_blank(text->content)) { continue; }
 
       return false;
     }
@@ -156,18 +125,7 @@ static bool contains_single_close_tag(hb_array_T* statements, AST_HTML_CLOSE_TAG
 
     if (child->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) child;
-      bool whitespace_only = true;
-
-      if (!hb_string_is_empty(text->content)) {
-        for (size_t ci = 0; ci < text->content.length; ci++) {
-          if (!is_whitespace(text->content.data[ci])) {
-            whitespace_only = false;
-            break;
-          }
-        }
-      }
-
-      if (whitespace_only) { continue; }
+      if (hb_string_is_blank(text->content)) { continue; }
 
       return false;
     }

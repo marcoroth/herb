@@ -3,7 +3,6 @@
 #include "../include/element_source.h"
 #include "../include/errors.h"
 #include "../include/token_struct.h"
-#include "../include/util.h"
 #include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 #include "../include/util/hb_string.h"
@@ -87,18 +86,7 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 
     if (node->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) node;
-      bool whitespace_only = true;
-
-      if (!hb_string_is_empty(text->content)) {
-        for (size_t ci = 0; ci < text->content.length; ci++) {
-          if (!is_whitespace(text->content.data[ci])) {
-            whitespace_only = false;
-            break;
-          }
-        }
-      }
-
-      if (whitespace_only) { continue; }
+      if (hb_string_is_blank(text->content)) { continue; }
 
       if (result.tag) {
         hb_string_T tag_name = get_open_tag_name(result.tag);
