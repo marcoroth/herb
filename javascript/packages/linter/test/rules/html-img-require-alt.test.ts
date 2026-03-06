@@ -45,4 +45,9 @@ describe("html-img-require-alt", () => {
   test("passes for case-insensitive alt attribute", () => {
     expectNoOffenses('<img src="/logo.png" ALT="Logo">')
   })
+
+  test("fails for img with alt attribute without value", () => {
+    expectError('The `alt` attribute has no value. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    assertOffenses('<img src="/avatar.jpg" alt>')
+  })
 })
