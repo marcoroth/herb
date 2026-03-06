@@ -403,7 +403,7 @@ module Herb
       end
 
       return unless non_security_errors.any?
-      
+
       formatter = ErrorFormatter.new(input, non_security_errors, filename: @filename)
       message = formatter.format_all
       raise CompilationError, "\n#{message}"
