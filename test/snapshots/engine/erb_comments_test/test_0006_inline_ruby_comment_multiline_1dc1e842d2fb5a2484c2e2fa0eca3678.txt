@@ -4,7 +4,6 @@ input: "{source: \"<% # Comment\\nmore %> <% code = \\\"test\\\" %><%= code %>\"
 ---
 _buf = ::String.new; # Comment
 more 
-
   code = "test" 
  _buf << (code).to_s;
 _buf.to_s

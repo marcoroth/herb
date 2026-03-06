@@ -21,6 +21,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when 'a' " (location: (2:2)-(2:12))
     │   │       ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (2:14)-(4:0))
     │   │               └── content: "\n  aaa\n"

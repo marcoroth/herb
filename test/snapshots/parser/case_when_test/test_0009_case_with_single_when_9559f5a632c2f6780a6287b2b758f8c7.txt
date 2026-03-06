@@ -1,0 +1,66 @@
+---
+source: "Parser::CaseWhenTest#test_0009_case with single when"
+input: |2-
+<% case 1 %>
+<% when 1 %>
+  <p>one</p>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case 1 " (location: (1:2)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:12)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:12))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 1 " (location: (2:2)-(2:10))
+    │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (3:2)-(3:12))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:5))
+    │   │           │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │           │   │       ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │           │   │       ├── tag_closing: ">" (location: (3:4)-(3:5))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (3:5)-(3:8))
+    │   │           │   │       └── content: "one"
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (3:8)-(3:12))
+    │   │           │   │       ├── tag_opening: "</" (location: (3:8)-(3:10))
+    │   │           │   │       ├── tag_name: "p" (location: (3:10)-(3:11))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (3:11)-(3:12))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (3:12)-(4:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

@@ -6,6 +6,7 @@ import { LinterService } from "../src/linter_service"
 import { Settings } from "../src/settings"
 import { Project } from "../src/project"
 import { Herb } from "@herb-tools/node-wasm"
+import { Config } from "@herb-tools/config"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 
@@ -130,6 +131,97 @@ describe("LinterService", () => {
       expect(parserErrorDiagnostics).toHaveLength(0)
     })
 
+    test("respects files.exclude patterns from config", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = Config.fromObject({
+        files: {
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
+
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/vendor/cache/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics).toEqual([])
+
+      vi.restoreAllMocks()
+    })
+
+    test("respects linter.exclude patterns from config", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = Config.fromObject({
+        linter: {
+          enabled: true,
+          exclude: ["something/**/*"],
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
+
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/something/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics).toEqual([])
+
+      vi.restoreAllMocks()
+    })
+
+    test("lints files not matching exclude patterns", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = Config.fromObject({
+        files: {
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
+
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/app/views/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics.length).toBeGreaterThan(0)
+
+      vi.restoreAllMocks()
+    })
+
     test("respects custom disabled rules configuration", async () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue({
@@ -139,7 +231,7 @@ describe("LinterService", () => {
       settings.projectConfig = {
         path: "/test/.herb.yml",
         config: {
-          version: "0.8.4",
+          version: "0.8.10",
           linter: {
             enabled: true,
             rules: {
@@ -149,12 +241,11 @@ describe("LinterService", () => {
         },
         toJSON: () => "{}",
         getConfiguredSeverity: () => "error",
-        applySeverityOverrides: (offenses) => offenses
+        applySeverityOverrides: (offenses: any) => offenses
       } as any
 
       const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<DIV>Content</DIV>")
-
       const result = await linterService.lintDocument(textDocument)
 
       const lowercaseDiagnostics = result.diagnostics.filter(

@@ -1,0 +1,63 @@
+---
+source: "Analyze::ThenTest#test_0008_case when with multiple then keywords"
+input: |2-
+<% case status %>
+<% when :active then %>
+  Active
+<% when :pending then %>
+  Pending
+<% when :inactive then %>
+  Inactive
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(8:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case status " (location: (1:2)-(1:15))
+    │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:17)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (3 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:23))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when :active then " (location: (2:2)-(2:21))
+    │   │   │   ├── tag_closing: "%>" (location: (2:21)-(2:23))
+    │   │   │   ├── then_keyword: (location: (2:16)-(2:20))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:23)-(4:0))
+    │   │   │           └── content: "\n  Active\n"
+    │   │   │
+    │   │   │
+    │   │   ├── @ ERBWhenNode (location: (4:0)-(4:24))
+    │   │   │   ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │   │   ├── content: " when :pending then " (location: (4:2)-(4:22))
+    │   │   │   ├── tag_closing: "%>" (location: (4:22)-(4:24))
+    │   │   │   ├── then_keyword: (location: (4:17)-(4:21))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (4:24)-(6:0))
+    │   │   │           └── content: "\n  Pending\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (6:0)-(6:25))
+    │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │       ├── content: " when :inactive then " (location: (6:2)-(6:23))
+    │   │       ├── tag_closing: "%>" (location: (6:23)-(6:25))
+    │   │       ├── then_keyword: (location: (6:18)-(6:22))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (6:25)-(8:0))
+    │   │               └── content: "\n  Inactive\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (8:0)-(8:9))
+    │           ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │           ├── content: " end " (location: (8:2)-(8:7))
+    │           └── tag_closing: "%>" (location: (8:7)-(8:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (8:9)-(9:0))
+        └── content: "\n"

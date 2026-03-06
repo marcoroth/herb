@@ -99,7 +99,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   val warningsArray = Array.new_();
 
   if (tokens) {
-    for (size_t i = 0; i < tokens->size; i++) {
+    for (size_t i = 0; i < hb_array_size(tokens); i++) {
       token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         tokensArray.call<void>("push", CreateToken(token));
@@ -115,7 +115,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   return result;
 }
 
-val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
+val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, parser_options_T* options){
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -128,6 +128,13 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
   result.set("source", val(source));
   result.set("warnings", warningsArray);
   result.set("errors", errorsArray);
+
+  val options_object = Object.new_();
+  options_object.set("strict", val(options->strict));
+  options_object.set("track_whitespace", val(options->track_whitespace));
+  options_object.set("analyze", val(options->analyze));
+
+  result.set("options", options_object);
 
   return result;
 }

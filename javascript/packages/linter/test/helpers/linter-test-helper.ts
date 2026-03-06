@@ -2,8 +2,10 @@ import { beforeAll, afterEach, expect } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
+import { ParseCache } from "../../src/parse-cache.js"
 import { Config } from "@herb-tools/config"
 
+import { ParserRule } from "../../src/types.js"
 import type { RuleClass } from "../../src/types.js"
 
 interface ExpectedLocation {
@@ -27,6 +29,7 @@ interface LinterTestHelpers {
   expectNoOffenses: (html: string, options?: any | TestOptions) => void
   expectWarning: (message: string, location?: LocationInput) => void
   expectError: (message: string, location?: LocationInput) => void
+  expectInfo: (message: string, location?: LocationInput) => void
   assertOffenses: (html: string, options?: any | TestOptions) => void
 }
 
@@ -61,23 +64,27 @@ interface LinterTestHelpers {
  * })
  * ```
  */
-export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelpers {
+export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?: Record<string, any>): LinterTestHelpers {
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
+  const expectedInfos: ExpectedOffense[] = []
   let hasAsserted = false
 
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
-  const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors"
+  const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
+  const parseCache = new ParseCache(Herb)
+  const ruleConfigOverride = configOverride
 
   beforeAll(async () => {
     await Herb.load()
   })
 
   afterEach(() => {
-    if (!hasAsserted && (expectedWarnings.length > 0 || expectedErrors.length > 0)) {
-      const pendingCount = expectedWarnings.length + expectedErrors.length
+    if (!hasAsserted && (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0)) {
+      const pendingCount = expectedWarnings.length + expectedErrors.length + expectedInfos.length
 
       throw new Error(
         `Test has ${pendingCount} pending expectation(s) that were never asserted. ` +
@@ -87,13 +94,15 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     expectedWarnings.length = 0
     expectedErrors.length = 0
+    expectedInfos.length = 0
     hasAsserted = false
+    parseCache.clear()
   })
 
   const expectNoOffenses = (html: string, options?: any | TestOptions) => {
-    if (expectedWarnings.length > 0 || expectedErrors.length > 0) {
+    if (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0) {
       throw new Error(
-        "Cannot call expectNoOffenses() after registering expectations with expectWarning() or expectError()"
+        "Cannot call expectNoOffenses() after registering expectations with expectWarning(), expectError(), or expectInfo()"
       )
     }
 
@@ -103,7 +112,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = parseCache.get(html, ruleParserOptions)
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -129,7 +138,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({
@@ -141,7 +153,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
 
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
     const primaryOffenses = lintResult.offenses.filter(offense => offense.rule === ruleName)
 
     expect(primaryOffenses).toHaveLength(0)
@@ -166,8 +178,12 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     expectedErrors.push({ message, location: normalizeLocation(location) })
   }
 
+  const expectInfo = (message: string, location?: LocationInput) => {
+    expectedInfos.push({ message, location: normalizeLocation(location) })
+  }
+
   const assertOffenses = (html: string, options?: any | TestOptions) => {
-    if (expectedWarnings.length === 0 && expectedErrors.length === 0) {
+    if (expectedWarnings.length === 0 && expectedErrors.length === 0 && expectedInfos.length === 0) {
       throw new Error(
         "Cannot call assertOffenses() with no expectations. Use expectNoOffenses() instead."
       )
@@ -179,7 +195,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = parseCache.get(html, ruleParserOptions)
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -205,7 +221,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({
@@ -216,11 +235,12 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
 
     const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
     const primaryErrors = primaryOffenses.filter(o => o.severity === "error")
     const primaryWarnings = primaryOffenses.filter(o => o.severity === "warning")
+    const primaryInfos = primaryOffenses.filter(o => o.severity === "info")
 
     if (primaryErrors.length !== expectedErrors.length) {
       throw new Error(
@@ -238,24 +258,36 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
       )
     }
 
+    if (primaryInfos.length !== expectedInfos.length) {
+      throw new Error(
+        `Expected ${expectedInfos.length} info(s) from rule "${ruleName}" but found ${primaryInfos.length}.\n` +
+        `Expected:\n${expectedInfos.map(i => `  - "${i.message}"`).join('\n')}\n` +
+        `Actual:\n${primaryInfos.map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
+      )
+    }
+
     primaryOffenses.forEach(offense => {
       expect(offense.rule).toBe(ruleName)
     })
 
     const actualErrors = primaryErrors
     const actualWarnings = primaryWarnings
+    const actualInfos = primaryInfos
 
     matchOffenses(expectedErrors, actualErrors, "error")
     matchOffenses(expectedWarnings, actualWarnings, "warning")
+    matchOffenses(expectedInfos, actualInfos, "info")
 
     expectedWarnings.length = 0
     expectedErrors.length = 0
+    expectedInfos.length = 0
   }
 
   return {
     expectNoOffenses,
     expectWarning,
     expectError,
+    expectInfo,
     assertOffenses
   }
 }
@@ -266,7 +298,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 function matchOffenses(
   expected: ExpectedOffense[],
   actual: any[],
-  severity: "error" | "warning"
+  severity: "error" | "warning" | "info"
 ) {
   const unmatched = [...expected]
   const unmatchedActual = [...actual]

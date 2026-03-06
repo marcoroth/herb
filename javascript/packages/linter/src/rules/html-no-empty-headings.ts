@@ -1,31 +1,27 @@
-import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS } from "./rule-utils.js"
-
 import { ParserRule } from "../types.js"
+import { BaseRuleVisitor, HEADING_TAGS } from "./rule-utils.js"
+import { getTagLocalName } from "@herb-tools/core"
+import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode, getStaticAttributeValue } from "@herb-tools/core"
 
+import type { Node } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
+    const tagName = getTagLocalName(node)
+    if (tagName === "template") return
+
     this.checkHeadingElement(node)
     super.visitHTMLElementNode(node)
   }
 
-
   private checkHeadingElement(node: HTMLElementNode): void {
-    if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
-      return
-    }
-
-    const openTag = node.open_tag as HTMLOpenTagNode
-    const tagName = getTagName(openTag)
-
-    if (!tagName) {
-      return
-    }
+    const tagName = getTagLocalName(node)
+    if (!tagName) return
 
     const isStandardHeading = HEADING_TAGS.has(tagName)
-    const isAriaHeading = this.hasHeadingRole(openTag)
+    const isAriaHeading = this.hasHeadingRole(node)
 
     if (!isStandardHeading && !isAriaHeading) {
       return
@@ -43,106 +39,73 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     }
   }
 
-
   private isEmptyHeading(node: HTMLElementNode): boolean {
     if (!node.body || node.body.length === 0) {
       return true
     }
 
-    let hasAccessibleContent = false
+    return !this.hasAccessibleContent(node.body)
+  }
 
-    for (const child of node.body) {
-      if (child.type === "AST_LITERAL_NODE") {
-        const literalNode = child as LiteralNode
-
-        if (literalNode.content.trim().length > 0) {
-          hasAccessibleContent = true
-          break
+  private hasAccessibleContent(nodes: Node[]): boolean {
+    for (const child of nodes) {
+      if (isLiteralNode(child) || isHTMLTextNode(child)) {
+        if (child.content.trim().length > 0) {
+          return true
         }
-      } else if (child.type === "AST_HTML_TEXT_NODE") {
-        const textNode = child as HTMLTextNode
-
-        if (textNode.content.trim().length > 0) {
-          hasAccessibleContent = true
-          break
+      } else if (isHTMLElementNode(child)) {
+        if (this.isElementAccessible(child)) {
+          return true
         }
-      } else if (child.type === "AST_HTML_ELEMENT_NODE") {
-        const elementNode = child as HTMLElementNode
-
-        if (this.isElementAccessible(elementNode)) {
-          hasAccessibleContent = true
-          break
+      } else if (isERBOutputNode(child)) {
+        return true
+      } else if (isERBControlFlowNode(child)) {
+        if (this.hasAccessibleContentInControlFlow(child)) {
+          return true
         }
-      } else {
-        hasAccessibleContent = true
-        break
       }
     }
 
-    return !hasAccessibleContent
+    return false
   }
 
-  private hasHeadingRole(node: HTMLOpenTagNode): boolean {
-    const attributes = getAttributes(node)
-    const roleAttribute = findAttributeByName(attributes, "role")
+  private hasAccessibleContentInControlFlow(node: Node): boolean {
+    const nodeWithStatements = node as { statements?: Node[], body?: Node[], subsequent?: Node }
 
-    if (!roleAttribute) {
-      return false
-    }
-
-    const roleValue = getAttributeValue(roleAttribute)
-    return roleValue === "heading"
-  }
-
-  private isElementAccessible(node: HTMLElementNode): boolean {
-    if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
+    if (nodeWithStatements.statements && this.hasAccessibleContent(nodeWithStatements.statements)) {
       return true
     }
 
-    const openTag = node.open_tag as HTMLOpenTagNode
-    const attributes = getAttributes(openTag)
-    const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
+    if (nodeWithStatements.body && this.hasAccessibleContent(nodeWithStatements.body)) {
+      return true
+    }
 
-    if (ariaHiddenAttribute) {
-      const ariaHiddenValue = getAttributeValue(ariaHiddenAttribute)
+    if (nodeWithStatements.subsequent) {
+      return this.hasAccessibleContentInControlFlow(nodeWithStatements.subsequent)
+    }
 
-      if (ariaHiddenValue === "true") {
-        return false
-      }
+    return false
+  }
+
+  private hasHeadingRole(node: HTMLElementNode): boolean {
+    return getStaticAttributeValue(node, "role") === "heading"
+  }
+
+  private isElementAccessible(node: HTMLElementNode): boolean {
+    if (getStaticAttributeValue(node, "aria-hidden") === "true") {
+      return false
     }
 
     if (!node.body || node.body.length === 0) {
       return false
     }
 
-    for (const child of node.body) {
-      if (child.type === "AST_LITERAL_NODE") {
-        const literalNode = child as LiteralNode
-        if (literalNode.content.trim().length > 0) {
-          return true
-        }
-      } else if (child.type === "AST_HTML_TEXT_NODE") {
-        const textNode = child as HTMLTextNode
-        if (textNode.content.trim().length > 0) {
-          return true
-        }
-      } else if (child.type === "AST_HTML_ELEMENT_NODE") {
-        const elementNode = child as HTMLElementNode
-        if (this.isElementAccessible(elementNode)) {
-          return true
-        }
-      } else {
-        // If there's any non-literal/non-text/non-element content (like ERB), consider it accessible
-        return true
-      }
-    }
-
-    return false
+    return this.hasAccessibleContent(node.body)
   }
 }
 
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
-  name = "html-no-empty-headings"
+  static ruleName = "html-no-empty-headings"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -152,7 +115,7 @@ export class HTMLNoEmptyHeadingsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoEmptyHeadingsVisitor(this.name, context)
+    const visitor = new NoEmptyHeadingsVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

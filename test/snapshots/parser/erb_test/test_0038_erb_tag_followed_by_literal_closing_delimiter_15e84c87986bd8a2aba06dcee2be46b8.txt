@@ -3,6 +3,10 @@ source: "Parser::ERBTest#test_0038_erb tag followed by literal closing delimiter
 input: "<% content %> %>"
 ---
 @ DocumentNode (location: (1:0)-(1:16))
+├── errors: (1 error)
+│   └── @ StrayERBClosingTagError (location: (1:14)-(1:16))
+│       └── message: "Stray `%>` found at (1:14). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+│
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:13))
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))

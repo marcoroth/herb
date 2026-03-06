@@ -5,6 +5,7 @@
 #include "location.h"
 #include "position.h"
 #include "token.h"
+#include "util/hb_allocator.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
 
@@ -31,7 +32,7 @@ typedef struct {
 
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
+<%- arguments = error_arguments + ["position_T start", "position_T end", "hb_allocator_T* allocator"] -%>
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>);
 void append_<%= error.human %>(<%= (arguments << "hb_array_T* errors").join(", ") %>);
 <%- end -%>
@@ -46,13 +47,15 @@ char* error_message(ERROR_T* error);
 const char* error_type_to_string(ERROR_T* error);
 const char* error_human_type(ERROR_T* error);
 
-void error_free(ERROR_T* error);
+void error_free(ERROR_T* error, hb_allocator_T* allocator);
 
-void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, hb_buffer_T* buffer);
+#ifndef HERB_EXCLUDE_PRETTYPRINT
+  void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, hb_buffer_T* buffer);
 
-void error_pretty_print_array(
-  const char* name, hb_array_T* array, size_t indent, size_t relative_indent, bool last_property,
-  hb_buffer_T* buffer
-);
+  void error_pretty_print_array(
+    const char* name, hb_array_T* array, size_t indent, size_t relative_indent, bool last_property,
+    hb_buffer_T* buffer
+  );
+#endif
 
 #endif

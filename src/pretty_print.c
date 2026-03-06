@@ -1,17 +1,19 @@
-#include "include/pretty_print.h"
-#include "include/analyzed_ruby.h"
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
-#include "include/ast_pretty_print.h"
-#include "include/errors.h"
-#include "include/token_struct.h"
-#include "include/util.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/hb_string.h"
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+// Pretty print support excluded
+#else
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#  include "include/pretty_print.h"
+#  include "include/ast_nodes.h"
+#  include "include/ast_pretty_print.h"
+#  include "include/errors.h"
+#  include "include/token_struct.h"
+#  include "include/util.h"
+#  include "include/util/hb_buffer.h"
+#  include "include/util/hb_string.h"
+
+#  include <stdbool.h>
+#  include <stdio.h>
+#  include <stdlib.h>
 
 void pretty_print_indent(hb_buffer_T* buffer, const size_t indent) {
   for (size_t i = 0; i < indent; i++) {
@@ -113,7 +115,7 @@ void pretty_print_array(
     return;
   }
 
-  if (array->size == 0) {
+  if (hb_array_size(array) == 0) {
     pretty_print_property(name, hb_string("[]"), indent, relative_indent, last_property, buffer);
 
     return;
@@ -124,17 +126,17 @@ void pretty_print_array(
   hb_buffer_append(buffer, "(");
 
   char count[16];
-  sprintf(count, "%zu", array->size);
+  sprintf(count, "%zu", hb_array_size(array));
   hb_buffer_append(buffer, count);
   hb_buffer_append(buffer, ")\n");
 
   if (indent < 20) {
-    for (size_t i = 0; i < array->size; i++) {
+    for (size_t i = 0; i < hb_array_size(array); i++) {
       AST_NODE_T* child = hb_array_get(array, i);
       pretty_print_indent(buffer, indent);
       pretty_print_indent(buffer, relative_indent + 1);
 
-      if (i == array->size - 1) {
+      if (i == hb_array_size(array) - 1) {
         hb_buffer_append(buffer, "└── ");
       } else {
         hb_buffer_append(buffer, "├── ");
@@ -142,7 +144,7 @@ void pretty_print_array(
 
       ast_pretty_print_node(child, indent + 1, relative_indent + 1, buffer);
 
-      if (i != array->size - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
+      if (i != hb_array_size(array) - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
     }
   }
   hb_buffer_append(buffer, "\n");
@@ -155,7 +157,7 @@ void pretty_print_errors(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  if (node->errors != NULL && node->errors->size > 0) {
+  if (hb_array_size(node->errors) > 0) {
     error_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
     hb_buffer_append(buffer, "\n");
   }
@@ -251,3 +253,5 @@ void pretty_print_string_property(
     if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
 }
+
+#endif

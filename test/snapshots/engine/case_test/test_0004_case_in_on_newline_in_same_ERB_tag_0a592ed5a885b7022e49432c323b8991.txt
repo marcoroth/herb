@@ -1,0 +1,5 @@
+---
+source: "Engine::CaseTest#test_0004_case in on newline in same ERB tag"
+input: "{source: \"<% case count\\n   in 1 %>\\n  <span>One</span>\\n<% in 2 %>\\n  <span>Two</span>\\n<% end %>\\n\", locals: {count: 1}, options: {escape: false, strict: false}}"
+---
+  <span>One</span>

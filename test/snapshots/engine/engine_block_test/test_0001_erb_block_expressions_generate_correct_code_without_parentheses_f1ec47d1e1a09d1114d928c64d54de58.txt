@@ -2,5 +2,5 @@
 source: "Engine::EngineBlockTest#test_0001_erb block expressions generate correct code without parentheses"
 input: "{source: \"<%= link_to \\\"/path\\\", class: \\\"btn\\\" do %>Click me<% end %>\", options: {}}"
 ---
-_buf = ::String.new; _buf << link_to "/path", class: "btn" do; _buf << 'Click me'.freeze; end;
+_buf = ::String.new; _buf << (link_to "/path", class: "btn" do; _buf << 'Click me'.freeze; end);
 _buf.to_s

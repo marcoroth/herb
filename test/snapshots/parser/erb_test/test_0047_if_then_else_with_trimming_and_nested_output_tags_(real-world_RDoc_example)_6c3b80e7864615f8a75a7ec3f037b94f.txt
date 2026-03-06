@@ -13,6 +13,7 @@ input: |2-
     │   ├── tag_opening: "<%-" (location: (1:0)-(1:3))
     │   ├── content: " if @options.main_page and main_page = @files.find { |f| f.full_name == @options.main_page } then " (location: (1:3)-(1:101))
     │   ├── tag_closing: "%>" (location: (1:101)-(1:103))
+    │   ├── then_keyword: (location: (1:96)-(1:100))
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:103)-(2:2))
     │   │   │   └── content: "\n  "

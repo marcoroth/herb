@@ -1,11 +1,18 @@
 module Herb
   module AST
     <%- nodes.each do |node| -%>
+    #: type serialized_<%= node.human %> = {
+      <%- node.fields.each do |field| -%>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+    #|  <%= field.name %>: <%= field.ruby_type %><%= if is_nilable then "?" end %>,
+      <%- end -%>
+    #| }
     class <%= node.name -%> < Node
       include Colors
 
       <%- node.fields.each do |field| -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %><%= if is_nilable then "?" end %>
       <%- end -%>
 
       #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -37,10 +44,10 @@ module Herb
       #: () -> Array[Herb::AST::Node?]
       def child_nodes
         [<%= node.fields.map { |field|
-          if field.is_a?(Herb::Template::NodeField)
+          if field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField)
             field.name
-          elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
-            "*#{field.name}"
+          elsif field.is_a?(Herb::Template::ArrayField) && (field.specific_kind&.end_with?("Node") || field.union_kind&.all? { |k| k.end_with?("Node") })
+            "*(#{field.name} || [])"
           else
             nil
           end
@@ -85,13 +92,17 @@ module Herb
         output += white("<%= symbol %> <%= field.name %>: ")
         output += [true, false].include?(<%= field.name %>) ? bold(magenta(<%= field.name %>.to_s)) : magenta("∅")
         output += "\n"
+        <%- when Herb::Template::LocationField -%>
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? dimmed("(location: #{<%= field.name %>.tree_inspect})") : magenta("∅")
+        output += "\n"
         <%- when Herb::Template::ElementSourceField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::PrismNodeField -%>
         # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>
         # no-op for <%= field.name %>
-        <%- when Herb::Template::NodeField -%>
+        <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
         output += white("<%= symbol %> <%= field.name %>: ")
         if <%= field.name %>
           <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>

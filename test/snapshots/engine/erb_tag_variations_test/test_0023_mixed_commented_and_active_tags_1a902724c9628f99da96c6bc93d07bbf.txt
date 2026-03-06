@@ -1,0 +1,11 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0023_mixed commented and active tags"
+input: "{source: \"<div>\\n  <%#= render \\\"disabled_partial\\\" %>\\n  <%= value %>\\n  <%# this is a comment %>\\n  <%#== raw_disabled %>\\n  <p>Content</p>\\n</div>\\n\", locals: {value: \"hello\"}, options: {}}"
+---
+<div>
+  
+  hello
+  
+  
+  <p>Content</p>
+</div>

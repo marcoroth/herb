@@ -1,17 +1,17 @@
 {
   "name": "@herb-tools/highlighter",
-  "version": "0.8.4",
+  "version": "0.8.10",
   "description": "Syntax highlighter and diagnostic renderer for HTML+ERB templates.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/highlighter%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/highlighter"
   },
   "bin": {
-    "herb-highlight": "./bin/herb-highlight"
+    "herb-highlight": "bin/herb-highlight"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -35,8 +35,8 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {
-    "@herb-tools/core": "0.8.4",
-    "@herb-tools/node-wasm": "0.8.4"
+    "@herb-tools/core": "0.8.10",
+    "@herb-tools/node-wasm": "0.8.10"
   },
   "files": [
     "package.json",

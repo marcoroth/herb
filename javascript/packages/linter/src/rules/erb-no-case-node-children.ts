@@ -49,7 +49,7 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoCaseNodeChildrenRule extends ParserRule {
-  name = "erb-no-case-node-children"
+  static ruleName = "erb-no-case-node-children"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -59,7 +59,7 @@ export class ERBNoCaseNodeChildrenRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoCaseNodeChildrenVisitor(this.name, context)
+    const visitor = new ERBNoCaseNodeChildrenVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

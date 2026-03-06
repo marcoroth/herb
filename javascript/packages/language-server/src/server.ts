@@ -12,6 +12,10 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
+  FoldingRangeParams,
+  DocumentHighlightParams,
+  TextDocumentIdentifier,
+  Range,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -53,6 +57,8 @@ export class Server {
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
+          foldingRangeProvider: true,
+          documentHighlightProvider: true,
         },
       }
 
@@ -157,6 +163,14 @@ export class Server {
       return this.service.formattingService.formatRange(params)
     })
 
+    this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
+    })
+
     this.connection.onCodeAction((params: CodeActionParams) => {
       const document = this.service.documentService.get(params.textDocument.uri)
 
@@ -174,6 +188,30 @@ export class Server {
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
 
       return autofixCodeActions.concat(linterDisableCodeActions)
+    })
+
+    this.connection.onFoldingRanges((params: FoldingRangeParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.foldingRangeService.getFoldingRanges(document)
+    })
+
+    this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleLineComment(document, params.range)
+    })
+
+    this.connection.onRequest('herb/toggleBlockComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleBlockComment(document, params.range)
     })
   }
 

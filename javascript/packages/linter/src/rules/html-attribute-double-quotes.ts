@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
-import { filterLiteralNodes } from "@herb-tools/core"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import { filterLiteralNodes, getAttributeValueQuoteType, hasAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
@@ -44,7 +44,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin<AttributeDouble
 
 export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuotesAutofixContext> {
   static autocorrectable = true
-  name = "html-attribute-double-quotes"
+  static ruleName = "html-attribute-double-quotes"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -54,7 +54,7 @@ export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuo
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeDoubleQuotesAutofixContext>[] {
-    const visitor = new AttributeDoubleQuotesVisitor(this.name, context)
+    const visitor = new AttributeDoubleQuotesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

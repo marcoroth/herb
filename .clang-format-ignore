@@ -1,7 +1,7 @@
 ext/herb/error_helpers.c
 ext/herb/nodes.c
-src/analyze_missing_end.c
-src/analyze_transform.c
+src/analyze/missing_end.c
+src/analyze/transform.c
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c

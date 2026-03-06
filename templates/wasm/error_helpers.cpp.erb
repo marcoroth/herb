@@ -18,7 +18,7 @@ extern "C" {
 
 using namespace emscripten;
 
-val CreateLocation(location_T* location);
+val CreateLocation(location_T location);
 val CreateToken(token_T* token);
 val NodeFromCStruct(AST_NODE_T* node);
 val NodesArrayFromCArray(hb_array_T* array);
@@ -49,6 +49,10 @@ val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
   result.set("<%= field.name %>", CreateString(token_type_to_string(<%= error.human %>-><%= field.name %>)));
   <%- when Herb::Template::BooleanField -%>
   result.set("<%= field.name %>", <%= error.human %>-><%= field.name %>);
+  <%- when Herb::Template::PositionField -%>
+  result.set("<%= field.name %>", CreatePosition(<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::SizeTField -%>
+  result.set("<%= field.name %>", val((double)<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::ArrayField -%>
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= error.human %>-><%= field.name %>));
   <%- else -%>
@@ -66,7 +70,7 @@ val ErrorsArrayFromCArray(hb_array_T* array) {
   val result = Array.new_();
 
   if (array) {
-    for (size_t i = 0; i < array->size; i++) {
+    for (size_t i = 0; i < hb_array_size(array); i++) {
       ERROR_T* error = (ERROR_T*)hb_array_get(array, i);
       if (error) {
         result.call<void>("push", ErrorFromCStruct(error));

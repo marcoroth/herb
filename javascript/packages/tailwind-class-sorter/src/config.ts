@@ -13,23 +13,23 @@ import { expiringMap } from './expiring-map.js'
 import { resolveCssFrom, resolveJsFrom } from './resolve'
 import type { ContextContainer, SortTailwindClassesOptions } from './types'
 
-let sourceToPathMap = new Map<string, string | null>()
-let sourceToEntryMap = new Map<string, string | null>()
-let pathToContextMap = expiringMap<string | null, ContextContainer>(10_000)
+const sourceToPathMap = new Map<string, string | null>()
+const sourceToEntryMap = new Map<string, string | null>()
+const pathToContextMap = expiringMap<string | null, ContextContainer>(10_000)
 
 export async function getTailwindConfig(
   options: SortTailwindClassesOptions = {},
 ): Promise<ContextContainer> {
-  let pkgName = 'tailwindcss'
+  const pkgName = 'tailwindcss'
 
-  let key = [
+  const key = [
     options.baseDir ?? process.cwd(),
     options.tailwindStylesheet ?? '',
     options.tailwindConfig ?? '',
     pkgName,
   ].join(':')
 
-  let baseDir = getBaseDir(options)
+  const baseDir = getBaseDir(options)
 
   // Map the source file to it's associated Tailwind config file
   let configPath = sourceToPathMap.get(key)
@@ -45,14 +45,14 @@ export async function getTailwindConfig(
   }
 
   // Now see if we've loaded the Tailwind config file before (and it's still valid)
-  let contextKey = `${pkgName}:${configPath}:${entryPoint}`
-  let existing = pathToContextMap.get(contextKey)
+  const contextKey = `${pkgName}:${configPath}:${entryPoint}`
+  const existing = pathToContextMap.get(contextKey)
   if (existing) {
     return existing
   }
 
   // By this point we know we need to load the Tailwind config file
-  let result = await loadTailwindConfig(
+  const result = await loadTailwindConfig(
     baseDir,
     pkgName,
     configPath,
@@ -85,7 +85,7 @@ async function loadTailwindConfig(
   let tailwindConfig: RequiredConfig = { content: [] }
 
   try {
-    let pkgPath = resolveJsFrom(baseDir, pkgName)
+    const pkgPath = resolveJsFrom(baseDir, pkgName)
     let pkgJsonPath: string
 
     try {
@@ -115,14 +115,14 @@ async function loadTailwindConfig(
       }
     }
 
-    let pkgDir = path.dirname(pkgJsonPath)
+    const pkgDir = path.dirname(pkgJsonPath)
 
     try {
-      let v4 = await loadV4(baseDir, pkgDir, pkgName, entryPoint)
+      const v4 = await loadV4(baseDir, pkgDir, pkgName, entryPoint)
       if (v4) {
         return v4
       }
-    } catch (err) {
+    } catch (_error) {
       // V4 loading failed, will try v3 below
     }
 
@@ -136,7 +136,7 @@ async function loadTailwindConfig(
 
     // Prior to `tailwindcss@3.3.0` this won't exist so we load it last
     loadConfig = require(path.join(pkgDir, 'loadConfig'))
-  } catch (err: any) {
+  } catch (_error: any) {
     // Tailwind isn't installed or loading failed, will use defaults
   }
 
@@ -159,7 +159,7 @@ async function loadTailwindConfig(
 
   tailwindConfig.content = ['no-op']
 
-  let context = createContext(resolveConfig(tailwindConfig))
+  const context = createContext(resolveConfig(tailwindConfig))
 
   return {
     context,
@@ -183,13 +183,13 @@ function createLoader<T>({
   filepath: string
   onError: (id: string, error: unknown, resourceType: string) => T
 }) {
-  let cacheKey = `${+Date.now()}`
+  const cacheKey = `${+Date.now()}`
 
   async function loadFile(id: string, base: string, resourceType: string) {
     try {
-      let resolved = resolveJsFrom(base, id)
+      const resolved = resolveJsFrom(base, id)
 
-      let url = pathToFileURL(resolved)
+      const url = pathToFileURL(resolved)
       url.searchParams.append('t', cacheKey)
 
       return await jiti.import(url.href, { default: true })
@@ -199,7 +199,7 @@ function createLoader<T>({
   }
 
   if (legacy) {
-    let baseDir = path.dirname(filepath)
+    const baseDir = path.dirname(filepath)
     return (id: string) => loadFile(id, baseDir, 'module')
   }
 
@@ -218,9 +218,9 @@ async function loadV4(
   entryPoint: string | null,
 ) {
   // Import Tailwind — if this is v4 it'll have APIs we can use directly
-  let pkgPath = resolveJsFrom(baseDir, pkgName)
+  const pkgPath = resolveJsFrom(baseDir, pkgName)
 
-  let tw = await import(pathToFileURL(pkgPath).toString())
+  const tw = await import(pathToFileURL(pkgPath).toString())
 
   // This is not Tailwind v4
   if (!tw.__unstable__loadDesignSystem) {
@@ -231,12 +231,12 @@ async function loadV4(
   entryPoint = entryPoint ?? `${pkgDir}/theme.css`
 
   // Create a Jiti instance that can be used to load plugins and config files
-  let jiti = createJiti(import.meta.url, {
+  const jiti = createJiti(import.meta.url, {
     moduleCache: false,
     fsCache: false,
   })
 
-  let importBasePath = path.dirname(entryPoint)
+  const importBasePath = path.dirname(entryPoint)
 
   // Resolve imports in the entrypoint to a flat CSS tree
   let css = await fs.readFile(entryPoint, 'utf-8')
@@ -256,14 +256,14 @@ async function loadV4(
   } catch {}
 
   if (!supportsImports) {
-    let resolveImports = postcss([postcssImport()])
-    let result = await resolveImports.process(css, { from: entryPoint })
+    const resolveImports = postcss([postcssImport()])
+    const result = await resolveImports.process(css, { from: entryPoint })
     css = result.css
   }
 
   // Load the design system and set up a compatible context object that is
   // usable by the rest of the plugin
-  let design = await tw.__unstable__loadDesignSystem(css, {
+  const design = await tw.__unstable__loadDesignSystem(css, {
     base: importBasePath,
 
     // v4.0.0-alpha.25+
@@ -283,7 +283,7 @@ async function loadV4(
     }),
 
     loadStylesheet: async (id: string, base: string) => {
-      let resolved = resolveCssFrom(base, id)
+      const resolved = resolveCssFrom(base, id)
 
       return {
         base: path.dirname(resolved),

@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0001_<% code %>"
+input: "{source: \"<% x = 1 %><%= x %>\", locals: {}, options: {}}"
+---
+1

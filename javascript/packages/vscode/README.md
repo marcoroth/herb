@@ -42,7 +42,7 @@ See the [Configuration documentation](https://herb-tools.dev/configuration) for 
 
 * Missing HTML opening tags (`MissingOpeningTagError`)
 * Missing HTML closing tags (`MissingClosingTagError`)
-* Mismatched HTML attribute quotes (`QuotesMismatchError`)
+* Unclosed quote errors (`UnclosedQuoteError`)
 * Ruby syntax errors (`Ruby Syntax Error`) (via [Prism](https://github.com/ruby/prism)) (`RubyParseError`)
 * Mismatched HTML tag names (`TagNamesMismatchError`)
 * Unclosed elements at the end of the document (`UnclosedElementError`)

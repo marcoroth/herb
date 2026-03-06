@@ -4,7 +4,7 @@ import dedent from "dedent"
 
 import { readFileSync, writeFileSync, existsSync } from "fs"
 import { resolve } from "path"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"

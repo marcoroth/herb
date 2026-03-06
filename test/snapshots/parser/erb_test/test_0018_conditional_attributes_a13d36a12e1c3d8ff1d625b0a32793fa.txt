@@ -15,6 +15,7 @@ input: "<div <% if odd? %> data-odd=true <% else %> data-odd=false <% end %>></d
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if odd? " (location: (1:7)-(1:16))
         │       │       ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:19)-(1:32))
         │       │       │       ├── name:

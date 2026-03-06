@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "./src",
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -7,7 +9,6 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationDir": "./dist/types",
-    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

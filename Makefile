@@ -67,15 +67,19 @@ ifeq ($(os),Linux)
 endif
 
 ifeq ($(os),Darwin)
-  brew_prefix := $(shell brew --prefix check)
-  test_cflags = $(test_flags) -I$(brew_prefix)/include
-  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(prism_ldflags)
-  llvm_path = $(shell brew --prefix llvm@21)
-  cc = $(llvm_path)/bin/clang
-  clang_format = $(llvm_path)/bin/clang-format
-  clang_tidy = $(llvm_path)/bin/clang-tidy
+  llvm_version := 21
+  llvm_prefix ?= $(shell brew --prefix llvm@$(llvm_version))
+  check_prefix ?= $(shell brew --prefix check)
+
+  cc ?= $(llvm_prefix)/bin/clang
+  clang_format ?= $(llvm_prefix)/bin/clang-format
+  clang_tidy ?= $(llvm_prefix)/bin/clang-tidy
+
+  test_cflags = $(test_flags) -I$(check_prefix)/include
+  test_ldflags = -L$(check_prefix)/lib -lcheck -lm $(prism_ldflags)
 endif
 
+.PHONY: all
 all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm clangd_config
 
 $(exec): $(objects)
@@ -91,39 +95,49 @@ $(static_lib_name): $(objects)
 src/%.o: src/%.c templates
 	$(cc) -c $(flags) -fPIC $< -o $@
 
-test/%.o: test/%.c templates
+test/%.o: test/%.c templates prism
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
 
+.PHONY: test
 test: $(test_objects) $(non_main_objects)
 	$(cc) $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
 
+.PHONY: clean
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
 	rake prism:clean
 
+.PHONY: bundle_install
 bundle_install:
 	bundle install
 
+.PHONY: templates
 templates: bundle_install
 	bundle exec rake templates
 
+.PHONY: prism
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -
 	rake prism:vendor
 
+.PHONY: format
 format:
 	$(clang_format) -i $(project_and_extension_files)
 
+.PHONY: lint
 lint:
 	$(clang_format) --dry-run --Werror $(project_and_extension_files)
 
+.PHONY: tidy
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
 
+.PHONY: clangd_config
 clangd_config:
 	@echo "$(flags) $(test_cflags)" | tr ' ' '\n' | sort -u > compile_flags.txt
 
+.PHONY: wasm
 wasm:
 	cd wasm && make

@@ -65,6 +65,10 @@ export class Client {
     return await this.client.sendNotification(method, params)
   }
 
+  async sendRequest<T>(method: string, params: any): Promise<T> {
+    return await this.client.sendRequest(method, params)
+  }
+
   async updateConfiguration() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
     let settings: any
@@ -89,7 +93,7 @@ export class Client {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
         }
-      } catch (error) {
+      } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         settings = {
@@ -182,7 +186,7 @@ export class Client {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
         }
-      } catch (error) {
+      } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         return {

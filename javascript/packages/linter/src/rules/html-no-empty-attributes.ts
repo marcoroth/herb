@@ -120,7 +120,7 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLNoEmptyAttributesRule extends ParserRule {
-  name = "html-no-empty-attributes"
+  static ruleName = "html-no-empty-attributes"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -130,7 +130,7 @@ export class HTMLNoEmptyAttributesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoEmptyAttributesVisitor(this.name, context)
+    const visitor = new NoEmptyAttributesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

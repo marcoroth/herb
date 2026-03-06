@@ -25,6 +25,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in Integer " (location: (2:2)-(2:14))
     │   │       ├── tag_closing: "%>" (location: (2:14)-(2:16))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:16)-(3:2))
     │   │           │   └── content: "\n  "
@@ -70,6 +71,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
     │   │           │   ├── content: " if unknown? " (location: (5:4)-(5:17))
     │   │           │   ├── tag_closing: "%>" (location: (5:17)-(5:19))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (3 items)
     │   │           │   │   ├── @ HTMLTextNode (location: (5:19)-(6:4))
     │   │           │   │   │   └── content: "\n    "

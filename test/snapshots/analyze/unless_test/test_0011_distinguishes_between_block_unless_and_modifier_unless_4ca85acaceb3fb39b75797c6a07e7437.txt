@@ -34,6 +34,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │   │   ├── content: " unless item.special? " (location: (3:4)-(3:26))
     │   │   │   ├── tag_closing: "%>" (location: (3:26)-(3:28))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (3 items)
     │   │   │   │   ├── @ HTMLTextNode (location: (3:28)-(4:4))
     │   │   │   │   │   └── content: "\n    "

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: true
 
 module Herb
   class LexResult < Result

@@ -20,6 +20,9 @@ export interface HighlightOptions {
   wrapLines?: boolean
   maxWidth?: number
   truncateLines?: boolean
+  codeUrlBuilder?: (code: string) => string
+  fileUrlBuilder?: (path: string, diagnostic: Diagnostic) => string
+  suffixBuilder?: (diagnostic: Diagnostic) => string | undefined
 }
 
 export interface HighlightDiagnosticOptions {
@@ -29,6 +32,9 @@ export interface HighlightDiagnosticOptions {
   wrapLines?: boolean
   maxWidth?: number
   truncateLines?: boolean
+  codeUrl?: string
+  fileUrl?: string
+  suffix?: string
 }
 
 export class Highlighter {
@@ -97,6 +103,9 @@ export class Highlighter {
       wrapLines = true,
       maxWidth = LineWrapper.getTerminalWidth(),
       truncateLines = false,
+      codeUrlBuilder,
+      fileUrlBuilder,
+      suffixBuilder,
     } = options
 
     // Case 1: Split diagnostics - render each diagnostic individually
@@ -104,12 +113,18 @@ export class Highlighter {
       const results: string[] = []
       for (let i = 0; i < diagnostics.length; i++) {
         const diagnostic = diagnostics[i]
+        const codeUrl = codeUrlBuilder && diagnostic.code ? codeUrlBuilder(diagnostic.code) : undefined
+        const fileUrl = fileUrlBuilder ? fileUrlBuilder(path, diagnostic) : undefined
+        const suffix = suffixBuilder ? suffixBuilder(diagnostic) : undefined
         const result = this.highlightDiagnostic(path, diagnostic, content, {
           contextLines,
           showLineNumbers,
           wrapLines,
           maxWidth,
           truncateLines,
+          codeUrl,
+          fileUrl,
+          suffix,
         })
 
         results.push(result)
@@ -141,6 +156,7 @@ export class Highlighter {
         wrapLines,
         maxWidth,
         truncateLines,
+        codeUrlBuilder,
       )
     }
 

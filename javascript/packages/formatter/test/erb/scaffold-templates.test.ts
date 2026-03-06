@@ -1,10 +1,12 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("ERB scaffold templates", () => {
   beforeAll(async () => {
@@ -14,43 +16,33 @@ describe("ERB scaffold templates", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves entire document with escaped ERB output tags", () => {
-    const source = '<%%=content%%>'
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    expectFormattedToMatch('<%%=content%%>')
   })
 
   test("preserves entire document with escaped ERB logic tags", () => {
-    const source = '<%%if condition%%>'
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    expectFormattedToMatch('<%%if condition%%>')
   })
 
   test("preserves entire document with escaped ERB tags and spaces", () => {
-    const source = '<%%=  content  %%>'
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    expectFormattedToMatch('<%%=  content  %%>')
   })
 
   test("preserves mixed escaped and regular ERB tags", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <%%=   spaced_escaped  %%>
         <%=normal%>
       </div>
-    `
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    `)
   })
 
   test("preserves scaffold template from issue #673 exactly as-is", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%# frozen_string_literal: true %>
       <%%= simple_form_for(@<%= singular_table_name %>) do |f| %>
         <%%= f.error_notification %>
@@ -66,9 +58,6 @@ describe("ERB scaffold templates", () => {
           <%%= f.button :submit %>
         </div>
       <%% end %>
-    `
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 })

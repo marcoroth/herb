@@ -11,6 +11,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if true " (location: (1:2)-(1:11))
     │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:13)-(2:3))
     │   │   │   └── content: "\n  \""
