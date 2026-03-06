@@ -57,7 +57,7 @@ export class HTMLNavigationHasLabelRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "error"
+      severity: "warning"
     }
   }
 

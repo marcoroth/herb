@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLImgRequireAltRule } from "../../src/rules/html-img-require-alt.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLImgRequireAltRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLImgRequireAltRule)
 
 describe("html-img-require-alt", () => {
   test("passes for img with alt attribute", () => {
@@ -14,18 +14,18 @@ describe("html-img-require-alt", () => {
   })
 
   test("fails for img without alt attribute", () => {
-    expectError('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<img src="/logo.png">')
   })
 
   test("fails for multiple img tags without alt", () => {
-    expectError('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
-    expectError('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<img src="/logo.png"><img src="/banner.jpg">')
   })
 
   test("handles mixed case img tags", () => {
-    expectError('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<IMG src="/logo.png">')
   })
 
@@ -38,7 +38,7 @@ describe("html-img-require-alt", () => {
   })
 
   test("handles self-closing img tags", () => {
-    expectError('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expectWarning('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     assertOffenses('<img src="/logo.png" />')
   })
 
