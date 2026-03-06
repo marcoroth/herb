@@ -235,8 +235,8 @@ describe("CLI Output Formatting", () => {
   test("--no-github disables GitHub Actions annotations", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-github", { GITHUB_ACTIONS: "true" })
 
-    expect(output).not.toMatch(/^::error/)
-    expect(output).toMatch(/error.*Missing required.*alt.*attribute/)
+    expect(output).not.toMatch(/^::warning/)
+    expect(output).toMatch(/warning.*Missing required.*alt.*attribute/)
     expect(exitCode) .toBe(1)
   })
 
