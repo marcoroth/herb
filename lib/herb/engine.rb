@@ -56,8 +56,8 @@ module Herb
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @security_mode = properties.fetch(:security) {
-        Herb.configuration.dig("engine", "security") || "error"
-      }
+        Herb.configuration.dig("engine", "security") || :error
+      }.to_sym
       @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
