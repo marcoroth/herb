@@ -22,6 +22,7 @@ export interface ProcessingContext {
   projectPath?: string
   pattern?: string
   fix?: boolean
+  fixUnsafe?: boolean
   ignoreDisableComments?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
@@ -50,15 +51,13 @@ export class FileProcessor {
   private isRuleAutocorrectable(ruleName: string): boolean {
     if (!this.linter) return false
 
-    const RuleClass = (this.linter as any).rules.find((rule: any) => {
-      const instance = new rule()
+    const ruleClass = (this.linter as any).rules.find(
+      (rule: any) => rule.ruleName === ruleName
+    )
 
-      return instance.name === ruleName
-    })
+    if (!ruleClass) return false
 
-    if (!RuleClass) return false
-
-    return RuleClass.autocorrectable === true
+    return ruleClass.autocorrectable === true
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
@@ -138,7 +137,7 @@ export class FileProcessor {
         const autofixResult = this.linter.autofix(content, {
           fileName: filename,
           ignoreDisableComments: context?.ignoreDisableComments
-        })
+        }, undefined, { includeUnsafe: context?.fixUnsafe })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")

@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("Multiline Element Spacing", () => {
   beforeAll(async () => {
@@ -13,6 +15,7 @@ describe("Multiline Element Spacing", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("adds spacing around multiline elements", () => {
@@ -68,18 +71,14 @@ describe("Multiline Element Spacing", () => {
   })
 
   test("single-line elements stay grouped", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <meta name="a">
         <meta name="b">
         <meta name="c">
         <meta name="d">
       </div>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    `)
   })
 
   test("mixed single-line and multiline elements", () => {

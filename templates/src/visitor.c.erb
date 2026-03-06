@@ -18,20 +18,20 @@ void herb_visit_child_nodes(const AST_NODE_T *node, bool (*visitor)(const AST_NO
 
   switch (node->type) {
     <%- nodes.each do |node| -%>
-    <%- if node.fields.count { |field| [Herb::Template::NodeField, Herb::Template::ArrayField].include?(field.class) }.positive? -%>
+    <%- if node.fields.count { |field| [Herb::Template::NodeField, Herb::Template::BorrowedNodeField, Herb::Template::ArrayField].include?(field.class) }.positive? -%>
     case <%= node.type %>: {
       const <%= node.struct_type %>* <%= node.human %> = ((const <%= node.struct_type %> *) node);
 
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
         herb_visit_node((AST_NODE_T *) <%= node.human %>-><%= field.name %>, visitor, data);
       }
 
       <%- when Herb::Template::ArrayField -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        for (size_t index = 0; index < <%= node.human %>-><%= field.name %>->size; index++) {
+        for (size_t index = 0; index < hb_array_size(<%= node.human %>-><%= field.name %>); index++) {
           herb_visit_node(hb_array_get(<%= node.human %>-><%= field.name %>, index), visitor, data);
         }
       }

@@ -1,0 +1,32 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0003_unclosed tag at EOF with space doesn't create HTMLElementNode"
+input: "<div> <div"
+---
+@ DocumentNode (location: (1:0)-(1:10))
+└── children: (3 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(1:5))
+    │   │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │       └── opening_tag: "div" (location: (1:1)-(1:4))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   ├── children: []
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:5)-(1:6))
+    │   └── content: " "
+    │
+    └── @ HTMLOpenTagNode (location: (1:6)-(1:10))
+        ├── errors: (1 error)
+        │   └── @ UnclosedOpenTagError (location: (1:7)-(1:10))
+        │       ├── message: "Opening tag `<div>` at (1:7) is missing closing `>`."
+        │       └── tag_name: "div" (location: (1:7)-(1:10))
+        │
+        ├── tag_opening: "<" (location: (1:6)-(1:7))
+        ├── tag_name: "div" (location: (1:7)-(1:10))
+        ├── tag_closing: ∅
+        ├── children: []
+        └── is_void: false

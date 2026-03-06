@@ -2,5 +2,5 @@
 source: "Engine::DebugModeTest#test_0028_link_to with block does NOT get erb-output outline type"
 input: "{source: \"<%= link_to \\\"/users\\\" do %>View Users<% end %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << link_to "/users" do; _buf << 'View Users'.freeze; end;
+_buf = ::String.new; _buf << (link_to "/users" do; _buf << 'View Users'.freeze; end);
 _buf.to_s

@@ -1,0 +1,118 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0021_option elements with implicit closing"
+input: |2-
+<select>
+  <option>Option 1
+  <option>Option 2
+  <option>Option 3
+</select>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "select" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "select" (location: (1:1)-(1:7))
+    │   ├── body: (4 items)
+    │   │   ├── @ HTMLTextNode (location: (1:8)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(3:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:10))
+    │   │   │   │       ├── message: "Element `<option>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</option>` closing tag at (3:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "option" (location: (2:3)-(2:9))
+    │   │   │   │       └── insertion_point: (3:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:10))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "option" (location: (2:3)-(2:9))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:9)-(2:10))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "option" (location: (2:3)-(2:9))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:10)-(3:2))
+    │   │   │   │       └── content: "Option 1\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (3:2)-(3:2))
+    │   │   │   │       └── tag_name: "option" (location: (2:3)-(2:9))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(4:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (3:2)-(3:10))
+    │   │   │   │       ├── message: "Element `<option>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</option>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "option" (location: (3:3)-(3:9))
+    │   │   │   │       └── insertion_point: (4:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:10))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "option" (location: (3:3)-(3:9))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:9)-(3:10))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "option" (location: (3:3)-(3:9))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:10)-(4:2))
+    │   │   │   │       └── content: "Option 2\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (4:2)-(4:2))
+    │   │   │   │       └── tag_name: "option" (location: (3:3)-(3:9))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLElementNode (location: (4:2)-(5:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ OmittedClosingTagError (location: (4:2)-(4:10))
+    │   │       │       ├── message: "Element `<option>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</option>` closing tag at (5:0) for clarity, or set `strict: false` to allow this."
+    │   │       │       ├── opening_tag: "option" (location: (4:3)-(4:9))
+    │   │       │       └── insertion_point: (5:0)
+    │   │       │
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (4:2)-(4:10))
+    │   │       │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │       │       ├── tag_name: "option" (location: (4:3)-(4:9))
+    │   │       │       ├── tag_closing: ">" (location: (4:9)-(4:10))
+    │   │       │       ├── children: []
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "option" (location: (4:3)-(4:9))
+    │   │       ├── body: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (4:10)-(5:0))
+    │   │       │       └── content: "Option 3\n"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLOmittedCloseTagNode (location: (5:0)-(5:0))
+    │   │       │       └── tag_name: "option" (location: (4:3)-(4:9))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:9))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "select" (location: (5:2)-(5:8))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

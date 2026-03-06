@@ -3,35 +3,34 @@
 
 #include <prism.h>
 
-#include "include/analyzed_ruby.h"
+#include "include/analyze/analyzed_ruby.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/token.h"
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_array.h"
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors", "hb_allocator_T* allocator"] -%>
 
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>) {
-  <%= node.struct_type %>* <%= node.human %> = malloc(sizeof(<%= node.struct_type %>));
+  <%= node.struct_type %>* <%= node.human %> = hb_allocator_alloc(allocator, sizeof(<%= node.struct_type %>));
+
+  if (!<%= node.human %>) { return NULL; }
 
   ast_node_init(&<%= node.human %>->base, <%= node.type %>, start_position, end_position, errors);
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>, allocator);
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
-  if (<%= field.name %> == NULL) {
-    <%= node.human %>-><%= field.name %> = hb_array_init(8);
-  } else {
-    <%= node.human %>-><%= field.name %> = <%= field.name %>;
-  }
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::BooleanField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ElementSourceField -%>
@@ -39,10 +38,12 @@
   <%- when Herb::Template::PrismNodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= node.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%= node.human %>-><%= field.name %> = hb_allocator_strdup(allocator, <%= field.name %>);
   <%- when Herb::Template::AnalyzedRubyField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::LocationField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- else -%>
   <%= field.inspect %>
@@ -73,45 +74,46 @@ hb_string_T ast_node_human_type(AST_NODE_T* node) {
   return hb_string("Unknown ast_node_type_T");
 }
 
-void ast_free_base_node(AST_NODE_T* node) {
+void ast_free_base_node(AST_NODE_T* node, hb_allocator_T* allocator) {
   if (node == NULL) { return; }
 
   if (node->errors) {
-    for (size_t i = 0; i < node->errors->size; i++) {
+    for (size_t i = 0; i < hb_array_size(node->errors); i++) {
       ERROR_T* child = hb_array_get(node->errors, i);
-      if (child != NULL) { error_free(child); }
+      if (child != NULL) { error_free(child, allocator); }
     }
 
     hb_array_free(&node->errors);
   }
 
-  free(node);
+  hb_allocator_dealloc(allocator, node);
 }
 
 <%- nodes.each do |node| -%>
-<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
 
-static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>) {
+static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>, hb_allocator_T* allocator) {
   <%- if node.fields.none? -%>
   /* no <%= node.struct_type %> specific fields to free up */
   <%- end -%>
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>); }
+  if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>, allocator); }
+  <%- when Herb::Template::BorrowedNodeField -%>
+  /* <%= field.name %> is a borrowed reference, not freed here (owned by another field) */
   <%- when Herb::Template::NodeField -%>
-  ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
+  ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>, allocator);
   <%- when Herb::Template::ArrayField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
-    for (size_t i = 0; i < <%= node.human %>-><%= field.name %>->size; i++) {
+    for (size_t i = 0; i < hb_array_size(<%= node.human %>-><%= field.name %>); i++) {
       AST_NODE_T* child = hb_array_get(<%= node.human %>-><%= field.name %>, i);
-      if (child) { ast_node_free(child); }
+      if (child) { ast_node_free(child, allocator); }
     }
 
     hb_array_free(&<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::StringField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) { free((char*) <%= node.human %>-><%= field.name %>); }
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, (char*) <%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::PrismNodeField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
     // The first argument to `pm_node_destroy` is a `pm_parser_t`, but it's currently unused:
@@ -124,24 +126,26 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     free_analyzed_ruby(<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::VoidPointerField -%>
-  free(<%= node.human %>-><%= field.name %>);
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::BooleanField -%>
   <%- when Herb::Template::ElementSourceField -%>
+  <%- when Herb::Template::LocationField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
   <%- end -%>
 
-  ast_free_base_node(&<%= node.human %>->base);
+  ast_free_base_node(&<%= node.human %>->base, allocator);
 }
 <%- end -%>
 
-void ast_node_free(AST_NODE_T* node) {
+void ast_node_free(AST_NODE_T* node, hb_allocator_T* allocator) {
   if (!node) { return; }
 
   switch (node->type) {
     <%- nodes.each do |node| -%>
-    case <%= node.type %>: ast_free_<%= node.human %>((<%= node.struct_type %>*) node); break;
+    case <%= node.type %>: ast_free_<%= node.human %>((<%= node.struct_type %>*) node, allocator); break;
     <%- end -%>
   }
 }

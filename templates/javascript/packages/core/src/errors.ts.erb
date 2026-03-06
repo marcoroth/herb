@@ -1,4 +1,5 @@
 import { Location, SerializedLocation } from "./location.js"
+import { Position, SerializedPosition } from "./position.js"
 import { Token, SerializedToken } from "./token.js"
 import { Diagnostic, MonacoDiagnostic } from "./diagnostic.js"
 
@@ -64,6 +65,8 @@ export interface Serialized<%= error.name %> {
   <%= field.name %>: SerializedToken | null;
   <%- when Herb::Template::TokenTypeField -%>
   <%= field.name %>: string | null;
+  <%- when Herb::Template::PositionField -%>
+  <%= field.name %>: SerializedPosition;
   <%- else -%>
   <%= field.name %>: any; // <%= field.inspect %>
   <%- end -%>
@@ -82,6 +85,8 @@ export interface <%= error.name %>Props {
   <%= field.name %>: Token | null;
   <%- when Herb::Template::TokenTypeField -%>
   <%= field.name %>: string | null;
+  <%- when Herb::Template::PositionField -%>
+  <%= field.name %>: Position;
   <%- else -%>
   <%= field.name %>: any; // <%= field.inspect %>
   <%- end -%>
@@ -97,6 +102,8 @@ export class <%= error.name %> extends HerbError {
   readonly <%= field.name %>: Token | null;
   <%- when Herb::Template::TokenTypeField -%>
   readonly <%= field.name %>: string | null;
+  <%- when Herb::Template::PositionField -%>
+  readonly <%= field.name %>: Position;
   <%- else -%>
   readonly <%= field.name %>: any;
   <%- end -%>
@@ -113,8 +120,10 @@ export class <%= error.name %> extends HerbError {
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::TokenField -%>
       <%= field.name %>: data.<%= field.name %> ? Token.from(data.<%= field.name %>) : null,
+      <%- when Herb::Template::PositionField -%>
+      <%= field.name %>: Position.from(data.<%= field.name %>),
       <%- else -%>
-      <% raise "Unexpetected type: #{field.class}" %>
+      <% raise "Unexpected type: #{field.class}" %>
       <%- end -%>
       <%- end -%>
     })
@@ -138,8 +147,10 @@ export class <%= error.name %> extends HerbError {
       <%= field.name %>: this.<%= field.name %>,
       <%- when Herb::Template::TokenField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
+      <%- when Herb::Template::PositionField -%>
+      <%= field.name %>: this.<%= field.name %>.toJSON(),
       <%- else -%>
-      <% raise "Unexpetected type: #{field.class}" %>
+      <% raise "Unexpected type: #{field.class}" %>
       <%- end -%>
       <%- end -%>
     };
@@ -170,8 +181,10 @@ export class <%= error.name %> extends HerbError {
     output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
     <%- when Herb::Template::TokenField -%>
     output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
+    <%- when Herb::Template::PositionField -%>
+    output += `<%= name %>(${this.<%= field.name %>.line}:${this.<%= field.name %>.column})\n`;
     <%- else -%>
-    <% raise "Unexpetected type: #{field.class}" %>
+    <% raise "Unexpected type: #{field.class}" %>
     <%- end -%>
     <%- end -%>
 

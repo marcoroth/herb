@@ -33,6 +33,7 @@ input: |2-
     │   │       │       │       ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │       │       │       ├── content: " when 1 " (location: (3:4)-(3:12))
     │   │       │       │       ├── tag_closing: "%>" (location: (3:12)-(3:14))
+    │   │       │       │       ├── then_keyword: ∅
     │   │       │       │       └── statements: (1 item)
     │   │       │       │           └── @ HTMLAttributeNode (location: (4:4)-(4:13))
     │   │       │       │               ├── name:

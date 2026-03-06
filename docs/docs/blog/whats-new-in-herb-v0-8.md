@@ -54,7 +54,7 @@ _November 12, 2025_ • Marco Roth
 
 Today, we are excited to announce **Herb v0.8**, the most feature-packed release so far!
 
-If you're not familiar with Herb yet: it's an ecosystem of tools specifically built for HTML+ERB files. If you haven't used Herb before, we suggest reading the [Overview](/overview) page first.
+If you're not familiar with Herb yet: it's an ecosystem of powerful and seamless developer tools for HTML+ERB templates. If you haven't used Herb before, we suggest reading the [Overview](/overview) page first.
 
 Its main goal is to improve the developer experience while working with `.html.erb` files, but also to improve HTML rendering from Ruby and drive innovation in the Ruby and Rails view layers.
 
@@ -379,7 +379,9 @@ The new `@herb-tools/rewriter` package now ships with a built-in rewriter for `@
 
 **TL;DR**: This built-in rewriter is fully integrated into the Herb Formatter, ensuring your Tailwind classes are always consistently ordered when you format documents.
 
-![Video demonstration of Tailwind class sorter automatically reordering classes](/blog/whats-new-in-herb-v0-8/tailwind-class-sorter.mp4)
+<video src="/blog/whats-new-in-herb-v0-8/tailwind-class-sorter.mp4" controls autoplay loop muted>
+  Video demonstration of Tailwind class sorter automatically reordering classes
+</video>
 
 
 ## Language Server Improvements
@@ -388,7 +390,9 @@ The new `@herb-tools/rewriter` package now ships with a built-in rewriter for `@
 
 The Herb Language Server now supports automatic fix-on-save for lint offenses. Enable this feature in your editor settings to automatically apply fixes when you save files.
 
-![Video demonstration of linter automatically fixing offenses on file save](/blog/whats-new-in-herb-v0-8/fix-on-save.mp4)
+<video src="/blog/whats-new-in-herb-v0-8/fix-on-save.mp4" controls autoplay loop muted>
+  Video demonstration of linter automatically fixing offenses on file save
+</video>
 
 For Visual Studio Code, you can set your preference in the settings pane, or add the following to your settings:
 
@@ -412,11 +416,15 @@ You can also choose to simultaneously use Fix-on-save and Format-on-save.
 
 The language server now provides code actions to disable linter rules at the current location, making it easy to suppress specific warnings when needed.
 
-![Video demonstration of using code actions to add herb:disable comments](/blog/whats-new-in-herb-v0-8/herb-disable-code-action.mp4)
+<video src="/blog/whats-new-in-herb-v0-8/herb-disable-code-action.mp4" controls autoplay loop muted>
+  Video demonstration of using code actions to add herb:disable comments
+</video>
 
 We also offer code actions to directly update the `.herb.yml`, to make it easier and less cumbersome to work with the linter and to configure it:
 
-![Video demonstration of using code actions to update the .herb.yml configuration file](/blog/whats-new-in-herb-v0-8/herb-disable-config-code-action.mp4)
+<video src="/blog/whats-new-in-herb-v0-8/herb-disable-config-code-action.mp4" controls autoplay loop muted>
+  Video demonstration of using code actions to update the .herb.yml configuration file
+</video>
 
 
 ## Herb CLI Improvements
@@ -488,7 +496,9 @@ Additionally, you can also see the status of the configured tools in the sidebar
 
 The Visual Studio Code Extension also helps you create and manage/update the `.herb.yml` configuration file:
 
-![Video demonstration of creating and managing .herb.yml configuration in VS Code](/blog/whats-new-in-herb-v0-8/vscode-herb-configuration.mp4)
+<video src="/blog/whats-new-in-herb-v0-8/vscode-herb-configuration.mp4" controls autoplay loop muted>
+  Video demonstration of creating and managing .herb.yml configuration in VS Code
+</video>
 
 
 ### Rails Dev Container

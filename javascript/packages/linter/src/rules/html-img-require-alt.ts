@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -11,7 +12,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "img") {
       return
@@ -27,7 +28,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLImgRequireAltRule extends ParserRule {
-  name = "html-img-require-alt"
+  static ruleName = "html-img-require-alt"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -37,7 +38,7 @@ export class HTMLImgRequireAltRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ImgRequireAltVisitor(this.name, context)
+    const visitor = new ImgRequireAltVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

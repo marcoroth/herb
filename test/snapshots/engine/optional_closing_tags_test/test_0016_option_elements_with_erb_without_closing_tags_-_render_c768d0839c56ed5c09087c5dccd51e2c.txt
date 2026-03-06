@@ -1,0 +1,9 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0016_option elements with erb without closing tags - render"
+input: "{source: \"<select>\\n  <% select_options.each do |opt| %>\\n    <option value=\\\"<%= opt[:value] %>\\\"><%= opt[:label] %>\\n  <% end %>\\n</select>\\n\", locals: {select_options: [{value: \"1\", label: \"One\"}, {value: \"2\", label: \"Two\"}, {value: \"3\", label: \"Three\"}]}, options: {escape: false, strict: false}}"
+---
+<select>
+    <option value="1">One
+    <option value="2">Two
+    <option value="3">Three
+</select>

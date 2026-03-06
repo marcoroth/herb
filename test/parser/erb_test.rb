@@ -380,5 +380,26 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "heredoc in code tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          text = <<~TEXT
+            Hello, world!
+          TEXT
+        %>
+      HTML
+    end
+
+    test "heredoc in output tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= method_call <<~GRAPHQL, variables
+          query {
+            field
+          }
+        GRAPHQL
+        %>
+      HTML
+    end
   end
 end

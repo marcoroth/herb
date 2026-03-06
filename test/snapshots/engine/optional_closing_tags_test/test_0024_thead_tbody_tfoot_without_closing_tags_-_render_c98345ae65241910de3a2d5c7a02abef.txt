@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0024_thead tbody tfoot without closing tags - render"
+input: "{source: \"<table>\\n  <thead>\\n    <tr><th>Header\\n  <tbody>\\n    <tr><td>Body\\n  <tfoot>\\n    <tr><td>Footer\\n</table>\\n\", locals: {}, options: {escape: false, strict: false}}"
+---
+<table>
+  <thead>
+    <tr><th>Header
+  <tbody>
+    <tr><td>Body
+  <tfoot>
+    <tr><td>Footer
+</table>

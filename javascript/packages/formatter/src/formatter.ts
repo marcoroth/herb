@@ -57,7 +57,7 @@ export class Formatter {
    * Format a source string, optionally overriding format options per call.
    */
   format(source: string, options: FormatOptions = {}, filePath?: string): string {
-    let result = this.parse(source)
+    const result = this.parse(source)
 
     if (result.failed) return source
     if (isScaffoldTemplate(result)) return source

@@ -38,8 +38,10 @@ void herb_parse_ruby_to_stdout(char* source) {
 
   pm_visit_node(root, herb_prism_visit, data);
 
+#ifndef PRISM_EXCLUDE_PRETTYPRINT
   pm_prettyprint(&buffer, &parser, root);
   printf("%s\n", buffer.value);
+#endif
 
   pm_buffer_free(&buffer);
   pm_node_destroy(&parser, root);

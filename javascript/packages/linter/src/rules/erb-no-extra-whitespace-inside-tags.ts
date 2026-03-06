@@ -3,7 +3,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
 import { Location } from "@herb-tools/core"
-import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, LintSeverity, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraWhitespaceAutofixContext extends BaseAutofixContext {
   node: Mutable<ERBNode>
@@ -26,17 +26,41 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
       this.reportWhitespace(node, openTag, closeTag, value, "start", 0, `Remove extra whitespace after \`${openTag.value}\`.`, "after-open")
     }
 
-    if (openTag.value === "<%#" && value.startsWith("=") && value.length > 1) {
-      const afterEquals = value.substring(1)
+    if (openTag.value === "<%#") {
+      const prefix = this.getCommentedTagPrefix(value)
 
-      if (afterEquals.match(/^\s{2,}/) && !afterEquals.startsWith("  \n") && !afterEquals.startsWith("\n")) {
-        this.reportWhitespace(node, openTag, closeTag, value, "start", 1, `Remove extra whitespace after \`<%#=\`.`, "after-comment-equals")
+      if (prefix) {
+        const afterPrefix = value.substring(prefix.length)
+        const tag = `<%#${prefix}`
+        const hasExtraWhitespace = afterPrefix.match(/^\s{2,}/) && !afterPrefix.startsWith("  \n") && !afterPrefix.startsWith("\n")
+
+        if (hasExtraWhitespace) {
+          this.reportWhitespace(node, openTag, closeTag, value, "start", prefix.length, `Remove extra whitespace after \`${tag}\`. This looks like a temporarily commented ERB tag.`, "after-comment-equals", "info")
+        } else {
+          this.addOffense(
+            `\`${tag}\` looks like a temporarily commented ERB tag.`,
+            openTag.location,
+            { node, openTag, closeTag, content: value, fixType: "after-comment-equals", unsafe: true },
+            "info"
+          )
+        }
       }
     }
 
     if (this.hasExtraTrailingWhitespace(value)) {
       this.reportWhitespace(node, openTag, closeTag, value, "end", 0, `Remove extra whitespace before \`${closeTag.value}\`.`, "before-close")
     }
+  }
+
+  private getCommentedTagPrefix(content: string): string | null {
+    if (content.startsWith("graphql")) return "graphql"
+    if (content.startsWith("%=")) return "%="
+    if (content.startsWith("==")) return "=="
+    if (content.startsWith("%")) return "%"
+    if (content.startsWith("=")) return "="
+    if (content.startsWith("-")) return "-"
+
+    return null
   }
 
   private hasExtraLeadingWhitespace(content: string): boolean {
@@ -82,7 +106,9 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
     position: "start" | "end",
     offset: number,
     message: string,
-    fixType: "after-open" | "before-close" | "after-comment-equals"
+    fixType: "after-open" | "before-close" | "after-comment-equals",
+    severity?: LintSeverity,
+    unsafe?: boolean,
   ): void {
     const location = this.getWhitespaceLocation(node, content, position, offset)
     this.addOffense(message, location, {
@@ -90,14 +116,15 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
       openTag,
       closeTag,
       content,
-      fixType
-    })
+      fixType,
+      unsafe,
+    }, severity)
   }
 }
 
 export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAutofixContext> {
   static autocorrectable = true
-  name = "erb-no-extra-whitespace-inside-tags"
+  static ruleName = "erb-no-extra-whitespace-inside-tags"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -107,7 +134,7 @@ export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBNoExtraWhitespaceAutofixContext>[] {
-    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.name, context)
+    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
@@ -131,13 +158,16 @@ export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAut
         node.content.value = content.replace(/^\s{2,}/, " ")
         break
 
-      case "after-comment-equals":
-        if (content.startsWith("=")) {
-          const afterEquals = content.substring(1)
-          node.content.value = "= " + afterEquals.replace(/^\s{2,}/, "")
+      case "after-comment-equals": {
+        const prefix = content.startsWith("graphql") ? "graphql" : content.startsWith("%=") ? "%=" : content.startsWith("==") ? "==" : content.startsWith("%") ? "%" : content.startsWith("=") ? "=" : content.startsWith("-") ? "-" : null
+
+        if (prefix) {
+          const afterPrefix = content.substring(prefix.length)
+          node.content.value = prefix + " " + afterPrefix.replace(/^\s{2,}/, "")
         }
 
         break
+      }
       default:
         return null
     }

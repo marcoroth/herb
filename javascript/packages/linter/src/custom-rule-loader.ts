@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 
 import type { RuleClass } from "./types.js"
 
@@ -52,7 +52,7 @@ export class CustomRuleLoader {
         const files = await glob(pattern, {
           cwd: this.baseDir,
           absolute: true,
-          nodir: true
+          onlyFiles: true
         })
 
         allFiles.push(...files)
@@ -75,8 +75,14 @@ export class CustomRuleLoader {
       const cacheBustedUrl = `${fileUrl}?t=${Date.now()}`
       const module = await import(cacheBustedUrl)
 
-      if (module.default && this.isValidRuleClass(module.default)) {
+      if (this.isValidRuleClass(module.default)) {
         return [module.default]
+      }
+
+      if (this.hasDeprecatedNameProperty(module.default)) {
+        const name = new module.default().name
+        console.error(`Error: Custom rule in "${filePath}" sets 'name' as an instance property, which is no longer supported. Use 'static ruleName = "${name}"' instead.`)
+        process.exit(1)
       }
 
       if (!this.silent) {
@@ -96,12 +102,22 @@ export class CustomRuleLoader {
    * Type guard to check if an export is a valid rule class
    */
   private isValidRuleClass(value: any): value is RuleClass {
+    if (!value) return false
     if (typeof value !== 'function') return false
     if (!value.prototype) return false
 
-    const instance = new value()
+    return typeof value.ruleName === 'string' && typeof value.prototype.check === 'function'
+  }
 
-    return typeof instance.check === 'function' && typeof instance.name === 'string'
+  /**
+   * Check for usage of deprecated 'name' property instead of 'static ruleName'
+   */
+  private hasDeprecatedNameProperty(value: any): boolean {
+    if (!value) return false
+    if (typeof value !== 'function') return false
+
+    const instance = new value()
+    return Object.prototype.hasOwnProperty.call(instance, 'name')
   }
 
   /**
@@ -142,8 +158,7 @@ export class CustomRuleLoader {
     for (const filePath of ruleFiles) {
       const rules = await this.loadRuleFile(filePath)
       for (const RuleClass of rules) {
-        const instance = new RuleClass()
-        const ruleName = instance.name
+        const ruleName = RuleClass.ruleName
 
         if (seenNames.has(ruleName)) {
           const firstPath = seenNames.get(ruleName)!

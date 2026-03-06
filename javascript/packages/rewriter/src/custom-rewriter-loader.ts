@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { isRewriterClass } from "./type-guards.js"
 
 import type { RewriterClass } from "./type-guards.js"
@@ -61,8 +61,7 @@ export class CustomRewriterLoader {
       try {
         const files = await glob(pattern, {
           cwd: this.baseDir,
-          absolute: true,
-          nodir: true
+          absolute: true
         })
 
         allFiles.push(...files)

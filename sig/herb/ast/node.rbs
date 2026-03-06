@@ -1,6 +1,11 @@
 # Generated from lib/herb/ast/node.rb with RBS::Inline
 
 module Herb
+  # : type serialized_node = {
+  # |  type: String,
+  # |  location: serialized_location?,
+  # |  errors: Array[serialized_error]
+  # | }
   module AST
     class Node
       attr_reader type: String
@@ -9,8 +14,8 @@ module Herb
 
       attr_reader errors: Array[Herb::Errors::Error]
 
-      # : (String, Location, Array[Herb::Errors::Error]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error]) -> void
+      # : (String, Location, ?Array[Herb::Errors::Error]) -> void
+      def initialize: (String, Location, ?Array[Herb::Errors::Error]) -> void
 
       # : () -> serialized_node
       def to_hash: () -> serialized_node

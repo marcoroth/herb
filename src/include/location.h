@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "position.h"
+#include "util/hb_allocator.h"
 
 typedef struct LOCATION_STRUCT {
   position_T start;
@@ -18,5 +19,9 @@ void location_from(
   uint32_t end_line,
   uint32_t end_column
 );
+
+void location_from_positions(location_T* location, position_T start, position_T end);
+
+location_T* location_create(position_T start, position_T end, hb_allocator_T* allocator);
 
 #endif

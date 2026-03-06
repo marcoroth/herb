@@ -1,0 +1,5 @@
+---
+source: "Engine::CaseTest#test_0003_case when on newline in same ERB tag"
+input: "{source: \"<% case status\\n   when \\\"pending\\\" %>\\n  <span>Pending</span>\\n<% when \\\"approved\\\" %>\\n  <span>Approved</span>\\n<% end %>\\n\", locals: {status: \"approved\"}, options: {escape: false, strict: false}}"
+---
+  <span>Approved</span>

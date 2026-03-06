@@ -1,0 +1,6 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0003_p element with erb without closing tag - compilation"
+input: "{source: \"<p><%= message %>\", options: {strict: false}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (message).to_s;
+_buf.to_s

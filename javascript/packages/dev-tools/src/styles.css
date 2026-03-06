@@ -421,6 +421,32 @@
   flex: 1;
 }
 
+.herb-outline-preview {
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 2px dotted transparent;
+}
+
+.herb-outline-view {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.herb-outline-partial {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.herb-outline-component {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.herb-outline-erb {
+  border-color: #a78bfa;
+  background-color: #f5f3ff;
+}
+
 .herb-toggle-label:hover .herb-toggle-switch {
   background: #94a3b8;
 }

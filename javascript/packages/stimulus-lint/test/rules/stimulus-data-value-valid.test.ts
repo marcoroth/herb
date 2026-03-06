@@ -5,7 +5,7 @@ import { StimulusDataValueValidRule } from '../../src/rules/stimulus-data-value-
 import type { Project } from 'stimulus-parser'
 
 describe('StimulusDataValueValidRule', () => {
-  let herb = Herb
+  const herb = Herb
   const rule = new StimulusDataValueValidRule()
 
   beforeAll(async () => {

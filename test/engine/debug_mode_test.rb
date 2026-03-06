@@ -402,5 +402,213 @@ module Engine
 
       assert_compiled_snapshot(template, debug: true)
     end
+
+    test "svg content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="<%= @radius %>" />
+          <text x="50" y="50"><%= @label %></text>
+        </svg>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "svg with defs and style erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29">
+          <defs>
+            <style>
+              .cls-1 {fill:none;stroke:<%= @stroke_color %>}
+            </style>
+          </defs>
+          <g transform="rotate(<%= @angle %> 50 50)">
+            <line x1="50" y1="10" x2="50" y2="50" stroke="red" />
+          </g>
+        </svg>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "nested svg inside div erb expressions do NOT get debug spans inside svg" do
+      template = <<~ERB
+        <div class="chart-container">
+          <h2><%= @chart_title %></h2>
+          <svg viewBox="0 0 100 100">
+            <rect width="<%= @width %>" height="<%= @height %>" />
+            <text><%= @value %></text>
+          </svg>
+          <p><%= @description %></p>
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
+    end
+
+    test "math content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <math>
+          <mrow>
+            <mi><%= @variable %></mi>
+            <mo>=</mo>
+            <mn><%= @value %></mn>
+          </mrow>
+        </math>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "nested math inside div erb expressions do NOT get debug spans inside math" do
+      template = <<~ERB
+        <div class="equation">
+          <p><%= @equation_name %></p>
+          <math>
+            <msup>
+              <mi><%= @base %></mi>
+              <mn><%= @exponent %></mn>
+            </msup>
+          </math>
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
+    end
+
+    test "sidecar component displays component name instead of component.html.erb" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.erb")
+    end
+
+    test "sidecar component with snake_case name converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/user_card/component.html.erb")
+    end
+
+    test "sidecar component with nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/user_card/component.html.erb")
+    end
+
+    test "sidecar component with deeply nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/settings/user_card/component.html.erb")
+    end
+
+    test "regular component file converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/button_component.html.erb")
+    end
+
+    test "sidecar component with erb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.erb")
+    end
+
+    test "sidecar component with herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.herb")
+    end
+
+    test "sidecar component with html.herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.herb")
+    end
+
+    test "namespaced regular component includes namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/ui/avatar_component.html.erb")
+    end
+
+    test "regular view keeps original basename" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/show.html.erb")
+    end
+
+    test "partial keeps original basename with underscore" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/_card.html.erb")
+    end
+
+    test "partial in components subfolder is not treated as component" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/page/components/_dropdowns.html.erb")
+    end
+
+    test "block without debug disable comment content erb expressions get debug spans" do
+      template = <<~ERB
+        <%= content_for :sidebar do %>
+          <div><%= "Sidebar content" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "block with debug disable comment content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <%= content_for :sidebar do # herb:debug disable %>
+          <div><%= "Sidebar content" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "block with debug disable comment suppresses debug spans for multiple expressions" do
+      template = <<~ERB
+        <%= content_for :title do # herb:debug disable %>
+          <%= [t('app_title.text', app_name: AppSettings.app_name), breadcrumb_trail&.first&.name].compact.join(" | ") %>
+          <%= :subtitle %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "block with debug disable comment suppresses debug spans in nested html" do
+      template = <<~ERB
+        <%= content_for :sidebar do # herb:debug disable %>
+          <div><%= "First" %></div>
+          <p><%= "Second" %></p>
+          <span><%= "Third" %></span>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "debug disable comment works on non-content_for blocks" do
+      template = <<~ERB
+        <%= some_helper do # herb:debug disable %>
+          <div><%= "Hello" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "debug disable comment with extra whitespace" do
+      template = <<~ERB
+        <%= content_for :title do #   herb:debug   disable %>
+          <%= "Title" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
   end
 end

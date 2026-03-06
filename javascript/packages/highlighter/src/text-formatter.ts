@@ -1,9 +1,13 @@
+import { colors, ANSI_REGEX } from "./color.js"
+
 export class TextFormatter {
   static applyDimToStyledText(text: string): string {
     const isColorEnabled = process.env.NO_COLOR === undefined
     if (!isColorEnabled) return text
 
-    return text.replace(/\x1b\[([0-9;]*)m/g, (match, codes) => {
+    return text.replace(ANSI_REGEX, (match) => {
+      const codes = match.slice(2, -1)
+
       if (codes === "0" || codes === "") {
         return match
       }
@@ -14,9 +18,7 @@ export class TextFormatter {
 
   static highlightBackticks(text: string): string {
     if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
-      const boldWhite = "\x1b[1m\x1b[37m"
-      const reset = "\x1b[0m"
-      return text.replace(/`([^`]+)`/g, `${boldWhite}$1${reset}`)
+      return text.replace(/`([^`]+)`/g, `${colors.bold}${colors.white}$1${colors.reset}`)
     }
     return text
   }

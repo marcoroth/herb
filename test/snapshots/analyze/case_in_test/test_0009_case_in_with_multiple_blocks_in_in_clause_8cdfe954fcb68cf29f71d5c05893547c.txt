@@ -26,6 +26,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in { type: :alert } " (location: (2:2)-(2:23))
     │   │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (5 items)
     │   │           ├── @ HTMLTextNode (location: (2:25)-(3:2))
     │   │           │   └── content: "\n  "

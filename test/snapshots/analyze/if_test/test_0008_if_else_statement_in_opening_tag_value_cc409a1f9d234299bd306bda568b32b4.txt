@@ -20,6 +20,7 @@ input: |2-
     │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │       │       ├── content: " if id? " (location: (2:4)-(2:12))
     │   │       │       ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │       │       ├── then_keyword: ∅
     │   │       │       ├── statements: (1 item)
     │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(3:14))
     │   │       │       │       ├── name:

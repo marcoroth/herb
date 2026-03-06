@@ -5,7 +5,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 import { Config } from "@herb-tools/config"
 
-import { getFullDocumentRange } from "./utils"
+import { getFullDocumentRange } from "./range_utils"
 
 export class AutofixService {
   private connection: Connection

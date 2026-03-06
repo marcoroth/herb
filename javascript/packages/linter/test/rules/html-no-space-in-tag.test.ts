@@ -16,11 +16,11 @@ describe("HTMLNoSpaceInTagRule", () => {
     })
 
     test("tag with no name", () => {
-      expectNoOffenses(`</>`, { allowInvalidSyntax: true })
+      expectNoOffenses(`</>`)
     })
 
     test("empty tag", () => {
-      expectNoOffenses(`<>`, { allowInvalidSyntax: true })
+      expectNoOffenses(`<>`)
     })
 
     test("void tag", () => {

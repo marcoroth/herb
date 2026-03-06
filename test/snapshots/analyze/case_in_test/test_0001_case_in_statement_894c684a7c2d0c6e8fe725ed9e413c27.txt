@@ -23,6 +23,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in [Integer] " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (2:18)-(4:0))
     │   │               └── content: "\n  Integer\n"

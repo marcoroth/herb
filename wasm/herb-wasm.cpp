@@ -7,7 +7,7 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/analyze.h"
+#include "../src/include/util/hb_allocator.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -25,46 +25,87 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  hb_array_T* tokens = herb_lex(source.c_str());
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return val::null();
+  }
+
+  hb_array_T* tokens = herb_lex(source.c_str(), &allocator);
 
   val result = CreateLexResult(tokens, source);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
 
 val Herb_parse(const std::string& source, val options) {
-  parser_options_T* parser_options = nullptr;
-  parser_options_T opts = {0};
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
     if (options.hasOwnProperty("track_whitespace")) {
       bool track_whitespace = options["track_whitespace"].as<bool>();
       if (track_whitespace) {
-        opts.track_whitespace = true;
-        parser_options = &opts;
+        parser_options.track_whitespace = true;
       }
+    }
+
+    if (options.hasOwnProperty("analyze")) {
+      bool analyze = options["analyze"].as<bool>();
+      if (!analyze) {
+        parser_options.analyze = false;
+      }
+    }
+
+    if (options.hasOwnProperty("strict")) {
+      parser_options.strict = options["strict"].as<bool>();
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return val::null();
+  }
 
-  herb_analyze_parse_tree(root, source.c_str());
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, &allocator);
 
-  val result = CreateParseResult(root, source);
+  val result = CreateParseResult(root, source, &parser_options);
 
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
 
-std::string Herb_extract_ruby(const std::string& source) {
+std::string Herb_extract_ruby(const std::string& source, val options) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_ruby_to_buffer(source.c_str(), &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (options.hasOwnProperty("semicolons")) {
+      extract_options.semicolons = options["semicolons"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("comments")) {
+      extract_options.comments = options["comments"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("preserve_positions")) {
+      extract_options.preserve_positions = options["preserve_positions"].as<bool>();
+    }
+  }
+
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return std::string();
+  }
+
+  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }
@@ -73,8 +114,15 @@ std::string Herb_extract_html(const std::string& source) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_html_to_buffer(source.c_str(), &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    return std::string();
+  }
+
+  herb_extract_html_to_buffer(source.c_str(), &output, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }

@@ -1,4 +1,4 @@
-import { getStaticAttributeName, isLiteralNode } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { LiteralNode, Location, Visitor } from "@herb-tools/core"
 
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
@@ -45,7 +45,23 @@ class TailwindClassSorterVisitor extends Visitor {
     const attributeName = getStaticAttributeName(node.name)
     if (attributeName !== "class") return
 
-    this.visit(node.value)
+    const classAttributeSorter = new ClassAttributeSorter(this.sorter)
+
+    classAttributeSorter.visit(node.value)
+  }
+}
+
+/**
+ * Visitor that sorts classes within a single class attribute value.
+ * Only operates on the content of a class attribute, not the full document.
+ */
+class ClassAttributeSorter extends Visitor {
+  private sorter: TailwindClassSorter
+
+  constructor(sorter: TailwindClassSorter) {
+    super()
+
+    this.sorter = sorter
   }
 
   visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
@@ -127,104 +143,181 @@ class TailwindClassSorterVisitor extends Visitor {
     })
   }
 
-  private startsWithClassLiteral(nodes: Node[]): boolean {
-    return nodes.length > 0 && isLiteralNode(nodes[0]) && !!nodes[0].content.trim()
+  private isInterpolatedGroup(group: Node[]): boolean {
+    return group.some(node => !isLiteralNode(node))
   }
 
-  private isWhitespaceLiteral(node: Node): boolean {
-    return isLiteralNode(node) && !node.content.trim()
+  private isWhitespaceGroup(group: Node[]): boolean {
+    return group.every(node => isPureWhitespaceNode(node))
+  }
+
+  private getStaticClassContent(group: Node[]): string {
+    return group
+      .filter(node => isLiteralNode(node))
+      .map(node => (node as LiteralNode).content)
+      .join("")
+  }
+
+  private categorizeGroups(groups: Node[][]): { staticClasses: string[], interpolationGroups: Node[][], standaloneERBNodes: Node[] } {
+    const staticClasses: string[] = []
+    const interpolationGroups: Node[][] = []
+    const standaloneERBNodes: Node[] = []
+
+    for (const group of groups) {
+      if (this.isWhitespaceGroup(group)) {
+        continue
+      }
+
+      if (this.isInterpolatedGroup(group)) {
+        const hasAttachedLiteral = group.some(node => isLiteralNode(node) && node.content.trim())
+
+        if (hasAttachedLiteral) {
+          for (const node of group) {
+            if (!isLiteralNode(node)) {
+              this.visit(node)
+            }
+          }
+
+          interpolationGroups.push(group)
+        } else {
+          for (const node of group) {
+            if (!isLiteralNode(node)) {
+              this.visit(node)
+              standaloneERBNodes.push(node)
+            }
+          }
+        }
+      } else {
+        const content = this.getStaticClassContent(group).trim()
+
+        if (content) {
+          staticClasses.push(content)
+        }
+      }
+    }
+
+    return { staticClasses, interpolationGroups, standaloneERBNodes }
   }
 
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
-    const { classLiterals, others } = this.partitionNodes(nodes)
-    const preserveLeadingSpace = isNested || this.startsWithClassLiteral(nodes)
+    if (nodes.length === 0) return nodes
+    if (nodes.every(child => isPureWhitespaceNode(child))) return nodes
 
-    return this.formatSortedClasses(classLiterals, others, preserveLeadingSpace, isNested)
-  }
+    const splitNodes = splitLiteralsAtWhitespace(nodes)
+    const groups = groupNodesByClass(splitNodes)
+    const groupPrecedingWhitespace = new Map<Node[], Node[]>()
+    const nodePrecedingWhitespace = new Map<Node, Node[]>()
 
-  private partitionNodes(nodes: Node[]): { classLiterals: LiteralNode[], others: Node[] } {
-    const classLiterals: LiteralNode[] = []
-    const others: Node[] = []
+    for (let i = 1; i < groups.length; i++) {
+      if (!this.isWhitespaceGroup(groups[i]) && this.isWhitespaceGroup(groups[i - 1])) {
+        groupPrecedingWhitespace.set(groups[i], groups[i - 1])
 
-    for (const node of nodes) {
-      if (isLiteralNode(node)) {
-        if (node.content.trim()) {
-          classLiterals.push(node)
-        } else {
-          others.push(node)
+        for (const node of groups[i]) {
+          if (!isLiteralNode(node)) {
+            nodePrecedingWhitespace.set(node, groups[i - 1])
+          }
         }
-      } else {
-        this.visit(node)
-        others.push(node)
       }
     }
 
-    return { classLiterals, others }
-  }
+    let leadingWhitespace: Node[] | null = null
+    let trailingWhitespace: Node[] | null = null
 
-  private formatSortedClasses(literals: LiteralNode[], others: Node[], preserveLeadingSpace: boolean, isNested: boolean): Node[] {
-    if (literals.length === 0 && others.length === 0) return []
-    if (literals.length === 0) return others
-
-    const fullContent = literals.map(n => n.content).join("")
-    const trimmedClasses = fullContent.trim()
-
-    if (!trimmedClasses) return others.length > 0 ? others : []
-
-    try {
-      const sortedClasses = this.sorter.sortClasses(trimmedClasses)
-
-      if (others.length === 0) {
-        return this.formatSortedLiteral(literals[0], fullContent, sortedClasses, trimmedClasses)
+    if (isNested && groups.length > 0) {
+      if (this.isWhitespaceGroup(groups[0])) {
+        leadingWhitespace = groups[0]
       }
-
-      return this.formatSortedLiteralWithERB(literals[0], fullContent, sortedClasses, others, preserveLeadingSpace, isNested)
-    } catch (error) {
-      return [...literals, ...others]
+      if (groups.length > 1 && this.isWhitespaceGroup(groups[groups.length - 1])) {
+        trailingWhitespace = groups[groups.length - 1]
+      }
     }
-  }
 
-  private formatSortedLiteral(literal: LiteralNode, fullContent: string, sortedClasses: string, trimmedClasses: string): Node[] {
-    const leadingSpace = fullContent.match(/^\s*/)?.[0] || ""
-    const trailingSpace = fullContent.match(/\s*$/)?.[0] || ""
-    const alreadySorted = sortedClasses === trimmedClasses
+    const { staticClasses, interpolationGroups, standaloneERBNodes } = this.categorizeGroups(groups)
 
-    const sortedContent = alreadySorted ? fullContent : (leadingSpace + sortedClasses + trailingSpace)
+    const allStaticContent = staticClasses.join(" ")
+    let sortedContent = allStaticContent
 
-    asMutable(literal).content = sortedContent
+    if (allStaticContent) {
+      try {
+        sortedContent = this.sorter.sortClasses(allStaticContent)
+      } catch {
+        // Keep original on error
+      }
+    }
 
-    return [literal]
-  }
+    const parts: Node[] = []
 
-  private formatSortedLiteralWithERB(literal: LiteralNode, fullContent: string, sortedClasses: string, others: Node[], preserveLeadingSpace: boolean, isNested: boolean): Node[] {
-    const leadingSpace = fullContent.match(/^\s*/)?.[0] || ""
-    const trailingSpace = fullContent.match(/\s*$/)?.[0] || ""
+    if (sortedContent) {
+      parts.push(new LiteralNode({
+        type: "AST_LITERAL_NODE",
+        content: sortedContent,
+        errors: [],
+        location: Location.zero
+      }))
+    }
 
-    const leading = preserveLeadingSpace ? leadingSpace : ""
-    const firstIsWhitespace = this.isWhitespaceLiteral(others[0])
-    const spaceBetween = firstIsWhitespace ? "" : " "
-
-    asMutable(literal).content = leading + sortedClasses + spaceBetween
-
-    const othersWithWhitespace = this.addSpacingBetweenERBNodes(others, isNested, trailingSpace)
-
-    return [literal, ...othersWithWhitespace]
-  }
-
-  private addSpacingBetweenERBNodes(nodes: Node[], isNested: boolean, trailingSpace: string): Node[] {
-    return nodes.flatMap((node, index) => {
-      const isLast = index >= nodes.length - 1
-
-      if (isLast) {
-        return isNested && trailingSpace ? [node, this.spaceLiteral] : [node]
+    for (const group of interpolationGroups) {
+      if (parts.length > 0) {
+        const whitespace = groupPrecedingWhitespace.get(group)
+        parts.push(...(whitespace ?? [this.spaceLiteral]))
       }
 
-      const currentIsWhitespace = this.isWhitespaceLiteral(node)
-      const nextIsWhitespace = this.isWhitespaceLiteral(nodes[index + 1])
-      const needsSpace = !currentIsWhitespace && !nextIsWhitespace
+      parts.push(...this.trimGroupWhitespace(group))
+    }
 
-      return needsSpace ? [node, this.spaceLiteral] : [node]
-    })
+    for (const node of standaloneERBNodes) {
+      if (parts.length > 0) {
+        const whitespace = nodePrecedingWhitespace.get(node)
+        parts.push(...(whitespace ?? [this.spaceLiteral]))
+      }
+      parts.push(node)
+    }
+
+    if (isNested && parts.length > 0) {
+      const leading = leadingWhitespace ?? [this.spaceLiteral]
+      const trailing = trailingWhitespace ?? [this.spaceLiteral]
+      return [...leading, ...parts, ...trailing]
+    }
+
+    return parts
+  }
+
+  private trimGroupWhitespace(group: Node[]): Node[] {
+    if (group.length === 0) return group
+
+    const result = [...group]
+
+    if (isLiteralNode(result[0])) {
+      const first = result[0] as LiteralNode
+      const trimmed = first.content.trimStart()
+
+      if (trimmed !== first.content) {
+        result[0] = new LiteralNode({
+          type: "AST_LITERAL_NODE",
+          content: trimmed,
+          errors: [],
+          location: first.location
+        })
+      }
+    }
+
+    const lastIndex = result.length - 1
+
+    if (isLiteralNode(result[lastIndex])) {
+      const last = result[lastIndex] as LiteralNode
+      const trimmed = last.content.trimEnd()
+
+      if (trimmed !== last.content) {
+        result[lastIndex] = new LiteralNode({
+          type: "AST_LITERAL_NODE",
+          content: trimmed,
+          errors: [],
+          location: last.location
+        })
+      }
+    }
+
+    return result
   }
 }
 

@@ -16,7 +16,7 @@ const { Config } = require('@herb-tools/config');
   let linterRules = {};
   try {
     linterRules = JSON.parse(linterRulesJson);
-  } catch (e) {
+  } catch (_error) {
     // Invalid JSON, use empty rules
   }
 
@@ -68,7 +68,7 @@ const { Config } = require('@herb-tools/config');
             silent: true
           });
           customRules = result.rules;
-        } catch (customRuleError) {
+        } catch (_customRuleError) {
           // Ignore custom rule loading errors in worker
         }
 

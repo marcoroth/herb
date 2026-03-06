@@ -24,10 +24,10 @@ input: "<div class=`hello world`></div>"
         │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:12))
         │       │   │           ├── errors: (1 error)
         │       │   │           │   └── @ UnexpectedError (location: (1:11)-(1:12))
-        │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: `single quote (') or double quote (\")`, found: `backtick (`)`."
+        │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: single quote (') or double quote (\"), found: a backtick."
         │       │   │           │       ├── description: "Invalid quote character for HTML attribute"
         │       │   │           │       ├── expected: "single quote (') or double quote (\")"
-        │       │   │           │       └── found: "backtick (`)"
+        │       │   │           │       └── found: "a backtick"
         │       │   │           │
         │       │   │           ├── open_quote: ∅
         │       │   │           ├── children: []

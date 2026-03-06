@@ -2,8 +2,8 @@
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/position.h"
-#include "include/token.h"
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -28,12 +28,14 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
   }
 }
 
-AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
-  AST_LITERAL_NODE_T* literal = malloc(sizeof(AST_LITERAL_NODE_T));
+AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_allocator_T* allocator) {
+  AST_LITERAL_NODE_T* literal = hb_allocator_alloc(allocator, sizeof(AST_LITERAL_NODE_T));
+
+  if (!literal) { return NULL; }
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = herb_strdup(token->value);
+  literal->content = hb_allocator_strdup(allocator, token->value);
 
   return literal;
 }
@@ -43,7 +45,7 @@ ast_node_type_T ast_node_type(const AST_NODE_T* node) {
 }
 
 size_t ast_node_errors_count(const AST_NODE_T* node) {
-  return node->errors->size;
+  return hb_array_size(node->errors);
 }
 
 hb_array_T* ast_node_errors(const AST_NODE_T* node) {

@@ -1,0 +1,51 @@
+---
+source: "Parser::AttributesTest#test_0091_issue #1063: conditional boolean attribute open (spaces around attribute)"
+input: "<details <% if @doc.registration_id.present? %> open <% end %>></details>"
+---
+@ DocumentNode (location: (1:0)-(1:73))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:73))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:63))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "details" (location: (1:1)-(1:8))
+        │       ├── tag_closing: ">" (location: (1:62)-(1:63))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBIfNode (location: (1:9)-(1:62))
+        │       │       ├── tag_opening: "<%" (location: (1:9)-(1:11))
+        │       │       ├── content: " if @doc.registration_id.present? " (location: (1:11)-(1:45))
+        │       │       ├── tag_closing: "%>" (location: (1:45)-(1:47))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:48)-(1:52))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:48)-(1:52))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:48)-(1:52))
+        │       │       │       │               └── content: "open"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:53)-(1:62))
+        │       │               ├── tag_opening: "<%" (location: (1:53)-(1:55))
+        │       │               ├── content: " end " (location: (1:55)-(1:60))
+        │       │               └── tag_closing: "%>" (location: (1:60)-(1:62))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "details" (location: (1:1)-(1:8))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:63)-(1:73))
+        │       ├── tag_opening: "</" (location: (1:63)-(1:65))
+        │       ├── tag_name: "details" (location: (1:65)-(1:72))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:72)-(1:73))
+        │
+        ├── is_void: false
+        └── source: "HTML"
