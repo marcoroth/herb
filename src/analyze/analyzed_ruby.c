@@ -48,22 +48,22 @@ void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
   free(analyzed);
 }
 
-const char* erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed) {
+hb_string_T erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed) {
   if (analyzed->end_count > 0) {
-    return "`<% end %>`";
+    return hb_string("`<% end %>`");
   } else if (analyzed->else_node_count > 0) {
-    return "`<% else %>`";
+    return hb_string("`<% else %>`");
   } else if (analyzed->elsif_node_count > 0) {
-    return "`<% elsif %>`";
+    return hb_string("`<% elsif %>`");
   } else if (analyzed->when_node_count > 0) {
-    return "`<% when %>`";
+    return hb_string("`<% when %>`");
   } else if (analyzed->in_node_count > 0) {
-    return "`<% in %>`";
+    return hb_string("`<% in %>`");
   } else if (analyzed->rescue_node_count > 0) {
-    return "`<% rescue %>`";
+    return hb_string("`<% rescue %>`");
   } else if (analyzed->ensure_node_count > 0) {
-    return "`<% ensure %>`";
+    return hb_string("`<% ensure %>`");
   }
 
-  return NULL;
+  return HB_STRING_NULL;
 }
