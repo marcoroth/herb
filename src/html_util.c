@@ -12,7 +12,7 @@
 bool is_void_element(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  hb_string_T void_tags[14] = {
+  static hb_string_T void_tags[14] = {
     hb_string("area"),  hb_string("base"),   hb_string("br"),    hb_string("col"),  hb_string("embed"),
     hb_string("hr"),    hb_string("img"),    hb_string("input"), hb_string("link"), hb_string("meta"),
     hb_string("param"), hb_string("source"), hb_string("track"), hb_string("wbr"),
@@ -29,7 +29,7 @@ bool is_void_element(hb_string_T tag_name) {
 bool has_optional_end_tag(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  hb_string_T optional_end_tags[15] = {
+  static hb_string_T optional_end_tags[15] = {
     hb_string("li"),    hb_string("dt"),       hb_string("dd"),     hb_string("p"),     hb_string("rt"),
     hb_string("rp"),    hb_string("optgroup"), hb_string("option"), hb_string("thead"), hb_string("tbody"),
     hb_string("tfoot"), hb_string("tr"),       hb_string("td"),     hb_string("th"),    hb_string("colgroup"),
@@ -68,7 +68,7 @@ bool should_implicitly_close(hb_string_T open_tag_name, hb_string_T next_tag_nam
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("p"))) {
-    hb_string_T p_closers[30] = {
+    static hb_string_T p_closers[30] = {
       hb_string("address"), hb_string("article"), hb_string("aside"),    hb_string("blockquote"), hb_string("details"),
       hb_string("div"),     hb_string("dl"),      hb_string("fieldset"), hb_string("figcaption"), hb_string("figure"),
       hb_string("footer"),  hb_string("form"),    hb_string("h1"),       hb_string("h2"),         hb_string("h3"),
@@ -145,7 +145,7 @@ bool parent_closes_element(hb_string_T open_tag_name, hb_string_T parent_close_t
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("p"))) {
-    hb_string_T p_parent_closers[20] = {
+    static hb_string_T p_parent_closers[20] = {
       hb_string("article"), hb_string("aside"),    hb_string("blockquote"), hb_string("body"),   hb_string("details"),
       hb_string("div"),     hb_string("fieldset"), hb_string("figcaption"), hb_string("figure"), hb_string("footer"),
       hb_string("form"),    hb_string("header"),   hb_string("main"),       hb_string("nav"),    hb_string("section"),
