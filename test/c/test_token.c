@@ -4,29 +4,30 @@
 #include "../../src/include/lex_helpers.h"
 #include "../../src/include/token.h"
 #include "../../src/include/util/hb_allocator.h"
+#include "../../src/include/util/hb_string.h"
 
 TEST(test_token)
   ck_assert(hb_string_equals(token_type_to_string(TOKEN_IDENTIFIER), hb_string("TOKEN_IDENTIFIER")));
 END
 
 TEST(test_token_type_to_friendly_string)
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_IDENTIFIER), "an identifier");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_WHITESPACE), "whitespace");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_NEWLINE), "a newline");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_QUOTE), "a quote");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_CHARACTER), "a character");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_EOF), "end of file");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_TAG_START), "`<`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_TAG_END), "`>`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_TAG_SELF_CLOSE), "`/>`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_TAG_START_CLOSE), "`</`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_COMMENT_START), "`<!--`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_HTML_COMMENT_END), "`-->`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_EQUALS), "`=`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_SLASH), "`/`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_COLON), "`:`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_ERB_START), "`<%`");
-  ck_assert_str_eq(token_type_to_friendly_string(TOKEN_ERB_END), "`%>`");
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_IDENTIFIER), hb_string("an identifier")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_WHITESPACE), hb_string("whitespace")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_NEWLINE), hb_string("a newline")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_QUOTE), hb_string("a quote")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_CHARACTER), hb_string("a character")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_EOF), hb_string("end of file")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_TAG_START), hb_string("`<`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_TAG_END), hb_string("`>`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_TAG_SELF_CLOSE), hb_string("`/>`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_TAG_START_CLOSE), hb_string("`</`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_COMMENT_START), hb_string("`<!--`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_HTML_COMMENT_END), hb_string("`-->`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_EQUALS), hb_string("`=`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_SLASH), hb_string("`/`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_COLON), hb_string("`:`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_ERB_START), hb_string("`<%`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_ERB_END), hb_string("`%>`")));
 END
 
 TEST(test_token_types_to_friendly_string)

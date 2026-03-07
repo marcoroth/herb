@@ -107,7 +107,7 @@ void parser_append_unexpected_error_impl(
   append_unexpected_error(
     hb_string(description),
     hb_string(expected),
-    hb_string(token_type_to_friendly_string(token->type)),
+    token_type_to_friendly_string(token->type),
     token->location.start,
     token->location.end,
     parser->allocator,
@@ -129,7 +129,7 @@ void parser_append_unexpected_error_string(
   append_unexpected_error(
     hb_string(description),
     hb_string(expected),
-    hb_string(token_type_to_friendly_string(token->type)),
+    token_type_to_friendly_string(token->type),
     token->location.start,
     token->location.end,
     parser->allocator,

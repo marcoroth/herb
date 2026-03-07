@@ -12,7 +12,7 @@
 token_T* token_init(hb_string_T value, token_type_T type, lexer_T* lexer);
 hb_string_T token_to_string(const token_T* token);
 hb_string_T token_type_to_string(token_type_T type);
-const char* token_type_to_friendly_string(token_type_T type);
+hb_string_T token_type_to_friendly_string(token_type_T type);
 char* token_types_to_friendly_string_va(token_type_T first_token, ...);
 char* token_types_to_friendly_string_valist(token_type_T first_token, va_list args);
 
