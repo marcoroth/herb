@@ -49,46 +49,6 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   return result;
 }
 
-napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
-  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-  if (argc < 1) {
-    napi_throw_error(env, nullptr, "Wrong number of arguments");
-    return nullptr;
-  }
-
-  char* file_path = CheckString(env, args[0]);
-  if (!file_path) { return nullptr; }
-
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(file_path);
-    napi_throw_error(env, nullptr, "Failed to initialize allocator");
-    return nullptr;
-  }
-
-  napi_value source_value = ReadFileToString(env, file_path);
-
-  char* source = CheckString(env, source_value);
-  if (!source) {
-    hb_allocator_destroy(&allocator);
-    free(file_path);
-    return nullptr;
-  }
-
-  hb_array_T* tokens = herb_lex(source, &allocator);
-  napi_value result = CreateLexResult(env, tokens, source_value);
-
-  herb_free_tokens(&tokens, &allocator);
-  hb_allocator_destroy(&allocator);
-  free(file_path);
-  free(source);
-
-  return result;
-}
-
 napi_value Herb_parse(napi_env env, napi_callback_info info) {
   size_t argc = 2;
   napi_value args[2];
@@ -162,47 +122,6 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
   ast_node_free((AST_NODE_T *) root, &allocator);
   hb_allocator_destroy(&allocator);
-  free(string);
-
-  return result;
-}
-
-napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
-  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-  if (argc < 1) {
-    napi_throw_error(env, nullptr, "Wrong number of arguments");
-    return nullptr;
-  }
-
-  char* file_path = CheckString(env, args[0]);
-  if (!file_path) { return nullptr; }
-
-  napi_value source_value = ReadFileToString(env, file_path);
-
-  char* string = CheckString(env, source_value);
-  if (!string) {
-    free(file_path);
-    return nullptr;
-  }
-
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(file_path);
-    free(string);
-    napi_throw_error(env, nullptr, "Failed to initialize allocator");
-    return nullptr;
-  }
-
-  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
-  napi_value result = CreateParseResult(env, root, source_value, &parser_options);
-
-  ast_node_free((AST_NODE_T *) root, &allocator);
-  hb_allocator_destroy(&allocator);
-  free(file_path);
   free(string);
 
   return result;
@@ -339,8 +258,6 @@ napi_value Init(napi_env env, napi_value exports) {
   napi_property_descriptor descriptors[] = {
     { "parse", nullptr, Herb_parse, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lex", nullptr, Herb_lex, nullptr, nullptr, nullptr, napi_default, nullptr },
-    { "parseFile", nullptr, Herb_parse_file, nullptr, nullptr, nullptr, napi_default, nullptr },
-    { "lexFile", nullptr, Herb_lex_file, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },

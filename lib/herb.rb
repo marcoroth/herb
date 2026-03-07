@@ -67,6 +67,16 @@ end
 
 module Herb
   class << self
+    #: (String path, ?arena_stats: bool) -> LexResult
+    def lex_file(path, **options)
+      lex(File.read(path), **options)
+    end
+
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+    def parse_file(path, **options)
+      parse(File.read(path), **options)
+    end
+
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)
     end
