@@ -69,12 +69,32 @@ impl Default for HerbFormatterConfig {
   }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HerbEngineConfig {
+  #[serde(default = "default_security_mode")]
+  pub security: String,
+}
+
+fn default_security_mode() -> String {
+  "error".to_string()
+}
+
+impl Default for HerbEngineConfig {
+  fn default() -> Self {
+    Self {
+      security: default_security_mode(),
+    }
+  }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HerbConfig {
   #[serde(default)]
   pub version: Option<String>,
   #[serde(default)]
   pub files: FilesConfig,
+  #[serde(default)]
+  pub engine: HerbEngineConfig,
   #[serde(default)]
   pub linter: HerbLinterConfig,
   #[serde(default)]

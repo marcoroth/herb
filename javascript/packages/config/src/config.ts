@@ -61,8 +61,13 @@ export type FormatterConfig = {
   }
 }
 
+export type EngineConfig = {
+  security?: 'error' | 'warn' | 'ignore'
+}
+
 export type HerbConfigOptions = {
   files?: FilesConfig
+  engine?: EngineConfig
   linter?: LinterConfig
   formatter?: FormatterConfig
 }

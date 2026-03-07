@@ -24,6 +24,11 @@ version: 0.8.10
 #     - 'public/**/*'
 #     - 'tmp/**/*'
 
+# engine:
+#   # Security mode for ERB output in HTML attributes
+#   # Valid values: error (default), warn, ignore
+#   security: error
+
 linter:
   enabled: true
 

@@ -16,6 +16,9 @@ files:
     - "tmp/**/*"
     - "vendor/**/*"
 
+engine:
+  security: error
+
 linter:
   enabled: true
   rules: {}

@@ -32,6 +32,8 @@ module Herb
 
     def linter: () -> untyped
 
+    def engine: () -> untyped
+
     def formatter: () -> untyped
 
     def include_patterns_for: (untyped tool) -> untyped
