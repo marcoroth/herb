@@ -174,7 +174,6 @@ pub fn extract_html(source: &str) -> Result<String, String> {
     let c_str = std::ffi::CStr::from_ptr(result);
     let rust_str = c_str.to_string_lossy().into_owned();
 
-    crate::ffi::hb_allocator_dealloc(&mut allocator, result as *mut std::ffi::c_void);
     crate::ffi::hb_allocator_destroy(&mut allocator);
 
     Ok(rust_str)
