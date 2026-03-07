@@ -10,13 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char* pm_error_level_to_string(pm_error_level_t level) {
+hb_string_T pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
-    case PM_ERROR_LEVEL_SYNTAX: return "syntax";
-    case PM_ERROR_LEVEL_ARGUMENT: return "argument";
-    case PM_ERROR_LEVEL_LOAD: return "load";
-
-    default: return "Unknown pm_error_level_t";
+    case PM_ERROR_LEVEL_SYNTAX: return hb_string("syntax");
+    case PM_ERROR_LEVEL_ARGUMENT: return hb_string("argument");
+    case PM_ERROR_LEVEL_LOAD: return hb_string("load");
   }
 }
 
@@ -36,7 +34,7 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   return ruby_parse_error_init(
     hb_string(error->message),
     hb_string(pm_diagnostic_id_human(error->diag_id)),
-    hb_string(pm_error_level_to_string(error->level)),
+    pm_error_level_to_string(error->level),
     start,
     end,
     allocator
@@ -52,7 +50,7 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
   return ruby_parse_error_init(
     hb_string(error->message),
     hb_string(pm_diagnostic_id_human(error->diag_id)),
-    hb_string(pm_error_level_to_string(error->level)),
+    pm_error_level_to_string(error->level),
     start,
     end,
     allocator
