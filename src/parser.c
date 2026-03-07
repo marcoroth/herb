@@ -668,7 +668,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   append_unexpected_error(
     hb_string("Unexpected Token"),
     hb_string(expected),
-    hb_string(token_type_to_friendly_string(parser->current_token->type)),
+    token_type_to_friendly_string(parser->current_token->type),
     parser->current_token->location.start,
     parser->current_token->location.end,
     parser->allocator,

@@ -82,58 +82,54 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_ERROR: return hb_string("TOKEN_ERROR");
     case TOKEN_EOF: return hb_string("TOKEN_EOF");
   }
-
-  return hb_string("Unknown token_type_T");
 }
 
-const char* token_type_to_friendly_string(const token_type_T type) {
+hb_string_T token_type_to_friendly_string(const token_type_T type) {
   switch (type) {
-    case TOKEN_WHITESPACE: return "whitespace";
-    case TOKEN_NBSP: return "non-breaking space";
-    case TOKEN_NEWLINE: return "a newline";
-    case TOKEN_IDENTIFIER: return "an identifier";
-    case TOKEN_HTML_DOCTYPE: return "`<!DOCTYPE`";
-    case TOKEN_XML_DECLARATION: return "`<?xml`";
-    case TOKEN_XML_DECLARATION_END: return "`?>`";
-    case TOKEN_CDATA_START: return "`<![CDATA[`";
-    case TOKEN_CDATA_END: return "`]]>`";
-    case TOKEN_HTML_TAG_START: return "`<`";
-    case TOKEN_HTML_TAG_END: return "`>`";
-    case TOKEN_HTML_TAG_START_CLOSE: return "`</`";
-    case TOKEN_HTML_TAG_SELF_CLOSE: return "`/>`";
-    case TOKEN_HTML_COMMENT_START: return "`<!--`";
-    case TOKEN_HTML_COMMENT_END: return "`-->`";
-    case TOKEN_HTML_COMMENT_INVALID_END: return "`--!>`";
-    case TOKEN_EQUALS: return "`=`";
-    case TOKEN_QUOTE: return "a quote";
-    case TOKEN_BACKTICK: return "a backtick";
-    case TOKEN_BACKSLASH: return "`\\`";
-    case TOKEN_DASH: return "`-`";
-    case TOKEN_UNDERSCORE: return "`_`";
-    case TOKEN_EXCLAMATION: return "`!`";
-    case TOKEN_SLASH: return "`/`";
-    case TOKEN_SEMICOLON: return "`;`";
-    case TOKEN_COLON: return "`:`";
-    case TOKEN_AT: return "`@`";
-    case TOKEN_LT: return "`<`";
-    case TOKEN_PERCENT: return "`%`";
-    case TOKEN_AMPERSAND: return "`&`";
-    case TOKEN_ERB_START: return "`<%`";
-    case TOKEN_ERB_CONTENT: return "ERB content";
-    case TOKEN_ERB_END: return "`%>`";
-    case TOKEN_CHARACTER: return "a character";
-    case TOKEN_ERROR: return "an error token";
-    case TOKEN_EOF: return "end of file";
+    case TOKEN_WHITESPACE: return hb_string("whitespace");
+    case TOKEN_NBSP: return hb_string("non-breaking space");
+    case TOKEN_NEWLINE: return hb_string("a newline");
+    case TOKEN_IDENTIFIER: return hb_string("an identifier");
+    case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
+    case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
+    case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
+    case TOKEN_CDATA_END: return hb_string("`]]>`");
+    case TOKEN_HTML_TAG_START: return hb_string("`<`");
+    case TOKEN_HTML_TAG_END: return hb_string("`>`");
+    case TOKEN_HTML_TAG_START_CLOSE: return hb_string("`</`");
+    case TOKEN_HTML_TAG_SELF_CLOSE: return hb_string("`/>`");
+    case TOKEN_HTML_COMMENT_START: return hb_string("`<!--`");
+    case TOKEN_HTML_COMMENT_END: return hb_string("`-->`");
+    case TOKEN_HTML_COMMENT_INVALID_END: return hb_string("`--!>`");
+    case TOKEN_EQUALS: return hb_string("`=`");
+    case TOKEN_QUOTE: return hb_string("a quote");
+    case TOKEN_BACKTICK: return hb_string("a backtick");
+    case TOKEN_BACKSLASH: return hb_string("`\\`");
+    case TOKEN_DASH: return hb_string("`-`");
+    case TOKEN_UNDERSCORE: return hb_string("`_`");
+    case TOKEN_EXCLAMATION: return hb_string("`!`");
+    case TOKEN_SLASH: return hb_string("`/`");
+    case TOKEN_SEMICOLON: return hb_string("`;`");
+    case TOKEN_COLON: return hb_string("`:`");
+    case TOKEN_AT: return hb_string("`@`");
+    case TOKEN_LT: return hb_string("`<`");
+    case TOKEN_PERCENT: return hb_string("`%`");
+    case TOKEN_AMPERSAND: return hb_string("`&`");
+    case TOKEN_ERB_START: return hb_string("`<%`");
+    case TOKEN_ERB_CONTENT: return hb_string("ERB content");
+    case TOKEN_ERB_END: return hb_string("`%>`");
+    case TOKEN_CHARACTER: return hb_string("a character");
+    case TOKEN_ERROR: return hb_string("an error token");
+    case TOKEN_EOF: return hb_string("end of file");
   }
-
-  return "Unknown token type";
 }
 
 char* token_types_to_friendly_string_valist(token_type_T first_token, va_list args) {
   if ((int) first_token == TOKEN_SENTINEL) { return herb_strdup(""); }
 
   size_t count = 0;
-  const char* names[32];
+  hb_string_T names[32];
   token_type_T current = first_token;
 
   while ((int) current != TOKEN_SENTINEL && count < 32) {
@@ -145,7 +141,7 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
   hb_buffer_init(&buffer, 128);
 
   for (size_t i = 0; i < count; i++) {
-    hb_buffer_append(&buffer, names[i]);
+    hb_buffer_append_string(&buffer, names[i]);
 
     if (i < count - 1) {
       if (count > 2) { hb_buffer_append(&buffer, ", "); }
