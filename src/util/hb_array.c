@@ -2,24 +2,31 @@
 #include <stdio.h>
 
 #include "../include/macros.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_array.h"
 
 size_t hb_array_sizeof(void) {
   return sizeof(hb_array_T);
 }
 
-hb_array_T* hb_array_init(const size_t capacity) {
-  hb_array_T* array = malloc(hb_array_sizeof());
+hb_array_T* hb_array_init(const size_t capacity, hb_allocator_T* allocator) {
+  hb_array_T* array = hb_allocator_alloc(allocator, hb_array_sizeof());
 
   if (!array) { return NULL; }
 
   array->size = 0;
   array->capacity = capacity;
-  array->items = malloc(capacity * sizeof(void*));
+  array->allocator = allocator;
 
-  if (!array->items) {
-    free(array);
-    return NULL;
+  if (capacity == 0) {
+    array->items = NULL;
+  } else {
+    array->items = hb_allocator_alloc(allocator, capacity * sizeof(void*));
+
+    if (!array->items) {
+      hb_allocator_dealloc(allocator, array);
+      return NULL;
+    }
   }
 
   return array;
@@ -47,12 +54,13 @@ bool hb_array_append(hb_array_T* array, void* item) {
       return false;
     }
 
+    size_t old_size_bytes = array->capacity * sizeof(void*);
     size_t new_size_bytes = new_capacity * sizeof(void*);
-    void* new_items = realloc(array->items, new_size_bytes);
+    void** new_items = hb_allocator_realloc(array->allocator, array->items, old_size_bytes, new_size_bytes);
 
     if (unlikely(new_items == NULL)) { return false; }
 
-    array->items = (void**) new_items;
+    array->items = new_items;
     array->capacity = new_capacity;
   }
 
@@ -136,8 +144,9 @@ size_t hb_array_capacity(const hb_array_T* array) {
 void hb_array_free(hb_array_T** array) {
   if (!array || !*array) { return; }
 
-  free((*array)->items);
-  free(*array);
+  hb_allocator_T* allocator = (*array)->allocator;
+  hb_allocator_dealloc(allocator, (*array)->items);
+  hb_allocator_dealloc(allocator, *array);
 
   *array = NULL;
 }

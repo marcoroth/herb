@@ -7,7 +7,14 @@
 #include "token_struct.h"
 #include "util/hb_allocator.h"
 
-void ast_node_init(AST_NODE_T* node, ast_node_type_T type, position_T start, position_T end, hb_array_T* errors);
+void ast_node_init(
+  AST_NODE_T* node,
+  ast_node_type_T type,
+  position_T start,
+  position_T end,
+  hb_array_T* errors,
+  hb_allocator_T* allocator
+);
 void ast_node_free(AST_NODE_T* node, hb_allocator_T* allocator);
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_allocator_T* allocator);

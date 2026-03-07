@@ -1,9 +1,17 @@
 #include "include/test.h"
+#include "../../src/include/util/hb_allocator.h"
 #include "../../src/include/util/hb_array.h"
+
+static hb_allocator_T test_allocator;
+
+static void setup(void) {
+  test_allocator = hb_allocator_with_malloc();
+}
 
 // Test array initialization
 TEST(test_hb_array_init)
-  hb_array_T* array = hb_array_init(10);
+  setup();
+  hb_array_T* array = hb_array_init(10, &test_allocator);
 
   ck_assert_ptr_nonnull(array);
   ck_assert_int_eq(array->size, 0);
@@ -15,7 +23,8 @@ END
 
 // Test array appending
 TEST(test_hb_array_append)
-  hb_array_T* array = hb_array_init(2);
+  setup();
+  hb_array_T* array = hb_array_init(2, &test_allocator);
 
   size_t item1 = 42, item2 = 99, item3 = 100;
   hb_array_append(array, &item1);
@@ -36,7 +45,8 @@ END
 
 // Test getting elements
 TEST(test_hb_array_get)
-  hb_array_T* array = hb_array_init(3);
+  setup();
+  hb_array_T* array = hb_array_init(3, &test_allocator);
 
   size_t item1 = 42, item2 = 99;
   hb_array_append(array, &item1);
@@ -51,7 +61,8 @@ END
 
 // Test setting elements
 TEST(test_hb_array_set)
-  hb_array_T* array = hb_array_init(3);
+  setup();
+  hb_array_T* array = hb_array_init(3, &test_allocator);
 
   size_t item1 = 42, item2 = 99;
   hb_array_append(array, &item1);
@@ -67,7 +78,8 @@ END
 
 // Test removing elements
 TEST(test_hb_array_remove)
-  hb_array_T* array = hb_array_init(3);
+  setup();
+  hb_array_T* array = hb_array_init(3, &test_allocator);
 
   size_t item1 = 42, item2 = 99, item3 = 100;
   hb_array_append(array, &item1);
@@ -84,7 +96,8 @@ END
 
 // Test freeing the array
 TEST(test_hb_array_free)
-  hb_array_T* array = hb_array_init(5);
+  setup();
+  hb_array_T* array = hb_array_init(5, &test_allocator);
   hb_array_free(&array);
 
   ck_assert_ptr_null(array);
@@ -92,9 +105,10 @@ END
 
 // Test hb_array_size with NULL safety
 TEST(test_hb_array_size)
+  setup();
   ck_assert_int_eq(hb_array_size(NULL), 0);
 
-  hb_array_T* array = hb_array_init(5);
+  hb_array_T* array = hb_array_init(5, &test_allocator);
   ck_assert_int_eq(hb_array_size(array), 0);
 
   size_t item1 = 42, item2 = 99;
