@@ -57,13 +57,8 @@ export abstract class HerbBackend {
    * Lexes a file.
    * @param path - The file path to lex.
    * @returns A `LexResult` instance.
-   * @throws Error if the backend is not loaded.
    */
-  lexFile(path: string): LexResult {
-    this.ensureBackend()
-
-    return LexResult.from(this.backend.lexFile(ensureString(path)))
-  }
+  abstract lexFile(path: string): LexResult
 
   /**
    * Parses the given source string into a `ParseResult`.
@@ -84,13 +79,8 @@ export abstract class HerbBackend {
    * Parses a file.
    * @param path - The file path to parse.
    * @returns A `ParseResult` instance.
-   * @throws Error if the backend is not loaded.
    */
-  parseFile(path: string): ParseResult {
-    this.ensureBackend()
-
-    return ParseResult.from(this.backend.parseFile(ensureString(path)))
-  }
+  abstract parseFile(path: string): ParseResult
 
   /**
    * Extracts embedded Ruby code from the given source.

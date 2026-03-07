@@ -67,6 +67,14 @@ end
 
 module Herb
   class << self
+    def lex_file(path, **options)
+      lex(File.read(path), **options)
+    end
+
+    def parse_file(path, **options)
+      parse(File.read(path), **options)
+    end
+
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)
     end

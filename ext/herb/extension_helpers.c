@@ -5,7 +5,6 @@
 #include "nodes.h"
 
 #include "../../src/include/herb.h"
-#include "../../src/include/io.h"
 #include "../../src/include/location.h"
 #include "../../src/include/position.h"
 #include "../../src/include/token.h"
@@ -95,13 +94,4 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   VALUE args[5] = { value, source, warnings, errors, parser_options };
 
   return rb_class_new_instance(5, args, cParseResult);
-}
-
-VALUE read_file_to_ruby_string(const char* file_path) {
-  char* source = herb_read_file(file_path);
-  VALUE source_value = rb_utf8_str_new_cstr(source);
-
-  free(source);
-
-  return source_value;
 }
