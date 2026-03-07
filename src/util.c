@@ -1,4 +1,5 @@
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -14,10 +15,10 @@ int is_whitespace(int character) {
   return character == ' ' || character == '\t' || character == '\n' || character == '\r';
 }
 
-hb_string_T escape_newlines(hb_string_T input) {
+hb_string_T escape_newlines(hb_allocator_T* allocator, hb_string_T input) {
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, input.length);
+  hb_buffer_init(&buffer, input.length, allocator);
 
   for (size_t i = 0; i < input.length; ++i) {
     switch (input.data[i]) {
@@ -38,10 +39,10 @@ hb_string_T escape_newlines(hb_string_T input) {
   return hb_string(buffer.value);
 }
 
-static hb_string_T wrap_string(hb_string_T input, char character) {
+static hb_string_T wrap_string(hb_allocator_T* allocator, hb_string_T input, char character) {
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, input.length + 2);
+  hb_buffer_init(&buffer, input.length + 2, allocator);
 
   hb_buffer_append_char(&buffer, character);
   hb_buffer_append_string(&buffer, input);
@@ -50,15 +51,6 @@ static hb_string_T wrap_string(hb_string_T input, char character) {
   return hb_string(buffer.value);
 }
 
-hb_string_T quoted_string(hb_string_T input) {
-  return wrap_string(input, '"');
-}
-
-char* herb_strdup(const char* s) {
-  size_t len = strlen(s) + 1;
-  char* copy = malloc(len);
-
-  if (copy) { memcpy(copy, s, len); }
-
-  return copy;
+hb_string_T quoted_string(hb_allocator_T* allocator, hb_string_T input) {
+  return wrap_string(allocator, input, '"');
 }

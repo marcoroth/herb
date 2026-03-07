@@ -62,18 +62,18 @@ int main(const int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  hb_buffer_T output;
-
-  if (!hb_buffer_init(&output, 4096)) { return 1; }
-
-  char* source = herb_read_file(argv[2]);
+  hb_allocator_T malloc_allocator = hb_allocator_with_malloc();
+  char* source = herb_read_file(argv[2], &malloc_allocator);
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     fprintf(stderr, "Failed to initialize allocator\n");
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
     return EXIT_FAILURE;
   }
+
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, 4096, &allocator)) { return 1; }
 
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
@@ -90,9 +90,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "lexing");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -115,9 +115,9 @@ int main(const int argc, char* argv[]) {
 
     ast_node_free((AST_NODE_T*) root, &allocator);
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -129,9 +129,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "extracting Ruby");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -143,9 +143,9 @@ int main(const int argc, char* argv[]) {
     puts(output.value);
     print_time_diff(start, end, "extracting HTML");
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -158,9 +158,10 @@ int main(const int argc, char* argv[]) {
 
     herb_parse_ruby_to_stdout(ruby_source);
 
-    free(ruby_source);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&allocator, ruby_source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }

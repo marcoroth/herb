@@ -4,6 +4,7 @@
 #include "../include/errors.h"
 #include "../include/extract.h"
 #include "../include/prism_helpers.h"
+#include "../include/util/hb_allocator.h"
 #include "../include/util/hb_string.h"
 
 #include <prism.h>
@@ -79,5 +80,5 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
   pm_options_free(&options);
-  free(extracted_ruby);
+  hb_allocator_dealloc(allocator, extracted_ruby);
 }

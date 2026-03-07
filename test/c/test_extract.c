@@ -17,8 +17,8 @@ TEST(extract_ruby_single_erb_with_semicolons)
   char expected[] = "   if  ;\n   end  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_multiple_erb_same_line_with_semicolon)
@@ -31,8 +31,8 @@ TEST(extract_ruby_multiple_erb_same_line_with_semicolon)
 
   ck_assert_str_eq(result, "   x = 1  ;    y = 2  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_three_erb_same_line_with_semicolons)
@@ -45,8 +45,8 @@ TEST(extract_ruby_three_erb_same_line_with_semicolons)
 
   ck_assert_str_eq(result, "   a = 1  ;    b = 2  ;    c = 3  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_different_lines_with_semicolons)
@@ -60,8 +60,8 @@ TEST(extract_ruby_different_lines_with_semicolons)
   char expected[] = "   x = 1  ;\n   y = 2  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_mixed_lines)
@@ -75,8 +75,8 @@ TEST(extract_ruby_mixed_lines)
   char expected[] = "   a = 1  ;    b = 2  ;\n   c = 3  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_output_tags_same_line)
@@ -89,8 +89,8 @@ TEST(extract_ruby_output_tags_same_line)
 
   ck_assert_str_eq(result, "    x  ;     y  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_empty_erb_same_line)
@@ -103,8 +103,8 @@ TEST(extract_ruby_empty_erb_same_line)
 
   ck_assert_str_eq(result, "     ;      ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_comments_skipped)
@@ -117,8 +117,8 @@ TEST(extract_ruby_comments_skipped)
 
   ck_assert_str_eq(result, "                  code  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_issue_135_if_without_condition)
@@ -132,8 +132,8 @@ TEST(extract_ruby_issue_135_if_without_condition)
   char expected[] = "   if  ;\n   end  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_same_line)
@@ -146,8 +146,8 @@ TEST(extract_ruby_inline_comment_same_line)
 
   ck_assert_str_eq(result, "   if true  ;                       end  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_with_newline)
@@ -161,8 +161,8 @@ TEST(extract_ruby_inline_comment_with_newline)
   char expected[] = "   if true  ;                    \n   end  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_with_spaces)
@@ -175,8 +175,8 @@ TEST(extract_ruby_inline_comment_with_spaces)
 
   ck_assert_str_eq(result, "                    code  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_multiline)
@@ -190,8 +190,8 @@ TEST(extract_ruby_inline_comment_multiline)
   char expected[] = "   # Comment\nmore  ;    code  ;";
   ck_assert_str_eq(result, expected);
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_between_code)
@@ -204,8 +204,8 @@ TEST(extract_ruby_inline_comment_between_code)
 
   ck_assert_str_eq(result, "   if true  ;                        hello  ;   end  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_inline_comment_complex)
@@ -218,15 +218,16 @@ TEST(extract_ruby_inline_comment_complex)
 
   ck_assert_str_eq(result, "                       if true  ;                        hello  ;   end  ;");
 
+  hb_allocator_dealloc(&allocator, result);
   hb_allocator_destroy(&allocator);
-  free(result);
 END
 
 TEST(extract_ruby_with_options_semicolons_false)
   char* source = "<% x = 1 %> <% y = 2 %>";
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
 
   hb_allocator_T allocator;
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
@@ -239,14 +240,15 @@ TEST(extract_ruby_with_options_semicolons_false)
   ck_assert_str_eq(output.value, "   x = 1       y = 2   ");
 
   hb_allocator_destroy(&allocator);
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TEST(extract_ruby_with_options_comments_true)
   char* source = "<%# comment %>\n<% code %>";
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
 
   hb_allocator_T allocator;
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
@@ -259,14 +261,15 @@ TEST(extract_ruby_with_options_comments_true)
   ck_assert_str_eq(output.value, "  # comment   \n   code  ;");
 
   hb_allocator_destroy(&allocator);
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TEST(extract_ruby_with_options_preserve_positions_false)
   char* source = "<% x = 1 %> <% y = 2 %>";
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
 
   hb_allocator_T allocator;
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
@@ -279,14 +282,15 @@ TEST(extract_ruby_with_options_preserve_positions_false)
   ck_assert_str_eq(output.value, " x = 1 \n y = 2 ");
 
   hb_allocator_destroy(&allocator);
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TEST(extract_ruby_with_options_preserve_positions_false_and_comments_true)
   char* source = "<%# comment %><%= something %>";
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
 
   hb_allocator_T allocator;
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
@@ -300,14 +304,15 @@ TEST(extract_ruby_with_options_preserve_positions_false_and_comments_true)
   ck_assert_str_eq(output.value, "# comment \n something ");
 
   hb_allocator_destroy(&allocator);
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TEST(extract_ruby_with_options_default)
   char* source = "<% x = 1 %> <% y = 2 %>";
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_allocator_T malloc_alloc = hb_allocator_with_malloc();
+  hb_buffer_init(&output, strlen(source), &malloc_alloc);
 
   hb_allocator_T allocator;
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
@@ -317,7 +322,7 @@ TEST(extract_ruby_with_options_default)
   ck_assert_str_eq(output.value, "   x = 1  ;    y = 2  ;");
 
   hb_allocator_destroy(&allocator);
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TCase *extract_tests(void) {

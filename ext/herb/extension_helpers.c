@@ -8,6 +8,7 @@
 #include "../../src/include/location.h"
 #include "../../src/include/position.h"
 #include "../../src/include/token.h"
+#include "../../src/include/util/hb_allocator.h"
 #include "../../src/include/util/hb_string.h"
 
 const char* check_string(VALUE value) {

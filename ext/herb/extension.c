@@ -33,6 +33,7 @@ typedef struct {
 
 typedef struct {
   char* buffer_value;
+  hb_allocator_T allocator;
 } buffer_args_T;
 
 static VALUE parse_convert_body(VALUE arg) {
@@ -76,7 +77,8 @@ static VALUE buffer_to_string_body(VALUE arg) {
 static VALUE buffer_cleanup(VALUE arg) {
   buffer_args_T* args = (buffer_args_T*) arg;
 
-  if (args->buffer_value != NULL) { free(args->buffer_value); }
+  hb_allocator_dealloc(&args->allocator, args->buffer_value);
+  hb_allocator_destroy(&args->allocator);
 
   return Qnil;
 }
@@ -151,9 +153,12 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
   rb_scan_args(argc, argv, "1:", &source, &options);
 
   char* string = (char*) check_string(source);
-  hb_buffer_T output;
 
-  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, strlen(string), &allocator)) { return Qnil; }
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
@@ -173,32 +178,25 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(preserve_positions_value)) { extract_options.preserve_positions = RTEST(preserve_positions_value); }
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
-
   herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
 
-  hb_allocator_destroy(&allocator);
-
-  buffer_args_T args = { .buffer_value = output.value };
+  buffer_args_T args = { .buffer_value = output.value, .allocator = allocator };
 
   return rb_ensure(buffer_to_string_body, (VALUE) &args, buffer_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_html(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
-  hb_buffer_T output;
-
-  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, strlen(string), &allocator)) { return Qnil; }
+
   herb_extract_html_to_buffer(string, &output, &allocator);
 
-  hb_allocator_destroy(&allocator);
-
-  buffer_args_T args = { .buffer_value = output.value };
+  buffer_args_T args = { .buffer_value = output.value, .allocator = allocator };
 
   return rb_ensure(buffer_to_string_body, (VALUE) &args, buffer_cleanup, (VALUE) &args);
 }
@@ -304,11 +302,11 @@ static VALUE Herb_leak_check(VALUE self, VALUE source) {
   }
 
   {
-    hb_buffer_T output;
-    if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
-
     hb_allocator_T allocator;
     if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    hb_buffer_T output;
+    if (!hb_buffer_init(&output, strlen(string), &allocator)) { return Qnil; }
 
     herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
     herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
@@ -316,24 +314,24 @@ static VALUE Herb_leak_check(VALUE self, VALUE source) {
     hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
     rb_hash_aset(result, ID2SYM(rb_intern("extract_ruby")), make_tracking_hash(stats));
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
   }
 
   {
-    hb_buffer_T output;
-    if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
-
     hb_allocator_T allocator;
     if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    hb_buffer_T output;
+    if (!hb_buffer_init(&output, strlen(string), &allocator)) { return Qnil; }
 
     herb_extract_html_to_buffer(string, &output, &allocator);
 
     hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
     rb_hash_aset(result, ID2SYM(rb_intern("extract_html")), make_tracking_hash(stats));
 
+    hb_buffer_free(&output);
     hb_allocator_destroy(&allocator);
-    free(output.value);
   }
 
   return result;
