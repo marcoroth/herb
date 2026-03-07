@@ -4,13 +4,14 @@
 #include <stdbool.h>
 #include <string.h>
 
-bool hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacity) {
+bool hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacity, hb_allocator_T* allocator) {
   assert(initial_capacity != 0);
 
+  array->allocator = allocator;
   array->item_size = item_size;
   array->capacity = initial_capacity;
   array->size = 0;
-  array->items = malloc(array->capacity * array->item_size);
+  array->items = hb_allocator_alloc(array->allocator, array->capacity * array->item_size);
 
   if (!array->items) { return false; }
 
@@ -20,7 +21,12 @@ bool hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacit
 bool hb_narray_append(hb_narray_T* array, void* item) {
   if (array->size + 1 > array->capacity) {
     size_t new_capacity = array->capacity * 2;
-    void* new_buffer = realloc(array->items, new_capacity * array->item_size);
+    void* new_buffer = hb_allocator_realloc(
+      array->allocator,
+      array->items,
+      array->capacity * array->item_size,
+      new_capacity * array->item_size
+    );
 
     if (!new_buffer) { return false; }
 
@@ -80,7 +86,7 @@ void hb_narray_deinit(hb_narray_T* array) {
   array->item_size = 0;
   array->capacity = 0;
   array->size = 0;
-  free(array->items);
+  hb_allocator_dealloc(array->allocator, array->items);
 }
 
 size_t hb_narray_size(const hb_narray_T* array) {
