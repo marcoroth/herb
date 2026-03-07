@@ -265,7 +265,7 @@ static void add_multiple_tags_error_to_erb_node(
     allocator
   );
 
-  if (!erb_node->errors) { erb_node->errors = hb_array_init(1); }
+  if (!erb_node->errors) { erb_node->errors = hb_array_init(0, allocator); }
 
   hb_array_append(erb_node->errors, error);
 }
@@ -340,7 +340,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
   if (!nodes || hb_array_size(nodes) == 0) { return; }
 
-  hb_array_T* consumed_indices = hb_array_init(8);
+  hb_array_T* consumed_indices = hb_array_init(8, allocator);
 
   for (size_t i = 0; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
@@ -379,7 +379,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     if (close_index == (size_t) -1 || !close_tag) { continue; }
 
-    hb_array_T* body = hb_array_init(8);
+    hb_array_T* body = hb_array_init(8, allocator);
 
     for (size_t j = i + 1; j < close_index; j++) {
       AST_NODE_T* body_node = (AST_NODE_T*) hb_array_get(nodes, j);
@@ -389,7 +389,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
     position_T start_position = conditional_node->location.start;
     position_T end_position = close_tag->base.location.end;
 
-    hb_array_T* conditional_open_tag_errors = hb_array_init(1);
+    hb_array_T* conditional_open_tag_errors = hb_array_init(0, allocator);
 
     AST_HTML_CONDITIONAL_OPEN_TAG_NODE_T* conditional_open_tag = ast_html_conditional_open_tag_node_init(
       conditional_node,
@@ -401,7 +401,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       allocator
     );
 
-    hb_array_T* element_errors = hb_array_init(1);
+    hb_array_T* element_errors = hb_array_init(0, allocator);
 
     AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
       (AST_NODE_T*) conditional_open_tag,
@@ -429,7 +429,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
   }
 
   if (hb_array_size(consumed_indices) > 0) {
-    hb_array_T* new_nodes = hb_array_init(hb_array_size(nodes));
+    hb_array_T* new_nodes = hb_array_init(hb_array_size(nodes), allocator);
 
     for (size_t i = 0; i < hb_array_size(nodes); i++) {
       bool consumed = false;

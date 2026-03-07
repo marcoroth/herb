@@ -287,9 +287,9 @@ static size_t process_case_structure(
   AST_ERB_CONTENT_NODE_T* erb_node = get_erb_content_at(array, index);
   if (!erb_node) { return index; }
 
-  hb_array_T* when_conditions = hb_array_init(8);
-  hb_array_T* in_conditions = hb_array_init(8);
-  hb_array_T* non_when_non_in_children = hb_array_init(8);
+  hb_array_T* when_conditions = hb_array_init(8, allocator);
+  hb_array_T* in_conditions = hb_array_init(8, allocator);
+  hb_array_T* non_when_non_in_children = hb_array_init(8, allocator);
 
   analyzed_ruby_T* analyzed = erb_node->analyzed_ruby;
   bool has_inline_when = has_case_node(analyzed) && has_when_node(analyzed);
@@ -309,7 +309,7 @@ static size_t process_case_structure(
   // Create a synthetic when/in node for inline when/in (e.g., <% case variable when "a" %>),
   if (has_inline_when || has_inline_in) {
     hb_array_T* statements = non_when_non_in_children;
-    non_when_non_in_children = hb_array_init(8);
+    non_when_non_in_children = hb_array_init(8, allocator);
 
     position_T start_position =
       erb_node->tag_closing ? erb_node->tag_closing->location.end : erb_node->content->location.end;
@@ -329,7 +329,7 @@ static size_t process_case_structure(
         statements,
         start_position,
         end_position,
-        hb_array_init(0),
+        hb_array_init(0, allocator),
         allocator
       );
 
@@ -343,7 +343,7 @@ static size_t process_case_structure(
         statements,
         start_position,
         end_position,
-        hb_array_init(0),
+        hb_array_init(0, allocator),
         allocator
       );
 
@@ -367,7 +367,7 @@ static size_t process_case_structure(
     control_type_t next_type = detect_control_type(next_erb);
 
     if (next_type == CONTROL_TYPE_WHEN || next_type == CONTROL_TYPE_IN) {
-      hb_array_T* statements = hb_array_init(8);
+      hb_array_T* statements = hb_array_init(8, allocator);
       index++;
       index = process_block_children(node, array, index, statements, context, next_type);
 
@@ -422,7 +422,7 @@ static size_t process_case_structure(
   AST_ERB_CONTENT_NODE_T* next_erb = NULL;
 
   if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_ELSE) {
-    hb_array_T* else_children = hb_array_init(8);
+    hb_array_T* else_children = hb_array_init(8, allocator);
     index++;
 
     index = process_block_children(node, array, index, else_children, context, CONTROL_TYPE_CASE);
@@ -518,7 +518,7 @@ static size_t process_begin_structure(
   hb_allocator_T* allocator = context->allocator;
   AST_ERB_CONTENT_NODE_T* erb_node = get_erb_content_at(array, index);
   if (!erb_node) { return index; }
-  hb_array_T* children = hb_array_init(8);
+  hb_array_T* children = hb_array_init(8, allocator);
 
   index++;
   index = process_block_children(node, array, index, children, context, CONTROL_TYPE_BEGIN);
@@ -537,7 +537,7 @@ static size_t process_begin_structure(
   }
 
   if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_ELSE) {
-    hb_array_T* else_children = hb_array_init(8);
+    hb_array_T* else_children = hb_array_init(8, allocator);
     index++;
 
     index = process_block_children(node, array, index, else_children, context, CONTROL_TYPE_BEGIN);
@@ -560,7 +560,7 @@ static size_t process_begin_structure(
   }
 
   if (peek_control_type(array, index, &next_type, &next_erb) && next_type == CONTROL_TYPE_ENSURE) {
-    hb_array_T* ensure_children = hb_array_init(8);
+    hb_array_T* ensure_children = hb_array_init(8, allocator);
     index++;
 
     const control_type_t ensure_stop[] = { CONTROL_TYPE_END };
@@ -635,7 +635,7 @@ static size_t process_generic_structure(
   hb_allocator_T* allocator = context->allocator;
   AST_ERB_CONTENT_NODE_T* erb_node = get_erb_content_at(array, index);
   if (!erb_node) { return index; }
-  hb_array_T* children = hb_array_init(8);
+  hb_array_T* children = hb_array_init(8, allocator);
 
   index++;
   index = process_block_children(node, array, index, children, context, initial_type);
@@ -690,7 +690,7 @@ static size_t process_subsequent_block(
   if (!erb_node) { return index; }
 
   control_type_t type = detect_control_type(erb_node);
-  hb_array_T* children = hb_array_init(8);
+  hb_array_T* children = hb_array_init(8, allocator);
 
   index++;
 
@@ -772,7 +772,7 @@ static size_t process_block_children(
     if (is_terminator_type(parent_type, child_type)) { break; }
 
     if (is_compound_control_type(child_type)) {
-      hb_array_T* temp_array = hb_array_init(1);
+      hb_array_T* temp_array = hb_array_init(1, context->allocator);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
       if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_first(temp_array)); }
@@ -792,7 +792,7 @@ static size_t process_block_children(
 
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
   hb_allocator_T* allocator = context->allocator;
-  hb_array_T* new_array = hb_array_init(hb_array_size(array));
+  hb_array_T* new_array = hb_array_init(hb_array_size(array), allocator);
   size_t index = 0;
 
   while (index < hb_array_size(array)) {
@@ -847,7 +847,7 @@ void herb_analyze_parse_tree(
   analyze_ruby_context_T context = {
     .document = document,
     .parent = NULL,
-    .ruby_context_stack = hb_array_init(8),
+    .ruby_context_stack = hb_array_init(8, allocator),
     .allocator = allocator,
   };
 

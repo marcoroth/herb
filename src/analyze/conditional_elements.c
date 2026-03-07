@@ -241,7 +241,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     }
   }
 
-  hb_array_T* open_stack = hb_array_init(8);
+  hb_array_T* open_stack = hb_array_init(8, allocator);
 
   for (size_t node_index = 0; node_index < hb_array_size(nodes); node_index++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, node_index);
@@ -271,7 +271,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     }
   }
 
-  hb_array_T* consumed_indices = hb_array_init(8);
+  hb_array_T* consumed_indices = hb_array_init(8, allocator);
 
   for (size_t node_index = 0; node_index < hb_array_size(nodes); node_index++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, node_index);
@@ -345,7 +345,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
     if (!matched_open) { continue; }
 
-    hb_array_T* body = hb_array_init(8);
+    hb_array_T* body = hb_array_init(8, allocator);
 
     for (size_t body_index = matched_open->open_index + 1; body_index < node_index; body_index++) {
       AST_NODE_T* body_node = (AST_NODE_T*) hb_array_get(nodes, body_index);
@@ -355,7 +355,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
     position_T start_position = matched_open->open_conditional->location.start;
     position_T end_position = node->location.end;
-    hb_array_T* errors = hb_array_init(8);
+    hb_array_T* errors = hb_array_init(0, allocator);
 
     AST_HTML_CONDITIONAL_ELEMENT_NODE_T* conditional_element = ast_html_conditional_element_node_init(
       matched_open->condition,
@@ -406,7 +406,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
   hb_array_free(&open_stack);
 
   if (hb_array_size(consumed_indices) > 0) {
-    hb_array_T* new_nodes = hb_array_init(hb_array_size(nodes));
+    hb_array_T* new_nodes = hb_array_init(hb_array_size(nodes), allocator);
 
     for (size_t node_index = 0; node_index < hb_array_size(nodes); node_index++) {
       bool consumed = false;
