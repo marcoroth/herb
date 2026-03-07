@@ -8,6 +8,7 @@
 #  include "include/errors.h"
 #  include "include/token_struct.h"
 #  include "include/util.h"
+#  include "include/util/hb_allocator.h"
 #  include "include/util/hb_buffer.h"
 #  include "include/util/hb_string.h"
 
@@ -55,9 +56,9 @@ void pretty_print_quoted_property(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  hb_string_T quoted = quoted_string(value);
+  hb_string_T quoted = quoted_string(buffer->allocator, value);
   pretty_print_property(name, quoted, indent, relative_indent, last_property, buffer);
-  free(quoted.data);
+  hb_allocator_dealloc(buffer->allocator, quoted.data);
 }
 
 void pretty_print_boolean_property(
@@ -215,9 +216,9 @@ void pretty_print_token_property(
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
   if (token != NULL && !hb_string_is_empty(token->value)) {
-    hb_string_T quoted = quoted_string(token->value);
+    hb_string_T quoted = quoted_string(buffer->allocator, token->value);
     hb_buffer_append_string(buffer, quoted);
-    free(quoted.data);
+    hb_allocator_dealloc(buffer->allocator, quoted.data);
 
     hb_buffer_append(buffer, " ");
     pretty_print_location(token->location, buffer);
@@ -241,16 +242,16 @@ void pretty_print_string_property(
   hb_string_T quoted;
 
   if (!hb_string_is_empty(string)) {
-    escaped = escape_newlines(string);
-    quoted = quoted_string(escaped);
+    escaped = escape_newlines(buffer->allocator, string);
+    quoted = quoted_string(buffer->allocator, escaped);
     value = quoted;
   }
 
   pretty_print_property(name, value, indent, relative_indent, last_property, buffer);
 
   if (!hb_string_is_empty(string)) {
-    if (!hb_string_is_empty(escaped)) { free(escaped.data); }
-    if (!hb_string_is_empty(quoted)) { free(quoted.data); }
+    if (!hb_string_is_empty(escaped)) { hb_allocator_dealloc(buffer->allocator, escaped.data); }
+    if (!hb_string_is_empty(quoted)) { hb_allocator_dealloc(buffer->allocator, quoted.data); }
   }
 }
 

@@ -16,9 +16,9 @@ static inline void herb_lex_to_buffer(const char* source, hb_buffer_T* output, h
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     token_T* token = hb_array_get(tokens, i);
 
-    hb_string_T type = token_to_string(token);
+    hb_string_T type = token_to_string(allocator, token);
     hb_buffer_append_string(output, type);
-    free(type.data);
+    hb_allocator_dealloc(allocator, type.data);
 
     hb_buffer_append(output, "\n");
   }

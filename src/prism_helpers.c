@@ -198,7 +198,7 @@ location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_cla
 
   hb_buffer_T buffer;
 
-  if (!hb_buffer_init(&buffer, source_length + 16)) { return NULL; }
+  if (!hb_buffer_init(&buffer, source_length + 16, allocator)) { return NULL; }
 
   hb_buffer_append(&buffer, "case x\n");
   size_t prefix_length = hb_buffer_length(&buffer);
@@ -208,7 +208,7 @@ location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_cla
   location_T* location =
     parse_wrapped_and_find_then_keyword(&buffer, source, source_length, prefix_length, SIZE_MAX, 0, allocator);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 
   return location;
 }
@@ -226,7 +226,7 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
 
   hb_buffer_T buffer;
 
-  if (!hb_buffer_init(&buffer, source_length + 8)) { return NULL; }
+  if (!hb_buffer_init(&buffer, source_length + 8, allocator)) { return NULL; }
 
   hb_buffer_append_with_length(&buffer, source, elsif_offset);
   hb_buffer_append(&buffer, "if");
@@ -237,7 +237,7 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
   location_T* location =
     parse_wrapped_and_find_then_keyword(&buffer, source, source_length, 0, if_end_offset, replacement_diff, allocator);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 
   return location;
 }

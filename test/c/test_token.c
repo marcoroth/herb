@@ -31,31 +31,33 @@ TEST(test_token_type_to_friendly_string)
 END
 
 TEST(test_token_types_to_friendly_string)
-  char* result1 = token_types_to_friendly_string(TOKEN_IDENTIFIER);
+  hb_allocator_T alloc = hb_allocator_with_malloc();
+
+  char* result1 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER);
   ck_assert_str_eq(result1, "an identifier");
-  free(result1);
+  hb_allocator_dealloc(&alloc, result1);
 
-  char* result2 = token_types_to_friendly_string(TOKEN_IDENTIFIER, TOKEN_QUOTE);
+  char* result2 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_QUOTE);
   ck_assert_str_eq(result2, "an identifier or a quote");
-  free(result2);
+  hb_allocator_dealloc(&alloc, result2);
 
-  char* result3 = token_types_to_friendly_string(TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
+  char* result3 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
   ck_assert_str_eq(result3, "an identifier, a quote, or `<%`");
-  free(result3);
+  hb_allocator_dealloc(&alloc, result3);
 
-  char* result4 = token_types_to_friendly_string(TOKEN_IDENTIFIER, TOKEN_ERB_START, TOKEN_WHITESPACE, TOKEN_NEWLINE);
+  char* result4 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_ERB_START, TOKEN_WHITESPACE, TOKEN_NEWLINE);
   ck_assert_str_eq(result4, "an identifier, `<%`, whitespace, or a newline");
-  free(result4);
+  hb_allocator_dealloc(&alloc, result4);
 
-  char* result5 = token_types_to_friendly_string(TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_END, TOKEN_EQUALS);
+  char* result5 = token_types_to_friendly_string(&alloc, TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_END, TOKEN_EQUALS);
   ck_assert_str_eq(result5, "`<`, `>`, or `=`");
-  free(result5);
+  hb_allocator_dealloc(&alloc, result5);
 END
 
 TEST(test_token_to_string)
-  hb_buffer_T output;
-  hb_buffer_init(&output, 1024);
   hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024, &allocator);
   herb_lex_to_buffer("hello", &output, &allocator);
 
   ck_assert_str_eq(
@@ -64,7 +66,7 @@ TEST(test_token_to_string)
     "#<Herb::Token type=\"TOKEN_EOF\" value=\"<EOF>\" range=[5, 5] start=(1:5) end=(1:5)>\n"
   );
 
-  free(output.value);
+  hb_buffer_free(&output);
 END
 
 TCase *token_tests(void) {

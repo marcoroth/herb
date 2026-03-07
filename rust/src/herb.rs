@@ -123,17 +123,17 @@ pub fn extract_ruby_with_options(source: &str, options: &ExtractRubyOptions) -> 
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
-    let mut output: hb_buffer_T = std::mem::zeroed();
-
-    if !crate::ffi::hb_buffer_init(&mut output, source.len()) {
-      return Err("Failed to initialize buffer".to_string());
-    }
-
     let mut allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
 
     if !crate::ffi::hb_allocator_init(&mut allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
-      libc::free(output.value as *mut std::ffi::c_void);
       return Err("Failed to initialize allocator".to_string());
+    }
+
+    let mut output: hb_buffer_T = std::mem::zeroed();
+
+    if !crate::ffi::hb_buffer_init(&mut output, source.len(), &mut allocator) {
+      crate::ffi::hb_allocator_destroy(&mut allocator);
+      return Err("Failed to initialize buffer".to_string());
     }
 
     let c_options = crate::bindings::herb_extract_ruby_options_T {
@@ -147,8 +147,8 @@ pub fn extract_ruby_with_options(source: &str, options: &ExtractRubyOptions) -> 
     let c_str = std::ffi::CStr::from_ptr(crate::ffi::hb_buffer_value(&output));
     let rust_str = c_str.to_string_lossy().into_owned();
 
+    crate::ffi::hb_buffer_free(&mut output);
     crate::ffi::hb_allocator_destroy(&mut allocator);
-    libc::free(output.value as *mut std::ffi::c_void);
 
     Ok(rust_str)
   }
@@ -175,7 +175,6 @@ pub fn extract_html(source: &str) -> Result<String, String> {
     let rust_str = c_str.to_string_lossy().into_owned();
 
     crate::ffi::hb_allocator_destroy(&mut allocator);
-    libc::free(result as *mut std::ffi::c_void);
 
     Ok(rust_str)
   }

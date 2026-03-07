@@ -39,12 +39,17 @@ static char* malloc_strndup(hb_allocator_T* _self, const char* string, size_t le
   return copy;
 }
 
+static void* malloc_realloc(hb_allocator_T* _self, void* pointer, size_t _old_size, size_t new_size) {
+  return realloc(pointer, new_size);
+}
+
 static void malloc_destroy(hb_allocator_T* _self) {
 }
 
 hb_allocator_T hb_allocator_with_malloc(void) {
   return (hb_allocator_T) {
     .alloc = malloc_alloc,
+    .realloc = malloc_realloc,
     .dealloc = malloc_dealloc,
     .strdup = malloc_strdup,
     .strndup = malloc_strndup,
@@ -57,6 +62,18 @@ hb_allocator_T hb_allocator_with_malloc(void) {
 
 static void* arena_alloc(hb_allocator_T* self, size_t size) {
   return hb_arena_alloc((hb_arena_T*) self->context, size);
+}
+
+static void* arena_realloc(hb_allocator_T* self, void* pointer, size_t old_size, size_t new_size) {
+  if (!pointer) { return arena_alloc(self, new_size); }
+
+  void* new_pointer = hb_arena_alloc((hb_arena_T*) self->context, new_size);
+  if (!new_pointer) { return NULL; }
+
+  size_t copy_size = old_size < new_size ? old_size : new_size;
+  memcpy(new_pointer, pointer, copy_size);
+
+  return new_pointer;
 }
 
 static void arena_dealloc(hb_allocator_T* _self, void* _pointer) {
@@ -96,6 +113,7 @@ static void arena_destroy(hb_allocator_T* self) {
 hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena) {
   return (hb_allocator_T) {
     .alloc = arena_alloc,
+    .realloc = arena_realloc,
     .dealloc = arena_dealloc,
     .strdup = arena_strdup,
     .strndup = arena_strndup,
@@ -207,6 +225,18 @@ static void* tracking_alloc(hb_allocator_T* self, size_t size) {
   return pointer;
 }
 
+static void* tracking_realloc(hb_allocator_T* self, void* pointer, size_t _old_size, size_t new_size) {
+  hb_allocator_tracking_stats_T* stats = (hb_allocator_tracking_stats_T*) self->context;
+
+  if (pointer) { tracking_unrecord(stats, pointer); }
+
+  void* new_pointer = realloc(pointer, new_size);
+
+  if (new_pointer) { tracking_record(stats, new_pointer, new_size); }
+
+  return new_pointer;
+}
+
 static void tracking_dealloc(hb_allocator_T* self, void* pointer) {
   hb_allocator_tracking_stats_T* stats = (hb_allocator_tracking_stats_T*) self->context;
   tracking_unrecord(stats, pointer);
@@ -256,6 +286,7 @@ hb_allocator_T hb_allocator_with_tracking(void) {
 
   return (hb_allocator_T) {
     .alloc = tracking_alloc,
+    .realloc = tracking_realloc,
     .dealloc = tracking_dealloc,
     .strdup = tracking_strdup,
     .strndup = tracking_strndup,

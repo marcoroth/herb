@@ -104,11 +104,17 @@ JNIEXPORT jstring JNICALL
 Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobject options) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
   hb_buffer_T output;
 
-  if (!hb_buffer_init(&output, strlen(src))) {
+  if (!hb_buffer_init(&output, strlen(src), &allocator)) {
+    hb_allocator_destroy(&allocator);
     (*env)->ReleaseStringUTFChars(env, source, src);
-
     return NULL;
   }
 
@@ -136,18 +142,12 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobjec
     }
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    (*env)->ReleaseStringUTFChars(env, source, src);
-    return NULL;
-  }
-
   herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options, &allocator);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_buffer_free(&output);
   hb_allocator_destroy(&allocator);
-  free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -157,17 +157,16 @@ JNIEXPORT jstring JNICALL
 Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  hb_buffer_T output;
-
-  if (!hb_buffer_init(&output, strlen(src))) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     (*env)->ReleaseStringUTFChars(env, source, src);
-
     return NULL;
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(output.value);
+  hb_buffer_T output;
+
+  if (!hb_buffer_init(&output, strlen(src), &allocator)) {
+    hb_allocator_destroy(&allocator);
     (*env)->ReleaseStringUTFChars(env, source, src);
     return NULL;
   }
@@ -176,8 +175,8 @@ Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_buffer_free(&output);
   hb_allocator_destroy(&allocator);
-  free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;

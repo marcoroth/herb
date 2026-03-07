@@ -1,4 +1,5 @@
 #include "include/html_util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -206,9 +207,9 @@ bool parent_closes_element(hb_string_T open_tag_name, hb_string_T parent_close_t
  * free(tag.data);
  * @endcode
  */
-hb_string_T html_closing_tag_string(hb_string_T tag_name) {
+hb_string_T html_closing_tag_string(hb_string_T tag_name, struct hb_allocator* allocator) {
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, tag_name.length + 3);
+  hb_buffer_init(&buffer, tag_name.length + 3, allocator);
 
   hb_buffer_append_char(&buffer, '<');
   hb_buffer_append_char(&buffer, '/');
@@ -232,9 +233,9 @@ hb_string_T html_closing_tag_string(hb_string_T tag_name) {
  * free(tag);
  * @endcode
  */
-hb_string_T html_self_closing_tag_string(hb_string_T tag_name) {
+hb_string_T html_self_closing_tag_string(hb_string_T tag_name, struct hb_allocator* allocator) {
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, tag_name.length + 4);
+  hb_buffer_init(&buffer, tag_name.length + 4, allocator);
 
   hb_buffer_append_char(&buffer, '<');
   hb_buffer_append_string(&buffer, tag_name);

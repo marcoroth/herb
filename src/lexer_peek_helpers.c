@@ -1,22 +1,10 @@
 #include "include/lexer_peek_helpers.h"
 #include "include/lexer.h"
-#include "include/lexer_struct.h"
-#include "include/macros.h"
 #include "include/token.h"
-#include "include/util/hb_string.h"
 
 #include <ctype.h>
-#include <stdbool.h>
 
-char lexer_backtrack(const lexer_T* lexer, uint32_t offset) {
-  return lexer->source.data[MAX(lexer->current_position - offset, 0)];
-}
-
-char lexer_peek(const lexer_T* lexer, uint32_t offset) {
-  return lexer->source.data[MIN(lexer->current_position + offset, lexer->source.length)];
-}
-
-bool lexer_peek_for(const lexer_T* lexer, uint32_t offset, hb_string_T pattern, const bool case_insensitive) {
+static bool lexer_peek_for(const lexer_T* lexer, uint32_t offset, hb_string_T pattern, bool case_insensitive) {
   hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position + offset);
   remaining_source.length = MIN(pattern.length, remaining_source.length);
 
@@ -47,39 +35,19 @@ bool lexer_peek_for_html_comment_start(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("<!--"), false);
 }
 
-bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("-->"), false);
-}
+bool lexer_peek_for_close_tag_start(const lexer_T* lexer, uint32_t offset) {
+  if (lexer_peek(lexer, offset) != '<' || lexer_peek(lexer, offset + 1) != '/') { return false; }
 
-bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("--!>"), false);
-}
+  uint32_t position = offset + 2;
 
-bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("%>"), false);
-}
+  while (lexer_peek(lexer, position) == ' ' || lexer_peek(lexer, position) == '\t'
+         || lexer_peek(lexer, position) == '\n' || lexer_peek(lexer, position) == '\r') {
+    position++;
+  }
 
-bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("-%>"), false);
-}
+  char character = lexer_peek(lexer, position);
 
-bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("%%>"), false);
-}
-
-bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("=%>"), false);
-}
-
-bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
-  return (
-    lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
-    || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset)
-  );
-}
-
-bool lexer_peek_erb_start(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string("<%"), false);
+  return isalpha(character) || character == '_';
 }
 
 bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T token_type) {
@@ -107,42 +75,4 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   lexer->state = saved_state;
 
   return result;
-}
-
-bool lexer_peek_for_close_tag_start(const lexer_T* lexer, uint32_t offset) {
-  if (lexer_peek(lexer, offset) != '<' || lexer_peek(lexer, offset + 1) != '/') { return false; }
-
-  uint32_t pos = offset + 2;
-
-  while (lexer_peek(lexer, pos) == ' ' || lexer_peek(lexer, pos) == '\t' || lexer_peek(lexer, pos) == '\n'
-         || lexer_peek(lexer, pos) == '\r') {
-    pos++;
-  }
-
-  char c = lexer_peek(lexer, pos);
-
-  return isalpha(c) || c == '_';
-}
-
-lexer_state_snapshot_T lexer_save_state(lexer_T* lexer) {
-  lexer_state_snapshot_T snapshot = { .position = lexer->current_position,
-                                      .line = lexer->current_line,
-                                      .column = lexer->current_column,
-                                      .previous_position = lexer->previous_position,
-                                      .previous_line = lexer->previous_line,
-                                      .previous_column = lexer->previous_column,
-                                      .current_character = lexer->current_character,
-                                      .state = lexer->state };
-  return snapshot;
-}
-
-void lexer_restore_state(lexer_T* lexer, lexer_state_snapshot_T snapshot) {
-  lexer->current_position = snapshot.position;
-  lexer->current_line = snapshot.line;
-  lexer->current_column = snapshot.column;
-  lexer->previous_position = snapshot.previous_position;
-  lexer->previous_line = snapshot.previous_line;
-  lexer->previous_column = snapshot.previous_column;
-  lexer->current_character = snapshot.current_character;
-  lexer->state = snapshot.state;
 }

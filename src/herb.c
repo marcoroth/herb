@@ -17,7 +17,7 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* 
   lexer_init(&lexer, source, allocator);
 
   token_T* token = NULL;
-  hb_array_T* tokens = hb_array_init(128);
+  hb_array_T* tokens = hb_array_init(128, allocator);
 
   while ((token = lexer_next_token(&lexer))->type != TOKEN_EOF) {
     hb_array_append(tokens, token);
