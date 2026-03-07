@@ -11,6 +11,8 @@
 
 #define LEXER_STALL_LIMIT 5
 
+static hb_string_T erb_open_patterns[] = HB_STRING_LIST("<%==", "<%%=", "<%graphql", "<%=", "<%#", "<%-", "<%%", "<%");
+
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
 }
@@ -190,12 +192,9 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="),       hb_string("<%#"),
-                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
-
   lexer->state = STATE_ERB_CONTENT;
-  for (size_t i = 0; i < 8; i++) {
-    token_T* match = lexer_match_and_advance(lexer, erb_patterns[i], TOKEN_ERB_START);
+  for (size_t i = 0; i < sizeof(erb_open_patterns) / sizeof(erb_open_patterns[0]); i++) {
+    token_T* match = lexer_match_and_advance(lexer, erb_open_patterns[i], TOKEN_ERB_START);
     if (match) { return match; }
   }
 

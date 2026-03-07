@@ -10,33 +10,112 @@
 #include <string.h>
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+static hb_string_T void_tags[] = HB_STRING_LIST(
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr"
+);
+
+// https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
+static hb_string_T optional_end_tags[] = HB_STRING_LIST(
+  "li",
+  "dt",
+  "dd",
+  "p",
+  "rt",
+  "rp",
+  "optgroup",
+  "option",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "td",
+  "th",
+  "colgroup"
+);
+
+static hb_string_T p_closers[] = HB_STRING_LIST(
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "details",
+  "div",
+  "dl",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hgroup",
+  "hr",
+  "main",
+  "menu",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "table",
+  "ul"
+);
+
+static hb_string_T p_parent_closers[] = HB_STRING_LIST(
+  "article",
+  "aside",
+  "blockquote",
+  "body",
+  "details",
+  "div",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "header",
+  "main",
+  "nav",
+  "section",
+  "td",
+  "th",
+  "li",
+  "dd",
+  "template"
+);
+
 bool is_void_element(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  hb_string_T void_tags[14] = {
-    hb_string("area"),  hb_string("base"),   hb_string("br"),    hb_string("col"),  hb_string("embed"),
-    hb_string("hr"),    hb_string("img"),    hb_string("input"), hb_string("link"), hb_string("meta"),
-    hb_string("param"), hb_string("source"), hb_string("track"), hb_string("wbr"),
-  };
-
-  for (size_t i = 0; i < 14; i++) {
+  for (size_t i = 0; i < sizeof(void_tags) / sizeof(void_tags[0]); i++) {
     if (hb_string_equals_case_insensitive(tag_name, void_tags[i])) { return true; }
   }
 
   return false;
 }
 
-// https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
 bool has_optional_end_tag(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  hb_string_T optional_end_tags[15] = {
-    hb_string("li"),    hb_string("dt"),       hb_string("dd"),     hb_string("p"),     hb_string("rt"),
-    hb_string("rp"),    hb_string("optgroup"), hb_string("option"), hb_string("thead"), hb_string("tbody"),
-    hb_string("tfoot"), hb_string("tr"),       hb_string("td"),     hb_string("th"),    hb_string("colgroup"),
-  };
-
-  for (size_t i = 0; i < 15; i++) {
+  for (size_t i = 0; i < sizeof(optional_end_tags) / sizeof(optional_end_tags[0]); i++) {
     if (hb_string_equals_case_insensitive(tag_name, optional_end_tags[i])) { return true; }
   }
 
@@ -69,16 +148,7 @@ bool should_implicitly_close(hb_string_T open_tag_name, hb_string_T next_tag_nam
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("p"))) {
-    hb_string_T p_closers[30] = {
-      hb_string("address"), hb_string("article"), hb_string("aside"),    hb_string("blockquote"), hb_string("details"),
-      hb_string("div"),     hb_string("dl"),      hb_string("fieldset"), hb_string("figcaption"), hb_string("figure"),
-      hb_string("footer"),  hb_string("form"),    hb_string("h1"),       hb_string("h2"),         hb_string("h3"),
-      hb_string("h4"),      hb_string("h5"),      hb_string("h6"),       hb_string("header"),     hb_string("hgroup"),
-      hb_string("hr"),      hb_string("main"),    hb_string("menu"),     hb_string("nav"),        hb_string("ol"),
-      hb_string("p"),       hb_string("pre"),     hb_string("section"),  hb_string("table"),      hb_string("ul"),
-    };
-
-    return tag_in_list(next_tag_name, p_closers, 30);
+    return tag_in_list(next_tag_name, p_closers, sizeof(p_closers) / sizeof(p_closers[0]));
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("rt"))) {
@@ -146,14 +216,7 @@ bool parent_closes_element(hb_string_T open_tag_name, hb_string_T parent_close_t
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("p"))) {
-    hb_string_T p_parent_closers[20] = {
-      hb_string("article"), hb_string("aside"),    hb_string("blockquote"), hb_string("body"),   hb_string("details"),
-      hb_string("div"),     hb_string("fieldset"), hb_string("figcaption"), hb_string("figure"), hb_string("footer"),
-      hb_string("form"),    hb_string("header"),   hb_string("main"),       hb_string("nav"),    hb_string("section"),
-      hb_string("td"),      hb_string("th"),       hb_string("li"),         hb_string("dd"),     hb_string("template"),
-    };
-
-    return tag_in_list(parent_close_tag_name, p_parent_closers, 20);
+    return tag_in_list(parent_close_tag_name, p_parent_closers, sizeof(p_parent_closers) / sizeof(p_parent_closers[0]));
   }
 
   if (hb_string_equals_case_insensitive(open_tag_name, hb_string("rt"))
