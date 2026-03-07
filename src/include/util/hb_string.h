@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+#include <strings.h>
 
 #include "hb_allocator.h"
 
@@ -22,13 +24,38 @@ hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
     ? ((hb_string_T){ .data = (char*)(string), .length = (uint32_t)__builtin_strlen(string) }) \
     : hb_string_from_c_string(string))
 
-hb_string_T hb_string_slice(hb_string_T string, uint32_t offset);
+static inline bool hb_string_is_null(hb_string_T string) {
+  return string.data == NULL;
+}
 
-bool hb_string_equals(hb_string_T a, hb_string_T b);
-bool hb_string_equals_case_insensitive(hb_string_T a, hb_string_T b);
-bool hb_string_starts_with(hb_string_T string, hb_string_T expected_prefix);
-bool hb_string_is_null(hb_string_T string);
-bool hb_string_is_empty(hb_string_T string);
+static inline bool hb_string_is_empty(hb_string_T string) {
+  return string.data == NULL || string.length == 0;
+}
+
+static inline hb_string_T hb_string_slice(hb_string_T string, uint32_t offset) {
+  if (string.length < offset) { return HB_STRING_NULL; }
+
+  return (hb_string_T){ .data = string.data + offset, .length = string.length - offset };
+}
+
+static inline bool hb_string_equals(hb_string_T a, hb_string_T b) {
+  if (a.length != b.length) { return false; }
+
+  return strncmp(a.data, b.data, a.length) == 0;
+}
+
+static inline bool hb_string_equals_case_insensitive(hb_string_T a, hb_string_T b) {
+  if (a.length != b.length) { return false; }
+
+  return strncasecmp(a.data, b.data, a.length) == 0;
+}
+
+static inline bool hb_string_starts_with(hb_string_T string, hb_string_T expected_prefix) {
+  if (hb_string_is_empty(string) || hb_string_is_empty(expected_prefix)) { return false; }
+  if (string.length < expected_prefix.length) { return false; }
+
+  return strncmp(string.data, expected_prefix.data, expected_prefix.length) == 0;
+}
 
 hb_string_T hb_string_truncate(hb_string_T string, uint32_t max_length);
 hb_string_T hb_string_range(hb_string_T string, uint32_t from, uint32_t to);
