@@ -8,6 +8,7 @@
 #include <strings.h>
 
 #include "hb_allocator.h"
+#include "hb_foreach.h"
 
 typedef struct HB_STRING_STRUCT {
   char* data;
@@ -17,12 +18,17 @@ typedef struct HB_STRING_STRUCT {
 #define HB_STRING_EMPTY ((hb_string_T){ .data = "", .length = 0 })
 #define HB_STRING_NULL  ((hb_string_T){ .data = NULL, .length = 0 })
 
-hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
+#define HB_STRING_LITERAL(string) \
+  { .data = (char*)(string), .length = (uint32_t)(sizeof(string) - 1) }
+
+#define HB_STRING_LIST(...) { HB_FOR_EACH(HB_STRING_LITERAL, __VA_ARGS__) }
 
 #define hb_string(string) \
   (__builtin_constant_p(string) \
     ? ((hb_string_T){ .data = (char*)(string), .length = (uint32_t)__builtin_strlen(string) }) \
     : hb_string_from_c_string(string))
+
+hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
 
 static inline bool hb_string_is_null(hb_string_T string) {
   return string.data == NULL;
