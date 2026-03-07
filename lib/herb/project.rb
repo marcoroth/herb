@@ -1039,12 +1039,26 @@ module Herb
       puts "  #{label("Total")} #{cyan(format_bytes(total_bytes))} across #{cyan("#{stats.size} #{pluralize(stats.size, "file")}")}"
       puts "  #{label("Largest")} #{cyan(relative_path(max[:file]))} (#{cyan(format_bytes(max[:bytes]))}, #{cyan("#{max[:pages]} #{pluralize(max[:pages], "page")}")})"
 
-      thresholds = { "16 KB" => 16 * 1024, "64 KB" => 64 * 1024, "128 KB" => 128 * 1024, "256 KB" => 256 * 1024, "512 KB" => 512 * 1024 }
+      boundaries = [0, 16 * 1024, 64 * 1024, 128 * 1024, 256 * 1024, 512 * 1024]
 
+      total = stats.size
       puts ""
-      thresholds.each do |label_text, threshold|
-        count = stats.count { |stat| stat[:bytes] > threshold }
-        puts "  #{label("  > #{label_text}")} #{count} #{pluralize(count, "file")}"
+      bucket_counts = []
+      boundaries.each_cons(2) do |low, high|
+        count = stats.count { |stat| stat[:bytes] > low && stat[:bytes] <= high }
+        low_label = format_bytes(low).rjust(6)
+        high_label = format_bytes(high).rjust(6)
+        bucket_counts << { label: "  #{low_label} - #{high_label}", count: count }
+      end
+      last = boundaries.last
+      count = stats.count { |stat| stat[:bytes] > last }
+      bucket_counts << { label: "         > #{format_bytes(last)}", count: count }
+
+      count_width = bucket_counts.max_by { |b| b[:count] }[:count].to_s.length
+      pct_width = bucket_counts.map { |b| "#{percentage(b[:count], total)}%".length }.max
+      bucket_counts.each do |bucket|
+        pct = "#{percentage(bucket[:count], total)}%"
+        puts "  #{label(bucket[:label], 19)} #{bucket[:count].to_s.rjust(count_width)} #{pluralize(bucket[:count], "file").ljust(5)} #{pct.rjust(pct_width)}"
       end
     end
 
