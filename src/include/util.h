@@ -5,10 +5,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+struct hb_allocator;
+
 int is_newline(int character);
 int is_whitespace(int character);
-hb_string_T escape_newlines(hb_string_T input);
-hb_string_T quoted_string(hb_string_T input);
-char* herb_strdup(const char* s);
+hb_string_T escape_newlines(struct hb_allocator* allocator, hb_string_T input);
+hb_string_T quoted_string(struct hb_allocator* allocator, hb_string_T input);
 
 #endif

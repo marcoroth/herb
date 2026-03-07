@@ -161,21 +161,23 @@ char* token_types_to_friendly_string_va(hb_allocator_T* allocator, token_type_T 
   return result;
 }
 
-hb_string_T token_to_string(const token_T* token) {
+hb_string_T token_to_string(hb_allocator_T* allocator, const token_T* token) {
   hb_string_T type_string = token_type_to_string(token->type);
   hb_string_T template =
     hb_string("#<Herb::Token type=\"%.*s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>");
 
-  char* string = calloc(template.length + type_string.length + token->value.length + 16, sizeof(char));
+  char* string = hb_allocator_alloc(allocator, template.length + type_string.length + token->value.length + 16);
 
   if (!string) { return HB_STRING_EMPTY; }
+
+  memset(string, 0, template.length + type_string.length + token->value.length + 16);
 
   hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = hb_string(herb_strdup("<EOF>"));
+    escaped = hb_string(hb_allocator_strdup(allocator, "<EOF>"));
   } else {
-    escaped = escape_newlines(token_value(token));
+    escaped = escape_newlines(allocator, token_value(token));
   }
 
   sprintf(
@@ -193,7 +195,7 @@ hb_string_T token_to_string(const token_T* token) {
     token->location.end.column
   );
 
-  free(escaped.data);
+  hb_allocator_dealloc(allocator, escaped.data);
 
   return hb_string(string);
 }

@@ -140,8 +140,16 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
+    return nullptr;
+  }
+
   hb_buffer_T output;
-  if (!hb_buffer_init(&output, strlen(string))) {
+  if (!hb_buffer_init(&output, strlen(string), &allocator)) {
+    hb_allocator_destroy(&allocator);
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;
@@ -183,21 +191,13 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
     }
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(output.value);
-    free(string);
-    napi_throw_error(env, nullptr, "Failed to initialize allocator");
-    return nullptr;
-  }
-
   herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
 
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
+  hb_buffer_free(&output);
   hb_allocator_destroy(&allocator);
-  free(output.value);
   free(string);
   return result;
 }
@@ -215,18 +215,18 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  hb_buffer_T output;
-  if (!hb_buffer_init(&output, strlen(string))) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(string);
-    napi_throw_error(env, nullptr, "Failed to initialize buffer");
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(output.value);
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, strlen(string), &allocator)) {
+    hb_allocator_destroy(&allocator);
     free(string);
-    napi_throw_error(env, nullptr, "Failed to initialize allocator");
+    napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;
   }
 
@@ -235,8 +235,8 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
+  hb_buffer_free(&output);
   hb_allocator_destroy(&allocator);
-  free(output.value);
   free(string);
   return result;
 }
