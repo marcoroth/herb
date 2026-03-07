@@ -3,6 +3,7 @@
 #include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -125,8 +126,8 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
   }
 }
 
-char* token_types_to_friendly_string_valist(token_type_T first_token, va_list args) {
-  if ((int) first_token == TOKEN_SENTINEL) { return herb_strdup(""); }
+char* token_types_to_friendly_string_valist(hb_allocator_T* allocator, token_type_T first_token, va_list args) {
+  if ((int) first_token == TOKEN_SENTINEL) { return hb_allocator_strdup(allocator, ""); }
 
   size_t count = 0;
   hb_string_T names[32];
@@ -138,7 +139,7 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
   }
 
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 128);
+  hb_buffer_init(&buffer, 128, allocator);
 
   for (size_t i = 0; i < count; i++) {
     hb_buffer_append_string(&buffer, names[i]);
@@ -152,10 +153,10 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
   return hb_buffer_value(&buffer);
 }
 
-char* token_types_to_friendly_string_va(token_type_T first_token, ...) {
+char* token_types_to_friendly_string_va(hb_allocator_T* allocator, token_type_T first_token, ...) {
   va_list args;
   va_start(args, first_token);
-  char* result = token_types_to_friendly_string_valist(first_token, args);
+  char* result = token_types_to_friendly_string_valist(allocator, first_token, args);
   va_end(args);
   return result;
 }

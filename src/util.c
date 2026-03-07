@@ -1,4 +1,5 @@
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -15,9 +16,10 @@ int is_whitespace(int character) {
 }
 
 hb_string_T escape_newlines(hb_string_T input) {
+  hb_allocator_T malloc_allocator = hb_allocator_with_malloc();
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, input.length);
+  hb_buffer_init(&buffer, input.length, &malloc_allocator);
 
   for (size_t i = 0; i < input.length; ++i) {
     switch (input.data[i]) {
@@ -39,9 +41,10 @@ hb_string_T escape_newlines(hb_string_T input) {
 }
 
 static hb_string_T wrap_string(hb_string_T input, char character) {
+  hb_allocator_T malloc_allocator = hb_allocator_with_malloc();
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, input.length + 2);
+  hb_buffer_init(&buffer, input.length + 2, &malloc_allocator);
 
   hb_buffer_append_char(&buffer, character);
   hb_buffer_append_string(&buffer, input);

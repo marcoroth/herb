@@ -220,7 +220,7 @@ char* herb_extract_ruby_with_semicolons(const char* source, hb_allocator_T* allo
   if (!source) { return NULL; }
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_buffer_init(&output, strlen(source), allocator);
 
   herb_extract_ruby_to_buffer(source, &output, allocator);
 
@@ -231,7 +231,7 @@ char* herb_extract(const char* source, const herb_extract_language_T language, h
   if (!source) { return NULL; }
 
   hb_buffer_T output;
-  hb_buffer_init(&output, strlen(source));
+  hb_buffer_init(&output, strlen(source), allocator);
 
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output, allocator); break;

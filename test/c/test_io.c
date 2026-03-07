@@ -1,5 +1,6 @@
 #include "include/test.h"
 #include "../../src/include/io.h"
+#include "../../src/include/util/hb_allocator.h"
 
 // Create a temporary file for testing
 void create_test_file(const char* filename, const char* content) {
@@ -14,7 +15,8 @@ void create_test_file(const char* filename, const char* content) {
 // Test that reading a non-existent file correctly exits
 // Note: Check verifies the exit code via tcase_add_exit_test, so no assertions.
 TEST(test_herb_read_file_nonexistent_exits)
-  herb_read_file("non_existent_file.txt");
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  herb_read_file("non_existent_file.txt", &allocator);
 END
 
 // Test reading from a file
@@ -24,12 +26,13 @@ TEST(test_herb_read_file)
 
   create_test_file(filename, file_content);
 
-  char* result = herb_read_file(filename);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  char* result = herb_read_file(filename, &allocator);
 
   ck_assert_ptr_nonnull(result);
   ck_assert_str_eq(result, file_content);
 
-  free(result);
+  hb_allocator_dealloc(&allocator, result);
   remove(filename);
 END
 
