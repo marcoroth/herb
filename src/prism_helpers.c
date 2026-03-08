@@ -10,13 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char* pm_error_level_to_string(pm_error_level_t level) {
+hb_string_T pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
-    case PM_ERROR_LEVEL_SYNTAX: return "syntax";
-    case PM_ERROR_LEVEL_ARGUMENT: return "argument";
-    case PM_ERROR_LEVEL_LOAD: return "load";
-
-    default: return "Unknown pm_error_level_t";
+    case PM_ERROR_LEVEL_SYNTAX: return hb_string("syntax");
+    case PM_ERROR_LEVEL_ARGUMENT: return hb_string("argument");
+    case PM_ERROR_LEVEL_LOAD: return hb_string("load");
   }
 }
 
@@ -36,7 +34,7 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   return ruby_parse_error_init(
     hb_string(error->message),
     hb_string(pm_diagnostic_id_human(error->diag_id)),
-    hb_string(pm_error_level_to_string(error->level)),
+    pm_error_level_to_string(error->level),
     start,
     end,
     allocator
@@ -52,7 +50,7 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
   return ruby_parse_error_init(
     hb_string(error->message),
     hb_string(pm_diagnostic_id_human(error->diag_id)),
-    hb_string(pm_error_level_to_string(error->level)),
+    pm_error_level_to_string(error->level),
     start,
     end,
     allocator
@@ -200,7 +198,7 @@ location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_cla
 
   hb_buffer_T buffer;
 
-  if (!hb_buffer_init(&buffer, source_length + 16)) { return NULL; }
+  if (!hb_buffer_init(&buffer, source_length + 16, allocator)) { return NULL; }
 
   hb_buffer_append(&buffer, "case x\n");
   size_t prefix_length = hb_buffer_length(&buffer);
@@ -210,7 +208,7 @@ location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_cla
   location_T* location =
     parse_wrapped_and_find_then_keyword(&buffer, source, source_length, prefix_length, SIZE_MAX, 0, allocator);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 
   return location;
 }
@@ -228,7 +226,7 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
 
   hb_buffer_T buffer;
 
-  if (!hb_buffer_init(&buffer, source_length + 8)) { return NULL; }
+  if (!hb_buffer_init(&buffer, source_length + 8, allocator)) { return NULL; }
 
   hb_buffer_append_with_length(&buffer, source, elsif_offset);
   hb_buffer_append(&buffer, "if");
@@ -239,7 +237,7 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_alloc
   location_T* location =
     parse_wrapped_and_find_then_keyword(&buffer, source, source_length, 0, if_end_offset, replacement_diff, allocator);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 
   return location;
 }

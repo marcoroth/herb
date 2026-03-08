@@ -3,6 +3,7 @@
 #include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -82,58 +83,54 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_ERROR: return hb_string("TOKEN_ERROR");
     case TOKEN_EOF: return hb_string("TOKEN_EOF");
   }
-
-  return hb_string("Unknown token_type_T");
 }
 
-const char* token_type_to_friendly_string(const token_type_T type) {
+hb_string_T token_type_to_friendly_string(const token_type_T type) {
   switch (type) {
-    case TOKEN_WHITESPACE: return "whitespace";
-    case TOKEN_NBSP: return "non-breaking space";
-    case TOKEN_NEWLINE: return "a newline";
-    case TOKEN_IDENTIFIER: return "an identifier";
-    case TOKEN_HTML_DOCTYPE: return "`<!DOCTYPE`";
-    case TOKEN_XML_DECLARATION: return "`<?xml`";
-    case TOKEN_XML_DECLARATION_END: return "`?>`";
-    case TOKEN_CDATA_START: return "`<![CDATA[`";
-    case TOKEN_CDATA_END: return "`]]>`";
-    case TOKEN_HTML_TAG_START: return "`<`";
-    case TOKEN_HTML_TAG_END: return "`>`";
-    case TOKEN_HTML_TAG_START_CLOSE: return "`</`";
-    case TOKEN_HTML_TAG_SELF_CLOSE: return "`/>`";
-    case TOKEN_HTML_COMMENT_START: return "`<!--`";
-    case TOKEN_HTML_COMMENT_END: return "`-->`";
-    case TOKEN_HTML_COMMENT_INVALID_END: return "`--!>`";
-    case TOKEN_EQUALS: return "`=`";
-    case TOKEN_QUOTE: return "a quote";
-    case TOKEN_BACKTICK: return "a backtick";
-    case TOKEN_BACKSLASH: return "`\\`";
-    case TOKEN_DASH: return "`-`";
-    case TOKEN_UNDERSCORE: return "`_`";
-    case TOKEN_EXCLAMATION: return "`!`";
-    case TOKEN_SLASH: return "`/`";
-    case TOKEN_SEMICOLON: return "`;`";
-    case TOKEN_COLON: return "`:`";
-    case TOKEN_AT: return "`@`";
-    case TOKEN_LT: return "`<`";
-    case TOKEN_PERCENT: return "`%`";
-    case TOKEN_AMPERSAND: return "`&`";
-    case TOKEN_ERB_START: return "`<%`";
-    case TOKEN_ERB_CONTENT: return "ERB content";
-    case TOKEN_ERB_END: return "`%>`";
-    case TOKEN_CHARACTER: return "a character";
-    case TOKEN_ERROR: return "an error token";
-    case TOKEN_EOF: return "end of file";
+    case TOKEN_WHITESPACE: return hb_string("whitespace");
+    case TOKEN_NBSP: return hb_string("non-breaking space");
+    case TOKEN_NEWLINE: return hb_string("a newline");
+    case TOKEN_IDENTIFIER: return hb_string("an identifier");
+    case TOKEN_HTML_DOCTYPE: return hb_string("`<!DOCTYPE`");
+    case TOKEN_XML_DECLARATION: return hb_string("`<?xml`");
+    case TOKEN_XML_DECLARATION_END: return hb_string("`?>`");
+    case TOKEN_CDATA_START: return hb_string("`<![CDATA[`");
+    case TOKEN_CDATA_END: return hb_string("`]]>`");
+    case TOKEN_HTML_TAG_START: return hb_string("`<`");
+    case TOKEN_HTML_TAG_END: return hb_string("`>`");
+    case TOKEN_HTML_TAG_START_CLOSE: return hb_string("`</`");
+    case TOKEN_HTML_TAG_SELF_CLOSE: return hb_string("`/>`");
+    case TOKEN_HTML_COMMENT_START: return hb_string("`<!--`");
+    case TOKEN_HTML_COMMENT_END: return hb_string("`-->`");
+    case TOKEN_HTML_COMMENT_INVALID_END: return hb_string("`--!>`");
+    case TOKEN_EQUALS: return hb_string("`=`");
+    case TOKEN_QUOTE: return hb_string("a quote");
+    case TOKEN_BACKTICK: return hb_string("a backtick");
+    case TOKEN_BACKSLASH: return hb_string("`\\`");
+    case TOKEN_DASH: return hb_string("`-`");
+    case TOKEN_UNDERSCORE: return hb_string("`_`");
+    case TOKEN_EXCLAMATION: return hb_string("`!`");
+    case TOKEN_SLASH: return hb_string("`/`");
+    case TOKEN_SEMICOLON: return hb_string("`;`");
+    case TOKEN_COLON: return hb_string("`:`");
+    case TOKEN_AT: return hb_string("`@`");
+    case TOKEN_LT: return hb_string("`<`");
+    case TOKEN_PERCENT: return hb_string("`%`");
+    case TOKEN_AMPERSAND: return hb_string("`&`");
+    case TOKEN_ERB_START: return hb_string("`<%`");
+    case TOKEN_ERB_CONTENT: return hb_string("ERB content");
+    case TOKEN_ERB_END: return hb_string("`%>`");
+    case TOKEN_CHARACTER: return hb_string("a character");
+    case TOKEN_ERROR: return hb_string("an error token");
+    case TOKEN_EOF: return hb_string("end of file");
   }
-
-  return "Unknown token type";
 }
 
-char* token_types_to_friendly_string_valist(token_type_T first_token, va_list args) {
-  if ((int) first_token == TOKEN_SENTINEL) { return herb_strdup(""); }
+char* token_types_to_friendly_string_valist(hb_allocator_T* allocator, token_type_T first_token, va_list args) {
+  if ((int) first_token == TOKEN_SENTINEL) { return hb_allocator_strdup(allocator, ""); }
 
   size_t count = 0;
-  const char* names[32];
+  hb_string_T names[32];
   token_type_T current = first_token;
 
   while ((int) current != TOKEN_SENTINEL && count < 32) {
@@ -142,10 +139,10 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
   }
 
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 128);
+  hb_buffer_init(&buffer, 128, allocator);
 
   for (size_t i = 0; i < count; i++) {
-    hb_buffer_append(&buffer, names[i]);
+    hb_buffer_append_string(&buffer, names[i]);
 
     if (i < count - 1) {
       if (count > 2) { hb_buffer_append(&buffer, ", "); }
@@ -156,29 +153,31 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
   return hb_buffer_value(&buffer);
 }
 
-char* token_types_to_friendly_string_va(token_type_T first_token, ...) {
+char* token_types_to_friendly_string_va(hb_allocator_T* allocator, token_type_T first_token, ...) {
   va_list args;
   va_start(args, first_token);
-  char* result = token_types_to_friendly_string_valist(first_token, args);
+  char* result = token_types_to_friendly_string_valist(allocator, first_token, args);
   va_end(args);
   return result;
 }
 
-hb_string_T token_to_string(const token_T* token) {
+hb_string_T token_to_string(hb_allocator_T* allocator, const token_T* token) {
   hb_string_T type_string = token_type_to_string(token->type);
   hb_string_T template =
     hb_string("#<Herb::Token type=\"%.*s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>");
 
-  char* string = calloc(template.length + type_string.length + token->value.length + 16, sizeof(char));
+  char* string = hb_allocator_alloc(allocator, template.length + type_string.length + token->value.length + 16);
 
   if (!string) { return HB_STRING_EMPTY; }
+
+  memset(string, 0, template.length + type_string.length + token->value.length + 16);
 
   hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = hb_string(herb_strdup("<EOF>"));
+    escaped = hb_string(hb_allocator_strdup(allocator, "<EOF>"));
   } else {
-    escaped = escape_newlines(token_value(token));
+    escaped = escape_newlines(allocator, token_value(token));
   }
 
   sprintf(
@@ -196,7 +195,7 @@ hb_string_T token_to_string(const token_T* token) {
     token->location.end.column
   );
 
-  free(escaped.data);
+  hb_allocator_dealloc(allocator, escaped.data);
 
   return hb_string(string);
 }

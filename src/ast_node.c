@@ -15,7 +15,14 @@ size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }
 
-void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T start, position_T end, hb_array_T* errors) {
+void ast_node_init(
+  AST_NODE_T* node,
+  const ast_node_type_T type,
+  position_T start,
+  position_T end,
+  hb_array_T* errors,
+  hb_allocator_T* allocator
+) {
   if (!node) { return; }
 
   node->type = type;
@@ -23,7 +30,7 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
   node->location.end = end;
 
   if (errors == NULL) {
-    node->errors = hb_array_init(8);
+    node->errors = hb_array_init(0, allocator);
   } else {
     node->errors = errors;
   }
@@ -34,7 +41,7 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_al
 
   if (!literal) { return NULL; }
 
-  ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
+  ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL, allocator);
 
   literal->content = hb_string_copy(token->value, allocator);
 

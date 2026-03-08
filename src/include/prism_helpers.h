@@ -10,7 +10,7 @@
 
 #include <prism.h>
 
-const char* pm_error_level_to_string(pm_error_level_t level);
+hb_string_T pm_error_level_to_string(pm_error_level_t level);
 
 RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   const pm_diagnostic_t* error,

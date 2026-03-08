@@ -49,15 +49,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         return true;
       }
 
-      const char* keyword = NULL;
+      hb_string_T keyword = HB_STRING_NULL;
 
       if (context->loop_depth == 0) {
         if (has_error_message(analyzed, "Invalid break")) {
-          keyword = "`<% break %>`";
+          keyword = hb_string("`<% break %>`");
         } else if (has_error_message(analyzed, "Invalid next")) {
-          keyword = "`<% next %>`";
+          keyword = hb_string("`<% next %>`");
         } else if (has_error_message(analyzed, "Invalid redo")) {
-          keyword = "`<% redo %>`";
+          keyword = hb_string("`<% redo %>`");
         }
       } else {
         if (has_error_message(analyzed, "Invalid redo") || has_error_message(analyzed, "Invalid break")
@@ -71,7 +71,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
       }
 
       if (context->rescue_depth == 0) {
-        if (has_error_message(analyzed, "Invalid retry without rescue")) { keyword = "`<% retry %>`"; }
+        if (has_error_message(analyzed, "Invalid retry without rescue")) { keyword = hb_string("`<% retry %>`"); }
       } else {
         if (has_error_message(analyzed, "Invalid retry without rescue")) {
           if (is_loop_node) { context->loop_depth--; }
@@ -81,11 +81,11 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         }
       }
 
-      if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
+      if (hb_string_is_null(keyword)) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
 
-      if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
+      if (!hb_string_is_null(keyword) && !token_value_empty(content_node->tag_closing)) {
         append_erb_control_flow_scope_error(
-          hb_string(keyword),
+          keyword,
           node->location.start,
           node->location.end,
           context->allocator,
@@ -116,11 +116,11 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
         if (content_node->parsed && !content_node->valid && content_node->analyzed_ruby != NULL) {
           analyzed_ruby_T* analyzed = content_node->analyzed_ruby;
-          const char* keyword = erb_keyword_from_analyzed_ruby(analyzed);
+          hb_string_T keyword = erb_keyword_from_analyzed_ruby(analyzed);
 
           if (!token_value_empty(content_node->tag_closing)) {
             append_erb_control_flow_scope_error(
-              hb_string(keyword),
+              keyword,
               subsequent->location.start,
               subsequent->location.end,
               context->allocator,

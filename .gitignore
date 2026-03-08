@@ -124,6 +124,7 @@ src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
 src/include/errors.h
+src/include/util/hb_foreach.h
 src/parser_match_tags.c
 src/visitor.c
 wasm/error_helpers.cpp

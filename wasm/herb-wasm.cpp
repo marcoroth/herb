@@ -79,8 +79,13 @@ val Herb_parse(const std::string& source, val options) {
 }
 
 std::string Herb_extract_ruby(const std::string& source, val options) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return std::string();
+  }
+
   hb_buffer_T output;
-  hb_buffer_init(&output, source.length());
+  hb_buffer_init(&output, source.length(), &allocator);
 
   herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
@@ -98,32 +103,24 @@ std::string Herb_extract_ruby(const std::string& source, val options) {
     }
   }
 
-  hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    return std::string();
-  }
-
   herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options, &allocator);
   std::string result(hb_buffer_value(&output));
   hb_allocator_destroy(&allocator);
-  free(output.value);
   return result;
 }
 
 std::string Herb_extract_html(const std::string& source) {
-  hb_buffer_T output;
-  hb_buffer_init(&output, source.length());
-
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
-    free(output.value);
     return std::string();
   }
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, source.length(), &allocator);
 
   herb_extract_html_to_buffer(source.c_str(), &output, &allocator);
   std::string result(hb_buffer_value(&output));
   hb_allocator_destroy(&allocator);
-  free(output.value);
   return result;
 }
 

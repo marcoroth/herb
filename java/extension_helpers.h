@@ -22,7 +22,6 @@ jobject CreateRange(JNIEnv* env, range_T range);
 jobject CreateToken(JNIEnv* env, token_T* token);
 jobject CreateLexResult(JNIEnv* env, hb_array_T* tokens, jstring source);
 jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source);
-jstring ReadFileToString(JNIEnv* env, const char* path);
 
 #ifdef __cplusplus
 }

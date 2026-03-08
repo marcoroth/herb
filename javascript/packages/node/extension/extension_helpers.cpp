@@ -6,7 +6,6 @@
 extern "C" {
 #include "../extension/libherb/include/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/io.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/position.h"
 #include "../extension/libherb/include/range.h"
@@ -120,20 +119,6 @@ napi_value CreateToken(napi_env env, token_T* token) {
   napi_set_named_property(env, result, "range", range);
   napi_set_named_property(env, result, "location", location);
   napi_set_named_property(env, result, "type", type);
-
-  return result;
-}
-
-napi_value ReadFileToString(napi_env env, const char* file_path) {
-  char* content = herb_read_file(file_path);
-  if (!content) {
-    napi_throw_error(env, nullptr, "Failed to read file");
-    return nullptr;
-  }
-
-  napi_value result = CreateString(env, content);
-
-  free(content);
 
   return result;
 }

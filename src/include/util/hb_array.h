@@ -4,13 +4,16 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+struct hb_allocator;
+
 typedef struct HB_ARRAY_STRUCT {
   void** items;
   size_t size;
   size_t capacity;
+  struct hb_allocator* allocator;
 } hb_array_T;
 
-hb_array_T* hb_array_init(size_t capacity);
+hb_array_T* hb_array_init(size_t capacity, struct hb_allocator* allocator);
 
 void* hb_array_get(const hb_array_T* array, size_t index);
 void* hb_array_first(hb_array_T* array);

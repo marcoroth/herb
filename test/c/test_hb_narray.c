@@ -3,8 +3,10 @@
 
 TEST(test_hb_narray_init)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 1024));
+  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 1024, &allocator));
 
   ck_assert_int_eq(array.item_size, sizeof(uint64_t));
   ck_assert_int_eq(array.capacity, 1024);
@@ -17,7 +19,10 @@ END
 TEST(test_hb_narray_pointer_init)
   hb_narray_T array;
 
-  ck_assert(hb_narray_pointer_init(&array, 1024));
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
+
+  ck_assert(hb_narray_pointer_init(&array, 1024, &allocator));
 
   ck_assert_int_eq(array.item_size, sizeof(void *));
   ck_assert_int_eq(array.capacity, 1024);
@@ -30,7 +35,10 @@ END
 TEST(test_hb_narray_append)
   hb_narray_T array;
 
-  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 2));
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
+
+  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 2, &allocator));
 
   uint64_t number = 1;
   ck_assert(hb_narray_append(&array, &number));
@@ -55,8 +63,10 @@ END
 
 TEST(test_hb_narray_first_last)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  hb_narray_init(&array, sizeof(uint64_t), 2);
+  hb_narray_init(&array, sizeof(uint64_t), 2, &allocator);
 
   ck_assert_ptr_null(hb_narray_first(&array));
   ck_assert_ptr_null(hb_narray_last(&array));
@@ -78,8 +88,10 @@ END
 
 TEST(test_hb_narray_stack_behavior)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  hb_narray_init(&array, sizeof(uint64_t), 2);
+  hb_narray_init(&array, sizeof(uint64_t), 2, &allocator);
 
   for(uint64_t i = 0; i < 4; i++) {
     hb_narray_push(&array, &i);
@@ -110,8 +122,10 @@ END
 
 TEST(test_hb_narray_remove)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  hb_narray_init(&array, sizeof(uint64_t), 2);
+  hb_narray_init(&array, sizeof(uint64_t), 2, &allocator);
 
   for(uint64_t i = 0; i < 4; i++) {
     hb_narray_push(&array, &i);
@@ -141,9 +155,11 @@ END
 // Test hb_narray_size with NULL safety
 TEST(test_hb_narray_size)
   ck_assert_int_eq(hb_narray_size(NULL), 0);
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
   hb_narray_T array;
-  hb_narray_init(&array, sizeof(uint64_t), 5);
+  hb_narray_init(&array, sizeof(uint64_t), 5, &allocator);
   ck_assert_int_eq(hb_narray_size(&array), 0);
 
   uint64_t item1 = 42, item2 = 99;
@@ -158,8 +174,10 @@ END
 
 TEST(test_hb_narray_init_returns_bool)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 4));
+  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 4, &allocator));
   ck_assert_ptr_nonnull(array.items);
   ck_assert_int_eq(array.size, 0);
   ck_assert_int_eq(array.capacity, 4);
@@ -169,8 +187,10 @@ END
 
 TEST(test_hb_narray_append_returns_bool)
   hb_narray_T array;
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_MALLOC);
 
-  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 2));
+  ck_assert(hb_narray_init(&array, sizeof(uint64_t), 2, &allocator));
 
   uint64_t number = 42;
   ck_assert(hb_narray_append(&array, &number));

@@ -4,7 +4,6 @@
 
 #include "../../src/include/ast_nodes.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/io.h"
 #include "../../src/include/location.h"
 #include "../../src/include/position.h"
 #include "../../src/include/range.h"
@@ -110,14 +109,4 @@ jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source
       env, parseResultClass, "<init>", "(Lorg/herb/ast/Node;Ljava/util/List;Ljava/lang/String;)V");
 
   return (*env)->NewObject(env, parseResultClass, constructor, value, errorsList, source);
-}
-
-jstring ReadFileToString(JNIEnv* env, const char* path) {
-  char* content = herb_read_file(path);
-  if (!content) { return NULL; }
-
-  jstring result = (*env)->NewStringUTF(env, content);
-  free(content);
-
-  return result;
 }

@@ -5,10 +5,8 @@ import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 
 interface LibHerbBackendFunctions {
   lex: (source: string) => SerializedLexResult
-  lexFile: (path: string) => SerializedLexResult
 
   parse: (source: string, options?: ParseOptions) => SerializedParseResult
-  parseFile: (path: string) => SerializedParseResult
 
   extractRuby: (source: string, options?: ExtractRubyOptions) => string
   extractHTML: (source: string) => string
@@ -21,8 +19,6 @@ export type BackendPromise = () => Promise<LibHerbBackend>
 const expectedFunctions = [
   "parse",
   "lex",
-  "parseFile",
-  "lexFile",
   "extractRuby",
   "extractHTML",
   "version",
