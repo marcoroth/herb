@@ -38,9 +38,9 @@ describe("CommentService", () => {
     let result = content
 
     for (const edit of sorted) {
-      const doc = TextDocument.create("file:///temp.erb", "erb", 1, result)
-      const startOffset = doc.offsetAt(edit.range.start)
-      const endOffset = doc.offsetAt(edit.range.end)
+      const document = TextDocument.create("file:///temp.erb", "erb", 1, result)
+      const startOffset = document.offsetAt(edit.range.start)
+      const endOffset = document.offsetAt(edit.range.end)
 
       result = result.substring(0, startOffset) + edit.newText + result.substring(endOffset)
     }
