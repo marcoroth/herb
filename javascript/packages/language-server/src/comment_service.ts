@@ -195,8 +195,20 @@ export class CommentService {
       const isSingleERBTag = /^\s*<%(?:(?!%>).)*%>\s*$/.test(lineText)
 
       if (!isSingleERBTag) {
+        const isAllERB = lineText.replace(/<%(?:(?!%>).)*%>/g, "").trim() === ""
+
+        if (isAllERB) {
+          return TextEdit.replace(lineRange, this.commentERBTags(lineText))
+        }
+
+        const allControlTags = Array.from(lineText.matchAll(/<%(\S?)/g)).every(m => m[1] === "" || m[1] === " ")
+
+        if (allControlTags) {
+          return TextEdit.replace(lineRange, this.commentMixedSegments(lineText))
+        }
+
         const indent = this.getIndentation(lineText)
-        const content = lineText.trimStart()
+        const content = this.commentERBTags(lineText.trimStart())
 
         return TextEdit.replace(lineRange, `${indent}<!-- ${content} -->`)
       }
@@ -215,7 +227,7 @@ export class CommentService {
 
     if (info.context === "html-content") {
       const indent = this.getIndentation(lineText)
-      const content = lineText.trimStart()
+      const content = this.commentERBTags(lineText.trimStart())
 
       return TextEdit.replace(lineRange, `${indent}<!-- ${content} -->`)
     }
@@ -227,6 +239,18 @@ export class CommentService {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
 
     if (info.context === "erb-comment") {
+      const isSingleERBTag = /^\s*<%(?:(?!%>).)*%>\s*$/.test(lineText)
+
+      if (!isSingleERBTag) {
+        const isAllERBComments = lineText.replace(/<%#(?:(?!%>).)*%>/g, "").trim() === ""
+
+        if (isAllERBComments) {
+          return TextEdit.replace(lineRange, this.uncommentERBTags(lineText))
+        }
+
+        return TextEdit.replace(lineRange, this.uncommentMixedSegments(lineText))
+      }
+
       const node = info.node as ERBContentNode
       if (!node?.tag_opening || !node?.tag_closing) return null
 
@@ -262,11 +286,49 @@ export class CommentService {
       const match = lineText.match(/<!--\s*(.*?)\s*-->/)
 
       if (match) {
-        return TextEdit.replace(lineRange, `${indent}${match[1]}`)
+        const content = this.uncommentERBTags(match[1])
+
+        return TextEdit.replace(lineRange, `${indent}${content}`)
       }
     }
 
     return null
+  }
+
+  private commentMixedSegments(lineText: string): string {
+    const indent = this.getIndentation(lineText)
+    const content = lineText.trimStart()
+    const segments = content.split(/(<%(?:(?!%>).)*%>)/)
+
+    const commented = segments.map(segment => {
+      if (/^<%/.test(segment)) {
+        return segment.replace("<%", "<%#")
+      } else if (segment.trim() !== "") {
+        return `<!-- ${segment} -->`
+      } else {
+        return segment
+      }
+    }).join("")
+
+    return `${indent}${commented}`
+  }
+
+  private uncommentMixedSegments(lineText: string): string {
+    const indent = this.getIndentation(lineText)
+    let content = lineText.trimStart()
+
+    content = content.replace(/<%#/g, "<%")
+    content = content.replace(/<!-- (.*?) -->/g, "$1")
+
+    return `${indent}${content}`
+  }
+
+  private commentERBTags(content: string): string {
+    return content.replace(/<%(?!#)/g, "<%#")
+  }
+
+  private uncommentERBTags(content: string): string {
+    return content.replace(/<%#/g, "<%")
   }
 
   private getIndentation(lineText: string): string {

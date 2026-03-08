@@ -78,36 +78,52 @@ describe("CommentService", () => {
     })
 
     describe("mixed content lines", () => {
-      it("wraps ERB + HTML in an HTML comment", () => {
+      it("comments each segment when ERB wraps HTML content", () => {
         const document = createDocument(`<% if condition? %><div>hello</div><% end %>`)
         const edits = service.toggleLineComment(document, lineRange(0))
 
         expect(edits).toHaveLength(1)
-        expect(edits[0].newText).toBe("<!-- <% if condition? %><div>hello</div><% end %> -->")
+        expect(edits[0].newText).toBe("<%# if condition? %><!-- <div>hello</div> --><%# end %>")
       })
 
-      it("wraps HTML with embedded ERB output in an HTML comment", () => {
+      it("wraps HTML with embedded ERB output in an HTML comment and comments ERB tags", () => {
         const document = createDocument(`<h1><%= @record.title %></h1>`)
         const edits = service.toggleLineComment(document, lineRange(0))
 
         expect(edits).toHaveLength(1)
-        expect(edits[0].newText).toBe("<!-- <h1><%= @record.title %></h1> -->")
+        expect(edits[0].newText).toBe("<!-- <h1><%#= @record.title %></h1> -->")
       })
 
-      it("wraps indented mixed content preserving indentation", () => {
+      it("wraps indented mixed content preserving indentation and comments ERB tags", () => {
         const document = createDocument(`  <h1><%= @record.title %></h1>`)
         const edits = service.toggleLineComment(document, lineRange(0))
 
         expect(edits).toHaveLength(1)
-        expect(edits[0].newText).toBe("  <!-- <h1><%= @record.title %></h1> -->")
+        expect(edits[0].newText).toBe("  <!-- <h1><%#= @record.title %></h1> -->")
       })
 
-      it("wraps multiple ERB tags on a single line in an HTML comment", () => {
+      it("comments multiple ERB tags on a single line by inserting # into each", () => {
         const document = createDocument(`<% if true %><% end %>`)
         const edits = service.toggleLineComment(document, lineRange(0))
 
         expect(edits).toHaveLength(1)
-        expect(edits[0].newText).toBe("<!-- <% if true %><% end %> -->")
+        expect(edits[0].newText).toBe("<%# if true %><%# end %>")
+      })
+
+      it("wraps whole line when HTML content surrounds multiple ERB tags", () => {
+        const document = createDocument(`<%= user.name %> commented on <%= post.title %> just now!`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("<!-- <%#= user.name %> commented on <%#= post.title %> just now! -->")
+      })
+
+      it("wraps whole line when ERB output tags are at both edges with HTML between", () => {
+        const document = createDocument(`<%= user.name %> commented on <%= post.title %> just now! <%= post.id %>`)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(edits).toHaveLength(1)
+        expect(edits[0].newText).toBe("<!-- <%#= user.name %> commented on <%#= post.title %> just now! <%#= post.id %> -->")
       })
 
       it("still uses # for a single ERB tag on a line", () => {
@@ -331,7 +347,7 @@ describe("CommentService", () => {
         const document1 = createDocument(original)
         const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
 
-        expect(commented).toBe(`<!-- <h1><%= @record.title %></h1> -->`)
+        expect(commented).toBe(`<!-- <h1><%#= @record.title %></h1> -->`)
 
         const document2 = createDocument(commented)
         const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
@@ -339,12 +355,38 @@ describe("CommentService", () => {
         expect(uncommented).toBe(original)
       })
 
-      it("round-trips multiple ERB tags on a single line", () => {
+      it("round-trips multiple ERB tags with HTML on a single line", () => {
         const original = `<% if condition? %><div>hello</div><% end %>`
         const document1 = createDocument(original)
         const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
 
-        expect(commented).toBe(`<!-- <% if condition? %><div>hello</div><% end %> -->`)
+        expect(commented).toBe(`<%# if condition? %><!-- <div>hello</div> --><%# end %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips HTML content surrounding multiple ERB tags", () => {
+        const original = `<%= user.name %> commented on <%= post.title %> just now!`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<!-- <%#= user.name %> commented on <%#= post.title %> just now! -->`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips multiple ERB-only tags on a single line", () => {
+        const original = `<% if true %><% end %>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%# if true %><%# end %>`)
 
         const document2 = createDocument(commented)
         const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
