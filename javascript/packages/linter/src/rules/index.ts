@@ -19,6 +19,7 @@ export * from "./erb-prefer-image-tag-helper.js"
 export * from "./erb-require-trailing-newline.js"
 export * from "./erb-require-whitespace-inside-tags.js"
 export * from "./erb-right-trim.js"
+export * from "./erb-safety.js"
 export * from "./erb-strict-locals-comment-syntax.js"
 export * from "./erb-strict-locals-required.js"
 

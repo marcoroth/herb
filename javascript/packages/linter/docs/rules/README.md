@@ -16,6 +16,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
+- [`erb-safety`](./erb-safety.md) - Disallow unsafe ERB output in HTML attribute positions and attribute names
 - [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
