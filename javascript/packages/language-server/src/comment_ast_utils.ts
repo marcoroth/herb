@@ -1,23 +1,13 @@
-import {
-  isERBCommentNode,
-  isLiteralNode,
-  createLiteral,
-  HTMLCommentNode,
-  Token,
-  Location as HerbLocation,
-  Range as HerbRange,
-} from "@herb-tools/core"
-
-import { IdentityPrinter } from "@herb-tools/printer"
-import { asMutable } from "@herb-tools/rewriter"
-
 import { ParserService } from "./parser_service"
 import { LineContextCollector } from "./line_context_collector"
 
-import type {
-  Node,
-  ERBContentNode,
-} from "@herb-tools/core"
+import { HTMLCommentNode, Token, Location, Range } from "@herb-tools/core"
+import { IdentityPrinter } from "@herb-tools/printer"
+
+import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
+import { asMutable } from "@herb-tools/rewriter"
+
+import type { Node, ERBContentNode } from "@herb-tools/core"
 
 /**
  * Commenting strategy for a line:
@@ -36,7 +26,7 @@ interface LineSegment {
 }
 
 export function createSyntheticToken(type: string, value: string): Token {
-  return new Token(value, HerbRange.zero, HerbLocation.zero, type)
+  return new Token(value, Range.zero, Location.zero, type)
 }
 
 export function commentERBNode(node: ERBContentNode): void {
@@ -44,6 +34,7 @@ export function commentERBNode(node: ERBContentNode): void {
 
   if (mutable.tag_opening) {
     const currentValue = mutable.tag_opening.value
+
     mutable.tag_opening = createSyntheticToken(
       mutable.tag_opening.type,
       currentValue.substring(0, 2) + "#" + currentValue.substring(2)
@@ -94,13 +85,13 @@ export function determineStrategy(erbNodes: ERBContentNode[], lineText: string):
   }
 
   const segments = getLineSegments(lineText, erbNodes)
-  const hasHTML = segments.some(s => !s.isERB && s.text.trim() !== "")
+  const hasHTML = segments.some(segment => !segment.isERB && segment.text.trim() !== "")
 
   if (!hasHTML) {
     return "all-erb"
   }
 
-  const allControlTags = erbNodes.every(n => n.tag_opening?.value === "<%")
+  const allControlTags = erbNodes.every(node => node.tag_opening?.value === "<%")
 
   if (allControlTags) {
     return "per-segment"
@@ -111,26 +102,24 @@ export function determineStrategy(erbNodes: ERBContentNode[], lineText: string):
 
 function getLineSegments(lineText: string, erbNodes: ERBContentNode[]): LineSegment[] {
   const segments: LineSegment[] = []
-  let pos = 0
+  const sorted = [...erbNodes].sort((a, b) => a.tag_opening!.location.start.column - b.tag_opening!.location.start.column)
 
-  const sorted = [...erbNodes].sort(
-    (a, b) => a.tag_opening!.location.start.column - b.tag_opening!.location.start.column
-  )
+  let position = 0
 
   for (const node of sorted) {
     const nodeStart = node.tag_opening!.location.start.column
     const nodeEnd = node.tag_closing!.location.end.column
 
-    if (nodeStart > pos) {
-      segments.push({ text: lineText.substring(pos, nodeStart), isERB: false })
+    if (nodeStart > position) {
+      segments.push({ text: lineText.substring(position, nodeStart), isERB: false })
     }
 
     segments.push({ text: lineText.substring(nodeStart, nodeEnd), isERB: true, node })
-    pos = nodeEnd
+    position = nodeEnd
   }
 
-  if (pos < lineText.length) {
-    segments.push({ text: lineText.substring(pos), isERB: false })
+  if (position < lineText.length) {
+    segments.push({ text: lineText.substring(position), isERB: false })
   }
 
   return segments
@@ -140,12 +129,7 @@ function getLineSegments(lineText: string, erbNodes: ERBContentNode[]): LineSegm
  * Comment a line using AST mutation for strategies where the parser produces flat children,
  * and text-segment manipulation for per-segment (where the parser nests nodes).
  */
-export function commentLineContent(
-  content: string,
-  erbNodes: ERBContentNode[],
-  strategy: CommentStrategy,
-  parserService: ParserService
-): string {
+export function commentLineContent(content: string, erbNodes: ERBContentNode[], strategy: CommentStrategy, parserService: ParserService): string {
   if (strategy === "per-segment") {
     return commentPerSegment(content, erbNodes)
   }
@@ -153,9 +137,10 @@ export function commentLineContent(
   const parseResult = parserService.parseContent(content, { track_whitespace: true })
   const lineCollector = new LineContextCollector()
   parseResult.visit(lineCollector)
+
   const lineERBNodes = lineCollector.erbNodesPerLine.get(0) || []
-  const doc = parseResult.value
-  const children = asMutable(doc).children
+  const document = parseResult.value
+  const children = asMutable(document).children
 
   switch (strategy) {
     case "all-erb":
@@ -171,7 +156,7 @@ export function commentLineContent(
 
       const commentNode = new HTMLCommentNode({
         type: "AST_HTML_COMMENT_NODE",
-        location: HerbLocation.zero,
+        location: Location.zero,
         errors: [],
         comment_start: createSyntheticToken("TOKEN_HTML_COMMENT_START", "<!--"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
@@ -186,7 +171,7 @@ export function commentLineContent(
     case "html-only": {
       const commentNode = new HTMLCommentNode({
         type: "AST_HTML_COMMENT_NODE",
-        location: HerbLocation.zero,
+        location: Location.zero,
         errors: [],
         comment_start: createSyntheticToken("TOKEN_HTML_COMMENT_START", "<!--"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
@@ -199,7 +184,7 @@ export function commentLineContent(
     }
   }
 
-  return IdentityPrinter.print(doc, { ignoreErrors: true })
+  return IdentityPrinter.print(document, { ignoreErrors: true })
 }
 
 /**
@@ -236,10 +221,10 @@ export function uncommentLineContent(content: string, parserService: ParserServi
     }
   }
 
-  let i = 0
+  let index = 0
 
-  while (i < children.length) {
-    const child = children[i]
+  while (index < children.length) {
+    const child = children[index]
 
     if (child.type === "AST_HTML_COMMENT_NODE") {
       const commentNode = child as HTMLCommentNode
@@ -288,12 +273,13 @@ export function uncommentLineContent(content: string, parserService: ParserServi
         }
       }
 
-      children.splice(i, 1, ...innerChildren)
-      i += innerChildren.length
+      children.splice(index, 1, ...innerChildren)
+      index += innerChildren.length
+
       continue
     }
 
-    i++
+    index++
   }
 
   return IdentityPrinter.print(document, { ignoreErrors: true })

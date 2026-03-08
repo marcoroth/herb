@@ -1,18 +1,9 @@
-import {
-  Visitor,
-  isERBCommentNode,
-  HTMLCommentNode,
-} from "@herb-tools/core"
+import { Visitor, HTMLCommentNode, } from "@herb-tools/core"
 
 import { lspLine } from "./range_utils"
+import { isERBCommentNode } from "@herb-tools/core"
 
-import type {
-  Node,
-  ERBNode,
-  ERBContentNode,
-  HTMLTextNode,
-  HTMLElementNode,
-} from "@herb-tools/core"
+import type { Node, ERBNode, ERBContentNode, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
 
 export type LineContext = "erb-comment" | "html-comment" | "erb-tag" | "html-content" | "empty"
 
