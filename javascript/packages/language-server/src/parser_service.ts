@@ -2,7 +2,7 @@ import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb, Visitor } from "@herb-tools/node-wasm"
 
-import type { Node, HerbError, DocumentNode } from "@herb-tools/node-wasm"
+import type { Node, HerbError, DocumentNode, ParseResult } from "@herb-tools/node-wasm"
 
 import { lspRangeFromLocation } from "./range_utils"
 
@@ -52,7 +52,7 @@ export class ParserService {
     }
   }
 
-  parseContent(content: string): DocumentNode {
-    return Herb.parse(content).value
+  parseContent(content: string, options?: { track_whitespace?: boolean }): ParseResult {
+    return Herb.parse(content, options)
   }
 }
