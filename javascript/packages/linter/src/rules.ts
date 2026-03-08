@@ -17,7 +17,15 @@ import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
+import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
+import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
+import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
+import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script-interpolation.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
+import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
+import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
@@ -87,7 +95,15 @@ export const rules: RuleClass[] = [
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
+  ERBNoJavascriptTagHelperRule,
+  ERBNoRawOutputInAttributeValueRule,
+  ERBNoStatementInScriptRule,
+  ERBNoUnsafeJSAttributeRule,
+  ERBNoUnsafeRawRule,
+  ERBNoUnsafeScriptInterpolationRule,
   ERBRightTrimRule,
+  ERBNoOutputInAttributePositionRule,
+  ERBNoOutputInAttributeNameRule,
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 

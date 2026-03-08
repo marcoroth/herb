@@ -6,20 +6,28 @@ This page contains documentation for all Herb Linter rules.
 
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
-- [`erb-no-inline-case-conditions`](./erb-no-inline-case-conditions.md) - Disallow inline `case`/`when` and `case`/`in` conditions in a single ERB tag
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
-- [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
 - [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow extra newlines.
 - [`erb-no-extra-whitespace-inside-tags`](./erb-no-extra-whitespace-inside-tags.md) - Disallow multiple consecutive spaces inside ERB tags
+- [`erb-no-inline-case-conditions`](./erb-no-inline-case-conditions.md) - Disallow inline `case`/`when` and `case`/`in` conditions in a single ERB tag
+- [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
+- [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
-- [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
+- [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
+- [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
+- [`erb-no-raw-output-in-attribute-value`](./erb-no-raw-output-in-attribute-value.md) - Disallow `<%==` in attribute values
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
+- [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
+- [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions
 - [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
+- [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
+- [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
+- [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
-- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
+- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`erb-strict-locals-comment-syntax`](./erb-strict-locals-comment-syntax.md) - Enforce strict locals comment syntax.
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
@@ -43,8 +51,8 @@ This page contains documentation for all Herb Linter rules.
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-head-only-elements`](./html-head-only-elements.md) - Require head-scoped elements inside `<head>`.
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
-- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
+- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
 - [`html-no-abstract-roles`](./html-no-abstract-roles.md) - No abstract ARIA roles
 - [`html-no-aria-hidden-on-body`](./html-no-aria-hidden-on-body.md) - No `aria-hidden` on `<body>`
