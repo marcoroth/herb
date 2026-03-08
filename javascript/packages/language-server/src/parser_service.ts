@@ -51,4 +51,8 @@ export class ParserService {
       diagnostics: errorVisitor.diagnostics
     }
   }
+
+  parseContent(content: string): DocumentNode {
+    return Herb.parse(content).value
+  }
 }

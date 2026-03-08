@@ -24,13 +24,25 @@ interface LineInfo {
   node: Node | null
 }
 
+interface LineSegment {
+  text: string
+  isERB: boolean
+  node?: ERBContentNode
+}
+
 class LineContextCollector extends Visitor {
   public lineMap: Map<number, LineInfo> = new Map()
+  public erbNodesPerLine: Map<number, ERBContentNode[]> = new Map()
+  public htmlCommentNodesPerLine: Map<number, HTMLCommentNode> = new Map()
 
   visitERBNode(node: ERBNode): void {
     if (!node.tag_opening || !node.tag_closing) return
 
     const startLine = lspLine(node.tag_opening.location.start)
+
+    const nodes = this.erbNodesPerLine.get(startLine) || []
+    nodes.push(node as ERBContentNode)
+    this.erbNodesPerLine.set(startLine, nodes)
 
     if (isERBCommentNode(node)) {
       this.setLine(startLine, "erb-comment", node)
@@ -49,6 +61,7 @@ class LineContextCollector extends Visitor {
     const endLine = lspLine(node.location.end)
 
     for (let line = startLine; line <= endLine; line++) {
+      this.htmlCommentNodesPerLine.set(line, node)
       this.setLine(line, "html-comment", node)
     }
 
@@ -124,11 +137,11 @@ export class CommentService {
         continue
       }
 
+      const htmlCommentNode = collector.htmlCommentNodesPerLine.get(line)
       const info = collector.lineMap.get(line)
-      const trimmed = lineText.trim()
 
-      if (trimmed.startsWith("<!--") && trimmed.endsWith("-->")) {
-        lineInfos.push({ line, context: "html-comment", node: null })
+      if (htmlCommentNode && this.htmlCommentSpansLine(htmlCommentNode, lineText)) {
+        lineInfos.push({ line, context: "html-comment", node: htmlCommentNode })
       } else if (info) {
         lineInfos.push(info)
       } else {
@@ -147,7 +160,8 @@ export class CommentService {
     if (allCommented) {
       for (const info of lineInfos) {
         const lineText = document.getText(Range.create(info.line, 0, info.line + 1, 0)).replace(/\n$/, "")
-        const edit = this.uncommentLine(info, lineText)
+        const erbNodes = collector.erbNodesPerLine.get(info.line) || []
+        const edit = this.uncommentLine(info, lineText, erbNodes)
 
         if (edit) edits.push(edit)
       }
@@ -156,7 +170,8 @@ export class CommentService {
         if (info.context === "erb-comment" || info.context === "html-comment") continue
 
         const lineText = document.getText(Range.create(info.line, 0, info.line + 1, 0)).replace(/\n$/, "")
-        const edit = this.commentLine(info, lineText)
+        const erbNodes = collector.erbNodesPerLine.get(info.line) || []
+        const edit = this.commentLine(info, lineText, erbNodes)
 
         if (edit) edits.push(edit)
       }
@@ -188,46 +203,56 @@ export class CommentService {
     }
   }
 
-  private commentLine(info: LineInfo, lineText: string): TextEdit | null {
+  private commentLine(info: LineInfo, lineText: string, erbNodes: ERBContentNode[]): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
 
     if (info.context === "erb-tag") {
-      const isSingleERBTag = /^\s*<%(?:(?!%>).)*%>\s*$/.test(lineText)
+      if (erbNodes.length === 1) {
+        const node = erbNodes[0]
+        if (!node.tag_opening || !node.tag_closing) return null
 
-      if (!isSingleERBTag) {
-        const isAllERB = lineText.replace(/<%(?:(?!%>).)*%>/g, "").trim() === ""
+        if (lspLine(node.tag_opening.location.start) !== info.line) return null
 
-        if (isAllERB) {
-          return TextEdit.replace(lineRange, this.commentERBTags(lineText))
+        const nodeStart = node.tag_opening.location.start.column
+        const nodeEnd = node.tag_closing.location.end.column
+        const isSoleContent = lineText.substring(0, nodeStart).trim() === "" && lineText.substring(nodeEnd).trim() === ""
+
+        if (isSoleContent) {
+          const insertColumn = nodeStart + 2
+
+          return TextEdit.insert(Position.create(info.line, insertColumn), "#")
         }
 
-        const allControlTags = Array.from(lineText.matchAll(/<%(\S?)/g)).every(m => m[1] === "" || m[1] === " ")
+        const segments = this.getLineSegments(lineText, erbNodes)
 
-        if (allControlTags) {
-          return TextEdit.replace(lineRange, this.commentMixedSegments(lineText))
-        }
-
-        const indent = this.getIndentation(lineText)
-        const content = this.commentERBTags(lineText.trimStart())
-
-        return TextEdit.replace(lineRange, `${indent}<!-- ${content} -->`)
+        return TextEdit.replace(lineRange, this.commentWholeLine(segments, lineText))
       }
 
-      const node = info.node as ERBContentNode
-      if (!node?.tag_opening) return null
+      const segments = this.getLineSegments(lineText, erbNodes)
+      const hasHTML = segments.some(s => !s.isERB && s.text.trim() !== "")
 
-      if (lspLine(node.tag_opening.location.start) !== info.line) {
-        return null
+      if (!hasHTML) {
+        return TextEdit.replace(lineRange, this.commentERBSegments(segments, lineText))
       }
 
-      const insertColumn = node.tag_opening.location.start.column + 2
+      const allControlTags = erbNodes.every(n => n.tag_opening?.value === "<%")
 
-      return TextEdit.insert(Position.create(info.line, insertColumn), "#")
+      if (allControlTags) {
+        return TextEdit.replace(lineRange, this.commentPerSegment(segments, lineText))
+      }
+
+      return TextEdit.replace(lineRange, this.commentWholeLine(segments, lineText))
     }
 
     if (info.context === "html-content") {
+      if (erbNodes.length > 0) {
+        const segments = this.getLineSegments(lineText, erbNodes)
+
+        return TextEdit.replace(lineRange, this.commentWholeLine(segments, lineText))
+      }
+
       const indent = this.getIndentation(lineText)
-      const content = this.commentERBTags(lineText.trimStart())
+      const content = lineText.trimStart()
 
       return TextEdit.replace(lineRange, `${indent}<!-- ${content} -->`)
     }
@@ -235,20 +260,19 @@ export class CommentService {
     return null
   }
 
-  private uncommentLine(info: LineInfo, lineText: string): TextEdit | null {
+  private uncommentLine(info: LineInfo, lineText: string, erbNodes: ERBContentNode[]): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
 
     if (info.context === "erb-comment") {
-      const isSingleERBTag = /^\s*<%(?:(?!%>).)*%>\s*$/.test(lineText)
+      if (erbNodes.length > 1) {
+        const segments = this.getLineSegments(lineText, erbNodes)
+        const hasHTMLComments = segments.some(s => !s.isERB && s.text.trim().startsWith("<!--"))
 
-      if (!isSingleERBTag) {
-        const isAllERBComments = lineText.replace(/<%#(?:(?!%>).)*%>/g, "").trim() === ""
-
-        if (isAllERBComments) {
-          return TextEdit.replace(lineRange, this.uncommentERBTags(lineText))
+        if (hasHTMLComments) {
+          return TextEdit.replace(lineRange, this.uncommentPerSegment(segments, lineText))
         }
 
-        return TextEdit.replace(lineRange, this.uncommentMixedSegments(lineText))
+        return TextEdit.replace(lineRange, this.uncommentERBSegments(segments, lineText))
       }
 
       const node = info.node as ERBContentNode
@@ -282,53 +306,149 @@ export class CommentService {
     }
 
     if (info.context === "html-comment") {
-      const indent = this.getIndentation(lineText)
-      const match = lineText.match(/<!--\s*(.*?)\s*-->/)
+      const commentNode = info.node as HTMLCommentNode | null
 
-      if (match) {
-        const content = this.uncommentERBTags(match[1])
+      if (commentNode?.comment_start && commentNode?.comment_end) {
+        const indent = this.getIndentation(lineText)
+        const contentStart = commentNode.comment_start.location.end.column
+        const contentEnd = commentNode.comment_end.location.start.column
+        const innerContent = lineText.substring(contentStart, contentEnd).trim()
+        const innerERBNodes = this.parseERBNodes(innerContent)
 
-        return TextEdit.replace(lineRange, `${indent}${content}`)
+        if (innerERBNodes.length > 0) {
+          const segments = this.getLineSegments(innerContent, innerERBNodes)
+
+          return TextEdit.replace(lineRange, `${indent}${this.uncommentERBSegments(segments, innerContent)}`)
+        }
+
+        return TextEdit.replace(lineRange, `${indent}${innerContent}`)
       }
     }
 
     return null
   }
 
-  private commentMixedSegments(lineText: string): string {
-    const indent = this.getIndentation(lineText)
-    const content = lineText.trimStart()
-    const segments = content.split(/(<%(?:(?!%>).)*%>)/)
+  private getLineSegments(lineText: string, erbNodes: ERBContentNode[]): LineSegment[] {
+    const segments: LineSegment[] = []
+    let pos = 0
 
-    const commented = segments.map(segment => {
-      if (/^<%/.test(segment)) {
-        return segment.replace("<%", "<%#")
-      } else if (segment.trim() !== "") {
-        return `<!-- ${segment} -->`
-      } else {
-        return segment
+    const sorted = [...erbNodes].sort(
+      (a, b) => a.tag_opening!.location.start.column - b.tag_opening!.location.start.column
+    )
+
+    for (const node of sorted) {
+      const nodeStart = node.tag_opening!.location.start.column
+      const nodeEnd = node.tag_closing!.location.end.column
+
+      if (nodeStart > pos) {
+        segments.push({ text: lineText.substring(pos, nodeStart), isERB: false })
       }
+
+      segments.push({ text: lineText.substring(nodeStart, nodeEnd), isERB: true, node })
+      pos = nodeEnd
+    }
+
+    if (pos < lineText.length) {
+      segments.push({ text: lineText.substring(pos), isERB: false })
+    }
+
+    return segments
+  }
+
+  private commentERBSegments(segments: LineSegment[], lineText: string): string {
+    const indent = this.getIndentation(lineText)
+
+    const result = segments.map(segment => {
+      if (segment.isERB) {
+        return segment.text.substring(0, 2) + "#" + segment.text.substring(2)
+      }
+
+      return segment.text
     }).join("")
 
-    return `${indent}${commented}`
+    return indent + result.trimStart()
   }
 
-  private uncommentMixedSegments(lineText: string): string {
+  private uncommentERBSegments(segments: LineSegment[], lineText: string): string {
     const indent = this.getIndentation(lineText)
-    let content = lineText.trimStart()
 
-    content = content.replace(/<%#/g, "<%")
-    content = content.replace(/<!-- (.*?) -->/g, "$1")
+    const result = segments.map(segment => {
+      if (segment.isERB && segment.node?.tag_opening?.value === "<%#") {
+        return segment.text.substring(0, 2) + segment.text.substring(3)
+      }
 
-    return `${indent}${content}`
+      return segment.text
+    }).join("")
+
+    return indent + result.trimStart()
   }
 
-  private commentERBTags(content: string): string {
-    return content.replace(/<%(?!#)/g, "<%#")
+  private commentPerSegment(segments: LineSegment[], lineText: string): string {
+    const indent = this.getIndentation(lineText)
+
+    const result = segments.map(segment => {
+      if (segment.isERB) {
+        return segment.text.substring(0, 2) + "#" + segment.text.substring(2)
+      } else if (segment.text.trim() !== "") {
+        return `<!-- ${segment.text} -->`
+      }
+
+      return segment.text
+    }).join("")
+
+    return indent + result.trimStart()
   }
 
-  private uncommentERBTags(content: string): string {
-    return content.replace(/<%#/g, "<%")
+  private uncommentPerSegment(segments: LineSegment[], lineText: string): string {
+    const indent = this.getIndentation(lineText)
+
+    const result = segments.map(segment => {
+      if (segment.isERB && segment.node?.tag_opening?.value === "<%#") {
+        return segment.text.substring(0, 2) + segment.text.substring(3)
+      } else if (!segment.isERB) {
+        const match = segment.text.match(/^<!-- (.*?) -->$/)
+
+        if (match) return match[1]
+      }
+
+      return segment.text
+    }).join("")
+
+    return indent + result.trimStart()
+  }
+
+  private commentWholeLine(segments: LineSegment[], lineText: string): string {
+    const indent = this.getIndentation(lineText)
+
+    const content = segments.map(segment => {
+      if (segment.isERB) {
+        return segment.text.substring(0, 2) + "#" + segment.text.substring(2)
+      }
+
+      return segment.text
+    }).join("").trimStart()
+
+    return `${indent}<!-- ${content} -->`
+  }
+
+  private htmlCommentSpansLine(node: HTMLCommentNode, lineText: string): boolean {
+    if (!node.comment_start || !node.comment_end) return false
+
+    const commentStart = node.comment_start.location.start.column
+    const commentEnd = node.comment_end.location.end.column
+    const contentBefore = lineText.substring(0, commentStart).trim()
+    const contentAfter = lineText.substring(commentEnd).trim()
+
+    return contentBefore === "" && contentAfter === ""
+  }
+
+  private parseERBNodes(content: string): ERBContentNode[] {
+    const document = this.parserService.parseContent(content)
+    const collector = new LineContextCollector()
+
+    collector.visit(document)
+
+    return collector.erbNodesPerLine.get(0) || []
   }
 
   private getIndentation(lineText: string): string {
