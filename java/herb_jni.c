@@ -68,6 +68,30 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean actionViewHelpers = (*env)->CallBooleanMethod(env, options, getActionViewHelpers);
       parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
     }
+
+    jmethodID getPrismNodes =
+        (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
+
+    if (getPrismNodes != NULL) {
+      jboolean prismNodes = (*env)->CallBooleanMethod(env, options, getPrismNodes);
+      parser_options.prism_nodes = (prismNodes == JNI_TRUE);
+    }
+
+    jmethodID getPrismNodesDeep =
+        (*env)->GetMethodID(env, optionsClass, "isPrismNodesDeep", "()Z");
+
+    if (getPrismNodesDeep != NULL) {
+      jboolean prismNodesDeep = (*env)->CallBooleanMethod(env, options, getPrismNodesDeep);
+      parser_options.prism_nodes_deep = (prismNodesDeep == JNI_TRUE);
+    }
+
+    jmethodID getPrismProgram =
+        (*env)->GetMethodID(env, optionsClass, "isPrismProgram", "()Z");
+
+    if (getPrismProgram != NULL) {
+      jboolean prismProgram = (*env)->CallBooleanMethod(env, options, getPrismProgram);
+      parser_options.prism_program = (prismProgram == JNI_TRUE);
+    }
   }
 
   hb_allocator_T allocator;

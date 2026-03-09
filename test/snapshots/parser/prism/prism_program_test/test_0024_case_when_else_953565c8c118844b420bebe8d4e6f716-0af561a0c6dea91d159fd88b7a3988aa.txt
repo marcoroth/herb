@@ -1,0 +1,96 @@
+---
+source: "Parser::Prism::PrismProgramTest#test_0024_case/when/else"
+input: "<% case status %><% when :active %>Active<% when :inactive %>Inactive<% else %>Unknown<% end %>"
+options: {prism_program: true}
+---
+@ DocumentNode (location: (1:0)-(1:95))
+├── children: (1 item)
+│   └── @ ERBCaseNode (location: (1:0)-(1:95))
+│       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+│       ├── content: " case status " (location: (1:2)-(1:15))
+│       ├── tag_closing: "%>" (location: (1:15)-(1:17))
+│       ├── children: []
+│       ├── conditions: (2 items)
+│       │   ├── @ ERBWhenNode (location: (1:17)-(1:35))
+│       │   │   ├── tag_opening: "<%" (location: (1:17)-(1:19))
+│       │   │   ├── content: " when :active " (location: (1:19)-(1:33))
+│       │   │   ├── tag_closing: "%>" (location: (1:33)-(1:35))
+│       │   │   ├── then_keyword: ∅
+│       │   │   └── statements: (1 item)
+│       │   │       └── @ HTMLTextNode (location: (1:35)-(1:41))
+│       │   │           └── content: "Active"
+│       │   │
+│       │   │
+│       │   └── @ ERBWhenNode (location: (1:41)-(1:61))
+│       │       ├── tag_opening: "<%" (location: (1:41)-(1:43))
+│       │       ├── content: " when :inactive " (location: (1:43)-(1:59))
+│       │       ├── tag_closing: "%>" (location: (1:59)-(1:61))
+│       │       ├── then_keyword: ∅
+│       │       └── statements: (1 item)
+│       │           └── @ HTMLTextNode (location: (1:61)-(1:69))
+│       │               └── content: "Inactive"
+│       │
+│       │
+│       ├── else_clause:
+│       │   └── @ ERBElseNode (location: (1:69)-(1:79))
+│       │       ├── tag_opening: "<%" (location: (1:69)-(1:71))
+│       │       ├── content: " else " (location: (1:71)-(1:77))
+│       │       ├── tag_closing: "%>" (location: (1:77)-(1:79))
+│       │       └── statements: (1 item)
+│       │           └── @ HTMLTextNode (location: (1:79)-(1:86))
+│       │               └── content: "Unknown"
+│       │
+│       │
+│       └── end_node:
+│           └── @ ERBEndNode (location: (1:86)-(1:95))
+│               ├── tag_opening: "<%" (location: (1:86)-(1:88))
+│               ├── content: " end " (location: (1:88)-(1:93))
+│               └── tag_closing: "%>" (location: (1:93)-(1:95))
+│
+│
+└── prism_node:
+    └── @ ProgramNode (location: (1:3)-(1:92))
+        ├── locals: []
+        └── statements:
+            └── @ StatementsNode (location: (1:3)-(1:92))
+                └── body: (1 item)
+                    └── @ CaseNode (location: (1:3)-(1:92))
+                        ├── predicate:
+                        │   └── @ CallNode (location: (1:8)-(1:14))
+                        │       ├── receiver: ∅
+                        │       ├── call_operator_loc: ∅
+                        │       ├── name: :status
+                        │       ├── message_loc: (1:8)-(1:14)
+                        │       ├── opening_loc: ∅
+                        │       ├── arguments: ∅
+                        │       ├── closing_loc: ∅
+                        │       ├── equal_loc: ∅
+                        │       └── block: ∅
+                        ├── conditions: (2 items)
+                        │   ├── @ WhenNode (location: (1:20)-(1:32))
+                        │   │   ├── keyword_loc: (1:20)-(1:24)
+                        │   │   ├── conditions: (1 item)
+                        │   │   │   └── @ SymbolNode (location: (1:25)-(1:32))
+                        │   │   │       ├── opening_loc: (1:25)-(1:26)
+                        │   │   │       ├── value_loc: (1:26)-(1:32)
+                        │   │   │       ├── closing_loc: ∅
+                        │   │   │       └── unescaped: "active"
+                        │   │   ├── then_keyword_loc: ∅
+                        │   │   └── statements: ∅
+                        │   └── @ WhenNode (location: (1:44)-(1:58))
+                        │       ├── keyword_loc: (1:44)-(1:48)
+                        │       ├── conditions: (1 item)
+                        │       │   └── @ SymbolNode (location: (1:49)-(1:58))
+                        │       │       ├── opening_loc: (1:49)-(1:50)
+                        │       │       ├── value_loc: (1:50)-(1:58)
+                        │       │       ├── closing_loc: ∅
+                        │       │       └── unescaped: "inactive"
+                        │       ├── then_keyword_loc: ∅
+                        │       └── statements: ∅
+                        ├── else_clause:
+                        │   └── @ ElseNode (location: (1:72)-(1:92))
+                        │       ├── else_keyword_loc: (1:72)-(1:76)
+                        │       ├── statements: ∅
+                        │       └── end_keyword_loc: (1:89)-(1:92)
+                        ├── case_keyword_loc: (1:3)-(1:7)
+                        └── end_keyword_loc: (1:89)-(1:92)

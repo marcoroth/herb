@@ -70,7 +70,37 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   }
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
-  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  <%- when Herb::Template::PrismSerializedField -%>
+  napi_value <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    void* buffer_data;
+    napi_create_buffer_copy(env, <%= node.human %>-><%= field.name %>.length,
+      <%= node.human %>-><%= field.name %>.data, &buffer_data, &<%= field.name %>);
+  } else {
+    napi_get_null(env, &<%= field.name %>);
+  }
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::PrismNodeField -%>
+  napi_value <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+
+    if (pm_buffer.length > 0) {
+      void* buffer_data;
+      napi_create_buffer_copy(env, pm_buffer.length, pm_buffer.value, &buffer_data, &<%= field.name %>);
+    } else {
+      napi_get_null(env, &<%= field.name %>);
+    }
+
+    pm_buffer_free(&pm_buffer);
+  } else {
+    napi_get_null(env, &<%= field.name %>);
+  }
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
   /* <%= field.name %> is internal parser state, not exposed to JavaScript */
   napi_value <%= field.name %>;
   napi_get_null(env, &<%= field.name %>);

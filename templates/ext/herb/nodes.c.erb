@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/encoding.h>
 
 #include "error_helpers.h"
 #include "extension_helpers.h"
@@ -51,7 +52,33 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::LocationField -%>
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
-  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  <%- when Herb::Template::PrismSerializedField -%>
+  VALUE <%= node.human %>_<%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    <%= node.human %>_<%= field.name %> = rb_str_new((const char*)<%= node.human %>-><%= field.name %>.data, <%= node.human %>-><%= field.name %>.length);
+    rb_enc_associate(<%= node.human %>_<%= field.name %>, rb_ascii8bit_encoding());
+    OBJ_FREEZE(<%= node.human %>_<%= field.name %>);
+  } else {
+    <%= node.human %>_<%= field.name %> = Qnil;
+  }
+  <%- when Herb::Template::PrismNodeField -%>
+  VALUE <%= node.human %>_<%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+
+    if (pm_buffer.length > 0) {
+      <%= node.human %>_<%= field.name %> = rb_str_new(pm_buffer.value, pm_buffer.length);
+      rb_enc_associate(<%= node.human %>_<%= field.name %>, rb_ascii8bit_encoding());
+      OBJ_FREEZE(<%= node.human %>_<%= field.name %>);
+    } else {
+      <%= node.human %>_<%= field.name %> = Qnil;
+    }
+    pm_buffer_free(&pm_buffer);
+  } else {
+    <%= node.human %>_<%= field.name %> = Qnil;
+  }
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
   /* <%= field.name %> is internal parser state, not exposed to Ruby */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;
   <%- else -%>

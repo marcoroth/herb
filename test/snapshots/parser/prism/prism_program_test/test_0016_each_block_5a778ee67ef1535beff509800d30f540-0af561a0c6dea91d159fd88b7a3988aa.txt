@@ -1,0 +1,79 @@
+---
+source: "Parser::Prism::PrismProgramTest#test_0016_each block"
+input: "<% items.each do |item| %><%= item %><% end %>"
+options: {prism_program: true}
+---
+@ DocumentNode (location: (1:0)-(1:46))
+├── children: (1 item)
+│   └── @ ERBBlockNode (location: (1:0)-(1:46))
+│       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+│       ├── content: " items.each do |item| " (location: (1:2)-(1:24))
+│       ├── tag_closing: "%>" (location: (1:24)-(1:26))
+│       ├── body: (1 item)
+│       │   └── @ ERBContentNode (location: (1:26)-(1:37))
+│       │       ├── tag_opening: "<%=" (location: (1:26)-(1:29))
+│       │       ├── content: " item " (location: (1:29)-(1:35))
+│       │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+│       │       ├── parsed: true
+│       │       └── valid: true
+│       │
+│       └── end_node:
+│           └── @ ERBEndNode (location: (1:37)-(1:46))
+│               ├── tag_opening: "<%" (location: (1:37)-(1:39))
+│               ├── content: " end " (location: (1:39)-(1:44))
+│               └── tag_closing: "%>" (location: (1:44)-(1:46))
+│
+│
+└── prism_node:
+    └── @ ProgramNode (location: (1:3)-(1:43))
+        ├── locals: []
+        └── statements:
+            └── @ StatementsNode (location: (1:3)-(1:43))
+                └── body: (1 item)
+                    └── @ CallNode (location: (1:3)-(1:43))
+                        ├── receiver:
+                        │   └── @ CallNode (location: (1:3)-(1:8))
+                        │       ├── receiver: ∅
+                        │       ├── call_operator_loc: ∅
+                        │       ├── name: :items
+                        │       ├── message_loc: (1:3)-(1:8)
+                        │       ├── opening_loc: ∅
+                        │       ├── arguments: ∅
+                        │       ├── closing_loc: ∅
+                        │       ├── equal_loc: ∅
+                        │       └── block: ∅
+                        ├── call_operator_loc: (1:8)-(1:9)
+                        ├── name: :each
+                        ├── message_loc: (1:9)-(1:13)
+                        ├── opening_loc: ∅
+                        ├── arguments: ∅
+                        ├── closing_loc: ∅
+                        ├── equal_loc: ∅
+                        └── block:
+                            └── @ BlockNode (location: (1:14)-(1:43))
+                                ├── locals: (1 item)
+                                │   └── :item
+                                ├── parameters:
+                                │   └── @ BlockParametersNode (location: (1:17)-(1:23))
+                                │       ├── parameters:
+                                │       │   └── @ ParametersNode (location: (1:18)-(1:22))
+                                │       │       ├── requireds: (1 item)
+                                │       │       │   └── @ RequiredParameterNode (location: (1:18)-(1:22))
+                                │       │       │       └── name: :item
+                                │       │       ├── optionals: []
+                                │       │       ├── rest: ∅
+                                │       │       ├── posts: []
+                                │       │       ├── keywords: []
+                                │       │       ├── keyword_rest: ∅
+                                │       │       └── block: ∅
+                                │       ├── locals: []
+                                │       ├── opening_loc: (1:17)-(1:18)
+                                │       └── closing_loc: (1:22)-(1:23)
+                                ├── body:
+                                │   └── @ StatementsNode (location: (1:30)-(1:34))
+                                │       └── body: (1 item)
+                                │           └── @ LocalVariableReadNode (location: (1:30)-(1:34))
+                                │               ├── name: :item
+                                │               └── depth: 0
+                                ├── opening_loc: (1:14)-(1:16)
+                                └── closing_loc: (1:40)-(1:43)

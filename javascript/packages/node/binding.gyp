@@ -20,6 +20,7 @@
         "./extension/libherb/analyze/invalid_structures.c",
         "./extension/libherb/analyze/missing_end.c",
         "./extension/libherb/analyze/parse_errors.c",
+        "./extension/libherb/analyze/prism_annotate.c",
         "./extension/libherb/analyze/transform.c",
         "./extension/libherb/analyze/action_view/attribute_extraction_helpers.c",
         "./extension/libherb/analyze/action_view/content_tag.c",
@@ -100,8 +101,7 @@
         "HERB_EXCLUDE_PRETTYPRINT",
         "PRISM_EXCLUDE_PRETTYPRINT",
         "PRISM_EXCLUDE_JSON",
-        "PRISM_EXCLUDE_PACK",
-        "PRISM_EXCLUDE_SERIALIZATION"
+        "PRISM_EXCLUDE_PACK"
       ],
       "cflags": [
         "-Wall",

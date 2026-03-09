@@ -136,6 +136,18 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
     if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
 
+    VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
+    if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
+    if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
+
+    VALUE prism_nodes_deep = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes_deep"));
+    if (NIL_P(prism_nodes_deep)) { prism_nodes_deep = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes_deep"))); }
+    if (!NIL_P(prism_nodes_deep) && RTEST(prism_nodes_deep)) { parser_options.prism_nodes_deep = true; }
+
+    VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
+    if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
+    if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
+
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }

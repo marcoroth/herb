@@ -103,6 +103,51 @@ public class HerbTest {
   }
 
   @Test
+  void testParserOptionsPrismNodes() {
+    String source = "<%= user.name %>";
+
+    ParseResult withPrism = Herb.parse(source, ParserOptions.create().prismNodes(true));
+    String inspected = withPrism.inspect();
+
+    assertTrue(inspected.contains("prism_node:"));
+  }
+
+  @Test
+  void testParserOptionsPrismNodesString() {
+    String source = "<%= \"String\" %>";
+
+    ParseResult withPrism = Herb.parse(source, ParserOptions.create().prismNodes(true));
+    String inspected = withPrism.inspect();
+
+    assertTrue(inspected.contains("prism_node:"));
+    assertTrue(inspected.contains("String"));
+  }
+
+  @Test
+  void testParserOptionsPrismProgram() {
+    String source = "<%= \"hello\" %>";
+
+    ParseResult withPrism = Herb.parse(source, ParserOptions.create().prismProgram(true));
+    String inspected = withPrism.inspect();
+
+    assertTrue(inspected.contains("prism_node:"));
+  }
+
+  @Test
+  void testParserOptionsPrismNodesDeep() {
+    String source = "<% if true %><%= \"yes\" %><% end %>";
+
+    ParseResult withDeep = Herb.parse(source, ParserOptions.create().prismNodes(true).prismNodesDeep(true));
+    ParseResult withoutDeep = Herb.parse(source, ParserOptions.create().prismNodes(true).prismNodesDeep(false));
+
+    String inspectDeep = withDeep.inspect();
+    String inspectShallow = withoutDeep.inspect();
+
+    assertTrue(inspectDeep.contains("prism_node:"));
+    assertTrue(inspectShallow.contains("prism_node:"));
+  }
+
+  @Test
   void testParserOptionsAnalyze() {
     String source = "<% if true %><div></div><% end %>";
 

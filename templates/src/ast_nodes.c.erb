@@ -42,6 +42,10 @@
   <%= node.human %>-><%= field.name %> = hb_string_copy(<%= field.name %>, allocator);
   <%- when Herb::Template::AnalyzedRubyField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::PrismSerializedField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::PrismContextField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::LocationField -%>
@@ -116,16 +120,15 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   <%- when Herb::Template::StringField -%>
   if (<%= node.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
   <%- when Herb::Template::PrismNodeField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) {
-    // The first argument to `pm_node_destroy` is a `pm_parser_t`, but it's currently unused:
-    // See: https://github.com/ruby/ruby/blob/efb2d4363709b36a205791787f6812259027c6e1/prism/templates/src/node.c.erb#L100-L104
-    //
-    pm_node_destroy(NULL, <%= node.human %>-><%= field.name %>);
-  }
+  /* prism_node is a borrowed reference into the prism context, not freed here */
   <%- when Herb::Template::AnalyzedRubyField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
     free_analyzed_ruby(<%= node.human %>-><%= field.name %>);
   }
+  <%- when Herb::Template::PrismSerializedField -%>
+  if (<%= node.human %>-><%= field.name %>.data != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>.data); }
+  <%- when Herb::Template::PrismContextField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) { herb_prism_context_free(<%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::VoidPointerField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::BooleanField -%>

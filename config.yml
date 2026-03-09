@@ -369,6 +369,12 @@ nodes:
           type: array
           kind: Node
 
+        - name: prism_context
+          type: prism_context
+
+        - name: prism_node
+          type: prism_node
+
     - name: LiteralNode
       fields:
         - name: content
@@ -643,6 +649,9 @@ nodes:
         - name: valid
           type: boolean
 
+        - name: prism_node
+          type: prism_node
+
     - name: ERBEndNode
       fields:
         - name: tag_opening
@@ -686,6 +695,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -716,6 +728,9 @@ nodes:
 
         # - name: opener
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: body
           type: array
@@ -765,6 +780,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBWhenNode
@@ -795,6 +813,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBInNode
@@ -821,6 +842,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -842,6 +866,9 @@ nodes:
 
         # - name: predicate
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -867,6 +894,9 @@ nodes:
 
         # - name: collection
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -928,6 +958,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -964,6 +997,9 @@ nodes:
 
         # - name: predicate
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array

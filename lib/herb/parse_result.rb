@@ -13,7 +13,13 @@ module Herb
       @value = value
       @options = options
       super(source, warnings, errors)
-      value.source = source
+
+      if options.prism_nodes || options.prism_nodes_deep
+        value.source = source
+      elsif options.prism_program
+        # Using `instance_variable_set` doesn't propagate the source being set on the whole tree
+        value.instance_variable_set(:@source, source)
+      end
     end
 
     #: () -> Array[Herb::Errors::Error]

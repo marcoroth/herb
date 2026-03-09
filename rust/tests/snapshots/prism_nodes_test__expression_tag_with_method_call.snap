@@ -1,0 +1,35 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:16))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:16))
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " user.name " (location: (1:3)-(1:14))
+        ├── tag_closing: "%>" (location: (1:14)-(1:16))
+        ├── parsed: true
+        ├── valid: true
+        └── prism_node: 
+            └── @ CallNode (location: (0,4)-(0,13))
+                ├── CallNodeFlags: nil
+                ├── receiver:
+                │   @ CallNode (location: (0,4)-(0,8))
+                │   ├── CallNodeFlags: variable_call, ignore_visibility
+                │   ├── receiver: nil
+                │   ├── call_operator_loc: nil
+                │   ├── name: :user
+                │   ├── message_loc: (0,4)-(0,8) = "user"
+                │   ├── opening_loc: nil
+                │   ├── arguments: nil
+                │   ├── closing_loc: nil
+                │   ├── equal_loc: nil
+                │   └── block: nil
+                ├── call_operator_loc: (0,8)-(0,9) = "."
+                ├── name: :name
+                ├── message_loc: (0,9)-(0,13) = "name"
+                ├── opening_loc: nil
+                ├── arguments: nil
+                ├── closing_loc: nil
+                ├── equal_loc: nil
+                └── block: nil

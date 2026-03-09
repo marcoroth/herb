@@ -9,6 +9,9 @@ pub struct ParserOptions {
   pub analyze: bool,
   pub strict: bool,
   pub action_view_helpers: bool,
+  pub prism_nodes: bool,
+  pub prism_nodes_deep: bool,
+  pub prism_program: bool,
 }
 
 impl Default for ParserOptions {
@@ -18,6 +21,9 @@ impl Default for ParserOptions {
       analyze: true,
       strict: true,
       action_view_helpers: false,
+      prism_nodes: false,
+      prism_nodes_deep: false,
+      prism_program: false,
     }
   }
 }
@@ -94,6 +100,9 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       analyze: options.analyze,
       strict: options.strict,
       action_view_helpers: options.action_view_helpers,
+      prism_program: options.prism_program,
+      prism_nodes: options.prism_nodes,
+      prism_nodes_deep: options.prism_nodes_deep,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);

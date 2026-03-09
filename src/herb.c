@@ -1,5 +1,6 @@
 #include "include/herb.h"
 #include "include/analyze/analyze.h"
+#include "include/analyze/prism_annotate.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/token.h"
@@ -49,6 +50,17 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   herb_parser_deinit(&parser);
 
   if (parser_options.analyze) { herb_analyze_parse_tree(document, source, &parser_options, allocator); }
+
+  if (parser_options.prism_nodes || parser_options.prism_program) {
+    herb_annotate_prism_nodes(
+      document,
+      source,
+      parser_options.prism_nodes,
+      parser_options.prism_nodes_deep,
+      parser_options.prism_program,
+      allocator
+    );
+  }
 
   return document;
 }
