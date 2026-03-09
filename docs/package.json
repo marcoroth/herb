@@ -25,7 +25,7 @@
     "medium-zoom": "^1.1.0"
   },
   "devDependencies": {
-    "@shikijs/vitepress-twoslash": "^4.0.1",
+    "@shikijs/vitepress-twoslash": "^4.0.2",
     "vitepress": "^2.0.0-alpha.16",
     "vitepress-plugin-group-icons": "^1.7.1"
   }
