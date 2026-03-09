@@ -58,6 +58,10 @@ module Herb
       @config["linter"] || {}
     end
 
+    def engine
+      @config["engine"] || {}
+    end
+
     def formatter
       @config["formatter"] || {}
     end

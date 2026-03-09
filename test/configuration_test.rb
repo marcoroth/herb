@@ -513,4 +513,32 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal 1, files.size
   end
+
+  test "engine config defaults to security error" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "error", config.engine["security"]
+  end
+
+  test "engine security can be set to warn" do
+    write_config(<<~YAML)
+      engine:
+        security: warn
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "warn", config.engine["security"]
+  end
+
+  test "engine security can be set to ignore" do
+    write_config(<<~YAML)
+      engine:
+        security: ignore
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "ignore", config.engine["security"]
+  end
 end

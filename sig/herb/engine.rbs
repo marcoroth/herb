@@ -20,6 +20,8 @@ module Herb
 
     attr_reader visitors: untyped
 
+    attr_reader security_mode: untyped
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError
