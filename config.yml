@@ -450,7 +450,7 @@ nodes:
         - name: is_void
           type: boolean
 
-        - name: source
+        - name: element_source
           type: element_source
 
     - name: HTMLConditionalElementNode
@@ -487,7 +487,7 @@ nodes:
         - name: tag_name
           type: token
 
-        - name: source
+        - name: element_source
           type: element_source
 
     - name: HTMLAttributeValueNode

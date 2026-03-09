@@ -48,7 +48,7 @@ input: |2-
     │   │   │   │       └── tag_name: "li" (location: (2:3)-(2:5))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLElementNode (location: (3:2)-(4:2))
     │   │   │   ├── errors: (1 error)
@@ -75,7 +75,7 @@ input: |2-
     │   │   │   │       └── tag_name: "li" (location: (3:3)-(3:5))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLElementNode (location: (4:2)-(5:0))
     │   │       ├── errors: (1 error)
@@ -102,7 +102,7 @@ input: |2-
     │   │       │       └── tag_name: "li" (location: (4:3)-(4:5))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:5))
@@ -112,7 +112,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (5:4)-(5:5))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:5)-(6:0))
         └── content: "\n"

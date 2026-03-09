@@ -85,4 +85,4 @@ input: "<div <% if primary? %>data-primary<% elsif secondary? %>data-secondary<%
         │       └── tag_closing: ">" (location: (1:107)-(1:108))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

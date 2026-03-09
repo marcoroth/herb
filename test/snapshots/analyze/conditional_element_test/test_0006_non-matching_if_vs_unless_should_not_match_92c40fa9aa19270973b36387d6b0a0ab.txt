@@ -68,7 +68,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (4:21)-(4:22))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (4:22)-(5:0))
     │   └── content: "\n"

@@ -61,7 +61,7 @@ input: |2-
     │   │       │       └── tag_closing: ">" (location: (1:114)-(1:115))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (1:115)-(1:119))
@@ -71,7 +71,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (1:118)-(1:119))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:119)-(2:0))
         └── content: "\n"

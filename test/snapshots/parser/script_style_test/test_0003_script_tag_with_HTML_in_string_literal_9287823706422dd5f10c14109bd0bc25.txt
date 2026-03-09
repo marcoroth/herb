@@ -26,4 +26,4 @@ input: "<script>var html = \"<div class='test'>content</div>\";</script>"
         │       └── tag_closing: ">" (location: (1:61)-(1:62))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

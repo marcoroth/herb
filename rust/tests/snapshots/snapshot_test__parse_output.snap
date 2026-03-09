@@ -26,7 +26,7 @@ expression: output
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │   
     ├── @ HTMLTextNode (location: (1:18)-(3:0))
     │   └── content: "\n\n"
@@ -87,7 +87,7 @@ expression: output
     │   │   │   │       └── tag_closing: ">" (location: (6:6)-(6:7))
     │   │   │   │   
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │   
     │   │   └── @ HTMLTextNode (location: (6:7)-(7:0))
     │   │       └── content: "\n"
@@ -137,7 +137,7 @@ expression: output
     │   │           │   │       └── tag_closing: ">" (location: (10:6)-(10:7))
     │   │           │   │   
     │   │           │   ├── is_void: false
-    │   │           │   └── source: "HTML"
+    │   │           │   └── element_source: "HTML"
     │   │           │   
     │   │           └── @ HTMLTextNode (location: (10:7)-(11:0))
     │   │               └── content: "\n"

@@ -87,7 +87,7 @@ options: {track_whitespace: true}
     │   │       └── tag_closing: ">" (location: (3:25)-(3:26))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:26)-(4:0))
         └── content: "\n"

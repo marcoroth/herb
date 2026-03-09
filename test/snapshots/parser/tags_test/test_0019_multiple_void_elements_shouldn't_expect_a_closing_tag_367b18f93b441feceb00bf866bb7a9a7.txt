@@ -17,7 +17,7 @@ input: "<br><input><br><input>"
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLElementNode (location: (1:4)-(1:11))
     │   ├── open_tag:
@@ -32,7 +32,7 @@ input: "<br><input><br><input>"
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLElementNode (location: (1:11)-(1:15))
     │   ├── open_tag:
@@ -47,7 +47,7 @@ input: "<br><input><br><input>"
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLElementNode (location: (1:15)-(1:22))
         ├── open_tag:
@@ -62,4 +62,4 @@ input: "<br><input><br><input>"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── source: "HTML"
+        └── element_source: "HTML"

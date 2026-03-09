@@ -46,7 +46,7 @@ input: |2-
     │   │       │       └── tag_name: "p" (location: (2:3)-(2:4))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
@@ -56,7 +56,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

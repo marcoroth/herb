@@ -135,7 +135,7 @@ function createWrapper(template: HTMLElementNode, body: Node[]): HTMLElementNode
     body,
     close_tag: template.close_tag,
     is_void: template.is_void,
-    source: template.source,
+    element_source: template.element_source,
     location: Location.zero,
     errors: [],
   })

@@ -12,12 +12,20 @@ module Herb
       attr_reader :type #: String
       attr_reader :location #: Location
       attr_reader :errors #: Array[Herb::Errors::Error]
+      attr_reader :source #: String?
 
       #: (String, Location, ?Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
         @errors = errors
+        @source = nil
+      end
+
+      #: (String?) -> void
+      def source=(source)
+        @source = source
+        compact_child_nodes.each { |child| child.source = source }
       end
 
       #: () -> serialized_node

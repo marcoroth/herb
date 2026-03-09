@@ -31,7 +31,7 @@ input: "<p>Hello</p World"
     │   │       └── tag_closing: ∅
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:12)-(1:17))
         └── content: "World"

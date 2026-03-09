@@ -88,7 +88,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "div" (location: (2:3)-(2:6))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (7:9)-(8:0))
         └── content: "\n"

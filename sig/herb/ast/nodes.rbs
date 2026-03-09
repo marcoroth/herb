@@ -215,7 +215,7 @@ module Herb
     # |  body: Array[Herb::AST::Node],
     # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?,
     # |  is_void: bool,
-    # |  source: String?,
+    # |  element_source: String?,
     # | }
     class HTMLElementNode < Node
       include Colors
@@ -230,7 +230,7 @@ module Herb
 
       attr_reader is_void: bool
 
-      attr_reader source: String?
+      attr_reader element_source: String?
 
       # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode), bool, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode, bool, String) -> void
@@ -262,7 +262,7 @@ module Herb
     # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?,
     # |  close_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?,
     # |  tag_name: Herb::Token?,
-    # |  source: String?,
+    # |  element_source: String?,
     # | }
     class HTMLConditionalElementNode < Node
       include Colors
@@ -281,7 +281,7 @@ module Herb
 
       attr_reader tag_name: Herb::Token?
 
-      attr_reader source: String?
+      attr_reader element_source: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String, (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode), (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, String) -> void

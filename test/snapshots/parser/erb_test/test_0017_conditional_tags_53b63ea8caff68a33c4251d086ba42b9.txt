@@ -47,7 +47,7 @@ input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% en
         │       │       │       └── tag_closing: ">" (location: (1:37)-(1:38))
         │       │       │
         │       │       ├── is_void: false
-        │       │       └── source: "HTML"
+        │       │       └── element_source: "HTML"
         │       │
         │       ├── subsequent:
         │       │   └── @ ERBElseNode (location: (1:38)-(1:67))
@@ -81,7 +81,7 @@ input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% en
         │       │               │       └── tag_closing: ">" (location: (1:66)-(1:67))
         │       │               │
         │       │               ├── is_void: false
-        │       │               └── source: "HTML"
+        │       │               └── element_source: "HTML"
         │       │
         │       │
         │       └── end_node:
@@ -99,4 +99,4 @@ input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% en
         │       └── tag_closing: ">" (location: (1:81)-(1:82))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

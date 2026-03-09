@@ -86,7 +86,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:29)-(4:2))
     │   │   │   │       └── content: "\n  "
@@ -96,7 +96,7 @@ input: |2-
     │   │   │   │       └── tag_name: "optgroup" (location: (2:3)-(2:11))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLElementNode (location: (4:2)-(6:0))
     │   │       ├── errors: (1 error)
@@ -160,7 +160,7 @@ input: |2-
     │   │       │   │   │       └── tag_closing: ">" (location: (5:28)-(5:29))
     │   │       │   │   │
     │   │       │   │   ├── is_void: false
-    │   │       │   │   └── source: "HTML"
+    │   │       │   │   └── element_source: "HTML"
     │   │       │   │
     │   │       │   └── @ HTMLTextNode (location: (5:29)-(6:0))
     │   │       │       └── content: "\n"
@@ -170,7 +170,7 @@ input: |2-
     │   │       │       └── tag_name: "optgroup" (location: (4:3)-(4:11))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:9))
@@ -180,7 +180,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (6:8)-(6:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:9)-(7:0))
         └── content: "\n"

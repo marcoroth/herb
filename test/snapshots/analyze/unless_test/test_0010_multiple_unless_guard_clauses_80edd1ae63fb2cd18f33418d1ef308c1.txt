@@ -74,7 +74,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:29)-(5:30))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (5:30)-(6:0))
     │   │       └── content: "\n"

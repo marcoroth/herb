@@ -44,4 +44,4 @@ input: "<script>console.log(\"<%\");</script>"
         │
         ├── close_tag: ∅
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

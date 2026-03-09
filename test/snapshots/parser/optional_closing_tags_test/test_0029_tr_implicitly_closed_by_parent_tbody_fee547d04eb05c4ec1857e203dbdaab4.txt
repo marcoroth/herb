@@ -76,7 +76,7 @@ input: |2-
     │   │   │   │       │   │   │       └── tag_closing: ">" (location: (3:21)-(3:22))
     │   │   │   │       │   │   │
     │   │   │   │       │   │   ├── is_void: false
-    │   │   │   │       │   │   └── source: "HTML"
+    │   │   │   │       │   │   └── element_source: "HTML"
     │   │   │   │       │   │
     │   │   │   │       │   └── @ HTMLTextNode (location: (3:22)-(4:2))
     │   │   │   │       │       └── content: "\n  "
@@ -86,7 +86,7 @@ input: |2-
     │   │   │   │       │       └── tag_name: "tr" (location: (3:5)-(3:7))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── source: "HTML"
+    │   │   │   │       └── element_source: "HTML"
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (4:2)-(4:10))
@@ -96,7 +96,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:9)-(4:10))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:10)-(5:0))
     │   │       └── content: "\n"
@@ -109,7 +109,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (5:7)-(5:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:8)-(6:0))
         └── content: "\n"

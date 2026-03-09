@@ -65,7 +65,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
     │   │       └── content: "\n"
@@ -117,7 +117,7 @@ input: |2-
     │   │       │   │   │       └── tag_closing: ">" (location: (8:7)-(8:8))
     │   │       │   │   │
     │   │       │   │   ├── is_void: false
-    │   │       │   │   └── source: "HTML"
+    │   │       │   │   └── element_source: "HTML"
     │   │       │   │
     │   │       │   └── @ HTMLTextNode (location: (8:8)-(9:0))
     │   │       │       └── content: "\n"
@@ -168,7 +168,7 @@ input: |2-
     │   │       │           │   │       └── tag_closing: ">" (location: (12:7)-(12:8))
     │   │       │           │   │
     │   │       │           │   ├── is_void: false
-    │   │       │           │   └── source: "HTML"
+    │   │       │           │   └── element_source: "HTML"
     │   │       │           │
     │   │       │           └── @ HTMLTextNode (location: (12:8)-(13:0))
     │   │       │               └── content: "\n"

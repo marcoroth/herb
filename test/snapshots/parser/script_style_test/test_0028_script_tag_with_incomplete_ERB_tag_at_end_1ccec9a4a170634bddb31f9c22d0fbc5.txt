@@ -50,4 +50,4 @@ input: "<script>console.log(\"test\"); <%</script>"
         │
         ├── close_tag: ∅
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"
