@@ -10413,10 +10413,10 @@ yeoman-environment@^4.4.1:
     untildify "^5.0.0"
     which-package-manager "^0.0.1"
 
-yeoman-generator@^8.0.0:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/yeoman-generator/-/yeoman-generator-8.0.0.tgz#fcc3346efaf1d5e67f0987f5a6539e33a4f69a5c"
-  integrity sha512-UB54IKUO5kxaazyYKQ6nq4nJQ9je4hRSvNzlZ1Axwohhau9pkTyBKsizUyIVEZBDli+vqzMlV+0JWwokDbmQDg==
+yeoman-generator@^8.0.2:
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/yeoman-generator/-/yeoman-generator-8.0.2.tgz#98f757d3678f9be4c2792e58e48d82205bb7f790"
+  integrity sha512-hP7gsvXc3cGnrGzT37/mShPMEvctNsLAAlLmAbKnj7gM2GLoSmhklkx7P3XXMf3uup+ganzDurMobiUeiXj5hA==
   dependencies:
     "@types/debug" "^4.1.12"
     "@types/lodash-es" "^4.17.12"
