@@ -12,6 +12,7 @@ docs/docs/linter/rules/
 /ext/herb/extconf.h
 /ext/herb/herb.bundle
 /ext/herb/Makefile
+/ext/herb/mkmf.log
 /lib/herb/herb.bundle
 
 # Prerequisites
