@@ -62,4 +62,4 @@ input: "<input type=\"text\" <% if required? %>required<% end %> />"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── source: "HTML"
+        └── element_source: "HTML"

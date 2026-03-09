@@ -14,8 +14,13 @@ module Herb
 
       attr_reader errors: Array[Herb::Errors::Error]
 
+      attr_reader source: String?
+
       # : (String, Location, ?Array[Herb::Errors::Error]) -> void
       def initialize: (String, Location, ?Array[Herb::Errors::Error]) -> void
+
+      # : (String?) -> void
+      def source=: (String?) -> void
 
       # : () -> serialized_node
       def to_hash: () -> serialized_node

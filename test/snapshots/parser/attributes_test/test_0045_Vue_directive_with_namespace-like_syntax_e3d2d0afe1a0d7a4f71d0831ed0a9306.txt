@@ -43,4 +43,4 @@ input: "<div :v-model=\"user\"></div>"
         │       └── tag_closing: ">" (location: (1:26)-(1:27))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

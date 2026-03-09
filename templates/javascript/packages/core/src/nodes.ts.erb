@@ -24,6 +24,7 @@ export abstract class Node implements BaseNodeProps {
   readonly type: NodeType
   readonly location: Location
   readonly errors: HerbError[]
+  source: string | null = null
 
   static from(node: SerializedNode): Node {
     return fromSerializedNode(node)
@@ -37,6 +38,11 @@ export abstract class Node implements BaseNodeProps {
     this.type = type
     this.location = location
     this.errors = errors
+  }
+
+  setSource(source: string): void {
+    this.source = source
+    this.compactChildNodes().forEach(child => child.setSource(source))
   }
 
   toJSON(): SerializedNode {

@@ -66,7 +66,7 @@ input: "<div class=<span>test</span></div>"
         │       │       └── tag_closing: ">" (location: (1:27)-(1:28))
         │       │
         │       ├── is_void: false
-        │       └── source: "HTML"
+        │       └── element_source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:28)-(1:34))
@@ -76,4 +76,4 @@ input: "<div class=<span>test</span></div>"
         │       └── tag_closing: ">" (location: (1:33)-(1:34))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

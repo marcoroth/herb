@@ -51,7 +51,7 @@ input: |2-
     │   │   │   ├── body: []
     │   │   │   ├── close_tag: ∅
     │   │   │   ├── is_void: true
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:16)-(3:0))
     │   │       └── content: "\n"
@@ -98,7 +98,7 @@ input: |2-
     │   │           │   ├── body: []
     │   │           │   ├── close_tag: ∅
     │   │           │   ├── is_void: true
-    │   │           │   └── source: "HTML"
+    │   │           │   └── element_source: "HTML"
     │   │           │
     │   │           └── @ HTMLTextNode (location: (4:16)-(5:0))
     │   │               └── content: "\n"

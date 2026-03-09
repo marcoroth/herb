@@ -98,7 +98,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (7:6)-(8:0))
         └── content: "\n"

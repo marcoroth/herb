@@ -119,7 +119,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (4:15)-(4:16))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (4:16)-(5:2))
     │   │   │   └── content: "\n  "
@@ -146,7 +146,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:19)-(5:20))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (5:20)-(6:2))
     │   │   │   └── content: "\n  "
@@ -182,7 +182,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (7:34)-(7:35))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (7:35)-(8:2))
     │   │   │   │       └── content: "\n  "
@@ -233,7 +233,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "section" (location: (2:3)-(2:10))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (11:9)-(12:0))
         └── content: "\n"

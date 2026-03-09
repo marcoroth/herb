@@ -46,4 +46,4 @@ input: "<div <%items.each do |item|%>data-item<%end%>></div>"
         │       └── tag_closing: ">" (location: (1:51)-(1:52))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

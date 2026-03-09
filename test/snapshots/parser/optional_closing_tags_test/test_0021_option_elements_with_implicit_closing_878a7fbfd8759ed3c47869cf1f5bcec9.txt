@@ -48,7 +48,7 @@ input: |2-
     │   │   │   │       └── tag_name: "option" (location: (2:3)-(2:9))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLElementNode (location: (3:2)-(4:2))
     │   │   │   ├── errors: (1 error)
@@ -75,7 +75,7 @@ input: |2-
     │   │   │   │       └── tag_name: "option" (location: (3:3)-(3:9))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLElementNode (location: (4:2)-(5:0))
     │   │       ├── errors: (1 error)
@@ -102,7 +102,7 @@ input: |2-
     │   │       │       └── tag_name: "option" (location: (4:3)-(4:9))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:9))
@@ -112,7 +112,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:9)-(6:0))
         └── content: "\n"

@@ -13,6 +13,7 @@ module Herb
       @value = value
       @options = options
       super(source, warnings, errors)
+      value.source = source
     end
 
     #: () -> Array[Herb::Errors::Error]
