@@ -14,6 +14,7 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  InlayHintParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
@@ -59,6 +60,7 @@ export class Server {
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
+          inlayHintProvider: true,
         },
       }
 
@@ -196,6 +198,14 @@ export class Server {
       if (!document) return []
 
       return this.service.foldingRangeService.getFoldingRanges(document)
+    })
+
+    this.connection.languages.inlayHint.on((params: InlayHintParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.inlayHintService.getInlayHints(document)
     })
 
     this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
