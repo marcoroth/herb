@@ -27,6 +27,7 @@ import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
+import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
@@ -104,6 +105,7 @@ export const rules: RuleClass[] = [
   ERBRightTrimRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoOutputInAttributeNameRule,
+  ERBNoInstanceVariablesInPartialsRule,
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 

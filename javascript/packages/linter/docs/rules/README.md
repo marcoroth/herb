@@ -12,6 +12,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow extra newlines.
 - [`erb-no-extra-whitespace-inside-tags`](./erb-no-extra-whitespace-inside-tags.md) - Disallow multiple consecutive spaces inside ERB tags
 - [`erb-no-inline-case-conditions`](./erb-no-inline-case-conditions.md) - Disallow inline `case`/`when` and `case`/`in` conditions in a single ERB tag
+- [`erb-no-instance-variables-in-partials`](./erb-no-instance-variables-in-partials.md) - Disallow instance variables in partials
 - [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
 - [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
