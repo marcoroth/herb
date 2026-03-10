@@ -351,6 +351,30 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     })
   })
 
+  describe("custom elements with dashes", () => {
+    test("trix-editor converts dashes to underscores in method name", () => {
+      expect(transform('<trix-editor input="content"></trix-editor>')).toBe(
+        '<%= tag.trix_editor input: "content" do %><% end %>'
+      )
+    })
+
+    test("my-custom-element converts dashes to underscores in method name", () => {
+      const input = dedent`
+        <my-custom-element data-controller="example">
+          Content
+        </my-custom-element>
+      `
+
+      const expected = dedent`
+        <%= tag.my_custom_element data: { controller: "example" } do %>
+          Content
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+  })
+
   describe("ERB in attribute values", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(

@@ -15,6 +15,7 @@ import { DocumentSaveService } from "./document_save_service"
 import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
 import { HoverService } from "./hover_service"
+import { RewriteCodeActionService } from "./rewrite_code_action_service"
 import { CommentService } from "./comment_service"
 
 import { version } from "../package.json"
@@ -37,6 +38,7 @@ export class Service {
   foldingRangeService: FoldingRangeService
   documentHighlightService: DocumentHighlightService
   hoverService: HoverService
+  rewriteCodeActionService: RewriteCodeActionService
   commentService: CommentService
 
   constructor(connection: Connection, params: InitializeParams) {
@@ -55,6 +57,7 @@ export class Service {
     this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
     this.hoverService = new HoverService(this.parserService)
+    this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
     this.commentService = new CommentService(this.parserService)
 
     if (params.initializationOptions) {
