@@ -1,8 +1,8 @@
 #ifndef HERB_ANALYZE_INVALID_STRUCTURES_H
 #define HERB_ANALYZE_INVALID_STRUCTURES_H
 
-#include "analyze.h"
 #include "../ast_node.h"
+#include "analyze.h"
 
 #include <stdbool.h>
 

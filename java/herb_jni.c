@@ -60,6 +60,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean strict = (*env)->CallBooleanMethod(env, options, getStrict);
       parser_options.strict = (strict == JNI_TRUE);
     }
+
+    jmethodID getActionViewHelpers =
+        (*env)->GetMethodID(env, optionsClass, "isActionViewHelpers", "()Z");
+
+    if (getActionViewHelpers != NULL) {
+      jboolean actionViewHelpers = (*env)->CallBooleanMethod(env, options, getActionViewHelpers);
+      parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
+    }
   }
 
   hb_allocator_T allocator;

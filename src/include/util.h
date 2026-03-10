@@ -12,4 +12,6 @@ int is_whitespace(int character);
 hb_string_T escape_newlines(struct hb_allocator* allocator, hb_string_T input);
 hb_string_T quoted_string(struct hb_allocator* allocator, hb_string_T input);
 
+char* convert_underscores_to_dashes(const char* input);
+
 #endif

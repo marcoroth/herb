@@ -7,7 +7,7 @@ NODE_BUILD_DIR = ../javascript/packages/node-wasm/build/
 NODE_WASM_OUTPUT = $(NODE_BUILD_DIR)libherb.js
 
 CPP_SOURCES = $(wildcard *.cpp)
-C_SOURCES = $(filter-out ../src/main.c ../src/ruby_parser.c, $(wildcard ../src/*.c)) $(wildcard ../src/**/*.c)
+C_SOURCES = $(filter-out ../src/main.c ../src/ruby_parser.c, $(shell find ../src -name '*.c'))
 
 PRISM_PATH = $(shell cd .. && bundle show prism)
 PRISM_MAIN_SOURCES = $(wildcard $(PRISM_PATH)/src/*.c)

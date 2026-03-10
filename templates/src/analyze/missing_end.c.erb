@@ -17,7 +17,7 @@ void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allo
       const <%= node.struct_type %>* <%= node.human %> = (const <%= node.struct_type %>*) node;
 
       if (<%= node.human %>->end_node == NULL) {
-        append_missingerb_end_tag_error(
+        <%= "append_#{errors.find { |e| e.name == 'MissingERBEndTagError' }.human}" %>(
         <%- if keyword == "block" -%>
           hb_string("ERB block"),
         <%- else -%>

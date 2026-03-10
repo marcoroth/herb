@@ -48,7 +48,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when Herb::Template::ArrayField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ElementSourceField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(element_source_to_string(<%= node.human %>-><%= field.name %>));
+  VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::LocationField -%>
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
   <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>

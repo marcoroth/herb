@@ -18,7 +18,7 @@ unsafe fn convert_position(c_position: position_T) -> Position {
 }
 
 <%- errors.each do |error| -%>
-<%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
+<%- snake_name = Herb::Template.underscore(error.name).downcase -%>
 unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%= error.name %> {
   let error_ref = &*error_ptr;
   let message = string_from_hb_string(error_ref.base.message);
@@ -68,7 +68,7 @@ unsafe fn convert_errors(errors_array: *mut hb_array_T) -> Vec<AnyError> {
 
     let error = match error_base.type_ {
         <%- errors.each do |error| -%>
-        <%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
+        <%- snake_name = Herb::Template.underscore(error.name).downcase -%>
         <%= error.type %> => {
           let error_ptr = error_base_ptr as *const <%= error.c_type %>;
           AnyError::<%= error.name %>(convert_<%= snake_name %>(error_ptr))
@@ -87,8 +87,7 @@ unsafe fn get_string_field(hb_string: hb_string_T) -> String {
   string_from_hb_string(hb_string)
 }
 
-unsafe fn convert_element_source(source: u32) -> String {
-  let hb_string = crate::ffi::element_source_to_string(source);
+unsafe fn convert_element_source(hb_string: hb_string_T) -> String {
   if hb_string.data.is_null() {
     String::new()
   } else {
@@ -219,7 +218,7 @@ unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
       <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
       <%= field.name %>: convert_specific_node_field!((*c_node_pointer).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
       <%- elsif field.union_kind -%>
-      <%- snake_name = field.union_type_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase -%>
+      <%- snake_name = Herb::Template.underscore(field.union_type_name).downcase -%>
       <%= field.name %>: convert_<%= snake_name %>_field((*c_node_pointer).<%= field.name %> as *mut c_void),
       <%- else -%>
       <%= field.name %>: convert_node_field((*c_node_pointer).<%= field.name %> as *mut c_void),
@@ -235,7 +234,7 @@ unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
 <%- union_kinds.each do |kinds| -%>
 <%-
   enum_name = kinds.sort.join("Or")
-  snake_name = enum_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+  snake_name = Herb::Template.underscore(enum_name).downcase
 -%>
 #[allow(dead_code)]
 unsafe fn convert_<%= snake_name %>_field(node_pointer: *mut c_void) -> Option<<%= enum_name %>> {

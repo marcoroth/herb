@@ -35,8 +35,7 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
   <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
-  // TODO: Convert element_source to string
-  jstring <%= field.name %> = (*env)->NewStringUTF(env, "");
+  jstring <%= field.name %> = <%= node.human %>-><%= field.name %>.data ? (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>.data) : NULL;
   <%- elsif field.is_a?(Herb::Template::LocationField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateLocation(env, *<%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>

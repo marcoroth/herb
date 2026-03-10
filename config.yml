@@ -426,6 +426,11 @@ nodes:
         - name: tag_name
           type: token
 
+    - name: HTMLVirtualCloseTagNode
+      fields:
+        - name: tag_name
+          type: token
+
     - name: HTMLElementNode
       fields:
         - name: open_tag
@@ -433,6 +438,7 @@ nodes:
           kind:
             - HTMLOpenTagNode
             - HTMLConditionalOpenTagNode
+            - ERBOpenTagNode
 
         - name: tag_name
           type: token
@@ -446,6 +452,7 @@ nodes:
           kind:
             - HTMLCloseTagNode
             - HTMLOmittedCloseTagNode
+            - HTMLVirtualCloseTagNode
 
         - name: is_void
           type: boolean
@@ -525,6 +532,37 @@ nodes:
         - name: value
           type: node
           kind: HTMLAttributeValueNode
+
+    - name: RubyLiteralNode
+      fields:
+        - name: content
+          type: string
+
+    - name: RubyHTMLAttributesSplatNode
+      fields:
+        - name: content
+          type: string
+
+        - name: prefix
+          type: string
+
+    - name: ERBOpenTagNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: tag_name
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
 
     - name: HTMLTextNode
       fields:

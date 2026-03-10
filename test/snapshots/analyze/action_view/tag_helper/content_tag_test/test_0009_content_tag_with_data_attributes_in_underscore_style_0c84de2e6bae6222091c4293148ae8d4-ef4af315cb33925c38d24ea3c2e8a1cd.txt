@@ -1,0 +1,75 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0009_content_tag with data attributes in underscore style"
+input: |2-
+<%= content_tag :div, data_controller_name: "example", data_user_id: 123 do %>
+  Content
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:9))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:78))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag :div, data_controller_name: "example", data_user_id: 123 do " (location: (1:3)-(1:76))
+    │   │       ├── tag_closing: "%>" (location: (1:76)-(1:78))
+    │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:22)-(1:44))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:44))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:22)-(1:44))
+    │   │           │   │               └── content: "data-controller-name"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:22)-(1:44))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:44))
+    │   │           │           ├── open_quote: """ (location: (1:22)-(1:44))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:22)-(1:44))
+    │   │           │           │       └── content: "example"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:44)-(1:44))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:55)-(1:69))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:55)-(1:69))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:55)-(1:69))
+    │   │               │               └── content: "data-user-id"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:55)-(1:69))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:55)-(1:69))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:55)-(1:69))
+    │   │                       │       └── content: "123"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:78)-(3:0))
+    │   │       └── content: "\n  Content\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ ERBEndNode (location: (3:0)-(3:9))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " end " (location: (3:2)-(3:7))
+    │   │       └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

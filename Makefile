@@ -1,8 +1,8 @@
 exec = herb
 test_exec = run_herb_tests
 
-sources = $(wildcard src/*.c) $(wildcard src/**/*.c)
-headers = $(wildcard src/*.h) $(wildcard src/**/*.h)
+sources = $(shell find src -name '*.c')
+headers = $(shell find src -name '*.h')
 objects = $(sources:.c=.o)
 
 extension_sources = $(wildcard ext/**/*.c)

@@ -222,8 +222,8 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : () -> serialized_missingerb_end_tag_error
-      def to_hash: () -> serialized_missingerb_end_tag_error
+      # : () -> serialized_missing_erb_end_tag_error
+      def to_hash: () -> serialized_missing_erb_end_tag_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
@@ -420,8 +420,8 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : () -> serialized_unclosederb_tag_error
-      def to_hash: () -> serialized_unclosederb_tag_error
+      # : () -> serialized_unclosed_erb_tag_error
+      def to_hash: () -> serialized_unclosed_erb_tag_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
@@ -452,8 +452,8 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : () -> serialized_nestederb_tag_error
-      def to_hash: () -> serialized_nestederb_tag_error
+      # : () -> serialized_nested_erb_tag_error
+      def to_hash: () -> serialized_nested_erb_tag_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String

@@ -69,6 +69,7 @@ describe("ParseCache", () => {
         track_whitespace: true,
         analyze: true,
         strict: true,
+        action_view_helpers: false,
       })
     })
 
@@ -80,6 +81,7 @@ describe("ParseCache", () => {
         track_whitespace: true,
         analyze: true,
         strict: false,
+        action_view_helpers: false,
       })
     })
 
@@ -91,6 +93,7 @@ describe("ParseCache", () => {
         track_whitespace: false,
         analyze: true,
         strict: true,
+        action_view_helpers: false,
       })
     })
 
@@ -102,6 +105,7 @@ describe("ParseCache", () => {
         track_whitespace: true,
         analyze: false,
         strict: false,
+        action_view_helpers: false,
       })
     })
   })

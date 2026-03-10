@@ -1,15 +1,19 @@
 #ifndef HERB_ANALYZE_BUILDERS_H
 #define HERB_ANALYZE_BUILDERS_H
 
-#include "analyze.h"
 #include "../ast_nodes.h"
 #include "../location.h"
 #include "../position.h"
 #include "../util/hb_allocator.h"
+#include "analyze.h"
 
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node);
 
-location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_t control_type, hb_allocator_T* allocator);
+location_T* compute_then_keyword(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+);
 
 AST_NODE_T* create_control_node(
   AST_ERB_CONTENT_NODE_T* erb_node,

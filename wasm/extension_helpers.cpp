@@ -128,6 +128,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("strict", val(options->strict));
   options_object.set("track_whitespace", val(options->track_whitespace));
   options_object.set("analyze", val(options->analyze));
+  options_object.set("action_view_helpers", val(options->action_view_helpers));
 
   result.set("options", options_object);
 

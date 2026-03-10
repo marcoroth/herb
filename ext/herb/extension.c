@@ -130,6 +130,12 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
 
+    VALUE action_view_helpers = rb_hash_lookup(options, rb_utf8_str_new_cstr("action_view_helpers"));
+    if (NIL_P(action_view_helpers)) {
+      action_view_helpers = rb_hash_lookup(options, ID2SYM(rb_intern("action_view_helpers")));
+    }
+    if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
+
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
