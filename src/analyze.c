@@ -65,7 +65,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   search_in_nodes(analyzed);
   search_rescue_nodes(analyzed);
   search_ensure_nodes(analyzed);
-  search_yield_nodes(analyzed);
+  pm_visit_node(analyzed->root, search_yield_nodes, analyzed);
   search_block_closing_nodes(analyzed);
 
   return analyzed;

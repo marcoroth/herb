@@ -38,6 +38,22 @@ module Parser
       assert_parsed_snapshot(%(<h1 id=<%= "test" %>></h1>))
     end
 
+    test "attribute name from erb" do
+      assert_parsed_snapshot(%(<img <%= key %>="true">))
+    end
+
+    test "attribute name with erb interpolation" do
+      assert_parsed_snapshot(%(<img data-<%= key %>-name="example">))
+    end
+
+    test "attribute name with erb interpolation after" do
+      assert_parsed_snapshot(%(<img data-<%= key %>="example">))
+    end
+
+    test "attribute name with erb interpolation before" do
+      assert_parsed_snapshot(%(<img <%= key %>-value="example">))
+    end
+
     test "interpolate inside attribute value with static content before" do
       assert_parsed_snapshot(%(<h1 class="text-white <%= "bg-black" %>"></h1>))
     end
@@ -107,6 +123,62 @@ module Parser
         <% if true %>
           '<%= value %>'
         <% end %>
+      HTML
+    end
+
+    test "multi-line erb content" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          hello
+        %>
+      HTML
+    end
+
+    test "multi-line erb content with complex ruby" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          if condition
+            "value1"
+          else
+            "value2"
+          end
+        %>
+      HTML
+    end
+
+    test "multi-line erb silent tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          x = 1
+          y = 2
+        %>
+      HTML
+    end
+
+    test "multi-line erb comment" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#
+          This is a comment
+          across multiple lines
+        %>
+      HTML
+    end
+
+    test "erb comment with equals sign" do
+      assert_parsed_snapshot(%(<%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>))
+    end
+
+    test "erb comment with equals sign without spaces" do
+      assert_parsed_snapshot(%(<%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>))
+    end
+
+    test "multi-line erb comment with equals sign" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#=
+          link_to "New watch list",
+          new_watch_list_path,
+          class: "btn btn-ghost"
+        %>
       HTML
     end
   end

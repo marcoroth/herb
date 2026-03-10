@@ -1,0 +1,62 @@
+@ DocumentNode (location: (1:0)-(1:54))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:54))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:48))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:47)-(1:48))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:25))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:11))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:11))
+        │       │   │   │               └── content: "@click"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:11)-(1:12))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:25))
+        │       │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:13)-(1:24))
+        │       │   │           │       └── content: "handleClick"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:24)-(1:25))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:26)-(1:47))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:38))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:26)-(1:38))
+        │       │       │               └── content: "@keyup.enter"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:38)-(1:39))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:39)-(1:47))
+        │       │               ├── open_quote: """ (location: (1:39)-(1:40))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:40)-(1:46))
+        │       │               │       └── content: "submit"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:46)-(1:47))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:48)-(1:54))
+        │       ├── tag_opening: "</" (location: (1:48)-(1:50))
+        │       ├── tag_name: "div" (location: (1:50)-(1:53))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:53)-(1:54))
+        │
+        ├── is_void: false
+        └── source: "HTML"

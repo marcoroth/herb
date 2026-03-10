@@ -76,7 +76,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: prism $(exec) $(lib_name) $(static_lib_name) test wasm
+all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -88,10 +88,10 @@ $(lib_name): $(objects)
 $(static_lib_name): $(objects)
 	ar rcs $(static_lib_name) $(objects)
 
-src/%.o: src/%.c
+src/%.o: src/%.c templates
 	$(cc) -c $(flags) -fPIC $< -o $@
 
-test/%.o: test/%.c
+test/%.o: test/%.c templates
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
 
 test: $(test_objects) $(non_main_objects)
@@ -104,6 +104,9 @@ clean:
 
 bundle_install:
 	bundle install
+
+templates: bundle_install
+	bundle exec rake templates
 
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -

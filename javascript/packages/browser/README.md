@@ -1,6 +1,6 @@
 # Herb for Browser Usage
 
-##### Package: [`@herb-tools/browser`](https://www.npmjs.com/package/@herb-tools/browser)
+**Package**: [`@herb-tools/browser`](https://www.npmjs.com/package/@herb-tools/browser)
 
 ---
 

@@ -266,6 +266,12 @@ export function replaceTextareaWithMonaco(
     }
   }
 
+  editor.setCursorPosition = function (line, column) {
+    const position = { lineNumber: line, column: column + 1 }
+    editor.setPosition(position)
+    editor.revealPositionInCenter(position)
+  }
+
   editor.dispose = function () {
     if (editor._resizeObserver) {
       editor._resizeObserver.disconnect()

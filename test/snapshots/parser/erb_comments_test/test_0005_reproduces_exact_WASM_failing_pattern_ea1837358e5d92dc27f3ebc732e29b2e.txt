@@ -1,0 +1,8 @@
+@ DocumentNode (location: (1:0)-(1:132))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:132))
+        ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+        ├── content: " herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp " (location: (1:3)-(1:130))
+        ├── tag_closing: "%>" (location: (1:130)-(1:132))
+        ├── parsed: false
+        └── valid: true

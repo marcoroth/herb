@@ -1,4 +1,10 @@
-import type { HerbBackend, ParseResult, LexResult } from "@herb-tools/core"
+import type { HerbBackend, ParseResult, LexResult, ParserOptions } from "@herb-tools/core"
+
+import { Formatter } from "@herb-tools/formatter"
+import { Linter } from "@herb-tools/linter"
+import { IdentityPrinter } from "@herb-tools/printer"
+
+import type { LintResult } from "@herb-tools/linter"
 
 async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   try {
@@ -9,11 +15,11 @@ async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
-export async function analyze(herb: HerbBackend, source: string) {
+export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: { ignoreErrors?: boolean } = {}) {
   const startTime = performance.now()
 
   const parseResult = await safeExecute<ParseResult>(
-    new Promise((resolve) => resolve(herb.parse(source))),
+    new Promise((resolve) => resolve(herb.parse(source, options))),
   )
 
   const string = await safeExecute<string>(
@@ -46,6 +52,24 @@ export async function analyze(herb: HerbBackend, source: string) {
     new Promise((resolve) => resolve(herb.version)),
   )
 
+  const formatted = await safeExecute<string>(
+    new Promise((resolve) => resolve((new Formatter(herb, {})).format(source))),
+  )
+
+  const printed = await safeExecute<string>(
+    new Promise((resolve) => resolve((new IdentityPrinter()).print(parseResult.value, printerOptions))),
+  )
+
+  let lintResult: LintResult | null = null
+
+  if (parseResult && parseResult.value) {
+    const linter = new Linter(herb)
+
+    lintResult = await safeExecute<LintResult>(
+      new Promise((resolve) => resolve(linter.lint(source))),
+    )
+  }
+
   const endTime = performance.now()
 
   return {
@@ -56,7 +80,10 @@ export async function analyze(herb: HerbBackend, source: string) {
     lex,
     ruby,
     html,
+    formatted,
+    printed,
     version,
+    lintResult,
     duration: endTime - startTime,
   }
 }

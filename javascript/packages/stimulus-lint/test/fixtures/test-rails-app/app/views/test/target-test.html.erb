@@ -1,0 +1,12 @@
+<!-- Valid targets -->
+<div data-controller="hello">
+  <input data-hello-target="name" type="text">
+  <button data-hello-target="button">Button</button>
+  <div data-hello-target="output"></div>
+</div>
+
+<!-- Invalid targets -->
+<div data-controller="hello">
+  <input data-hello-target="unknown" type="text">
+  <div data-invalid-target="name">Invalid Controller</div>
+</div>

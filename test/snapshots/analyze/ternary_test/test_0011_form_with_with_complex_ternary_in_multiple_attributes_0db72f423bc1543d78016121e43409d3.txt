@@ -1,0 +1,32 @@
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " form_with model: @article,
+    │                 url: @article.persisted? ? article_path(@article) : articles_path,
+    │                 html: { class: @article.draft? ? "draft-form" : "published-form" },
+    │                 local: @article.draft? ? true : false do |f| " (location: (1:3)-(4:59))
+    │   ├── tag_closing: "%>" (location: (4:59)-(4:61))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (4:61)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (5:2)-(5:28))
+    │   │   │   ├── tag_opening: "<%=" (location: (5:2)-(5:5))
+    │   │   │   ├── content: " f.text_field :title " (location: (5:5)-(5:26))
+    │   │   │   ├── tag_closing: "%>" (location: (5:26)-(5:28))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:28)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

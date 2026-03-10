@@ -48,6 +48,34 @@ module Lexer
       assert_lexed_snapshot(%(<img value="/"/>))
     end
 
+    test "Alpine.js @click attribute" do
+      assert_lexed_snapshot(%(<button @click="handleClick">Click me</button>))
+    end
+
+    test "Alpine.js @submit attribute" do
+      assert_lexed_snapshot(%(<form @submit="handleSubmit">Submit</form>))
+    end
+
+    test "Alpine.js :class attribute" do
+      assert_lexed_snapshot(%(<div :class="{ active: isActive }">Content</div>))
+    end
+
+    test "Alpine.js :value attribute" do
+      assert_lexed_snapshot(%(<input :value="inputValue" />))
+    end
+
+    test "Multiple Alpine.js attributes" do
+      assert_lexed_snapshot(%(<div @click="onClick" :class="classes" x-data="{ open: false }"></div>))
+    end
+
+    test "Alpine.js @ without identifier" do
+      assert_lexed_snapshot(%(<div @>Content</div>))
+    end
+
+    test "Alpine.js : without identifier" do
+      assert_lexed_snapshot(%(<div :>Content</div>))
+    end
+
     test "attribute value double quotes with > value" do
       assert_lexed_snapshot(%(<img value=">"/>))
     end

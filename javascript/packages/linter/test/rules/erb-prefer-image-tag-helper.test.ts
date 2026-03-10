@@ -1,0 +1,328 @@
+import { describe, test, expect, beforeAll } from "vitest"
+import { Herb } from "@herb-tools/node-wasm"
+import dedent from "dedent"
+import { Linter } from "../../src/linter.js"
+import { ERBPreferImageTagHelperRule } from "../../src/rules/erb-prefer-image-tag-helper.js"
+
+describe("erb-prefer-image-tag-helper", () => {
+  beforeAll(async () => {
+    await Herb.load()
+  })
+
+  test("passes for regular img tags without ERB", () => {
+    const html = '<img src="/logo.png" alt="Company logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for image_tag helper usage", () => {
+    const html = '<%= image_tag "logo.png", alt: "Company logo", class: "logo" %>'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("fails for img with image_path helper", () => {
+    const html = '<img src="<%= image_path("logo.png") %>" alt="Logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag image_path("logo.png"), alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with asset_path helper", () => {
+    const html = '<img src="<%= asset_path("banner.jpg") %>" alt="Banner">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag asset_path("banner.jpg"), alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("handles self-closing img tags with image_path", () => {
+    const html = '<img src="<%= image_path("logo.png") %>" alt="Logo" />'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag image_path("logo.png"), alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("ignores non-img tags with image_path", () => {
+    const html = '<div data-background="<%= image_path("bg.jpg") %>">Content</div>'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("fails for img with Rails URL helpers", () => {
+    const html = '<img src="<%= Rails.application.routes.url_helpers.root_url %>/icon.png" alt="Logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{Rails.application.routes.url_helpers.root_url}/icon.png", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with root_url helper", () => {
+    const html = '<img src="<%= root_url %>/banner.jpg" alt="Banner">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{root_url}/banner.jpg", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with custom path helpers", () => {
+    const html = '<img src="<%= admin_path %>/icon.png" alt="Admin icon">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{admin_path}/icon.png", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with dynamic user avatar URL", () => {
+    const html = '<img src="<%= user.avatar.url %>" alt="User avatar">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag user.avatar.url, alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with dynamic product image", () => {
+    const html = '<img src="<%= product.image %>" alt="Product image">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag product.image, alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with any ERB expression", () => {
+    const html = '<img src="<%= @company.logo_path %>" alt="Company logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag @company.logo_path, alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with multiple ERB expressions", () => {
+    const html = '<img src="<%= base_url %><%= image_path("logo.png") %>" alt="Logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{base_url}#{image_path("logo.png")}", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with ERB expression containing string literal", () => {
+    const html = '<img src="<%= root_path %><%= "icon.png" %>" alt="Icon">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{root_path}#{"icon.png"}", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("fails for img with ERB expression containing string literal followed by another ERB tag", () => {
+    const html = '<img src="<%= root_path %>/assets/<%= "icon.png" %>" alt="Icon">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{root_path}/assets/#{"icon.png"}", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("shouldn't flag empty src attribute", () => {
+    const html = '<img src="" alt="Empty"><img src="    " alt="Empty">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for img tags with static paths only", () => {
+    const html = dedent`
+      <div>
+        <img src="/images/logo.png" alt="Logo">
+        <img src="https://example.com/image.jpg" alt="External image">
+        <img src="logo.png" alt="Relative path">
+      </div>
+    `
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for data URIs with embedded ERB content", () => {
+    const html = '<img src="data:image/png;base64,<%= base64_encoded_logo_image %>" alt="Logo">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for mixed static and ERB content in src", () => {
+    const html = '<img src="https://example.com/<%= user.id %>/avatar.png" alt="User avatar">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for data URI with SVG and embedded ERB", () => {
+    const html = '<img src="data:image/svg+xml,<svg><text><%= user_name %></text></svg>" alt="SVG">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for data URI with PNG", () => {
+    const html = '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2W2n8AAAAASUVORK5CYII=" alt="1x1 transparent image">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for data URI with PNG with ERB", () => {
+    const html = '<img src="data:image/png;base64,<%= File.read("image.png").to_base64 %>" alt="1x1 transparent image">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for img with only https URL", () => {
+    const html = '<img src="https://example.com/image.jpg" alt="External image">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("passes for img with only http URL", () => {
+    const html = '<img src="http://example.com/image.jpg" alt="External image">'
+
+    const linter = new Linter(Herb, [ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+})

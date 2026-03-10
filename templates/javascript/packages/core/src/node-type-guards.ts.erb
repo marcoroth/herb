@@ -1,0 +1,325 @@
+import type { Node, NodeType, ERBNode } from "./nodes.js"
+
+import { Token } from "./token.js"
+import { ParseResult } from "./parse-result.js"
+
+import {
+<%- nodes.each_with_index do |node, index| -%>
+  <%= node.name %>,
+<%- end -%>
+} from "./nodes.js"
+
+/**
+ * Type guard functions for AST nodes.
+ * These functions provide type checking by combining both instanceof
+ * checks and type string comparisons for maximum reliability across different
+ * runtime scenarios (e.g., serialized/deserialized nodes).
+ */
+
+<%- nodes.each do |node| -%>
+/**
+ * Checks if a node is a <%= node.name %>
+ */
+export function is<%= node.name %>(node: Node): node is <%= node.name %> {
+  return node instanceof <%= node.name %> || node.type === "<%= node.type %>" || (node.constructor as any).type === "<%= node.type %>"
+}
+
+<%- end -%>
+/**
+ * Convenience type guards for common node categories
+ */
+
+/**
+ * Checks if a node is any HTML node type
+ */
+export function isHTMLNode(node: Node): boolean {
+<%- html_nodes = nodes.select { |n| n.name.start_with?("HTML") } -%>
+  return <%= html_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
+}
+
+/**
+ * Checks if a node is any ERB node type
+ */
+export function isERBNode(node: Node): node is ERBNode {
+<%- erb_nodes = nodes.select { |n| n.name.start_with?("ERB") } -%>
+  return <%= erb_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
+}
+
+/**
+ * Map of node classes to their corresponding type guard functions
+ *
+ * @example
+ * const guard = NODE_TYPE_GUARDS[HTMLTextNode]
+ *
+ * if (guard(node)) {
+ *   // node is HTMLTextNode
+ * }
+ */
+export const NODE_TYPE_GUARDS = new Map<new (...args: any[]) => Node, (node: Node) => boolean>([
+<%- nodes.each_with_index do |node, index| -%>
+  [<%= node.name %>, is<%= node.name %>],
+<%- end -%>
+])
+
+/**
+ * Map of AST node type strings to their corresponding type guard functions
+ *
+ * @example
+ * const guard = AST_TYPE_GUARDS["AST_HTML_TEXT_NODE"]
+ *
+ * if (guard(node)) {
+ *   // node is HTMLTextNode
+ * }
+ */
+export const AST_TYPE_GUARDS = new Map<NodeType, (node: Node) => boolean>([
+<%- nodes.each_with_index do |node, index| -%>
+  ["<%= node.type %>", is<%= node.name %>],
+<%- end -%>
+])
+
+type NodeTypeToClass = {
+<%- nodes.each do |node| -%>
+  "<%= node.type %>": <%= node.name %>;
+<%- end -%>
+}
+
+type ClassToInstance<T> = T extends new (...args: any[]) => infer R ? R : never
+
+/**
+ * Checks if a node matches any of the provided type identifiers with proper type narrowing
+ * Supports AST type strings, node classes, or type guard functions
+ *
+ * @example
+ * if (isAnyOf(node, "AST_HTML_TEXT_NODE", "AST_LITERAL_NODE")) {
+ *   // node is narrowed to HTMLTextNode | LiteralNode
+ * }
+ *
+ * @example
+ * if (isAnyOf(node, HTMLTextNode, LiteralNode)) {
+ *   // node is narrowed to HTMLTextNode | LiteralNode
+ * }
+ */
+
+export function isAnyOf(node: Node, ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>): boolean {
+  return types.some(type => {
+    if (typeof type === 'string') {
+      return isNode(node, type)
+    } else if (typeof type === 'function' && type.prototype && type.prototype.constructor === type && NODE_TYPE_GUARDS.has(type as new (...args: any[]) => Node)) {
+      return isNode(node, type as new (...args: any[]) => Node)
+    } else if (typeof type === 'function') {
+      return (type as (node: Node) => boolean)(node)
+    } else {
+      return false
+    }
+  })
+}
+
+/**
+ * Checks if a node does NOT match any of the provided type identifiers
+ * Supports AST type strings, node classes, or type guard functions
+ * This is the logical inverse of isAnyOf
+ *
+ * @example
+ * if (isNoneOf(node, "AST_HTML_TEXT_NODE", "AST_LITERAL_NODE")) {
+ *   // node is neither HTMLTextNode nor LiteralNode
+ * }
+ *
+ * @example
+ * if (isNoneOf(node, HTMLTextNode, LiteralNode)) {
+ *   // node is neither HTMLTextNode nor LiteralNode
+ * }
+ *
+ * @example
+ * if (isNoneOf(node, isHTMLTextNode, isLiteralNode)) {
+ *   // node is neither HTMLTextNode nor LiteralNode
+ * }
+ */
+export function isNoneOf(
+  node: Node,
+  ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
+): boolean {
+  return !isAnyOf(node, ...types)
+}
+
+/**
+ * Checks if ALL nodes in an array match any of the provided type identifiers
+ * Supports AST type strings, node classes, or type guard functions
+ * Provides type narrowing for the array when true
+ *
+ * @example
+ * if (areAllOfType(nodes, "AST_HTML_TEXT_NODE", "AST_LITERAL_NODE")) {
+ *   // nodes is narrowed to (HTMLTextNode | LiteralNode)[]
+ * }
+ *
+ * @example
+ * if (areAllOfType(nodes, HTMLTextNode, LiteralNode)) {
+ *   // nodes is narrowed to (HTMLTextNode | LiteralNode)[]
+ * }
+ *
+ * @example
+ * if (areAllOfType(nodes, isHTMLTextNode, isLiteralNode)) {
+ *   // all nodes are either HTMLTextNode or LiteralNode
+ * }
+ */
+
+export function areAllOfType<T extends NodeType[]>(
+  nodes: Node[],
+  ...types: T
+): nodes is NodeTypeToClass[T[number]][]
+
+export function areAllOfType<T extends (new (...args: any[]) => Node)[]>(
+  nodes: Node[],
+  ...types: T
+): nodes is ClassToInstance<T[number]>[]
+
+export function areAllOfType(
+  nodes: Node[],
+  ...types: Array<(node: Node) => boolean>
+): boolean
+
+export function areAllOfType(
+  nodes: Node[],
+  ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
+): boolean {
+  return nodes.every(node => isAnyOf(node, ...types))
+}
+
+/**
+ * Filters an array of nodes to only include nodes matching any of the provided type identifiers
+ * Supports AST type strings, node classes, or type guard functions
+ * Returns a properly typed array of the filtered nodes
+ *
+ * @example
+ * const filtered = filterNodes(nodes, "AST_HTML_TEXT_NODE", "AST_LITERAL_NODE")
+ * // filtered is typed as (HTMLTextNode | LiteralNode)[]
+ *
+ * @example
+ * const filtered = filterNodes(nodes, HTMLTextNode, LiteralNode)
+ * // filtered is typed as (HTMLTextNode | LiteralNode)[]
+ *
+ * @example
+ * const filtered = filterNodes(nodes, isHTMLTextNode, isLiteralNode)
+ * // filtered contains only HTMLTextNode or LiteralNode instances
+ *
+ * @example
+ * const filtered = filterNodes(nodes, "AST_LITERAL_NODE", HTMLTextNode, isERBContentNode)
+ * // filtered contains only LiteralNode, HTMLTextNode, or ERBContentNode instances
+ */
+
+export function filterNodes<T extends NodeType[]>(
+  nodes: Node[] | undefined | null,
+  ...types: T
+): NodeTypeToClass[T[number]][]
+
+export function filterNodes<T extends (new (...args: any[]) => Node)[]>(
+  nodes: Node[] | undefined | null,
+  ...types: T
+): ClassToInstance<T[number]>[]
+
+export function filterNodes(
+  nodes: Node[] | undefined | null,
+  ...types: Array<(node: Node) => boolean>
+): Node[]
+
+export function filterNodes(
+  nodes: Node[] | undefined | null,
+  ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
+): Node[] {
+  if (!nodes) return []
+
+  return nodes.filter(node => isAnyOf(node, ...types))
+}
+
+/**
+ * Checks if a node matches a specific type identifier with proper type narrowing
+ * Supports AST type strings or node classes
+ *
+ * @example
+ * if (isNode(node, "AST_HTML_TEXT_NODE")) {
+ *   // node is narrowed to HTMLTextNode
+ * }
+ *
+ * @example
+ * if (isNode(node, HTMLTextNode)) {
+ *   // node is narrowed to HTMLTextNode
+ * }
+ */
+
+export function isNode<T extends NodeType>(
+  node: Node | null | undefined,
+  type: T
+): node is NodeTypeToClass[T]
+
+export function isNode<T extends new (...args: any[]) => Node>(
+  node: Node | null | undefined,
+  type: T
+): node is ClassToInstance<T>
+
+export function isNode(
+  node: Node | null | undefined,
+  type: NodeType | (new (...args: any[]) => Node)
+): boolean {
+  if (!node) return false
+
+  if (typeof type === 'string') {
+    const guard = AST_TYPE_GUARDS.get(type)
+
+    return guard ? guard(node) : false
+  } else if (typeof type === 'function') {
+    const guard = NODE_TYPE_GUARDS.get(type as new (...args: any[]) => Node)
+
+    return guard ? guard(node) : false
+  } else {
+    return false
+  }
+}
+
+export function isToken(object: any): object is Token {
+  return (object instanceof Token) || (object?.constructor?.name === "Token" && "value" in object) || (object as any).type?.startsWith('TOKEN_')
+}
+
+export function isParseResult(object: any): object is ParseResult {
+  return (object instanceof ParseResult) || (object?.constructor?.name === "ParseResult" && "value" in object)
+}
+
+/**
+ * Checks if a node has children (contains other nodes)
+ */
+export function hasChildren(node: Node): boolean {
+  return isDocumentNode(node) ||
+         isHTMLOpenTagNode(node) ||
+         isHTMLCloseTagNode(node) ||
+         isHTMLElementNode(node) ||
+         isHTMLAttributeValueNode(node) ||
+         isHTMLAttributeNameNode(node) ||
+         isHTMLCommentNode(node) ||
+         isHTMLDoctypeNode(node) ||
+         isERBElseNode(node) ||
+         isERBIfNode(node) ||
+         isERBBlockNode(node) ||
+         isERBWhenNode(node) ||
+         isERBCaseNode(node) ||
+         isERBCaseMatchNode(node) ||
+         isERBWhileNode(node) ||
+         isERBUntilNode(node) ||
+         isERBForNode(node) ||
+         isERBRescueNode(node) ||
+         isERBEnsureNode(node) ||
+         isERBBeginNode(node) ||
+         isERBUnlessNode(node) ||
+         isERBInNode(node)
+}
+
+/**
+ * Filter functions for extracting specific node types from arrays
+ */
+
+<%- nodes.each do |node| -%>
+/**
+ * Filters an array of nodes to only include <%= node.name %> nodes
+ */
+export function filter<%= node.name %>s(nodes: Node[]): <%= node.name %>[] {
+  return nodes.filter(is<%= node.name %>) as <%= node.name %>[]
+}
+
+<%- end -%>

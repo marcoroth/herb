@@ -8,6 +8,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (1:0)-(1:2))
     │   ├── tag_name: "div" (location: (1:2)-(1:5))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (1:5)-(1:6))
     │
     ├── @ HTMLCloseTagNode (location: (1:6)-(1:12))
@@ -18,6 +19,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (1:6)-(1:8))
     │   ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (1:11)-(1:12))
     │
     └── @ HTMLCloseTagNode (location: (1:12)-(1:19))
@@ -28,4 +30,5 @@
         │
         ├── tag_opening: "</" (location: (1:12)-(1:14))
         ├── tag_name: "span" (location: (1:14)-(1:18))
+        ├── children: []
         └── tag_closing: ">" (location: (1:18)-(1:19))

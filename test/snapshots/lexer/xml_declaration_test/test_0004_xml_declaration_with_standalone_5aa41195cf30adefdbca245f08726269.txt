@@ -1,0 +1,17 @@
+#<Herb::Token type="TOKEN_XML_DECLARATION" value="<?xml" range=[0, 5] start=(1:0) end=(1:5)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[5, 6] start=(1:5) end=(1:6)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="version" range=[6, 13] start=(1:6) end=(1:13)>
+#<Herb::Token type="TOKEN_EQUALS" value="=" range=[13, 14] start=(1:13) end=(1:14)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[14, 15] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="1" range=[15, 16] start=(1:15) end=(1:16)>
+#<Herb::Token type="TOKEN_CHARACTER" value="." range=[16, 17] start=(1:16) end=(1:17)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="0" range=[17, 18] start=(1:17) end=(1:18)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[18, 19] start=(1:18) end=(1:19)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[19, 20] start=(1:19) end=(1:20)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="standalone" range=[20, 30] start=(1:20) end=(1:30)>
+#<Herb::Token type="TOKEN_EQUALS" value="=" range=[30, 31] start=(1:30) end=(1:31)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[31, 32] start=(1:31) end=(1:32)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="yes" range=[32, 35] start=(1:32) end=(1:35)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[35, 36] start=(1:35) end=(1:36)>
+#<Herb::Token type="TOKEN_XML_DECLARATION_END" value="?>" range=[36, 38] start=(1:36) end=(1:38)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[38, 38] start=(1:38) end=(1:38)>

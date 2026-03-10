@@ -30,6 +30,8 @@
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::BooleanField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::ElementSourceField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::PrismNodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
@@ -122,6 +124,7 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   <%- when Herb::Template::VoidPointerField -%>
   free(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::BooleanField -%>
+  <%- when Herb::Template::ElementSourceField -%>
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>

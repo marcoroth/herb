@@ -1,0 +1,14 @@
+#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[0, 4] start=(1:0) end=(1:4)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=(1:4) end=(1:5)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Before" range=[5, 11] start=(1:5) end=(1:11)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[11, 12] start=(1:11) end=(1:12)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[12, 15] start=(1:12) end=(1:15)>
+#<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[15, 24] start=(1:15) end=(1:24)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Data" range=[24, 28] start=(1:24) end=(1:28)>
+#<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[28, 31] start=(1:28) end=(1:31)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[31, 35] start=(1:31) end=(1:35)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[35, 36] start=(1:35) end=(1:36)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="After" range=[36, 41] start=(1:36) end=(1:41)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[41, 42] start=(1:41) end=(1:42)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[42, 45] start=(1:42) end=(1:45)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[45, 45] start=(1:45) end=(1:45)>

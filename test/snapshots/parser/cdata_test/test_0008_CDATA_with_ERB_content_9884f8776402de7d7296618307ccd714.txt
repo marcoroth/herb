@@ -1,0 +1,13 @@
+@ DocumentNode (location: (1:0)-(1:28))
+└── children: (1 item)
+    └── @ CDATANode (location: (1:0)-(1:28))
+        ├── tag_opening: "<![CDATA[" (location: (1:0)-(1:9))
+        ├── children: (1 item)
+        │   └── @ ERBContentNode (location: (1:9)-(1:25))
+        │       ├── tag_opening: "<%=" (location: (1:9)-(1:12))
+        │       ├── content: " @variable " (location: (1:12)-(1:23))
+        │       ├── tag_closing: "%>" (location: (1:23)-(1:25))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        └── tag_closing: "]]>" (location: (1:25)-(1:28))

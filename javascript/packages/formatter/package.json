@@ -1,0 +1,51 @@
+{
+  "name": "@herb-tools/formatter",
+  "version": "0.6.1",
+  "description": "Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/formatter%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/formatter"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.esm.js",
+  "require": "./dist/index.cjs",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "herb-format": "bin/herb-format"
+  },
+  "scripts": {
+    "build": "yarn clean && rollup -c rollup.config.mjs",
+    "dev": "rollup -c rollup.config.mjs -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.esm.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.6.1",
+    "@herb-tools/printer": "0.6.1"
+  },
+  "devDependencies": {
+    "glob": "^11.0.3"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/",
+    "bin/"
+  ]
+}

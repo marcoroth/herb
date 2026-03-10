@@ -1,4 +1,12 @@
-export type HerbConfigOptions = {}
+export type HerbConfigOptions = {
+  formatter?: {
+    enabled?: boolean
+    include?: string[]
+    exclude?: string[]
+    indentWidth?: number
+    maxLineLength?: number
+  }
+}
 
 export type HerbLSPConfig = {
   version: string
@@ -73,7 +81,7 @@ export class Config {
   static async fromPathOrNew(projectPath: string) {
     try {
       return await this.fromPath(projectPath)
-    } catch (error: any) {
+    } catch {
       return Config.newConfig(projectPath)
     }
   }

@@ -1,0 +1,21 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (4 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:12))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " hello " (location: (1:3)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (1:12)-(1:17))
+    │   └── content: "     "
+    │
+    ├── @ ERBContentNode (location: (1:17)-(1:29))
+    │   ├── tag_opening: "<%=" (location: (1:17)-(1:20))
+    │   ├── content: " world " (location: (1:20)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:29)-(2:0))
+        └── content: "\n"

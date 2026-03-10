@@ -29,6 +29,7 @@ class VisitorTest < Minitest::Spec
       "Herb::AST::HTMLOpenTagNode",
       "Herb::AST::HTMLAttributeNode",
       "Herb::AST::HTMLAttributeNameNode",
+      "Herb::AST::LiteralNode",
       "Herb::AST::HTMLAttributeValueNode",
       "Herb::AST::LiteralNode",
       "Herb::AST::HTMLTextNode",

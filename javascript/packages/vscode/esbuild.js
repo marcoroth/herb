@@ -41,19 +41,34 @@ async function main() {
     plugins: [
       esbuildProblemMatcherPlugin,
       copy({
-        assets: {
-          from: ['../language-server/dist/herb-language-server.js'],
-          to: ['./'],
-        }
+        assets: [
+          { from: '../language-server/dist/herb-language-server.js', to: ['./'] },
+        ],
       })
     ],
   })
 
+  const workerCtx = await esbuild.context({
+    entryPoints: ['src/parse-worker.js'],
+    bundle: true,
+    format: 'cjs',
+    minify: production,
+    sourcemap: !production,
+    sourcesContent: false,
+    platform: 'node',
+    outfile: 'dist/parse-worker.js',
+    external: [],
+    logLevel: 'silent',
+  })
+
   if (watch) {
     await ctx.watch()
+    await workerCtx.watch()
   } else {
     await ctx.rebuild()
+    await workerCtx.rebuild()
     await ctx.dispose()
+    await workerCtx.dispose()
   }
 }
 

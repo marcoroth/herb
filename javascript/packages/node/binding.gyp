@@ -20,6 +20,7 @@
         "./extension/libherb/ast_nodes.c",
         "./extension/libherb/ast_pretty_print.c",
         "./extension/libherb/buffer.c",
+        "./extension/libherb/element_source.c",
         "./extension/libherb/errors.c",
         "./extension/libherb/extract.c",
         "./extension/libherb/herb.c",
@@ -38,6 +39,7 @@
         "./extension/libherb/range.c",
         "./extension/libherb/token_matchers.c",
         "./extension/libherb/token.c",
+        "./extension/libherb/utf8.c",
         "./extension/libherb/util.c",
         "./extension/libherb/visitor.c",
 

@@ -21,6 +21,7 @@
         │   └── @ HTMLCloseTagNode (location: (1:16)-(1:23))
         │       ├── tag_opening: "</" (location: (1:16)-(1:18))
         │       ├── tag_name: "span" (location: (1:18)-(1:22))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:22)-(1:23))
         │
         ├── is_void: false

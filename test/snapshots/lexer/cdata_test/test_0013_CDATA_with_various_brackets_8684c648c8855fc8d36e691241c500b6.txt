@@ -1,0 +1,9 @@
+#<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
+#<Herb::Token type="TOKEN_CHARACTER" value="{" range=[9, 10] start=(1:9) end=(1:10)>
+#<Herb::Token type="TOKEN_CHARACTER" value="[" range=[10, 11] start=(1:10) end=(1:11)>
+#<Herb::Token type="TOKEN_CHARACTER" value="(" range=[11, 12] start=(1:11) end=(1:12)>
+#<Herb::Token type="TOKEN_CHARACTER" value=")" range=[12, 13] start=(1:12) end=(1:13)>
+#<Herb::Token type="TOKEN_CHARACTER" value="]" range=[13, 14] start=(1:13) end=(1:14)>
+#<Herb::Token type="TOKEN_CHARACTER" value="}" range=[14, 15] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[15, 18] start=(1:15) end=(1:18)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[18, 18] start=(1:18) end=(1:18)>

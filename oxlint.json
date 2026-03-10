@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/src/schemas/oxlint.json",
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "warn",
+    "@typescript-eslint/prefer-optional-chain": "warn",
+    "no-console": "off",
+    "no-debugger": "error",
+    "no-unused-vars": "error",
+    "prefer-const": "error",
+    "eqeqeq": "error"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true
+  },
+  "globals": {
+    "globalThis": "readonly"
+  },
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/pkg/**",
+    "**/gem-*/**",
+    "**/tmp/**",
+    "**/*.min.js",
+    "**/*.bundle.js",
+    "**/vendor/**"
+  ]
+}

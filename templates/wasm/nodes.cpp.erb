@@ -37,6 +37,8 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   result.set("<%= field.name %>", <%= node.human %>-><%= field.name %> ? true : false);
   <%- when Herb::Template::ArrayField -%>
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::ElementSourceField -%>
+  result.set("<%= field.name %>", CreateString(element_source_to_string(<%= node.human %>-><%= field.name %>)));
   <%- else -%>
   result.set("<%= field.name %>", val::null());
   <%- end -%>

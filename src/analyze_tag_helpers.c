@@ -256,8 +256,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value_from_as
   name_token->location = location_init(name_start, name_end);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, name_start, name_end, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, name_start, name_end, array_init(8));
+    ast_html_attribute_name_node_init(name_children, name_start, name_end, array_init(8));
 
   position_T* equals_start = position_copy(name_end);
   position_T* equals_end =
@@ -310,8 +315,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value(
   name_token->location = location_init(start_pos, end_pos);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, start_pos, end_pos, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, start_pos, end_pos, array_init(8));
+    ast_html_attribute_name_node_init(name_children, start_pos, end_pos, array_init(8));
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node =
     create_interpolated_attribute_value(interpolated_node, start_pos, end_pos);
@@ -389,8 +399,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_from_assoc_no
   name_token->location = location_init(name_start, name_end);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, name_start, name_end, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, name_start, name_end, array_init(8));
+    ast_html_attribute_name_node_init(name_children, name_start, name_end, array_init(8));
 
   position_T* equals_start = position_copy(name_end);
   position_T* equals_end =
@@ -448,8 +463,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
   name_token->location = location_init(start_pos, end_pos);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, start_pos, end_pos, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, start_pos, end_pos, array_init(8));
+    ast_html_attribute_name_node_init(name_children, start_pos, end_pos, array_init(8));
 
   AST_RUBY_LITERAL_NODE_T* ruby_node = create_ruby_literal_node(ruby_content, start_pos, end_pos);
 
@@ -528,8 +548,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_from_assoc_node(
   name_token->location = location_init(name_start, name_end);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, name_start, name_end, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, name_start, name_end, array_init(8));
+    ast_html_attribute_name_node_init(name_children, name_start, name_end, array_init(8));
 
   // Create equals token with position between key and value
   // Find the operator position (: or =) by looking between key and value locations
@@ -651,8 +676,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
   name_token->location = location_init(start_pos, end_pos);
   name_token->range = range_init(0, 0);
 
+  // Create a literal node containing the name token
+  AST_LITERAL_NODE_T* name_literal = ast_literal_node_init(name_token->value, start_pos, end_pos, array_init(8));
+  array_T* name_children = array_init(1);
+  array_append(name_children, (AST_NODE_T*)name_literal);
+  
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    ast_html_attribute_name_node_init(name_token, start_pos, end_pos, array_init(8));
+    ast_html_attribute_name_node_init(name_children, start_pos, end_pos, array_init(8));
 
   AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init(value_str, start_pos, end_pos, array_init(8));
 
@@ -1078,42 +1108,6 @@ bool has_tag_helper_attributes(const char* content) {
 }
 
 // Determine the source string for a tag helper by inspecting the call node
-static const char* get_handler_source_for_content(const char* content) {
-  if (!content) { return "ActionView"; }
-  pm_parser_t parser;
-  const uint8_t* src = (const uint8_t*) content;
-  pm_parser_init(&parser, src, strlen(content), NULL);
-  pm_node_t* root = pm_parse(&parser);
-  const char* result = "ActionView";
-  if (root) {
-    tag_helper_handler_T* handlers = get_tag_helper_handlers();
-    size_t handlers_count = get_tag_helper_handlers_count();
-
-    tag_helper_search_data_T search_data = { .tag_helper_node = NULL,
-                                             .source = src,
-                                             .parser = &parser,
-                                             .info = NULL,
-                                             .found = false };
-
-    pm_visit_node(root, search_tag_helper_node, &search_data);
-
-    if (search_data.found && search_data.tag_helper_node->type == PM_CALL_NODE) {
-      pm_call_node_t* call_node = (pm_call_node_t*) search_data.tag_helper_node;
-
-      for (size_t i = 0; i < handlers_count; i++) {
-        if (handlers[i].detect(call_node, &parser)) {
-          result = handlers[i].source;
-          break;
-        }
-      }
-    }
-
-    pm_node_destroy(&parser, root);
-  }
-
-  pm_parser_free(&parser);
-  return result;
-}
 
 AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context) {
   if (!erb_node || !erb_node->content || !erb_node->content->value) { return NULL; }
@@ -1177,14 +1171,13 @@ AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_nod
   position_T* element_start = position_copy(erb_node->base.location->start);
   position_T* element_end = position_copy(erb_node->tag_closing->location->end);
 
-  const char* source_string = get_handler_source_for_content(erb_node->content->value);
   AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
     (AST_NODE_T*) erb_open_tag,
     tag_name_token,
     body,
     NULL,
     false,
-    source_string,
+    ELEMENT_SOURCE_ACTIONVIEW,
     element_start,
     element_end,
     element_errors
@@ -1256,14 +1249,13 @@ AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyz
 
   position_T* element_start = position_copy(erb_node->base.location->start);
   position_T* element_end = position_copy(erb_node->tag_closing->location->end);
-  const char* source_string = get_handler_source_for_content(erb_node->content->value);
   AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
     (AST_NODE_T*) erb_open_tag,
     tag_name_token,
     body,
     NULL,
     false,
-    source_string,
+    ELEMENT_SOURCE_ACTIONVIEW,
     element_start,
     element_end,
     simple_element_errors
@@ -1408,14 +1400,13 @@ AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, 
     array_append(body, array_get(block_node->body, i));
   }
 
-  const char* source_string = get_handler_source_for_content(content);
   AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
     (AST_NODE_T*) erb_open_tag,
     token_copy(tag_name_token),
     body,
     (struct AST_HTML_CLOSE_TAG_NODE_STRUCT*) block_node->end_node,
     false,
-    source_string,
+    ELEMENT_SOURCE_ACTIONVIEW,
     block_node->base.location->start,
     block_node->base.location->end,
     array_init(8)
@@ -1585,14 +1576,13 @@ AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_r
   }
 
   // Create HTML element
-  const char* source_string = get_handler_source_for_content(erb_node->content->value);
   AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
     (AST_NODE_T*) erb_open_tag,
     tag_name_token,
     body,
     NULL,
     false,
-    source_string,
+    ELEMENT_SOURCE_ACTIONVIEW,
     erb_node->base.location->start,
     erb_node->base.location->end,
     array_init(8)

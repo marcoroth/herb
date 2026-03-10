@@ -1,0 +1,156 @@
+@ DocumentNode (location: (1:0)-(18:0))
+└── children: (4 items)
+    ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))
+    │   ├── tag_opening: "<!DOCTYPE" (location: (1:0)-(1:9))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:9)-(1:14))
+    │   │       └── content: " html"
+    │   │
+    │   └── tag_closing: ">" (location: (1:14)-(1:15))
+    │
+    ├── @ HTMLTextNode (location: (1:15)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(17:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:6))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "html" (location: (2:1)-(2:5))
+    │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "html" (location: (2:1)-(2:5))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (2:6)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(13:9))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "head" (location: (3:3)-(3:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:7)-(3:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "head" (location: (3:3)-(3:7))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (3:8)-(4:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (4:4)-(12:13))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (4:4)-(4:12))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (4:4)-(4:5))
+    │   │   │   │   │   │       ├── tag_name: "script" (location: (4:5)-(4:11))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (4:11)-(4:12))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "script" (location: (4:5)-(4:11))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ LiteralNode (location: (4:12)-(12:4))
+    │   │   │   │   │   │       └── content: "\n      <![CDATA[\n        function test() {\n          if (x < 5 && y > 3) {\n            return true;\n          }\n        }\n      ]]>\n    "
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (12:4)-(12:13))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (12:4)-(12:6))
+    │   │   │   │   │   │       ├── tag_name: "script" (location: (12:6)-(12:12))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (12:12)-(12:13))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (12:13)-(13:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (13:2)-(13:9))
+    │   │   │   │       ├── tag_opening: "</" (location: (13:2)-(13:4))
+    │   │   │   │       ├── tag_name: "head" (location: (13:4)-(13:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (13:8)-(13:9))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (13:9)-(14:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (14:2)-(16:9))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (14:2)-(14:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (14:2)-(14:3))
+    │   │   │   │       ├── tag_name: "body" (location: (14:3)-(14:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (14:7)-(14:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "body" (location: (14:3)-(14:7))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (14:8)-(15:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (15:4)-(15:56))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (15:4)-(15:9))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (15:4)-(15:5))
+    │   │   │   │   │   │       ├── tag_name: "div" (location: (15:5)-(15:8))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (15:8)-(15:9))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "div" (location: (15:5)-(15:8))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ CDATANode (location: (15:9)-(15:50))
+    │   │   │   │   │   │       ├── tag_opening: "<![CDATA[" (location: (15:9)-(15:18))
+    │   │   │   │   │   │       ├── children: (1 item)
+    │   │   │   │   │   │       │   └── @ ERBContentNode (location: (15:18)-(15:47))
+    │   │   │   │   │   │       │       ├── tag_opening: "<%=" (location: (15:18)-(15:21))
+    │   │   │   │   │   │       │       ├── content: " render partial: 'test' " (location: (15:21)-(15:45))
+    │   │   │   │   │   │       │       ├── tag_closing: "%>" (location: (15:45)-(15:47))
+    │   │   │   │   │   │       │       ├── parsed: true
+    │   │   │   │   │   │       │       └── valid: true
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       └── tag_closing: "]]>" (location: (15:47)-(15:50))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (15:50)-(15:56))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (15:50)-(15:52))
+    │   │   │   │   │   │       ├── tag_name: "div" (location: (15:52)-(15:55))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (15:55)-(15:56))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (15:56)-(16:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (16:2)-(16:9))
+    │   │   │   │       ├── tag_opening: "</" (location: (16:2)-(16:4))
+    │   │   │   │       ├── tag_name: "body" (location: (16:4)-(16:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (16:8)-(16:9))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (16:9)-(17:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (17:0)-(17:7))
+    │   │       ├── tag_opening: "</" (location: (17:0)-(17:2))
+    │   │       ├── tag_name: "html" (location: (17:2)-(17:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (17:6)-(17:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (17:7)-(18:0))
+        └── content: "\n"

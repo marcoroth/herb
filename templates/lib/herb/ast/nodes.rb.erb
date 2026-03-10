@@ -79,6 +79,8 @@ module Herb
         output += "<%= name %>"
         output += [true, false].include?(<%= field.name %>) ? <%= field.name %>.to_s : "∅"
         output += "\n"
+        <%- when Herb::Template::ElementSourceField -%>
+        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
         <%- when Herb::Template::PrismNodeField -%>
         # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>

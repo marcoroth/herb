@@ -1,0 +1,12 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLDoctypeNode (location: (1:0)-(1:19))
+    │   ├── tag_opening: "<!DOCTYPE" (location: (1:0)-(1:9))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:9)-(1:18))
+    │   │       └── content: "     html"
+    │   │
+    │   └── tag_closing: ">" (location: (1:18)-(1:19))
+    │
+    └── @ HTMLTextNode (location: (1:19)-(2:0))
+        └── content: "\n"

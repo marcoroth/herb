@@ -37,6 +37,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (3:32)-(3:37))
     │   │       ├── tag_opening: "</" (location: (3:32)-(3:34))
     │   │       ├── tag_name: "h1" (location: (3:34)-(3:36))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:36)-(3:37))
     │   │
     │   ├── is_void: false

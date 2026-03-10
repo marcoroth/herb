@@ -9,7 +9,7 @@ outline: deep
 ### Script Tag (`<%`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <% "String" %>
 ```
 
@@ -27,7 +27,7 @@ outline: deep
 ### Expression Tag (`<%=`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%= "String" %>
 ```
 
@@ -45,7 +45,7 @@ outline: deep
 ### Raw text output Tag (`<%==`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%== "String" %>
 ```
 
@@ -65,7 +65,7 @@ outline: deep
 Can also be seen as `<% #`.
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%# Comment %>
 ```
 
@@ -84,7 +84,7 @@ Can also be seen as `<% #`.
 ### ??? Tag (`<%-`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 
 ```
 
@@ -102,7 +102,7 @@ Can also be seen as `<% #`.
 ### ??? Tag (`<%%`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 
 ```
 
@@ -123,7 +123,7 @@ Can also be seen as `<% #`.
 ### ??? Tag (`%>`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 
 ```
 
@@ -141,7 +141,7 @@ Can also be seen as `<% #`.
 ### ??? Tag (`%%>`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 
 ```
 
@@ -159,7 +159,7 @@ Can also be seen as `<% #`.
 ### ??? Tag (`-%>`)
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 
 ```
 
@@ -181,7 +181,7 @@ Can also be seen as `<% #`.
 ### Interpolate attribute value
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <article id="<%= dom_id(article) %>"></article>
 ```
 
@@ -199,7 +199,7 @@ Can also be seen as `<% #`.
 ### Interpolate attribute value with static value
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <article class="article <%= classes_for(article) %>"></article>
 ```
 
@@ -220,7 +220,7 @@ Can also be seen as `<% #`.
 ### Output
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <input <%= "type='text' %> />
 ```
 
@@ -238,7 +238,7 @@ Can also be seen as `<% #`.
 ### Conditional
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <input <% if true %> type="text" <% end %> />
 ```
 
@@ -259,7 +259,7 @@ Can also be seen as `<% #`.
 ### Tag Children
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <% if true %>
   <h1><%= "Hello World" %></h1>
 <% end %>
@@ -281,7 +281,7 @@ Can also be seen as `<% #`.
 ### Tag Children
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <% @posts.each do |post| %>
   <h1><%= post.title %></h1>
 <% end %>
@@ -308,7 +308,7 @@ TODO
 ### `content_tag`
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%= content_tag(:p, "Hello world!") %>
 ```
 
@@ -326,7 +326,7 @@ TODO
 ### `tag.<tag name>`
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%= tag.div tag.p("Hello world!") %>
 ```
 
@@ -344,7 +344,7 @@ TODO
 ### `tag.<tag name>` with block
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%= tag.p do %>
   Hello world!
 <% end %>
@@ -364,7 +364,7 @@ TODO
 ### `tag.<tag name>` with attributes
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <%= tag.section class: ["bg-black text-white"] %>
 ```
 
@@ -382,7 +382,7 @@ TODO
 ### `tag.attributes`
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
 ```
 
@@ -405,7 +405,7 @@ We should disallow/discourage the following patterns
 ### Dynamic tag names
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <<%= "input" %> required />
 ```
 :::
@@ -413,7 +413,7 @@ We should disallow/discourage the following patterns
 ### Dynamic Attribute names
 
 ::: code-group
-```html [ERB]
+```erb [ERB]
 <input <%= "type" %>="text" />
 ```
 :::

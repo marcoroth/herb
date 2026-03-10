@@ -220,31 +220,18 @@ nodes:
         - name: tag_name
           type: token
 
-        - name: tag_closing
-          type: token
-
-    - name: HTMLSelfCloseTagNode
-      fields:
-        - name: tag_opening
-          type: token
-
-        - name: tag_name
-          type: token
-
-        - name: attributes
+        - name: children
           type: array
-          kind: HTMLAttributeNode
+          kind: Node
 
         - name: tag_closing
           type: token
-
-        - name: is_void
-          type: boolean
 
     - name: HTMLElementNode
       fields:
         - name: open_tag
           type: node
+          kind: HTMLOpenTagNode
           # kind: HTMLOpenTagNode or ERBOpenTagNode
 
         - name: tag_name
@@ -262,7 +249,7 @@ nodes:
           type: boolean
 
         - name: source
-          type: string
+          type: element_source
 
     - name: HTMLAttributeValueNode
       fields:
@@ -281,8 +268,13 @@ nodes:
 
     - name: HTMLAttributeNameNode
       fields:
-        - name: name
-          type: token
+        - name: children
+          type: array
+          kind: Node
+          # kind:
+          #   - LiteralNode
+          #   - ERBContentNode
+          #   - WhitespaceNode
 
     - name: HTMLAttributeNode
       fields:
@@ -323,6 +315,30 @@ nodes:
           type: token
 
     - name: HTMLDoctypeNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
+
+        - name: tag_closing
+          type: token
+
+    - name: XMLDeclarationNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
+
+        - name: tag_closing
+          type: token
+
+    - name: CDATANode
       fields:
         - name: tag_opening
           type: token
@@ -423,7 +439,10 @@ nodes:
 
         - name: subsequent
           type: node
-          #kind: ERBIfNode # or ERBElseNode
+          kind: Node
+          # kind:
+          #   - ERBIfNode
+          #   - ERBElseNode
 
         - name: end_node
           type: node

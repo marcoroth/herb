@@ -1,0 +1,68 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:53))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:40))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:39)-(1:40))
+    │   │       ├── children: (4 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:4)-(1:5))
+    │   │       │   │   └── value: " " (location: (1:4)-(1:5))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:22))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:15))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:15))
+    │   │       │   │   │               └── content: "data-empty"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "  =  " (location: (1:15)-(1:20))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:20)-(1:22))
+    │   │       │   │           ├── open_quote: """ (location: (1:20)-(1:21))
+    │   │       │   │           ├── children: []
+    │   │       │   │           ├── close_quote: """ (location: (1:21)-(1:22))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:22)-(1:27))
+    │   │       │   │   └── value: "     " (location: (1:22)-(1:27))
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:27)-(1:39))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:32))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:27)-(1:32))
+    │   │       │       │               └── content: "title"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "  =  " (location: (1:32)-(1:37))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:37)-(1:39))
+    │   │       │               ├── open_quote: """ (location: (1:37)-(1:38))
+    │   │       │               ├── children: []
+    │   │       │               ├── close_quote: """ (location: (1:38)-(1:39))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:40)-(1:47))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:47)-(1:53))
+    │   │       ├── tag_opening: "</" (location: (1:47)-(1:49))
+    │   │       ├── tag_name: "div" (location: (1:49)-(1:52))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:52)-(1:53))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:53)-(2:0))
+        └── content: "\n"

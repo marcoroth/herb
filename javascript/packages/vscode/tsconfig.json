@@ -6,11 +6,14 @@
       "ES2022",
       "dom"
     ],
+    "moduleDetection": "force",
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedParameters": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true
   }
 }

@@ -10,6 +10,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "@herb-tools/language-server",
 ]
 
 function isExternal(id) {

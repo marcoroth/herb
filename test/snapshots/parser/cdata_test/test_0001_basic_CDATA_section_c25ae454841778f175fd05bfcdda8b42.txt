@@ -1,0 +1,6 @@
+@ DocumentNode (location: (1:0)-(1:12))
+└── children: (1 item)
+    └── @ CDATANode (location: (1:0)-(1:12))
+        ├── tag_opening: "<![CDATA[" (location: (1:0)-(1:9))
+        ├── children: []
+        └── tag_closing: "]]>" (location: (1:9)-(1:12))

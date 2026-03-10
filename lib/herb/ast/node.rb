@@ -51,7 +51,7 @@ module Herb
         output = +""
 
         if array.any?
-          output += "(#{array.count} #{array.count == 1 ? item_name : "#{item_name}s"})"
+          output += "(#{array.count} #{array.one? ? item_name : "#{item_name}s"})"
           output += "\n"
 
           items = array.map { |item|
@@ -91,6 +91,11 @@ module Herb
       #: () -> Array[Herb::AST::Node]
       def compact_child_nodes
         child_nodes.compact
+      end
+
+      #: () -> Array[Herb::Errors::Error]
+      def recursive_errors
+        errors + compact_child_nodes.flat_map(&:recursive_errors)
       end
     end
   end

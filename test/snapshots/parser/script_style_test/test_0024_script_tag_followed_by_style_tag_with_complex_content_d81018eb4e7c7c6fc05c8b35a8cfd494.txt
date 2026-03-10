@@ -1,0 +1,55 @@
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (4 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(5:0))
+    │   │       └── content: "\n  if (window.width < 768) {\n    document.body.className = \"mobile\";\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:9))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "script" (location: (5:2)-(5:8))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (5:9)-(6:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (6:0)-(10:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (6:0)-(6:7))
+    │   │       ├── tag_opening: "<" (location: (6:0)-(6:1))
+    │   │       ├── tag_name: "style" (location: (6:1)-(6:6))
+    │   │       ├── tag_closing: ">" (location: (6:6)-(6:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "style" (location: (6:1)-(6:6))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (6:7)-(10:0))
+    │   │       └── content: "\n  .mobile > .header {\n    font-size: 14px;\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (10:0)-(10:8))
+    │   │       ├── tag_opening: "</" (location: (10:0)-(10:2))
+    │   │       ├── tag_name: "style" (location: (10:2)-(10:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (10:7)-(10:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (10:8)-(11:0))
+        └── content: "\n"

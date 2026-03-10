@@ -25,7 +25,7 @@ export function resolvePath(relativePath: string) {
       const { fileURLToPath } = require("url")
       const currentFileUrl = import.meta.url
       basePath = path.dirname(fileURLToPath(currentFileUrl))
-    } catch (error) {
+    } catch {
       // Fallback for environments where neither is available
       basePath = process.cwd()
     }

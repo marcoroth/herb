@@ -11,7 +11,10 @@
     │   │           └── @ HTMLAttributeNode (location: (1:0)-(1:24))
     │   │               ├── name:
     │   │               │   └── @ HTMLAttributeNameNode (location: (1:0)-(1:24))
-    │   │               │       └── name: "href" (location: (1:0)-(1:24))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:0)-(1:24))
+    │   │               │               └── content: "href"
+    │   │               │
     │   │               │
     │   │               ├── equals: "=" (location: (1:0)-(1:24))
     │   │               └── value:

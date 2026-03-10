@@ -1,0 +1,4 @@
+#<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="   " range=[9, 12] start=(1:9) end=(1:12)>
+#<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[12, 15] start=(1:12) end=(1:15)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[15, 15] start=(1:15) end=(1:15)>

@@ -21,11 +21,6 @@ export interface BaseNodeProps {
   errors: HerbError[]
 }
 
-export type NodeType =
-  <%- nodes.each_with_index.map do |node, index| -%>
-  | "<%= node.type %>"
-  <%- end -%>
-
 export abstract class Node implements BaseNodeProps {
   readonly type: NodeType
   readonly location: Location
@@ -33,6 +28,10 @@ export abstract class Node implements BaseNodeProps {
 
   static from(node: SerializedNode): Node {
     return fromSerializedNode(node)
+  }
+
+  static get type(): NodeType {
+    throw new Error("AST_NODE")
   }
 
   constructor(type: NodeType, location: Location, errors: HerbError[]) {
@@ -53,6 +52,14 @@ export abstract class Node implements BaseNodeProps {
     return this.treeInspect(0)
   }
 
+  is<T extends Node>(nodeClass: { new(...args: any[]): T; prototype: T, type: NodeType }): this is T {
+    return this.type === nodeClass.type
+  }
+
+  isOfType<T extends Node>(type: NodeType): this is T {
+    return this.type === type
+  }
+
   get isSingleLine(): boolean {
     return this.location.start.line === this.location.end.line
   }
@@ -70,7 +77,7 @@ export abstract class Node implements BaseNodeProps {
     if (!array) return "∅\n"
     if (array.length === 0) return "[]\n"
 
-    let output = `(${array.length} item${array.length == 1 ? "" : "s"})\n`
+    let output = `(${array.length} item${array.length === 1 ? "" : "s"})\n`
 
     array.forEach((item, index) => {
       const isLast = index === array.length - 1
@@ -112,7 +119,7 @@ export abstract class Node implements BaseNodeProps {
       .trimStart()
       .split("\n")
       .map((line, index) =>
-        index == 0 ? line.trimStart() : `${prefix}${prefix2}${line}`,
+        index === 0 ? line.trimStart() : `${prefix}${prefix2}${line}`,
       )
       .join("\n")
       .trimStart()
@@ -134,8 +141,14 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%= field.name %>: SerializedToken | null;
   <%- when Herb::Template::BooleanField -%>
   <%= field.name %>: boolean;
+  <%- when Herb::Template::ElementSourceField -%>
+  <%= field.name %>: string;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  <%= field.name %>: Serialized<%= field.specific_kind %> | null;
+  <%- else -%>
   <%= field.name %>: SerializedNode | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%= field.name %>: SerializedNode[];
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
@@ -155,8 +168,14 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%= field.name %>: Token | null;
   <%- when Herb::Template::BooleanField -%>
   <%= field.name %>: boolean;
+  <%- when Herb::Template::ElementSourceField -%>
+  <%= field.name %>: string;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- else -%>
   <%= field.name %>: Node | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%- if field.specific_kind == "Node" -%>
   <%= field.name %>: Node[];
@@ -180,13 +199,19 @@ export class <%= node.name %> extends Node {
   readonly <%= field.name %>: Token | null;
   <%- when Herb::Template::BooleanField -%>
   readonly <%= field.name %>: boolean;
+  <%- when Herb::Template::ElementSourceField -%>
+  readonly <%= field.name %>: string;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  readonly <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- else -%>
   readonly <%= field.name %>: Node | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%- if field.specific_kind == "Node" -%>
   readonly <%= field.name %>: Node[];
   <%- else -%>
-  readonly <%= field.name %>: any[];
+  readonly <%= field.name %>: Node[];
   <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
@@ -194,6 +219,10 @@ export class <%= node.name %> extends Node {
   <% raise "Unhandled class #{field.class}" %>
   <%- end -%>
   <%- end -%>
+
+  static get type(): NodeType {
+    return "<%= node.type %>"
+  }
 
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({
@@ -208,8 +237,10 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: data.<%= field.name %> ? Token.from(data.<%= field.name %>) : null,
       <%- when Herb::Template::BooleanField -%>
       <%= field.name %>: data.<%= field.name %>,
+      <%- when Herb::Template::ElementSourceField -%>
+      <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::NodeField -%>
-      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %> as any)) : null,
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) : null,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
       <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
@@ -234,6 +265,8 @@ export class <%= node.name %> extends Node {
     <%- when Herb::Template::StringField -%>
     this.<%= field.name %> = convertToUTF8(props.<%= field.name %>);
     <%- when Herb::Template::BooleanField -%>
+    this.<%= field.name %> = props.<%= field.name %>;
+    <%- when Herb::Template::ElementSourceField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
     // no-op for <%= field.name %>
@@ -290,6 +323,8 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
       <%- when Herb::Template::BooleanField -%>
       <%= field.name %>: this.<%= field.name %>,
+      <%- when Herb::Template::ElementSourceField -%>
+      <%= field.name %>: this.<%= field.name %>,
       <%- when Herb::Template::NodeField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
       <%- when Herb::Template::ArrayField -%>
@@ -318,6 +353,8 @@ export class <%= node.name %> extends Node {
     output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
     <%- when Herb::Template::BooleanField -%>
     output += `<%= name %>${typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅"}\n`;
+    <%- when Herb::Template::ElementSourceField -%>
+    output += `<%= name %>${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
     <%- when Herb::Template::NodeField -%>
     output += `<%= name %>${this.inspectNode(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
     <%- when Herb::Template::ArrayField -%>
@@ -329,13 +366,21 @@ export class <%= node.name %> extends Node {
     <%- end -%>
     <%- end -%>
 
-    // output += "\n";
-
     return output
   }
 }
 
 <%- end -%>
+
+export type ConcreteNode =
+<%- nodes.each do |node| -%>
+  <%= node.name %><%- if nodes.last != node -%> |<%- end -%>
+<%- end -%>
+
+<%- nodes.each do |node| -%>
+export function fromSerializedNode(node: Serialized<%= node.name %>): <%= node.name %>;
+<%- end -%>
+export function fromSerializedNode(node: SerializedNode): Node;
 
 export function fromSerializedNode(node: SerializedNode): Node {
   switch (node.type) {
@@ -347,3 +392,23 @@ export function fromSerializedNode(node: SerializedNode): Node {
       throw new Error(`Unknown node type: ${node.type}`);
   }
 }
+
+export type NodeType =
+  <%- nodes.each_with_index.map do |node, index| -%>
+  | "<%= node.type %>"
+  <%- end -%>
+
+export type ERBNodeType = Extract<NodeType, `AST_ERB_${string}`>;
+
+export type ERBNode =
+  <%- nodes.each_with_index.map do |node, index| -%>
+    <%- next unless node.name.start_with?("ERB") -%>
+  | <%= node.name %>
+  <%- end -%>
+
+export const ERBNodeClasses = [
+  <%- nodes.each_with_index.map do |node, index| -%>
+  <%- next unless node.name.start_with?("ERB") -%>
+  <%= node.name %>,
+  <%- end -%>
+]

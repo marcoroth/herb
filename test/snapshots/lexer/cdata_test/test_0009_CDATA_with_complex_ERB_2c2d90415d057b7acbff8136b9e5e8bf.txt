@@ -1,0 +1,20 @@
+#<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[9, 10] start=(1:9) end=(2:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="  " range=[10, 12] start=(2:0) end=(2:2)>
+#<Herb::Token type="TOKEN_ERB_START" value="<%" range=[12, 14] start=(2:2) end=(2:4)>
+#<Herb::Token type="TOKEN_ERB_CONTENT" value=" if @condition " range=[14, 29] start=(2:4) end=(2:19)>
+#<Herb::Token type="TOKEN_ERB_END" value="%>" range=[29, 31] start=(2:19) end=(2:21)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[31, 32] start=(2:21) end=(3:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="    " range=[32, 36] start=(3:0) end=(3:4)>
+#<Herb::Token type="TOKEN_ERB_START" value="<%=" range=[36, 39] start=(3:4) end=(3:7)>
+#<Herb::Token type="TOKEN_ERB_CONTENT" value=" @content " range=[39, 49] start=(3:7) end=(3:17)>
+#<Herb::Token type="TOKEN_ERB_END" value="%>" range=[49, 51] start=(3:17) end=(3:19)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[51, 52] start=(3:19) end=(4:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="  " range=[52, 54] start=(4:0) end=(4:2)>
+#<Herb::Token type="TOKEN_ERB_START" value="<%" range=[54, 56] start=(4:2) end=(4:4)>
+#<Herb::Token type="TOKEN_ERB_CONTENT" value=" end " range=[56, 61] start=(4:4) end=(4:9)>
+#<Herb::Token type="TOKEN_ERB_END" value="%>" range=[61, 63] start=(4:9) end=(4:11)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[63, 64] start=(4:11) end=(5:0)>
+#<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[64, 67] start=(5:0) end=(5:3)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[67, 68] start=(5:3) end=(6:0)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[68, 68] start=(6:0) end=(6:0)>

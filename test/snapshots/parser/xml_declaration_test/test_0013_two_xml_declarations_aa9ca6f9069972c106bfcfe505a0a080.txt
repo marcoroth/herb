@@ -1,0 +1,17 @@
+@ DocumentNode (location: (1:0)-(1:42))
+└── children: (2 items)
+    ├── @ XMLDeclarationNode (location: (1:0)-(1:21))
+    │   ├── tag_opening: "<?xml" (location: (1:0)-(1:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:5)-(1:19))
+    │   │       └── content: " version=\"1.0\""
+    │   │
+    │   └── tag_closing: "?>" (location: (1:19)-(1:21))
+    │
+    └── @ XMLDeclarationNode (location: (1:21)-(1:42))
+        ├── tag_opening: "<?xml" (location: (1:21)-(1:26))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:26)-(1:40))
+        │       └── content: " version=\"1.1\""
+        │
+        └── tag_closing: "?>" (location: (1:40)-(1:42))
