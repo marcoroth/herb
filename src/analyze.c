@@ -104,7 +104,34 @@ static array_T* transform_tag_helper_blocks(array_T* array, analyze_ruby_context
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) item;
 
       if (has_tag_helper_block(block_node)) {
-        AST_NODE_T* transformed = transform_erb_block_to_tag_helper(block_node, context);
+        const char* handler_source = "ActionView";
+
+        if (block_node->content && block_node->content->value) {
+          pm_parser_t block_parser;
+          const uint8_t* block_source = (const uint8_t*) block_node->content->value;
+          pm_parser_init(&block_parser, block_source, strlen(block_node->content->value), NULL);
+          pm_node_t* block_root = pm_parse(&block_parser);
+
+          if (block_root) {
+            tag_helper_search_data_T block_search_data = { .tag_helper_node = NULL,
+                                                           .source = block_source,
+                                                           .parser = &block_parser,
+                                                           .info = NULL,
+                                                           .matched_handler = NULL,
+                                                           .found = false };
+
+            pm_visit_node(block_root, search_tag_helper_node, &block_search_data);
+
+            if (block_search_data.matched_handler) {
+              handler_source = block_search_data.matched_handler->source;
+            }
+
+            pm_node_destroy(&block_parser, block_root);
+          }
+          pm_parser_free(&block_parser);
+        }
+
+        AST_NODE_T* transformed = transform_erb_block_to_tag_helper(block_node, context, handler_source);
         if (transformed) {
           array_append(new_array, transformed);
           continue;
@@ -116,12 +143,11 @@ static array_T* transform_tag_helper_blocks(array_T* array, analyze_ruby_context
       if (is_tag_helper_block(content_node->content->value, content_node)) {
         AST_NODE_T* transformed = NULL;
 
-        // Determine tag helper type and call appropriate transformation
         pm_parser_t parser;
         const uint8_t* source = (const uint8_t*) content_node->content->value;
         pm_parser_init(&parser, source, strlen(content_node->content->value), NULL);
-
         pm_node_t* root = pm_parse(&parser);
+
         if (root) {
           tag_helper_info_T* info = tag_helper_info_init();
           tag_helper_search_data_T search_data = { .tag_helper_node = NULL,
@@ -133,12 +159,13 @@ static array_T* transform_tag_helper_blocks(array_T* array, analyze_ruby_context
 
           pm_visit_node(root, search_tag_helper_node, &search_data);
 
+          const char* handler_source = search_data.matched_handler ? search_data.matched_handler->source : NULL;
           if (search_data.found && search_data.matched_handler && strcmp(search_data.matched_handler->name, "link_to") == 0) {
-            transformed = transform_link_to_helper(content_node, context);
+            transformed = transform_link_to_helper(content_node, context, handler_source);
           } else if (has_tag_helper_attributes(content_node->content->value)) {
-            transformed = transform_tag_helper_with_attributes(content_node, context);
+            transformed = transform_tag_helper_with_attributes(content_node, context, handler_source);
           } else {
-            transformed = transform_simple_tag_helper(content_node, context);
+            transformed = transform_simple_tag_helper(content_node, context, handler_source);
           }
 
           tag_helper_info_free(&info);

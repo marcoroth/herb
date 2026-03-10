@@ -64,10 +64,10 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value_from_as
   const char* original_source, size_t erb_content_offset, const uint8_t* source
 );
 
-AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context);
-AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context);
-AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, analyze_ruby_context_T* context);
-AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context);
+AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source);
+AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source);
+AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, analyze_ruby_context_T* context, const char* handler_source);
+AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source);
 
 bool search_tag_helper_node(const pm_node_t* node, void* data);
 

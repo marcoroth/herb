@@ -7,25 +7,40 @@
 #include <string.h>
 #include <stdlib.h>
 
-// Helper function to extract value from HTML attribute value node
-// Returns either simple string content or Ruby literal for complex expressions
+static char* extract_attribute_name(AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node) {
+  if (!name_node || !name_node->children || name_node->children->size == 0) {
+    return NULL;
+  }
+
+  for (size_t i = 0; i < name_node->children->size; i++) {
+    AST_NODE_T* child = (AST_NODE_T*)name_node->children->items[i];
+
+    if (child && child->type == AST_LITERAL_NODE) {
+      AST_LITERAL_NODE_T* literal_node = (AST_LITERAL_NODE_T*)child;
+      return literal_node->content ? strdup(literal_node->content) : NULL;
+    }
+  }
+
+  return NULL;
+}
+
 static char* extract_attribute_value_content(AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node, const char* original_source) {
   if (!value_node || !value_node->children || value_node->children->size == 0) {
     return NULL;
   }
 
-  // For simple string values, children should contain one AST_HTML_TEXT_NODE_T
   if (value_node->children->size == 1) {
     AST_NODE_T* first_child = (AST_NODE_T*)value_node->children->items[0];
+
     if (first_child && first_child->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text_node = (AST_HTML_TEXT_NODE_T*)first_child;
       return text_node->content ? strdup(text_node->content) : NULL;
     }
   }
 
-  // For complex values, look for RubyLiteralNode and extract the raw Ruby code
   for (size_t i = 0; i < value_node->children->size; i++) {
     AST_NODE_T* child = (AST_NODE_T*)value_node->children->items[i];
+
     if (child && child->type == AST_RUBY_LITERAL_NODE) {
       AST_RUBY_LITERAL_NODE_T* ruby_node = (AST_RUBY_LITERAL_NODE_T*)child;
       return ruby_node->content ? strdup(ruby_node->content) : NULL;
@@ -35,7 +50,6 @@ static char* extract_attribute_value_content(AST_HTML_ATTRIBUTE_VALUE_NODE_T* va
   return NULL;
 }
 
-// Helper function for simple string values only (backwards compatibility)
 static char* extract_simple_attribute_value(AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node) {
   return extract_attribute_value_content(value_node, NULL);
 }
@@ -68,10 +82,11 @@ TEST(test_extract_keyword_arguments_basic)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 1);
 
-  // Check the attribute key and value
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(class_attr);
-  ck_assert_str_eq(class_attr->name->name->value, "class");
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
 
   char* class_value = extract_simple_attribute_value(class_attr->value);
   ck_assert_ptr_nonnull(class_value);
@@ -100,15 +115,18 @@ TEST(test_extract_keyword_arguments_multiple)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 2);
 
-  // Check both attributes
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   AST_HTML_ATTRIBUTE_NODE_T* id_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
 
   ck_assert_ptr_nonnull(class_attr);
   ck_assert_ptr_nonnull(id_attr);
 
-  ck_assert_str_eq(class_attr->name->name->value, "class");
-  ck_assert_str_eq(id_attr->name->name->value, "id");
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
+  char* id_attr_name = extract_attribute_name(id_attr->name);
+  ck_assert_str_eq(id_attr_name, "id");
+  free(id_attr_name);
 
   char* class_value = extract_simple_attribute_value(class_attr->value);
   char* id_value = extract_simple_attribute_value(id_attr->value);
@@ -143,15 +161,18 @@ TEST(test_extract_keyword_arguments_tag_dot)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 2);
 
-  // Check both attributes
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   AST_HTML_ATTRIBUTE_NODE_T* disabled_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
 
   ck_assert_ptr_nonnull(class_attr);
   ck_assert_ptr_nonnull(disabled_attr);
 
-  ck_assert_str_eq(class_attr->name->name->value, "class");
-  ck_assert_str_eq(disabled_attr->name->name->value, "disabled");
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
+  char* disabled_attr_name = extract_attribute_name(disabled_attr->name);
+  ck_assert_str_eq(disabled_attr_name, "disabled");
+  free(disabled_attr_name);
 
   char* class_value = extract_simple_attribute_value(class_attr->value);
   char* disabled_value = extract_simple_attribute_value(disabled_attr->value);
@@ -270,15 +291,15 @@ TEST(test_complex_method_call_expression)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 1);
 
-  // Check the attribute key and complex value
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(class_attr);
-  ck_assert_str_eq(class_attr->name->name->value, "class");
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
 
   char* class_value = extract_attribute_value_content(class_attr->value, code);
   ck_assert_ptr_nonnull(class_value);
 
-  // Or check the exact value
   ck_assert_str_eq(class_value, "class_names(\"btn\", \"hello world\")");
 
   free(class_value);
@@ -305,19 +326,21 @@ TEST(test_data_hash_attributes)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 2);
 
-  // Check first data attribute (data-controller)
   AST_HTML_ATTRIBUTE_NODE_T* data_controller_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(data_controller_attr);
-  ck_assert_str_eq(data_controller_attr->name->name->value, "data-controller");
+  char* data_controller_attr_name = extract_attribute_name(data_controller_attr->name);
+  ck_assert_str_eq(data_controller_attr_name, "data-controller");
+  free(data_controller_attr_name);
 
   char* controller_value = extract_attribute_value_content(data_controller_attr->value, code);
   ck_assert_ptr_nonnull(controller_value);
   ck_assert_str_eq(controller_value, "example");
 
-  // Check second data attribute (data-action)
   AST_HTML_ATTRIBUTE_NODE_T* data_action_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
   ck_assert_ptr_nonnull(data_action_attr);
-  ck_assert_str_eq(data_action_attr->name->name->value, "data-action");
+  char* data_action_attr_name = extract_attribute_name(data_action_attr->name);
+  ck_assert_str_eq(data_action_attr_name, "data-action");
+  free(data_action_attr_name);
 
   char* action_value = extract_attribute_value_content(data_action_attr->value, code);
   ck_assert_ptr_nonnull(action_value);
@@ -348,19 +371,21 @@ TEST(test_aria_hash_attributes)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 2);
 
-  // Check first aria attribute (aria-label)
   AST_HTML_ATTRIBUTE_NODE_T* aria_label_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(aria_label_attr);
-  ck_assert_str_eq(aria_label_attr->name->name->value, "aria-label");
+  char* aria_label_attr_name = extract_attribute_name(aria_label_attr->name);
+  ck_assert_str_eq(aria_label_attr_name, "aria-label");
+  free(aria_label_attr_name);
 
   char* label_value = extract_attribute_value_content(aria_label_attr->value, code);
   ck_assert_ptr_nonnull(label_value);
   ck_assert_str_eq(label_value, "Close");
 
-  // Check second aria attribute (aria-expanded)
   AST_HTML_ATTRIBUTE_NODE_T* aria_expanded_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
   ck_assert_ptr_nonnull(aria_expanded_attr);
-  ck_assert_str_eq(aria_expanded_attr->name->name->value, "aria-expanded");
+  char* aria_expanded_attr_name = extract_attribute_name(aria_expanded_attr->name);
+  ck_assert_str_eq(aria_expanded_attr_name, "aria-expanded");
+  free(aria_expanded_attr_name);
 
   char* expanded_value = extract_attribute_value_content(aria_expanded_attr->value, code);
   ck_assert_ptr_nonnull(expanded_value);
@@ -392,28 +417,31 @@ TEST(test_underscore_to_dash_conversion)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 3);
 
-  // Check data_controller becomes data-controller
   AST_HTML_ATTRIBUTE_NODE_T* data_controller_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(data_controller_attr);
-  ck_assert_str_eq(data_controller_attr->name->name->value, "data-controller");
+  char* data_controller_attr_name = extract_attribute_name(data_controller_attr->name);
+  ck_assert_str_eq(data_controller_attr_name, "data-controller");
+  free(data_controller_attr_name);
 
   char* controller_value = extract_attribute_value_content(data_controller_attr->value, code);
   ck_assert_ptr_nonnull(controller_value);
   ck_assert_str_eq(controller_value, "hello");
 
-  // Check aria_label becomes aria-label
   AST_HTML_ATTRIBUTE_NODE_T* aria_label_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
   ck_assert_ptr_nonnull(aria_label_attr);
-  ck_assert_str_eq(aria_label_attr->name->name->value, "aria-label");
+  char* aria_label_attr_name = extract_attribute_name(aria_label_attr->name);
+  ck_assert_str_eq(aria_label_attr_name, "aria-label");
+  free(aria_label_attr_name);
 
   char* label_value = extract_attribute_value_content(aria_label_attr->value, code);
   ck_assert_ptr_nonnull(label_value);
   ck_assert_str_eq(label_value, "Close");
 
-  // Check data_user_id becomes data-user-id
   AST_HTML_ATTRIBUTE_NODE_T* data_user_id_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 2);
   ck_assert_ptr_nonnull(data_user_id_attr);
-  ck_assert_str_eq(data_user_id_attr->name->name->value, "data-user-id");
+  char* data_user_id_attr_name = extract_attribute_name(data_user_id_attr->name);
+  ck_assert_str_eq(data_user_id_attr_name, "data-user-id");
+  free(data_user_id_attr_name);
 
   char* user_id_value = extract_attribute_value_content(data_user_id_attr->value, code);
   ck_assert_ptr_nonnull(user_id_value);
@@ -445,20 +473,21 @@ TEST(test_data_hash_complex_values)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 2);
 
-  // Check first data attribute (data-controller with variable)
   AST_HTML_ATTRIBUTE_NODE_T* data_controller_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(data_controller_attr);
-  ck_assert_str_eq(data_controller_attr->name->name->value, "data-controller");
+  char* data_controller_attr_name = extract_attribute_name(data_controller_attr->name);
+  ck_assert_str_eq(data_controller_attr_name, "data-controller");
+  free(data_controller_attr_name);
 
-  // Verify that the value contains a RubyLiteralNode
   ck_assert_ptr_nonnull(data_controller_attr->value);
   ck_assert_ptr_nonnull(data_controller_attr->value->children);
   ck_assert_int_gt(data_controller_attr->value->children->size, 0);
 
-  // Find the RubyLiteralNode in the children
   bool found_ruby_literal_controller = false;
+
   for (size_t i = 0; i < data_controller_attr->value->children->size; i++) {
     AST_NODE_T* child = (AST_NODE_T*)data_controller_attr->value->children->items[i];
+
     if (child && child->type == AST_RUBY_LITERAL_NODE) {
       AST_RUBY_LITERAL_NODE_T* ruby_node = (AST_RUBY_LITERAL_NODE_T*)child;
       ck_assert_ptr_nonnull(ruby_node->content);
@@ -469,21 +498,21 @@ TEST(test_data_hash_complex_values)
   }
   ck_assert(found_ruby_literal_controller);
 
-  // Check second data attribute (data-action with string interpolation)
   AST_HTML_ATTRIBUTE_NODE_T* data_action_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
   ck_assert_ptr_nonnull(data_action_attr);
-  ck_assert_str_eq(data_action_attr->name->name->value, "data-action");
+  char* data_action_attr_name = extract_attribute_name(data_action_attr->name);
+  ck_assert_str_eq(data_action_attr_name, "data-action");
+  free(data_action_attr_name);
 
-  // Verify that the value contains a RubyLiteralNode
   ck_assert_ptr_nonnull(data_action_attr->value);
   ck_assert_ptr_nonnull(data_action_attr->value->children);
   ck_assert_int_gt(data_action_attr->value->children->size, 0);
 
-  // Find the RubyLiteralNode in the children
   bool found_ruby_literal_action = false;
 
   for (size_t i = 0; i < data_action_attr->value->children->size; i++) {
     AST_NODE_T* child = (AST_NODE_T*)data_action_attr->value->children->items[i];
+
     if (child && child->type == AST_RUBY_LITERAL_NODE) {
       AST_RUBY_LITERAL_NODE_T* ruby_node = (AST_RUBY_LITERAL_NODE_T*)child;
       ck_assert_ptr_nonnull(ruby_node->content);
@@ -517,25 +546,26 @@ TEST(test_splat_attributes)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 3);
 
-  // Check regular attributes first
   AST_HTML_ATTRIBUTE_NODE_T* id_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
 
   ck_assert_ptr_nonnull(id_attr);
   ck_assert_ptr_nonnull(class_attr);
-  ck_assert_str_eq(id_attr->name->name->value, "id");
-  ck_assert_str_eq(class_attr->name->name->value, "class");
+  char* id_attr_name = extract_attribute_name(id_attr->name);
+  ck_assert_str_eq(id_attr_name, "id");
+  free(id_attr_name);
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
 
-  // Check splat - should be an HTMLAttributeRubySplatNode directly in the attributes array
   AST_NODE_T* splat_node = (AST_NODE_T*)array_get(attributes, 2);
   ck_assert_ptr_nonnull(splat_node);
   ck_assert_int_eq(splat_node->type, AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE);
 
-  // Cast to HTMLAttributeRubySplatNode and verify content
   AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE_T* splat_ruby_node = (AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE_T*)splat_node;
   ck_assert_ptr_nonnull(splat_ruby_node->content);
   ck_assert_str_eq(splat_ruby_node->content, "**attributes");
-  ck_assert_str_eq(splat_ruby_node->prefix, ""); // Top-level splat has empty prefix
+  ck_assert_str_eq(splat_ruby_node->prefix, "");
 
   array_free(&attributes);
   pm_parser_free(&parser);
@@ -559,32 +589,32 @@ TEST(test_data_hash_with_splat)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 3);
 
-  // Check first data attribute (data-controller)
   AST_HTML_ATTRIBUTE_NODE_T* data_controller_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(data_controller_attr);
   ck_assert_int_eq(data_controller_attr->base.type, AST_HTML_ATTRIBUTE_NODE);
-  ck_assert_str_eq(data_controller_attr->name->name->value, "data-controller");
+  char* data_controller_attr_name = extract_attribute_name(data_controller_attr->name);
+  ck_assert_str_eq(data_controller_attr_name, "data-controller");
+  free(data_controller_attr_name);
 
   char* controller_value = extract_attribute_value_content(data_controller_attr->value, code);
   ck_assert_ptr_nonnull(controller_value);
   ck_assert_str_eq(controller_value, "example");
 
-  // Check second data attribute (data-action)
   AST_HTML_ATTRIBUTE_NODE_T* data_action_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 1);
   ck_assert_ptr_nonnull(data_action_attr);
   ck_assert_int_eq(data_action_attr->base.type, AST_HTML_ATTRIBUTE_NODE);
-  ck_assert_str_eq(data_action_attr->name->name->value, "data-action");
+  char* data_action_attr_name = extract_attribute_name(data_action_attr->name);
+  ck_assert_str_eq(data_action_attr_name, "data-action");
+  free(data_action_attr_name);
 
   char* action_value = extract_attribute_value_content(data_action_attr->value, code);
   ck_assert_ptr_nonnull(action_value);
   ck_assert_str_eq(action_value, "click");
 
-  // Check splat - should be an HTMLAttributeRubySplatNode directly in the attributes array
   AST_NODE_T* splat_node = (AST_NODE_T*)array_get(attributes, 2);
   ck_assert_ptr_nonnull(splat_node);
   ck_assert_int_eq(splat_node->type, AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE);
 
-  // Cast to HTMLAttributeRubySplatNode and verify content and prefix
   AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE_T* splat_ruby_node = (AST_HTML_ATTRIBUTE_RUBY_SPLAT_NODE_T*)splat_node;
   ck_assert_ptr_nonnull(splat_ruby_node->content);
   ck_assert_str_eq(splat_ruby_node->content, "**data_attributes");
@@ -616,31 +646,28 @@ TEST(test_interpolated_string_attributes)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 1);
 
-  // Check the class attribute
   AST_HTML_ATTRIBUTE_NODE_T* class_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(class_attr);
-  ck_assert_str_eq(class_attr->name->name->value, "class");
+  char* class_attr_name = extract_attribute_name(class_attr->name);
+  ck_assert_str_eq(class_attr_name, "class");
+  free(class_attr_name);
 
-  // Check that the value contains multiple children (3 parts: "before_", variable, "_after")
   ck_assert_ptr_nonnull(class_attr->value);
   ck_assert_ptr_nonnull(class_attr->value->children);
   ck_assert_int_eq(class_attr->value->children->size, 3);
 
-  // Check first part: "before_" (LiteralNode)
   AST_NODE_T* first_child = (AST_NODE_T*)class_attr->value->children->items[0];
   ck_assert_ptr_nonnull(first_child);
   ck_assert_int_eq(first_child->type, AST_LITERAL_NODE);
   AST_LITERAL_NODE_T* literal1 = (AST_LITERAL_NODE_T*)first_child;
   ck_assert_str_eq(literal1->content, "before_");
 
-  // Check second part: #{variable} (RubyLiteralNode with interpolation wrapper)
   AST_NODE_T* second_child = (AST_NODE_T*)class_attr->value->children->items[1];
   ck_assert_ptr_nonnull(second_child);
   ck_assert_int_eq(second_child->type, AST_RUBY_LITERAL_NODE);
   AST_RUBY_LITERAL_NODE_T* ruby_literal = (AST_RUBY_LITERAL_NODE_T*)second_child;
   ck_assert_str_eq(ruby_literal->content, "#{variable}");
 
-  // Check third part: "_after" (LiteralNode)
   AST_NODE_T* third_child = (AST_NODE_T*)class_attr->value->children->items[2];
   ck_assert_ptr_nonnull(third_child);
   ck_assert_int_eq(third_child->type, AST_LITERAL_NODE);
@@ -669,41 +696,36 @@ TEST(test_complex_interpolated_string_attributes)
   ck_assert_ptr_nonnull(attributes);
   ck_assert_int_eq(array_size(attributes), 1);
 
-  // Check the title attribute
   AST_HTML_ATTRIBUTE_NODE_T* title_attr = (AST_HTML_ATTRIBUTE_NODE_T*)array_get(attributes, 0);
   ck_assert_ptr_nonnull(title_attr);
-  ck_assert_str_eq(title_attr->name->name->value, "title");
+  char* title_attr_name = extract_attribute_name(title_attr->name);
+  ck_assert_str_eq(title_attr_name, "title");
+  free(title_attr_name);
 
-  // Check that the value contains 5 parts: "User: ", #{user.name}, " (", #{user.id}, ")"
   ck_assert_ptr_nonnull(title_attr->value);
   ck_assert_ptr_nonnull(title_attr->value->children);
   ck_assert_int_eq(title_attr->value->children->size, 5);
 
-  // Check first part: "User: " (LiteralNode)
   AST_NODE_T* part1 = (AST_NODE_T*)title_attr->value->children->items[0];
   ck_assert_int_eq(part1->type, AST_LITERAL_NODE);
   AST_LITERAL_NODE_T* literal1 = (AST_LITERAL_NODE_T*)part1;
   ck_assert_str_eq(literal1->content, "User: ");
 
-  // Check second part: #{user.name} (RubyLiteralNode)
   AST_NODE_T* part2 = (AST_NODE_T*)title_attr->value->children->items[1];
   ck_assert_int_eq(part2->type, AST_RUBY_LITERAL_NODE);
   AST_RUBY_LITERAL_NODE_T* ruby1 = (AST_RUBY_LITERAL_NODE_T*)part2;
   ck_assert_str_eq(ruby1->content, "#{user.name}");
 
-  // Check third part: " (" (LiteralNode)
   AST_NODE_T* part3 = (AST_NODE_T*)title_attr->value->children->items[2];
   ck_assert_int_eq(part3->type, AST_LITERAL_NODE);
   AST_LITERAL_NODE_T* literal2 = (AST_LITERAL_NODE_T*)part3;
   ck_assert_str_eq(literal2->content, " (");
 
-  // Check fourth part: #{user.id} (RubyLiteralNode)
   AST_NODE_T* part4 = (AST_NODE_T*)title_attr->value->children->items[3];
   ck_assert_int_eq(part4->type, AST_RUBY_LITERAL_NODE);
   AST_RUBY_LITERAL_NODE_T* ruby2 = (AST_RUBY_LITERAL_NODE_T*)part4;
   ck_assert_str_eq(ruby2->content, "#{user.id}");
 
-  // Check fifth part: ")" (LiteralNode)
   AST_NODE_T* part5 = (AST_NODE_T*)title_attr->value->children->items[4];
   ck_assert_int_eq(part5->type, AST_LITERAL_NODE);
   AST_LITERAL_NODE_T* literal3 = (AST_LITERAL_NODE_T*)part5;

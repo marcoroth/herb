@@ -1109,7 +1109,7 @@ bool has_tag_helper_attributes(const char* content) {
 
 // Determine the source string for a tag helper by inspecting the call node
 
-AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context) {
+AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source) {
   if (!erb_node || !erb_node->content || !erb_node->content->value) { return NULL; }
 
   char* tag_name = extract_tag_name_from_helper(erb_node->content->value);
@@ -1177,7 +1177,7 @@ AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_nod
     body,
     NULL,
     false,
-    ELEMENT_SOURCE_ACTIONVIEW,
+    handler_source ? handler_source : "ActionView",
     element_start,
     element_end,
     element_errors
@@ -1188,7 +1188,7 @@ AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_nod
   return (AST_NODE_T*) element_node;
 }
 
-AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context) {
+AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source) {
   if (!erb_node || !erb_node->content || !erb_node->content->value) { return NULL; }
 
   char* tag_name = extract_tag_name_from_helper(erb_node->content->value);
@@ -1255,7 +1255,7 @@ AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyz
     body,
     NULL,
     false,
-    ELEMENT_SOURCE_ACTIONVIEW,
+    handler_source ? handler_source : "ActionView",
     element_start,
     element_end,
     simple_element_errors
@@ -1266,7 +1266,7 @@ AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyz
   return (AST_NODE_T*) element_node;
 }
 
-AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, analyze_ruby_context_T* context) {
+AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, analyze_ruby_context_T* context, const char* handler_source) {
   if (!block_node || !block_node->content || !block_node->content->value) { return NULL; }
 
   const char* content = block_node->content->value;
@@ -1406,7 +1406,7 @@ AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, 
     body,
     (struct AST_HTML_CLOSE_TAG_NODE_STRUCT*) block_node->end_node,
     false,
-    ELEMENT_SOURCE_ACTIONVIEW,
+    handler_source ? handler_source : "ActionView",
     block_node->base.location->start,
     block_node->base.location->end,
     array_init(8)
@@ -1417,7 +1417,7 @@ AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, 
 }
 
 // Special transformation for link_to helper
-AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context) {
+AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_ruby_context_T* context, const char* handler_source) {
   if (!erb_node || !erb_node->content || !erb_node->content->value) { return NULL; }
 
   const char* content = erb_node->content->value;
@@ -1582,7 +1582,7 @@ AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_r
     body,
     NULL,
     false,
-    ELEMENT_SOURCE_ACTIONVIEW,
+    handler_source ? handler_source : "ActionView",
     erb_node->base.location->start,
     erb_node->base.location->end,
     array_init(8)
