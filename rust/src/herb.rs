@@ -8,6 +8,7 @@ pub struct ParserOptions {
   pub track_whitespace: bool,
   pub analyze: bool,
   pub strict: bool,
+  pub action_view_helpers: bool,
 }
 
 impl Default for ParserOptions {
@@ -16,6 +17,7 @@ impl Default for ParserOptions {
       track_whitespace: false,
       analyze: true,
       strict: true,
+      action_view_helpers: false,
     }
   }
 }
@@ -91,6 +93,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       track_whitespace: options.track_whitespace,
       analyze: options.analyze,
       strict: options.strict,
+      action_view_helpers: options.action_view_helpers,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);

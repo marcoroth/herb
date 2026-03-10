@@ -7,6 +7,12 @@ require "yaml"
 
 module Herb
   module Template
+    def self.underscore(name)
+      name
+        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+    end
+
     class Field
       attr_reader :name, :options
 
@@ -42,7 +48,7 @@ module Herb
 
       def c_item_type
         if specific_kind
-          "AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_T*"
+          "AST_#{Template.underscore(specific_kind).upcase}_T*"
         else
           "void*"
         end
@@ -65,7 +71,7 @@ module Herb
 
       def c_type
         if specific_kind
-          "struct AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_STRUCT*"
+          "struct AST_#{Template.underscore(specific_kind).upcase}_STRUCT*"
         else
           "AST_NODE_T*"
         end
@@ -229,7 +235,7 @@ module Herb
       end
 
       def c_type
-        "element_source_t"
+        "hb_string_T"
       end
     end
 
@@ -279,7 +285,7 @@ module Herb
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
 
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = camelized.upcase
         @struct_type = "#{camelized.upcase}_T"
         @struct_name = "#{camelized.upcase}_STRUCT"
@@ -306,7 +312,7 @@ module Herb
 
       def initialize(config)
         @name = config.fetch("name")
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = "AST_#{camelized.upcase}"
         @struct_type = "AST_#{camelized.upcase}_T"
         @struct_name = "AST_#{camelized.upcase}_STRUCT"

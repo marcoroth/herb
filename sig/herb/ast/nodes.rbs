@@ -209,31 +209,61 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_virtual_close_tag_node = {
+    # |  tag_name: Herb::Token?,
+    # | }
+    class HTMLVirtualCloseTagNode < Node
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      # : () -> serialized_html_virtual_close_tag_node
+      def to_hash: () -> serialized_html_virtual_close_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     # : type serialized_html_element_node = {
-    # |  open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode)?,
+    # |  open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?,
     # |  tag_name: Herb::Token?,
     # |  body: Array[Herb::AST::Node],
-    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?,
+    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode)?,
     # |  is_void: bool,
     # |  element_source: String?,
     # | }
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode)?
+      attr_reader open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?
 
       attr_reader tag_name: Herb::Token?
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?
+      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode)?
 
       attr_reader is_void: bool
 
       attr_reader element_source: String?
 
-      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode), bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode), bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
@@ -393,6 +423,111 @@ module Herb
 
       # : () -> serialized_html_attribute_node
       def to_hash: () -> serialized_html_attribute_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_ruby_literal_node = {
+    # |  content: String?,
+    # | }
+    class RubyLiteralNode < Node
+      include Colors
+
+      attr_reader content: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+
+      # : () -> serialized_ruby_literal_node
+      def to_hash: () -> serialized_ruby_literal_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_ruby_html_attributes_splat_node = {
+    # |  content: String?,
+    # |  prefix: String?,
+    # | }
+    class RubyHTMLAttributesSplatNode < Node
+      include Colors
+
+      attr_reader content: String?
+
+      attr_reader prefix: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], String, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, String) -> void
+
+      # : () -> serialized_ruby_html_attributes_splat_node
+      def to_hash: () -> serialized_ruby_html_attributes_splat_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_open_tag_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  tag_name: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # | }
+    class ERBOpenTagNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader tag_name: Herb::Token?
+
+      attr_reader children: Array[Herb::AST::Node]
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+
+      # : () -> serialized_erb_open_tag_node
+      def to_hash: () -> serialized_erb_open_tag_node
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

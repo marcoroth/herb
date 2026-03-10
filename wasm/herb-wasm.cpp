@@ -61,6 +61,10 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("strict")) {
       parser_options.strict = options["strict"].as<bool>();
     }
+
+    if (options.hasOwnProperty("action_view_helpers")) {
+      parser_options.action_view_helpers = options["action_view_helpers"].as<bool>();
+    }
   }
 
   hb_allocator_T allocator;

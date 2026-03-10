@@ -4,9 +4,9 @@
 #include <prism.h>
 #include <stdbool.h>
 
-#include "analyzed_ruby.h"
 #include "../ast_node.h"
 #include "../util/hb_allocator.h"
+#include "analyzed_ruby.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);
 bool has_elsif_node(analyzed_ruby_T* analyzed);

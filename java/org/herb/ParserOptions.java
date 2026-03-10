@@ -4,6 +4,7 @@ public class ParserOptions {
   private boolean trackWhitespace = false;
   private boolean analyze = true;
   private boolean strict = true;
+  private boolean actionViewHelpers = false;
 
   public ParserOptions() {}
 
@@ -32,6 +33,15 @@ public class ParserOptions {
 
   public boolean isStrict() {
     return strict;
+  }
+
+  public ParserOptions actionViewHelpers(boolean value) {
+    this.actionViewHelpers = value;
+    return this;
+  }
+
+  public boolean isActionViewHelpers() {
+    return actionViewHelpers;
   }
 
   public static ParserOptions create() {

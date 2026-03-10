@@ -8,14 +8,18 @@ module Herb
 
     attr_reader analyze: bool
 
+    attr_reader action_view_helpers: bool
+
     DEFAULT_STRICT: bool
 
     DEFAULT_TRACK_WHITESPACE: bool
 
     DEFAULT_ANALYZE: bool
 
-    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool) -> void
-    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool) -> void
+    DEFAULT_ACTION_VIEW_HELPERS: bool
+
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool) -> void
 
     # : () -> Hash[Symbol, bool]
     def to_h: () -> Hash[Symbol, bool]

@@ -1089,6 +1089,7 @@ export default class extends Controller {
       track_whitespace: false,
       analyze: true,
       strict: true,
+      actionViewHelpers: false,
     }
 
     const nonDefaultOptions = {}

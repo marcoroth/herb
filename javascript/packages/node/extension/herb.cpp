@@ -107,6 +107,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, strict_prop, &strict_value);
         parser_options.strict = strict_value;
       }
+
+      napi_value action_view_helpers_prop;
+      bool has_action_view_helpers_prop;
+      napi_has_named_property(env, args[1], "action_view_helpers", &has_action_view_helpers_prop);
+
+      if (has_action_view_helpers_prop) {
+        napi_get_named_property(env, args[1], "action_view_helpers", &action_view_helpers_prop);
+        bool action_view_helpers_value;
+        napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
+        parser_options.action_view_helpers = action_view_helpers_value;
+      }
     }
   }
 

@@ -31,6 +31,9 @@ module Herb
     # : (Herb::AST::HTMLOmittedCloseTagNode) -> void
     def visit_html_omitted_close_tag_node: (Herb::AST::HTMLOmittedCloseTagNode) -> void
 
+    # : (Herb::AST::HTMLVirtualCloseTagNode) -> void
+    def visit_html_virtual_close_tag_node: (Herb::AST::HTMLVirtualCloseTagNode) -> void
+
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
@@ -45,6 +48,15 @@ module Herb
 
     # : (Herb::AST::HTMLAttributeNode) -> void
     def visit_html_attribute_node: (Herb::AST::HTMLAttributeNode) -> void
+
+    # : (Herb::AST::RubyLiteralNode) -> void
+    def visit_ruby_literal_node: (Herb::AST::RubyLiteralNode) -> void
+
+    # : (Herb::AST::RubyHTMLAttributesSplatNode) -> void
+    def visit_ruby_html_attributes_splat_node: (Herb::AST::RubyHTMLAttributesSplatNode) -> void
+
+    # : (Herb::AST::ERBOpenTagNode) -> void
+    def visit_erb_open_tag_node: (Herb::AST::ERBOpenTagNode) -> void
 
     # : (Herb::AST::HTMLTextNode) -> void
     def visit_html_text_node: (Herb::AST::HTMLTextNode) -> void

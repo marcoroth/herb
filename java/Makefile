@@ -35,7 +35,7 @@ INCLUDES = -I. -I$(SRC_DIR)/include -I$(PRISM_INCLUDE) $(JNI_INCLUDES)
 LDFLAGS = -shared
 LIBS = $(PRISM_BUILD)/libprism.a
 
-HERB_SOURCES = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c)
+HERB_SOURCES = $(shell find $(SRC_DIR) -name '*.c')
 HERB_OBJECTS = $(filter-out $(SRC_DIR)/main.o, $(HERB_SOURCES:.c=.o))
 
 JNI_SOURCES = herb_jni.c extension_helpers.c

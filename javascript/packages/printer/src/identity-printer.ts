@@ -72,6 +72,10 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitHTMLVirtualCloseTagNode(_node: Nodes.HTMLVirtualCloseTagNode): void {
+    // Virtual closing tags don't print anything (they are synthetic)
+  }
+
   visitHTMLOmittedCloseTagNode(_node: Nodes.HTMLOmittedCloseTagNode): void {
     // Omitted closing tags don't print anything
   }
@@ -154,6 +158,14 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitRubyLiteralNode(node: Nodes.RubyLiteralNode): void {
+    this.write(node.content)
+  }
+
+  visitRubyHTMLAttributesSplatNode(node: Nodes.RubyHTMLAttributesSplatNode): void {
+    this.write(node.content)
+  }
+
   visitHTMLCommentNode(node: Nodes.HTMLCommentNode): void {
     if (node.comment_start) {
       this.write(node.comment_start.value)
@@ -200,6 +212,10 @@ export class IdentityPrinter extends Printer {
     if (node.tag_closing) {
       this.write(node.tag_closing.value)
     }
+  }
+
+  visitERBOpenTagNode(node: Nodes.ERBOpenTagNode): void {
+    this.printERBNode(node)
   }
 
   visitERBContentNode(node: Nodes.ERBContentNode): void {

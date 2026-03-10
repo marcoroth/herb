@@ -1,4 +1,6 @@
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/action_view/tag_helper_handler.h"
+#include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/builders.h"
 #include "../include/analyze/conditional_elements.h"
@@ -849,9 +851,15 @@ void herb_analyze_parse_tree(
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
     .allocator = allocator,
+    .source = source,
   };
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
+
+  if (options && options->action_view_helpers) {
+    herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);
+  }
+
   herb_transform_conditional_elements(document, allocator);
   herb_transform_conditional_open_tags(document, allocator);
 

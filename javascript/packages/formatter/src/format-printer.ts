@@ -87,6 +87,8 @@ import {
   ERBUnlessNode,
   ERBYieldNode,
   ERBInNode,
+  ERBOpenTagNode,
+  HTMLVirtualCloseTagNode,
   XMLDeclarationNode,
   CDATANode,
   Token
@@ -1003,6 +1005,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     } else {
       this.printERBNode(node)
     }
+  }
+
+  visitERBOpenTagNode(node: ERBOpenTagNode) {
+    this.printERBNode(node)
+  }
+
+  visitHTMLVirtualCloseTagNode(_node: HTMLVirtualCloseTagNode) {
+    // Virtual closing tags don't print anything (they are synthetic)
   }
 
   visitERBEndNode(node: ERBEndNode) {
