@@ -1,4 +1,4 @@
-import { Token, Location, WhitespaceNode } from "@herb-tools/core"
+import { Token, WhitespaceNode, createWhitespaceNode } from "@herb-tools/core"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 
 import { findParent, BaseRuleVisitor } from "./rule-utils.js"
@@ -168,10 +168,7 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
     if (!node) return null
 
     if (isHTMLOpenTagNode(node)) {
-      const token = Token.from({ type: "TOKEN_WHITESPACE", value: " ", range: [0, 0], location: Location.zero })
-      const whitespace = new WhitespaceNode({ type: "AST_WHITESPACE_NODE", value: token, location: Location.zero, errors: [] })
-
-      node.children.push(whitespace)
+      node.children.push(createWhitespaceNode())
 
       return result
     }
