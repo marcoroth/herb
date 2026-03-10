@@ -116,6 +116,7 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
             tag_closing: createSyntheticToken("%>"),
             parsed: false,
             valid: true,
+            prism_node: null
           })
         }
 

@@ -5,7 +5,7 @@ import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
 
 import type { RewriteContext } from "../context.js"
-import type { Node, HTMLCloseTagNode, HTMLAttributeValueNode } from "@herb-tools/core"
+import type { Node, HTMLAttributeValueNode } from "@herb-tools/core"
 
 function serializeAttributeValue(value: HTMLAttributeValueNode): string {
   const hasERB = value.children.some(child => isERBContentNode(child))

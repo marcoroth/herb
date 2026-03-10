@@ -75,5 +75,19 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "turbo_frame_tag with model wraps in dom_id" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= turbo_frame_tag post do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "turbo_frame_tag with instance variable wraps in dom_id" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= turbo_frame_tag @post %>
+      HTML
+    end
   end
 end
