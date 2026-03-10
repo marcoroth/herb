@@ -453,6 +453,7 @@ nodes:
             - HTMLCloseTagNode
             - HTMLOmittedCloseTagNode
             - HTMLVirtualCloseTagNode
+            - ERBEndNode
 
         - name: is_void
           type: boolean

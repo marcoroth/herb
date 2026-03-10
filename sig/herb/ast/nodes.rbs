@@ -243,7 +243,7 @@ module Herb
     # |  open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?,
     # |  tag_name: Herb::Token?,
     # |  body: Array[Herb::AST::Node],
-    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode)?,
+    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?,
     # |  is_void: bool,
     # |  element_source: String?,
     # | }
@@ -256,14 +256,14 @@ module Herb
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode)?
+      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?
 
       attr_reader is_void: bool
 
       attr_reader element_source: String?
 
-      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode), bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode), bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node

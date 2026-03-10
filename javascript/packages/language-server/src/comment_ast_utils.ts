@@ -1,7 +1,7 @@
 import { ParserService } from "./parser_service"
 import { LineContextCollector } from "./line_context_collector"
 
-import { HTMLCommentNode, Token, Location, Range } from "@herb-tools/core"
+import { HTMLCommentNode, Location, createSyntheticToken } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
@@ -25,10 +25,6 @@ interface LineSegment {
   node?: ERBContentNode
 }
 
-export function createSyntheticToken(type: string, value: string): Token {
-  return new Token(value, Range.zero, Location.zero, type)
-}
-
 export function commentERBNode(node: ERBContentNode): void {
   const mutable = asMutable(node)
 
@@ -36,8 +32,8 @@ export function commentERBNode(node: ERBContentNode): void {
     const currentValue = mutable.tag_opening.value
 
     mutable.tag_opening = createSyntheticToken(
-      mutable.tag_opening.type,
-      currentValue.substring(0, 2) + "#" + currentValue.substring(2)
+      currentValue.substring(0, 2) + "#" + currentValue.substring(2),
+      mutable.tag_opening.type
     )
   }
 }
@@ -56,10 +52,10 @@ export function uncommentERBNode(node: ERBContentNode): void {
       contentValue.startsWith(" = ") ||
       contentValue.startsWith(" - ")
     ) {
-      mutable.tag_opening = createSyntheticToken(mutable.tag_opening.type, "<%")
-      mutable.content = createSyntheticToken(mutable.content!.type, contentValue.substring(1))
+      mutable.tag_opening = createSyntheticToken("<%", mutable.tag_opening.type)
+      mutable.content = createSyntheticToken(contentValue.substring(1), mutable.content!.type)
     } else {
-      mutable.tag_opening = createSyntheticToken(mutable.tag_opening.type, "<%")
+      mutable.tag_opening = createSyntheticToken("<%", mutable.tag_opening.type)
     }
   }
 }
@@ -158,9 +154,9 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
         type: "AST_HTML_COMMENT_NODE",
         location: Location.zero,
         errors: [],
-        comment_start: createSyntheticToken("TOKEN_HTML_COMMENT_START", "<!--"),
+        comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
-        comment_end: createSyntheticToken("TOKEN_HTML_COMMENT_END", "-->"),
+        comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),
       })
 
       children.length = 0
@@ -173,9 +169,9 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
         type: "AST_HTML_COMMENT_NODE",
         location: Location.zero,
         errors: [],
-        comment_start: createSyntheticToken("TOKEN_HTML_COMMENT_START", "<!--"),
+        comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
-        comment_end: createSyntheticToken("TOKEN_HTML_COMMENT_END", "-->"),
+        comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),
       })
 
       children.length = 0
