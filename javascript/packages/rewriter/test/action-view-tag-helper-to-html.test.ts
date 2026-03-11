@@ -196,6 +196,26 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("link_to helpers", () => {
+    test("link_to with path only", () => {
+      expect(transform("<%= link_to root_path %>")).toBe(
+        '<a href="<%= root_path %>"><%= root_path.to_s %></a>'
+      )
+    })
+
+    test("link_to with model", () => {
+      expect(transform("<%= link_to @profile %>")).toBe(
+        '<a href="<%= url_for(@profile) %>"><%= @profile.to_s %></a>'
+      )
+    })
+
+    test("link_to with :back", () => {
+      expect(transform('<%= link_to "Back", :back %>')).toBe(
+        '<a href="<%= url_for(:back) %>">Back</a>'
+      )
+    })
+  })
+
   describe("turbo_frame_tag helpers", () => {
     test("turbo_frame_tag with block", () => {
       const input = dedent`
