@@ -23,7 +23,13 @@ char* extract_tag_dot_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
   pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
   if (!constant) { return NULL; }
 
-  return hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+  char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+
+  for (size_t i = 0; i < constant->length && name[i] != '\0'; i++) {
+    if (name[i] == '_') { name[i] = '-'; }
+  }
+
+  return name;
 }
 
 // TODO: this should probably be an array of nodes

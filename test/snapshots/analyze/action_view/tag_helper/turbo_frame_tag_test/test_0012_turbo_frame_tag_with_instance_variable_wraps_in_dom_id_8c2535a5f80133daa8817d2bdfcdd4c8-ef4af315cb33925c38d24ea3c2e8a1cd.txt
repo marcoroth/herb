@@ -1,0 +1,48 @@
+---
+source: "Analyze::ActionView::TagHelper::TurboFrameTagTest#test_0012_turbo_frame_tag with instance variable wraps in dom_id"
+input: |2-
+<%= turbo_frame_tag @post %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:28))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:28))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " turbo_frame_tag @post " (location: (1:3)-(1:26))
+    │   │       ├── tag_closing: "%>" (location: (1:26)-(1:28))
+    │   │       ├── tag_name: "turbo-frame" (location: (1:4)-(1:19))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:20)-(1:25))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:25))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:20)-(1:25))
+    │   │               │               └── content: "id"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:20)-(1:25))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:20)-(1:25))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:20)-(1:25))
+    │   │                       │       └── content: "dom_id(@post)"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "turbo-frame" (location: (1:4)-(1:19))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:28)-(1:28))
+    │   │       └── tag_name: "turbo-frame" (location: (1:4)-(1:19))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "Turbo::FramesHelper#turbo_frame_tag"
+    │
+    └── @ HTMLTextNode (location: (1:28)-(2:0))
+        └── content: "\n"

@@ -5,7 +5,7 @@ import { Visitor } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 
 import { isERBIfNode, isERBElseNode, isHTMLOpenTagNode } from "@herb-tools/core"
-import { erbTagToRange, tokenToRange, nodeToRange, openTagRanges } from "./range_utils"
+import { erbTagToRange, tokenToRange, nodeToRange, openTagRanges, isPositionInRange, rangeSize } from "./range_utils"
 
 import type {
   Node,
@@ -245,10 +245,10 @@ export class DocumentHighlightService {
     let bestSize = Infinity
 
     for (const group of collector.groups) {
-      const matchingRange = group.find(range => this.isPositionInRange(position, range))
+      const matchingRange = group.find(range => isPositionInRange(position, range))
 
       if (matchingRange) {
-        const size = this.rangeSize(matchingRange)
+        const size = rangeSize(matchingRange)
 
         if (size < bestSize) {
           bestSize = size
@@ -264,27 +264,4 @@ export class DocumentHighlightService {
     return []
   }
 
-  private rangeSize(range: Range): number {
-    if (range.start.line === range.end.line) {
-      return range.end.character - range.start.character
-    }
-
-    return (range.end.line - range.start.line) * 10000 + range.end.character
-  }
-
-  private isPositionInRange(position: Position, range: Range): boolean {
-    if (position.line < range.start.line || position.line > range.end.line) {
-      return false
-    }
-
-    if (position.line === range.start.line && position.character < range.start.character) {
-      return false
-    }
-
-    if (position.line === range.end.line && position.character > range.end.character) {
-      return false
-    }
-
-    return true
-  }
 }

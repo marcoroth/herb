@@ -129,5 +129,27 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "tag.turbo_frame converts underscore to dash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.turbo_frame id: "tray" do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "tag.trix_editor converts underscore to dash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.trix_editor input: "content", class: "editor" %>
+      HTML
+    end
+
+    test "tag.my_custom_element converts underscores to dashes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.my_custom_element data: { controller: "example" } do %>
+          Content
+        <% end %>
+      HTML
+    end
   end
 end
