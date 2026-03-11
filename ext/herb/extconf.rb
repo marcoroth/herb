@@ -1,64 +1,45 @@
 # frozen_string_literal: true
 
 require "mkmf"
-require "fileutils"
+require_relative "../../lib/herb/bootstrap"
 
 extension_name = "herb"
-root_path = File.expand_path("../..", __dir__)
+git_build = false
 
-# When installing from a git source (e.g. `gem "herb", github: "..."`) generated
-# files and the vendored Prism C source won't exist yet. Bootstrap them automatically.
-
-# 1. Generate template files (nodes.c, error_helpers.c, ast_nodes.h, etc.)
-unless File.exist?(File.join(__dir__, "nodes.c"))
+unless Herb::Bootstrap.templates_generated?
   puts "Generated files not found — running template generation..."
-
-  Dir.chdir(root_path) do
-    require "pathname"
-    require "set"
-    require_relative "../../templates/template"
-
-    Dir.glob("#{root_path}/templates/**/*.erb").each do |template|
-      Herb::Template.render(template)
-    end
-  end
+  git_build = true
+  Herb::Bootstrap.generate_templates
 end
 
-# 2. Vendor Prism C source (headers + implementation) if not present
-prism_vendor_dir = File.join(root_path, "vendor", "prism")
+unless Herb::Bootstrap.prism_vendored?
+  prism_path = Herb::Bootstrap.find_prism_gem_path
 
-unless File.directory?(File.join(prism_vendor_dir, "include"))
-  puts "Vendored Prism not found — vendoring from installed gem..."
+  abort <<~MSG unless prism_path
+    ERROR: Could not find Prism C source files.
 
-  begin
-    prism_gem_path = Gem::Specification.find_by_name("prism").full_gem_path
-  rescue Gem::MissingSpecError
-    abort <<~MSG
-      ERROR: The 'prism' gem is required to compile herb from a git source.
+    When installing Herb from a git source, a git-sourced Prism is required
+    (the released gem does not include C source files).
 
-      Add it to your Gemfile before the herb git reference:
+    Add it to your Gemfile before the herb git reference:
 
-        gem "prism", "~> 1.9"
-        gem "herb", github: "...", branch: "..."
+      gem "prism", github: "ruby/prism", tag: "v1.9.0"
+      gem "herb", github: "...", branch: "..."
 
-      Then run `bundle install` again.
-    MSG
-  end
+    Then run `bundle install` again.
+  MSG
 
-  FileUtils.mkdir_p(prism_vendor_dir)
+  puts "Vendoring Prism from #{prism_path}..."
+  git_build = true
+  Herb::Bootstrap.vendor_prism(prism_gem_path: prism_path)
+end
 
-  %w[config.yml Rakefile src/ include/ templates/].each do |entry|
-    source = File.join(prism_gem_path, entry)
-    next unless File.exist?(source)
+if git_build
+  root_path = Herb::Bootstrap::ROOT_PATH
+  sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
 
-    FileUtils.cp_r(source, prism_vendor_dir)
-  end
-
-  # Prism's own generated header (ast.h) may need to be created
-  unless File.exist?(File.join(prism_vendor_dir, "include", "prism", "ast.h"))
-    puts "Generating Prism template files..."
-    system("ruby #{prism_vendor_dir}/templates/template.rb", exception: true)
-  end
+  $CFLAGS << " -DHERB_GIT_BUILD"
+  $CFLAGS << " -DHERB_GIT_SHA=\\\"#{sha}\\\"" unless sha.empty?
 end
 
 include_path = File.expand_path("../../src/include", __dir__)

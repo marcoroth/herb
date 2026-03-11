@@ -149,55 +149,35 @@ end
 
 desc "Render out template files"
 task :templates do
-  require_relative "templates/template"
+  require_relative "lib/herb/bootstrap"
 
-  Dir.glob("#{__dir__}/templates/**/*.erb").each do |template|
-    Herb::Template.render(template)
-  end
+  Herb::Bootstrap.generate_templates
 end
-
-prism_vendor_path = "vendor/prism"
 
 namespace :prism do
   desc "Setup and vendor Prism"
   task :vendor do
+    require_relative "lib/herb/bootstrap"
+
     Rake::Task["prism:clean"].execute
 
     prism_bundle_path = `bundle show prism`.chomp
-
-    puts prism_bundle_path
 
     if prism_bundle_path.empty?
       puts "Make sure to run `bundle install` in the herb project directory first"
       exit 1
     end
 
-    FileUtils.mkdir_p(prism_vendor_path)
+    puts prism_bundle_path
 
-    files = [
-      "config.yml",
-      "Rakefile",
-      "src/",
-      "include/",
-      "templates/"
-    ]
-
-    files.each do |file|
-      vendored_file_path = prism_vendor_path + "/#{file}"
-      puts "Vendoring '#{file}' Prism file to #{vendored_file_path}"
-      FileUtils.cp_r(prism_bundle_path + "/#{file}", prism_vendor_path)
-    end
-
-    prism_ast_header = "#{prism_vendor_path}/include/prism/ast.h"
-
-    unless File.exist?(prism_ast_header)
-      puts "Generating Prism template files..."
-      system("ruby #{prism_vendor_path}/templates/template.rb", exception: true)
-    end
+    Herb::Bootstrap.vendor_prism(prism_gem_path: prism_bundle_path)
   end
 
   desc "Clean vendored Prism in vendor/prism/"
   task :clean do
+    require_relative "lib/herb/bootstrap"
+
+    prism_vendor_path = Herb::Bootstrap::PRISM_VENDOR_DIR
     puts "Cleaning up vendored Prism at #{prism_vendor_path}..."
     begin
       FileUtils.rm_r(prism_vendor_path)
