@@ -44,11 +44,16 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       <%- when Herb::Template::BooleanField -%>
       pretty_print_boolean_property(hb_string("<%= field.name %>"), <%= node.human %>-><%= field.name %>, indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::ElementSourceField -%>
-      pretty_print_string_property(element_source_to_string(<%= node.human %>-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+      pretty_print_string_property(<%= node.human %>-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::StringField -%>
       pretty_print_string_property(<%= node.human %>-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::PrismNodeField -%>
-      pretty_print_string_property(hb_string("<%= field.name %>"), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+      if (<%= node.human %>-><%= field.name %>.node != NULL) {
+        pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+        hb_buffer_append(buffer, " (pm_node_t*)\n");
+      }
+      <%- when Herb::Template::PrismContextField -%>
+      /* prism_context is internal state, not pretty printed */
       <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
 
       pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
@@ -103,6 +108,14 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
         hb_buffer_append(buffer, <%= field.name %>_location_string);
       } else {
         hb_buffer_append(buffer, " ∅\n");
+      }
+
+      <%- when Herb::Template::PrismSerializedField -%>
+      if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+        pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+        char <%= field.name %>_size_string[64];
+        sprintf(<%= field.name %>_size_string, " (%zu bytes)\n", <%= node.human %>-><%= field.name %>.length);
+        hb_buffer_append(buffer, <%= field.name %>_size_string);
       }
 
       <%- else -%>

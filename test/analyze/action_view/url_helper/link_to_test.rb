@@ -6,24 +6,20 @@ module Analyze::ActionView::UrlHelper
   class LinkToTest < Minitest::Spec
     include SnapshotUtils
 
-    before do
-      skip
-    end
-
     test "link_to" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Click me", "#" %>
       HTML
     end
 
     test "link_to with html options" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Click me", "#", class: "example" %>
       HTML
     end
 
     test "link_to with block" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "#" do %>
           Click me
         <% end %>
@@ -31,38 +27,198 @@ module Analyze::ActionView::UrlHelper
     end
 
     test "link_to with path helper" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Click me", root_path %>
       HTML
     end
 
     test "link_to with method" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Delete", root_path, method: "delete" %>
       HTML
     end
 
     test "link_to with confirm" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Delete", root_path, data: { confirm: "Are you sure?" } %>
       HTML
     end
 
     test "link_to with data-turbo-method" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Delete", root_path, data: { turbo_method: "delete" } %>
       HTML
     end
 
     test "link_to with data-turbo-confirm" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Delete", root_path, data: { turbo_confirm: "Are you sure?" } %>
       HTML
     end
 
     test "link_to with :back" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= link_to "Back", :back %>
+      HTML
+    end
+
+    test "link_to with data attributes using string key hashrocket" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click", root_path, data: { "action" => "value" } %>
+      HTML
+    end
+
+    test "link_to with data attributes using symbol key hashrocket" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click", root_path, data: { :action => "value" } %>
+      HTML
+    end
+
+    test "link_to with block and path helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to root_path do %>
+          Click me
+        <% end %>
+      HTML
+    end
+
+    test "link_to with block and path helper and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to root_path, class: "btn" do %>
+          Click me
+        <% end %>
+      HTML
+    end
+
+    test "link_to with ruby expression as content" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to text, root_path %>
+      HTML
+    end
+
+    test "link_to with nil content and string url" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to nil, "http://example.com" %>
+      HTML
+    end
+
+    test "link_to with nil content and path helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to nil, root_path %>
+      HTML
+    end
+
+    # Rails docs examples
+
+    test "link_to with path helper with argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Profile", profile_path(@profile) %>
+      HTML
+    end
+
+    test "link_to with model as url" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Profile", @profile %>
+      HTML
+    end
+
+    test "link_to with model as single argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to @profile %>
+      HTML
+    end
+
+    test "link_to with block and model" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to @profile do %>
+          <strong><%= @profile.name %></strong>
+        <% end %>
+      HTML
+    end
+
+    test "link_to with id and class" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Articles", articles_path, id: "news", class: "article" %>
+      HTML
+    end
+
+    test "link_to with target and rel" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "External link", "http://www.rubyonrails.org/", target: "_blank", rel: "nofollow" %>
+      HTML
+    end
+
+    test "link_to with turbo_method on model" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Delete profile", @profile, data: { turbo_method: :delete } %>
+      HTML
+    end
+
+    test "link_to with turbo_confirm and string url" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Visit Other Site", "https://rubyonrails.org/", data: { turbo_confirm: "Are you sure?" } %>
+      HTML
+    end
+
+    test "link_to with path helper with anchor argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Comment wall", profile_path(@profile, anchor: "wall") %>
+      HTML
+    end
+
+    test "link_to with path helper with multiple arguments" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Nonsense search", searches_path(foo: "bar", baz: "quux") %>
+      HTML
+    end
+
+    test "link_to with method delete using rails ujs" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Remove Profile", profile_path(@profile), method: :delete %>
+      HTML
+    end
+
+    test "link_to with data confirm using rails ujs" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Visit Other Site", "http://www.rubyonrails.org/", data: { confirm: "Are you sure?" } %>
+      HTML
+    end
+
+    test "link_to with old-style controller action hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Profile", controller: "profiles", action: "show", id: @profile %>
+      HTML
+    end
+
+    test "link_to with remote true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Remote", root_path, remote: true %>
+      HTML
+    end
+
+    test "link_to with data disable_with" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Submit", root_path, data: { disable_with: "Submitting..." } %>
+      HTML
+    end
+
+    test "link_to with old-style controller action hash and class" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Profile", controller: "profiles", action: "show", id: @profile, class: "btn" %>
+      HTML
+    end
+
+    test "link_to with explicit url hash and html options" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Profile", { controller: "profiles", action: "show" }, class: "btn" %>
+      HTML
+    end
+
+    test "link_to with explicit url hash and html options block form" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to({ controller: "profiles", action: "show" }, class: "btn") do %>
+          Profile
+        <% end %>
       HTML
     end
   end

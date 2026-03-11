@@ -30,6 +30,9 @@
     }
   },
   "dependencies": {},
+  "devDependencies": {
+    "@ruby/prism": "^1.9.0"
+  },
   "files": [
     "package.json",
     "README.md",

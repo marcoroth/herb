@@ -225,4 +225,17 @@ describe("Round-trip Parser Accuracy Tests", () => {
       </div>
     `)
   })
+
+  test("ActionView Tag Helpers", () => {
+    expectPrintRoundTrip(dedent`
+      <%= tag.div(
+        data: {
+          controller: "hello",
+          action: "click->hello#greet"
+        }
+      ) do %>
+        <div>Hello</div>
+      <% end %>
+    `, true, { action_view_helpers: true })
+  })
 })

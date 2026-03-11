@@ -4,6 +4,10 @@ public class ParserOptions {
   private boolean trackWhitespace = false;
   private boolean analyze = true;
   private boolean strict = true;
+  private boolean actionViewHelpers = false;
+  private boolean prismNodes = false;
+  private boolean prismNodesDeep = false;
+  private boolean prismProgram = false;
 
   public ParserOptions() {}
 
@@ -32,6 +36,42 @@ public class ParserOptions {
 
   public boolean isStrict() {
     return strict;
+  }
+
+  public ParserOptions actionViewHelpers(boolean value) {
+    this.actionViewHelpers = value;
+    return this;
+  }
+
+  public boolean isActionViewHelpers() {
+    return actionViewHelpers;
+  }
+
+  public ParserOptions prismNodes(boolean value) {
+    this.prismNodes = value;
+    return this;
+  }
+
+  public boolean isPrismNodes() {
+    return prismNodes;
+  }
+
+  public ParserOptions prismNodesDeep(boolean value) {
+    this.prismNodesDeep = value;
+    return this;
+  }
+
+  public boolean isPrismNodesDeep() {
+    return prismNodesDeep;
+  }
+
+  public ParserOptions prismProgram(boolean value) {
+    this.prismProgram = value;
+    return this;
+  }
+
+  public boolean isPrismProgram() {
+    return prismProgram;
   }
 
   public static ParserOptions create() {

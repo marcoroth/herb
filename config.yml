@@ -369,6 +369,12 @@ nodes:
           type: array
           kind: Node
 
+        - name: prism_context
+          type: prism_context
+
+        - name: prism_node
+          type: prism_node
+
     - name: LiteralNode
       fields:
         - name: content
@@ -426,6 +432,11 @@ nodes:
         - name: tag_name
           type: token
 
+    - name: HTMLVirtualCloseTagNode
+      fields:
+        - name: tag_name
+          type: token
+
     - name: HTMLElementNode
       fields:
         - name: open_tag
@@ -433,6 +444,7 @@ nodes:
           kind:
             - HTMLOpenTagNode
             - HTMLConditionalOpenTagNode
+            - ERBOpenTagNode
 
         - name: tag_name
           type: token
@@ -446,6 +458,8 @@ nodes:
           kind:
             - HTMLCloseTagNode
             - HTMLOmittedCloseTagNode
+            - HTMLVirtualCloseTagNode
+            - ERBEndNode
 
         - name: is_void
           type: boolean
@@ -526,6 +540,37 @@ nodes:
           type: node
           kind: HTMLAttributeValueNode
 
+    - name: RubyLiteralNode
+      fields:
+        - name: content
+          type: string
+
+    - name: RubyHTMLAttributesSplatNode
+      fields:
+        - name: content
+          type: string
+
+        - name: prefix
+          type: string
+
+    - name: ERBOpenTagNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: tag_name
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
+
     - name: HTMLTextNode
       fields:
         - name: content
@@ -604,6 +649,9 @@ nodes:
         - name: valid
           type: boolean
 
+        - name: prism_node
+          type: prism_node
+
     - name: ERBEndNode
       fields:
         - name: tag_opening
@@ -647,6 +695,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -677,6 +728,9 @@ nodes:
 
         # - name: opener
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: body
           type: array
@@ -726,6 +780,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBWhenNode
@@ -756,6 +813,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBInNode
@@ -782,6 +842,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -803,6 +866,9 @@ nodes:
 
         # - name: predicate
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -828,6 +894,9 @@ nodes:
 
         # - name: collection
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -889,6 +958,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -925,6 +997,9 @@ nodes:
 
         # - name: predicate
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array

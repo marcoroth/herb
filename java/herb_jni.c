@@ -60,6 +60,38 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean strict = (*env)->CallBooleanMethod(env, options, getStrict);
       parser_options.strict = (strict == JNI_TRUE);
     }
+
+    jmethodID getActionViewHelpers =
+        (*env)->GetMethodID(env, optionsClass, "isActionViewHelpers", "()Z");
+
+    if (getActionViewHelpers != NULL) {
+      jboolean actionViewHelpers = (*env)->CallBooleanMethod(env, options, getActionViewHelpers);
+      parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
+    }
+
+    jmethodID getPrismNodes =
+        (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
+
+    if (getPrismNodes != NULL) {
+      jboolean prismNodes = (*env)->CallBooleanMethod(env, options, getPrismNodes);
+      parser_options.prism_nodes = (prismNodes == JNI_TRUE);
+    }
+
+    jmethodID getPrismNodesDeep =
+        (*env)->GetMethodID(env, optionsClass, "isPrismNodesDeep", "()Z");
+
+    if (getPrismNodesDeep != NULL) {
+      jboolean prismNodesDeep = (*env)->CallBooleanMethod(env, options, getPrismNodesDeep);
+      parser_options.prism_nodes_deep = (prismNodesDeep == JNI_TRUE);
+    }
+
+    jmethodID getPrismProgram =
+        (*env)->GetMethodID(env, optionsClass, "isPrismProgram", "()Z");
+
+    if (getPrismProgram != NULL) {
+      jboolean prismProgram = (*env)->CallBooleanMethod(env, options, getPrismProgram);
+      parser_options.prism_program = (prismProgram == JNI_TRUE);
+    }
   }
 
   hb_allocator_T allocator;
@@ -148,6 +180,35 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobjec
 
   hb_buffer_free(&output);
   hb_allocator_destroy(&allocator);
+  (*env)->ReleaseStringUTFChars(env, source, src);
+
+  return result;
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
+  const char* src = (*env)->GetStringUTFChars(env, source, 0);
+  size_t src_len = strlen(src);
+
+  herb_ruby_parse_result_T* parse_result = herb_parse_ruby(src, src_len);
+
+  if (!parse_result) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  pm_buffer_t buffer = { 0 };
+  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+
+  jbyteArray result = NULL;
+
+  if (buffer.length > 0) {
+    result = (*env)->NewByteArray(env, (jsize) buffer.length);
+    (*env)->SetByteArrayRegion(env, result, 0, (jsize) buffer.length, (const jbyte*) buffer.value);
+  }
+
+  pm_buffer_free(&buffer);
+  herb_free_ruby_parse_result(parse_result);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;

@@ -4,7 +4,7 @@
 
 <h2 align="center">Herb</h2>
 
-<h4 align="center">The HTML+ERB Toolchain</h4>
+<h4 align="center">The modern HTML+ERB Toolchain</h4>
 
 <div align="center">An ecosystem of powerful and seamless developer tools for HTML+ERB (HTML + Embedded Ruby) templates.</div><br/>
 

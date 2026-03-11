@@ -7,7 +7,7 @@ NODE_BUILD_DIR = ../javascript/packages/node-wasm/build/
 NODE_WASM_OUTPUT = $(NODE_BUILD_DIR)libherb.js
 
 CPP_SOURCES = $(wildcard *.cpp)
-C_SOURCES = $(filter-out ../src/main.c ../src/ruby_parser.c, $(wildcard ../src/*.c)) $(wildcard ../src/**/*.c)
+C_SOURCES = $(filter-out ../src/main.c ../src/ruby_parser.c, $(shell find ../src -name '*.c'))
 
 PRISM_PATH = $(shell cd .. && bundle show prism)
 PRISM_MAIN_SOURCES = $(wildcard $(PRISM_PATH)/src/*.c)
@@ -26,7 +26,7 @@ INCLUDE_DIR = ../include
 PRISM_INCLUDE = $(PRISM_PATH)/include
 PRISM_SRC = $(PRISM_PATH)/src
 PRISM_UTIL = $(PRISM_PATH)/src/util
-PRISM_EXCLUDE_FLAGS = -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_EXCLUDE_PACK -DPRISM_EXCLUDE_SERIALIZATION
+PRISM_EXCLUDE_FLAGS = -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_EXCLUDE_PACK
 HERB_EXCLUDE_FLAGS = -DHERB_EXCLUDE_PRETTYPRINT
 
 OPT_FLAGS = -Oz -g0 -flto -fdata-sections -ffunction-sections

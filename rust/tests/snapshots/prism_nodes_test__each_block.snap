@@ -1,0 +1,71 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:46))
+└── children: (1 item)
+    └── @ ERBBlockNode (location: (1:0)-(1:46))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " items.each do |item| " (location: (1:2)-(1:24))
+        ├── tag_closing: "%>" (location: (1:24)-(1:26))
+        ├── prism_node: 
+        │   └── @ CallNode (location: (0,3)-(0,43))
+        │       ├── CallNodeFlags: nil
+        │       ├── receiver:
+        │       │   @ CallNode (location: (0,3)-(0,8))
+        │       │   ├── CallNodeFlags: variable_call, ignore_visibility
+        │       │   ├── receiver: nil
+        │       │   ├── call_operator_loc: nil
+        │       │   ├── name: :items
+        │       │   ├── message_loc: (0,3)-(0,8) = "items"
+        │       │   ├── opening_loc: nil
+        │       │   ├── arguments: nil
+        │       │   ├── closing_loc: nil
+        │       │   ├── equal_loc: nil
+        │       │   └── block: nil
+        │       ├── call_operator_loc: (0,8)-(0,9) = "."
+        │       ├── name: :each
+        │       ├── message_loc: (0,9)-(0,13) = "each"
+        │       ├── opening_loc: nil
+        │       ├── arguments: nil
+        │       ├── closing_loc: nil
+        │       ├── equal_loc: nil
+        │       └── block:
+        │           @ BlockNode (location: (0,14)-(0,43))
+        │           ├── locals: [:item]
+        │           ├── parameters:
+        │           │   @ BlockParametersNode (location: (0,17)-(0,23))
+        │           │   ├── parameters:
+        │           │   │   @ ParametersNode (location: (0,18)-(0,22))
+        │           │   │   ├── requireds: (length: 1)
+        │           │   │   │   └── @ RequiredParameterNode (location: (0,18)-(0,22))
+        │           │   │   │       ├── ParameterFlags: nil
+        │           │   │   │       └── name: :item
+        │           │   │   ├── optionals: (length: 0)
+        │           │   │   ├── rest: nil
+        │           │   │   ├── posts: (length: 0)
+        │           │   │   ├── keywords: (length: 0)
+        │           │   │   ├── keyword_rest: nil
+        │           │   │   └── block: nil
+        │           │   ├── locals: (length: 0)
+        │           │   ├── opening_loc: (0,17)-(0,18) = "|"
+        │           │   └── closing_loc: (0,22)-(0,23) = "|"
+        │           ├── body: nil
+        │           ├── opening_loc: (0,14)-(0,16) = "do"
+        │           └── closing_loc: (0,40)-(0,43) = "end"
+        ├── body: (1 item)
+        │   └── @ ERBContentNode (location: (1:26)-(1:37))
+        │       ├── tag_opening: "<%=" (location: (1:26)-(1:29))
+        │       ├── content: " item " (location: (1:29)-(1:35))
+        │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ LocalVariableReadNode (location: (0,30)-(0,34))
+        │               ├── name: :item
+        │               └── depth: 0
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:37)-(1:46))
+                ├── tag_opening: "<%" (location: (1:37)-(1:39))
+                ├── content: " end " (location: (1:39)-(1:44))
+                └── tag_closing: "%>" (location: (1:44)-(1:46))

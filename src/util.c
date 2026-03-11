@@ -54,3 +54,17 @@ static hb_string_T wrap_string(hb_allocator_T* allocator, hb_string_T input, cha
 hb_string_T quoted_string(hb_allocator_T* allocator, hb_string_T input) {
   return wrap_string(allocator, input, '"');
 }
+
+char* convert_underscores_to_dashes(const char* input) {
+  if (!input) { return NULL; }
+
+  size_t len = strlen(input);
+  char* output = calloc(len + 1, sizeof(char));
+  if (!output) { return NULL; }
+
+  for (size_t i = 0; i < len; i++) {
+    output[i] = (input[i] == '_') ? '-' : input[i];
+  }
+
+  return output;
+}

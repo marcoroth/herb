@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0018_link_to with model as url"
+input: |2-
+<%= link_to "Profile", @profile %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:34))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:34))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Profile", @profile " (location: (1:3)-(1:32))
+    │   │       ├── tag_closing: "%>" (location: (1:32)-(1:34))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:23)-(1:31))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:23)-(1:31))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:23)-(1:31))
+    │   │               │               └── content: "href"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:23)-(1:31))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:23)-(1:31))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:23)-(1:31))
+    │   │                       │       └── content: "url_for(@profile)"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:34))
+    │   │       └── content: "Profile"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:34)-(1:34))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:34)-(2:0))
+        └── content: "\n"

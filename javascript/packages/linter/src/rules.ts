@@ -1,40 +1,43 @@
 import type { RuleClass } from "./types.js"
 
+import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
+
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
-import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-conditions.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
-import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
+import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
-import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
-import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
-import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
-import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
-import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.js"
-import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
-import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
-import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
+import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-conditions.js"
+import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
+import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
+import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
+import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
+import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
+import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.js"
 import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
 import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
 import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script-interpolation.js"
+import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
+import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
+import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
-import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
-import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
-import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
-import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
-import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-comment-no-duplicate-rules.js"
-import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
+import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
+import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-comment-no-duplicate-rules.js"
+import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
+import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -71,48 +74,52 @@ import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
-import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
-
-import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
+import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
+
+import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
+
 export const rules: RuleClass[] = [
+  ActionViewNoSilentHelperRule,
+
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
-  ERBNoInlineCaseConditionsRule,
   ERBNoConditionalHTMLElementRule,
-  ERBNoDuplicateBranchElementsRule,
   ERBNoConditionalOpenTagRule,
+  ERBNoDuplicateBranchElementsRule,
   ERBNoEmptyTagsRule,
-  ERBNoInterpolatedClassNamesRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
-  ERBNoOutputControlFlowRule,
-  ERBNoThenInControlFlowRule,
-  ERBNoSilentTagInAttributeNameRule,
-  ERBNoTrailingWhitespaceRule,
-  ERBPreferImageTagHelperRule,
-  ERBRequireTrailingNewlineRule,
-  ERBRequireWhitespaceRule,
+  ERBNoInlineCaseConditionsRule,
+  ERBNoInstanceVariablesInPartialsRule,
+  ERBNoInterpolatedClassNamesRule,
   ERBNoJavascriptTagHelperRule,
+  ERBNoOutputControlFlowRule,
+  ERBNoOutputInAttributeNameRule,
+  ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
+  ERBNoThenInControlFlowRule,
+  ERBNoTrailingWhitespaceRule,
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
+  ERBPreferImageTagHelperRule,
+  ERBRequireTrailingNewlineRule,
+  ERBRequireWhitespaceRule,
   ERBRightTrimRule,
-  ERBNoOutputInAttributePositionRule,
-  ERBNoOutputInAttributeNameRule,
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 
-  HerbDisableCommentValidRuleNameRule,
-  HerbDisableCommentNoRedundantAllRule,
-  HerbDisableCommentNoDuplicateRulesRule,
-  HerbDisableCommentMissingRulesRule,
   HerbDisableCommentMalformedRule,
+  HerbDisableCommentMissingRulesRule,
+  HerbDisableCommentNoDuplicateRulesRule,
+  HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
+  HerbDisableCommentValidRuleNameRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,
@@ -149,9 +156,10 @@ export const rules: RuleClass[] = [
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
   HTMLTagNameLowercaseRule,
-  TurboPermanentRequireIdRule,
+
+  ParserNoErrorsRule,
 
   SVGTagNameCapitalizationRule,
 
-  ParserNoErrorsRule,
+  TurboPermanentRequireIdRule,
 ]

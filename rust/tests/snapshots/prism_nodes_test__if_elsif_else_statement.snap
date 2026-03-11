@@ -1,0 +1,80 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:47))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:47))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if a? " (location: (1:2)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── then_keyword: ∅
+        ├── prism_node: 
+        │   └── @ IfNode (location: (0,3)-(0,44))
+        │       ├── if_keyword_loc: (0,3)-(0,5) = "if"
+        │       ├── predicate:
+        │       │   @ CallNode (location: (0,6)-(0,8))
+        │       │   ├── CallNodeFlags: ignore_visibility
+        │       │   ├── receiver: nil
+        │       │   ├── call_operator_loc: nil
+        │       │   ├── name: :a?
+        │       │   ├── message_loc: (0,6)-(0,8) = "a?"
+        │       │   ├── opening_loc: nil
+        │       │   ├── arguments: nil
+        │       │   ├── closing_loc: nil
+        │       │   ├── equal_loc: nil
+        │       │   ├── block: nil
+        │       ├── then_keyword_loc: nil
+        │       ├── statements: nil
+        │       ├── subsequent:
+        │       │   @ IfNode (location: (0,15)-(0,44))
+        │       │   ├── if_keyword_loc: (0,15)-(0,20) = "elsif"
+        │       │   ├── predicate:
+        │       │   │   @ CallNode (location: (0,21)-(0,23))
+        │       │   │   ├── CallNodeFlags: ignore_visibility
+        │       │   │   ├── receiver: nil
+        │       │   │   ├── call_operator_loc: nil
+        │       │   │   ├── name: :b?
+        │       │   │   ├── message_loc: (0,21)-(0,23) = "b?"
+        │       │   │   ├── opening_loc: nil
+        │       │   │   ├── arguments: nil
+        │       │   │   ├── closing_loc: nil
+        │       │   │   ├── equal_loc: nil
+        │       │   │   ├── block: nil
+        │       │   ├── then_keyword_loc: nil
+        │       │   ├── statements: nil
+        │       │   ├── subsequent:
+        │       │   │   @ ElseNode (location: (0,30)-(0,44))
+        │       │   │   ├── else_keyword_loc: (0,30)-(0,34) = "else"
+        │       │   │   ├── statements: nil
+        │       │   │   └── end_keyword_loc: (0,41)-(0,44) = "end"
+        │       │   └── end_keyword_loc: (0,41)-(0,44) = "end"
+        │       └── end_keyword_loc: (0,41)-(0,44) = "end"
+        ├── statements: (1 item)
+        │   └── @ HTMLTextNode (location: (1:11)-(1:12))
+        │       └── content: "A"
+        ├── subsequent: 
+        │   └── @ ERBIfNode (location: (1:12)-(1:27))
+        │       ├── tag_opening: "<%" (location: (1:12)-(1:14))
+        │       ├── content: " elsif b? " (location: (1:14)-(1:24))
+        │       ├── tag_closing: "%>" (location: (1:24)-(1:26))
+        │       ├── then_keyword: ∅
+        │       ├── statements: (1 item)
+        │       │   └── @ HTMLTextNode (location: (1:26)-(1:27))
+        │       │       └── content: "B"
+        │       ├── subsequent: 
+        │       │   └── @ ERBElseNode (location: (1:27)-(1:38))
+        │       │       ├── tag_opening: "<%" (location: (1:27)-(1:29))
+        │       │       ├── content: " else " (location: (1:29)-(1:35))
+        │       │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+        │       │       └── statements: (1 item)
+        │       │           └── @ HTMLTextNode (location: (1:37)-(1:38))
+        │       │               └── content: "C"
+        │       │   
+        │       └── end_node: ∅
+        │   
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:38)-(1:47))
+                ├── tag_opening: "<%" (location: (1:38)-(1:40))
+                ├── content: " end " (location: (1:40)-(1:45))
+                └── tag_closing: "%>" (location: (1:45)-(1:47))

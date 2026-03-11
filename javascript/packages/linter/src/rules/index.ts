@@ -27,6 +27,7 @@ export * from "./erb-no-unsafe-script-interpolation.js"
 export * from "./erb-right-trim.js"
 export * from "./erb-no-output-in-attribute-position.js"
 export * from "./erb-no-output-in-attribute-name.js"
+export * from "./erb-no-instance-variables-in-partials.js"
 export * from "./erb-strict-locals-comment-syntax.js"
 export * from "./erb-strict-locals-required.js"
 

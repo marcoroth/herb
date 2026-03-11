@@ -33,7 +33,13 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser);
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children);
 static void parser_handle_whitespace_in_open_tag(parser_T* parser, hb_array_T* children);
 
-const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false, .analyze = true, .strict = true };
+const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false,
+                                                       .analyze = true,
+                                                       .strict = true,
+                                                       .action_view_helpers = false,
+                                                       .prism_nodes_deep = false,
+                                                       .prism_nodes = false,
+                                                       .prism_program = false };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -280,7 +286,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
         position_T stray_end = peek_token->location.end;
         token_free(peek_token, parser->allocator);
 
-        append_strayerb_closing_tag_error(stray_start, stray_end, parser->allocator, document_errors);
+        append_stray_erb_closing_tag_error(stray_start, stray_end, parser->allocator, document_errors);
 
         token_T* percent = parser_advance(parser);
         hb_buffer_append_string(&content, percent->value);
@@ -1069,7 +1075,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
         position_T stray_end = peek_token->location.end;
         token_free(peek_token, parser->allocator);
 
-        append_strayerb_closing_tag_error(stray_start, stray_end, parser->allocator, errors);
+        append_stray_erb_closing_tag_error(stray_start, stray_end, parser->allocator, errors);
 
         token_T* percent = parser_advance(parser);
         token_T* gt = parser_advance(parser);
@@ -1354,7 +1360,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, errors);
     end_position = closing_tag->location.end;
   } else if (token_is(parser, TOKEN_ERB_START)) {
-    append_nestederb_tag_error(
+    append_nested_erb_tag_error(
       opening_tag,
       parser->current_token->location.start.line,
       parser->current_token->location.start.column,
@@ -1365,7 +1371,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     );
     end_position = parser->current_token->location.start;
   } else {
-    append_unclosederb_tag_error(
+    append_unclosed_erb_tag_error(
       opening_tag,
       opening_tag->location.start,
       parser->current_token->location.start,
@@ -1382,6 +1388,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     NULL,
     false,
     false,
+    HERB_PRISM_NODE_EMPTY,
     opening_tag->location.start,
     end_position,
     errors,
@@ -1763,7 +1770,7 @@ static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
   token_T* eof = parser_consume_expected(parser, TOKEN_EOF, errors);
 
   AST_DOCUMENT_NODE_T* document_node =
-    ast_document_node_init(children, start, eof->location.end, errors, parser->allocator);
+    ast_document_node_init(children, NULL, HERB_PRISM_NODE_EMPTY, start, eof->location.end, errors, parser->allocator);
 
   token_free(eof, parser->allocator);
 

@@ -8,6 +8,10 @@ pub struct ParserOptions {
   pub track_whitespace: bool,
   pub analyze: bool,
   pub strict: bool,
+  pub action_view_helpers: bool,
+  pub prism_nodes: bool,
+  pub prism_nodes_deep: bool,
+  pub prism_program: bool,
 }
 
 impl Default for ParserOptions {
@@ -16,6 +20,10 @@ impl Default for ParserOptions {
       track_whitespace: false,
       analyze: true,
       strict: true,
+      action_view_helpers: false,
+      prism_nodes: false,
+      prism_nodes_deep: false,
+      prism_program: false,
     }
   }
 }
@@ -58,15 +66,15 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
     let mut tokens = Vec::with_capacity(array_size);
 
     for index in 0..array_size {
-      let token_ptr = crate::ffi::hb_array_get(c_tokens, index) as *const token_T;
+      let token_pointer = crate::ffi::hb_array_get(c_tokens, index) as *const token_T;
 
-      if !token_ptr.is_null() {
-        tokens.push(token_from_c(token_ptr));
+      if !token_pointer.is_null() {
+        tokens.push(token_from_c(token_pointer));
       }
     }
 
-    let mut c_tokens_ptr = c_tokens;
-    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T, &mut allocator);
+    let mut c_tokens_pointer = c_tokens;
+    crate::ffi::herb_free_tokens(&mut c_tokens_pointer as *mut *mut hb_array_T, &mut allocator);
     crate::ffi::hb_allocator_destroy(&mut allocator);
 
     Ok(LexResult::new(tokens))
@@ -91,6 +99,10 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       track_whitespace: options.track_whitespace,
       analyze: options.analyze,
       strict: options.strict,
+      action_view_helpers: options.action_view_helpers,
+      prism_program: options.prism_program,
+      prism_nodes: options.prism_nodes,
+      prism_nodes_deep: options.prism_nodes_deep,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -112,6 +124,59 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     crate::ffi::hb_allocator_destroy(&mut allocator);
 
     Ok(result)
+  }
+}
+
+pub struct RubyParseResult {
+  pointer: *mut crate::bindings::herb_ruby_parse_result_T,
+  _source: CString,
+}
+
+impl RubyParseResult {
+  pub fn prettyprint(&self) -> String {
+    unsafe {
+      let mut buffer: crate::ffi::pm_buffer_t = std::mem::zeroed();
+
+      crate::ffi::pm_prettyprint(&mut buffer, &(*self.pointer).parser, (*self.pointer).root);
+
+      let output = if !buffer.value.is_null() && buffer.length > 0 {
+        let slice = std::slice::from_raw_parts(buffer.value as *const u8, buffer.length);
+        String::from_utf8_lossy(slice).into_owned()
+      } else {
+        String::new()
+      };
+
+      crate::ffi::pm_buffer_free(&mut buffer);
+
+      crate::nodes::prettify_prism_tree(&output)
+    }
+  }
+}
+
+impl Drop for RubyParseResult {
+  fn drop(&mut self) {
+    if !self.pointer.is_null() {
+      unsafe {
+        crate::ffi::herb_free_ruby_parse_result(self.pointer);
+      }
+    }
+  }
+}
+
+pub fn parse_ruby(source: &str) -> Result<RubyParseResult, String> {
+  let c_source = CString::new(source).map_err(|e| e.to_string())?;
+
+  unsafe {
+    let result = crate::ffi::herb_parse_ruby(c_source.as_ptr(), source.len());
+
+    if result.is_null() {
+      return Err("Failed to parse Ruby source".to_string());
+    }
+
+    Ok(RubyParseResult {
+      pointer: result,
+      _source: c_source,
+    })
   }
 }
 

@@ -20,6 +20,10 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool track_whitespace;
   bool analyze;
   bool strict;
+  bool action_view_helpers;
+  bool prism_program;
+  bool prism_nodes;
+  bool prism_nodes_deep;
 } parser_options_T;
 
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {

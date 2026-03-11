@@ -1,3 +1,5 @@
+require_relative "../prism_inspect"
+
 module Herb
   module AST
     <%- nodes.each do |node| -%>
@@ -27,6 +29,19 @@ module Herb
         <%- end -%>
       end
 
+      <%- if node.fields.any? { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
+      <%- prism_field = node.fields.find { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
+      #: () -> Prism::node?
+      def deserialized_prism_node
+        prism_node = @<%= prism_field.name %>
+        return nil unless prism_node
+        return nil unless source
+
+        require "prism"
+        Prism.load(source, prism_node).value
+      end
+
+      <%- end -%>
       #: () -> serialized_<%= node.human %>
       def to_hash
         super.merge({
@@ -79,54 +94,89 @@ module Herb
 
         output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")
 
-        <%- node.fields.each do |field| -%>
-        <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
+        <%- node.field_visibilities.each do |visibility| -%>
+        <%- field = visibility.field -%>
+        <%- next if field.always_invisible? -%>
+        <%- if field.conditionally_invisible? -%>
+        if <%= field.name %> && source
+          output += white("<%= visibility.symbol.strip %> prism_node: ")
+          output += Herb::PrismInspect.inspect_prism_serialized(<%= field.name %>, source, "<%= visibility.prefix %>")
+          output += "\n"
+        end
+        <%- else -%>
+        <%- if visibility.dynamic_last? -%>
+        dynamic_symbol = <%= visibility.prism_field_name %> ? "├──" : "└──"
+        <%- end -%>
         <%- case field -%>
         <%- when Herb::Template::StringField -%>
-        output += white("<%= symbol %> <%= field.name %>: ") + green("#{<%= field.name %>.inspect}\n")
+        <%- if visibility.dynamic_last? -%>
+        output += white("#{dynamic_symbol} <%= field.name %>: ") + green("#{<%= field.name %>.inspect}\n")
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ") + green("#{<%= field.name %>.inspect}\n")
+        <%- end -%>
         <%- when Herb::Template::TokenField -%>
-        output += white("<%= symbol %> <%= field.name %>: ")
+        <%- if visibility.dynamic_last? -%>
+        output += white("#{dynamic_symbol} <%= field.name %>: ")
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ")
+        <%- end -%>
         output += <%= field.name %> ? <%= field.name %>.tree_inspect : magenta("∅")
         output += "\n"
         <%- when Herb::Template::BooleanField -%>
-        output += white("<%= symbol %> <%= field.name %>: ")
+        <%- if visibility.dynamic_last? -%>
+        output += white("#{dynamic_symbol} <%= field.name %>: ")
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ")
+        <%- end -%>
         output += [true, false].include?(<%= field.name %>) ? bold(magenta(<%= field.name %>.to_s)) : magenta("∅")
         output += "\n"
         <%- when Herb::Template::LocationField -%>
-        output += white("<%= symbol %> <%= field.name %>: ")
+        <%- if visibility.dynamic_last? -%>
+        output += white("#{dynamic_symbol} <%= field.name %>: ")
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ")
+        <%- end -%>
         output += <%= field.name %> ? dimmed("(location: #{<%= field.name %>.tree_inspect})") : magenta("∅")
         output += "\n"
         <%- when Herb::Template::ElementSourceField -%>
-        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
-        <%- when Herb::Template::PrismNodeField -%>
-        # no-op for <%= field.name %>
-        <%- when Herb::Template::AnalyzedRubyField -%>
-        # no-op for <%= field.name %>
+        <%- if visibility.dynamic_last? -%>
+        output += white("#{dynamic_symbol} <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
+        <%- end -%>
         <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-        output += white("<%= symbol %> <%= field.name %>: ")
+        <%- if visibility.dynamic_last? -%>
+        dynamic_prefix = <%= visibility.prism_field_name %> ? "│   " : "    "
+        output += white("#{dynamic_symbol} <%= field.name %>: ")
         if <%= field.name %>
-          <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
           output += "\n"
-          <%- if (node.fields.last == field) -%>
-          output += "    └── "
-          <%- else -%>
-          output += "│   └── "
-          <%- end -%>
-          output += <%= field.name %>.tree_inspect(indent: indent, depth: depth + 1, depth_limit: depth_limit).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
-          <%- if false -%>
-          <%- unless node.fields.last == field -%>
-          output += "\n"
-          output += white("<%= prefix %>\n")
-          <%- end -%>
-          <%- end -%>
+          output += dynamic_prefix + "└── "
+          output += <%= field.name %>.tree_inspect(indent: indent, depth: depth + 1, depth_limit: depth_limit).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, dynamic_prefix).delete_prefix(dynamic_prefix)
         else
           output += magenta("∅\n")
         end
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ")
+        if <%= field.name %>
+          output += "\n"
+          output += "<%= visibility.prefix %>└── "
+          output += <%= field.name %>.tree_inspect(indent: indent, depth: depth + 1, depth_limit: depth_limit).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= visibility.prefix %>").delete_prefix("<%= visibility.prefix %>")
+        else
+          output += magenta("∅\n")
+        end
+        <%- end -%>
         <%- when Herb::Template::ArrayField -%>
-        output += white("<%= symbol %> <%= field.name %>: ")
-        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>", indent: indent, depth: depth + 1, depth_limit: depth_limit)
+        <%- if visibility.dynamic_last? -%>
+        dynamic_prefix = <%= visibility.prism_field_name %> ? "│   " : "    "
+        output += white("#{dynamic_symbol} <%= field.name %>: ")
+        output += inspect_array(<%= field.name %>, prefix: dynamic_prefix, indent: indent, depth: depth + 1, depth_limit: depth_limit)
+        <%- else -%>
+        output += white("<%= visibility.symbol.strip %> <%= field.name %>: ")
+        output += inspect_array(<%= field.name %>, prefix: "<%= visibility.prefix %>", indent: indent, depth: depth + 1, depth_limit: depth_limit)
+        <%- end -%>
         <%- else -%>
         <%- raise "Unhandled type: #{field.class}" -%>
+        <%- end -%>
         <%- end -%>
         <%- end -%>
         output += "\n"

@@ -854,6 +854,15 @@ export function positionFromOffset(source: string, offset: number): Position {
 }
 
 /**
+ * Creates a Location from a source string, a start offset, and a length.
+ */
+export function locationFromOffset(source: string, startOffset: number, length: number): Location {
+  const start = positionFromOffset(source, startOffset)
+  const end = positionFromOffset(source, startOffset + length)
+  return Location.from(start.line, start.column, end.line, end.column)
+}
+
+/**
  * Checks if a position (line, column) is within a node's location range.
  * @param node - The node to check
  * @param line - Line number (1-based)

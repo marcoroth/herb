@@ -107,6 +107,50 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, strict_prop, &strict_value);
         parser_options.strict = strict_value;
       }
+
+      napi_value action_view_helpers_prop;
+      bool has_action_view_helpers_prop;
+      napi_has_named_property(env, args[1], "action_view_helpers", &has_action_view_helpers_prop);
+
+      if (has_action_view_helpers_prop) {
+        napi_get_named_property(env, args[1], "action_view_helpers", &action_view_helpers_prop);
+        bool action_view_helpers_value;
+        napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
+        parser_options.action_view_helpers = action_view_helpers_value;
+      }
+
+      napi_value prism_nodes_prop;
+      bool has_prism_nodes_prop;
+      napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
+
+      if (has_prism_nodes_prop) {
+        napi_get_named_property(env, args[1], "prism_nodes", &prism_nodes_prop);
+        bool prism_nodes_value;
+        napi_get_value_bool(env, prism_nodes_prop, &prism_nodes_value);
+        parser_options.prism_nodes = prism_nodes_value;
+      }
+
+      napi_value prism_nodes_deep_prop;
+      bool has_prism_nodes_deep_prop;
+      napi_has_named_property(env, args[1], "prism_nodes_deep", &has_prism_nodes_deep_prop);
+
+      if (has_prism_nodes_deep_prop) {
+        napi_get_named_property(env, args[1], "prism_nodes_deep", &prism_nodes_deep_prop);
+        bool prism_nodes_deep_value;
+        napi_get_value_bool(env, prism_nodes_deep_prop, &prism_nodes_deep_value);
+        parser_options.prism_nodes_deep = prism_nodes_deep_value;
+      }
+
+      napi_value prism_program_prop;
+      bool has_prism_program_prop;
+      napi_has_named_property(env, args[1], "prism_program", &has_prism_program_prop);
+
+      if (has_prism_program_prop) {
+        napi_get_named_property(env, args[1], "prism_program", &prism_program_prop);
+        bool prism_program_value;
+        napi_get_value_bool(env, prism_program_prop, &prism_program_value);
+        parser_options.prism_program = prism_program_value;
+      }
     }
   }
 
@@ -241,6 +285,43 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   return result;
 }
 
+napi_value Herb_parse_ruby(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1];
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  if (argc < 1) {
+    napi_throw_error(env, nullptr, "Wrong number of arguments");
+    return nullptr;
+  }
+
+  char* string = CheckString(env, args[0]);
+  if (!string) { return nullptr; }
+
+  herb_ruby_parse_result_T* parse_result = herb_parse_ruby(string, strlen(string));
+
+  if (!parse_result) {
+    free(string);
+    return nullptr;
+  }
+
+  pm_buffer_t buffer = { 0 };
+  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+
+  napi_value result = nullptr;
+
+  if (buffer.length > 0) {
+    void* data;
+    napi_create_buffer_copy(env, buffer.length, buffer.value, &data, &result);
+  }
+
+  pm_buffer_free(&buffer);
+  herb_free_ruby_parse_result(parse_result);
+  free(string);
+
+  return result;
+}
+
 napi_value Herb_version(napi_env env, napi_callback_info info) {
   const char* libherb_version = herb_version();
   const char* libprism_version = herb_prism_version();
@@ -261,6 +342,7 @@ napi_value Init(napi_env env, napi_value exports) {
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "parseRuby", nullptr, Herb_parse_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
   };
 
   napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);

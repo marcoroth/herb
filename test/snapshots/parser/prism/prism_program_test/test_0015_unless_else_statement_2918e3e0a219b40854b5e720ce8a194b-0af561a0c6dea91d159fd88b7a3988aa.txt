@@ -1,0 +1,82 @@
+---
+source: "Parser::Prism::PrismProgramTest#test_0015_unless/else statement"
+input: "<% unless admin? %><%= \"restricted\" %><% else %><%= \"welcome\" %><% end %>"
+options: {prism_program: true}
+---
+@ DocumentNode (location: (1:0)-(1:73))
+├── children: (1 item)
+│   └── @ ERBUnlessNode (location: (1:0)-(1:73))
+│       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+│       ├── content: " unless admin? " (location: (1:2)-(1:17))
+│       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+│       ├── then_keyword: ∅
+│       ├── statements: (1 item)
+│       │   └── @ ERBContentNode (location: (1:19)-(1:38))
+│       │       ├── tag_opening: "<%=" (location: (1:19)-(1:22))
+│       │       ├── content: " "restricted" " (location: (1:22)-(1:36))
+│       │       ├── tag_closing: "%>" (location: (1:36)-(1:38))
+│       │       ├── parsed: true
+│       │       └── valid: true
+│       │
+│       ├── else_clause:
+│       │   └── @ ERBElseNode (location: (1:38)-(1:64))
+│       │       ├── tag_opening: "<%" (location: (1:38)-(1:40))
+│       │       ├── content: " else " (location: (1:40)-(1:46))
+│       │       ├── tag_closing: "%>" (location: (1:46)-(1:48))
+│       │       └── statements: (1 item)
+│       │           └── @ ERBContentNode (location: (1:48)-(1:64))
+│       │               ├── tag_opening: "<%=" (location: (1:48)-(1:51))
+│       │               ├── content: " "welcome" " (location: (1:51)-(1:62))
+│       │               ├── tag_closing: "%>" (location: (1:62)-(1:64))
+│       │               ├── parsed: true
+│       │               └── valid: true
+│       │
+│       │
+│       └── end_node:
+│           └── @ ERBEndNode (location: (1:64)-(1:73))
+│               ├── tag_opening: "<%" (location: (1:64)-(1:66))
+│               ├── content: " end " (location: (1:66)-(1:71))
+│               └── tag_closing: "%>" (location: (1:71)-(1:73))
+│
+│
+└── prism_node:
+    └── @ ProgramNode (location: (1:3)-(1:70))
+        ├── locals: []
+        └── statements:
+            └── @ StatementsNode (location: (1:3)-(1:70))
+                └── body: (1 item)
+                    └── @ UnlessNode (location: (1:3)-(1:70))
+                        ├── keyword_loc: (1:3)-(1:9)
+                        ├── predicate:
+                        │   └── @ CallNode (location: (1:10)-(1:16))
+                        │       ├── receiver: ∅
+                        │       ├── call_operator_loc: ∅
+                        │       ├── name: :admin?
+                        │       ├── message_loc: (1:10)-(1:16)
+                        │       ├── opening_loc: ∅
+                        │       ├── arguments: ∅
+                        │       ├── closing_loc: ∅
+                        │       ├── equal_loc: ∅
+                        │       └── block: ∅
+                        ├── then_keyword_loc: ∅
+                        ├── statements:
+                        │   └── @ StatementsNode (location: (1:23)-(1:35))
+                        │       └── body: (1 item)
+                        │           └── @ StringNode (location: (1:23)-(1:35))
+                        │               ├── opening_loc: (1:23)-(1:24)
+                        │               ├── content_loc: (1:24)-(1:34)
+                        │               ├── closing_loc: (1:34)-(1:35)
+                        │               └── unescaped: "restricted"
+                        ├── else_clause:
+                        │   └── @ ElseNode (location: (1:41)-(1:70))
+                        │       ├── else_keyword_loc: (1:41)-(1:45)
+                        │       ├── statements:
+                        │       │   └── @ StatementsNode (location: (1:52)-(1:61))
+                        │       │       └── body: (1 item)
+                        │       │           └── @ StringNode (location: (1:52)-(1:61))
+                        │       │               ├── opening_loc: (1:52)-(1:53)
+                        │       │               ├── content_loc: (1:53)-(1:60)
+                        │       │               ├── closing_loc: (1:60)-(1:61)
+                        │       │               └── unescaped: "welcome"
+                        │       └── end_keyword_loc: (1:67)-(1:70)
+                        └── end_keyword_loc: (1:67)-(1:70)

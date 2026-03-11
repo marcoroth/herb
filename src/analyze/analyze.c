@@ -1,4 +1,6 @@
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/action_view/tag_helper_handler.h"
+#include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/builders.h"
 #include "../include/analyze/conditional_elements.h"
@@ -472,6 +474,7 @@ static size_t process_case_structure(
       erb_node->content,
       erb_node->tag_closing,
       non_when_non_in_children,
+      HERB_PRISM_NODE_EMPTY,
       in_conditions,
       else_clause,
       end_node,
@@ -492,6 +495,7 @@ static size_t process_case_structure(
     erb_node->content,
     erb_node->tag_closing,
     non_when_non_in_children,
+    HERB_PRISM_NODE_EMPTY,
     when_conditions,
     else_clause,
     end_node,
@@ -607,6 +611,7 @@ static size_t process_begin_structure(
     erb_node->tag_opening,
     erb_node->content,
     erb_node->tag_closing,
+    HERB_PRISM_NODE_EMPTY,
     children,
     rescue_clause,
     else_clause,
@@ -849,9 +854,15 @@ void herb_analyze_parse_tree(
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
     .allocator = allocator,
+    .source = source,
   };
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
+
+  if (options && options->action_view_helpers) {
+    herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);
+  }
+
   herb_transform_conditional_elements(document, allocator);
   herb_transform_conditional_open_tags(document, allocator);
 

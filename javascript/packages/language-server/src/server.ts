@@ -14,6 +14,7 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  HoverParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
@@ -55,10 +56,11 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
+          hoverProvider: true,
         },
       }
 
@@ -171,6 +173,14 @@ export class Server {
       return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
     })
 
+    this.connection.onHover((params: HoverParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return null
+
+      return this.service.hoverService.getHover(document, params.position)
+    })
+
     this.connection.onCodeAction((params: CodeActionParams) => {
       const document = this.service.documentService.get(params.textDocument.uri)
 
@@ -186,8 +196,9 @@ export class Server {
       )
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+      const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {

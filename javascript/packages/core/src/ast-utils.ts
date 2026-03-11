@@ -17,7 +17,8 @@ import {
   HTMLAttributeNode,
   HTMLAttributeNameNode,
   HTMLAttributeValueNode,
-  HTMLCommentNode
+  HTMLCommentNode,
+  WhitespaceNode
 } from "./nodes.js"
 
 import {
@@ -38,6 +39,9 @@ import {
 } from "./node-type-guards.js"
 
 import { Location } from "./location.js"
+import { Range } from "./range.js"
+import { Token } from "./token.js"
+
 import type { Position } from "./position.js"
 
 export type ERBOutputNode = ERBNode & {
@@ -854,5 +858,18 @@ export function createLiteral(content: string): LiteralNode {
     content,
     location: Location.zero,
     errors: [],
+  })
+}
+
+export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): Token {
+  return new Token(value, Range.zero, Location.zero, type)
+}
+
+export function createWhitespaceNode(): WhitespaceNode {
+  return new WhitespaceNode({
+    type: "AST_WHITESPACE_NODE",
+    location: Location.zero,
+    errors: [],
+    value: createSyntheticToken(" "),
   })
 }

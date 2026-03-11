@@ -1,0 +1,71 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0024_link_to with turbo_confirm and string url"
+input: |2-
+<%= link_to "Visit Other Site", "https://rubyonrails.org/", data: { turbo_confirm: "Are you sure?" } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:103))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:103))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Visit Other Site", "https://rubyonrails.org/", data: { turbo_confirm: "Are you sure?" } " (location: (1:3)-(1:101))
+    │   │       ├── tag_closing: "%>" (location: (1:101)-(1:103))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:32)-(1:58))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:58))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:32)-(1:58))
+    │   │           │   │               └── content: "href"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:32)-(1:58))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:32)-(1:58))
+    │   │           │           ├── open_quote: """ (location: (1:32)-(1:58))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:32)-(1:58))
+    │   │           │           │       └── content: "https://rubyonrails.org/"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:58)-(1:58))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:68)-(1:83))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:68)-(1:83))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:68)-(1:83))
+    │   │               │               └── content: "data-turbo-confirm"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:68)-(1:83))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:68)-(1:83))
+    │   │                       ├── open_quote: """ (location: (1:68)-(1:83))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:68)-(1:83))
+    │   │                       │       └── content: "Are you sure?"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:83)-(1:83))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:103))
+    │   │       └── content: "Visit Other Site"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:103)-(1:103))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:103)-(2:0))
+        └── content: "\n"

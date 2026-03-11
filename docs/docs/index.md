@@ -2,11 +2,11 @@
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
-title: "Herb - The HTML+ERB Toolchain"
+title: "Herb - The modern HTML+ERB Toolchain"
 
 hero:
   name: "Herb"
-  text: "The HTML+ERB Toolchain"
+  text: "The modern HTML+ERB Toolchain"
   tagline: "An ecosystem of powerful and seamless developer tools for HTML+ERB templates."
 
   image:

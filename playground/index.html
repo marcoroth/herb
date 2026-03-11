@@ -45,6 +45,11 @@
         <div class="hidden lg:flex lg:flex-1 lg:justify-end">
           <div class="flex flex-row-reserve space-x-4 py-0 items-center">
             <a
+              href="/prism/"
+              class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >Prism Playground &rarr;</a
+            >
+            <a
               href="https://docs.herb-tools.dev"
               class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               target="_blank"
@@ -64,46 +69,9 @@
       <div class="px-3 lg:px-8 h-screen">
         <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mt-6">
-            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-4 mb-2">
-              <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-3 mb-2">
+              <div class="flex items-center text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium">
                 HTML+ERB File
-              </div>
-
-              <div
-                class="flex flex-wrap items-center gap-3 text-sm"
-                data-playground-target="parserOptions"
-              >
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    data-option="track_whitespace"
-                    data-action="change->playground#onOptionChange"
-                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
-                  />
-                  <span class="select-none">Track whitespace</span>
-                </label>
-
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    data-option="strict"
-                    data-action="change->playground#onOptionChange"
-                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
-                    checked
-                  />
-                  <span class="select-none">Strict</span>
-                </label>
-
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    data-option="analyze"
-                    data-action="change->playground#onOptionChange"
-                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
-                    checked
-                  />
-                  <span class="select-none">Analyze</span>
-                </label>
               </div>
 
               <div class="hidden lg:flex items-center gap-4 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] lg:ml-auto">
@@ -126,7 +94,7 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-2">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
                 <div class="relative">
                   <button
                     data-action="click->playground#copyEditorContent"
@@ -258,6 +226,19 @@
                     <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
                   </div>
                 </div>
+
+              <div class="flex items-center gap-0 ml-auto">
+                <a
+                  data-playground-target="switchLink"
+                  href="/"
+                  class="rounded-l-md text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium"
+                >HTML+ERB (Herb)</a>
+                <a
+                  data-playground-target="switchLink"
+                  href="/prism/"
+                  class="rounded-r-md text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 text-sm font-medium"
+                >Ruby (Prism)</a>
+              </div>
               </div>
 
             <div
@@ -406,13 +387,97 @@
               </div>
 
             <div class="mt-2">
-              <pre
-                style="white-space: pre; line-height: 1.3"
+              <div
                 data-viewer-target="parse"
                 data-playground-target="parseViewer"
                 data-action="click->playground#shrinkViewer"
-                class="w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
-              ></pre>
+                class="w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div
+                  class="sticky top-0 z-10 p-3 border-b border-gray-600 flex flex-wrap gap-3 items-center bg-[#282c34]"
+                  data-playground-target="parserOptions"
+                >
+                  <span class="text-sm text-gray-300 mr-1">Parser Options:</span>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Include whitespace-only text nodes in the AST">
+                    <input
+                      type="checkbox"
+                      data-option="track_whitespace"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Track whitespace</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable strict HTML parsing mode with additional validation">
+                    <input
+                      type="checkbox"
+                      data-option="strict"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      checked
+                    />
+                    <span class="select-none">Strict</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Run analysis passes on the parse tree (error detection, tag matching)">
+                    <input
+                      type="checkbox"
+                      data-option="analyze"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      checked
+                    />
+                    <span class="select-none">Analyze</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Transform Action View tag helpers (tag, content_tag, link_to)">
+                    <input
+                      type="checkbox"
+                      data-option="action_view_helpers"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Action View helpers</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
+                    <input
+                      type="checkbox"
+                      data-option="prism_program"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Prism program</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Attach Prism AST subtrees to each ERB node for its Ruby content">
+                    <input
+                      type="checkbox"
+                      data-option="prism_nodes"
+                      data-action="change->playground#onOptionChange change->playground#onPrismNodesChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Prism nodes</span>
+                  </label>
+
+                  <label data-playground-target="prismNodesDeepLabel" class="hidden flex items-center gap-1.5 text-gray-300 text-sm" title="Include nested body content in control-flow Prism nodes (e.g. if/else body statements)">
+                    <input
+                      type="checkbox"
+                      data-option="prism_nodes_deep"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Prism nodes (deep)</span>
+                  </label>
+                </div>
+
+                <pre
+                  data-playground-target="parseOutput"
+                  class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4] highlight"
+                  style="white-space: pre; line-height: 1.3"
+                ></pre>
+              </div>
 
               <pre
                 style="white-space: pre; line-height: 1.3"

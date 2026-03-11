@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0026_link_to with path helper with multiple arguments"
+input: |2-
+<%= link_to "Nonsense search", searches_path(foo: "bar", baz: "quux") %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:72))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:72))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Nonsense search", searches_path(foo: "bar", baz: "quux") " (location: (1:3)-(1:70))
+    │   │       ├── tag_closing: "%>" (location: (1:70)-(1:72))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:31)-(1:69))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:69))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:31)-(1:69))
+    │   │               │               └── content: "href"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:31)-(1:69))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:31)-(1:69))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:31)-(1:69))
+    │   │                       │       └── content: "searches_path(foo: \"bar\", baz: \"quux\")"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:72))
+    │   │       └── content: "Nonsense search"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:72)-(1:72))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:72)-(2:0))
+        └── content: "\n"

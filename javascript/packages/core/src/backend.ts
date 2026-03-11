@@ -11,6 +11,8 @@ interface LibHerbBackendFunctions {
   extractRuby: (source: string, options?: ExtractRubyOptions) => string
   extractHTML: (source: string) => string
 
+  parseRuby: (source: string) => Uint8Array | null
+
   version: () => string
 }
 
@@ -21,6 +23,7 @@ const expectedFunctions = [
   "lex",
   "extractRuby",
   "extractHTML",
+  "parseRuby",
   "version",
 ] as const
 

@@ -1,0 +1,49 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:43))
+└── children: (1 item)
+    └── @ ERBForNode (location: (1:0)-(1:43))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " for item in items " (location: (1:2)-(1:21))
+        ├── tag_closing: "%>" (location: (1:21)-(1:23))
+        ├── prism_node: 
+        │   └── @ ForNode (location: (0,3)-(0,40))
+        │       ├── index:
+        │       │   @ LocalVariableTargetNode (location: (0,7)-(0,11))
+        │       │   ├── name: :item
+        │       │   ├── depth: 0
+        │       ├── collection:
+        │       │   @ CallNode (location: (0,15)-(0,20))
+        │       │   ├── CallNodeFlags: variable_call, ignore_visibility
+        │       │   ├── receiver: nil
+        │       │   ├── call_operator_loc: nil
+        │       │   ├── name: :items
+        │       │   ├── message_loc: (0,15)-(0,20) = "items"
+        │       │   ├── opening_loc: nil
+        │       │   ├── arguments: nil
+        │       │   ├── closing_loc: nil
+        │       │   ├── equal_loc: nil
+        │       │   └── block: nil
+        │       ├── statements: nil
+        │       ├── for_keyword_loc: (0,3)-(0,6) = "for"
+        │       ├── in_keyword_loc: (0,12)-(0,14) = "in"
+        │       ├── do_keyword_loc: nil
+        │       └── end_keyword_loc: (0,37)-(0,40) = "end"
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:23)-(1:34))
+        │       ├── tag_opening: "<%=" (location: (1:23)-(1:26))
+        │       ├── content: " item " (location: (1:26)-(1:32))
+        │       ├── tag_closing: "%>" (location: (1:32)-(1:34))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ LocalVariableReadNode (location: (0,27)-(0,31))
+        │               ├── name: :item
+        │               └── depth: 0
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:34)-(1:43))
+                ├── tag_opening: "<%" (location: (1:34)-(1:36))
+                ├── content: " end " (location: (1:36)-(1:41))
+                └── tag_closing: "%>" (location: (1:41)-(1:43))

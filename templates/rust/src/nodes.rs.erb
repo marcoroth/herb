@@ -3,6 +3,27 @@ use crate::{Location, Token};
 use crate::union_types::*;
 use colored::*;
 
+pub(crate) fn prettify_prism_tree(input: &str) -> String {
+  let input = input.replace("+-- ", "├── ").replace("|   ", "│   ");
+  let lines: Vec<&str> = input.lines().collect();
+  let mut result: Vec<String> = lines.iter().map(|l| l.to_string()).collect();
+
+  for i in 0..result.len() {
+    if let Some(position) = result[i].find("├── ") {
+      let indent = &result[i][..position];
+      let is_last = !lines[i + 1..].iter().any(|next| {
+        next.starts_with(&format!("{}├── ", indent)) || next.starts_with(&format!("{}│   ", indent))
+      });
+
+      if is_last {
+        result[i] = format!("{}└── {}", indent, &result[i][position + "├── ".len()..]);
+      }
+    }
+  }
+
+  result.join("\n")
+}
+
 fn escape_string(s: &str) -> String {
   s.replace('\\', "\\\\")
     .replace('\n', "\\n")
@@ -297,6 +318,12 @@ pub struct <%= node.name %> {
   pub <%= field.name %>: String,
   <%- when Herb::Template::LocationField -%>
   pub <%= field.name %>: Option<Location>,
+  <%- when Herb::Template::PrismSerializedField -%>
+  pub <%= field.name %>: Option<Vec<u8>>,
+  <%- when Herb::Template::PrismNodeField -%>
+  pub <%= field.name %>: Option<String>,
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
+  // no-op for <%= field.name %>
   <%- end -%>
   <%- end -%>
 }
@@ -393,26 +420,83 @@ impl Node for <%= node.name %> {
     ));
     output.push_str(&format_errors_field(&self.errors, &<%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>.white().to_string()));
     <%- if node.fields.any? -%>
-    <%- node.fields.each_with_index do |field, index| -%>
-    <%- is_last = index == node.fields.length - 1 -%>
-    <%- symbol = is_last ? "└── " : "├── " -%>
+    <%- node.field_visibilities.each do |visibility| -%>
+    <%- field = visibility.field -%>
+    <%- next if field.always_invisible? -%>
+    <%- if field.conditionally_invisible? -%>
+    <%- case field -%>
+    <%- when Herb::Template::PrismSerializedField -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|b| format!("({} bytes)", b.len()).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
+    <%- when Herb::Template::PrismNodeField -%>
+    if let Some(ref prism_string) = self.<%= field.name %> {
+      let prefix = "<%= visibility.prefix %>";
+      output.push_str(&format!("{}{}: \n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white()));
+      output.push_str(&format!("{}└── ", prefix));
+      let prettified = prettify_prism_tree(prism_string);
+      let indented = prettified.lines().enumerate().map(|(i, line)| {
+        if i == 0 { line.to_string() } else { format!("{}    {}", prefix, line) }
+      }).collect::<Vec<_>>().join("\n");
+      output.push_str(&indented);
+      output.push('\n');
+    }
+    <%- end -%>
+    <%- else -%>
+    <%- if visibility.dynamic_last? -%>
+    { let is_last = self.<%= visibility.prism_field_name %>.is_none(); let symbol = if is_last { "└── " } else { "├── " };
+    <%- end -%>
     <%- case field -%>
     <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
-    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_string_value(&self.<%= field.name %>)));
-    <%- when Herb::Template::TokenField -%>
-    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_token_value(&self.<%= field.name %>)));
-    <%- when Herb::Template::BooleanField -%>
-    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
-    <%- when Herb::Template::ArrayField -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
-    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
-    <%- if field.union_kind -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_union_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>, |n: &<%= field.union_type_name %>| n.tree_inspect())));
+    <%- if visibility.dynamic_last? -%>
+    output.push_str(&format!("{}{}: {}\n", symbol.white(), "<%= field.name %>".white(), format_string_value(&self.<%= field.name %>)));
     <%- else -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
+    output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_string_value(&self.<%= field.name %>)));
+    <%- end -%>
+    <%- when Herb::Template::TokenField -%>
+    <%- if visibility.dynamic_last? -%>
+    output.push_str(&format!("{}{}: {}\n", symbol.white(), "<%= field.name %>".white(), format_token_value(&self.<%= field.name %>)));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_token_value(&self.<%= field.name %>)));
+    <%- end -%>
+    <%- when Herb::Template::BooleanField -%>
+    <%- if visibility.dynamic_last? -%>
+    output.push_str(&format!("{}{}: {}\n", symbol.white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
+    <%- end -%>
+    <%- when Herb::Template::ArrayField -%>
+    <%- if visibility.dynamic_last? -%>
+    let child_prefix = if is_last { "    " } else { "│   " };
+    output.push_str(&format!("{}{}: {}", symbol.white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &child_prefix.white().to_string())));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= visibility.prefix %>".white().to_string())));
+    <%- end -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+    <%- if visibility.dynamic_last? -%>
+    let child_prefix = if is_last { "    " } else { "│   " };
+    <%- if field.union_kind -%>
+    output.push_str(&format!("{}{}: {}", symbol.white(), "<%= field.name %>".white(), format_union_node_value(&self.<%= field.name %>, &child_prefix.white().to_string(), !is_last, |n: &<%= field.union_type_name %>| n.tree_inspect())));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}", symbol.white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &child_prefix.white().to_string(), !is_last)));
+    <%- end -%>
+    <%- else -%>
+    <%- if field.union_kind -%>
+    output.push_str(&format!("{}{}: {}", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_union_node_value(&self.<%= field.name %>, &"<%= visibility.prefix %>".white().to_string(), <%= !visibility.static_last? %>, |n: &<%= field.union_type_name %>| n.tree_inspect())));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= visibility.prefix %>".white().to_string(), <%= !visibility.static_last? %>)));
+    <%- end -%>
     <%- end -%>
     <%- when Herb::Template::LocationField -%>
-    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|l| format!("(location: {})", l).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
+    <%- if visibility.dynamic_last? -%>
+    output.push_str(&format!("{}{}: {}\n", symbol.white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|l| format!("(location: {})", l).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
+    <%- else -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|l| format!("(location: {})", l).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
+    <%- end -%>
+    <%- else -%>
+    <% raise "Unhandled class #{field.class}" %>
+    <%- end -%>
+    <%- if visibility.dynamic_last? -%>
+    }
+    <%- end -%>
     <%- end -%>
     <%- end -%>
     <%- else -%>

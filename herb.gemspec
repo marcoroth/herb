@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
-  spec.summary = "The HTML+ERB Toolchain"
+  spec.summary = "The modern HTML+ERB Toolchain"
   spec.description = "A collection of powerful and seamless developer tools for HTML+ERB templates."
   spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"

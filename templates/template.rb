@@ -7,12 +7,61 @@ require "yaml"
 
 module Herb
   module Template
+    def self.underscore(name)
+      name
+        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+    end
+
+    ALWAYS_INVISIBLE_FIELD_CLASSES = ["PrismContextField", "AnalyzedRubyField"].freeze
+    CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
+    ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
+
     class Field
       attr_reader :name, :options
 
       def initialize(name:, **options)
         @name = name
         @options = options
+      end
+
+      def always_invisible?
+        ALWAYS_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def conditionally_invisible?
+        CONDITIONALLY_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def invisible?
+        ALL_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+    end
+
+    class FieldVisibility
+      attr_reader :field, :prism_field_name
+
+      def initialize(field:, static_last:, dynamic_last:, prism_field_name:)
+        @field = field
+        @static_last = static_last
+        @dynamic_last = dynamic_last
+        @prism_field_name = prism_field_name
+      end
+
+      def static_last?
+        @static_last
+      end
+
+      def dynamic_last?
+        @dynamic_last
+      end
+
+      def symbol
+        @static_last ? "└── " : "├── "
+      end
+
+      def prefix
+        @static_last ? "    " : "│   "
       end
     end
 
@@ -42,7 +91,7 @@ module Herb
 
       def c_item_type
         if specific_kind
-          "AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_T*"
+          "AST_#{Template.underscore(specific_kind).upcase}_T*"
         else
           "void*"
         end
@@ -65,7 +114,7 @@ module Herb
 
       def c_type
         if specific_kind
-          "struct AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_STRUCT*"
+          "struct AST_#{Template.underscore(specific_kind).upcase}_STRUCT*"
         else
           "AST_NODE_T*"
         end
@@ -195,11 +244,33 @@ module Herb
 
     class PrismNodeField < Field
       def ruby_type
-        "Prism::Node"
+        "String"
       end
 
       def c_type
-        "pm_node_t*"
+        "herb_prism_node_T"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
+    class PrismContextField < Field
+      def ruby_type
+        "nil"
+      end
+
+      def c_type
+        "herb_prism_context_T*"
       end
     end
 
@@ -223,13 +294,35 @@ module Herb
       end
     end
 
+    class PrismSerializedField < Field
+      def ruby_type
+        "String"
+      end
+
+      def c_type
+        "prism_serialized_T"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
     class ElementSourceField < Field
       def ruby_type
         "String"
       end
 
       def c_type
-        "element_source_t"
+        "hb_string_T"
       end
     end
 
@@ -250,20 +343,22 @@ module Herb
 
       def field_type_for(name)
         case name
-        when "array"          then ArrayField
-        when "node"           then NodeField
-        when "borrowed_node"  then BorrowedNodeField
-        when "token"          then TokenField
-        when "token_type"     then TokenTypeField
-        when "string"         then StringField
-        when "position"       then PositionField
-        when "location"       then LocationField
-        when "size_t"         then SizeTField
-        when "boolean"        then BooleanField
-        when "prism_node"     then PrismNodeField
-        when "analyzed_ruby"  then AnalyzedRubyField
-        when "element_source" then ElementSourceField
-        when "void*"          then VoidPointerField
+        when "array"            then ArrayField
+        when "node"             then NodeField
+        when "borrowed_node"    then BorrowedNodeField
+        when "token"            then TokenField
+        when "token_type"       then TokenTypeField
+        when "string"           then StringField
+        when "position"         then PositionField
+        when "location"         then LocationField
+        when "size_t"           then SizeTField
+        when "boolean"          then BooleanField
+        when "prism_node"       then PrismNodeField
+        when "prism_context"    then PrismContextField
+        when "analyzed_ruby"    then AnalyzedRubyField
+        when "prism_serialized" then PrismSerializedField
+        when "element_source"   then ElementSourceField
+        when "void*"            then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end
@@ -279,7 +374,7 @@ module Herb
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
 
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = camelized.upcase
         @struct_type = "#{camelized.upcase}_T"
         @struct_name = "#{camelized.upcase}_STRUCT"
@@ -306,7 +401,7 @@ module Herb
 
       def initialize(config)
         @name = config.fetch("name")
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = "AST_#{camelized.upcase}"
         @struct_type = "AST_#{camelized.upcase}_T"
         @struct_name = "AST_#{camelized.upcase}_STRUCT"
@@ -323,6 +418,34 @@ module Herb
 
       def c_type
         @struct_type
+      end
+
+      def field_visibilities
+        @field_visibilities ||= begin
+          prism_fields = @fields.select(&:conditionally_invisible?)
+          last_prism_field_name = prism_fields.last&.name
+
+          @fields.each_with_index.map do |field, index|
+            remaining = @fields[(index + 1)..] || []
+            all_remaining_always_invisible = remaining.all?(&:always_invisible?)
+            all_remaining_invisible = remaining.all?(&:invisible?)
+            any_remaining_conditionally_invisible = remaining.any?(&:conditionally_invisible?)
+
+            static_last = all_remaining_always_invisible
+            dynamic_last = !static_last && all_remaining_invisible && any_remaining_conditionally_invisible
+
+            FieldVisibility.new(
+              field: field,
+              static_last: static_last,
+              dynamic_last: dynamic_last,
+              prism_field_name: dynamic_last ? last_prism_field_name : nil
+            )
+          end
+        end
+      end
+
+      def field_visibility(index)
+        field_visibilities[index]
       end
     end
 
