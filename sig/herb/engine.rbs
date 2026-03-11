@@ -28,6 +28,9 @@ module Herb
     end
 
     class InvalidRubyError < CompilationError
+      attr_reader compiled_source: untyped
+
+      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
     end
 
     def initialize: (untyped input, ?untyped properties) -> untyped

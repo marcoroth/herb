@@ -462,6 +462,24 @@ class Herb::CLI
       end
 
       exit(0)
+    rescue Herb::Engine::InvalidRubyError => e
+      if json
+        result = {
+          success: false,
+          error: e.message,
+          source: e.compiled_source,
+          filename: @file,
+        }
+        puts result.to_json
+      elsif silent
+        puts "Failed"
+      else
+        puts e.compiled_source if e.compiled_source
+        puts
+        puts e.message
+      end
+
+      exit(1)
     rescue Herb::Engine::CompilationError => e
       if json
         result = {
