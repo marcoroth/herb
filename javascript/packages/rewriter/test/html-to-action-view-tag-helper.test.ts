@@ -255,6 +255,102 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     })
   })
 
+  describe("turbo_frame_tag for turbo-frame elements", () => {
+    test("turbo-frame with id and body", () => {
+      const input = dedent`
+        <turbo-frame id="tray">
+          Content
+        </turbo-frame>
+      `
+
+      const expected = dedent`
+        <%= turbo_frame_tag "tray" do %>
+          Content
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo-frame with id only", () => {
+      expect(transform('<turbo-frame id="tray"></turbo-frame>')).toBe(
+        '<%= turbo_frame_tag "tray" %>'
+      )
+    })
+
+    test("turbo-frame with id and src", () => {
+      expect(transform('<turbo-frame id="tray" src="/trays/1"></turbo-frame>')).toBe(
+        '<%= turbo_frame_tag "tray", src: "/trays/1" %>'
+      )
+    })
+
+    test("turbo-frame with id, src and target", () => {
+      expect(transform('<turbo-frame id="tray" src="/trays/1" target="_top"></turbo-frame>')).toBe(
+        '<%= turbo_frame_tag "tray", src: "/trays/1", target: "_top" %>'
+      )
+    })
+
+    test("turbo-frame with id and class", () => {
+      const input = dedent`
+        <turbo-frame id="tray" class="frame">
+          Content
+        </turbo-frame>
+      `
+
+      const expected = dedent`
+        <%= turbo_frame_tag "tray", class: "frame" do %>
+          Content
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo-frame with id and data attributes", () => {
+      expect(transform('<turbo-frame id="tray" data-controller="frame"></turbo-frame>')).toBe(
+        '<%= turbo_frame_tag "tray", data: { controller: "frame" } %>'
+      )
+    })
+
+    test("turbo-frame with ERB id", () => {
+      const input = dedent`
+        <turbo-frame id="<%= dom_id(post) %>">
+          Content
+        </turbo-frame>
+      `
+
+      const expected = dedent`
+        <%= turbo_frame_tag dom_id(post) do %>
+          Content
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo-frame with loading lazy", () => {
+      expect(transform('<turbo-frame id="tray" src="/trays/1" loading="lazy"></turbo-frame>')).toBe(
+        '<%= turbo_frame_tag "tray", src: "/trays/1", loading: "lazy" %>'
+      )
+    })
+
+    test("turbo-frame without id", () => {
+      const input = dedent`
+        <turbo-frame>
+          Content
+        </turbo-frame>
+      `
+
+      const expected = dedent`
+        <%= turbo_frame_tag do %>
+          Content
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+  })
+
   describe("ERB in attribute values", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(
