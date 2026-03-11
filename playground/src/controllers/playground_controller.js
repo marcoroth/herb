@@ -14,6 +14,7 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { Herb } from "@herb-tools/browser"
 import { Linter } from "@herb-tools/linter"
 import { analyze } from "../analyze"
+import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
 window.analyze = analyze
@@ -48,10 +49,30 @@ const exampleFile = dedent`
   <div>
 `
 
+const rubyExampleFile = dedent`
+  class User
+    attr_reader :name, :email
+
+    def initialize(name, email)
+      @name = name
+      @email = email
+    end
+
+    def greeting
+      "Hello, #{name}!"
+    end
+  end
+`
+
 export default class extends Controller {
+  static values = {
+    mode: { type: String, default: "erb" },
+  }
+
   static targets = [
     "input",
     "parseViewer",
+    "parseOutput",
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
@@ -98,7 +119,16 @@ export default class extends Controller {
     "infoCount",
     "commitHash",
     "prismNodesDeepLabel",
+    "switchLink",
   ]
+
+  get isRubyMode() {
+    return this.modeValue === "ruby"
+  }
+
+  get currentExampleFile() {
+    return this.isRubyMode ? rubyExampleFile : exampleFile
+  }
 
   connect() {
     this.currentDiagnosticsFilter = this.restoreDiagnosticsFilter()
@@ -114,16 +144,20 @@ export default class extends Controller {
 
     this.restoreInput()
     this.restoreActiveTab()
-    this.restoreParserOptions()
-    this.restorePrinterOptions()
-    this.restoreFormatterOptions()
+
+    if (!this.isRubyMode) {
+      this.restoreParserOptions()
+      this.restorePrinterOptions()
+      this.restoreFormatterOptions()
+    }
+
     this.inputTarget.focus()
     this.load()
 
     this.urlUpdatedFromChangeEvent = false
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
-      language: "erb",
+      language: this.isRubyMode ? "ruby" : "erb",
       theme: this.isDarkMode ? 'vs-dark' : 'vs',
       automaticLayout: true,
       minimap: { enabled: false },
@@ -160,6 +194,7 @@ export default class extends Controller {
     window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
 
+    this.setupSwitchLinks()
     this.setupThemeListener()
     this.setupTooltip()
     this.setupAutofixTooltip()
@@ -179,6 +214,31 @@ export default class extends Controller {
     }
 
     return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  setupSwitchLinks() {
+    if (!this.hasSwitchLinkTarget) return
+
+    const isEmbedded = window.frameElement
+
+    if (isEmbedded) {
+      const linkMap = {
+        "/": "/playground/",
+        "/prism/": "/playground/prism",
+      }
+
+      this.switchLinkTargets.forEach(link => {
+        const href = link.getAttribute("href")
+        const parentHref = linkMap[href]
+
+        if (parentHref) {
+          link.addEventListener("click", (event) => {
+            event.preventDefault()
+            window.parent.location.href = parentHref
+          })
+        }
+      })
+    }
   }
 
   setupThemeListener() {
@@ -221,12 +281,14 @@ export default class extends Controller {
   updateURL() {
     window.parent.location.hash = this.compressedValue
 
-    const options = this.getParserOptions()
-    const printerOptions = this.getPrinterOptions()
-    const formatterOptions = this.getFormatterOptions()
-    this.setOptionsInURL(options)
-    this.setPrinterOptionsInURL(printerOptions)
-    this.setFormatterOptionsInURL(formatterOptions)
+    if (!this.isRubyMode) {
+      const options = this.getParserOptions()
+      const printerOptions = this.getPrinterOptions()
+      const formatterOptions = this.getFormatterOptions()
+      this.setOptionsInURL(options)
+      this.setPrinterOptionsInURL(printerOptions)
+      this.setFormatterOptionsInURL(formatterOptions)
+    }
   }
 
   async insert(event) {
@@ -238,9 +300,9 @@ export default class extends Controller {
     }
 
     if (this.editor) {
-      this.editor.setValue(exampleFile)
+      this.editor.setValue(this.currentExampleFile)
     } else {
-      this.inputTarget.value = exampleFile
+      this.inputTarget.value = this.currentExampleFile
     }
 
     const button = this.getClosestButton(event.target)
@@ -298,7 +360,7 @@ export default class extends Controller {
 
     switch(activeViewer) {
       case 'parse':
-        content = this.parseViewerTarget.textContent
+        content = this.parseOutputTarget.textContent
         break
       case 'lex':
         content = this.lexViewerTarget.textContent
@@ -584,7 +646,7 @@ export default class extends Controller {
   }
 
   clearTreeLocationHighlights() {
-    this.parseViewerTarget
+    this.parseOutputTarget
       .querySelectorAll(".tree-location-highlight")
       .forEach((element) => {
         element.classList.remove("tree-location-highlight")
@@ -593,7 +655,7 @@ export default class extends Controller {
 
   get treeLocations() {
     return Array.from(
-      this.parseViewerTarget?.querySelectorAll(".token.location") || [],
+      this.parseOutputTarget?.querySelectorAll(".token.location") || [],
     ).map((locationElement) => {
       const element = locationElement.previousElementSibling
       const location = Array.from(
@@ -614,6 +676,8 @@ export default class extends Controller {
   }
 
   async formatEditor(event) {
+    if (this.isRubyMode) return
+
     const button = this.getClosestButton(event.target)
 
     if (button.disabled) {
@@ -647,6 +711,8 @@ export default class extends Controller {
   }
 
   async autofixEditor(event) {
+    if (this.isRubyMode) return
+
     const button = this.getClosestButton(event.target)
 
     if (button.disabled) {
@@ -702,6 +768,11 @@ export default class extends Controller {
     this.updateURL()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.isRubyMode) {
+      return this.analyzeRuby(value)
+    }
+
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
@@ -825,11 +896,11 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseViewerTarget) {
-      this.parseViewerTarget.classList.add("language-tree")
-      this.parseViewerTarget.textContent = result.string
+    if (this.hasParseOutputTarget) {
+      this.parseOutputTarget.classList.add("language-tree")
+      this.parseOutputTarget.textContent = result.string
 
-      Prism.highlightElement(this.parseViewerTarget)
+      Prism.highlightElement(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -989,6 +1060,95 @@ export default class extends Controller {
     }
   }
 
+  async analyzeRuby(value) {
+    const result = await analyzeRuby(Herb, value)
+
+    this.updatePosition(1, 0, value.length)
+
+    if (this.hasTimeTarget) {
+      if (result.duration.toFixed(2) === 0.0) {
+        this.timeTarget.textContent = `(in < 0.00 ms)`
+      } else {
+        this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
+      }
+    }
+
+    if (this.hasVersionTarget) {
+      const fullVersion = result.version
+      let displayVersion = fullVersion
+
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        displayVersion = fullVersion.split(',').map(component => {
+          if (component.includes('libprism')) {
+            return component
+          }
+
+          return component.replace(/@[\d]+\.[\d]+\.[\d]+/g, `@${commitInfo.hash}`)
+        }).join(',')
+      }
+
+      const shortVersion = displayVersion.split(',')[0]
+
+      const icon = this.versionTarget.querySelector('i')
+      if (icon) {
+        const textNodes = Array.from(this.versionTarget.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)
+        textNodes.forEach(node => node.remove())
+        this.versionTarget.insertBefore(document.createTextNode(shortVersion), icon)
+      } else {
+        this.versionTarget.textContent = shortVersion
+      }
+
+      this.versionTarget.title = displayVersion
+    }
+
+    if (this.hasCommitHashTarget) {
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        if (commitInfo.prNumber) {
+          const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
+
+          this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
+          this.commitHashTarget.href = prUrl
+          this.commitHashTarget.title = `View PR #${commitInfo.prNumber} on GitHub (commit ${commitInfo.hash})`
+        } else {
+          const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
+
+          if (commitInfo.ahead > 0) {
+            this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+          } else {
+            this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
+          }
+
+          this.commitHashTarget.href = githubUrl
+          this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+        }
+      } else {
+        this.commitHashTarget.textContent = 'unknown'
+        this.commitHashTarget.removeAttribute('href')
+        this.commitHashTarget.removeAttribute('title')
+      }
+    }
+
+    if (this.hasParseOutputTarget) {
+      this.parseOutputTarget.classList.add("language-tree")
+      this.parseOutputTarget.textContent = result.string
+
+      Prism.highlightElement(this.parseOutputTarget)
+
+      this.treeLocations.forEach(({ element, locationElement, location }) => {
+        this.setupHoverListener(locationElement, location)
+        this.setupHoverListener(element, location)
+
+        if (element.classList.contains("string")) {
+          this.setupHoverListener(element.previousElementSibling, location)
+        }
+      })
+    }
+  }
+
   get compressedValue() {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     return lz.compressToEncodedURIComponent(value)
@@ -1002,6 +1162,7 @@ export default class extends Controller {
 
   getParserOptions() {
     const options = {}
+    if (!this.hasParserOptionsTarget) return options
     const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
 
     optionInputs.forEach(input => {
@@ -1017,6 +1178,7 @@ export default class extends Controller {
   }
 
   setParserOptions(options) {
+    if (!this.hasParserOptionsTarget) return
     const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
 
     optionInputs.forEach(input => {
