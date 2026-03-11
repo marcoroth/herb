@@ -372,7 +372,7 @@ module Herb
         code = node.content.value.strip
 
         if erb_output?(opening)
-          process_erb_output(opening, code)
+          process_erb_output(node, opening, code)
         else
           apply_trim(node, code)
         end
@@ -487,9 +487,11 @@ module Herb
         search_index >= 0 ? tokens[search_index] : nil
       end
 
-      def process_erb_output(opening, code)
+      def process_erb_output(node, opening, code)
+        has_right_trim = node.tag_closing&.value == "-%>"
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
+        @trim_next_whitespace = true if has_right_trim
       end
 
       def should_escape_output?(opening)
