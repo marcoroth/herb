@@ -148,5 +148,26 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "expression tag with right trim removes following newline" do
+      template = "<%= \"hello\" -%>\nworld"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "expression tag with right trim inline" do
+      template = "<%= \"hello\" -%> world"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "expression tag with right trim as no-op for newline control" do
+      template = "2024-07-09 with the filters: \"archived:false\"<%= -%>.\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end
