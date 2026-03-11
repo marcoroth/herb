@@ -81,6 +81,18 @@ Install the Herb gem via RubyGems:
 gem install herb
 ```
 
+### Installing from a Git branch
+
+To test a branch before it's released (e.g. from a fork), add both `prism` and `herb` to your Gemfile:
+
+```ruby
+gem "prism", github: "ruby/prism", tag: "v1.9.0"
+gem "herb", github: "fork/herb", branch: "my-branch"
+```
+
+The `prism` gem is required because Herb's native C extension compiles against
+Prism's C source, which is vendored automatically during installation.
+
 For detailed information, like how you can use Herb programmatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
 
 Basic usage to analyze all HTML+ERB files in your project:
