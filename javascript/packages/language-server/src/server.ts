@@ -56,7 +56,7 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
@@ -196,8 +196,9 @@ export class Server {
       )
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+      const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {

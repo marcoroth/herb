@@ -179,23 +179,25 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
   }
 
   private buildTagContent(tag: string, node: HTMLElementNode, attributes: string, isInlineContent: boolean): string {
+    const methodName = dashToUnderscore(tag)
+
     if (node.is_void) {
       return attributes
-        ? ` tag.${tag} ${attributes} `
-        : ` tag.${tag} `
+        ? ` tag.${methodName} ${attributes} `
+        : ` tag.${methodName} `
     }
 
     if (isInlineContent && isHTMLTextNode(node.body[0])) {
       const textContent = node.body[0].content
 
       return attributes
-        ? ` tag.${tag} "${textContent}", ${attributes} `
-        : ` tag.${tag} "${textContent}" `
+        ? ` tag.${methodName} "${textContent}", ${attributes} `
+        : ` tag.${methodName} "${textContent}" `
     }
 
     return attributes
-      ? ` tag.${tag} ${attributes} do `
-      : ` tag.${tag} do `
+      ? ` tag.${methodName} ${attributes} do `
+      : ` tag.${methodName} do `
   }
 
   private buildTurboFrameTagContent(node: HTMLElementNode, attributes: string, id: string | null, isInlineContent: boolean): string {
