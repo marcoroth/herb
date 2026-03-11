@@ -304,10 +304,7 @@ module Herb
                 else
                   ";"
                 end
-      @src << " " << code_stripped
-      @src << "\n" if self.class.comment?(code_stripped)
-      @src << (escaped ? "))" : ")")
-      @src << (trailing_newline ? "\n" : ";")
+      end
 
       @buffer_on_stack = false
     end
