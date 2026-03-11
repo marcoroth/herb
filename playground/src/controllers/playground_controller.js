@@ -97,6 +97,7 @@ export default class extends Controller {
     "warningCount",
     "infoCount",
     "commitHash",
+    "prismNodesDeepLabel",
   ]
 
   connect() {
@@ -1028,11 +1029,24 @@ export default class extends Controller {
         }
       }
     })
+
+    if (this.hasPrismNodesDeepLabelTarget) {
+      const prismNodesInput = this.parserOptionsTarget.querySelector('input[data-option="prism_nodes"]')
+      this.prismNodesDeepLabelTarget.classList.toggle("hidden", !prismNodesInput?.checked)
+    }
   }
 
   onOptionChange(_event) {
     this.updateURL()
     this.analyze()
+  }
+
+  onPrismNodesChange(event) {
+    const checked = event.target.checked
+
+    if (this.hasPrismNodesDeepLabelTarget) {
+      this.prismNodesDeepLabelTarget.classList.toggle("hidden", !checked)
+    }
   }
 
   onPrinterOptionChange(_event) {
@@ -1089,7 +1103,10 @@ export default class extends Controller {
       track_whitespace: false,
       analyze: true,
       strict: true,
-      actionViewHelpers: false,
+      action_view_helpers: false,
+      prism_program: false,
+      prism_nodes: false,
+      prism_nodes_deep: false,
     }
 
     const nonDefaultOptions = {}

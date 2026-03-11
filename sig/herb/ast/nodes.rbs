@@ -4,14 +4,23 @@ module Herb
   module AST
     # : type serialized_document_node = {
     # |  children: Array[Herb::AST::Node],
+    # |  prism_context: nil,
+    # |  prism_node: String?,
     # | }
     class DocumentNode < Node
       include Colors
 
       attr_reader children: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      attr_reader prism_context: nil
+
+      attr_reader prism_node: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
@@ -756,6 +765,7 @@ module Herb
     # |  analyzed_ruby: nil,
     # |  parsed: bool,
     # |  valid: bool,
+    # |  prism_node: String?,
     # | }
     class ERBContentNode < Node
       include Colors
@@ -772,8 +782,13 @@ module Herb
 
       attr_reader valid: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
+      attr_reader prism_node: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
@@ -874,6 +889,7 @@ module Herb
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
     # |  then_keyword: Herb::Location?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?,
     # |  end_node: Herb::AST::ERBEndNode?,
@@ -889,14 +905,19 @@ module Herb
 
       attr_reader then_keyword: Herb::Location?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode), Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBIfNode | Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode), Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBIfNode | Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
@@ -921,6 +942,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # |  body: Array[Herb::AST::Node],
     # |  end_node: Herb::AST::ERBEndNode?,
     # | }
@@ -933,12 +955,17 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
+      attr_reader prism_node: String?
+
       attr_reader body: Array[Herb::AST::Node]
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
@@ -1006,6 +1033,7 @@ module Herb
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
     # |  children: Array[Herb::AST::Node],
+    # |  prism_node: String?,
     # |  conditions: Array[Herb::AST::ERBWhenNode],
     # |  else_clause: Herb::AST::ERBElseNode?,
     # |  end_node: Herb::AST::ERBEndNode?,
@@ -1021,14 +1049,19 @@ module Herb
 
       attr_reader children: Array[Herb::AST::Node]
 
+      attr_reader prism_node: String?
+
       attr_reader conditions: Array[Herb::AST::ERBWhenNode]
 
       attr_reader else_clause: Herb::AST::ERBElseNode?
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
@@ -1054,6 +1087,7 @@ module Herb
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
     # |  children: Array[Herb::AST::Node],
+    # |  prism_node: String?,
     # |  conditions: Array[Herb::AST::ERBInNode],
     # |  else_clause: Herb::AST::ERBElseNode?,
     # |  end_node: Herb::AST::ERBEndNode?,
@@ -1069,14 +1103,19 @@ module Herb
 
       attr_reader children: Array[Herb::AST::Node]
 
+      attr_reader prism_node: String?
+
       attr_reader conditions: Array[Herb::AST::ERBInNode]
 
       attr_reader else_clause: Herb::AST::ERBElseNode?
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
@@ -1101,6 +1140,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  end_node: Herb::AST::ERBEndNode?,
     # | }
@@ -1113,12 +1153,17 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
@@ -1143,6 +1188,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  end_node: Herb::AST::ERBEndNode?,
     # | }
@@ -1155,12 +1201,17 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
@@ -1185,6 +1236,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  end_node: Herb::AST::ERBEndNode?,
     # | }
@@ -1197,12 +1249,17 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
@@ -1308,6 +1365,7 @@ module Herb
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  rescue_clause: Herb::AST::ERBRescueNode?,
     # |  else_clause: Herb::AST::ERBElseNode?,
@@ -1323,6 +1381,8 @@ module Herb
 
       attr_reader tag_closing: Herb::Token?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader rescue_clause: Herb::AST::ERBRescueNode?
@@ -1333,8 +1393,11 @@ module Herb
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
@@ -1360,6 +1423,7 @@ module Herb
     # |  content: Herb::Token?,
     # |  tag_closing: Herb::Token?,
     # |  then_keyword: Herb::Location?,
+    # |  prism_node: String?,
     # |  statements: Array[Herb::AST::Node],
     # |  else_clause: Herb::AST::ERBElseNode?,
     # |  end_node: Herb::AST::ERBEndNode?,
@@ -1375,14 +1439,19 @@ module Herb
 
       attr_reader then_keyword: Herb::Location?
 
+      attr_reader prism_node: String?
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader else_clause: Herb::AST::ERBElseNode?
 
       attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node

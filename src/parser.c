@@ -36,7 +36,10 @@ static void parser_handle_whitespace_in_open_tag(parser_T* parser, hb_array_T* c
 const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false,
                                                        .analyze = true,
                                                        .strict = true,
-                                                       .action_view_helpers = false };
+                                                       .action_view_helpers = false,
+                                                       .prism_nodes_deep = false,
+                                                       .prism_nodes = false,
+                                                       .prism_program = false };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -1385,6 +1388,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     NULL,
     false,
     false,
+    HERB_PRISM_NODE_EMPTY,
     opening_tag->location.start,
     end_position,
     errors,
@@ -1766,7 +1770,7 @@ static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
   token_T* eof = parser_consume_expected(parser, TOKEN_EOF, errors);
 
   AST_DOCUMENT_NODE_T* document_node =
-    ast_document_node_init(children, start, eof->location.end, errors, parser->allocator);
+    ast_document_node_init(children, NULL, HERB_PRISM_NODE_EMPTY, start, eof->location.end, errors, parser->allocator);
 
   token_free(eof, parser->allocator);
 

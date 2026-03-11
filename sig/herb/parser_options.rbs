@@ -10,6 +10,12 @@ module Herb
 
     attr_reader action_view_helpers: bool
 
+    attr_reader prism_program: bool
+
+    attr_reader prism_nodes: bool
+
+    attr_reader prism_nodes_deep: bool
+
     DEFAULT_STRICT: bool
 
     DEFAULT_TRACK_WHITESPACE: bool
@@ -18,8 +24,14 @@ module Herb
 
     DEFAULT_ACTION_VIEW_HELPERS: bool
 
-    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool) -> void
-    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool) -> void
+    DEFAULT_PRISM_PROGRAM: bool
+
+    DEFAULT_PRISM_NODES: bool
+
+    DEFAULT_PRISM_NODES_DEEP: bool
+
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
 
     # : () -> Hash[Symbol, bool]
     def to_h: () -> Hash[Symbol, bool]

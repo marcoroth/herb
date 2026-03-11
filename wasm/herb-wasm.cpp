@@ -65,6 +65,18 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("action_view_helpers")) {
       parser_options.action_view_helpers = options["action_view_helpers"].as<bool>();
     }
+
+    if (options.hasOwnProperty("prism_nodes")) {
+      parser_options.prism_nodes = options["prism_nodes"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("prism_nodes_deep")) {
+      parser_options.prism_nodes_deep = options["prism_nodes_deep"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("prism_program")) {
+      parser_options.prism_program = options["prism_program"].as<bool>();
+    }
   }
 
   hb_allocator_T allocator;

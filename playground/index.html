@@ -73,7 +73,7 @@
                 class="flex flex-wrap items-center gap-3 text-sm"
                 data-playground-target="parserOptions"
               >
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Include whitespace-only text nodes in the AST">
                   <input
                     type="checkbox"
                     data-option="track_whitespace"
@@ -83,7 +83,7 @@
                   <span class="select-none">Track whitespace</span>
                 </label>
 
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Enable strict HTML parsing mode with additional validation">
                   <input
                     type="checkbox"
                     data-option="strict"
@@ -94,7 +94,7 @@
                   <span class="select-none">Strict</span>
                 </label>
 
-                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Run analysis passes on the parse tree (error detection, tag matching)">
                   <input
                     type="checkbox"
                     data-option="analyze"
@@ -108,11 +108,41 @@
                 <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Transform Action View tag helpers (tag, content_tag, link_to)">
                   <input
                     type="checkbox"
-                    data-option="actionViewHelpers"
+                    data-option="action_view_helpers"
                     data-action="change->playground#onOptionChange"
                     class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
                   />
                   <span class="select-none">Action View helpers</span>
+                </label>
+
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
+                  <input
+                    type="checkbox"
+                    data-option="prism_program"
+                    data-action="change->playground#onOptionChange"
+                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                  />
+                  <span class="select-none">Prism program</span>
+                </label>
+
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Attach Prism AST subtrees to each ERB node for its Ruby content">
+                  <input
+                    type="checkbox"
+                    data-option="prism_nodes"
+                    data-action="change->playground#onOptionChange change->playground#onPrismNodesChange"
+                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                  />
+                  <span class="select-none">Prism nodes</span>
+                </label>
+
+                <label data-playground-target="prismNodesDeepLabel" class="hidden flex items-center gap-2 text-gray-700 dark:text-gray-300" title="Include nested body content in control-flow Prism nodes (e.g. if/else body statements)">
+                  <input
+                    type="checkbox"
+                    data-option="prism_nodes_deep"
+                    data-action="change->playground#onOptionChange"
+                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                  />
+                  <span class="select-none">Prism nodes (deep)</span>
                 </label>
               </div>
 

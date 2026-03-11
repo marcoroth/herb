@@ -21,6 +21,7 @@ fn test_document_with_text_node() {
     location: Location::new(Position::new(1, 0), Position::new(2, 0)),
     errors: vec![],
     children: vec![AnyNode::HTMLTextNode(text_node)],
+    prism_node: None,
   };
 
   let output = doc_node.tree_inspect();

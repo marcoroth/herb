@@ -45,7 +45,40 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   } else {
     result.set("<%= field.name %>", val::null());
   }
-  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  <%- when Herb::Template::PrismSerializedField -%>
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    val jsArray = val::array();
+
+    for (size_t i = 0; i < <%= node.human %>-><%= field.name %>.length; i++) {
+      jsArray.call<void>("push", (int)<%= node.human %>-><%= field.name %>.data[i]);
+    }
+
+    result.set("<%= field.name %>", jsArray);
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
+  <%- when Herb::Template::PrismNodeField -%>
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+
+    if (pm_buffer.length > 0) {
+      val jsArray = val::array();
+
+      for (size_t i = 0; i < pm_buffer.length; i++) {
+        jsArray.call<void>("push", (int)((uint8_t*)pm_buffer.value)[i]);
+      }
+
+      result.set("<%= field.name %>", jsArray);
+    } else {
+      result.set("<%= field.name %>", val::null());
+    }
+
+    pm_buffer_free(&pm_buffer);
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
   /* <%= field.name %> is internal parser state, not exposed to JavaScript */
   result.set("<%= field.name %>", val::null());
   <%- else -%>

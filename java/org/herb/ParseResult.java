@@ -50,7 +50,7 @@ public class ParseResult {
     StringBuilder builder = new StringBuilder();
 
     if (value != null) {
-      builder.append(value.inspect());
+      builder.append(value.inspect(source));
     }
 
     if (hasErrors()) {

@@ -1,0 +1,74 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0028_begin/rescue"
+input: "<% begin %><%= dangerous_call %><% rescue %><%= \"error\" %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:67))
+└── children: (1 item)
+    └── @ ERBBeginNode (location: (1:0)-(1:67))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " begin " (location: (1:2)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── prism_node:
+        │   └── @ BeginNode (location: (1:3)-(1:64))
+        │       ├── begin_keyword_loc: (1:3)-(1:8)
+        │       ├── statements: ∅
+        │       ├── rescue_clause:
+        │       │   └── @ RescueNode (location: (1:35)-(1:41))
+        │       │       ├── keyword_loc: (1:35)-(1:41)
+        │       │       ├── exceptions: []
+        │       │       ├── operator_loc: ∅
+        │       │       ├── reference: ∅
+        │       │       ├── then_keyword_loc: ∅
+        │       │       ├── statements: ∅
+        │       │       └── subsequent: ∅
+        │       ├── else_clause: ∅
+        │       ├── ensure_clause: ∅
+        │       └── end_keyword_loc: (1:61)-(1:64)
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:11)-(1:32))
+        │       ├── tag_opening: "<%=" (location: (1:11)-(1:14))
+        │       ├── content: " dangerous_call " (location: (1:14)-(1:30))
+        │       ├── tag_closing: "%>" (location: (1:30)-(1:32))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node:
+        │           └── @ CallNode (location: (1:15)-(1:29))
+        │               ├── receiver: ∅
+        │               ├── call_operator_loc: ∅
+        │               ├── name: :dangerous_call
+        │               ├── message_loc: (1:15)-(1:29)
+        │               ├── opening_loc: ∅
+        │               ├── arguments: ∅
+        │               ├── closing_loc: ∅
+        │               ├── equal_loc: ∅
+        │               └── block: ∅
+        │
+        ├── rescue_clause:
+        │   └── @ ERBRescueNode (location: (1:32)-(1:58))
+        │       ├── tag_opening: "<%" (location: (1:32)-(1:34))
+        │       ├── content: " rescue " (location: (1:34)-(1:42))
+        │       ├── tag_closing: "%>" (location: (1:42)-(1:44))
+        │       ├── statements: (1 item)
+        │       │   └── @ ERBContentNode (location: (1:44)-(1:58))
+        │       │       ├── tag_opening: "<%=" (location: (1:44)-(1:47))
+        │       │       ├── content: " "error" " (location: (1:47)-(1:56))
+        │       │       ├── tag_closing: "%>" (location: (1:56)-(1:58))
+        │       │       ├── parsed: true
+        │       │       ├── valid: true
+        │       │       └── prism_node:
+        │       │           └── @ StringNode (location: (1:48)-(1:55))
+        │       │               ├── opening_loc: (1:48)-(1:49)
+        │       │               ├── content_loc: (1:49)-(1:54)
+        │       │               ├── closing_loc: (1:54)-(1:55)
+        │       │               └── unescaped: "error"
+        │       │
+        │       └── subsequent: ∅
+        │
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:58)-(1:67))
+                ├── tag_opening: "<%" (location: (1:58)-(1:60))
+                ├── content: " end " (location: (1:60)-(1:65))
+                └── tag_closing: "%>" (location: (1:65)-(1:67))

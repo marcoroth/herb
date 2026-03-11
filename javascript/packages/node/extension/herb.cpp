@@ -118,6 +118,39 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
         parser_options.action_view_helpers = action_view_helpers_value;
       }
+
+      napi_value prism_nodes_prop;
+      bool has_prism_nodes_prop;
+      napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
+
+      if (has_prism_nodes_prop) {
+        napi_get_named_property(env, args[1], "prism_nodes", &prism_nodes_prop);
+        bool prism_nodes_value;
+        napi_get_value_bool(env, prism_nodes_prop, &prism_nodes_value);
+        parser_options.prism_nodes = prism_nodes_value;
+      }
+
+      napi_value prism_nodes_deep_prop;
+      bool has_prism_nodes_deep_prop;
+      napi_has_named_property(env, args[1], "prism_nodes_deep", &has_prism_nodes_deep_prop);
+
+      if (has_prism_nodes_deep_prop) {
+        napi_get_named_property(env, args[1], "prism_nodes_deep", &prism_nodes_deep_prop);
+        bool prism_nodes_deep_value;
+        napi_get_value_bool(env, prism_nodes_deep_prop, &prism_nodes_deep_value);
+        parser_options.prism_nodes_deep = prism_nodes_deep_value;
+      }
+
+      napi_value prism_program_prop;
+      bool has_prism_program_prop;
+      napi_has_named_property(env, args[1], "prism_program", &has_prism_program_prop);
+
+      if (has_prism_program_prop) {
+        napi_get_named_property(env, args[1], "prism_program", &prism_program_prop);
+        bool prism_program_value;
+        napi_get_value_bool(env, prism_program_prop, &prism_program_value);
+        parser_options.prism_program = prism_program_value;
+      }
     }
   }
 

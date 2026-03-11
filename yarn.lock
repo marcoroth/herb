@@ -1285,6 +1285,11 @@
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.59.0.tgz#4584a8a87b29188a4c1fe987a9fcf701e256d86c"
   integrity sha512-2HRCml6OztYXyJXAvdDXPKcawukWY2GpR5/nxKp4iBgiO3wcoEGkAaqctIbZcNB6KlUQBIqt8VYkNSj2397EfA==
 
+"@ruby/prism@^1.9.0":
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@ruby/prism/-/prism-1.9.0.tgz#064f599caf2288e8f0738875abbdd4bc4755df95"
+  integrity sha512-/j+JfP1eA0nCjx6c/8L6K/ENErmsqc6RMAba8rKYNz4RadrT7AW20u4WrjpWYWzdlk6k1YWHxoW9OS68w02+Vw==
+
 "@sec-ant/readable-stream@^0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@sec-ant/readable-stream/-/readable-stream-0.4.1.tgz#60de891bb126abfdc5410fdc6166aca065f10a0c"

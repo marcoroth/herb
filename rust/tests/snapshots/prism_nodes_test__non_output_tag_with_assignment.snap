@@ -1,0 +1,22 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:11))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:11))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " x = 1 " (location: (1:2)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── parsed: true
+        ├── valid: true
+        └── prism_node: 
+            └── @ LocalVariableWriteNode (location: (0,3)-(0,8))
+                ├── name: :x
+                ├── depth: 0
+                ├── name_loc: (0,3)-(0,4) = "x"
+                ├── value:
+                │   @ IntegerNode (location: (0,7)-(0,8))
+                │   ├── IntegerBaseFlags: decimal
+                │   └── value: 1
+                └── operator_loc: (0,5)-(0,6) = "="
