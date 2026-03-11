@@ -5,11 +5,9 @@ require_relative "../../lib/herb/bootstrap"
 
 extension_name = "herb"
 
-if Herb::Bootstrap.git_source?
-  unless Herb::Bootstrap.templates_generated?
-    puts "Generated files not found — running template generation..."
-    Herb::Bootstrap.generate_templates
-  end
+if Herb::Bootstrap.git_source? && !Herb::Bootstrap.templates_generated?
+  puts "Building from source — running bootstrap..."
+  Herb::Bootstrap.generate_templates
 
   unless Herb::Bootstrap.prism_vendored?
     prism_path = Herb::Bootstrap.find_prism_gem_path
