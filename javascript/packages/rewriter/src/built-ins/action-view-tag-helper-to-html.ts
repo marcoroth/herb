@@ -52,6 +52,7 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
           tag_closing: createSyntheticToken("%>"),
           parsed: false,
           valid: true,
+          prism_node: null,
         }))
 
         continue
@@ -140,6 +141,7 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
             tag_closing: createSyntheticToken("%>"),
             parsed: false,
             valid: true,
+            prism_node: null,
           })
         }
 
@@ -163,7 +165,7 @@ export class ActionViewTagHelperToHTMLRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts ActionView tag helpers (tag.*, content_tag, link_to) to raw HTML elements"
+    return "Converts ActionView tag helpers (tag.*, content_tag, link_to, turbo_frame_tag) to raw HTML elements"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {

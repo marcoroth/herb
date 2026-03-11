@@ -216,6 +216,112 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("turbo_frame_tag helpers", () => {
+    test("turbo_frame_tag with block", () => {
+      const input = dedent`
+        <%= turbo_frame_tag "tray" do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <turbo-frame id="tray">
+          Content
+        </turbo-frame>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo_frame_tag without block", () => {
+      expect(transform('<%= turbo_frame_tag "tray" %>')).toBe(
+        '<turbo-frame id="tray"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with src attribute", () => {
+      expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray) %>')).toBe(
+        '<turbo-frame id="tray" src="<%= tray_path(tray) %>"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with src and target attributes", () => {
+      expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray), target: "_top" %>')).toBe(
+        '<turbo-frame id="tray" src="<%= tray_path(tray) %>" target="_top"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with loading lazy", () => {
+      expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray), loading: "lazy" %>')).toBe(
+        '<turbo-frame id="tray" src="<%= tray_path(tray) %>" loading="lazy"></turbo-frame>'
+      )
+    })
+
+    test("turbo_frame_tag with class attribute and block", () => {
+      const input = dedent`
+        <%= turbo_frame_tag "tray", class: "frame" do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <turbo-frame id="tray" class="frame">
+          Content
+        </turbo-frame>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo_frame_tag with variable id", () => {
+      const input = dedent`
+        <%= turbo_frame_tag dom_id(post) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <turbo-frame id="<%= dom_id(post) %>">
+          Content
+        </turbo-frame>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo_frame_tag with data attributes", () => {
+      const input = dedent`
+        <%= turbo_frame_tag "tray", data: { controller: "frame" } do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <turbo-frame id="tray" data-controller="frame">
+          Content
+        </turbo-frame>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("turbo_frame_tag with splat attributes", () => {
+      const input = dedent`
+        <%= turbo_frame_tag "tray", **attributes do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <turbo-frame id="tray" <%= **attributes %>>
+          Content
+        </turbo-frame>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+  })
+
   describe("non-ActionView elements", () => {
     test("regular HTML elements are not modified", () => {
       expect(transform('<div class="content">Hello</div>')).toBe(

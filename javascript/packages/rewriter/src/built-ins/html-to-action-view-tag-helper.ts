@@ -34,13 +34,15 @@ function dashToUnderscore(string: string): string {
 interface SerializedAttributes {
   attributes: string
   href: string | null
+  id: string | null
 }
 
-function serializeAttributes(children: Node[], extractHref = false): SerializedAttributes {
+function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean } = {}): SerializedAttributes {
   const regular: string[] = []
   const prefixed: Map<string, string[]> = new Map()
 
   let href: string | null = null
+  let id: string | null = null
 
   for (const child of children) {
     if (!isHTMLAttributeNode(child)) continue
@@ -50,8 +52,13 @@ function serializeAttributes(children: Node[], extractHref = false): SerializedA
 
     const value = child.value ? serializeAttributeValue(child.value) : "true"
 
-    if (extractHref && name === "href") {
+    if (options.extractHref && name === "href") {
       href = value
+      continue
+    }
+
+    if (options.extractId && name === "id") {
+      id = value
       continue
     }
 
@@ -76,7 +83,7 @@ function serializeAttributes(children: Node[], extractHref = false): SerializedA
     parts.push(`${prefix}: { ${entries.join(", ")} }`)
   }
 
-  return { attributes: parts.join(", "), href }
+  return { attributes: parts.join(", "), href, id }
 }
 
 function isTextOnlyBody(body: Node[]): boolean {
@@ -108,8 +115,9 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     }
 
     const isAnchor = tagName.value === "a"
+    const isTurboFrame = tagName.value === "turbo-frame"
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
-    const { attributes: attributesString, href } = serializeAttributes(attributes, isAnchor)
+    const { attributes: attributesString, href, id } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame })
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
@@ -119,6 +127,9 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     if (isAnchor) {
       content = this.buildLinkToContent(node, attributesString, href, isInlineContent)
       elementSource = "ActionView::Helpers::UrlHelper#link_to"
+    } else if (isTurboFrame) {
+      content = this.buildTurboFrameTagContent(node, attributesString, id, isInlineContent)
+      elementSource = "Turbo::FramesHelper#turbo_frame_tag"
     } else {
       content = this.buildTagContent(tagName.value, node, attributesString, isInlineContent)
       elementSource = "ActionView::Helpers::TagHelper#tag"
@@ -131,16 +142,18 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       tag_opening: createSyntheticToken("<%="),
       content: createSyntheticToken(content),
       tag_closing: createSyntheticToken("%>"),
-      tag_name: createSyntheticToken(isAnchor ? "a" : tagName.value),
+      tag_name: createSyntheticToken(tagName.value),
       children: [],
     })
 
     asMutable(node).open_tag = erbOpenTag
     asMutable(node).element_source = elementSource
 
+    const isInlineForm = isInlineContent || (isTurboFrame && !hasBody)
+
     if (node.is_void) {
       asMutable(node).close_tag = null
-    } else if (isInlineContent) {
+    } else if (isInlineForm) {
       asMutable(node).body = []
 
       const virtualClose = new HTMLVirtualCloseTagNode({
@@ -185,6 +198,30 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       : ` tag.${tag} do `
   }
 
+  private buildTurboFrameTagContent(node: HTMLElementNode, attributes: string, id: string | null, isInlineContent: boolean): string {
+    const args: string[] = []
+
+    if (id) {
+      args.push(id)
+    }
+
+    if (isInlineContent && isHTMLTextNode(node.body[0])) {
+      args.push(`"${node.body[0].content}"`)
+    }
+
+    if (attributes) {
+      args.push(attributes)
+    }
+
+    const argString = args.join(", ")
+
+    if (isInlineContent || !node.body || node.body.length === 0) {
+      return argString ? ` turbo_frame_tag ${argString} ` : ` turbo_frame_tag `
+    }
+
+    return argString ? ` turbo_frame_tag ${argString} do ` : ` turbo_frame_tag do `
+  }
+
   private buildLinkToContent(node: HTMLElementNode, attribute: string, href: string | null, isInlineContent: boolean): string {
     const args: string[] = []
 
@@ -216,7 +253,7 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts raw HTML elements to ActionView tag helpers (tag.*)"
+    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag)"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {

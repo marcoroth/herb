@@ -20,6 +20,8 @@ extern bool detect_link_to(pm_call_node_t*, pm_parser_t*);
 extern bool is_route_helper_node(pm_node_t*, pm_parser_t*);
 extern char* wrap_in_url_for(const char*, size_t, hb_allocator_T*);
 extern char* extract_link_to_href(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
+extern bool detect_turbo_frame_tag(pm_call_node_t*, pm_parser_t*);
+extern char* extract_turbo_frame_tag_id(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 
 typedef struct {
   pm_parser_t parser;
@@ -271,6 +273,27 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
+  if (detect_turbo_frame_tag(parse_context->info->call_node, &parse_context->parser)) {
+    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, &parse_context->parser, allocator);
+
+    if (id_value) {
+      if (!attributes) { attributes = hb_array_init(4, allocator); }
+
+      pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
+      position_T id_start, id_end;
+      prism_node_location_to_positions(&first_argument->location, parse_context, &id_start, &id_end);
+      bool id_is_ruby_expression = (first_argument->type != PM_STRING_NODE && first_argument->type != PM_SYMBOL_NODE);
+
+      AST_HTML_ATTRIBUTE_NODE_T* id_attribute =
+        id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
+                              : create_html_attribute_node("id", id_value, id_start, id_end, allocator);
+
+      if (id_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) id_attribute, allocator); }
+
+      hb_allocator_dealloc(allocator, id_value);
+    }
+  }
+
   token_T* tag_name_token =
     tag_name ? create_synthetic_token(allocator, tag_name, TOKEN_IDENTIFIER, tag_name_start, tag_name_end) : NULL;
 
@@ -395,6 +418,27 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       if (href_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) href_attribute, allocator); }
 
       hb_allocator_dealloc(allocator, href);
+    }
+  }
+
+  if (detect_turbo_frame_tag(parse_context->info->call_node, &parse_context->parser)) {
+    char* id_value = extract_turbo_frame_tag_id(parse_context->info->call_node, &parse_context->parser, allocator);
+
+    if (id_value) {
+      if (!attributes) { attributes = hb_array_init(4, allocator); }
+
+      pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
+      position_T id_start, id_end;
+      prism_node_location_to_positions(&first_argument->location, parse_context, &id_start, &id_end);
+      bool id_is_ruby_expression = (first_argument->type != PM_STRING_NODE && first_argument->type != PM_SYMBOL_NODE);
+
+      AST_HTML_ATTRIBUTE_NODE_T* id_attribute =
+        id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
+                              : create_html_attribute_node("id", id_value, id_start, id_end, allocator);
+
+      if (id_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) id_attribute, allocator); }
+
+      hb_allocator_dealloc(allocator, id_value);
     }
   }
 
