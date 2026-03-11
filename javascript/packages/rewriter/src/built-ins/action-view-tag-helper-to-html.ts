@@ -166,7 +166,7 @@ export class ActionViewTagHelperToHTMLRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts ActionView tag helpers (tag.*, content_tag, link_to, turbo_frame_tag) to raw HTML elements"
+    return "Converts ActionView tag helpers to raw HTML elements"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {

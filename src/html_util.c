@@ -27,6 +27,16 @@ static hb_string_T void_tags[] = HB_STRING_LIST(
   "wbr"
 );
 
+// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+static hb_string_T boolean_attributes[] = HB_STRING_LIST(
+  "allowfullscreen", "async",    "autofocus",   "autoplay",  "checked",   "compact",
+  "controls",        "declare",  "default",     "defer",     "disabled",  "formnovalidate",
+  "hidden",          "inert",    "ismap",       "itemscope", "loop",      "multiple",
+  "muted",           "nomodule", "nohref",      "noresize",  "noshade",   "novalidate",
+  "nowrap",          "open",     "playsinline", "readonly",  "required",  "reversed",
+  "scoped",          "seamless", "selected",    "sortable",  "truespeed", "typemustmatch"
+);
+
 // https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
 static hb_string_T optional_end_tags[] = HB_STRING_LIST(
   "li",
@@ -107,6 +117,16 @@ bool is_void_element(hb_string_T tag_name) {
 
   for (size_t i = 0; i < sizeof(void_tags) / sizeof(void_tags[0]); i++) {
     if (hb_string_equals_case_insensitive(tag_name, void_tags[i])) { return true; }
+  }
+
+  return false;
+}
+
+bool is_boolean_attribute(hb_string_T attribute_name) {
+  if (hb_string_is_empty(attribute_name)) { return false; }
+
+  for (size_t i = 0; i < sizeof(boolean_attributes) / sizeof(boolean_attributes[0]); i++) {
+    if (hb_string_equals_case_insensitive(attribute_name, boolean_attributes[i])) { return true; }
   }
 
   return false;

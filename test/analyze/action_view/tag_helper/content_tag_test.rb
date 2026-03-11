@@ -149,5 +149,25 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "content_tag :script with block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script do %>
+          alert('Hello')
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :script with content as argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script, "alert('Hello')" %>
+      HTML
+    end
+
+    test "content_tag :script with type attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :script, "alert('Hello')", type: "application/javascript" %>
+      HTML
+    end
   end
 end
