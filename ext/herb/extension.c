@@ -359,9 +359,31 @@ static VALUE Herb_version(VALUE self) {
   VALUE gem_version = rb_const_get(self, rb_intern("VERSION"));
   VALUE libherb_version = rb_utf8_str_new_cstr(herb_version());
   VALUE libprism_version = rb_utf8_str_new_cstr(herb_prism_version());
-  VALUE format_string = rb_utf8_str_new_cstr("herb gem v%s, libprism v%s, libherb v%s (Ruby C native extension)");
+
+#ifdef HERB_GIT_BUILD
+#  ifdef HERB_GIT_SHA
+  VALUE format_string = rb_utf8_str_new_cstr(
+    "herb gem " HERB_GIT_SHA ", libprism v%s, libherb " HERB_GIT_SHA " (Ruby C native extension, built from source)"
+  );
+
+  return rb_funcall(rb_mKernel, rb_intern("sprintf"), 2, format_string, libprism_version);
+#  else
+  VALUE format_string =
+    rb_utf8_str_new_cstr("herb gem v%s, libprism v%s, libherb v%s (Ruby C native extension, built from source)");
 
   return rb_funcall(rb_mKernel, rb_intern("sprintf"), 4, format_string, gem_version, libprism_version, libherb_version);
+#  endif
+#else
+  return rb_funcall(
+    rb_mKernel,
+    rb_intern("sprintf"),
+    4,
+    rb_utf8_str_new_cstr("herb gem v%s, libprism v%s, libherb v%s (Ruby C native extension)"),
+    gem_version,
+    libprism_version,
+    libherb_version
+  );
+#endif
 }
 
 __attribute__((__visibility__("default"))) void Init_herb(void) {
