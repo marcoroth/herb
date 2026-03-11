@@ -117,7 +117,7 @@ module Herb
 
       def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
 
-      def process_erb_output: (untyped opening, untyped code) -> untyped
+      def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 
