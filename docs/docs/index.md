@@ -6,7 +6,7 @@ title: "Herb - The modern HTML+ERB Toolchain"
 
 hero:
   name: "Herb"
-  text: "The HTML+ERB Toolchain"
+  text: "The modern HTML+ERB Toolchain"
   tagline: "An ecosystem of powerful and seamless developer tools for HTML+ERB templates."
 
   image:
