@@ -107,5 +107,11 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+    
+    test "inline comment on end inside output block does not break parens" do
+      template = '<%= render Foo.new do %>hello<% end # comment %>'
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

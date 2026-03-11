@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineBlockTest#test_0014_inline comment on end inside output block does not break parens"
+input: "{source: \"<%= render Foo.new do %>hello<% end # comment %>\", options: {}}"
+---
+_buf = ::String.new; _buf << (render Foo.new do; _buf << 'hello'.freeze; end) # comment
+_buf.to_s
