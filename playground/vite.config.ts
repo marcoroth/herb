@@ -1,3 +1,4 @@
+import { resolve } from "path"
 import { defineConfig } from "vite"
 import { execSync } from "child_process"
 
@@ -64,6 +65,14 @@ function getCommitInfo() {
 export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        prism: resolve(__dirname, 'prism/index.html'),
+      },
+    },
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173

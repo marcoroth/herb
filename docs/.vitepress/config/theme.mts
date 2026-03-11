@@ -134,7 +134,13 @@ export function createThemeConfig() {
       { text: "Home", link: "/" },
       { text: "Blog", link: "/blog/whats-new-in-herb-v0-8" },
       { text: "Documentation", link: "/overview" },
-      { text: "Playground", link: "/playground" },
+      {
+        text: "Playground",
+        items: [
+          { text: "Herb Playground", link: "/playground/" },
+          { text: "Prism Playground", link: "/playground/prism" },
+        ],
+      },
     ],
     outline: [2, 4],
     search: {
