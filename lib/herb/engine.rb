@@ -32,6 +32,13 @@ module Herb
     end
 
     class InvalidRubyError < CompilationError
+      attr_reader :compiled_source
+
+      def initialize(message, compiled_source: nil)
+        @compiled_source = compiled_source
+
+        super(message)
+      end
     end
 
     def initialize(input, properties = {})
@@ -155,7 +162,7 @@ module Herb
 
         if syntax_errors.any?
           details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
-          raise InvalidRubyError, "Compiled template produced invalid Ruby:\n#{details}"
+          raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
         end
       end
 
