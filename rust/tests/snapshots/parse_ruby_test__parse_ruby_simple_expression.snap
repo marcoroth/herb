@@ -1,0 +1,29 @@
+---
+source: tests/parse_ruby_test.rs
+expression: result.prettyprint()
+---
+@ ProgramNode (location: (0,0)-(0,5))
+├── locals: []
+└── statements:
+    @ StatementsNode (location: (0,0)-(0,5))
+    └── body: (length: 1)
+        └── @ CallNode (location: (0,0)-(0,5))
+            ├── CallNodeFlags: nil
+            ├── receiver:
+            │   @ IntegerNode (location: (0,0)-(0,1))
+            │   ├── IntegerBaseFlags: decimal
+            │   ├── value: 1
+            ├── call_operator_loc: nil
+            ├── name: :+
+            ├── message_loc: (0,2)-(0,3) = "+"
+            ├── opening_loc: nil
+            ├── arguments:
+            │   @ ArgumentsNode (location: (0,4)-(0,5))
+            │   ├── ArgumentsNodeFlags: nil
+            │   └── arguments: (length: 1)
+            │       └── @ IntegerNode (location: (0,4)-(0,5))
+            │           ├── IntegerBaseFlags: decimal
+            │           └── value: 2
+            ├── closing_loc: nil
+            ├── equal_loc: nil
+            └── block: nil

@@ -20,6 +20,7 @@ public class Herb {
   public static native LexResult lex(String source);
   public static native String extractRuby(String source, ExtractRubyOptions options);
   public static native String extractHTML(String source);
+  public static native byte[] parseRuby(String source);
 
   public static ParseResult parse(String source) {
     return parse(source, null);

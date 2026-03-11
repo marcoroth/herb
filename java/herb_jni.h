@@ -13,6 +13,7 @@ JNIEXPORT jobject JNICALL Java_org_herb_Herb_parse(JNIEnv*, jclass, jstring, job
 JNIEXPORT jobject JNICALL Java_org_herb_Herb_lex(JNIEnv*, jclass, jstring);
 JNIEXPORT jstring JNICALL Java_org_herb_Herb_extractRuby(JNIEnv*, jclass, jstring, jobject);
 JNIEXPORT jstring JNICALL Java_org_herb_Herb_extractHTML(JNIEnv*, jclass, jstring);
+JNIEXPORT jbyteArray JNICALL Java_org_herb_Herb_parseRuby(JNIEnv*, jclass, jstring);
 
 #ifdef __cplusplus
 }

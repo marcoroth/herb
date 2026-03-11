@@ -140,6 +140,27 @@ std::string Herb_extract_html(const std::string& source) {
   return result;
 }
 
+val Herb_parse_ruby(const std::string& source) {
+  herb_ruby_parse_result_T* parse_result = herb_parse_ruby(source.c_str(), source.length());
+
+  if (!parse_result) { return val::null(); }
+
+  pm_buffer_t buffer = { 0 };
+  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+
+  val result = val::null();
+
+  if (buffer.length > 0) {
+    result = val(typed_memory_view(buffer.length, (const uint8_t*) buffer.value));
+    result = val::global("Uint8Array").new_(result);
+  }
+
+  pm_buffer_free(&buffer);
+  herb_free_ruby_parse_result(parse_result);
+
+  return result;
+}
+
 std::string Herb_version() {
   const char* libherb_version = herb_version();
   const char* libprism_version = herb_prism_version();
@@ -154,4 +175,5 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("extractRuby", &Herb_extract_ruby);
   function("extractHTML", &Herb_extract_html);
   function("version", &Herb_version);
+  function("parseRuby", &Herb_parse_ruby);
 }

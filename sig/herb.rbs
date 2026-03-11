@@ -7,6 +7,9 @@ module Herb
   # : (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
   def self.parse_file: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
 
+  # : (String source) -> Prism::ParseResult
+  def self.parse_ruby: (String source) -> Prism::ParseResult
+
   def self.configuration: (?untyped project_path) -> untyped
 
   def self.configure: (?untyped project_path) -> untyped

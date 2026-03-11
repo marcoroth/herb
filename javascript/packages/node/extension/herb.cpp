@@ -285,6 +285,43 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   return result;
 }
 
+napi_value Herb_parse_ruby(napi_env env, napi_callback_info info) {
+  size_t argc = 1;
+  napi_value args[1];
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  if (argc < 1) {
+    napi_throw_error(env, nullptr, "Wrong number of arguments");
+    return nullptr;
+  }
+
+  char* string = CheckString(env, args[0]);
+  if (!string) { return nullptr; }
+
+  herb_ruby_parse_result_T* parse_result = herb_parse_ruby(string, strlen(string));
+
+  if (!parse_result) {
+    free(string);
+    return nullptr;
+  }
+
+  pm_buffer_t buffer = { 0 };
+  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+
+  napi_value result = nullptr;
+
+  if (buffer.length > 0) {
+    void* data;
+    napi_create_buffer_copy(env, buffer.length, buffer.value, &data, &result);
+  }
+
+  pm_buffer_free(&buffer);
+  herb_free_ruby_parse_result(parse_result);
+  free(string);
+
+  return result;
+}
+
 napi_value Herb_version(napi_env env, napi_callback_info info) {
   const char* libherb_version = herb_version();
   const char* libprism_version = herb_prism_version();
@@ -305,6 +342,7 @@ napi_value Init(napi_env env, napi_value exports) {
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "parseRuby", nullptr, Herb_parse_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
   };
 
   napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);

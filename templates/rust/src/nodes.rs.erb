@@ -3,7 +3,7 @@ use crate::{Location, Token};
 use crate::union_types::*;
 use colored::*;
 
-fn prettify_prism_tree(input: &str) -> String {
+pub(crate) fn prettify_prism_tree(input: &str) -> String {
   let input = input.replace("+-- ", "├── ").replace("|   ", "│   ");
   let lines: Vec<&str> = input.lines().collect();
   let mut result: Vec<String> = lines.iter().map(|l| l.to_string()).collect();
