@@ -286,25 +286,10 @@ module Herb
 
       @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
-      has_comment = code.include?("#")
-      closing = escaped ? "))" : ")"
-
-      if has_comment
-        comment_index = code_stripped.index("#")
-        code_part = code_stripped[0...comment_index].rstrip
-        comment_part = code_stripped[comment_index..]
-
-        @src << " " << code_part << closing << " " << comment_part << "\n"
-      else
-        @src << " " << code_stripped
-        @src << closing
-
-        @src << if trailing_newline
-                  "\n"
-                else
-                  ";"
-                end
-      end
+      @src << " " << code_stripped
+      @src << "\n" if self.class.comment?(code_stripped)
+      @src << (escaped ? "))" : ")")
+      @src << (trailing_newline ? "\n" : ";")
 
       @buffer_on_stack = false
     end
