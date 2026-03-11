@@ -1,4 +1,4 @@
-import { Diagnostic, LexResult, ParseResult } from "@herb-tools/core"
+import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
@@ -111,6 +111,18 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
     return DEFAULT_LINTER_PARSER_OPTIONS
   }
 
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+    return {
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
+      message,
+      location,
+      autofixContext,
+      severity,
+    }
+  }
+
   abstract check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
@@ -151,6 +163,19 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   get defaultConfig(): FullRuleConfig {
     return DEFAULT_RULE_CONFIG
   }
+
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+    return {
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
+      message,
+      location,
+      autofixContext,
+      severity,
+    }
+  }
+
   abstract check(lexResult: LexResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
@@ -215,6 +240,19 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   get defaultConfig(): FullRuleConfig {
     return DEFAULT_RULE_CONFIG
   }
+
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+    return {
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
+      message,
+      location,
+      autofixContext,
+      severity,
+    }
+  }
+
   abstract check(source: string, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
