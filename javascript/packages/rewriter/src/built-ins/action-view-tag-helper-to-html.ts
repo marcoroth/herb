@@ -104,9 +104,23 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     asMutable(node).element_source = "HTML"
 
     if (node.body) {
-      for (const child of node.body) {
+      asMutable(node).body = node.body.map(child => {
+        if (isRubyLiteralNode(child)) {
+          return new ERBContentNode({
+            type: "AST_ERB_CONTENT_NODE",
+            location: child.location,
+            errors: [],
+            tag_opening: createSyntheticToken("<%="),
+            content: createSyntheticToken(` ${child.content} `),
+            tag_closing: createSyntheticToken("%>"),
+            parsed: false,
+            valid: true,
+          })
+        }
+
         this.visit(child)
-      }
+        return child
+      })
     }
   }
 
