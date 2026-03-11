@@ -185,6 +185,35 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobjec
   return result;
 }
 
+JNIEXPORT jbyteArray JNICALL
+Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
+  const char* src = (*env)->GetStringUTFChars(env, source, 0);
+  size_t src_len = strlen(src);
+
+  herb_ruby_parse_result_T* parse_result = herb_parse_ruby(src, src_len);
+
+  if (!parse_result) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  pm_buffer_t buffer = { 0 };
+  pm_serialize(&parse_result->parser, parse_result->root, &buffer);
+
+  jbyteArray result = NULL;
+
+  if (buffer.length > 0) {
+    result = (*env)->NewByteArray(env, (jsize) buffer.length);
+    (*env)->SetByteArrayRegion(env, result, 0, (jsize) buffer.length, (const jbyte*) buffer.value);
+  }
+
+  pm_buffer_free(&buffer);
+  herb_free_ruby_parse_result(parse_result);
+  (*env)->ReleaseStringUTFChars(env, source, src);
+
+  return result;
+}
+
 JNIEXPORT jstring JNICALL
 Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);

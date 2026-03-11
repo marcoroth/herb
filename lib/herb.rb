@@ -77,6 +77,13 @@ module Herb
       parse(File.read(path), **options)
     end
 
+    #: (String source) -> Prism::ParseResult
+    def parse_ruby(source)
+      require "prism"
+
+      Prism.parse(source)
+    end
+
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)
     end

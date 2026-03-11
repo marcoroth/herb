@@ -148,6 +148,22 @@ public class HerbTest {
   }
 
   @Test
+  void testParseRuby() {
+    byte[] result = Herb.parseRuby("link_to('Home', root_path)");
+
+    assertNotNull(result);
+    assertTrue(result.length > 0);
+  }
+
+  @Test
+  void testParseRubyEmpty() {
+    byte[] result = Herb.parseRuby("");
+
+    assertNotNull(result);
+    assertTrue(result.length > 0);
+  }
+
+  @Test
   void testParserOptionsAnalyze() {
     String source = "<% if true %><div></div><% end %>";
 

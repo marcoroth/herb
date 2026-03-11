@@ -10,6 +10,7 @@
 
 #include <prism.h>
 #include <stdlib.h>
+#include <string.h>
 
 HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source, hb_allocator_T* allocator) {
   if (!source) { source = ""; }
@@ -82,4 +83,27 @@ HERB_EXPORTED_FUNCTION const char* herb_version(void) {
 
 HERB_EXPORTED_FUNCTION const char* herb_prism_version(void) {
   return PRISM_VERSION;
+}
+
+HERB_EXPORTED_FUNCTION herb_ruby_parse_result_T* herb_parse_ruby(const char* source, size_t length) {
+  if (!source) { return NULL; }
+
+  herb_ruby_parse_result_T* result = malloc(sizeof(herb_ruby_parse_result_T));
+  if (!result) { return NULL; }
+
+  memset(&result->options, 0, sizeof(pm_options_t));
+  pm_parser_init(&result->parser, (const uint8_t*) source, length, &result->options);
+  result->root = pm_parse(&result->parser);
+
+  return result;
+}
+
+HERB_EXPORTED_FUNCTION void herb_free_ruby_parse_result(herb_ruby_parse_result_T* result) {
+  if (!result) { return; }
+
+  if (result->root) { pm_node_destroy(&result->parser, result->root); }
+
+  pm_parser_free(&result->parser);
+  pm_options_free(&result->options);
+  free(result);
 }
