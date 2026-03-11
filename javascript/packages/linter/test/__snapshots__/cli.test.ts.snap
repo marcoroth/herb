@@ -787,7 +787,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 68,
+    "ruleCount": 69,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -808,7 +808,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 68,
+    "ruleCount": 69,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -881,7 +881,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 68,
+    "ruleCount": 69,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1041,47 +1041,20 @@ test/fixtures/disabled-1.html.erb:12:19
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/8] ⎯⎯⎯⎯
 
-[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+[error] \`herb:disable\` comment is missing rule names. Specify \`all\` or list specific rules to disable. (herb-disable-comment-missing-rules)
 
-test/fixtures/disabled-1.html.erb:2:36
+test/fixtures/disabled-1.html.erb:10:19
 
-      1 │ <div>
-  →   2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
-        │                                     ~~~
-      3 │ 
-      4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+        │ html-tag-name-lowercase %>
+      9 │ 
+  →  10 │   <div>hello</div> <%# herb:disable %>
+        │                    ~~~~~~~~~~~~~~~~~~~
+     11 │ 
+     12 │   <div>hello</div> <% # herb:disable %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/8] ⎯⎯⎯⎯
-
-[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
-
-test/fixtures/disabled-1.html.erb:4:61
-
-      2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
-      3 │ 
-  →   4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
-        │                                                              ~~~
-      5 │ 
-      6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/8] ⎯⎯⎯⎯
-
-[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
-
-test/fixtures/disabled-1.html.erb:6:36
-
-      4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
-      5 │ 
-  →   6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
-        │                                     ~~~
-      7 │ 
-      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
-        │ html-tag-name-lowercase %>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/8] ⎯⎯⎯⎯
 
 [warning] Duplicate rule \`all\` in \`herb:disable\` comment. Remove the duplicate. (herb-disable-comment-no-duplicate-rules)
 
@@ -1096,7 +1069,7 @@ test/fixtures/disabled-1.html.erb:6:41
         │ html-tag-name-lowercase %>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/8] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/8] ⎯⎯⎯⎯
 
 [warning] Duplicate rule \`html-tag-name-lowercase\` in \`herb:disable\` comment. Remove the duplicate. (herb-disable-comment-no-duplicate-rules)
 
@@ -1111,19 +1084,46 @@ test/fixtures/disabled-1.html.erb:8:61
      10 │   <div>hello</div> <%# herb:disable %>
 
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/8] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/disabled-1.html.erb:2:36
+
+      1 │ <div>
+  →   2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
+        │                                     ~~~
+      3 │ 
+      4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/8] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/disabled-1.html.erb:4:61
+
+      2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
+      3 │ 
+  →   4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+        │                                                              ~~~
+      5 │ 
+      6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+
+
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/8] ⎯⎯⎯⎯
 
-[error] \`herb:disable\` comment is missing rule names. Specify \`all\` or list specific rules to disable. (herb-disable-comment-missing-rules)
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
 
-test/fixtures/disabled-1.html.erb:10:19
+test/fixtures/disabled-1.html.erb:6:36
 
+      4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+      5 │ 
+  →   6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+        │                                     ~~~
+      7 │ 
       8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
         │ html-tag-name-lowercase %>
-      9 │ 
-  →  10 │   <div>hello</div> <%# herb:disable %>
-        │                    ~~~~~~~~~~~~~~~~~~~
-     11 │ 
-     12 │   <div>hello</div> <% # herb:disable %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/8] ⎯⎯⎯⎯
@@ -1156,7 +1156,22 @@ test/fixtures/disabled-1.html.erb:14:19
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
-"[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+"[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/disabled-2.html.erb:6:30
+
+      4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+      5 │ 
+  →   6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+        │                               ~~~
+      7 │ 
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+        │ this-rule-doesnt-exist %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/13] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
 
 test/fixtures/disabled-2.html.erb:4:30
 
@@ -1168,7 +1183,7 @@ test/fixtures/disabled-2.html.erb:4:30
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/13] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/13] ⎯⎯⎯⎯
 
 [warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
 
@@ -1183,7 +1198,7 @@ test/fixtures/disabled-2.html.erb:6:35
         │ this-rule-doesnt-exist %>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/13] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/13] ⎯⎯⎯⎯
 
 [warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
 
@@ -1198,7 +1213,7 @@ test/fixtures/disabled-2.html.erb:8:55
      10 │   <DIV></DIV><%# herb:disable herb %>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/13] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/13] ⎯⎯⎯⎯
 
 [warning] Unknown rule \`herb\`. Did you mean \`all\`? (herb-disable-comment-valid-rule-name)
 
@@ -1213,7 +1228,7 @@ test/fixtures/disabled-2.html.erb:10:30
      12 │   <DIV></DIV><%# herb:disable disable %>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/13] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/13] ⎯⎯⎯⎯
 
 [warning] Unknown rule \`disable\`. Did you mean \`all\`? (herb-disable-comment-valid-rule-name)
 
@@ -1225,21 +1240,6 @@ test/fixtures/disabled-2.html.erb:12:30
         │                               ~~~~~~~
      13 │ </div>
      14 │
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/13] ⎯⎯⎯⎯
-
-[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
-
-test/fixtures/disabled-2.html.erb:6:30
-
-      4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
-      5 │ 
-  →   6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
-        │                               ~~~
-      7 │ 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
-        │ this-rule-doesnt-exist %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/13] ⎯⎯⎯⎯
