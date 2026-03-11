@@ -4,37 +4,34 @@ require "mkmf"
 require_relative "../../lib/herb/bootstrap"
 
 extension_name = "herb"
-git_build = false
 
-unless Herb::Bootstrap.templates_generated?
-  puts "Generated files not found — running template generation..."
-  git_build = true
-  Herb::Bootstrap.generate_templates
-end
+if Herb::Bootstrap.git_source?
+  unless Herb::Bootstrap.templates_generated?
+    puts "Generated files not found — running template generation..."
+    Herb::Bootstrap.generate_templates
+  end
 
-unless Herb::Bootstrap.prism_vendored?
-  prism_path = Herb::Bootstrap.find_prism_gem_path
+  unless Herb::Bootstrap.prism_vendored?
+    prism_path = Herb::Bootstrap.find_prism_gem_path
 
-  abort <<~MSG unless prism_path
-    ERROR: Could not find Prism C source files.
+    abort <<~MSG unless prism_path
+      ERROR: Could not find Prism C source files.
 
-    When installing Herb from a git source, a git-sourced Prism is required
-    (the released gem does not include C source files).
+      When installing Herb from a git source, a git-sourced Prism is required
+      (the released gem does not include C source files).
 
-    Add it to your Gemfile before the herb git reference:
+      Add it to your Gemfile before the herb git reference:
 
-      gem "prism", github: "ruby/prism", tag: "v1.9.0"
-      gem "herb", github: "...", branch: "..."
+        gem "prism", github: "ruby/prism", tag: "v1.9.0"
+        gem "herb", github: "...", branch: "..."
 
-    Then run `bundle install` again.
-  MSG
+      Then run `bundle install` again.
+    MSG
 
-  puts "Vendoring Prism from #{prism_path}..."
-  git_build = true
-  Herb::Bootstrap.vendor_prism(prism_gem_path: prism_path)
-end
+    puts "Vendoring Prism from #{prism_path}..."
+    Herb::Bootstrap.vendor_prism(prism_gem_path: prism_path)
+  end
 
-if git_build
   root_path = Herb::Bootstrap::ROOT_PATH
   sha = `git -C #{root_path} rev-parse --short HEAD 2>/dev/null`.strip
 

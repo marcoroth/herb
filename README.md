@@ -86,7 +86,7 @@ gem install herb
 To test a branch before it's released (e.g. from a fork), add both `prism` and `herb` to your Gemfile:
 
 ```ruby
-gem "prism", "~> 1.9"
+gem "prism", github: "ruby/prism", tag: "v1.9.0"
 gem "herb", github: "fork/herb", branch: "my-branch"
 ```
 

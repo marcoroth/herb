@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 require "fileutils"
 
@@ -25,6 +26,10 @@ module Herb
           Herb::Template.render(template)
         end
       end
+    end
+
+    def self.git_source?
+      File.directory?(File.join(ROOT_PATH, ".git"))
     end
 
     def self.templates_generated?

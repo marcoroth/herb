@@ -1,0 +1,31 @@
+# Generated from lib/herb/bootstrap.rb with RBS::Inline
+
+module Herb
+  module Bootstrap
+    ROOT_PATH: untyped
+
+    PRISM_VENDOR_DIR: untyped
+
+    PRISM_ENTRIES: untyped
+
+    def self.generate_templates: () -> untyped
+
+    def self.git_source?: () -> untyped
+
+    def self.templates_generated?: () -> untyped
+
+    def self.vendor_prism: (prism_gem_path: untyped) -> untyped
+
+    def self.prism_vendored?: () -> untyped
+
+    def self.prism_ast_header_exists?: () -> untyped
+
+    def self.find_prism_gem_path: () -> untyped
+
+    def self.generate_prism_templates: () -> untyped
+
+    def self.find_prism_as_bundler_sibling: () -> untyped
+
+    def self.find_prism_from_gem_spec: () -> untyped
+  end
+end
