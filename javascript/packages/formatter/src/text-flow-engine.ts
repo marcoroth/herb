@@ -214,10 +214,6 @@ export class TextFlowEngine {
     const unitsWithNodes: ContentUnitWithNode[] = this.analyzer.buildContentUnits(children)
     const words: Array<{ word: string, isHerbDisable: boolean }> = []
 
-    if (process.env.DEBUG_FLOW) {
-      console.log('UNITS: ' + JSON.stringify(unitsWithNodes.map(u => ({ t: u.unit.type, c: u.unit.content.substring(0, 60), a: u.unit.isAtomic, b: u.unit.breaksFlow }))))
-    }
-
     for (const { unit, node } of unitsWithNodes) {
       if (unit.breaksFlow) {
         this.flushWords(words)
