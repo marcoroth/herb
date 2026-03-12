@@ -10,6 +10,13 @@ const external = [
   "url",
   "fs",
   "module",
+  "os",
+  "worker_threads",
+  "node:path",
+  "node:url",
+  "node:fs",
+  "node:os",
+  "node:worker_threads",
 ]
 
 function isExternal(id) {
@@ -25,6 +32,27 @@ export default [
     input: "src/herb-lint.ts",
     output: {
       file: "dist/herb-lint.js",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
+  },
+
+  // Lint worker entry point (CommonJS - used by worker_threads)
+  {
+    input: "src/cli/lint-worker.ts",
+    output: {
+      file: "dist/lint-worker.js",
       format: "cjs",
       sourcemap: true,
     },

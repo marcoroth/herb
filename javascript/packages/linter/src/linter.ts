@@ -48,7 +48,7 @@ export interface LinterOptions {
 }
 
 export class Linter {
-  protected rules: RuleClass[]
+  public rules: RuleClass[]
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
   protected parseCache: ParseCache
