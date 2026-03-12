@@ -2,7 +2,7 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
-import type { RuleConfig } from "@herb-tools/config"
+import type { RuleConfig, Config } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 
 export type { Mutable } from "@herb-tools/rewriter"
@@ -213,6 +213,7 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
+  config: Config | undefined
 }
 
 /**
@@ -222,7 +223,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   fileName: undefined,
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
-  ignoreDisableComments: undefined
+  ignoreDisableComments: undefined,
+  config: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

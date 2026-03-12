@@ -38,6 +38,7 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbFormatterWellFormattedRule } from "./rules/herb-formatter-well-formatted.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
@@ -121,6 +122,7 @@ export const rules: RuleClass[] = [
   HerbDisableCommentNoRedundantAllRule,
   HerbDisableCommentUnnecessaryRule,
   HerbDisableCommentValidRuleNameRule,
+  HerbFormatterWellFormattedRule,
 
   HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,
