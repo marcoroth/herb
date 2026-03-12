@@ -40,6 +40,15 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
       return
     }
 
+    if (hrefValue !== null && hrefValue.startsWith("javascript:void")) {
+      this.addOffense(
+        'Avoid `javascript:void(0)` in `href` on `<a>`. Links should navigate somewhere. If you need a clickable element without navigation, use a `<button>` instead.',
+        hrefAttribute.location,
+      )
+
+      return
+    }
+
     if (this.hasNilHrefValue(hrefAttribute)) {
       this.addOffense(
         "Avoid passing `nil` as the URL for `link_to`. Links should navigate somewhere. If you need a clickable element without navigation, use a `<button>` instead.",

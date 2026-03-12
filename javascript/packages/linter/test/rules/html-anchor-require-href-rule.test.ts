@@ -6,6 +6,7 @@ const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLA
 
 const MISSING_HREF_MESSAGE = "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a `<button>` instead."
 const HASH_HREF_MESSAGE = 'Avoid `href="#"` on `<a>`. `href="#"` does not navigate anywhere, scrolls the page to the top, and adds `#` to the URL. If you need a clickable element without navigation, use a `<button>` instead.'
+const JAVASCRIPT_VOID_HREF_MESSAGE = 'Avoid `javascript:void(0)` in `href` on `<a>`. Links should navigate somewhere. If you need a clickable element without navigation, use a `<button>` instead.'
 const NIL_HREF_MESSAGE = "Avoid passing `nil` as the URL for `link_to`. Links should navigate somewhere. If you need a clickable element without navigation, use a `<button>` instead."
 
 describe("html-anchor-require-href", () => {
@@ -80,6 +81,24 @@ describe("html-anchor-require-href", () => {
     expectError(MISSING_HREF_MESSAGE)
 
     assertOffenses("<A>My link</A>")
+  })
+
+  test("fails for a with href='javascript:void(0)'", () => {
+    expectError(JAVASCRIPT_VOID_HREF_MESSAGE)
+
+    assertOffenses('<a href="javascript:void(0)">My link</a>')
+  })
+
+  test("fails for a with href='javascript:void(0)' and other attributes", () => {
+    expectError(JAVASCRIPT_VOID_HREF_MESSAGE)
+
+    assertOffenses('<a href="javascript:void(0)" data-action="click->doSomething">My link</a>')
+  })
+
+  test("fails for a with href='javascript:void()'", () => {
+    expectError(JAVASCRIPT_VOID_HREF_MESSAGE)
+
+    assertOffenses('<a href="javascript:void()">My link</a>')
   })
 
   test("fails for link_to with href='#'", () => {
