@@ -366,7 +366,16 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        return if !skip_comment_check && erb_comment?(opening)
+        if !skip_comment_check && erb_comment?(opening)
+          has_left_trim = opening.start_with?("<%-")
+          remove_trailing_whitespace_from_last_token! if has_left_trim
+
+          if at_line_start?
+            extract_and_remove_lspace!
+            @trim_next_whitespace = true
+          end
+          return
+        end
         return if erb_graphql?(opening)
 
         code = node.content.value.strip
