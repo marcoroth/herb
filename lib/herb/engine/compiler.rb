@@ -512,8 +512,16 @@ module Herb
           @tokens.last[0] != :text ||
           @tokens.last[1].empty? ||
           @tokens.last[1].end_with?("\n") ||
-          @tokens.last[1] =~ /\A[ \t]+\z/ ||
+          (@tokens.last[1] =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) ||
           @tokens.last[1] =~ /\n[ \t]+\z/
+      end
+
+      def preceding_token_ends_with_newline?
+        preceding = @tokens.length >= 2 ? @tokens[-2] : nil
+        return true unless preceding
+        return true unless preceding[0] == :text
+
+        preceding[1].end_with?("\n")
       end
 
       def extract_lspace

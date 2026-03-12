@@ -169,5 +169,12 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "inline space between close tag and ERB control tag is preserved" do
+      template = "<strong>Foo:</strong> <% if true %>Bar<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end
