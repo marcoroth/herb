@@ -50,6 +50,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.
+- [`html-details-has-summary`](./html-details-has-summary.md) - Require `<summary>` in `<details>` elements
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-head-only-elements`](./html-head-only-elements.md) - Require head-scoped elements inside `<head>`.
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
