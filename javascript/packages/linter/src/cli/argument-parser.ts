@@ -1,5 +1,6 @@
 import dedent from "dedent"
 
+import { availableParallelism } from "node:os"
 import { parseArgs } from "util"
 import { Herb } from "@herb-tools/node-wasm"
 
@@ -27,6 +28,7 @@ export interface ParsedArguments {
   init: boolean
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
+  jobs: number
 }
 
 export class ArgumentParser {
@@ -53,6 +55,8 @@ export class ArgumentParser {
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
+      -j, --jobs <n>                number of parallel workers for linting files [default: auto]
+                                    use "auto" to detect based on available CPU cores
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color                    disable colored output
       --no-timing                   hide timing information
@@ -83,7 +87,8 @@ export class ArgumentParser {
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
         "truncate-lines": { type: "boolean" },
-        "no-custom-rules": { type: "boolean" }
+        "no-custom-rules": { type: "boolean" },
+        jobs: { type: "string", short: "j" }
       },
       allowPositionals: true
     })
@@ -163,7 +168,20 @@ export class ArgumentParser {
       }
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel }
+    let jobs = availableParallelism()
+
+    if (values.jobs && values.jobs !== "auto") {
+      const parsed = parseInt(values.jobs, 10)
+
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(`Error: Invalid --jobs value "${values.jobs}". Must be a positive integer or "auto".`)
+        process.exit(1)
+      }
+
+      jobs = parsed
+    }
+
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel, jobs }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

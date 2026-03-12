@@ -3,13 +3,17 @@ import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { Config } from "@herb-tools/config"
 
-import { readFileSync, writeFileSync } from "fs"
-import { resolve } from "path"
+import { Worker } from "node:worker_threads"
+import { readFileSync, writeFileSync } from "node:fs"
+import { resolve, dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
+import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 
 export interface ProcessedFile {
   filename: string
@@ -20,6 +24,7 @@ export interface ProcessedFile {
 
 export interface ProcessingContext {
   projectPath?: string
+  configPath?: string
   pattern?: string
   fix?: boolean
   fixUnsafe?: boolean
@@ -27,6 +32,7 @@ export interface ProcessingContext {
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
   loadCustomRules?: boolean
+  jobs?: number
 }
 
 export interface ProcessingResult {
@@ -43,6 +49,13 @@ export interface ProcessingResult {
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   context?: ProcessingContext
 }
+
+/**
+ * Minimum number of files required to use parallel processing.
+ * Below this threshold, sequential processing is faster due to
+ * worker thread startup overhead (loading WASM, config, etc.).
+ */
+const PARALLEL_FILE_THRESHOLD = 10
 
 export class FileProcessor {
   private linter: Linter | null = null
@@ -61,6 +74,17 @@ export class FileProcessor {
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
+    const jobs = context?.jobs ?? 1
+    const shouldParallelize = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
+
+    if (shouldParallelize) {
+      return this.processFilesInParallel(files, jobs, formatOption, context)
+    }
+
+    return this.processFilesSequentially(files, formatOption, context)
+  }
+
+  private async processFilesSequentially(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
     let totalInfo = 0
@@ -222,5 +246,162 @@ export class FileProcessor {
     }
 
     return result
+  }
+
+  private async processFilesInParallel(files: string[], jobs: number, formatOption: FormatOption, context?: ProcessingContext): Promise<ProcessingResult> {
+    const workerCount = Math.min(jobs, files.length)
+    const chunks = this.splitIntoChunks(files, workerCount)
+    const workerPath = this.resolveWorkerPath()
+
+    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
+    const workerResults = await Promise.all(workerPromises)
+
+    for (const result of workerResults) {
+      if (result.error) {
+        throw new Error(`Worker error: ${result.error}`)
+      }
+    }
+
+    return this.aggregateWorkerResults(workerResults, formatOption, context)
+  }
+
+  private resolveWorkerPath(): string {
+    try {
+      const currentDir = dirname(fileURLToPath(import.meta.url))
+
+      return join(currentDir, "lint-worker.js")
+    } catch {
+      return join(__dirname, "lint-worker.js")
+    }
+  }
+
+  private splitIntoChunks(files: string[], chunkCount: number): string[][] {
+    const chunks: string[][] = Array.from({ length: chunkCount }, () => [])
+
+    for (let i = 0; i < files.length; i++) {
+      chunks[i % chunkCount].push(files[i])
+    }
+
+    return chunks.filter(chunk => chunk.length > 0)
+  }
+
+  private runWorker(workerPath: string, files: string[], context?: ProcessingContext): Promise<WorkerResult> {
+    return new Promise((resolve, reject) => {
+      const workerData: WorkerInput = {
+        files,
+        projectPath: context?.projectPath || process.cwd(),
+        configPath: context?.configPath,
+        fix: context?.fix || false,
+        fixUnsafe: context?.fixUnsafe || false,
+        ignoreDisableComments: context?.ignoreDisableComments || false,
+        loadCustomRules: context?.loadCustomRules || false,
+      }
+
+      const worker = new Worker(workerPath, { workerData })
+
+      worker.on("message", (result: WorkerResult) => {
+        resolve(result)
+      })
+
+      worker.on("error", (error) => {
+        reject(error)
+      })
+
+      worker.on("exit", (code) => {
+        if (code !== 0) {
+          reject(new Error(`Worker exited with code ${code}`))
+        }
+      })
+    })
+  }
+
+  private aggregateWorkerResults(results: WorkerResult[], formatOption: FormatOption, context?: ProcessingContext): ProcessingResult {
+    let totalErrors = 0
+    let totalWarnings = 0
+    let totalInfo = 0
+    let totalHints = 0
+    let totalIgnored = 0
+    let totalWouldBeIgnored = 0
+    let filesWithOffenses = 0
+    let filesFixed = 0
+    let ruleCount = 0
+
+    const allOffenses: ProcessedFile[] = []
+    const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
+
+    for (const result of results) {
+      totalErrors += result.totalErrors
+      totalWarnings += result.totalWarnings
+      totalInfo += result.totalInfo
+      totalHints += result.totalHints
+      totalIgnored += result.totalIgnored
+      totalWouldBeIgnored += result.totalWouldBeIgnored
+      filesWithOffenses += result.filesWithOffenses
+      filesFixed += result.filesFixed
+
+      if (result.ruleCount > 0) {
+        ruleCount = result.ruleCount
+      }
+
+      for (const offense of result.offenses) {
+        allOffenses.push({
+          filename: offense.filename,
+          offense: offense.offense,
+          content: offense.content,
+          autocorrectable: offense.autocorrectable
+        })
+      }
+
+      for (const [rule, data] of result.ruleOffenses) {
+        const existing = ruleOffenses.get(rule) || { count: 0, files: new Set<string>() }
+        existing.count += data.count
+
+        for (const file of data.files) {
+          existing.files.add(file)
+        }
+
+        ruleOffenses.set(rule, existing)
+      }
+
+      if (formatOption !== 'json') {
+        for (const fixMessage of result.fixMessages) {
+          const [filename, countStr] = fixMessage.split("\t")
+          const count = parseInt(countStr, 10)
+          console.log(`${colorize("\u2713", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${count} ${count === 1 ? "offense" : "offenses"}`, "green")}`)
+        }
+      }
+    }
+
+    const processingResult: ProcessingResult = {
+      totalErrors,
+      totalWarnings,
+      totalInfo,
+      totalHints,
+      totalIgnored,
+      filesWithOffenses,
+      filesFixed,
+      ruleCount,
+      allOffenses,
+      ruleOffenses,
+      context
+    }
+
+    if (totalWouldBeIgnored > 0) {
+      processingResult.totalWouldBeIgnored = totalWouldBeIgnored
+    }
+
+    return processingResult
+  }
+
+  /**
+   * Returns the default number of parallel jobs based on available CPU cores.
+   * Returns 1 if parallelism detection fails.
+   */
+  static defaultJobs(): number {
+    try {
+      return availableParallelism()
+    } catch {
+      return 1
+    }
   }
 }
