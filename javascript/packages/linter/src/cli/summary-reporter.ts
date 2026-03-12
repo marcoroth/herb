@@ -65,7 +65,7 @@ export class SummaryReporter {
     }
 
     if (totalInfo > 0) {
-      parts.push(colorize(colorize(`${totalInfo} info`, "brightBlue"), "bold"))
+      parts.push(colorize(colorize(`${totalInfo} info`, "cyan"), "bold"))
     }
 
     if (totalHints > 0) {
