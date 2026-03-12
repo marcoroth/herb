@@ -51,6 +51,7 @@ import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-sp
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
+import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
@@ -133,6 +134,7 @@ export const rules: RuleClass[] = [
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
+  HTMLDetailsHasSummaryRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
