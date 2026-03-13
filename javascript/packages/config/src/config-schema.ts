@@ -39,10 +39,14 @@ export const FormatterConfigSchema = z.object({
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
-export const SecurityModeSchema = z.enum(["error", "warn", "ignore"])
+export const ValidatorsConfigSchema = z.object({
+  security: z.boolean().optional().describe("Enable or disable the security validator (default: true)"),
+  nesting: z.boolean().optional().describe("Enable or disable the nesting validator (default: true)"),
+  accessibility: z.boolean().optional().describe("Enable or disable the accessibility validator (default: true)"),
+}).strict().optional()
 
 export const EngineConfigSchema = z.object({
-  security: SecurityModeSchema.optional().describe("Security mode for ERB output in HTML attributes. 'error' raises immediately, 'warn' logs a warning, 'ignore' skips validation"),
+  validators: ValidatorsConfigSchema.describe("Per-validator enable/disable configuration"),
 }).strict().optional()
 
 export const HerbConfigSchema = z.object({

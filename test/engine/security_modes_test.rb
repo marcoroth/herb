@@ -3,18 +3,19 @@
 require_relative "../test_helper"
 
 module Engine
-  class SecurityModesTest < Minitest::Spec
+  class ValidatorConfigTest < Minitest::Spec
     include SnapshotUtils
 
     before do
       @security_violation_template = "<div <%= @malicious %>>Content</div>"
       @attribute_name_violation = '<div data-<%= @name %>="value">Content</div>'
       @valid_template = "<div>Valid template</div>"
+      @invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
     end
 
-    test "security: 'error' mode raises SecurityError (default)" do
+    test "security validator raises SecurityError by default" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template, security: :error)
+        Herb::Engine.new(@security_violation_template)
       end
 
       assert_includes error.message, "ERB output tags"
@@ -22,165 +23,83 @@ module Engine
       assert_equal 5, error.column
     end
 
-    test "security mode defaults to 'error' when not specified" do
-      error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template)
-      end
-
-      assert_includes error.message, "ERB output tags"
-    end
-
-    test "security: 'warn' mode logs warning but compiles successfully" do
-      original_stderr = $stderr
-      $stderr = StringIO.new
-
-      engine = Herb::Engine.new(@security_violation_template, security: :warn)
-
-      $stderr.rewind
-      output = $stderr.read
-      $stderr = original_stderr
-
-      assert output.include?("WARNING: Security issue")
-      assert output.include?("ERB output tags")
-      assert output.include?("Suggestion:")
-      assert_kind_of String, engine.src
-    end
-
-    test "security: 'ignore' mode silently skips security validation" do
-      engine = Herb::Engine.new(@security_violation_template, security: :ignore)
+    test "security validator can be disabled" do
+      engine = Herb::Engine.new(@security_violation_template, validators: { security: false })
 
       assert_kind_of String, engine.src
       refute_empty engine.src
     end
 
-    test "security: 'warn' mode logs multiple security violations" do
-      template = '<div <%= @attr1 %> data-<%= @name %>="value">Content</div>'
+    test "nesting validator raises CompilationError by default" do
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(@invalid_nesting_template)
+      end
 
-      original_stderr = $stderr
-      $stderr = StringIO.new
+      assert_includes error.message, "InvalidNestingError"
+    end
 
-      engine = Herb::Engine.new(template, security: :warn)
+    test "nesting validator can be disabled" do
+      engine = Herb::Engine.new(@invalid_nesting_template, validators: { nesting: false })
 
-      $stderr.rewind
-      output = $stderr.read
-      $stderr = original_stderr
-
-      assert output.scan("WARNING: Security issue").count >= 1
       assert_kind_of String, engine.src
     end
 
-    test "security: 'error' mode still raises non-security validation errors" do
-      invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
-
+    test "disabling security does not disable nesting" do
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: :error)
+        Herb::Engine.new(@invalid_nesting_template, validators: { security: false })
       end
 
       assert_includes error.message, "InvalidNestingError"
     end
 
-    test "security: 'warn' mode still raises non-security validation errors" do
-      invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
-
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: :warn)
+    test "disabling nesting does not disable security" do
+      error = assert_raises(Herb::Engine::SecurityError) do
+        Herb::Engine.new(@security_violation_template, validators: { nesting: false })
       end
 
-      assert_includes error.message, "InvalidNestingError"
+      assert_includes error.message, "ERB output tags"
     end
 
-    test "security: 'ignore' mode still raises non-security validation errors" do
-      invalid_nesting_template = "<p><div>Invalid nesting</div></p>"
+    test "multiple validators can be disabled" do
+      template = "<p><div <%= @attr %>>Content</div></p>"
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(invalid_nesting_template, security: :ignore)
-      end
+      engine = Herb::Engine.new(template, validators: {
+        security: false,
+        nesting: false,
+      })
 
-      assert_includes error.message, "InvalidNestingError"
+      assert_kind_of String, engine.src
     end
 
-    test "invalid security mode raises ArgumentError" do
-      error = assert_raises(ArgumentError) do
-        Herb::Engine.new(@valid_template, security: :invalid)
-      end
-
-      assert_includes error.message, "security must be one of :error, :warn, or :ignore"
-      assert_includes error.message, ":invalid"
-    end
-
-    test "security mode works with validation_mode: :overlay" do
-      # When validation_mode is :overlay, validation errors are rendered as an overlay
-      # rather than raising or logging to stderr
+    test "disabled validators work with validation_mode: :overlay" do
       engine = Herb::Engine.new(@security_violation_template,
-                                security: :warn,
+                                validators: { security: false },
                                 validation_mode: :overlay)
 
       assert_kind_of String, engine.src
     end
 
-    test "security mode works with validation_mode: :none" do
-      # When validation_mode is :none, security checks don't run
+    test "validators do not run when validation_mode: :none" do
       engine = Herb::Engine.new(@security_violation_template,
-                                security: :error,
                                 validation_mode: :none)
 
       assert_kind_of String, engine.src
     end
 
-    test "security: 'warn' includes filename in warning message" do
-      original_stderr = $stderr
-      $stderr = StringIO.new
+    test "enabled_validators returns resolved config" do
+      engine = Herb::Engine.new(@valid_template, validators: { security: false })
 
-      Herb::Engine.new(@security_violation_template,
-                       security: :warn,
-                       filename: "test_template.html.erb")
-
-      $stderr.rewind
-      output = $stderr.read
-      $stderr = original_stderr
-
-      assert output.include?("test_template.html.erb")
+      assert_equal false, engine.enabled_validators[:security]
+      assert_equal true, engine.enabled_validators[:nesting]
+      assert_equal true, engine.enabled_validators[:accessibility]
     end
 
-    test "security: 'warn' formats location without filename" do
-      original_stderr = $stderr
-      $stderr = StringIO.new
+    test "all validators enabled by default" do
+      engine = Herb::Engine.new(@valid_template)
 
-      Herb::Engine.new(@security_violation_template, security: :warn)
-
-      $stderr.rewind
-      output = $stderr.read
-      $stderr = original_stderr
-
-      assert output.match?(/\d+:\d+/)
-    end
-
-    test "security mode reads from .herb.yml configuration" do
-      temp_dir = Dir.mktmpdir("herb_security_config_test")
-      File.write(File.join(temp_dir, ".herb.yml"), "engine:\n  security: ignore\n")
-
-      Herb.configure(temp_dir)
-
-      engine = Herb::Engine.new(@security_violation_template)
-      assert_kind_of String, engine.src
-      assert_equal :ignore, engine.security_mode
-    ensure
-      Herb.reset_configuration!
-      FileUtils.rm_rf(temp_dir)
-    end
-
-    test "explicit security parameter overrides .herb.yml configuration" do
-      temp_dir = Dir.mktmpdir("herb_security_config_test")
-      File.write(File.join(temp_dir, ".herb.yml"), "engine:\n  security: ignore\n")
-
-      Herb.configure(temp_dir)
-
-      assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template, security: :error)
-      end
-    ensure
-      Herb.reset_configuration!
-      FileUtils.rm_rf(temp_dir)
+      assert_equal true, engine.enabled_validators[:security]
+      assert_equal true, engine.enabled_validators[:nesting]
+      assert_equal true, engine.enabled_validators[:accessibility]
     end
   end
 end
