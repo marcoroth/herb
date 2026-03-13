@@ -169,5 +169,30 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "inline space between close tag and ERB control tag is preserved" do
+      template = "<strong>Foo:</strong> <% if true %>Bar<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "whitespace between expression and code tag on same line is preserved" do
+      template = "<%= value %> <% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
+
+    test "multiple spaces between expression and code tag on same line are preserved" do
+      template = "<%= value %>   <% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
+
+    test "tab between expression and code tag on same line is preserved" do
+      template = "<%= value %>\t<% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
   end
 end

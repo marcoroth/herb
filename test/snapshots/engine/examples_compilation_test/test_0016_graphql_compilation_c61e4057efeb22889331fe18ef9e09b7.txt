@@ -4,7 +4,6 @@ input: "{source: \"<%# app/views/products/product.html.erb %>\\n<%graphql\\n  fr
 ---
 _buf = ::String.new; _buf << '
 
-
 <article class="product">
   <h1>'.freeze; _buf << (product.title).to_s; _buf << '</h1>
   <p class="description">'.freeze; _buf << (product.description).to_s; _buf << '</p>
