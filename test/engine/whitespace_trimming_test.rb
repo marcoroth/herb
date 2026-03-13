@@ -178,13 +178,13 @@ module Engine
     end
 
     test "whitespace between expression and code tag on same line is preserved" do
-      template = '<%= value %> <% if true %>extra<% end %>'
+      template = "<%= value %> <% if true %>extra<% end %>"
 
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
 
     test "multiple spaces between expression and code tag on same line are preserved" do
-      template = '<%= value %>   <% if true %>extra<% end %>'
+      template = "<%= value %>   <% if true %>extra<% end %>"
 
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
