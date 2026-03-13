@@ -27,8 +27,16 @@ hero:
       link: https://github.com/marcoroth/herb
 
     - theme: alt
-      text: Playground
+      text: What's new in v0.9
+      link: /blog/whats-new-in-herb-v0-9
+
+    - theme: alt
+      text: Herb Playground
       link: /playground
+
+    - theme: alt
+      text: Prism Playground
+      link: /playground/prism
 
 features:
   - title: HTML-aware
