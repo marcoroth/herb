@@ -62,6 +62,18 @@ module Herb
       @config["engine"] || {}
     end
 
+    def enabled_validators(overrides = {})
+      config = dig("engine", "validators") || {}
+
+      {
+        security: config.fetch("security", true),
+        nesting: config.fetch("nesting", true),
+        accessibility: config.fetch("accessibility", true),
+      }.merge(
+        overrides.to_h { |key, value| [key.to_sym, !!value] }
+      )
+    end
+
     def formatter
       @config["formatter"] || {}
     end

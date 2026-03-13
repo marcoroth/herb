@@ -514,31 +514,57 @@ class ConfigurationTest < Minitest::Spec
     assert_equal 1, files.size
   end
 
-  test "engine config defaults to security error" do
+  test "engine validators default to true" do
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_equal "error", config.engine["security"]
+    assert_equal true, config.dig("engine", "validators", "security")
+    assert_equal true, config.dig("engine", "validators", "nesting")
+    assert_equal true, config.dig("engine", "validators", "accessibility")
   end
 
-  test "engine security can be set to warn" do
+  test "engine validator security can be disabled" do
     write_config(<<~YAML)
       engine:
-        security: warn
+        validators:
+          security: false
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_equal "warn", config.engine["security"]
+    assert_equal false, config.dig("engine", "validators", "security")
   end
 
-  test "engine security can be set to ignore" do
+  test "engine validator nesting can be disabled" do
     write_config(<<~YAML)
       engine:
-        security: ignore
+        validators:
+          nesting: false
     YAML
 
     config = Herb::Configuration.load(@temp_dir)
 
-    assert_equal "ignore", config.engine["security"]
+    assert_equal false, config.dig("engine", "validators", "nesting")
+  end
+
+  test "enabled_validators resolves from config" do
+    write_config(<<~YAML)
+      engine:
+        validators:
+          security: false
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({ security: false, nesting: true, accessibility: true }, config.enabled_validators)
+  end
+
+  test "enabled_validators accepts overrides" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    result = config.enabled_validators(nesting: false)
+
+    assert_equal true, result[:security]
+    assert_equal false, result[:nesting]
+    assert_equal true, result[:accessibility]
   end
 end

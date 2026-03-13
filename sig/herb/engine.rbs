@@ -20,7 +20,7 @@ module Herb
 
     attr_reader visitors: untyped
 
-    attr_reader security_mode: untyped
+    attr_reader enabled_validators: untyped
 
     ESCAPE_TABLE: untyped
 
@@ -79,9 +79,9 @@ module Herb
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
-    def handle_validation_errors: (untyped errors, untyped input) -> untyped
+    def handle_validation_errors: (untyped validators, untyped input) -> untyped
 
-    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
+    def add_validation_overlay: (untyped validators, ?untyped input) -> untyped
 
     def escape_attr: (untyped text) -> untyped
 

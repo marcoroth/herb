@@ -70,21 +70,33 @@ impl Default for HerbFormatterConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HerbEngineConfig {
-  #[serde(default = "default_security_mode")]
-  pub security: String,
+pub struct HerbValidatorsConfig {
+  #[serde(default = "default_validator_enabled")]
+  pub security: bool,
+  #[serde(default = "default_validator_enabled")]
+  pub nesting: bool,
+  #[serde(default = "default_validator_enabled")]
+  pub accessibility: bool,
 }
 
-fn default_security_mode() -> String {
-  "error".to_string()
+fn default_validator_enabled() -> bool {
+  true
 }
 
-impl Default for HerbEngineConfig {
+impl Default for HerbValidatorsConfig {
   fn default() -> Self {
     Self {
-      security: default_security_mode(),
+      security: true,
+      nesting: true,
+      accessibility: true,
     }
   }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HerbEngineConfig {
+  #[serde(default)]
+  pub validators: HerbValidatorsConfig,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
