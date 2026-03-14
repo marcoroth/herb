@@ -322,6 +322,158 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("javascript_tag helpers", () => {
+    test("javascript_tag with content as argument", () => {
+      expect(transform(`<%= javascript_tag "alert('Hello')" %>`)).toBe(
+        `<script>alert('Hello')</script>`
+      )
+    })
+
+    test("javascript_tag with block", () => {
+      const input = dedent`
+        <%= javascript_tag do %>
+          alert('Hello')
+        <% end %>
+      `
+
+      const expected = dedent`
+        <script>
+          alert('Hello')
+        </script>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("javascript_tag with type attribute", () => {
+      expect(transform(`<%= javascript_tag "alert('Hello')", type: "application/javascript" %>`)).toBe(
+        `<script type="application/javascript">alert('Hello')</script>`
+      )
+    })
+  })
+
+  describe("javascript_include_tag helpers", () => {
+    test("javascript_include_tag with single source", () => {
+      expect(transform(`<%= javascript_include_tag "application" %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with defer", () => {
+      expect(transform(`<%= javascript_include_tag "application", defer: true %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>" defer></script>`
+      )
+    })
+
+    test("javascript_include_tag with multiple sources", () => {
+      expect(transform(`<%= javascript_include_tag "application", "vendor" %>`)).toBe(
+        dedent`
+          <script src="<%= javascript_path("application") %>"></script>
+          <script src="<%= javascript_path("vendor") %>"></script>
+        `
+      )
+    })
+
+    test("javascript_include_tag with nonce", () => {
+      expect(transform(`<%= javascript_include_tag "application", nonce: true %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>" nonce="true"></script>`
+      )
+    })
+
+    test("javascript_include_tag with nonce false", () => {
+      expect(transform(`<%= javascript_include_tag "application", nonce: false %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>" nonce="false"></script>`
+      )
+    })
+
+    test("javascript_include_tag with interpolated nonce", () => {
+      expect(transform('<%= javascript_include_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
+        '<script src="<%= javascript_path("application") %>" nonce="static-<%= dynamic %>"></script>'
+      )
+    })
+
+    test("javascript_include_tag with data attributes", () => {
+      expect(transform(`<%= javascript_include_tag "application", data: { turbo_track: "reload" } %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>" data-turbo-track="reload"></script>`
+      )
+    })
+
+    test("javascript_include_tag with .js extension", () => {
+      expect(transform(`<%= javascript_include_tag "xmlhr.js" %>`)).toBe(
+        `<script src="<%= javascript_path("xmlhr.js") %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with URL", () => {
+      expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr" %>`)).toBe(
+        `<script src="http://www.example.com/xmlhr"></script>`
+      )
+    })
+
+    test("javascript_include_tag with URL ending in .js", () => {
+      expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js" %>`)).toBe(
+        `<script src="http://www.example.com/xmlhr.js"></script>`
+      )
+    })
+
+    test("javascript_include_tag with protocol-relative URL", () => {
+      expect(transform(`<%= javascript_include_tag "//cdn.example.com/app.js" %>`)).toBe(
+        `<script src="//cdn.example.com/app.js"></script>`
+      )
+    })
+
+    test("javascript_include_tag with URL and nonce", () => {
+      expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", nonce: true %>`)).toBe(
+        `<script src="http://www.example.com/xmlhr.js" nonce="true"></script>`
+      )
+    })
+
+    test("javascript_include_tag with URL and async", () => {
+      expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", async: true %>`)).toBe(
+        `<script src="http://www.example.com/xmlhr.js" async></script>`
+      )
+    })
+
+    test("javascript_include_tag with URL and defer", () => {
+      expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", defer: true %>`)).toBe(
+        `<script src="http://www.example.com/xmlhr.js" defer></script>`
+      )
+    })
+
+    test("javascript_include_tag with defer as string", () => {
+      expect(transform(`<%= javascript_include_tag "application", defer: "true" %>`)).toBe(
+        `<script src="<%= javascript_path("application") %>" defer="true"></script>`
+      )
+    })
+
+    test("javascript_include_tag with extname false", () => {
+      expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
+        `<script src="<%= javascript_path("template.jst") %>" extname="false"></script>`
+      )
+    })
+
+    test("javascript_include_tag with host and protocol", () => {
+      expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
+        `<script src="<%= javascript_path("xmlhr") %>" host="localhost" protocol="https"></script>`
+      )
+    })
+
+    test("javascript_include_tag with multiple sources including path", () => {
+      expect(transform(`<%= javascript_include_tag "common.javascript", "/elsewhere/cools" %>`)).toBe(
+        dedent`
+          <script src="<%= javascript_path("common.javascript") %>"></script>
+          <script src="<%= javascript_path("/elsewhere/cools") %>"></script>
+        `
+      )
+    })
+
+    test("javascript_include_tag with asset_path", () => {
+      expect(transform(`<%= javascript_include_tag asset_path("application.js") %>`)).toBe(
+        `<script src="<%= asset_path("application.js") %>"></script>`
+      )
+    })
+  })
+
   describe("non-ActionView elements", () => {
     test("regular HTML elements are not modified", () => {
       expect(transform('<div class="content">Hello</div>')).toBe(

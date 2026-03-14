@@ -35,14 +35,16 @@ interface SerializedAttributes {
   attributes: string
   href: string | null
   id: string | null
+  src: string | null
 }
 
-function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean } = {}): SerializedAttributes {
+function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean } = {}): SerializedAttributes {
   const regular: string[] = []
   const prefixed: Map<string, string[]> = new Map()
 
   let href: string | null = null
   let id: string | null = null
+  let src: string | null = null
 
   for (const child of children) {
     if (!isHTMLAttributeNode(child)) continue
@@ -59,6 +61,11 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
 
     if (options.extractId && name === "id") {
       id = value
+      continue
+    }
+
+    if (options.extractSrc && name === "src") {
+      src = value
       continue
     }
 
@@ -83,7 +90,7 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
     parts.push(`${prefix}: { ${entries.join(", ")} }`)
   }
 
-  return { attributes: parts.join(", "), href, id }
+  return { attributes: parts.join(", "), href, id, src }
 }
 
 function isTextOnlyBody(body: Node[]): boolean {
@@ -116,8 +123,10 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
 
     const isAnchor = tagName.value === "a"
     const isTurboFrame = tagName.value === "turbo-frame"
+    const isScript = tagName.value === "script"
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
-    const { attributes: attributesString, href, id } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame })
+    const hasSrcAttribute = isScript && attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
+    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame, extractSrc: isScript })
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
@@ -130,6 +139,12 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     } else if (isTurboFrame) {
       content = this.buildTurboFrameTagContent(node, attributesString, id, isInlineContent)
       elementSource = "Turbo::FramesHelper#turbo_frame_tag"
+    } else if (isScript && hasSrcAttribute) {
+      content = this.buildJavascriptIncludeTagContent(attributesString, src)
+      elementSource = "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
+    } else if (isScript) {
+      content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
+      elementSource = "ActionView::Helpers::JavaScriptHelper#javascript_tag"
     } else {
       content = this.buildTagContent(tagName.value, node, attributesString, isInlineContent)
       elementSource = "ActionView::Helpers::TagHelper#tag"
@@ -149,7 +164,8 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     asMutable(node).open_tag = erbOpenTag
     asMutable(node).element_source = elementSource
 
-    const isInlineForm = isInlineContent || (isTurboFrame && !hasBody)
+    const isInlineLiteralContent = isScript && hasBody && node.body.length === 1 && isLiteralNode(node.body[0]) && !node.body[0].content.includes("\n")
+    const isInlineForm = isInlineContent || isInlineLiteralContent || (isTurboFrame && !hasBody) || (isScript && hasSrcAttribute)
 
     if (node.is_void) {
       asMutable(node).close_tag = null
@@ -224,6 +240,36 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     return argString ? ` turbo_frame_tag ${argString} do ` : ` turbo_frame_tag do `
   }
 
+  private buildJavascriptTagContent(node: HTMLElementNode, attributes: string, isInlineContent: boolean): string {
+    const bodyNode = node.body?.[0]
+    const isInlineLiteral = bodyNode && isLiteralNode(bodyNode) && !bodyNode.content.includes("\n")
+    const isInlineText = isInlineContent && isHTMLTextNode(bodyNode)
+
+    if (isInlineText || isInlineLiteral) {
+      const textContent = isHTMLTextNode(bodyNode) ? bodyNode.content : bodyNode.content
+      const args = [`"${textContent}"`]
+
+      if (attributes) args.push(attributes)
+
+      return ` javascript_tag ${args.join(", ")} `
+    }
+
+    return attributes
+      ? ` javascript_tag ${attributes} do `
+      : ` javascript_tag do `
+  }
+
+  private buildJavascriptIncludeTagContent(attributes: string, source: string | null): string {
+    const args: string[] = []
+
+    if (source) args.push(source)
+    if (attributes) args.push(attributes)
+
+    const argString = args.join(", ")
+
+    return argString ? ` javascript_include_tag ${argString} ` : ` javascript_include_tag `
+  }
+
   private buildLinkToContent(node: HTMLElementNode, attribute: string, href: string | null, isInlineContent: boolean): string {
     const args: string[] = []
 
@@ -255,7 +301,7 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag)"
+    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag)"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {
