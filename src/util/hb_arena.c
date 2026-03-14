@@ -70,14 +70,12 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t page_size) {
   page->position = 0;
 
   if (allocator->head == NULL) {
+    assert(allocator->tail == NULL);
+
     allocator->head = page;
     allocator->tail = page;
   } else {
-    hb_arena_page_T* last = allocator->head;
-
-    while (last->next != NULL) {
-      last = last->next;
-    }
+    hb_arena_page_T* last = allocator->tail;
 
     last->next = page;
     allocator->tail = page;
