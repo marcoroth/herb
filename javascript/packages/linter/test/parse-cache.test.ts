@@ -71,6 +71,7 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: true,
         action_view_helpers: false,
       })
@@ -86,6 +87,7 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: false,
         action_view_helpers: false,
       })
@@ -101,6 +103,7 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: true,
         action_view_helpers: false,
       })
@@ -116,6 +119,7 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: false,
         action_view_helpers: false,
       })

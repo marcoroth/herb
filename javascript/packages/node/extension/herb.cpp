@@ -119,6 +119,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         parser_options.action_view_helpers = action_view_helpers_value;
       }
 
+      napi_value render_nodes_prop;
+      bool has_render_nodes_prop;
+      napi_has_named_property(env, args[1], "render_nodes", &has_render_nodes_prop);
+
+      if (has_render_nodes_prop) {
+        napi_get_named_property(env, args[1], "render_nodes", &render_nodes_prop);
+        bool render_nodes_value;
+        napi_get_value_bool(env, render_nodes_prop, &render_nodes_value);
+        parser_options.render_nodes = render_nodes_value;
+      }
+
       napi_value prism_nodes_prop;
       bool has_prism_nodes_prop;
       napi_has_named_property(env, args[1], "prism_nodes", &has_prism_nodes_prop);
