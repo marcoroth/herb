@@ -33,7 +33,7 @@
     "vitest": "^4.0.0",
     "yaml": "^2.8.2",
     "yeoman-environment": "^4.4.1",
-    "yeoman-generator": "^8.0.2"
+    "yeoman-generator": "^8.1.2"
   },
   "scripts": {
     "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server",
