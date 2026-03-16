@@ -172,6 +172,9 @@ module Herb
       end
     end
 
+    class BorrowedTokenField < TokenField
+    end
+
     class TokenTypeField < Field
       def ruby_type
         "String"
@@ -347,6 +350,7 @@ module Herb
         when "node"             then NodeField
         when "borrowed_node"    then BorrowedNodeField
         when "token"            then TokenField
+        when "borrowed_token"   then BorrowedTokenField
         when "token_type"       then TokenTypeField
         when "string"           then StringField
         when "position"         then PositionField
