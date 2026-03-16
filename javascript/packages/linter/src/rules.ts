@@ -1,6 +1,7 @@
 import type { RuleClass } from "./types.js"
 
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
+import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
@@ -51,8 +52,8 @@ import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-sp
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
-import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -84,6 +85,7 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 
 export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
+  ActionViewNoSilentRenderRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
@@ -134,8 +136,8 @@ export const rules: RuleClass[] = [
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
-  HTMLDetailsHasSummaryRule,
   HTMLBooleanAttributesNoValueRule,
+  HTMLDetailsHasSummaryRule,
   HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
