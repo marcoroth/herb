@@ -10,6 +10,8 @@ module Herb
 
     attr_reader action_view_helpers: bool
 
+    attr_reader render_nodes: bool
+
     attr_reader prism_program: bool
 
     attr_reader prism_nodes: bool
@@ -23,6 +25,8 @@ module Herb
     DEFAULT_ANALYZE: bool
 
     DEFAULT_ACTION_VIEW_HELPERS: bool
+
+    DEFAULT_RENDER_NODES: bool
 
     DEFAULT_PRISM_PROGRAM: bool
 

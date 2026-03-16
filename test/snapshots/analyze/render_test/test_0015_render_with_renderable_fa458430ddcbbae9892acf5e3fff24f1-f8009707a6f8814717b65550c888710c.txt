@@ -1,0 +1,33 @@
+---
+source: "Analyze::RenderTest#test_0015_render with renderable"
+input: |2-
+<%= render renderable: Greeting.new %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:38))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render renderable: Greeting.new " (location: (1:3)-(1:36))
+    │   ├── tag_closing: "%>" (location: (1:36)-(1:38))
+    │   ├── partial: ∅
+    │   ├── template_path: ∅
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: "Greeting.new" (location: (1:23)-(1:35))
+    │   ├── collection: ∅
+    │   ├── object: ∅
+    │   ├── as_name: ∅
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: ∅
+    │   ├── content_type: ∅
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:38)-(2:0))
+        └── content: "\n"

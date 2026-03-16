@@ -1472,6 +1472,138 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_ruby_render_local_node = {
+    # |  name: Herb::Token?,
+    # |  value: Herb::AST::RubyLiteralNode?,
+    # | }
+    class RubyRenderLocalNode < Node
+      include Colors
+
+      attr_reader name: Herb::Token?
+
+      attr_reader value: Herb::AST::RubyLiteralNode?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
+
+      # : () -> serialized_ruby_render_local_node
+      def to_hash: () -> serialized_ruby_render_local_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_render_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  analyzed_ruby: nil,
+    # |  prism_node: String?,
+    # |  partial: Herb::Token?,
+    # |  template_path: Herb::Token?,
+    # |  layout: Herb::Token?,
+    # |  file: Herb::Token?,
+    # |  inline_template: Herb::Token?,
+    # |  body: Herb::Token?,
+    # |  plain: Herb::Token?,
+    # |  html: Herb::Token?,
+    # |  renderable: Herb::Token?,
+    # |  collection: Herb::Token?,
+    # |  object: Herb::Token?,
+    # |  as_name: Herb::Token?,
+    # |  spacer_template: Herb::Token?,
+    # |  formats: Herb::Token?,
+    # |  variants: Herb::Token?,
+    # |  handlers: Herb::Token?,
+    # |  content_type: Herb::Token?,
+    # |  locals: Array[Herb::AST::RubyRenderLocalNode]?,
+    # | }
+    class ERBRenderNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader analyzed_ruby: nil
+
+      attr_reader prism_node: String?
+
+      attr_reader partial: Herb::Token?
+
+      attr_reader template_path: Herb::Token?
+
+      attr_reader layout: Herb::Token?
+
+      attr_reader file: Herb::Token?
+
+      attr_reader inline_template: Herb::Token?
+
+      attr_reader body: Herb::Token?
+
+      attr_reader plain: Herb::Token?
+
+      attr_reader html: Herb::Token?
+
+      attr_reader renderable: Herb::Token?
+
+      attr_reader collection: Herb::Token?
+
+      attr_reader object: Herb::Token?
+
+      attr_reader as_name: Herb::Token?
+
+      attr_reader spacer_template: Herb::Token?
+
+      attr_reader formats: Herb::Token?
+
+      attr_reader variants: Herb::Token?
+
+      attr_reader handlers: Herb::Token?
+
+      attr_reader content_type: Herb::Token?
+
+      attr_reader locals: Array[Herb::AST::RubyRenderLocalNode]?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
+
+      # : () -> serialized_erb_render_node
+      def to_hash: () -> serialized_erb_render_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     # : type serialized_erb_yield_node = {
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,

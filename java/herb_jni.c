@@ -69,6 +69,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
     }
 
+    jmethodID getRenderNodes =
+        (*env)->GetMethodID(env, optionsClass, "isRenderNodes", "()Z");
+
+    if (getRenderNodes != NULL) {
+      jboolean renderNodes = (*env)->CallBooleanMethod(env, options, getRenderNodes);
+      parser_options.render_nodes = (renderNodes == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 
