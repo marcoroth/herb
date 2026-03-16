@@ -573,7 +573,7 @@ nodes:
             - ERBUnlessNode
 
         - name: tag_name
-          type: token
+          type: borrowed_token
 
         - name: element_source
           type: element_source

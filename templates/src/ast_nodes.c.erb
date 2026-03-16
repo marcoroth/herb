@@ -26,8 +26,10 @@
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
+  <%- when Herb::Template::BorrowedTokenField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::TokenField -%>
-  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>, allocator);
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
@@ -102,6 +104,8 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   <%- end -%>
   <%- node.fields.each do |field| -%>
   <%- case field -%>
+  <%- when Herb::Template::BorrowedTokenField -%>
+  /* <%= field.name %> is a borrowed reference, not freed here (owned by another field) */
   <%- when Herb::Template::TokenField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>, allocator); }
   <%- when Herb::Template::BorrowedNodeField -%>
