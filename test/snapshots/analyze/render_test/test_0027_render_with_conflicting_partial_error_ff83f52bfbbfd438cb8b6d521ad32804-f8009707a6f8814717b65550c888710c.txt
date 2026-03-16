@@ -1,0 +1,46 @@
+---
+source: "Analyze::RenderTest#test_0027_render with conflicting partial error"
+input: |2-
+<%= render "card", partial: "other" %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:38))
+    │   ├── errors: (1 error)
+    │   │   └── @ RenderConflictingPartialError (location: (1:0)-(1:38))
+    │   │       ├── message: "Both a positional partial `'card'` and a keyword `partial: 'other'` were passed to `render`. Use one form or the other, not both."
+    │   │       ├── positional_partial: "card"
+    │   │       └── keyword_partial: "other"
+    │   │
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render "card", partial: "other" " (location: (1:3)-(1:36))
+    │   ├── tag_closing: "%>" (location: (1:36)-(1:38))
+    │   ├── partial: "card" (location: (1:11)-(1:17))
+    │   ├── template_path: ∅
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: ∅
+    │   ├── collection: ∅
+    │   ├── object: ∅
+    │   ├── as_name: ∅
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: ∅
+    │   ├── content_type: ∅
+    │   └── locals: (1 item)
+    │       └── @ RubyRenderLocalNode (location: (1:19)-(1:35))
+    │           ├── name: "partial" (location: (1:19)-(1:27))
+    │           └── value:
+    │               └── @ RubyLiteralNode (location: (1:28)-(1:35))
+    │                   └── content: "\"other\""
+    │
+    │
+    │
+    └── @ HTMLTextNode (location: (1:38)-(2:0))
+        └── content: "\n"

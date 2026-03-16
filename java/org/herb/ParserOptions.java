@@ -5,6 +5,7 @@ public class ParserOptions {
   private boolean analyze = true;
   private boolean strict = true;
   private boolean actionViewHelpers = false;
+  private boolean renderNodes = false;
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
@@ -45,6 +46,15 @@ public class ParserOptions {
 
   public boolean isActionViewHelpers() {
     return actionViewHelpers;
+  }
+
+  public ParserOptions renderNodes(boolean value) {
+    this.renderNodes = value;
+    return this;
+  }
+
+  public boolean isRenderNodes() {
+    return renderNodes;
   }
 
   public ParserOptions prismNodes(boolean value) {

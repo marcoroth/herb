@@ -22,7 +22,7 @@ module Herb
         super(type, location, errors)
         <%- node.fields.each do |field| -%>
         <%- if field.is_a?(Herb::Template::StringField) -%>
-        @<%= field.name %> = <%= field.name %>.force_encoding("utf-8")
+        @<%= field.name %> = <%= field.name %>&.force_encoding("utf-8")
         <%- else -%>
         @<%= field.name %> = <%= field.name %>
         <%- end -%>

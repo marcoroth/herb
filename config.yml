@@ -336,6 +336,80 @@ errors:
         - name: nested_tag_column
           type: size_t
 
+    - name: RenderAmbiguousLocalsError
+      message:
+        template: "Did you mean `render partial: '%s', locals: { ... }`? Using `render '%s', locals: { ... }` passes a local variable named `locals` to the partial instead of setting the `locals:` option."
+        arguments:
+          - partial
+          - partial
+
+      fields:
+        - name: partial
+          type: string
+
+    - name: RenderMissingLocalsError
+      message:
+        template: "Wrap `%s` in `locals: { ... }` when using `partial:`. Use `render partial: '%s', locals: { %s }` instead. Without `locals:`, these keyword arguments are ignored."
+        arguments:
+          - keywords
+          - partial
+          - keywords
+
+      fields:
+        - name: partial
+          type: string
+
+        - name: keywords
+          type: string
+
+    - name: RenderNoArgumentsError
+      message:
+        template: "No arguments passed to `render`. It needs a partial name, a keyword argument like `partial:`, `template:`, or `layout:`, or a renderable object."
+        arguments: []
+
+      fields: []
+
+    - name: RenderConflictingPartialError
+      message:
+        template: "Both a positional partial `'%s'` and a keyword `partial: '%s'` were passed to `render`. Use one form or the other, not both."
+        arguments:
+          - positional_partial
+          - keyword_partial
+
+      fields:
+        - name: positional_partial
+          type: string
+
+        - name: keyword_partial
+          type: string
+
+    - name: RenderInvalidAsOptionError
+      message:
+        template: "The `as:` value `'%s'` is not a valid Ruby identifier. Use a name that starts with a lowercase letter or underscore, like `as: :item`."
+        arguments:
+          - as_value
+
+      fields:
+        - name: as_value
+          type: string
+
+    - name: RenderObjectAndCollectionError
+      message:
+        template: "The `object:` and `collection:` options are mutually exclusive. Use one or the other in your `render` call."
+        arguments: []
+
+      fields: []
+
+    - name: RenderLayoutWithoutBlockError
+      message:
+        template: "Layout rendering needs a block. Use `render layout: '%s' do ... end` so the layout has content to wrap."
+        arguments:
+          - layout
+
+      fields:
+        - name: layout
+          type: string
+
 warnings:
   fields: []
   types: []
@@ -1012,6 +1086,88 @@ nodes:
         - name: end_node
           type: node
           kind: ERBEndNode
+
+    - name: RubyRenderLocalNode
+      fields:
+        - name: name
+          type: token
+
+        - name: value
+          type: node
+          kind: RubyLiteralNode
+
+    - name: ERBRenderNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: partial
+          type: token
+
+        - name: template_path
+          type: token
+
+        - name: layout
+          type: token
+
+        - name: file
+          type: token
+
+        - name: inline_template
+          type: token
+
+        - name: body
+          type: token
+
+        - name: plain
+          type: token
+
+        - name: html
+          type: token
+
+        - name: renderable
+          type: token
+
+        - name: collection
+          type: token
+
+        - name: object
+          type: token
+
+        - name: as_name
+          type: token
+
+        - name: spacer_template
+          type: token
+
+        - name: formats
+          type: token
+
+        - name: variants
+          type: token
+
+        - name: handlers
+          type: token
+
+        - name: content_type
+          type: token
+
+        - name: locals
+          type: array
+          kind:
+            - RubyRenderLocalNode
 
     - name: ERBYieldNode
       fields:
