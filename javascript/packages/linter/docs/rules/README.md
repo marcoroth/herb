@@ -4,6 +4,7 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+- [`actionview-no-content-and-block`](./actionview-no-content-and-block.md) - Disallow passing both content and block to tag helpers
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags

@@ -3,6 +3,7 @@ export * from "./file-utils.js"
 export * from "./string-utils.js"
 export * from "./herb-disable-comment-base.js"
 
+export * from "./actionview-no-content-and-block.js"
 export * from "./actionview-no-silent-helper.js"
 export * from "./actionview-no-silent-render.js"
 

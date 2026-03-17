@@ -1,5 +1,6 @@
 import type { RuleClass } from "./types.js"
 
+import { ActionViewNoContentAndBlockRule } from "./rules/actionview-no-content-and-block.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 
@@ -85,6 +86,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  ActionViewNoContentAndBlockRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
 
