@@ -148,15 +148,7 @@ module Herb
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
-        require "prism"
-
-        prism_result = Prism.parse(@src)
-        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
-
-        if syntax_errors.any?
-          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
-          raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
-        end
+        ensure_valid_ruby!(@src)
       end
 
       @src.freeze
@@ -439,6 +431,28 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    def ensure_valid_ruby!(source)
+      RubyVM::InstructionSequence.compile(source)
+    rescue SyntaxError => e
+      return if e.message.include?("Invalid yield")
+
+      begin
+        require "prism"
+      rescue LoadError
+        # Prism not available, fall through
+      end
+
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n  - #{e.message}", compiled_source: @src) unless defined?(Prism)
+
+      prism_result = Prism.parse(@src)
+      syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
+
+      if syntax_errors.any?
+        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
+      end
     end
   end
 end

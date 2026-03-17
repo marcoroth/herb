@@ -89,5 +89,7 @@ module Herb
 
     # : () -> Array[Herb::Visitor]
     def default_visitors: () -> Array[Herb::Visitor]
+
+    def ensure_valid_ruby!: (untyped source) -> untyped
   end
 end
