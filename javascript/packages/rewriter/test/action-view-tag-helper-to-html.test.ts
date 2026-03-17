@@ -161,6 +161,24 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("tag.details with inline block", () => {
+      expect(transform('<%= tag.details { "Some content" } %>')).toBe(
+        "<details>Some content</details>"
+      )
+    })
+
+    test("tag.div with inline block and attributes", () => {
+      expect(transform('<%= tag.div(class: "container") { "Hello" } %>')).toBe(
+        '<div class="container">Hello</div>'
+      )
+    })
+
+    test("tag.p with inline block and ruby expression", () => {
+      expect(transform('<%= tag.p { @user.name } %>')).toBe(
+        "<p><%= @user.name %></p>"
+      )
+    })
+
     test("tag.div with splat attributes", () => {
       const input = dedent`
         <%= tag.div class: "content", **attributes do %>
@@ -175,6 +193,26 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       expect(transform(input)).toBe(expected)
+    })
+  })
+
+  describe("content_tag helpers", () => {
+    test("content_tag with inline block", () => {
+      expect(transform('<%= content_tag(:details) { "Some content" } %>')).toBe(
+        "<details>Some content</details>"
+      )
+    })
+
+    test("content_tag with inline block and attributes", () => {
+      expect(transform('<%= content_tag(:div, class: "container") { "Hello" } %>')).toBe(
+        '<div class="container">Hello</div>'
+      )
+    })
+
+    test("content_tag with inline block and ruby expression", () => {
+      expect(transform('<%= content_tag(:p) { @user.name } %>')).toBe(
+        "<p><%= @user.name %></p>"
+      )
     })
   })
 
@@ -212,6 +250,24 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("link_to with :back", () => {
       expect(transform('<%= link_to "Back", :back %>')).toBe(
         '<a href="<%= url_for(:back) %>">Back</a>'
+      )
+    })
+
+    test("link_to with inline block", () => {
+      expect(transform('<%= link_to("#") { "Click me" } %>')).toBe(
+        '<a href="#">Click me</a>'
+      )
+    })
+
+    test("link_to with inline block and attributes", () => {
+      expect(transform('<%= link_to("/about", class: "btn") { "About" } %>')).toBe(
+        '<a href="/about" class="btn">About</a>'
+      )
+    })
+
+    test("link_to with inline block and ruby expression", () => {
+      expect(transform('<%= link_to("#") { @user.name } %>')).toBe(
+        '<a href="#"><%= @user.name %></a>'
       )
     })
   })
