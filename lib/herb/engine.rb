@@ -14,6 +14,7 @@ require_relative "engine/validation_error_overlay"
 require_relative "engine/validators/security_validator"
 require_relative "engine/validators/nesting_validator"
 require_relative "engine/validators/accessibility_validator"
+require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
