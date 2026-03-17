@@ -188,7 +188,7 @@ export function hasStaticAttributeName(attributeNameNode: HTMLAttributeNameNode)
 /**
  * Checks if an HTML attribute name node has dynamic content (contains ERB)
  */
-export function hasDynamicAttributeName(attributeNameNode: HTMLAttributeNameNode): boolean {
+export function hasDynamicAttributeNameNode(attributeNameNode: HTMLAttributeNameNode): boolean {
   if (!attributeNameNode.children) {
     return false
   }
@@ -383,12 +383,11 @@ export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | un
 
 /**
  * Checks if an attribute has a dynamic (ERB-containing) name.
- * Accepts an HTMLAttributeNode (wraps the core HTMLAttributeNameNode-level check).
  */
-export function hasDynamicAttributeNameOnAttribute(attributeNode: HTMLAttributeNode): boolean {
+export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
   if (!isHTMLAttributeNameNode(attributeNode.name)) return false
 
-  return hasDynamicAttributeName(attributeNode.name)
+  return hasDynamicAttributeNameNode(attributeNode.name)
 }
 
 /**
