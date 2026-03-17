@@ -179,6 +179,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("tag.div with content argument and block prefers block content", () => {
+      expect(transform('<%= tag.div("argument") { "Block" } %>')).toBe(
+        "<div>Block</div>"
+      )
+    })
+
     test("tag.div with splat attributes", () => {
       const input = dedent`
         <%= tag.div class: "content", **attributes do %>
@@ -212,6 +218,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("content_tag with inline block and ruby expression", () => {
       expect(transform('<%= content_tag(:p) { @user.name } %>')).toBe(
         "<p><%= @user.name %></p>"
+      )
+    })
+
+    test("content_tag with content argument and block prefers block content", () => {
+      expect(transform('<%= content_tag(:div, "argument") { "Block" } %>')).toBe(
+        "<div>Block</div>"
       )
     })
   })
@@ -268,6 +280,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("link_to with inline block and ruby expression", () => {
       expect(transform('<%= link_to("#") { @user.name } %>')).toBe(
         '<a href="#"><%= @user.name %></a>'
+      )
+    })
+
+    test("link_to with content argument and block prefers block content", () => {
+      expect(transform('<%= link_to("#", "argument") { "Block" } %>')).toBe(
+        `<a href="#">Block</a>`
       )
     })
   })
