@@ -40,6 +40,9 @@ char* extract_content_tag_content(pm_call_node_t* call_node, pm_parser_t* parser
 
   if (!call_node) { return NULL; }
 
+  char* block_content = extract_inline_block_content(call_node, allocator);
+  if (block_content) { return block_content; }
+
   if (call_node->arguments) {
     pm_arguments_node_t* arguments = call_node->arguments;
 
@@ -59,7 +62,7 @@ char* extract_content_tag_content(pm_call_node_t* call_node, pm_parser_t* parser
     }
   }
 
-  return extract_inline_block_content(call_node, allocator);
+  return NULL;
 }
 
 bool content_tag_supports_block(void) {
