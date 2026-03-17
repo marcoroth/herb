@@ -8,6 +8,7 @@ export * from "./actionview-no-silent-render.js"
 
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"
+export * from "./erb-no-empty-control-flow.js"
 export * from "./erb-no-conditional-open-tag.js"
 export * from "./erb-no-duplicate-branch-elements.js"
 export * from "./erb-no-empty-tags.js"

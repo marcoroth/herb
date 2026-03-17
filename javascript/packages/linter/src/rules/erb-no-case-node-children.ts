@@ -28,10 +28,12 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
       if (!this.isAllowedContent(child)) {
         const childCode = IdentityPrinter.print(child).trim()
 
-        this.addOffense(
+        const offense = this.createOffense(
           `Do not place \`${childCode}\` between \`${caseCode}\` and \`${conditionCode}\`. Content here is not part of any branch and will not be rendered.`,
           child.location,
         )
+        offense.tags = ["unnecessary"]
+        this.offenses.push(offense)
       }
     }
   }
