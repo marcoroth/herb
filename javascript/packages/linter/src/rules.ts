@@ -19,6 +19,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
 import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
@@ -103,6 +104,7 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoSilentStatementRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
