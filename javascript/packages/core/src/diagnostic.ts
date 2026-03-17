@@ -1,6 +1,7 @@
 import { Location, SerializedLocation } from "./location.js"
 
 export type DiagnosticSeverity = "error" | "warning" | "info" | "hint"
+export type DiagnosticTag = "unnecessary" | "deprecated"
 
 /**
  * Base interface for all diagnostic information in Herb tooling.
@@ -32,6 +33,11 @@ export interface Diagnostic {
    * Optional source that generated this diagnostic (e.g., "parser", "linter", "lexer")
    */
   source?: string
+
+  /**
+   * Optional diagnostic tags for additional metadata (e.g., "unnecessary", "deprecated")
+   */
+  tags?: DiagnosticTag[]
 }
 
 /**
@@ -43,6 +49,7 @@ export interface SerializedDiagnostic {
   severity: DiagnosticSeverity
   code?: string
   source?: string
+  tags?: DiagnosticTag[]
 }
 
 export type MonacoSeverity = "error" | "warning" | "info"

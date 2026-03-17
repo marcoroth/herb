@@ -217,14 +217,14 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
-test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:8:3
+test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
 
-      6 │ <% end %>
-      7 │ 
-  →   8 │ <%=  render partial: "post",
+      7 │ <% end %>
+      8 │ 
+  →   9 │ <%=  render partial: "post",
         │    ~~
-      9 │            as: :post
-     10 │ %>
+     10 │            as: :post
+     11 │ %>
 
 
 
@@ -787,7 +787,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 71,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -808,7 +808,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 71,
+    "ruleCount": 72,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -881,7 +881,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 71,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
