@@ -7,7 +7,7 @@ import {
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
-  hasDynamicAttributeNameOnAttribute as hasDynamicAttributeName,
+  hasDynamicAttributeName,
   getCombinedAttributeNameString,
   getAttributeValueNodes,
   getAttributeValue,
