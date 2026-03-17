@@ -262,13 +262,29 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   if (parse_context->info->call_node && handler->extract_content) {
     helper_content = handler->extract_content(parse_context->info->call_node, &parse_context->parser, allocator);
 
-    if (helper_content && parse_context->info->call_node->arguments) {
-      if (strcmp(handler->name, "content_tag") == 0 && parse_context->info->call_node->arguments->arguments.size >= 2) {
-        content_is_ruby_expression =
-          (parse_context->info->call_node->arguments->arguments.nodes[1]->type != PM_STRING_NODE);
-      } else if (parse_context->info->call_node->arguments->arguments.size >= 1) {
-        content_is_ruby_expression =
-          (parse_context->info->call_node->arguments->arguments.nodes[0]->type != PM_STRING_NODE);
+    if (helper_content) {
+      pm_call_node_t* call = parse_context->info->call_node;
+
+      if (call->arguments) {
+        if (strcmp(handler->name, "content_tag") == 0 && call->arguments->arguments.size >= 2
+            && call->arguments->arguments.nodes[1]->type != PM_KEYWORD_HASH_NODE) {
+          content_is_ruby_expression = (call->arguments->arguments.nodes[1]->type != PM_STRING_NODE);
+        } else if (strcmp(handler->name, "content_tag") != 0 && call->arguments->arguments.size >= 1
+                   && call->arguments->arguments.nodes[0]->type != PM_KEYWORD_HASH_NODE) {
+          content_is_ruby_expression = (call->arguments->arguments.nodes[0]->type != PM_STRING_NODE);
+        }
+      }
+
+      if (!content_is_ruby_expression && call->block && call->block->type == PM_BLOCK_NODE) {
+        pm_block_node_t* block_node = (pm_block_node_t*) call->block;
+
+        if (block_node->body && block_node->body->type == PM_STATEMENTS_NODE) {
+          pm_statements_node_t* statements = (pm_statements_node_t*) block_node->body;
+
+          if (statements->body.size == 1) {
+            content_is_ruby_expression = (statements->body.nodes[0]->type != PM_STRING_NODE);
+          }
+        }
       }
     }
   }
@@ -492,7 +508,9 @@ static AST_NODE_T* transform_link_to_helper(
 
   hb_array_T* attributes = NULL;
   pm_arguments_node_t* link_arguments = info->call_node->arguments;
-  bool keyword_hash_is_url = link_arguments && link_arguments->arguments.size == 2
+  bool has_inline_block = info->call_node->block && info->call_node->block->type == PM_BLOCK_NODE;
+
+  bool keyword_hash_is_url = !has_inline_block && link_arguments && link_arguments->arguments.size == 2
                           && link_arguments->arguments.nodes[1]->type == PM_KEYWORD_HASH_NODE;
 
   if (!keyword_hash_is_url) {
@@ -549,7 +567,12 @@ static AST_NODE_T* transform_link_to_helper(
       pm_arguments_node_t* arguments = info->call_node->arguments;
       pm_node_t* href_argument = NULL;
 
-      if (arguments->arguments.size >= 2) {
+      if (has_inline_block) {
+        if (arguments->arguments.size >= 1) {
+          href_argument = arguments->arguments.nodes[0];
+          href_is_ruby_expression = (href_argument->type != PM_STRING_NODE);
+        }
+      } else if (arguments->arguments.size >= 2) {
         href_argument = arguments->arguments.nodes[1];
         href_is_ruby_expression = (href_argument->type != PM_STRING_NODE);
       } else if (arguments->arguments.size == 1) {
@@ -602,7 +625,17 @@ static AST_NODE_T* transform_link_to_helper(
   if (info->content) {
     bool content_is_ruby_expression = false;
 
-    if (info->call_node && info->call_node->arguments && info->call_node->arguments->arguments.size >= 1) {
+    if (has_inline_block && info->call_node->block && info->call_node->block->type == PM_BLOCK_NODE) {
+      pm_block_node_t* block_node = (pm_block_node_t*) info->call_node->block;
+
+      if (block_node->body && block_node->body->type == PM_STATEMENTS_NODE) {
+        pm_statements_node_t* statements = (pm_statements_node_t*) block_node->body;
+
+        if (statements->body.size == 1) {
+          content_is_ruby_expression = (statements->body.nodes[0]->type != PM_STRING_NODE);
+        }
+      }
+    } else if (info->call_node && info->call_node->arguments && info->call_node->arguments->arguments.size >= 1) {
       pm_node_t* first_argument = info->call_node->arguments->arguments.nodes[0];
       content_is_ruby_expression = (first_argument->type != PM_STRING_NODE);
     }

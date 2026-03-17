@@ -58,3 +58,26 @@ tag_helper_handler_T* get_tag_helper_handlers(void) {
 size_t get_tag_helper_handlers_count(void) {
   return handlers_count;
 }
+
+char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator) {
+  if (!call_node || !call_node->block || call_node->block->type != PM_BLOCK_NODE) { return NULL; }
+
+  pm_block_node_t* block_node = (pm_block_node_t*) call_node->block;
+
+  if (!block_node->body || block_node->body->type != PM_STATEMENTS_NODE) { return NULL; }
+
+  pm_statements_node_t* statements = (pm_statements_node_t*) block_node->body;
+
+  if (statements->body.size != 1) { return NULL; }
+
+  pm_node_t* statement = statements->body.nodes[0];
+
+  if (statement->type == PM_STRING_NODE) {
+    pm_string_node_t* string_node = (pm_string_node_t*) statement;
+    size_t length = pm_string_length(&string_node->unescaped);
+    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+  }
+
+  size_t source_length = statement->location.end - statement->location.start;
+  return hb_allocator_strndup(allocator, (const char*) statement->location.start, source_length);
+}
