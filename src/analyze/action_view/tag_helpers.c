@@ -530,7 +530,8 @@ static AST_NODE_T* transform_link_to_helper(
   if (has_inline_block && link_arguments && link_arguments->arguments.size >= 2) {
     pm_node_t* second_arg = link_arguments->arguments.nodes[1];
 
-    if (second_arg->type != PM_KEYWORD_HASH_NODE && second_arg->type != PM_HASH_NODE) {
+    if (second_arg->type != PM_KEYWORD_HASH_NODE && second_arg->type != PM_HASH_NODE
+        && second_arg->type != PM_STRING_NODE && second_arg->type != PM_SYMBOL_NODE) {
       size_t source_length = second_arg->location.end - second_arg->location.start;
       char* content = hb_allocator_strndup(allocator, (const char*) second_arg->location.start, source_length);
 

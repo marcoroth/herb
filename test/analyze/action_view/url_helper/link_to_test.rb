@@ -287,5 +287,11 @@ module Analyze::ActionView::UrlHelper
         <%= link_to(root_path, options) { "Home" } %>
       HTML
     end
+
+    test "link_to with inline block and string as second argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#", "argument") { "Block" } %>
+      HTML
+    end
   end
 end
