@@ -510,8 +510,10 @@ static AST_NODE_T* transform_link_to_helper(
   pm_arguments_node_t* link_arguments = info->call_node->arguments;
   bool has_inline_block = info->call_node->block && info->call_node->block->type == PM_BLOCK_NODE;
 
-  bool keyword_hash_is_url = !has_inline_block && link_arguments && link_arguments->arguments.size == 2
-                          && link_arguments->arguments.nodes[1]->type == PM_KEYWORD_HASH_NODE;
+  bool second_arg_is_hash = link_arguments && link_arguments->arguments.size == 2
+                         && (link_arguments->arguments.nodes[1]->type == PM_KEYWORD_HASH_NODE
+                             || link_arguments->arguments.nodes[1]->type == PM_HASH_NODE);
+  bool keyword_hash_is_url = !has_inline_block && second_arg_is_hash;
 
   if (!keyword_hash_is_url) {
     attributes = extract_html_attributes_from_call_node(
@@ -524,6 +526,37 @@ static AST_NODE_T* transform_link_to_helper(
   }
 
   if (!attributes) { attributes = hb_array_init(4, allocator); }
+
+  if (has_inline_block && link_arguments && link_arguments->arguments.size >= 2) {
+    pm_node_t* second_arg = link_arguments->arguments.nodes[1];
+
+    if (second_arg->type != PM_KEYWORD_HASH_NODE && second_arg->type != PM_HASH_NODE) {
+      size_t source_length = second_arg->location.end - second_arg->location.start;
+      char* content = hb_allocator_strndup(allocator, (const char*) second_arg->location.start, source_length);
+
+      if (content) {
+        position_T position = prism_location_to_position_with_offset(
+          &second_arg->location,
+          parse_context->original_source,
+          parse_context->erb_content_offset,
+          parse_context->prism_source
+        );
+
+        AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
+          hb_string_from_c_string(content),
+          HB_STRING_EMPTY,
+          position,
+          position,
+          hb_array_init(0, allocator),
+          allocator
+        );
+
+        if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
+
+        hb_allocator_dealloc(allocator, content);
+      }
+    }
+  }
 
   // `method:` implies `rel="nofollow"`
   bool has_data_method = false;

@@ -175,5 +175,23 @@ module Analyze::ActionView::TagHelper
         <%= tag.span { "Text" } %>
       HTML
     end
+
+    test "tag.div with content argument and block prefers block content" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div("argument") { "Block" } %>
+      HTML
+    end
+
+    test "tag.div with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div(data: { controller: "example" }) { "Hello" } %>
+      HTML
+    end
+
+    test "tag.div with content argument and attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div("Content", class: "box") { "Block" } %>
+      HTML
+    end
   end
 end

@@ -1,0 +1,71 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0028_content_tag with content argument and multiple attributes and block prefers block"
+input: |2-
+<%= content_tag(:div, "Content", id: "main", class: "box") { "Block" } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:73))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:73))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag(:div, "Content", id: "main", class: "box") { "Block" } " (location: (1:3)-(1:71))
+    │   │       ├── tag_closing: "%>" (location: (1:71)-(1:73))
+    │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:33)-(1:37))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:37))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:33)-(1:37))
+    │   │           │   │               └── content: "id"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:33)-(1:37))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:33)-(1:37))
+    │   │           │           ├── open_quote: """ (location: (1:33)-(1:37))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:33)-(1:37))
+    │   │           │           │       └── content: "main"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:37)-(1:37))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:45)-(1:52))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:45)-(1:52))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:45)-(1:52))
+    │   │               │               └── content: "class"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:45)-(1:52))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:45)-(1:52))
+    │   │                       ├── open_quote: """ (location: (1:45)-(1:52))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:45)-(1:52))
+    │   │                       │       └── content: "box"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:52)-(1:52))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:73))
+    │   │       └── content: "Block"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:73)-(1:73))
+    │   │       └── tag_name: "div" (location: (1:4)-(1:15))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (1:73)-(2:0))
+        └── content: "\n"
