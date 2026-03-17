@@ -221,5 +221,35 @@ module Analyze::ActionView::UrlHelper
         <% end %>
       HTML
     end
+
+    test "link_to with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#") { "Click me" } %>
+      HTML
+    end
+
+    test "link_to with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/about", class: "btn") { "About" } %>
+      HTML
+    end
+
+    test "link_to with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/profile", data: { turbo_method: "delete" }) { "Delete" } %>
+      HTML
+    end
+
+    test "link_to with inline block and path helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to(root_path) { "Home" } %>
+      HTML
+    end
+
+    test "link_to with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#") { @user.name } %>
+      HTML
+    end
   end
 end

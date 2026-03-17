@@ -149,5 +149,29 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "content_tag with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:details) { "Some content" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, class: "container") { "Hello" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:p) { @user.name } %>
+      HTML
+    end
+
+    test "content_tag with inline block and symbol tag name" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:span) { "Text" } %>
+      HTML
+    end
   end
 end
