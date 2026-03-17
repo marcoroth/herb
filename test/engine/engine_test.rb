@@ -237,5 +237,35 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "validate_ruby passes for valid Ruby" do
+      template = <<~ERB
+        <% if true %>
+          <div>Hello</div>
+        <% end %>
+      ERB
+
+      engine = Herb::Engine.new(template, validate_ruby: true)
+      assert engine.src
+    end
+
+    test "validate_ruby raises InvalidRubyError for invalid compiled Ruby" do
+      engine = Herb::Engine.allocate
+      engine.instance_variable_set(:@src, "def foo(")
+
+      error = assert_raises(Herb::Engine::InvalidRubyError) do
+        engine.send(:ensure_valid_ruby!, "def foo(")
+      end
+
+      assert_match(/Compiled template produced invalid Ruby/, error.message)
+      assert error.compiled_source
+    end
+
+    test "validate_ruby does not raise for valid compiled Ruby" do
+      engine = Herb::Engine.allocate
+      engine.instance_variable_set(:@src, "def foo; end")
+
+      engine.send(:ensure_valid_ruby!, "def foo; end")
+    end
   end
 end

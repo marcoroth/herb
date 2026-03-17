@@ -37,7 +37,13 @@ module Herb
         return nil unless prism_node
         return nil unless source
 
-        require "prism"
+        begin
+          require "prism"
+        rescue LoadError
+          warn "The 'prism' gem is required to deserialize Prism nodes. Add it to your Gemfile or install it with: gem install prism"
+          return nil
+        end
+
         Prism.load(source, prism_node).value
       end
 
