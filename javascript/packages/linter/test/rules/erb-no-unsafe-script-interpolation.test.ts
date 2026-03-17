@@ -8,6 +8,7 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoUnsafeScriptInterpolationRule)
 
 const MESSAGE = "Unsafe ERB output in `<script>` tag. Use `.to_json` to safely serialize values into JavaScript."
+const ESCAPE_JS_MESSAGE = "Avoid `j()` / `escape_javascript()` in `<script>` tags. It is only safe inside quoted string literals. Use `.to_json` instead, which is safe in any position."
 
 describe("ERBNoUnsafeScriptInterpolationRule", () => {
   describe("unsafe", () => {
@@ -50,6 +51,40 @@ describe("ERBNoUnsafeScriptInterpolationRule", () => {
     })
   })
 
+  describe("escape_javascript", () => {
+    test("j() in script tag is flagged with specific message", () => {
+      expectError(ESCAPE_JS_MESSAGE)
+
+      assertOffenses(dedent`
+        <script>const url = '<%= j @poll_path %>';</script>
+      `)
+    })
+
+    test("j() with parentheses in script tag is flagged with specific message", () => {
+      expectError(ESCAPE_JS_MESSAGE)
+
+      assertOffenses(dedent`
+        <script>const url = '<%= j(@poll_path) %>';</script>
+      `)
+    })
+
+    test("escape_javascript() in script tag is flagged with specific message", () => {
+      expectError(ESCAPE_JS_MESSAGE)
+
+      assertOffenses(dedent`
+        <script>const url = '<%= escape_javascript(@poll_path) %>';</script>
+      `)
+    })
+
+    test("escape_javascript without parentheses in script tag is flagged with specific message", () => {
+      expectError(ESCAPE_JS_MESSAGE)
+
+      assertOffenses(dedent`
+        <script>const url = '<%= escape_javascript @poll_path %>';</script>
+      `)
+    })
+  })
+
   describe("safe", () => {
     test("ERB output in script tag with .to_json is allowed", () => {
       expectNoOffenses(dedent`
@@ -82,6 +117,12 @@ describe("ERBNoUnsafeScriptInterpolationRule", () => {
     test("html_safe with to_json in script tag is allowed", () => {
       expectNoOffenses(dedent`
         <script>var myData = <%= foo.to_json.html_safe %>;</script>
+      `)
+    })
+
+    test("json_escape() in script tag is allowed", () => {
+      expectNoOffenses(dedent`
+        <script>const data = '<%= json_escape(@data) %>';</script>
       `)
     })
 
