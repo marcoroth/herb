@@ -1,5 +1,6 @@
 #include "../../include/analyze/action_view/attribute_extraction_helpers.h"
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
+#include "../../include/html_util.h"
 #include "../../include/util.h"
 #include "../../include/util/hb_allocator.h"
 #include "../../include/util/hb_array.h"
@@ -58,6 +59,14 @@ static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
     hb_allocator_dealloc(allocator, value_string);
 
     return attribute;
+  } else if (value_node->type == PM_TRUE_NODE) {
+    if (is_boolean_attribute(hb_string((char*) name_string))) {
+      return create_html_attribute_node(name_string, NULL, start_position, end_position, allocator);
+    }
+    return create_html_attribute_node(name_string, "true", start_position, end_position, allocator);
+  } else if (value_node->type == PM_FALSE_NODE) {
+    if (is_boolean_attribute(hb_string((char*) name_string))) { return NULL; }
+    return create_html_attribute_node(name_string, "false", start_position, end_position, allocator);
   } else if (value_node->type == PM_INTERPOLATED_STRING_NODE) {
     return create_html_attribute_with_interpolated_value(
       name_string,

@@ -193,5 +193,33 @@ module Analyze::ActionView::TagHelper
         <%= tag.div("Content", class: "box") { "Block" } %>
       HTML
     end
+
+    test "tag.script with block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script do %>
+          alert('Hello')
+        <% end %>
+      HTML
+    end
+
+    test "tag.script with content as argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script "alert('Hello')" %>
+      HTML
+    end
+
+    test "tag.script with type attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script type: "application/javascript" do %>
+          alert('Hello')
+        <% end %>
+      HTML
+    end
+
+    test "tag.script with src attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script src: "/assets/application.js", defer: true %>
+      HTML
+    end
   end
 end

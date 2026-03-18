@@ -375,6 +375,56 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     })
   })
 
+  describe("javascript_tag for script elements", () => {
+    test("script with inline content", () => {
+      expect(transform(`<script>alert('Hello')</script>`)).toBe(
+        `<%= javascript_tag "alert('Hello')" %>`
+      )
+    })
+
+    test("script with block content", () => {
+      const input = dedent`
+        <script>
+          alert('Hello')
+        </script>
+      `
+
+      const expected = dedent`
+        <%= javascript_tag do %>
+          alert('Hello')
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("script with type attribute and content", () => {
+      expect(transform(`<script type="application/javascript">alert('Hello')</script>`)).toBe(
+        `<%= javascript_tag "alert('Hello')", type: "application/javascript" %>`
+      )
+    })
+  })
+
+  describe("javascript_include_tag for script elements with src", () => {
+    test("script with src attribute", () => {
+      expect(transform(`<script src="application.js"></script>`)).toBe(
+        `<%= javascript_include_tag "application.js" %>`
+      )
+    })
+
+    test("script with src and defer", () => {
+      expect(transform(`<script src="application.js" defer="defer"></script>`)).toBe(
+        `<%= javascript_include_tag "application.js", defer: "defer" %>`
+      )
+    })
+
+    test("script with src and type", () => {
+      expect(transform(`<script src="app.js" type="module"></script>`)).toBe(
+        `<%= javascript_include_tag "app.js", type: "module" %>`
+      )
+    })
+  })
+
   describe("ERB in attribute values", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(

@@ -56,6 +56,9 @@ module Herb
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
       @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
+      @attrfunc = properties.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
+      @jsfunc = properties.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
+      @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -149,15 +152,7 @@ module Herb
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
-        require "prism"
-
-        prism_result = Prism.parse(@src)
-        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
-
-        if syntax_errors.any?
-          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
-          raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
-        end
+        ensure_valid_ruby!(@src)
       end
 
       @src.freeze
@@ -239,11 +234,35 @@ module Herb
       @buffer_on_stack = false
     end
 
+    def expression_block?
+      @_in_expression_block || false
+    end
+
     def add_expression(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_result(code)
+      unescaped = (indicator == "=") ^ @escape
+
+      if expression_block?
+        unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
-        add_expression_result_escaped(code)
+        unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
+      end
+    end
+
+    def add_context_aware_expression(indicator, code, context)
+      escapefunc = context_escape_function(context)
+
+      if escapefunc.nil?
+        add_expression(indicator, code)
+      else
+        with_buffer { @src << " << #{escapefunc}((" << code << trailing_newline(code) << "))" }
+      end
+    end
+
+    def context_escape_function(context)
+      case context
+      when :attribute_value then @attrfunc
+      when :script_content then @jsfunc
+      when :style_content then @cssfunc
       end
     end
 
@@ -260,39 +279,48 @@ module Herb
     end
 
     def add_expression_block(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_block_result(code)
-      else
-        add_expression_block_result_escaped(code)
-      end
+      @_in_expression_block = true
+      @_expression_block_open_paren = false
+
+      add_expression(indicator, code)
+    ensure
+      @_in_expression_block = false
     end
 
     def add_expression_block_result(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_end(code, escaped: false)
-      terminate_expression
+      if @_expression_block_open_paren
+        terminate_expression
 
-      trailing_newline = code.end_with?("\n")
-      code_stripped = code.chomp
+        trailing_newline = code.end_with?("\n")
+        code_stripped = code.chomp
 
-      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
-      @src << " " << code_stripped
-      @src << "\n" if self.class.comment?(code_stripped)
-      @src << (escaped ? "))" : ")")
-      @src << (trailing_newline ? "\n" : ";")
+        @src << " " << code_stripped
+        @src << "\n" if self.class.comment?(code_stripped)
+        @src << (escaped ? "))" : ")")
+        @src << (trailing_newline ? "\n" : ";")
 
-      @buffer_on_stack = false
+        @buffer_on_stack = false
+      else
+        add_code(code)
+      end
     end
 
     def trailing_newline(code)
@@ -440,6 +468,28 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    def ensure_valid_ruby!(source)
+      RubyVM::InstructionSequence.compile(source)
+    rescue SyntaxError => e
+      return if e.message.include?("Invalid yield")
+
+      begin
+        require "prism"
+      rescue LoadError
+        # Prism not available, fall through
+      end
+
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n  - #{e.message}", compiled_source: @src) unless defined?(Prism)
+
+      prism_result = Prism.parse(@src)
+      syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
+
+      if syntax_errors.any?
+        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
+      end
     end
   end
 end

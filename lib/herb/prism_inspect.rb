@@ -9,7 +9,11 @@ module Herb
       def inspect_prism_serialized(serialized_bytes, source, prefix)
         return "∅" unless serialized_bytes
 
-        require "prism"
+        begin
+          require "prism"
+        rescue LoadError
+          return "(#{serialized_bytes.bytesize} bytes, prism gem not available)"
+        end
 
         node = Prism.load(source, serialized_bytes).value
         return "∅" unless node

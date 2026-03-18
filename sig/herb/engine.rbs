@@ -51,7 +51,13 @@ module Herb
 
     def add_code: (untyped code) -> untyped
 
+    def expression_block?: () -> untyped
+
     def add_expression: (untyped indicator, untyped code) -> untyped
+
+    def add_context_aware_expression: (untyped indicator, untyped code, untyped context) -> untyped
+
+    def context_escape_function: (untyped context) -> untyped
 
     def add_expression_result: (untyped code) -> untyped
 
@@ -89,5 +95,7 @@ module Herb
 
     # : () -> Array[Herb::Visitor]
     def default_visitors: () -> Array[Herb::Visitor]
+
+    def ensure_valid_ruby!: (untyped source) -> untyped
   end
 end

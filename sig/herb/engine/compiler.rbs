@@ -89,8 +89,6 @@ module Herb
 
       def pop_context: () -> untyped
 
-      def add_context_aware_expression: (untyped code, untyped context) -> untyped
-
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
@@ -118,6 +116,10 @@ module Herb
       def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
 
       def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
+
+      def indicator_for: (untyped type) -> untyped
+
+      def context_aware_context?: (untyped context) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 

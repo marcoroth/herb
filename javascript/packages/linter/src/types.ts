@@ -1,5 +1,6 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
+import type { DiagnosticTag } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig } from "@herb-tools/config"
@@ -111,7 +112,7 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
     return DEFAULT_LINTER_PARSER_OPTIONS
   }
 
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -120,6 +121,7 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 
@@ -164,7 +166,7 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
     return DEFAULT_RULE_CONFIG
   }
 
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -173,6 +175,7 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 
@@ -241,7 +244,7 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
     return DEFAULT_RULE_CONFIG
   }
 
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -250,6 +253,7 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 

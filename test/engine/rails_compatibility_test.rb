@@ -8,8 +8,6 @@ require_relative "../../lib/herb/engine"
 module Engine
   class RailsCompatibilityTest < Minitest::Spec
     class RailsHerb < ::Herb::Engine
-      BLOCK_EXPR = /((\s|\))do|\{)(\s*\|[^|]*\|)?\s*\Z/
-
       def initialize(input, properties = {})
         @newline_pending = 0
 
@@ -47,17 +45,21 @@ module Engine
         flush_newline_if_pending(@src)
 
         with_buffer do
-          @src << if ((indicator == "==") && !@escape) || ((indicator == "=") && @escape)
-                    ".append="
-                  else
-                    ".safe_expr_append="
-                  end
+          @src << expression_append_method(indicator)
 
-          if BLOCK_EXPR.match?(code)
+          if expression_block?
             @src << " " << code
           else
             @src << "(" << code << ")"
           end
+        end
+      end
+
+      def expression_append_method(indicator)
+        if ((indicator == "==") && !@escape) || ((indicator == "=") && @escape)
+          ".append="
+        else
+          ".safe_expr_append="
         end
       end
 
@@ -154,6 +156,19 @@ module Engine
       engine = RailsHerb.new(template, escape: true)
 
       assert_equal " @output_buffer.safe_append='<h1>'.freeze; @output_buffer.append=(@title); @output_buffer.safe_append='</h1>'.freeze;\n@output_buffer", engine.src
+    end
+
+    test "rails erb handler output block expressions use add_expression override" do
+      template = '<%= link_to "/path", class: "btn" do %>Click me<% end %>'
+
+      engine = RailsHerb.new(template, escape: true)
+
+      assert_includes engine.src, ".append="
+      refute_includes engine.src, " << "
+
+      result = Prism.parse(engine.src)
+      syntax_errors = result.errors.reject { |e| e.type == :invalid_yield }
+      assert syntax_errors.empty?, "Compiled output is not valid Ruby: #{syntax_errors.map(&:message).join(", ")}"
     end
 
     test "drop-in replacement compatibility" do

@@ -5,6 +5,7 @@ import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-rende
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
@@ -90,6 +91,7 @@ export const rules: RuleClass[] = [
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
   ERBNoDuplicateBranchElementsRule,

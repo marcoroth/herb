@@ -88,7 +88,8 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
     create_attribute_name_node(name_string, start_position, end_position, allocator);
 
-  token_T* equals_token = create_synthetic_token(allocator, "=", TOKEN_EQUALS, start_position, end_position);
+  token_T* equals_token =
+    value_string ? create_synthetic_token(allocator, "=", TOKEN_EQUALS, start_position, end_position) : NULL;
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = NULL;
 
   if (value_string) {
@@ -210,8 +211,20 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
         }
       }
     } else if (part->type == PM_EMBEDDED_STATEMENTS_NODE) {
-      size_t ruby_length = part->location.end - part->location.start;
-      char* ruby_content = hb_allocator_strndup(allocator, (const char*) part->location.start, ruby_length);
+      pm_embedded_statements_node_t* embedded = (pm_embedded_statements_node_t*) part;
+      const uint8_t* content_start;
+      const uint8_t* content_end;
+
+      if (embedded->statements) {
+        content_start = embedded->statements->base.location.start;
+        content_end = embedded->statements->base.location.end;
+      } else {
+        content_start = part->location.start;
+        content_end = part->location.end;
+      }
+
+      size_t ruby_length = content_end - content_start;
+      char* ruby_content = hb_allocator_strndup(allocator, (const char*) content_start, ruby_length);
 
       if (ruby_content) {
         AST_RUBY_LITERAL_NODE_T* ruby_node = ast_ruby_literal_node_init(
