@@ -55,6 +55,9 @@ module Herb
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
       @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
+      @attrfunc = properties.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
+      @jsfunc = properties.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
+      @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -241,6 +244,24 @@ module Herb
         unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
         unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
+      end
+    end
+
+    def add_context_aware_expression(indicator, code, context)
+      escapefunc = context_escape_function(context)
+
+      if escapefunc.nil?
+        add_expression(indicator, code)
+      else
+        with_buffer { @src << " << #{escapefunc}((" << code << trailing_newline(code) << "))" }
+      end
+    end
+
+    def context_escape_function(context)
+      case context
+      when :attribute_value then @attrfunc
+      when :script_content then @jsfunc
+      when :style_content then @cssfunc
       end
     end
 
