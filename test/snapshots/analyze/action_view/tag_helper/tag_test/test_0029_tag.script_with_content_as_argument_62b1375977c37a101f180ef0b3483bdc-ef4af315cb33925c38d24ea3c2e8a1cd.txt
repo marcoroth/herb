@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::TagHelper::TagTest#test_0022_tag.script with content as argument"
+source: "Analyze::ActionView::TagHelper::TagTest#test_0029_tag.script with content as argument"
 input: |2-
 <%= tag.script "alert('Hello')" %>
 options: {action_view_helpers: true}

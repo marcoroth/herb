@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::TagHelper::TagTest#test_0024_tag.script with src attribute"
+source: "Analyze::ActionView::TagHelper::TagTest#test_0031_tag.script with src attribute"
 input: |2-
 <%= tag.script src: "/assets/application.js", defer: true %>
 options: {action_view_helpers: true}

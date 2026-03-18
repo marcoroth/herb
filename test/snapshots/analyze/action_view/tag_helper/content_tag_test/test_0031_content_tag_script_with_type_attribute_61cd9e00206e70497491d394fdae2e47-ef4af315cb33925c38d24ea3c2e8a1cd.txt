@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0023_content_tag :script with type attribute"
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0031_content_tag :script with type attribute"
 input: |2-
 <%= content_tag :script, "alert('Hello')", type: "application/javascript" %>
 options: {action_view_helpers: true}

@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::TagHelper::TagTest#test_0023_tag.script with type attribute"
+source: "Analyze::ActionView::TagHelper::TagTest#test_0030_tag.script with type attribute"
 input: |2-
 <%= tag.script type: "application/javascript" do %>
   alert('Hello')
