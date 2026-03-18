@@ -375,6 +375,40 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
       expect(result.fixed).toHaveLength(1)
     })
 
+    test("two elements both with different bodies: no autofix", () => {
+      const input = dedent`
+        <% if @event.meetup? %>
+          <div class="text-3xl font-bold text-primary mb-1"><%= @event.talks.where(meta_talk: true).count %></div>
+          <div class="text-sm font-medium text-gray-600">Events</div>
+        <% else %>
+          <div class="text-3xl font-bold text-primary mb-1"><%= @event.sponsors.count %></div>
+          <div class="text-sm font-medium text-gray-600">Sponsors</div>
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+    })
+
+    test("shared tag with different content when branches have different lengths: no autofix", () => {
+      const input = dedent`
+        <% if Current.user.verified? %>
+          <h1>Change your email</h1>
+        <% else %>
+          <h1>Verify your email</h1>
+          <p>We sent a verification email to the address below. Check that email and follow those instructions to confirm it's your email address.</p>
+          <p><%= button_to "Re-send verification email", identity_email_verification_path %></p>
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+    })
+
     test("identical middle element with different surrounding elements: no autofix", () => {
       const input = dedent`
         <% if condition? %>
