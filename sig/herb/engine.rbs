@@ -51,6 +51,8 @@ module Herb
 
     def add_code: (untyped code) -> untyped
 
+    def expression_block?: () -> untyped
+
     def add_expression: (untyped indicator, untyped code) -> untyped
 
     def add_expression_result: (untyped code) -> untyped
