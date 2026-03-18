@@ -188,13 +188,7 @@ export const HTML_VOID_ELEMENTS = new Set([
   "param", "source", "track", "wbr",
 ])
 
-export const HTML_BOOLEAN_ATTRIBUTES = new Set([
-  "autofocus", "autoplay", "checked", "controls", "defer", "disabled", "hidden",
-  "loop", "multiple", "muted", "readonly", "required", "reversed", "selected",
-  "open", "default", "formnovalidate", "novalidate", "itemscope", "scoped",
-  "seamless", "allowfullscreen", "async", "compact", "declare", "nohref",
-  "noresize", "noshade", "nowrap", "sortable", "truespeed", "typemustmatch"
-])
+export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
@@ -399,13 +393,6 @@ export function isBlockElement(tagName: string): boolean {
  */
 export function isVoidElement(tagName: string): boolean {
   return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
-}
-
-/**
- * Checks if an attribute is a boolean attribute
- */
-export function isBooleanAttribute(attributeName: string): boolean {
-  return HTML_BOOLEAN_ATTRIBUTES.has(attributeName.toLowerCase())
 }
 
 /**

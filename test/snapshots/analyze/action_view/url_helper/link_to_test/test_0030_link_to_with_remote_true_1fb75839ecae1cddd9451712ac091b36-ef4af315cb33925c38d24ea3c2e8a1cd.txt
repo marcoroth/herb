@@ -42,16 +42,16 @@ options: {action_view_helpers: true}
     │   │               │               └── content: "data-remote"
     │   │               │
     │   │               │
-    │   │               ├── equals: ":" (location: (1:33)-(1:41))
+    │   │               ├── equals: "=" (location: (1:33)-(1:41))
     │   │               └── value:
     │   │                   └── @ HTMLAttributeValueNode (location: (1:33)-(1:41))
-    │   │                       ├── open_quote: ∅
+    │   │                       ├── open_quote: """ (location: (1:33)-(1:41))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ RubyLiteralNode (location: (1:33)-(1:41))
+    │   │                       │   └── @ LiteralNode (location: (1:33)-(1:41))
     │   │                       │       └── content: "true"
     │   │                       │
-    │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       ├── close_quote: """ (location: (1:41)-(1:41))
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
