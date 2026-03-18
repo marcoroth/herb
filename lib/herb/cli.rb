@@ -106,6 +106,7 @@ class Herb::CLI
         bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
         bundle exec herb actionview compile [file]  Compile ERB template with ActionView framework support.
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
+        bundle exec herb actionview stats [path]    Show most-used helpers and method calls across views.
 
         bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
         bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
@@ -385,6 +386,19 @@ class Herb::CLI
     when "render"
       @file = @args[2]
       actionview_render
+    when "stats"
+      require_relative "helper_usage_analyzer"
+
+      path = @file || "."
+
+      unless File.directory?(path)
+        puts "Not a directory: '#{path}'."
+        exit(1)
+      end
+
+      analyzer = Herb::HelperUsageAnalyzer.new(path)
+      analyzer.analyze!
+      exit(0)
     when nil, "help"
       puts <<~HELP
         Herb ActionView Commands
@@ -397,6 +411,7 @@ class Herb::CLI
           graph [path]    Show render dependency graph for a project or file
           compile [file]  Compile ERB template with ActionView framework support
           render [file]   Render ERB template using ActionView helpers
+          stats [path]    Show most-used helpers and method calls across views
 
         Examples:
           bundle exec herb actionview check .
@@ -404,8 +419,10 @@ class Herb::CLI
           bundle exec herb actionview graph app/views/posts/show.html.erb
           bundle exec herb actionview compile app/views/posts/show.html.erb
           bundle exec herb actionview render app/views/posts/show.html.erb
+          bundle exec herb actionview stats app/views
 
       HELP
+
       exit(0)
     else
       puts "Unknown actionview subcommand: '#{subcommand}'"
