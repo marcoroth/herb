@@ -55,6 +55,10 @@ module Herb
 
     def add_expression: (untyped indicator, untyped code) -> untyped
 
+    def add_context_aware_expression: (untyped indicator, untyped code, untyped context) -> untyped
+
+    def context_escape_function: (untyped context) -> untyped
+
     def add_expression_result: (untyped code) -> untyped
 
     def add_expression_result_escaped: (untyped code) -> untyped
