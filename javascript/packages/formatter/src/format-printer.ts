@@ -87,6 +87,8 @@ import {
   ERBUnlessNode,
   ERBYieldNode,
   ERBInNode,
+  ERBRenderNode,
+  RubyRenderLocalNode,
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
   XMLDeclarationNode,
@@ -1017,6 +1019,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   visitERBEndNode(node: ERBEndNode) {
     this.printERBNode(node)
+  }
+
+  visitERBRenderNode(node: ERBRenderNode) {
+    this.printERBNode(node)
+  }
+
+  visitRubyRenderLocalNode(_node: RubyRenderLocalNode) {
+    // extracted metadata, nothing to print
   }
 
   visitERBYieldNode(node: ERBYieldNode) {

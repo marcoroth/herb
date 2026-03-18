@@ -152,6 +152,48 @@ module Analyze::ActionView::TagHelper
       HTML
     end
 
+    test "tag.details with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.details { "Some content" } %>
+      HTML
+    end
+
+    test "tag.div with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div(class: "container") { "Hello" } %>
+      HTML
+    end
+
+    test "tag.p with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.p { @user.name } %>
+      HTML
+    end
+
+    test "tag.span with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.span { "Text" } %>
+      HTML
+    end
+
+    test "tag.div with content argument and block prefers block content" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div("argument") { "Block" } %>
+      HTML
+    end
+
+    test "tag.div with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div(data: { controller: "example" }) { "Hello" } %>
+      HTML
+    end
+
+    test "tag.div with content argument and attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div("Content", class: "box") { "Block" } %>
+      HTML
+    end
+
     test "tag.script with block" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= tag.script do %>

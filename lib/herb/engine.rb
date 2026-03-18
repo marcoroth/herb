@@ -18,7 +18,7 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template, :visitors, :security_mode
+                :validation_error_template, :visitors, :enabled_validators
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -62,9 +62,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
-      @security_mode = properties.fetch(:security) {
-        Herb.configuration.dig("engine", "security") || :error
-      }.to_sym
+      @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
@@ -80,11 +78,6 @@ module Herb
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
-      end
-
-      unless [:error, :warn, :ignore].include?(@security_mode)
-        raise ArgumentError,
-              "security must be one of :error, :warn, or :ignore, got #{@security_mode.inspect}"
       end
 
       @freeze = properties[:freeze]
@@ -126,12 +119,12 @@ module Herb
           # Skip both errors and compilation, but still need minimal Ruby code
         end
       else
-        validation_errors = run_validation(ast) unless @validation_mode == :none
-        all_errors = parser_errors + (validation_errors || [])
+        validators = run_validation(ast) unless @validation_mode == :none
 
-        handle_validation_errors(all_errors, input) if @validation_mode == :raise && all_errors.any?
-
-        add_validation_overlay(validation_errors, input) if @validation_mode == :overlay && validation_errors&.any?
+        if validators
+          handle_validation_errors(validators, input) if @validation_mode == :raise
+          add_validation_overlay(validators, input) if @validation_mode == :overlay
+        end
 
         @visitors.each do |visitor|
           ast.accept(visitor)
@@ -155,15 +148,7 @@ module Herb
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
-        require "prism"
-
-        prism_result = Prism.parse(@src)
-        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
-
-        if syntax_errors.any?
-          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
-          raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
-        end
+        ensure_valid_ruby!(@src)
       end
 
       @src.freeze
@@ -245,11 +230,17 @@ module Herb
       @buffer_on_stack = false
     end
 
+    def expression_block?
+      @_in_expression_block || false
+    end
+
     def add_expression(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_result(code)
+      unescaped = (indicator == "=") ^ @escape
+
+      if expression_block?
+        unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
-        add_expression_result_escaped(code)
+        unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
       end
     end
 
@@ -266,39 +257,48 @@ module Herb
     end
 
     def add_expression_block(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_block_result(code)
-      else
-        add_expression_block_result_escaped(code)
-      end
+      @_in_expression_block = true
+      @_expression_block_open_paren = false
+
+      add_expression(indicator, code)
+    ensure
+      @_in_expression_block = false
     end
 
     def add_expression_block_result(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_end(code, escaped: false)
-      terminate_expression
+      if @_expression_block_open_paren
+        terminate_expression
 
-      trailing_newline = code.end_with?("\n")
-      code_stripped = code.chomp
+        trailing_newline = code.end_with?("\n")
+        code_stripped = code.chomp
 
-      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
-      @src << " " << code_stripped
-      @src << "\n" if self.class.comment?(code_stripped)
-      @src << (escaped ? "))" : ")")
-      @src << (trailing_newline ? "\n" : ";")
+        @src << " " << code_stripped
+        @src << "\n" if self.class.comment?(code_stripped)
+        @src << (escaped ? "))" : ")")
+        @src << (trailing_newline ? "\n" : ";")
 
-      @buffer_on_stack = false
+        @buffer_on_stack = false
+      else
+        add_code(code)
+      end
     end
 
     def trailing_newline(code)
@@ -333,19 +333,16 @@ module Herb
 
     def run_validation(ast)
       validators = [
-        Validators::SecurityValidator.new,
-        Validators::NestingValidator.new,
-        Validators::AccessibilityValidator.new
+        Validators::SecurityValidator.new(enabled: @enabled_validators[:security]),
+        Validators::NestingValidator.new(enabled: @enabled_validators[:nesting]),
+        Validators::AccessibilityValidator.new(enabled: @enabled_validators[:accessibility])
       ]
 
-      errors = [] #: Array[untyped]
-
-      validators.each do |validator|
+      validators.select(&:enabled?).each do |validator|
         ast.accept(validator)
-        errors.concat(validator.errors)
       end
 
-      errors
+      validators
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
@@ -365,54 +362,29 @@ module Herb
       end
     end
 
-    def handle_validation_errors(errors, input)
+    def handle_validation_errors(validators, input)
+      errors = validators.select(&:enabled?).flat_map(&:errors)
       return unless errors.any?
 
-      security_errors = errors.select { |error|
-        error.is_a?(Hash) && error[:source] == "SecurityValidator"
-      }
+      security_error = errors.find { |error| error[:source] == "SecurityValidator" }
 
-      non_security_errors = errors.reject { |error|
-        error.is_a?(Hash) && error[:source] == "SecurityValidator"
-      }
-
-      if security_errors.any?
-        case @security_mode
-        when :error
-          security_error = security_errors.first
-          line = security_error[:location]&.start&.line
-          column = security_error[:location]&.start&.column
-          suggestion = security_error[:suggestion]
-
-          raise SecurityError.new(
-            security_error[:message],
-            line: line,
-            column: column,
-            filename: @filename,
-            suggestion: suggestion
-          )
-        when :warn
-          security_errors.each do |security_error|
-            line = security_error[:location]&.start&.line
-            column = security_error[:location]&.start&.column
-            location_str = @filename ? "#{@filename}:#{line}:#{column}" : "#{line}:#{column}"
-
-            warn "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
-            warn "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
-          end
-        when :ignore
-          # Skip security errors silently
-        end
+      if security_error
+        raise SecurityError.new(
+          security_error[:message],
+          line: security_error[:location]&.start&.line,
+          column: security_error[:location]&.start&.column,
+          filename: @filename,
+          suggestion: security_error[:suggestion]
+        )
       end
 
-      return unless non_security_errors.any?
-
-      formatter = ErrorFormatter.new(input, non_security_errors, filename: @filename)
+      formatter = ErrorFormatter.new(input, errors, filename: @filename)
       message = formatter.format_all
       raise CompilationError, "\n#{message}"
     end
 
-    def add_validation_overlay(errors, input = nil)
+    def add_validation_overlay(validators, input = nil)
+      errors = validators.select(&:enabled?).flat_map(&:errors)
       return unless errors.any?
 
       templates = errors.map { |error|
@@ -474,6 +446,28 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    def ensure_valid_ruby!(source)
+      RubyVM::InstructionSequence.compile(source)
+    rescue SyntaxError => e
+      return if e.message.include?("Invalid yield")
+
+      begin
+        require "prism"
+      rescue LoadError
+        # Prism not available, fall through
+      end
+
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n  - #{e.message}", compiled_source: @src) unless defined?(Prism)
+
+      prism_result = Prism.parse(@src)
+      syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
+
+      if syntax_errors.any?
+        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
+      end
     end
   end
 end

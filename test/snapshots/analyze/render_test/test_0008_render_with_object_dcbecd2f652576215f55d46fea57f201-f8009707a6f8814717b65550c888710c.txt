@@ -1,0 +1,33 @@
+---
+source: "Analyze::RenderTest#test_0008_render with object"
+input: |2-
+<%= render @product %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:22))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render @product " (location: (1:3)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── partial: ∅
+    │   ├── template_path: ∅
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: ∅
+    │   ├── collection: ∅
+    │   ├── object: "@product" (location: (1:11)-(1:19))
+    │   ├── as_name: ∅
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: ∅
+    │   ├── content_type: ∅
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:22)-(2:0))
+        └── content: "\n"

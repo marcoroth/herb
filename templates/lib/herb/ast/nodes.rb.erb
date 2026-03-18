@@ -22,7 +22,7 @@ module Herb
         super(type, location, errors)
         <%- node.fields.each do |field| -%>
         <%- if field.is_a?(Herb::Template::StringField) -%>
-        @<%= field.name %> = <%= field.name %>.force_encoding("utf-8")
+        @<%= field.name %> = <%= field.name %>&.force_encoding("utf-8")
         <%- else -%>
         @<%= field.name %> = <%= field.name %>
         <%- end -%>
@@ -37,7 +37,13 @@ module Herb
         return nil unless prism_node
         return nil unless source
 
-        require "prism"
+        begin
+          require "prism"
+        rescue LoadError
+          warn "The 'prism' gem is required to deserialize Prism nodes. Add it to your Gemfile or install it with: gem install prism"
+          return nil
+        end
+
         Prism.load(source, prism_node).value
       end
 

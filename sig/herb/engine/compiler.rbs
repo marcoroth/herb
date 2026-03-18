@@ -125,6 +125,8 @@ module Herb
 
       def at_line_start?: () -> untyped
 
+      def preceding_token_ends_with_newline?: () -> untyped
+
       def extract_lspace: () -> untyped
 
       def extract_and_remove_lspace!: () -> untyped

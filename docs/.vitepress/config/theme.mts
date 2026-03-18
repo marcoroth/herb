@@ -132,7 +132,7 @@ export function createThemeConfig() {
     logo: "/herb.svg",
     nav: [
       { text: "Home", link: "/" },
-      { text: "Blog", link: "/blog/whats-new-in-herb-v0-8" },
+      { text: "Blog", link: "/blog" },
       { text: "Documentation", link: "/overview" },
       {
         text: "Playground",

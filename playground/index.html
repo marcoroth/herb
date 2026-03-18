@@ -406,7 +406,7 @@
                       data-action="change->playground#onOptionChange"
                       class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
                     />
-                    <span class="select-none">Track whitespace</span>
+                    <span class="select-none">Track insignificant whitespace</span>
                   </label>
 
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable strict HTML parsing mode with additional validation">
@@ -439,6 +439,16 @@
                       class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
                     />
                     <span class="select-none">Action View helpers</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Detect ActionView render calls and represent them as ERBRenderNode with extracted partial, collection, layout, object, as, and locals fields">
+                    <input
+                      type="checkbox"
+                      data-option="render_nodes"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Transform render nodes</span>
                   </label>
 
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">

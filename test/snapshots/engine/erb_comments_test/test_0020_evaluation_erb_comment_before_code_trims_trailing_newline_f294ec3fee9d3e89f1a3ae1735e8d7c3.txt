@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBCommentsTest#test_0020_evaluation: erb comment before code trims trailing newline"
+input: "{source: \"<%# comment %>\\n<% if true %>content<% end %>\", locals: {}, options: {}}"
+---
+content

@@ -5,10 +5,12 @@ This page contains documentation for all Herb Linter rules.
 ## Available Rules
 
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
+- [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
+- [`erb-no-empty-control-flow`](./erb-no-empty-control-flow.md) - Disallow empty ERB control flow blocks
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow extra newlines.
 - [`erb-no-extra-whitespace-inside-tags`](./erb-no-extra-whitespace-inside-tags.md) - Disallow multiple consecutive spaces inside ERB tags
@@ -20,6 +22,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
 - [`erb-no-raw-output-in-attribute-value`](./erb-no-raw-output-in-attribute-value.md) - Disallow `<%==` in attribute values
+- [`erb-no-silent-statement`](./erb-no-silent-statement.md) - Disallow silent ERB statements
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
 - [`erb-no-then-in-control-flow`](./erb-no-then-in-control-flow.md) - Disallow `then` in ERB control flow expressions

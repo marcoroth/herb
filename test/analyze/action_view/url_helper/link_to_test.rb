@@ -221,5 +221,77 @@ module Analyze::ActionView::UrlHelper
         <% end %>
       HTML
     end
+
+    test "link_to with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#") { "Click me" } %>
+      HTML
+    end
+
+    test "link_to with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/about", class: "btn") { "About" } %>
+      HTML
+    end
+
+    test "link_to with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/profile", data: { turbo_method: "delete" }) { "Delete" } %>
+      HTML
+    end
+
+    test "link_to with inline block and path helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to(root_path) { "Home" } %>
+      HTML
+    end
+
+    test "link_to with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#") { @user.name } %>
+      HTML
+    end
+
+    test "link_to with inline block and multiple data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/profile", data: { turbo_method: "delete", turbo_confirm: "Sure?" }) { "Delete" } %>
+      HTML
+    end
+
+    test "link_to with inline block and string url" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/about") { "About Us" } %>
+      HTML
+    end
+
+    test "link_to with inline block and path helper and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to(root_path, class: "btn", data: { turbo_method: "delete" }) { "Home" } %>
+      HTML
+    end
+
+    test "link_to with inline block and explicit hash options" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/about", { class: "btn" }) { "x" } %>
+      HTML
+    end
+
+    test "link_to with inline block and variable options" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("/about", html_opts) { "About" } %>
+      HTML
+    end
+
+    test "link_to with inline block and path helper with variable options" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to(root_path, options) { "Home" } %>
+      HTML
+    end
+
+    test "link_to with inline block and string as second argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to("#", "argument") { "Block" } %>
+      HTML
+    end
   end
 end

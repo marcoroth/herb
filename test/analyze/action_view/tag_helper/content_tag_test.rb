@@ -150,6 +150,54 @@ module Analyze::ActionView::TagHelper
       HTML
     end
 
+    test "content_tag with inline block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:details) { "Some content" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, class: "container") { "Hello" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and ruby expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:p) { @user.name } %>
+      HTML
+    end
+
+    test "content_tag with inline block and symbol tag name" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:span) { "Text" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and block prefers block content" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "argument") { "Block" } %>
+      HTML
+    end
+
+    test "content_tag with inline block and data attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, data: { controller: "example" }) { "Hello" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Content", class: "box") { "Block" } %>
+      HTML
+    end
+
+    test "content_tag with content argument and multiple attributes and block prefers block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Content", id: "main", class: "box") { "Block" } %>
+      HTML
+    end
+
     test "content_tag :script with block" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= content_tag :script do %>

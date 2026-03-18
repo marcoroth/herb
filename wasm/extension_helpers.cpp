@@ -129,6 +129,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("track_whitespace", val(options->track_whitespace));
   options_object.set("analyze", val(options->analyze));
   options_object.set("action_view_helpers", val(options->action_view_helpers));
+  options_object.set("render_nodes", val(options->render_nodes));
   options_object.set("prism_nodes", val(options->prism_nodes));
   options_object.set("prism_nodes_deep", val(options->prism_nodes_deep));
   options_object.set("prism_program", val(options->prism_program));

@@ -8,6 +8,7 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
+#include "../include/analyze/render_nodes.h"
 #include "../include/ast_node.h"
 #include "../include/ast_nodes.h"
 #include "../include/errors.h"
@@ -858,6 +859,8 @@ void herb_analyze_parse_tree(
   };
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
+
+  if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
 
   if (options && options->action_view_helpers) {
     herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);

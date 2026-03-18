@@ -274,7 +274,7 @@ bool has_html_attributes_in_call(pm_call_node_t* call_node) {
 
   pm_node_t* last_argument = arguments->arguments.nodes[arguments->arguments.size - 1];
 
-  return last_argument && last_argument->type == PM_KEYWORD_HASH_NODE;
+  return last_argument && (last_argument->type == PM_KEYWORD_HASH_NODE || last_argument->type == PM_HASH_NODE);
 }
 
 hb_array_T* extract_html_attributes_from_call_node(
@@ -288,6 +288,19 @@ hb_array_T* extract_html_attributes_from_call_node(
 
   pm_arguments_node_t* arguments = call_node->arguments;
   pm_node_t* last_argument = arguments->arguments.nodes[arguments->arguments.size - 1];
+
+  if (last_argument->type == PM_HASH_NODE) {
+    pm_hash_node_t* hash_node = (pm_hash_node_t*) last_argument;
+    pm_keyword_hash_node_t synthetic = { .base = hash_node->base, .elements = hash_node->elements };
+
+    return extract_html_attributes_from_keyword_hash(
+      &synthetic,
+      source,
+      original_source,
+      erb_content_offset,
+      allocator
+    );
+  }
 
   return extract_html_attributes_from_keyword_hash(
     (pm_keyword_hash_node_t*) last_argument,

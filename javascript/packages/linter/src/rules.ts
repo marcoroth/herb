@@ -1,9 +1,11 @@
 import type { RuleClass } from "./types.js"
 
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
+import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
@@ -18,6 +20,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
 import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
@@ -51,8 +54,8 @@ import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-sp
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
-import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -84,9 +87,11 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 
 export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
+  ActionViewNoSilentRenderRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
   ERBNoDuplicateBranchElementsRule,
@@ -101,6 +106,7 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoSilentStatementRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
@@ -134,8 +140,8 @@ export const rules: RuleClass[] = [
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
-  HTMLDetailsHasSummaryRule,
   HTMLBooleanAttributesNoValueRule,
+  HTMLDetailsHasSummaryRule,
   HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,

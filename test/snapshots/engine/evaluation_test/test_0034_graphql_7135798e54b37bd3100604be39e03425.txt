@@ -4,7 +4,6 @@ input: "{source: \"<%# app/views/products/product.html.erb %>\\n<%graphql\\n  fr
 ---
 
 
-
 <article class="product">
   <h1>title</h1>
   <p class="description">Description</p>

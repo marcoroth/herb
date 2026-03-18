@@ -366,7 +366,16 @@ module Herb
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        return if !skip_comment_check && erb_comment?(opening)
+        if !skip_comment_check && erb_comment?(opening)
+          has_left_trim = opening.start_with?("<%-")
+          remove_trailing_whitespace_from_last_token! if has_left_trim
+
+          if at_line_start?
+            extract_and_remove_lspace!
+            @trim_next_whitespace = true
+          end
+          return
+        end
         return if erb_graphql?(opening)
 
         code = node.content.value.strip
@@ -512,8 +521,18 @@ module Herb
           @tokens.last[0] != :text ||
           @tokens.last[1].empty? ||
           @tokens.last[1].end_with?("\n") ||
-          @tokens.last[1] =~ /\A[ \t]+\z/ ||
+          (@tokens.last[1] =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) ||
           @tokens.last[1] =~ /\n[ \t]+\z/
+      end
+
+      def preceding_token_ends_with_newline?
+        return true unless @tokens.length >= 2
+
+        preceding = @tokens[-2]
+        return false if [:expr, :expr_escaped, :expr_block, :expr_block_escaped, :expr_block_end].include?(preceding[0])
+        return true unless preceding[0] == :text
+
+        preceding[1].end_with?("\n")
       end
 
       def extract_lspace

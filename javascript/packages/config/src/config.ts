@@ -61,8 +61,14 @@ export type FormatterConfig = {
   }
 }
 
+export type ValidatorsConfig = {
+  security?: boolean
+  nesting?: boolean
+  accessibility?: boolean
+}
+
 export type EngineConfig = {
-  security?: 'error' | 'warn' | 'ignore'
+  validators?: ValidatorsConfig
 }
 
 export type HerbConfigOptions = {

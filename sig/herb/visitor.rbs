@@ -121,6 +121,12 @@ module Herb
     # : (Herb::AST::ERBUnlessNode) -> void
     def visit_erb_unless_node: (Herb::AST::ERBUnlessNode) -> void
 
+    # : (Herb::AST::RubyRenderLocalNode) -> void
+    def visit_ruby_render_local_node: (Herb::AST::RubyRenderLocalNode) -> void
+
+    # : (Herb::AST::ERBRenderNode) -> void
+    def visit_erb_render_node: (Herb::AST::ERBRenderNode) -> void
+
     # : (Herb::AST::ERBYieldNode) -> void
     def visit_erb_yield_node: (Herb::AST::ERBYieldNode) -> void
 
