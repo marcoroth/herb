@@ -230,11 +230,17 @@ module Herb
       @buffer_on_stack = false
     end
 
+    def expression_block?
+      @_in_expression_block || false
+    end
+
     def add_expression(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_result(code)
+      unescaped = (indicator == "=") ^ @escape
+
+      if expression_block?
+        unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
-        add_expression_result_escaped(code)
+        unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
       end
     end
 
@@ -251,39 +257,48 @@ module Herb
     end
 
     def add_expression_block(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_block_result(code)
-      else
-        add_expression_block_result_escaped(code)
-      end
+      @_in_expression_block = true
+      @_expression_block_open_paren = false
+
+      add_expression(indicator, code)
+    ensure
+      @_in_expression_block = false
     end
 
     def add_expression_block_result(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_end(code, escaped: false)
-      terminate_expression
+      if @_expression_block_open_paren
+        terminate_expression
 
-      trailing_newline = code.end_with?("\n")
-      code_stripped = code.chomp
+        trailing_newline = code.end_with?("\n")
+        code_stripped = code.chomp
 
-      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
-      @src << " " << code_stripped
-      @src << "\n" if self.class.comment?(code_stripped)
-      @src << (escaped ? "))" : ")")
-      @src << (trailing_newline ? "\n" : ";")
+        @src << " " << code_stripped
+        @src << "\n" if self.class.comment?(code_stripped)
+        @src << (escaped ? "))" : ")")
+        @src << (trailing_newline ? "\n" : ";")
 
-      @buffer_on_stack = false
+        @buffer_on_stack = false
+      else
+        add_code(code)
+      end
     end
 
     def trailing_newline(code)
