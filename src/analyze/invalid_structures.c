@@ -89,7 +89,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
           node->location.start,
           node->location.end,
           context->allocator,
-          node->errors
+          &((AST_NODE_T*) node)->errors
         );
       }
     }
@@ -124,7 +124,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
               subsequent->location.start,
               subsequent->location.end,
               context->allocator,
-              subsequent->errors
+              &((AST_NODE_T*) subsequent)->errors
             );
           }
         }

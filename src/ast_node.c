@@ -29,8 +29,10 @@ void ast_node_init(
   node->location.start = start;
   node->location.end = end;
 
+  (void) allocator;
+
   if (errors == NULL) {
-    node->errors = hb_array_init(0, allocator);
+    node->errors = NULL;
   } else {
     node->errors = errors;
   }
