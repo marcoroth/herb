@@ -9,6 +9,7 @@
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
 #include "../include/analyze/render_nodes.h"
+#include "../include/analyze/strict_locals.h"
 #include "../include/ast_node.h"
 #include "../include/ast_nodes.h"
 #include "../include/errors.h"
@@ -796,6 +797,28 @@ static size_t process_block_children(
   return index;
 }
 
+hb_array_T* get_node_children_array(const AST_NODE_T* node) {
+  if (!node) { return NULL; }
+
+  switch (node->type) {
+    case AST_DOCUMENT_NODE: return ((AST_DOCUMENT_NODE_T*) node)->children;
+    case AST_HTML_ELEMENT_NODE: return ((AST_HTML_ELEMENT_NODE_T*) node)->body;
+    case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->statements;
+    case AST_ERB_UNLESS_NODE: return ((AST_ERB_UNLESS_NODE_T*) node)->statements;
+    case AST_ERB_ELSE_NODE: return ((AST_ERB_ELSE_NODE_T*) node)->statements;
+    case AST_ERB_WHILE_NODE: return ((AST_ERB_WHILE_NODE_T*) node)->statements;
+    case AST_ERB_UNTIL_NODE: return ((AST_ERB_UNTIL_NODE_T*) node)->statements;
+    case AST_ERB_FOR_NODE: return ((AST_ERB_FOR_NODE_T*) node)->statements;
+    case AST_ERB_BEGIN_NODE: return ((AST_ERB_BEGIN_NODE_T*) node)->statements;
+    case AST_ERB_RESCUE_NODE: return ((AST_ERB_RESCUE_NODE_T*) node)->statements;
+    case AST_ERB_ENSURE_NODE: return ((AST_ERB_ENSURE_NODE_T*) node)->statements;
+    case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->children;
+    case AST_ERB_WHEN_NODE: return ((AST_ERB_WHEN_NODE_T*) node)->statements;
+    default: return NULL;
+  }
+}
+
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
   hb_allocator_T* allocator = context->allocator;
   hb_array_T* new_array = hb_array_init(hb_array_size(array), allocator);
@@ -861,6 +884,10 @@ void herb_analyze_parse_tree(
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 
   if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
+
+  if (options && options->strict_locals) {
+    herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
+  }
 
   if (options && options->action_view_helpers) {
     herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);

@@ -410,6 +410,54 @@ errors:
         - name: layout
           type: string
 
+    - name: StrictLocalsPositionalArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Positional argument `%s` is not allowed. Use keyword argument format: `%s:`."
+        arguments:
+          - name
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsBlockArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Block argument `&%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsSplatArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Splat argument `*%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsMissingParenthesisError
+      message:
+        template: "Strict locals declaration requires parentheses. Expected `locals: (...)` but got `locals: %s`."
+        arguments:
+          - rest
+
+      fields:
+        - name: rest
+          type: string
+
+    - name: StrictLocalsDuplicateDeclarationError
+      message:
+        template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
+        arguments: []
+
+      fields: []
+
 warnings:
   fields: []
   types: []
@@ -1168,6 +1216,43 @@ nodes:
           type: array
           kind:
             - RubyRenderLocalNode
+
+    - name: RubyStrictLocalNode
+      fields:
+        - name: name
+          type: token
+
+        - name: default_value
+          type: node
+          kind: RubyLiteralNode
+
+        - name: required
+          type: boolean
+
+        - name: double_splat
+          type: boolean
+
+    - name: ERBStrictLocalsNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: locals
+          type: array
+          kind:
+            - RubyStrictLocalNode
 
     - name: ERBYieldNode
       fields:

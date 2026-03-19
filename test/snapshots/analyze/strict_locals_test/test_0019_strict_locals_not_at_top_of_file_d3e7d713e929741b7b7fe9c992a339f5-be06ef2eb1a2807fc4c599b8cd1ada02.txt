@@ -1,0 +1,82 @@
+---
+source: "Analyze::StrictLocalsTest#test_0019_strict locals not at top of file"
+input: |2-
+<div class="card">
+  <%# locals: (user:) %>
+  <%= user.name %>
+</div>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:18))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:17)-(1:18))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:17))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:17))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:12)-(1:16))
+    │   │       │               │       └── content: "card"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:16)-(1:17))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:18)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBStrictLocalsNode (location: (2:2)-(2:24))
+    │   │   │   ├── tag_opening: "<%#" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " locals: (user:) " (location: (2:5)-(2:22))
+    │   │   │   ├── tag_closing: "%>" (location: (2:22)-(2:24))
+    │   │   │   └── locals: (1 item)
+    │   │   │       └── @ RubyStrictLocalNode (location: (2:15)-(2:20))
+    │   │   │           ├── name: "user" (location: (2:15)-(2:20))
+    │   │   │           ├── default_value: ∅
+    │   │   │           ├── required: true
+    │   │   │           └── double_splat: false
+    │   │   │
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:24)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:18))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │   ├── content: " user.name " (location: (3:5)-(3:16))
+    │   │   │   ├── tag_closing: "%>" (location: (3:16)-(3:18))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:18)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:6))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "div" (location: (4:2)-(4:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:6)-(5:0))
+        └── content: "\n"

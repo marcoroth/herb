@@ -13,6 +13,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   hb_array_T* ruby_context_stack;
   hb_allocator_T* allocator;
   const char* source;
+  bool found_strict_locals;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -51,6 +52,7 @@ void herb_analyze_parse_tree(
   hb_allocator_T* allocator
 );
 
+hb_array_T* get_node_children_array(const AST_NODE_T* node);
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context);
 bool transform_erb_nodes(const AST_NODE_T* node, void* data);
 

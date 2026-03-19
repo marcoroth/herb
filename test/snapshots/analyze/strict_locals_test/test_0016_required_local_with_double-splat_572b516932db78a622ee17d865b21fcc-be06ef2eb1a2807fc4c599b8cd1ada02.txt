@@ -1,0 +1,28 @@
+---
+source: "Analyze::StrictLocalsTest#test_0016_required local with double-splat"
+input: |2-
+<%# locals: (message:, **attributes) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:39))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message:, **attributes) " (location: (1:3)-(1:37))
+    │   ├── tag_closing: "%>" (location: (1:37)-(1:39))
+    │   └── locals: (2 items)
+    │       ├── @ RubyStrictLocalNode (location: (1:13)-(1:21))
+    │       │   ├── name: "message" (location: (1:13)-(1:21))
+    │       │   ├── default_value: ∅
+    │       │   ├── required: true
+    │       │   └── double_splat: false
+    │       │
+    │       └── @ RubyStrictLocalNode (location: (1:25)-(1:35))
+    │           ├── name: "attributes" (location: (1:25)-(1:35))
+    │           ├── default_value: ∅
+    │           ├── required: false
+    │           └── double_splat: true
+    │
+    │
+    └── @ HTMLTextNode (location: (1:39)-(2:0))
+        └── content: "\n"

@@ -73,6 +73,7 @@ describe("ParseCache", () => {
         prism_program: false,
         render_nodes: false,
         strict: true,
+        strict_locals: false,
         action_view_helpers: false,
       })
     })
@@ -89,6 +90,7 @@ describe("ParseCache", () => {
         prism_program: false,
         render_nodes: false,
         strict: false,
+        strict_locals: false,
         action_view_helpers: false,
       })
     })
@@ -105,6 +107,7 @@ describe("ParseCache", () => {
         prism_program: false,
         render_nodes: false,
         strict: true,
+        strict_locals: false,
         action_view_helpers: false,
       })
     })
@@ -121,6 +124,7 @@ describe("ParseCache", () => {
         prism_program: false,
         render_nodes: false,
         strict: false,
+        strict_locals: false,
         action_view_helpers: false,
       })
     })

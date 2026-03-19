@@ -77,6 +77,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.render_nodes = (renderNodes == JNI_TRUE);
     }
 
+    jmethodID getStrictLocals =
+        (*env)->GetMethodID(env, optionsClass, "isStrictLocals", "()Z");
+
+    if (getStrictLocals != NULL) {
+      jboolean strictLocals = (*env)->CallBooleanMethod(env, options, getStrictLocals);
+      parser_options.strict_locals = (strictLocals == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 

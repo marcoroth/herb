@@ -22,6 +22,7 @@
         "./extension/libherb/analyze/parse_errors.c",
         "./extension/libherb/analyze/prism_annotate.c",
         "./extension/libherb/analyze/render_nodes.c",
+        "./extension/libherb/analyze/strict_locals.c",
         "./extension/libherb/analyze/transform.c",
         "./extension/libherb/analyze/action_view/attribute_extraction_helpers.c",
         "./extension/libherb/analyze/action_view/content_tag.c",

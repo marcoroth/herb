@@ -451,6 +451,16 @@
                     <span class="select-none">Transform render nodes</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Parse ERB comment strict locals declarations (<%# locals: (...) %>) and transform them into ERBStrictLocalsNode with structured local variable information">
+                    <input
+                      type="checkbox"
+                      data-option="strict_locals"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Strict locals</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
                     <input
                       type="checkbox"

@@ -70,6 +70,10 @@ val Herb_parse(const std::string& source, val options) {
       parser_options.render_nodes = options["render_nodes"].as<bool>();
     }
 
+    if (options.hasOwnProperty("strict_locals")) {
+      parser_options.strict_locals = options["strict_locals"].as<bool>();
+    }
+
     if (options.hasOwnProperty("prism_nodes")) {
       parser_options.prism_nodes = options["prism_nodes"].as<bool>();
     }

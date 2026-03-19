@@ -127,6 +127,12 @@ module Herb
     # : (Herb::AST::ERBRenderNode) -> void
     def visit_erb_render_node: (Herb::AST::ERBRenderNode) -> void
 
+    # : (Herb::AST::RubyStrictLocalNode) -> void
+    def visit_ruby_strict_local_node: (Herb::AST::RubyStrictLocalNode) -> void
+
+    # : (Herb::AST::ERBStrictLocalsNode) -> void
+    def visit_erb_strict_locals_node: (Herb::AST::ERBStrictLocalsNode) -> void
+
     # : (Herb::AST::ERBYieldNode) -> void
     def visit_erb_yield_node: (Herb::AST::ERBYieldNode) -> void
 

@@ -1,0 +1,25 @@
+---
+source: "Analyze::StrictLocalsTest#test_0017_reserved keyword name as local"
+input: |2-
+<%# locals: (class: "message") %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:33))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (class: "message") " (location: (1:3)-(1:31))
+    │   ├── tag_closing: "%>" (location: (1:31)-(1:33))
+    │   └── locals: (1 item)
+    │       └── @ RubyStrictLocalNode (location: (1:13)-(1:29))
+    │           ├── name: "class" (location: (1:13)-(1:19))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:20)-(1:29))
+    │           │       └── content: "\"message\""
+    │           │
+    │           ├── required: false
+    │           └── double_splat: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:33)-(2:0))
+        └── content: "\n"

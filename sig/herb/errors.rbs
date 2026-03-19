@@ -572,5 +572,87 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class StrictLocalsPositionalArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_positional_argument_error
+      def to_hash: () -> serialized_strict_locals_positional_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsBlockArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_block_argument_error
+      def to_hash: () -> serialized_strict_locals_block_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsSplatArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_splat_argument_error
+      def to_hash: () -> serialized_strict_locals_splat_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsMissingParenthesisError < Error
+      include Colors
+
+      attr_reader rest: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_missing_parenthesis_error
+      def to_hash: () -> serialized_strict_locals_missing_parenthesis_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsDuplicateDeclarationError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end
