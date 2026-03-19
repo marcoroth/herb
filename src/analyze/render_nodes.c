@@ -727,27 +727,7 @@ static void transform_render_nodes_in_array(hb_array_T* array, analyze_ruby_cont
 static void transform_render_in_node(const AST_NODE_T* node, analyze_ruby_context_T* context) {
   if (!node || !context) { return; }
 
-  hb_array_T* array = NULL;
-
-  switch (node->type) {
-    case AST_DOCUMENT_NODE: array = ((AST_DOCUMENT_NODE_T*) node)->children; break;
-    case AST_HTML_ELEMENT_NODE: array = ((AST_HTML_ELEMENT_NODE_T*) node)->body; break;
-    case AST_ERB_BLOCK_NODE: array = ((AST_ERB_BLOCK_NODE_T*) node)->body; break;
-    case AST_ERB_IF_NODE: array = ((AST_ERB_IF_NODE_T*) node)->statements; break;
-    case AST_ERB_UNLESS_NODE: array = ((AST_ERB_UNLESS_NODE_T*) node)->statements; break;
-    case AST_ERB_ELSE_NODE: array = ((AST_ERB_ELSE_NODE_T*) node)->statements; break;
-    case AST_ERB_WHILE_NODE: array = ((AST_ERB_WHILE_NODE_T*) node)->statements; break;
-    case AST_ERB_UNTIL_NODE: array = ((AST_ERB_UNTIL_NODE_T*) node)->statements; break;
-    case AST_ERB_FOR_NODE: array = ((AST_ERB_FOR_NODE_T*) node)->statements; break;
-    case AST_ERB_BEGIN_NODE: array = ((AST_ERB_BEGIN_NODE_T*) node)->statements; break;
-    case AST_ERB_RESCUE_NODE: array = ((AST_ERB_RESCUE_NODE_T*) node)->statements; break;
-    case AST_ERB_ENSURE_NODE: array = ((AST_ERB_ENSURE_NODE_T*) node)->statements; break;
-    case AST_ERB_CASE_NODE: array = ((AST_ERB_CASE_NODE_T*) node)->children; break;
-    case AST_ERB_WHEN_NODE: array = ((AST_ERB_WHEN_NODE_T*) node)->statements; break;
-    default: return;
-  }
-
-  transform_render_nodes_in_array(array, context);
+  transform_render_nodes_in_array(get_node_children_array(node), context);
 }
 
 bool transform_render_nodes(const AST_NODE_T* node, void* data) {

@@ -4,6 +4,7 @@ export interface ParseOptions {
   strict?: boolean
   action_view_helpers?: boolean
   render_nodes?: boolean
+  strict_locals?: boolean
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
   prism_program?: boolean
@@ -17,6 +18,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   strict: true,
   action_view_helpers: false,
   render_nodes: false,
+  strict_locals: false,
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
@@ -41,6 +43,9 @@ export class ParserOptions {
   /** Whether ActionView render call detection was enabled during parsing. */
   readonly render_nodes: boolean
 
+  /** Whether strict locals analysis was enabled during parsing. */
+  readonly strict_locals: boolean
+
   /** Whether Prism node serialization was enabled during parsing. */
   readonly prism_nodes: boolean
 
@@ -60,6 +65,7 @@ export class ParserOptions {
     this.analyze = options.analyze ?? DEFAULT_PARSER_OPTIONS.analyze
     this.action_view_helpers = options.action_view_helpers ?? DEFAULT_PARSER_OPTIONS.action_view_helpers
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
+    this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program

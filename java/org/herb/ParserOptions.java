@@ -6,6 +6,7 @@ public class ParserOptions {
   private boolean strict = true;
   private boolean actionViewHelpers = false;
   private boolean renderNodes = false;
+  private boolean strictLocals = false;
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
@@ -55,6 +56,15 @@ public class ParserOptions {
 
   public boolean isRenderNodes() {
     return renderNodes;
+  }
+
+  public ParserOptions strictLocals(boolean value) {
+    this.strictLocals = value;
+    return this;
+  }
+
+  public boolean isStrictLocals() {
+    return strictLocals;
   }
 
   public ParserOptions prismNodes(boolean value) {

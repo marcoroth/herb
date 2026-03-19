@@ -394,6 +394,14 @@ export class IdentityPrinter extends Printer {
     // extracted metadata, nothing to print
   }
 
+  visitERBStrictLocalsNode(node: Nodes.ERBStrictLocalsNode): void {
+    this.printERBNode(node)
+  }
+
+  visitRubyStrictLocalNode(_node: Nodes.RubyStrictLocalNode): void {
+    // extracted metadata, nothing to print
+  }
+
   visitERBYieldNode(node: Nodes.ERBYieldNode): void {
     this.printERBNode(node)
   }

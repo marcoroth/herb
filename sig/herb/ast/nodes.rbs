@@ -1604,6 +1604,93 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_ruby_strict_local_node = {
+    # |  name: Herb::Token?,
+    # |  default_value: Herb::AST::RubyLiteralNode?,
+    # |  required: bool,
+    # |  double_splat: bool,
+    # | }
+    class RubyStrictLocalNode < Node
+      include Colors
+
+      attr_reader name: Herb::Token?
+
+      attr_reader default_value: Herb::AST::RubyLiteralNode?
+
+      attr_reader required: bool
+
+      attr_reader double_splat: bool
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
+
+      # : () -> serialized_ruby_strict_local_node
+      def to_hash: () -> serialized_ruby_strict_local_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_strict_locals_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  analyzed_ruby: nil,
+    # |  prism_node: String?,
+    # |  locals: Array[Herb::AST::RubyStrictLocalNode]?,
+    # | }
+    class ERBStrictLocalsNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader analyzed_ruby: nil
+
+      attr_reader prism_node: String?
+
+      attr_reader locals: Array[Herb::AST::RubyStrictLocalNode]?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
+
+      # : () -> serialized_erb_strict_locals_node
+      def to_hash: () -> serialized_erb_strict_locals_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     # : type serialized_erb_yield_node = {
     # |  tag_opening: Herb::Token?,
     # |  content: Herb::Token?,
