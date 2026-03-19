@@ -88,7 +88,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          erb_content_node->base.errors
+          &erb_content_node->base.errors
         );
       }
 
@@ -97,7 +97,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           allocator,
-          erb_content_node->base.errors
+          &erb_content_node->base.errors
         );
       }
     } else {

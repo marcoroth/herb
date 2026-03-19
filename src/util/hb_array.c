@@ -116,6 +116,15 @@ void hb_array_remove_item(hb_array_T* array, void* item) {
   if (index != SIZE_MAX) { hb_array_remove(array, index); }
 }
 
+bool hb_array_append_lazy(hb_array_T** array, void* item, hb_allocator_T* allocator) {
+  if (*array == NULL) {
+    *array = hb_array_init(8, allocator);
+    if (!*array) { return false; }
+  }
+
+  return hb_array_append(*array, item);
+}
+
 // Alias for hb_array_append
 bool hb_array_push(hb_array_T* array, void* item) {
   return hb_array_append(array, item);

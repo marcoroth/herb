@@ -194,7 +194,7 @@ static hb_array_T* extract_strict_locals(
     );
 
     hb_array_T* node_errors = hb_array_init(1, allocator);
-    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
+    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, &node_errors);
 
     AST_RUBY_STRICT_LOCAL_NODE_T* local =
       ast_ruby_strict_local_node_init(name_token, value_node, false, false, start, value_end, node_errors, allocator);
@@ -229,7 +229,7 @@ static hb_array_T* extract_strict_locals(
     position_T end = name_token ? name_token->location.end : start;
 
     hb_array_T* node_errors = hb_array_init(1, allocator);
-    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
+    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, &node_errors);
 
     AST_RUBY_STRICT_LOCAL_NODE_T* local =
       ast_ruby_strict_local_node_init(name_token, NULL, true, false, start, end, node_errors, allocator);
@@ -262,7 +262,7 @@ static hb_array_T* extract_strict_locals(
       position_T end = name_token ? name_token->location.end : start;
 
       hb_array_T* node_errors = hb_array_init(1, allocator);
-      append_strict_locals_block_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
+      append_strict_locals_block_argument_error(hb_string_from_c_string(name), start, end, allocator, &node_errors);
 
       AST_RUBY_STRICT_LOCAL_NODE_T* local =
         ast_ruby_strict_local_node_init(name_token, NULL, false, false, start, end, node_errors, allocator);
@@ -296,7 +296,7 @@ static hb_array_T* extract_strict_locals(
       position_T end = name_token ? name_token->location.end : start;
 
       hb_array_T* node_errors = hb_array_init(1, allocator);
-      append_strict_locals_splat_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
+      append_strict_locals_splat_argument_error(hb_string_from_c_string(name), start, end, allocator, &node_errors);
 
       AST_RUBY_STRICT_LOCAL_NODE_T* local =
         ast_ruby_strict_local_node_init(name_token, NULL, false, false, start, end, node_errors, allocator);
@@ -486,7 +486,7 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
       error_start,
       error_end,
       allocator,
-      errors
+      &errors
     );
     hb_allocator_dealloc(allocator, rest);
 
@@ -609,7 +609,7 @@ static void transform_strict_locals_in_array(hb_array_T* array, analyze_ruby_con
         strict_locals_node->base.location.start,
         strict_locals_node->base.location.end,
         context->allocator,
-        strict_locals_node->base.errors
+        &strict_locals_node->base.errors
       );
     }
 

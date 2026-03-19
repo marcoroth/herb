@@ -13,7 +13,7 @@
 #include <string.h>
 
 typedef struct {
-  hb_array_T* document_errors;
+  hb_array_T** document_errors;
   hb_allocator_T* allocator;
 } conditional_elements_context_T;
 
@@ -182,9 +182,8 @@ typedef struct {
   bool is_if;
 } conditional_open_tag_T;
 
-static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document_errors, hb_allocator_T* allocator) {
+static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T** document_errors, hb_allocator_T* allocator) {
   if (!nodes || hb_array_size(nodes) == 0) { return; }
-  if (!document_errors) { return; }
 
   for (size_t open_index = 0; open_index < hb_array_size(nodes); open_index++) {
     AST_NODE_T* open_node = (AST_NODE_T*) hb_array_get(nodes, open_index);
@@ -235,7 +234,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
           allocator
         );
 
-        hb_array_append(document_errors, multiple_tags_error);
+        hb_array_append_lazy(document_errors, multiple_tags_error, allocator);
         break;
       }
     }
@@ -339,7 +338,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
           allocator
         );
 
-      hb_array_append(document_errors, mismatch_error);
+      hb_array_append_lazy(document_errors, mismatch_error, allocator);
       continue;
     }
 
@@ -355,7 +354,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
     position_T start_position = matched_open->open_conditional->location.start;
     position_T end_position = node->location.end;
-    hb_array_T* errors = hb_array_init(0, allocator);
+    hb_array_T* errors = NULL;
 
     AST_HTML_CONDITIONAL_ELEMENT_NODE_T* conditional_element = ast_html_conditional_element_node_init(
       matched_open->condition,
@@ -589,6 +588,6 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 }
 
 void herb_transform_conditional_elements(AST_DOCUMENT_NODE_T* document, hb_allocator_T* allocator) {
-  conditional_elements_context_T context = { .document_errors = document->base.errors, .allocator = allocator };
+  conditional_elements_context_T context = { .document_errors = &document->base.errors, .allocator = allocator };
   herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, &context);
 }
