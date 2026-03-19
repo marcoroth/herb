@@ -695,7 +695,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
 
       size_t content_length = end_offset - start_offset;
       char* raw_copy = hb_allocator_strndup(allocator, context->source + start_offset, content_length);
-      hb_string_T raw_content = { .data = raw_copy, .length = content_length };
+      hb_string_T raw_content = { .data = raw_copy, .length = (uint32_t) content_length };
 
       AST_LITERAL_NODE_T* literal_node =
         ast_literal_node_init(raw_content, body_start, body_end, hb_array_init(0, allocator), allocator);
