@@ -104,6 +104,30 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
 
   position_T start_position =
     prism_location_to_position_with_offset(&assoc->key->location, original_source, erb_content_offset, source);
+
+  if (!assoc->value) {
+    hb_allocator_dealloc(allocator, name_string);
+
+    return NULL;
+  }
+
+  if (assoc->value->type == PM_IMPLICIT_NODE) {
+    char* dashed_name = convert_underscores_to_dashes(name_string);
+
+    AST_HTML_ATTRIBUTE_NODE_T* attribute = create_html_attribute_with_ruby_literal(
+      dashed_name ? dashed_name : name_string,
+      name_string,
+      start_position,
+      start_position,
+      allocator
+    );
+
+    if (dashed_name) { free(dashed_name); }
+    hb_allocator_dealloc(allocator, name_string);
+
+    return attribute;
+  }
+
   position_T end_position =
     prism_location_to_position_with_offset(&assoc->value->location, original_source, erb_content_offset, source);
 
