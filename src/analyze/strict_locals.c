@@ -535,6 +535,8 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
+    if (error->diag_id == PM_ERR_DEF_TERM) { continue; }
+
     size_t error_start_in_synthetic = (size_t) (error->location.start - synthetic_start);
     size_t error_end_in_synthetic = (size_t) (error->location.end - synthetic_start);
 

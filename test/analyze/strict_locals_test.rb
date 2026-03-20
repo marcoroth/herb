@@ -250,5 +250,59 @@ module Analyze
         <%# locals: (message, something: "else") %>
       HTML
     end
+
+    test "empty locals declaration without parentheses produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: %>
+      HTML
+    end
+
+    test "trailing comma in parameters produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (user:,) %>
+      HTML
+    end
+
+    test "leading comma in parameters produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (, user:) %>
+      HTML
+    end
+
+    test "double comma in parameters produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (user:,, admin:) %>
+      HTML
+    end
+
+    test "closing paren inside string default value produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (user: ") %>
+      HTML
+    end
+
+    test "missing opening parenthesis with closing paren produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: user:) %>
+      HTML
+    end
+
+    test "content after closing paren is silently ignored" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: () extra %>
+      HTML
+    end
+
+    test "duplicate keyword argument names produce errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (user:, user:) %>
+      HTML
+    end
+
+    test "keyword argument with assignment syntax produces errors" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (user: = "default") %>
+      HTML
+    end
   end
 end

@@ -1,35 +1,27 @@
-import { SourceRule } from "../types.js"
-import { Location } from "@herb-tools/core"
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
+import { Location, ERBStrictLocalsNode, LiteralNode } from "@herb-tools/core"
+import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isPartialFile } from "./file-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, DocumentNode } from "@herb-tools/core"
 
-function hasStrictLocals(source: string): boolean {
-  return source.includes("<%# locals:") || source.includes("<%#locals:")
-}
+class ERBStrictLocalsRequiredVisitor extends BaseRuleVisitor {
+  foundStrictLocals: boolean = false
 
-class ERBStrictLocalsRequiredVisitor extends BaseSourceRuleVisitor {
-  protected visitSource(source: string): void {
-    const isPartial = isPartialFile(this.context.fileName)
-
-    if (isPartial !== true) return
-    if (hasStrictLocals(source)) return
-
-    const firstLineLength = source.indexOf("\n") === -1 ? source.length : source.indexOf("\n")
-    const location = Location.from(1, 0, 1, firstLineLength)
-
-    this.addOffense(
-      "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
-      location
-    )
+  visitERBStrictLocalsNode(_node: ERBStrictLocalsNode): void {
+    this.foundStrictLocals = true
   }
 }
 
-export class ERBStrictLocalsRequiredRule extends SourceRule {
+export class ERBStrictLocalsRequiredRule extends ParserRule {
   static unsafeAutocorrectable = true
   static ruleName = "erb-strict-locals-required"
+
+  get parserOptions() {
+    return { strict_locals: true }
+  }
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -38,15 +30,34 @@ export class ERBStrictLocalsRequiredRule extends SourceRule {
     }
   }
 
-  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    if (isPartialFile(context?.fileName) !== true) return []
+
     const visitor = new ERBStrictLocalsRequiredVisitor(this.ruleName, context)
+    visitor.visit(result.value)
 
-    visitor.visit(source)
+    if (visitor.foundStrictLocals) return []
 
-    return visitor.offenses
+    const document = result.value as DocumentNode
+    const firstChild = document.children[0]
+    const end = firstChild ? firstChild.location.end : Location.zero.end
+
+    return [
+      this.createOffense(
+        "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
+        Location.from(1, 0, end.line, end.column)
+      )
+    ]
   }
 
-  autofix(_offense: LintOffense, source: string, _context?: Partial<LintContext>): string | null {
-    return `<%# locals: () %>\n\n${source}`
+  autofix(_offense: LintOffense, result: ParseResult): ParseResult | null {
+    (result.value.children as unknown[]).unshift(LiteralNode.from({
+      type: "AST_LITERAL_NODE",
+      location: Location.zero,
+      errors: [],
+      content: "<%# locals: () %>\n\n",
+    }))
+
+    return result
   }
 }
