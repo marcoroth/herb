@@ -251,5 +251,11 @@ module Analyze::ActionView::TagHelper
         <% content_for :head, tag.meta(name: "viewport", content: "width=device-width, initial-scale=1") %>
       HTML
     end
+
+    test "tag.div with shorthand keyword arguments" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div(height:, width:) %>
+      HTML
+    end
   end
 end

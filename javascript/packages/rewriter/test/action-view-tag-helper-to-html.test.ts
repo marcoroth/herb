@@ -113,6 +113,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       expect(transform(input)).toBe(expected)
     })
 
+    test("tag.div with shorthand keyword arguments wraps each in ERB", () => {
+      expect(transform('<%= tag.div(height:, width:) %>')).toBe(
+        '<div height="<%= height %>" width="<%= width %>"></div>'
+      )
+    })
+
     test("tag.div with variable attribute value wraps in ERB", () => {
       const input = dedent`
         <%= tag.div class: class_name do %>
