@@ -39,7 +39,7 @@ bool hb_array_append(hb_array_T* array, void* item) {
     size_t new_capacity;
 
     if (array->capacity == 0) {
-      new_capacity = 1;
+      new_capacity = 8;
     } else if (array->capacity > SIZE_MAX / (2 * sizeof(void*))) {
       fprintf(stderr, "Warning: Approaching array size limits, using conservative growth.\n");
       new_capacity = array->capacity + 1024 / sizeof(void*);
