@@ -8,6 +8,7 @@ export interface ParseOptions {
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
   prism_program?: boolean
+  html?: boolean
 }
 
 export type SerializedParserOptions = Required<ParseOptions>
@@ -22,6 +23,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
+  html: true,
 }
 
 /**
@@ -55,6 +57,9 @@ export class ParserOptions {
   /** Whether the full Prism ProgramNode was serialized on the DocumentNode. */
   readonly prism_program: boolean
 
+  /** Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text. */
+  readonly html: boolean
+
   static from(options: SerializedParserOptions): ParserOptions {
     return new ParserOptions(options)
   }
@@ -69,5 +74,6 @@ export class ParserOptions {
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program
+    this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
   }
 }

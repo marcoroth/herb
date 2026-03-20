@@ -41,7 +41,10 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .strict_locals = false,
                                                        .prism_nodes_deep = false,
                                                        .prism_nodes = false,
-                                                       .prism_program = false };
+                                                       .prism_program = false,
+                                                       .html = true,
+                                                       .start_line = 0,
+                                                       .start_column = 0 };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -768,7 +771,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       equals_with_whitespace->type = TOKEN_EQUALS;
 
       char* arena_copy = hb_allocator_strndup(parser->allocator, equals_buffer.value, equals_buffer.length);
-      equals_with_whitespace->value = (hb_string_T) { .data = arena_copy, .length = (uint32_t) equals_buffer.length };
+      equals_with_whitespace->value = hb_string_from_data(arena_copy, equals_buffer.length);
 
       hb_buffer_free(&equals_buffer);
 
@@ -930,9 +933,9 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
 
 static bool starts_with_keyword(hb_string_T string, const char* keyword) {
   hb_string_T prefix = hb_string(keyword);
+
   if (string.length < prefix.length) { return false; }
   if (strncmp(string.data, prefix.data, prefix.length) != 0) { return false; }
-
   if (string.length == prefix.length) { return true; }
 
   return is_whitespace(string.data[prefix.length]);
@@ -1409,13 +1412,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
   hb_buffer_init(&content, 1024, parser->allocator);
   position_T start = parser->current_token->location.start;
   hb_string_T expected_closing_tag = parser_get_foreign_content_closing_tag(parser->foreign_content_type);
-
-  if (hb_string_is_empty(expected_closing_tag)) {
-    parser_exit_foreign_content(parser);
-    hb_buffer_free(&content);
-
-    return;
-  }
+  bool has_closing_tag = !hb_string_is_empty(expected_closing_tag);
 
   while (!token_is(parser, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
@@ -1429,7 +1426,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
       continue;
     }
 
-    if (token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) {
+    if (has_closing_tag && token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) {
       lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
       token_T* next_token = lexer_next_token(parser->lexer);
@@ -1464,6 +1461,11 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
 }
 
 static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, hb_array_T* errors) {
+  if (!parser->options.html) {
+    parser_parse_foreign_content(parser, children, errors);
+    return;
+  }
+
   while (token_is_not(parser, TOKEN_EOF)) {
 
     if (token_is(parser, TOKEN_ERB_START)) {

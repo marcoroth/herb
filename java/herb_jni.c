@@ -108,6 +108,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean prismProgram = (*env)->CallBooleanMethod(env, options, getPrismProgram);
       parser_options.prism_program = (prismProgram == JNI_TRUE);
     }
+
+    jmethodID getHtml =
+        (*env)->GetMethodID(env, optionsClass, "isHtml", "()Z");
+
+    if (getHtml != NULL) {
+      jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
+      parser_options.html = (html == JNI_TRUE);
+    }
   }
 
   hb_allocator_T allocator;

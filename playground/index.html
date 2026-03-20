@@ -490,6 +490,17 @@
                     />
                     <span class="select-none">Prism nodes (deep)</span>
                   </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable HTML tag parsing — uncheck to treat all HTML-like content as literal text (ERB is still parsed)">
+                    <input
+                      type="checkbox"
+                      data-option="html"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      checked
+                    />
+                    <span class="select-none">HTML</span>
+                  </label>
                 </div>
 
                 <pre

@@ -305,5 +305,14 @@ module Parser
     test "case-insensitive style tag" do
       assert_parsed_snapshot(%(<STYLE>.class { color: red; }</style>))
     end
+
+    test "less-than operator with dot method access is parsed as text not a tag (gh-1426)" do
+      assert_parsed_snapshot("n <o.length")
+      assert_parsed_snapshot("n <o.length", html: false)
+    end
+
+    test "less-than operator followed by lowercase identifier and dot is parsed as text" do
+      assert_parsed_snapshot("<foo.bar", html: false)
+    end
   end
 end

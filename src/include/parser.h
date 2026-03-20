@@ -6,6 +6,8 @@
 #include "util/hb_allocator.h"
 #include "util/hb_array.h"
 
+#include <stdint.h>
+
 typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
   FOREIGN_CONTENT_SCRIPT,
@@ -26,6 +28,9 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool prism_program;
   bool prism_nodes;
   bool prism_nodes_deep;
+  bool html;
+  uint32_t start_line;
+  uint32_t start_column;
 } parser_options_T;
 
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {

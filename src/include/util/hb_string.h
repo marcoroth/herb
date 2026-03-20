@@ -29,6 +29,10 @@ typedef struct HB_STRING_STRUCT {
 
 hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
 
+static inline hb_string_T hb_string_from_data(const char* data, size_t length) {
+  return (hb_string_T) { .data = (char*) data, .length = (uint32_t) length };
+}
+
 static inline bool hb_string_is_null(hb_string_T string) {
   return string.data == NULL;
 }

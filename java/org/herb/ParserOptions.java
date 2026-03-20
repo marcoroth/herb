@@ -10,6 +10,7 @@ public class ParserOptions {
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
+  private boolean html = true;
 
   public ParserOptions() {}
 
@@ -92,6 +93,15 @@ public class ParserOptions {
 
   public boolean isPrismProgram() {
     return prismProgram;
+  }
+
+  public ParserOptions html(boolean value) {
+    this.html = value;
+    return this;
+  }
+
+  public boolean isHtml() {
+    return html;
   }
 
   public static ParserOptions create() {
