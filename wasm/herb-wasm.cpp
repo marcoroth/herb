@@ -85,6 +85,10 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("prism_program")) {
       parser_options.prism_program = options["prism_program"].as<bool>();
     }
+
+    if (options.hasOwnProperty("html")) {
+      parser_options.html = options["html"].as<bool>();
+    }
   }
 
   hb_allocator_T allocator;

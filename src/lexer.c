@@ -75,7 +75,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
   size_t length = strlen(buffer);
   char* error_message = hb_allocator_strndup(lexer->allocator, buffer, length);
 
-  return token_init((hb_string_T) { .data = error_message, .length = (uint32_t) length }, TOKEN_ERROR, lexer);
+  return token_init(hb_string_from_data(error_message, length), TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {

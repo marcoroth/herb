@@ -223,5 +223,27 @@ module Analyze::ActionView::TagHelper
         <%= t(".terms_notice", link: content_tag(:a, t(".terms_of_service"), href: terms_path)).html_safe %>
       HTML
     end
+
+    test "content_tag :script with HTML-like content in block (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          n <o.length
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
+
+    test "content_tag :script with less-than in for loop condition (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          for (let i = 0; i<items.length; i++) { console.log(items[i]) }
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
   end
 end

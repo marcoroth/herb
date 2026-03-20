@@ -156,6 +156,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
     if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
 
+    VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
+    if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
+    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
+
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }

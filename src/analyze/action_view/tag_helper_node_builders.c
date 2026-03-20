@@ -26,7 +26,7 @@ token_T* create_synthetic_token(
   if (value) {
     size_t length = strlen(value);
     char* copied = hb_allocator_strndup(allocator, value, length);
-    token->value = (hb_string_T) { .data = copied, .length = (uint32_t) length };
+    token->value = hb_string_from_data(copied, length);
   } else {
     token->value = HB_STRING_EMPTY;
   }

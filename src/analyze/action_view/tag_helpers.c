@@ -4,9 +4,11 @@
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../../include/analyze/analyze.h"
 #include "../../include/ast_nodes.h"
+#include "../../include/herb.h"
 #include "../../include/html_util.h"
 #include "../../include/parser_helpers.h"
 #include "../../include/position.h"
+#include "../../include/util.h"
 #include "../../include/util/hb_allocator.h"
 #include "../../include/util/hb_array.h"
 #include "../../include/util/hb_string.h"
@@ -580,6 +582,42 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
   return elements;
 }
 
+static bool erb_content_is_end_keyword(hb_string_T content) {
+  const char* start = content.data;
+  const char* end = content.data + content.length;
+
+  while (start < end && is_whitespace(*start)) {
+    start++;
+  }
+
+  while (end > start && is_whitespace(*(end - 1))) {
+    end--;
+  }
+
+  return (size_t) (end - start) == 3 && start[0] == 'e' && start[1] == 'n' && start[2] == 'd';
+}
+
+static AST_ERB_CONTENT_NODE_T* find_swallowed_erb_end_node(hb_array_T* nodes) {
+  if (!nodes) { return NULL; }
+
+  for (size_t i = 0; i < hb_array_size(nodes); i++) {
+    AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
+    if (!node) { continue; }
+
+    if (node->type == AST_ERB_CONTENT_NODE) {
+      AST_ERB_CONTENT_NODE_T* erb = (AST_ERB_CONTENT_NODE_T*) node;
+      if (erb->content && erb_content_is_end_keyword(erb->content->value)) { return erb; }
+    }
+
+    if (node->type == AST_HTML_OPEN_TAG_NODE) {
+      AST_ERB_CONTENT_NODE_T* found = find_swallowed_erb_end_node(((AST_HTML_OPEN_TAG_NODE_T*) node)->children);
+      if (found) { return found; }
+    }
+  }
+
+  return NULL;
+}
+
 static AST_NODE_T* transform_erb_block_to_tag_helper(
   AST_ERB_BLOCK_NODE_T* block_node,
   analyze_ruby_context_T* context,
@@ -600,6 +638,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
   );
 
   hb_array_T* attributes = NULL;
+
   if (parse_context->info->call_node) {
     attributes = extract_html_attributes_from_call_node(
       parse_context->info->call_node,
@@ -685,25 +724,51 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
 
   hb_array_T* body = block_node->body ? block_node->body : hb_array_init(0, allocator);
   AST_NODE_T* close_tag = (AST_NODE_T*) block_node->end_node;
+  position_T element_end = block_node->base.location.end;
 
   if (tag_name && parser_is_foreign_content_tag(hb_string_from_c_string(tag_name)) && context->source
       && block_node->body && hb_array_size(block_node->body) > 0) {
     size_t start_offset = block_node->tag_closing->range.to;
-    size_t end_offset = block_node->end_node->tag_opening->range.from;
+    size_t end_offset = 0;
+
+    if (block_node->end_node && block_node->end_node->tag_opening) {
+      end_offset = block_node->end_node->tag_opening->range.from;
+    } else {
+      AST_ERB_CONTENT_NODE_T* swallowed_end = find_swallowed_erb_end_node(block_node->body);
+
+      if (swallowed_end && swallowed_end->tag_opening) {
+        end_offset = swallowed_end->tag_opening->range.from;
+
+        AST_ERB_END_NODE_T* end_node = ast_erb_end_node_init(
+          swallowed_end->tag_opening,
+          swallowed_end->content,
+          swallowed_end->tag_closing,
+          swallowed_end->base.location.start,
+          swallowed_end->base.location.end,
+          hb_array_init(0, allocator),
+          allocator
+        );
+
+        close_tag = (AST_NODE_T*) end_node;
+        element_end = close_tag->location.end;
+      }
+    }
 
     if (end_offset > start_offset) {
       position_T body_start = block_node->tag_closing->location.end;
-      position_T body_end = block_node->end_node->tag_opening->location.start;
 
       size_t content_length = end_offset - start_offset;
       char* raw_copy = hb_allocator_strndup(allocator, context->source + start_offset, content_length);
-      hb_string_T raw_content = { .data = raw_copy, .length = (uint32_t) content_length };
 
-      AST_LITERAL_NODE_T* literal_node =
-        ast_literal_node_init(raw_content, body_start, body_end, hb_array_init(0, allocator), allocator);
+      parser_options_T body_options = HERB_DEFAULT_PARSER_OPTIONS;
+      body_options.html = false;
+      body_options.analyze = false;
+      body_options.strict = false;
+      body_options.start_line = body_start.line;
+      body_options.start_column = body_start.column;
 
-      body = hb_array_init(1, allocator);
-      hb_array_append(body, literal_node);
+      AST_DOCUMENT_NODE_T* body_document = herb_parse(raw_copy, &body_options, allocator);
+      body = body_document->children;
     }
   }
 
@@ -715,7 +780,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
     false,
     parse_context->matched_handler->source,
     block_node->base.location.start,
-    block_node->base.location.end,
+    element_end,
     hb_array_init(0, allocator),
     allocator
   );
@@ -1055,7 +1120,65 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
       }
     }
 
-    if (replacement) { hb_array_set(array, i, replacement); }
+    if (replacement) {
+      position_T replacement_end = replacement->location.end;
+      position_T original_end = child->location.end;
+      bool has_trailing = replacement_end.line != original_end.line || replacement_end.column != original_end.column;
+
+      if (has_trailing && context->source && child->type == AST_ERB_BLOCK_NODE) {
+        AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) replacement;
+
+        if (element->close_tag && element->close_tag->type == AST_ERB_END_NODE) {
+          AST_ERB_END_NODE_T* close_erb = (AST_ERB_END_NODE_T*) element->close_tag;
+          size_t trailing_start = close_erb->tag_closing->range.to;
+          size_t source_length = strlen(context->source);
+          size_t trailing_end = trailing_start;
+
+          while (trailing_end < source_length) {
+            position_T position = position_from_source_with_offset(context->source, trailing_end);
+
+            if (position.line > original_end.line
+                || (position.line == original_end.line && position.column >= original_end.column)) {
+              break;
+            }
+
+            trailing_end++;
+          }
+
+          if (trailing_end > trailing_start) {
+            hb_string_T trailing_content =
+              hb_string_from_data(context->source + trailing_start, trailing_end - trailing_start);
+            AST_HTML_TEXT_NODE_T* trailing_text = ast_html_text_node_init(
+              trailing_content,
+              replacement_end,
+              original_end,
+              hb_array_init(0, context->allocator),
+              context->allocator
+            );
+
+            size_t old_size = hb_array_size(array);
+            hb_array_T* new_array = hb_array_init(old_size + 1, context->allocator);
+
+            for (size_t j = 0; j < old_size; j++) {
+              if (j == i) {
+                hb_array_append(new_array, replacement);
+                hb_array_append(new_array, trailing_text);
+              } else {
+                hb_array_append(new_array, hb_array_get(array, j));
+              }
+            }
+
+            array->items = new_array->items;
+            array->size = new_array->size;
+            array->capacity = new_array->capacity;
+            i++;
+            continue;
+          }
+        }
+      }
+
+      hb_array_set(array, i, replacement);
+    }
   }
 }
 

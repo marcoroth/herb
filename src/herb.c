@@ -44,6 +44,16 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   if (options != NULL) { parser_options = *options; }
 
+  if (parser_options.start_line > 0) {
+    lexer.current_line = parser_options.start_line;
+    lexer.previous_line = parser_options.start_line;
+  }
+
+  if (parser_options.start_column > 0) {
+    lexer.current_column = parser_options.start_column;
+    lexer.previous_column = parser_options.start_column;
+  }
+
   herb_parser_init(&parser, &lexer, parser_options);
 
   AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
