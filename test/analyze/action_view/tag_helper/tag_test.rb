@@ -221,5 +221,35 @@ module Analyze::ActionView::TagHelper
         <%= tag.script src: "/assets/application.js", defer: true %>
       HTML
     end
+
+    test "tag.div nested inside unknown helper block is not incorrectly detected as top-level tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= my_component(data: @items) do |component|
+          component.with_slot do
+            tag.div class: "container" do
+              link_to("Click", url_path)
+            end
+          end
+        end %>
+      HTML
+    end
+
+    test "tag helpers nested inside lambda inside unknown helper are not incorrectly detected" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= my_table(data: @things) do |table|
+          table.with_column(value: lambda do |thing|
+            tag.div class: "flex" do
+              link_to(thing.name, thing_path(thing))
+            end
+          end)
+        end %>
+      HTML
+    end
+
+    test "tag.meta nested as argument to content_for is not incorrectly detected as top-level tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% content_for :head, tag.meta(name: "viewport", content: "width=device-width, initial-scale=1") %>
+      HTML
+    end
   end
 end

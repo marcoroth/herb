@@ -127,6 +127,8 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
         return true;
       }
     }
+
+    return false;
   }
 
   pm_visit_child_nodes(node, search_tag_helper_node, search_data);
