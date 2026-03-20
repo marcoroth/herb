@@ -3,7 +3,7 @@ import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
 import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult } from "@herb-tools/core"
+import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
@@ -48,6 +48,10 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
       severity: "error",
       exclude: ["**/views/**/*_mailer/**/*"]
     }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
