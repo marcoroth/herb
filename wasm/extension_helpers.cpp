@@ -133,6 +133,7 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("prism_nodes", val(options->prism_nodes));
   options_object.set("prism_nodes_deep", val(options->prism_nodes_deep));
   options_object.set("prism_program", val(options->prism_program));
+  options_object.set("dot_notation_tags", val(options->dot_notation_tags));
   options_object.set("html", val(options->html));
 
   result.set("options", options_object);

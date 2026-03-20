@@ -109,6 +109,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.prism_program = (prismProgram == JNI_TRUE);
     }
 
+    jmethodID getDotNotationTags =
+        (*env)->GetMethodID(env, optionsClass, "isDotNotationTags", "()Z");
+
+    if (getDotNotationTags != NULL) {
+      jboolean dotNotationTags = (*env)->CallBooleanMethod(env, options, getDotNotationTags);
+      parser_options.dot_notation_tags = (dotNotationTags == JNI_TRUE);
+    }
+
     jmethodID getHtml =
         (*env)->GetMethodID(env, optionsClass, "isHtml", "()Z");
 

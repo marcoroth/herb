@@ -314,5 +314,45 @@ module Parser
     test "less-than operator followed by lowercase identifier and dot is parsed as text" do
       assert_parsed_snapshot("<foo.bar", html: false)
     end
+
+    test "dot-notation component tag" do
+      assert_parsed_snapshot("<Dialog.Button></Dialog.Button>", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag without option is parsed as regular HTML" do
+      assert_parsed_snapshot("<Dialog.Button></Dialog.Button>")
+    end
+
+    test "dot-notation component tag with lowercase segments is parsed as regular HTML" do
+      assert_parsed_snapshot("<dialog.button></dialog.button>", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag with three segments" do
+      assert_parsed_snapshot("<Namespace.Dialog.Button></Namespace.Dialog.Button>", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag with three segments without option is parsed as regular HTML" do
+      assert_parsed_snapshot("<Namespace.Dialog.Button></Namespace.Dialog.Button>")
+    end
+
+    test "dot-notation component tag with lowercase first segment" do
+      assert_parsed_snapshot("<dialog.Button></dialog.Button>", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag with lowercase second segment" do
+      assert_parsed_snapshot("<Dialog.button></Dialog.button>", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag self-closing" do
+      assert_parsed_snapshot("<Dialog.Button />", dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag with attributes" do
+      assert_parsed_snapshot('<Dialog.Button class="primary" disabled></Dialog.Button>', dot_notation_tags: true)
+    end
+
+    test "dot-notation component tag with three segments and lowercase middle" do
+      assert_parsed_snapshot("<Namespace.dialog.Button></Namespace.dialog.Button>", dot_notation_tags: true)
+    end
   end
 end

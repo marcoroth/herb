@@ -45,6 +45,7 @@
         "./extension/libherb/lexer_peek_helpers.c",
         "./extension/libherb/lexer.c",
         "./extension/libherb/location.c",
+        "./extension/libherb/parser/dot_notation.c",
         "./extension/libherb/parser_helpers.c",
         "./extension/libherb/parser_match_tags.c",
         "./extension/libherb/parser.c",

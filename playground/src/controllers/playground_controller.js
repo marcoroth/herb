@@ -1271,6 +1271,7 @@ export default class extends Controller {
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
+      dot_notation_tags: false,
       html: true,
     }
 

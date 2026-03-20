@@ -10,6 +10,7 @@ public class ParserOptions {
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
+  private boolean dotNotationTags = false;
   private boolean html = true;
 
   public ParserOptions() {}
@@ -93,6 +94,15 @@ public class ParserOptions {
 
   public boolean isPrismProgram() {
     return prismProgram;
+  }
+
+  public ParserOptions dotNotationTags(boolean value) {
+    this.dotNotationTags = value;
+    return this;
+  }
+
+  public boolean isDotNotationTags() {
+    return dotNotationTags;
   }
 
   public ParserOptions html(boolean value) {

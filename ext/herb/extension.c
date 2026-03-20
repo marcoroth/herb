@@ -136,6 +136,12 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
     if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
 
+    VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
+    if (NIL_P(dot_notation_tags)) {
+      dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
+    }
+    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
+
     VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
     if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
     if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }

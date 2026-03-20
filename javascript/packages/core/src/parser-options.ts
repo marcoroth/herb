@@ -8,6 +8,7 @@ export interface ParseOptions {
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
   prism_program?: boolean
+  dot_notation_tags?: boolean
   html?: boolean
 }
 
@@ -23,6 +24,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
+  dot_notation_tags: false,
   html: true,
 }
 
@@ -57,6 +59,9 @@ export class ParserOptions {
   /** Whether the full Prism ProgramNode was serialized on the DocumentNode. */
   readonly prism_program: boolean
 
+  /** Whether dot-notation component tags (e.g. Dialog.Button) are parsed as HTML elements. */
+  readonly dot_notation_tags: boolean
+
   /** Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text. */
   readonly html: boolean
 
@@ -74,6 +79,7 @@ export class ParserOptions {
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program
+    this.dot_notation_tags = options.dot_notation_tags ?? DEFAULT_PARSER_OPTIONS.dot_notation_tags
     this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
   }
 }

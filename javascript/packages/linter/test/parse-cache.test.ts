@@ -75,6 +75,7 @@ describe("ParseCache", () => {
         strict: true,
         strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
         html: true,
       })
     })
@@ -93,6 +94,7 @@ describe("ParseCache", () => {
         strict: false,
         strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
         html: true,
       })
     })
@@ -111,6 +113,7 @@ describe("ParseCache", () => {
         strict: true,
         strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
         html: true,
       })
     })
@@ -129,6 +132,7 @@ describe("ParseCache", () => {
         strict: false,
         strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
         html: true,
       })
     })

@@ -86,6 +86,10 @@ val Herb_parse(const std::string& source, val options) {
       parser_options.prism_program = options["prism_program"].as<bool>();
     }
 
+    if (options.hasOwnProperty("dot_notation_tags")) {
+      parser_options.dot_notation_tags = options["dot_notation_tags"].as<bool>();
+    }
+
     if (options.hasOwnProperty("html")) {
       parser_options.html = options["html"].as<bool>();
     }

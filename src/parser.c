@@ -5,6 +5,7 @@
 #include "include/html_util.h"
 #include "include/lexer.h"
 #include "include/lexer_peek_helpers.h"
+#include "include/parser/dot_notation.h"
 #include "include/parser_helpers.h"
 #include "include/token.h"
 #include "include/token_matchers.h"
@@ -42,6 +43,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .prism_nodes_deep = false,
                                                        .prism_nodes = false,
                                                        .prism_program = false,
+                                                       .dot_notation_tags = false,
                                                        .html = true,
                                                        .start_line = 0,
                                                        .start_column = 0 };
@@ -941,6 +943,22 @@ static bool starts_with_keyword(hb_string_T string, const char* keyword) {
   return is_whitespace(string.data[prefix.length]);
 }
 
+static AST_HTML_TEXT_NODE_T* parser_advance_as_text(parser_T* parser) {
+  token_T* token = parser_advance(parser);
+
+  AST_HTML_TEXT_NODE_T* text = ast_html_text_node_init(
+    token->value,
+    token->location.start,
+    token->location.end,
+    hb_array_init(0, parser->allocator),
+    parser->allocator
+  );
+
+  token_free(token, parser->allocator);
+
+  return text;
+}
+
 // TODO: ideally we could avoid basing this off of strings, and use the step in analyze.c
 static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
   lexer_T lexer_copy = *parser->lexer;
@@ -1008,6 +1026,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
   token_T* tag_start = parser_consume_expected(parser, TOKEN_HTML_TAG_START, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
+
+  parser_consume_dot_notation_segments(parser, tag_name, errors);
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
     if (token_is_any_of(parser, TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_START_CLOSE)) {
@@ -1185,6 +1205,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
   parser_consume_whitespace(parser, children);
 
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
+
+  parser_consume_dot_notation_segments(parser, tag_name, errors);
 
   parser_consume_whitespace(parser, children);
 
@@ -1499,7 +1521,11 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
     }
 
     if (token_is(parser, TOKEN_HTML_TAG_START)) {
-      hb_array_append(children, parser_parse_html_element(parser));
+      if (parser_lookahead_is_valid_dot_notation_open_tag(parser)) {
+        hb_array_append(children, parser_parse_html_element(parser));
+      } else {
+        hb_array_append(children, parser_advance_as_text(parser));
+      }
       parser->consecutive_error_count = 0;
       continue;
     }
