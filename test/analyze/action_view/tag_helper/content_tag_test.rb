@@ -217,5 +217,11 @@ module Analyze::ActionView::TagHelper
         <%= content_tag :script, "alert('Hello')", type: "application/javascript" %>
       HTML
     end
+
+    test "content_tag nested as argument to another method is not incorrectly detected as top-level tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= t(".terms_notice", link: content_tag(:a, t(".terms_of_service"), href: terms_path)).html_safe %>
+      HTML
+    end
   end
 end
