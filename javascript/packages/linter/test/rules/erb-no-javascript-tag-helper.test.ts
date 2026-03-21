@@ -25,4 +25,10 @@ describe("ERBNoJavascriptTagHelperRule", () => {
       </script>
     `)
   })
+
+  test("javascript_include_tag is ignored", () => {
+    expectNoOffenses(dedent`
+      <%= javascript_include_tag "application" %>
+    `)
+  })
 })
