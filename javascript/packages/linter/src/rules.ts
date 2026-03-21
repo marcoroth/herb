@@ -32,6 +32,7 @@ import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-pre
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
+import { ERBClosingTagIndentRule } from "./rules/erb-closing-tag-indent.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
 import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
@@ -183,6 +184,7 @@ export const rules: RuleClass[] = [
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
+  ERBClosingTagIndentRule,
   ERBCommentSyntax,
   ERBNoByteOrderMarkRule,
   ERBNoCaseNodeChildrenRule,
