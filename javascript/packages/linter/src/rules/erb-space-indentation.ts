@@ -1,0 +1,50 @@
+import { Location } from "@herb-tools/core"
+
+import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { SourceRule } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+
+const START_BLANKS = /^[^\S\n]*\t[^\S\n]*/
+
+class ERBSpaceIndentationVisitor extends BaseSourceRuleVisitor {
+  protected visitSource(source: string): void {
+    const lines = source.split("\n")
+    let offset = 0
+
+    lines.forEach((line) => {
+      const match = line.match(START_BLANKS)
+
+      if (match) {
+        const start = positionFromOffset(source, offset)
+        const end = positionFromOffset(source, offset + match[0].length)
+        const location = new Location(start, end)
+
+        this.addOffense(
+          "Indent with spaces instead of tabs.",
+          location,
+        )
+      }
+
+      offset += line.length + 1
+    })
+  }
+}
+
+export class ERBSpaceIndentationRule extends SourceRule {
+  static ruleName = "erb-space-indentation"
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new ERBSpaceIndentationVisitor(this.ruleName, context)
+
+    visitor.visit(source)
+
+    return visitor.offenses
+  }
+}
