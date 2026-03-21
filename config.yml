@@ -458,6 +458,16 @@ errors:
 
       fields: []
 
+    - name: DotNotationCasingError
+      message:
+        template: "Dot-notation component tags require the first segment to start with an uppercase letter. `%s` does not start with an uppercase letter."
+        arguments:
+          - segment->value
+
+      fields:
+        - name: segment
+          type: token
+
 warnings:
   fields: []
   types: []

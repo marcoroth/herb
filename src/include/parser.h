@@ -28,6 +28,7 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool prism_program;
   bool prism_nodes;
   bool prism_nodes_deep;
+  bool dot_notation_tags;
   bool html;
   uint32_t start_line;
   uint32_t start_column;

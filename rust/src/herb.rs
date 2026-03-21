@@ -14,6 +14,7 @@ pub struct ParserOptions {
   pub prism_nodes: bool,
   pub prism_nodes_deep: bool,
   pub prism_program: bool,
+  pub dot_notation_tags: bool,
   pub html: bool,
 }
 
@@ -29,6 +30,7 @@ impl Default for ParserOptions {
       prism_nodes: false,
       prism_nodes_deep: false,
       prism_program: false,
+      dot_notation_tags: false,
       html: true,
     }
   }
@@ -111,6 +113,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       prism_program: options.prism_program,
       prism_nodes: options.prism_nodes,
       prism_nodes_deep: options.prism_nodes_deep,
+      dot_notation_tags: options.dot_notation_tags,
       html: options.html,
       start_line: 0,
       start_column: 0,
