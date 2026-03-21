@@ -279,5 +279,60 @@ module Analyze::ActionView::TagHelper
       assert_parsed_snapshot(template, action_view_helpers: true)
       assert_parsed_snapshot(template)
     end
+
+    test "tag.div inside if block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.div id: "my-id" do %>
+            Content
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.img inside if block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.img src: "/image.png", alt: "Photo" %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.div inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.div id: "my-id" do %>
+            Branch one
+          <% end %>
+        <% else %>
+          <%= tag.span id: "my-id" do %>
+            Branch two
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.div inside case/when branches" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% case status %>
+        <% when "active" %>
+          <%= tag.div class: "active" do %>
+            Active
+          <% end %>
+        <% when "inactive" %>
+          <%= tag.div class: "inactive" do %>
+            Inactive
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.img inside each loop" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @items.each do |item| %>
+          <%= tag.img src: item.image_url, alt: item.name %>
+        <% end %>
+      HTML
+    end
   end
 end
