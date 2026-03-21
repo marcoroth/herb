@@ -3,12 +3,13 @@ import type { RuleClass } from "./types.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 
+import { ERBClosingTagIndentRule } from "./rules/erb-closing-tag-indent.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
-import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
+import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
@@ -90,12 +91,13 @@ export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
 
+  ERBClosingTagIndentRule,
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
-  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
   ERBNoDuplicateBranchElementsRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
