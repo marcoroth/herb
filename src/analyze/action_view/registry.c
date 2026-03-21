@@ -1,5 +1,5 @@
 #include "../../include/analyze/action_view/tag_helper_handler.h"
-#include "../../include/util/hb_allocator.h"
+#include "../../include/lib/hb_allocator.h"
 
 #include <stdbool.h>
 #include <stdlib.h>

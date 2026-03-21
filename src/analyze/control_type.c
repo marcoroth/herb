@@ -2,7 +2,7 @@
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
-#include "../include/ast_node.h"
+#include "../include/ast/ast_node.h"
 
 #include <prism.h>
 #include <stdbool.h>

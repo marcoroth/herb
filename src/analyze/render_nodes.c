@@ -2,12 +2,12 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyze.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
-#include "../include/util/string.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
+#include "../include/lib/string.h"
 #include "../include/visitor.h"
 
 #include <prism.h>

@@ -1,12 +1,12 @@
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
-#include "../../include/ast_nodes.h"
-#include "../../include/location.h"
-#include "../../include/position.h"
-#include "../../include/range.h"
-#include "../../include/token_struct.h"
-#include "../../include/util/hb_allocator.h"
-#include "../../include/util/hb_array.h"
-#include "../../include/util/hb_string.h"
+#include "../../include/ast/ast_nodes.h"
+#include "../../include/lexer/token_struct.h"
+#include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_string.h"
+#include "../../include/location/location.h"
+#include "../../include/location/position.h"
+#include "../../include/location/range.h"
 
 #include <prism.h>
 #include <stdbool.h>

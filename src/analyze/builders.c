@@ -1,13 +1,13 @@
 #include "../include/analyze/builders.h"
 #include "../include/analyze/analyze.h"
-#include "../include/ast_nodes.h"
-#include "../include/location.h"
-#include "../include/position.h"
-#include "../include/prism_helpers.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
+#include "../include/ast/ast_nodes.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
+#include "../include/location/location.h"
+#include "../include/location/position.h"
+#include "../include/prism/prism_helpers.h"
 
 #include <stddef.h>
 #include <string.h>

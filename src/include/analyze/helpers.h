@@ -4,8 +4,8 @@
 #include <prism.h>
 #include <stdbool.h>
 
-#include "../ast_node.h"
-#include "../util/hb_allocator.h"
+#include "../ast/ast_node.h"
+#include "../lib/hb_allocator.h"
 #include "analyzed_ruby.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);

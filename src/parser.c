@@ -1,19 +1,19 @@
-#include "include/parser.h"
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
+#include "include/parser/parser.h"
+#include "include/ast/ast_node.h"
+#include "include/ast/ast_nodes.h"
 #include "include/errors.h"
-#include "include/html_util.h"
-#include "include/lexer.h"
-#include "include/lexer_peek_helpers.h"
+#include "include/lexer/lexer.h"
+#include "include/lexer/lexer_peek_helpers.h"
+#include "include/lexer/token.h"
+#include "include/lexer/token_matchers.h"
+#include "include/lib/hb_array.h"
+#include "include/lib/hb_buffer.h"
+#include "include/lib/hb_string.h"
+#include "include/lib/string.h"
 #include "include/parser/dot_notation.h"
-#include "include/parser_helpers.h"
-#include "include/token.h"
-#include "include/token_matchers.h"
-#include "include/util.h"
-#include "include/util/hb_array.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/hb_string.h"
-#include "include/util/string.h"
+#include "include/parser/parser_helpers.h"
+#include "include/util/html_util.h"
+#include "include/util/util.h"
 #include "include/visitor.h"
 
 #include <stdio.h>
@@ -1272,7 +1272,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
     NULL,
     NULL,
     true,
-    ELEMENT_SOURCE_HTML,
+    hb_string("HTML"),
     open_tag->base.location.start,
     open_tag->base.location.end,
     NULL,
@@ -1344,7 +1344,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
     body,
     (AST_NODE_T*) close_tag,
     false,
-    ELEMENT_SOURCE_HTML,
+    hb_string("HTML"),
     open_tag->base.location.start,
     close_tag->base.location.end,
     errors,
@@ -1712,7 +1712,7 @@ static hb_array_T* parser_build_elements_from_tags(
             processed_body,
             (AST_NODE_T*) omitted_close_tag,
             false,
-            ELEMENT_SOURCE_HTML,
+            hb_string("HTML"),
             open_tag->base.location.start,
             end_position,
             element_errors,
@@ -1755,7 +1755,7 @@ static hb_array_T* parser_build_elements_from_tags(
           processed_body,
           (AST_NODE_T*) close_tag,
           false,
-          ELEMENT_SOURCE_HTML,
+          hb_string("HTML"),
           open_tag->base.location.start,
           close_tag->base.location.end,
           element_errors,

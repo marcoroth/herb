@@ -8,17 +8,17 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../src/include/util/hb_array.h"
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
-#include "../src/include/pretty_print.h"
-#include "../src/include/ast_pretty_print.h"
-#include "../src/include/util/hb_buffer.h"
+#include "../src/include/lib/hb_array.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
+#include "../src/include/ast/pretty_print.h"
+#include "../src/include/ast/ast_pretty_print.h"
+#include "../src/include/lib/hb_buffer.h"
 #include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/position.h"
-#include "../src/include/location.h"
-#include "../src/include/range.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/location/position.h"
+#include "../src/include/location/location.h"
+#include "../src/include/location/range.h"
 #include "../src/include/extract.h"
 }
 
