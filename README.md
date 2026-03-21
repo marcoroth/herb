@@ -56,6 +56,7 @@ The Herb ecosystem offers multiple tools that integrate seamlessly into editors,
 | [Herb Parser](https://herb-tools.dev/projects/parser) | Fast, portable, HTML-aware ERB parser written in C. |
 | [Herb Linter](https://herb-tools.dev/projects/linter) | Static analysis to enforce best practices and identify common mistakes. |
 | [Herb Formatter](https://herb-tools.dev/projects/formatter) | Automatic, consistent formatting for HTML+ERB files. *(experimental)* |
+| [Herb Language Service](https://herb-tools.dev/projects/language-service) | HTML+ERB language service with ActionView tag helper support. |
 | [Herb Language Server](https://herb-tools.dev/projects/language-server) | Rich editor integration for VS Code, Zed, Neovim, and more. |
 | [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
 | [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
