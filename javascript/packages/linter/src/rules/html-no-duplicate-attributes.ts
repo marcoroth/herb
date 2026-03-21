@@ -3,7 +3,7 @@ import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils.js"
 import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult, Location } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult, Location, ERBOpenTagNode, ParserOptions } from "@herb-tools/core"
 
 interface ControlFlowState {
   previousBranchAttributes: Set<string>
@@ -24,10 +24,19 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
   private controlFlowAttributes = new Set<string>()
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.resetAttributeSets()
+    super.visitHTMLOpenTagNode(node)
+  }
+
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.resetAttributeSets()
+    super.visitERBOpenTagNode(node)
+  }
+
+  private resetAttributeSets(): void {
     this.tagAttributes = new Set()
     this.currentBranchAttributes = new Set()
     this.controlFlowAttributes = new Set()
-    super.visitHTMLOpenTagNode(node)
   }
 
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
@@ -170,6 +179,10 @@ export class HTMLNoDuplicateAttributesRule extends ParserRule {
       enabled: true,
       severity: "error"
     }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {

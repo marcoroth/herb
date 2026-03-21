@@ -291,4 +291,83 @@ describe("html-no-duplicate-attributes", () => {
       ></div>
     `)
   })
+
+  // Action View tag helper tests
+
+  test("passes for tag helper with unique attributes", () => {
+    expectNoOffenses('<%= tag.div class: "container", id: "main" %>')
+  })
+
+  test("fails for tag helper with duplicate data attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `data-value`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div data: { value: "value-one" }, data_value: "value-two" %>')
+  })
+
+  test("fails for tag helper with duplicate aria attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `aria-label`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div aria: { label: "Label one" }, aria_label: "Label two" %>')
+  })
+
+  test("fails for image_tag helper with duplicate src from positional argument and keyword", () => {
+    expectError('Duplicate attribute `src`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= image_tag image_path("image.png"), src: "image-2.png" %>')
+  })
+
+  test("passes for tag helper with non-overlapping data hash and underscore attributes", () => {
+    expectNoOffenses('<%= tag.div data: { controller: "content" }, data_action: "click" %>')
+  })
+
+  test("fails for tag helper with duplicate class attribute", () => {
+    expectError('Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div class: "one", class: "two" %>')
+  })
+
+  test("fails for javascript_include_tag with duplicate src from positional argument and keyword", () => {
+    expectError('Duplicate attribute `src`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= javascript_include_tag "application", src: "other.js" %>')
+  })
+
+  test("fails for link_to with duplicate href from positional argument and keyword", () => {
+    expectError('Duplicate attribute `href`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= link_to "Click here", "/path", href: "/other-path" %>')
+  })
+
+  test("fails for turbo_frame_tag with duplicate id from positional argument and keyword", () => {
+    expectError('Duplicate attribute `id`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= turbo_frame_tag "my-frame", id: "other-frame" %>')
+  })
+
+  test("passes for image_tag with unique attributes", () => {
+    expectNoOffenses('<%= image_tag "logo.png", alt: "Logo", class: "img-fluid" %>')
+  })
+
+  test("passes for link_to with unique attributes", () => {
+    expectNoOffenses('<%= link_to "Home", root_path, class: "nav-link" %>')
+  })
+
+  test("passes for turbo_frame_tag with unique attributes", () => {
+    expectNoOffenses('<%= turbo_frame_tag "main", src: "/path", loading: "lazy" %>')
+  })
+
+  test("fails for content_tag with duplicate data attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `data-controller`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= content_tag :div, "content", data: { controller: "one" }, data_controller: "two" %>')
+  })
+
+  test("passes for id in mutually exclusive branches with HTML and Action View tag helper", () => {
+    expectNoOffenses(dedent`
+      <% if use_tag_helper? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for tag helper with duplicate data attributes from multiple nested hash keys", () => {
+    expectError('Duplicate attribute `data-action`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div data: { controller: "content", action: "click" }, data_action: "hover" %>')
+  })
 })
