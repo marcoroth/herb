@@ -137,14 +137,17 @@ export class RewriteCodeActionService {
     const tagName = element.node.tag_name?.value
     const isAnchor = tagName === "a"
     const isTurboFrame = tagName === "turbo-frame"
+    const isImg = tagName === "img"
     const methodName = tagName?.replace(/-/g, "_")
     const title = isAnchor
       ? "Herb: Convert to `link_to`"
       : isTurboFrame
         ? "Herb: Convert to `turbo_frame_tag`"
-        : methodName
-          ? `Herb: Convert to \`tag.${methodName}\``
-          : "Herb: Convert to tag helper"
+        : isImg
+          ? "Herb: Convert to `image_tag`"
+          : methodName
+            ? `Herb: Convert to \`tag.${methodName}\``
+            : "Herb: Convert to tag helper"
 
     return {
       title,

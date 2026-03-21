@@ -29,6 +29,10 @@ extern bool detect_javascript_include_tag(pm_call_node_t*, pm_parser_t*);
 extern char* extract_javascript_include_tag_src(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
 extern char* wrap_in_javascript_path(const char*, size_t, hb_allocator_T*);
 extern bool javascript_include_tag_source_is_url(const char*, size_t);
+extern bool detect_image_tag(pm_call_node_t*, pm_parser_t*);
+extern char* extract_image_tag_src(pm_call_node_t*, pm_parser_t*, hb_allocator_T*);
+extern char* wrap_in_image_path(const char*, size_t, hb_allocator_T*);
+extern bool image_tag_source_is_url(const char*, size_t);
 
 typedef struct {
   pm_parser_t parser;
@@ -360,6 +364,50 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     }
   }
 
+  if (detect_image_tag(parse_context->info->call_node, &parse_context->parser)
+      && parse_context->info->call_node->arguments && parse_context->info->call_node->arguments->arguments.size >= 1) {
+    char* source_value = extract_image_tag_src(parse_context->info->call_node, &parse_context->parser, allocator);
+
+    if (source_value) {
+      if (!attributes) { attributes = hb_array_init(4, allocator); }
+
+      pm_node_t* first_argument = parse_context->info->call_node->arguments->arguments.nodes[0];
+      position_T source_start, source_end;
+      prism_node_location_to_positions(&first_argument->location, parse_context, &source_start, &source_end);
+      bool source_is_string = (first_argument->type == PM_STRING_NODE);
+      bool source_is_path_helper = is_route_helper_node(first_argument, &parse_context->parser);
+
+      size_t source_length = strlen(source_value);
+      bool is_url = image_tag_source_is_url(source_value, source_length);
+
+      char* source_attribute_value = source_value;
+
+      if (source_is_string && !is_url) {
+        size_t quoted_length = source_length + 2;
+        char* quoted_source = hb_allocator_alloc(allocator, quoted_length + 1);
+        quoted_source[0] = '"';
+        memcpy(quoted_source + 1, source_value, source_length);
+        quoted_source[quoted_length - 1] = '"';
+        quoted_source[quoted_length] = '\0';
+
+        source_attribute_value = wrap_in_image_path(quoted_source, quoted_length, allocator);
+        hb_allocator_dealloc(allocator, quoted_source);
+      } else if (!source_is_string && !is_url && !source_is_path_helper) {
+        source_attribute_value = wrap_in_image_path(source_value, source_length, allocator);
+      }
+
+      AST_HTML_ATTRIBUTE_NODE_T* source_attribute =
+        is_url
+          ? create_html_attribute_node("src", source_attribute_value, source_start, source_end, allocator)
+          : create_html_attribute_with_ruby_literal("src", source_attribute_value, source_start, source_end, allocator);
+
+      if (source_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) source_attribute, allocator); }
+      if (source_attribute_value != source_value) { hb_allocator_dealloc(allocator, source_attribute_value); }
+
+      hb_allocator_dealloc(allocator, source_value);
+    }
+  }
+
   token_T* tag_name_token =
     tag_name ? create_synthetic_token(allocator, tag_name, TOKEN_IDENTIFIER, tag_name_start, tag_name_end) : NULL;
 
@@ -378,7 +426,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   );
 
   hb_array_T* body = hb_array_init(1, allocator);
-  bool is_void = tag_name && (strcmp(handler->name, "tag") == 0) && is_void_element(hb_string_from_c_string(tag_name));
+  bool is_void = tag_name && ((strcmp(handler->name, "tag") == 0) || (strcmp(handler->name, "image_tag") == 0))
+              && is_void_element(hb_string_from_c_string(tag_name));
 
   if (helper_content) {
     append_body_content_node(

@@ -554,6 +554,80 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("image_tag helpers", () => {
+    test("image_tag with string source", () => {
+      expect(transform('<%= image_tag "icon.png" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with alt attribute", () => {
+      expect(transform('<%= image_tag "icon.png", alt: "Icon" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" alt="Icon" />'
+      )
+    })
+
+    test("image_tag with multiple attributes", () => {
+      expect(transform('<%= image_tag "photo.jpg", alt: "Photo", class: "avatar" %>')).toBe(
+        '<img src="<%= image_path("photo.jpg") %>" alt="Photo" class="avatar" />'
+      )
+    })
+
+    test("image_tag with URL source", () => {
+      expect(transform('<%= image_tag "http://example.com/icon.png" %>')).toBe(
+        '<img src="http://example.com/icon.png" />'
+      )
+    })
+
+    test("image_tag with protocol-relative URL", () => {
+      expect(transform('<%= image_tag "//cdn.example.com/icon.png" %>')).toBe(
+        '<img src="//cdn.example.com/icon.png" />'
+      )
+    })
+
+    test("image_tag with ruby expression source wraps in image_path", () => {
+      expect(transform('<%= image_tag user.avatar %>')).toBe(
+        '<img src="<%= image_path(user.avatar) %>" />'
+      )
+    })
+
+    test("image_tag with image_path source passes through", () => {
+      expect(transform('<%= image_tag image_path("icon.png") %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with asset_path source passes through", () => {
+      expect(transform('<%= image_tag asset_path("icon.png") %>')).toBe(
+        '<img src="<%= asset_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with image_url source passes through", () => {
+      expect(transform('<%= image_tag image_url("icon.png") %>')).toBe(
+        '<img src="<%= image_url("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with asset_url source passes through", () => {
+      expect(transform('<%= image_tag asset_url("icon.png") %>')).toBe(
+        '<img src="<%= asset_url("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with instance variable method wraps in image_path", () => {
+      expect(transform('<%= image_tag @post.cover_image %>')).toBe(
+        '<img src="<%= image_path(@post.cover_image) %>" />'
+      )
+    })
+
+    test("image_tag with data attributes", () => {
+      expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" data-controller="image" />'
+      )
+    })
+  })
+
   describe("non-ActionView elements", () => {
     test("regular HTML elements are not modified", () => {
       expect(transform('<div class="content">Hello</div>')).toBe(
