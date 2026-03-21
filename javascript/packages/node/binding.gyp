@@ -26,6 +26,7 @@
         "./extension/libherb/analyze/transform.c",
         "./extension/libherb/analyze/action_view/attribute_extraction_helpers.c",
         "./extension/libherb/analyze/action_view/content_tag.c",
+        "./extension/libherb/analyze/action_view/image_tag.c",
         "./extension/libherb/analyze/action_view/javascript_include_tag.c",
         "./extension/libherb/analyze/action_view/javascript_tag.c",
         "./extension/libherb/analyze/action_view/link_to.c",

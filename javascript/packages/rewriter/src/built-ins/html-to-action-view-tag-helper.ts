@@ -124,9 +124,10 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     const isAnchor = tagName.value === "a"
     const isTurboFrame = tagName.value === "turbo-frame"
     const isScript = tagName.value === "script"
+    const isImg = tagName.value === "img"
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
-    const hasSrcAttribute = isScript && attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
-    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame, extractSrc: isScript })
+    const hasSrcAttribute = (isScript || isImg) && attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
+    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame, extractSrc: isScript || isImg })
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
@@ -145,6 +146,9 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     } else if (isScript) {
       content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
       elementSource = "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+    } else if (isImg) {
+      content = this.buildImageTagContent(attributesString, src)
+      elementSource = "ActionView::Helpers::AssetTagHelper#image_tag"
     } else {
       content = this.buildTagContent(tagName.value, node, attributesString, isInlineContent)
       elementSource = "ActionView::Helpers::TagHelper#tag"
@@ -165,7 +169,7 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     asMutable(node).element_source = elementSource
 
     const isInlineLiteralContent = isScript && hasBody && node.body.length === 1 && isLiteralNode(node.body[0]) && !node.body[0].content.includes("\n")
-    const isInlineForm = isInlineContent || isInlineLiteralContent || (isTurboFrame && !hasBody) || (isScript && hasSrcAttribute)
+    const isInlineForm = isInlineContent || isInlineLiteralContent || (isTurboFrame && !hasBody) || (isScript && hasSrcAttribute) || isImg
 
     if (node.is_void) {
       asMutable(node).close_tag = null
@@ -270,6 +274,17 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     return argString ? ` javascript_include_tag ${argString} ` : ` javascript_include_tag `
   }
 
+  private buildImageTagContent(attributes: string, source: string | null): string {
+    const args: string[] = []
+
+    if (source) args.push(source)
+    if (attributes) args.push(attributes)
+
+    const argString = args.join(", ")
+
+    return argString ? ` image_tag ${argString} ` : ` image_tag `
+  }
+
   private buildLinkToContent(node: HTMLElementNode, attribute: string, href: string | null, isInlineContent: boolean): string {
     const args: string[] = []
 
@@ -301,7 +316,7 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag)"
+    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag)"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {

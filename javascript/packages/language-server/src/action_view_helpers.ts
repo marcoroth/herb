@@ -28,4 +28,8 @@ export const ACTION_VIEW_HELPERS: Record<string, ActionViewHelperInfo> = {
     signature: "javascript_include_tag(*sources)",
     documentationURL: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-javascript_include_tag",
   },
+  "ActionView::Helpers::AssetTagHelper#image_tag": {
+    signature: "image_tag(source, options = {})",
+    documentationURL: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-image_tag",
+  },
 }

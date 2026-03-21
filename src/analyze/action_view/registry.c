@@ -10,8 +10,9 @@ extern const tag_helper_handler_T link_to_handler;
 extern const tag_helper_handler_T turbo_frame_tag_handler;
 extern const tag_helper_handler_T javascript_tag_handler;
 extern const tag_helper_handler_T javascript_include_tag_handler;
+extern const tag_helper_handler_T image_tag_handler;
 
-static size_t handlers_count = 6;
+static size_t handlers_count = 7;
 
 tag_helper_info_T* tag_helper_info_init(hb_allocator_T* allocator) {
   tag_helper_info_T* info = hb_allocator_alloc(allocator, sizeof(tag_helper_info_T));
@@ -43,7 +44,7 @@ void tag_helper_info_free(tag_helper_info_T** info) {
 }
 
 tag_helper_handler_T* get_tag_helper_handlers(void) {
-  static tag_helper_handler_T static_handlers[6];
+  static tag_helper_handler_T static_handlers[7];
   static bool initialized = false;
 
   if (!initialized) {
@@ -53,6 +54,8 @@ tag_helper_handler_T* get_tag_helper_handlers(void) {
     static_handlers[3] = turbo_frame_tag_handler;
     static_handlers[4] = javascript_tag_handler;
     static_handlers[5] = javascript_include_tag_handler;
+    static_handlers[6] = image_tag_handler;
+
     initialized = true;
   }
 
