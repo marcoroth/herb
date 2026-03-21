@@ -6,6 +6,7 @@ export * from "./herb-disable-comment-base.js"
 export * from "./actionview-no-silent-helper.js"
 export * from "./actionview-no-silent-render.js"
 
+export * from "./erb-closing-tag-indent.js"
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"
 export * from "./erb-no-conditional-open-tag.js"

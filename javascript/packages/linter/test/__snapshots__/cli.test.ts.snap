@@ -191,7 +191,20 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
-"[error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
+"[error] Remove newline before \`%>\`. The opening \`<%=\` is not followed by a newline, so the closing tag should be on the same line. (erb-closing-tag-indent) [Correctable]
+
+test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:11:0
+
+      9 │ <%=  render partial: "post",
+     10 │            as: :post
+  →  11 │ %>
+        │ ~~
+     12 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
+
+[error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
 
@@ -201,7 +214,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
       3 │ <%
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace before \`%>\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -213,7 +226,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
       3 │ <%
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -230,12 +243,13 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
 
  Rule offenses:
   erb-no-extra-whitespace-inside-tags (3 offenses in 1 file)
+  erb-closing-tag-indent (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 offenses | 3 autocorrectable using \`--fix\`"
+  Offenses     4 errors | 0 warnings (4 offenses across 1 file)
+  Fixable      4 offenses | 4 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
@@ -787,7 +801,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 73,
+    "ruleCount": 74,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -808,7 +822,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 73,
+    "ruleCount": 74,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -881,7 +895,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 73,
+    "ruleCount": 74,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
