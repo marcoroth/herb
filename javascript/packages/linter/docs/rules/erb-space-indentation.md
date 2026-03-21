@@ -24,6 +24,10 @@ Detects indentation with tabs. Consistent use of spaces for indentation improves
 </div>
 ```
 
+## Autofix
+
+This rule is autocorrectable. Each tab character in leading whitespace is replaced with spaces based on the configured `indentWidth` (default: 2).
+
 ## References
 
 - [Shopify/erb_lint - `SpaceIndentation`](https://github.com/Shopify/erb_lint/blob/main/lib/erb_lint/linters/space_indentation.rb)

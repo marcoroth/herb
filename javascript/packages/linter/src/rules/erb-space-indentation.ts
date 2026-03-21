@@ -2,7 +2,7 @@ import { Location } from "@herb-tools/core"
 
 import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const START_BLANKS = /^[^\S\n]*\t[^\S\n]*/
 
@@ -31,6 +31,7 @@ class ERBSpaceIndentationVisitor extends BaseSourceRuleVisitor {
 }
 
 export class ERBSpaceIndentationRule extends SourceRule {
+  static autocorrectable = true
   static ruleName = "erb-space-indentation"
 
   get defaultConfig(): FullRuleConfig {
@@ -46,5 +47,22 @@ export class ERBSpaceIndentationRule extends SourceRule {
     visitor.visit(source)
 
     return visitor.offenses
+  }
+
+  autofix(_offense: LintOffense, source: string, context?: Partial<LintContext>): string | null {
+    const indentWidth = context?.indentWidth ?? 2
+    const lines = source.split("\n")
+    const result = lines.map((line) => {
+      const match = line.match(START_BLANKS)
+
+      if (match) {
+        const replaced = match[0].replace(/\t/g, " ".repeat(indentWidth))
+        return replaced + line.substring(match[0].length)
+      }
+
+      return line
+    })
+
+    return result.join("\n")
   }
 }
