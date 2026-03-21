@@ -77,6 +77,7 @@ import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
+import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
@@ -163,6 +164,7 @@ export const rules: RuleClass[] = [
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
+  HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
