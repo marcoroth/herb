@@ -1,0 +1,77 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0038_tag.div inside if block"
+input: |2-
+<% if condition? %>
+  <%= tag.div id: "my-id" do %>
+    Content
+  <% end %>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if condition? " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:11))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ ERBOpenTagNode (location: (2:2)-(2:31))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   │       ├── content: " tag.div id: "my-id" do " (location: (2:5)-(2:29))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:29)-(2:31))
+    │   │   │   │       ├── tag_name: "div" (location: (2:10)-(2:13))
+    │   │   │   │       └── children: (1 item)
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:14)-(2:18))
+    │   │   │   │               ├── name:
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:18))
+    │   │   │   │               │       └── children: (1 item)
+    │   │   │   │               │           └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │               │               └── content: "id"
+    │   │   │   │               │
+    │   │   │   │               │
+    │   │   │   │               ├── equals: "=" (location: (2:14)-(2:18))
+    │   │   │   │               └── value:
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:14)-(2:18))
+    │   │   │   │                       ├── open_quote: """ (location: (2:14)-(2:18))
+    │   │   │   │                       ├── children: (1 item)
+    │   │   │   │                       │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │                       │       └── content: "my-id"
+    │   │   │   │                       │
+    │   │   │   │                       ├── close_quote: """ (location: (2:18)-(2:18))
+    │   │   │   │                       └── quoted: true
+    │   │   │   │
+    │   │   │   │
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (2:10)-(2:13))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:31)-(4:2))
+    │   │   │   │       └── content: "\n    Content\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │   │       ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   │       ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │   │       └── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:11)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

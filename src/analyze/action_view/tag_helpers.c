@@ -1062,21 +1062,8 @@ static AST_NODE_T* transform_link_to_helper(
   return (AST_NODE_T*) element;
 }
 
-void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T* context) {
-  if (!node || !context) { return; }
-
-  hb_array_T* array = NULL;
-
-  switch (node->type) {
-    case AST_DOCUMENT_NODE: array = ((AST_DOCUMENT_NODE_T*) node)->children; break;
-    case AST_HTML_ELEMENT_NODE: array = ((AST_HTML_ELEMENT_NODE_T*) node)->body; break;
-    case AST_HTML_OPEN_TAG_NODE: array = ((AST_HTML_OPEN_TAG_NODE_T*) node)->children; break;
-    case AST_HTML_ATTRIBUTE_VALUE_NODE: array = ((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children; break;
-    case AST_ERB_BLOCK_NODE: array = ((AST_ERB_BLOCK_NODE_T*) node)->body; break;
-    default: return;
-  }
-
-  if (!array) { return; }
+void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* context) {
+  if (!array || !context) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child = hb_array_get(array, i);
@@ -1228,6 +1215,45 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
 
       hb_array_set(array, i, replacement);
     }
+  }
+}
+
+void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T* context) {
+  if (!node || !context) { return; }
+
+  switch (node->type) {
+    case AST_DOCUMENT_NODE: transform_tag_helper_array(((AST_DOCUMENT_NODE_T*) node)->children, context); break;
+    case AST_HTML_ELEMENT_NODE: transform_tag_helper_array(((AST_HTML_ELEMENT_NODE_T*) node)->body, context); break;
+    case AST_HTML_CONDITIONAL_ELEMENT_NODE:
+      transform_tag_helper_array(((AST_HTML_CONDITIONAL_ELEMENT_NODE_T*) node)->body, context);
+      break;
+    case AST_HTML_OPEN_TAG_NODE:
+      transform_tag_helper_array(((AST_HTML_OPEN_TAG_NODE_T*) node)->children, context);
+      break;
+    case AST_HTML_ATTRIBUTE_VALUE_NODE:
+      transform_tag_helper_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
+      break;
+    case AST_ERB_BLOCK_NODE: transform_tag_helper_array(((AST_ERB_BLOCK_NODE_T*) node)->body, context); break;
+    case AST_ERB_IF_NODE: transform_tag_helper_array(((AST_ERB_IF_NODE_T*) node)->statements, context); break;
+    case AST_ERB_ELSE_NODE: transform_tag_helper_array(((AST_ERB_ELSE_NODE_T*) node)->statements, context); break;
+    case AST_ERB_UNLESS_NODE: transform_tag_helper_array(((AST_ERB_UNLESS_NODE_T*) node)->statements, context); break;
+    case AST_ERB_CASE_NODE:
+      transform_tag_helper_array(((AST_ERB_CASE_NODE_T*) node)->children, context);
+      transform_tag_helper_array(((AST_ERB_CASE_NODE_T*) node)->conditions, context);
+      break;
+    case AST_ERB_CASE_MATCH_NODE:
+      transform_tag_helper_array(((AST_ERB_CASE_MATCH_NODE_T*) node)->children, context);
+      transform_tag_helper_array(((AST_ERB_CASE_MATCH_NODE_T*) node)->conditions, context);
+      break;
+    case AST_ERB_WHEN_NODE: transform_tag_helper_array(((AST_ERB_WHEN_NODE_T*) node)->statements, context); break;
+    case AST_ERB_WHILE_NODE: transform_tag_helper_array(((AST_ERB_WHILE_NODE_T*) node)->statements, context); break;
+    case AST_ERB_UNTIL_NODE: transform_tag_helper_array(((AST_ERB_UNTIL_NODE_T*) node)->statements, context); break;
+    case AST_ERB_FOR_NODE: transform_tag_helper_array(((AST_ERB_FOR_NODE_T*) node)->statements, context); break;
+    case AST_ERB_BEGIN_NODE: transform_tag_helper_array(((AST_ERB_BEGIN_NODE_T*) node)->statements, context); break;
+    case AST_ERB_RESCUE_NODE: transform_tag_helper_array(((AST_ERB_RESCUE_NODE_T*) node)->statements, context); break;
+    case AST_ERB_ENSURE_NODE: transform_tag_helper_array(((AST_ERB_ENSURE_NODE_T*) node)->statements, context); break;
+    case AST_ERB_IN_NODE: transform_tag_helper_array(((AST_ERB_IN_NODE_T*) node)->statements, context); break;
+    default: break;
   }
 }
 
