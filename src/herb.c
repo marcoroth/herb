@@ -1,11 +1,11 @@
 #include "include/herb.h"
 #include "include/analyze/analyze.h"
 #include "include/analyze/prism_annotate.h"
-#include "include/lexer.h"
-#include "include/parser.h"
-#include "include/token.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_array.h"
+#include "include/lexer/lexer.h"
+#include "include/lexer/token.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_array.h"
+#include "include/parser/parser.h"
 #include "include/version.h"
 
 #include <prism.h>

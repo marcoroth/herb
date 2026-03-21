@@ -1,9 +1,9 @@
-#include "include/lexer_peek_helpers.h"
+#include "include/lexer/lexer_peek_helpers.h"
+#include "include/lexer/token.h"
+#include "include/lib/hb_string.h"
 #include "include/macros.h"
-#include "include/token.h"
-#include "include/utf8.h"
-#include "include/util.h"
-#include "include/util/hb_string.h"
+#include "include/util/utf8.h"
+#include "include/util/util.h"
 
 #include <ctype.h>
 #include <stdint.h>

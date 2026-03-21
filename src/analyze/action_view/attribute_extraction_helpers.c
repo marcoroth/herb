@@ -1,10 +1,10 @@
 #include "../../include/analyze/action_view/attribute_extraction_helpers.h"
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
-#include "../../include/html_util.h"
-#include "../../include/util.h"
-#include "../../include/util/hb_allocator.h"
-#include "../../include/util/hb_array.h"
-#include "../../include/util/hb_string.h"
+#include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_string.h"
+#include "../../include/util/html_util.h"
+#include "../../include/util/util.h"
 
 #include <prism.h>
 #include <stdlib.h>

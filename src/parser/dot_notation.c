@@ -1,8 +1,8 @@
 #include "../include/parser/dot_notation.h"
 #include "../include/errors.h"
-#include "../include/lexer.h"
-#include "../include/parser_helpers.h"
-#include "../include/token.h"
+#include "../include/lexer/lexer.h"
+#include "../include/lexer/token.h"
+#include "../include/parser/parser_helpers.h"
 
 #include <ctype.h>
 

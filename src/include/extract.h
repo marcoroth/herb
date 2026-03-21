@@ -1,8 +1,8 @@
 #ifndef HERB_EXTRACT_H
 #define HERB_EXTRACT_H
 
-#include "util/hb_allocator.h"
-#include "util/hb_buffer.h"
+#include "lib/hb_allocator.h"
+#include "lib/hb_buffer.h"
 
 #include <stdbool.h>
 

@@ -1,6 +1,6 @@
 #include "../../src/include/herb.h"
-#include "../../src/include/html_util.h"
-#include "../../src/include/util/hb_allocator.h"
+#include "../../src/include/util/html_util.h"
+#include "../../src/include/lib/hb_allocator.h"
 #include "include/test.h"
 #include <stdio.h>
 

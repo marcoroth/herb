@@ -1,10 +1,10 @@
 #ifndef HERB_ANALYZE_BUILDERS_H
 #define HERB_ANALYZE_BUILDERS_H
 
-#include "../ast_nodes.h"
-#include "../location.h"
-#include "../position.h"
-#include "../util/hb_allocator.h"
+#include "../ast/ast_nodes.h"
+#include "../lib/hb_allocator.h"
+#include "../location/location.h"
+#include "../location/position.h"
 #include "analyze.h"
 
 position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node);

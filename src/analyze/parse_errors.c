@@ -1,11 +1,11 @@
 #include "../include/analyze/analyze.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/extract.h"
-#include "../include/prism_helpers.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_string.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_string.h"
+#include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
 #include <stdlib.h>

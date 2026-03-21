@@ -1,7 +1,7 @@
 #ifndef ATTRIBUTE_EXTRACTION_HELPERS_H
 #define ATTRIBUTE_EXTRACTION_HELPERS_H
 
-#include "../../util/hb_allocator.h"
+#include "../../lib/hb_allocator.h"
 #include "tag_helper_handler.h"
 #include "tag_helpers.h"
 

@@ -1,11 +1,11 @@
 #ifndef HERB_ANALYZE_TAG_HELPER_NODE_BUILDERS_H
 #define HERB_ANALYZE_TAG_HELPER_NODE_BUILDERS_H
 
-#include "../../ast_nodes.h"
-#include "../../position.h"
-#include "../../token_struct.h"
-#include "../../util/hb_allocator.h"
-#include "../../util/hb_array.h"
+#include "../../ast/ast_nodes.h"
+#include "../../lexer/token_struct.h"
+#include "../../lib/hb_allocator.h"
+#include "../../lib/hb_array.h"
+#include "../../location/position.h"
 
 #include <prism.h>
 

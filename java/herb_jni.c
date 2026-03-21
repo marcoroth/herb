@@ -3,8 +3,8 @@
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_buffer.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_buffer.h"
 
 #include <stdlib.h>
 #include <string.h>
