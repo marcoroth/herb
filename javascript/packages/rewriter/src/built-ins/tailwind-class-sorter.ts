@@ -1,29 +1,37 @@
-import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass, isERBOpenTagNode, isHTMLAttributeNode } from "@herb-tools/core"
 import { LiteralNode, Location, Visitor } from "@herb-tools/core"
 
+import { Herb } from "@herb-tools/node-wasm"
+import { IdentityPrinter } from "@herb-tools/printer"
+
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
-import { ASTRewriter } from "../ast-rewriter.js"
+import { StringRewriter } from "../string-rewriter.js"
 import { asMutable } from "../mutable.js"
 
 import type { RewriteContext } from "../context.js"
+
+type ClassSplice = { from: string, to: string }
+
 import type {
+  ERBBeginNode,
+  ERBBlockNode,
+  ERBCaseMatchNode,
+  ERBCaseNode,
+  ERBElseNode,
+  ERBEnsureNode,
+  ERBForNode,
+  ERBIfNode,
+  ERBInNode,
+  ERBOpenTagNode,
+  ERBRescueNode,
+  ERBUnlessNode,
+  ERBUntilNode,
+  ERBWhenNode,
+  ERBWhileNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
+  HTMLElementNode,
   Node,
-  ERBIfNode,
-  ERBUnlessNode,
-  ERBElseNode,
-  ERBBlockNode,
-  ERBForNode,
-  ERBCaseNode,
-  ERBWhenNode,
-  ERBCaseMatchNode,
-  ERBInNode,
-  ERBWhileNode,
-  ERBUntilNode,
-  ERBBeginNode,
-  ERBRescueNode,
-  ERBEnsureNode
 } from "@herb-tools/core"
 
 /**
@@ -322,9 +330,92 @@ class ClassAttributeSorter extends Visitor {
 }
 
 /**
- * Built-in rewriter that sorts Tailwind CSS classes in class and className attributes
+ * Visitor that extracts class attribute splice operations from Action View Tag Helper elements.
+ * Finds static class attributes and records old/new ERB tag text for string-level replacement.
  */
-export class TailwindClassSorterRewriter extends ASTRewriter {
+class ActionViewClassSorterVisitor extends Visitor {
+  private sorter: TailwindClassSorter
+  private splices: ClassSplice[]
+
+  constructor(sorter: TailwindClassSorter, splices: ClassSplice[]) {
+    super()
+
+    this.sorter = sorter
+    this.splices = splices
+  }
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (node.element_source && isERBOpenTagNode(node.open_tag)) {
+      this.extractSplice(node)
+    }
+
+    this.visitChildNodes(node)
+  }
+
+  private extractSplice(node: HTMLElementNode): void {
+    const openTag = node.open_tag as ERBOpenTagNode
+
+    if (!openTag.content) return
+    if (!openTag.tag_opening) return
+    if (!openTag.tag_closing) return
+    if (!openTag.children) return
+
+    for (const child of openTag.children) {
+      if (!isHTMLAttributeNode(child)) continue
+      if (!child.name || !child.value) continue
+
+      const attributeName = getStaticAttributeName(child.name)
+      if (attributeName !== "class") continue
+
+      const valueChildren = child.value.children
+      if (!valueChildren || valueChildren.length === 0) continue
+
+      if (!valueChildren.every(isLiteralNode)) continue
+
+      const classValue = (valueChildren as LiteralNode[]).map(n => n.content).join("")
+      if (!classValue.trim()) continue
+
+      let sortedValue: string
+
+      try {
+        sortedValue = this.sorter.sortClasses(classValue)
+      } catch {
+        continue
+      }
+
+      if (sortedValue === classValue) continue
+
+      const oldContent = openTag.content.value
+      const doubleQuoted = `"${classValue}"`
+      const singleQuoted = `'${classValue}'`
+
+      let newContent: string
+
+      if (oldContent.includes(doubleQuoted)) {
+        newContent = oldContent.replace(doubleQuoted, `"${sortedValue}"`)
+      } else if (oldContent.includes(singleQuoted)) {
+        newContent = oldContent.replace(singleQuoted, `'${sortedValue}'`)
+      } else {
+        continue
+      }
+
+      const oldTag = openTag.tag_opening.value + oldContent + openTag.tag_closing.value
+      const newTag = openTag.tag_opening.value + newContent + openTag.tag_closing.value
+
+      this.splices.push({ from: oldTag, to: newTag })
+    }
+  }
+}
+
+/**
+ * Built-in rewriter that sorts Tailwind CSS classes in class and className attributes.
+ *
+ * Operates as a string rewriter with two phases:
+ * 1. Parse the template normally and sort HTML element class attributes via AST manipulation.
+ * 2. Parse again with action_view_helpers enabled to locate and sort class attributes in
+ *    Action View Tag Helper expressions (tag.div, content_tag, etc.) via string splicing.
+ */
+export class TailwindClassSorterRewriter extends StringRewriter {
   private sorter?: TailwindClassSorter
 
   get name(): string {
@@ -357,15 +448,54 @@ export class TailwindClassSorterRewriter extends ASTRewriter {
     }
   }
 
-  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
-    if (!this.sorter) {
-      return node
+  rewrite(formatted: string, _context: RewriteContext): string {
+    if (!this.sorter) return formatted
+
+    let htmlSorted: string
+
+    try {
+      const parseResult = Herb.parse(formatted, { track_whitespace: true })
+
+      if (parseResult.failed) return formatted
+
+      const visitor = new TailwindClassSorterVisitor(this.sorter)
+      visitor.visit(parseResult.value)
+
+      htmlSorted = IdentityPrinter.print(parseResult.value)
+    } catch {
+      return formatted
     }
 
-    const visitor = new TailwindClassSorterVisitor(this.sorter)
+    return this.sortActionViewHelperClasses(htmlSorted)
+  }
 
-    visitor.visit(node)
+  private sortActionViewHelperClasses(source: string): string {
+    let parseResult
 
-    return node
+    try {
+      parseResult = Herb.parse(source, {
+        track_whitespace: true,
+        action_view_helpers: true
+      })
+    } catch {
+      return source
+    }
+
+    if (parseResult.failed) return source
+
+    const splices: ClassSplice[] = []
+    const visitor = new ActionViewClassSorterVisitor(this.sorter!, splices)
+
+    visitor.visit(parseResult.value)
+
+    if (splices.length === 0) return source
+
+    let result = source
+
+    for (const { from, to } of splices) {
+      result = result.replaceAll(from, to)
+    }
+
+    return result
   }
 }
