@@ -334,5 +334,17 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "tag.script with nonce true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script(nonce: true) { "alert('Hello')".html_safe } %>
+      HTML
+    end
+
+    test "tag.script with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script(nonce: false) { "alert('Hello')".html_safe } %>
+      HTML
+    end
   end
 end

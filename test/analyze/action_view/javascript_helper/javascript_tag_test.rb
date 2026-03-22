@@ -26,7 +26,7 @@ module Analyze::ActionView::JavaScriptHelper
       HTML
     end
 
-    test "javascript_tag with nonce" do
+    test "javascript_tag with nonce true" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= javascript_tag nonce: true do %>
           alert('Hello')
@@ -134,6 +134,14 @@ module Analyze::ActionView::JavaScriptHelper
 
       assert_parsed_snapshot(template, action_view_helpers: true)
       assert_parsed_snapshot(template)
+    end
+
+    test "javascript_tag with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_tag nonce: false do %>
+          alert('Hello')
+        <% end %>
+      HTML
     end
   end
 end

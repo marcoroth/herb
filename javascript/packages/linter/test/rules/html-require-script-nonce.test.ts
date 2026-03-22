@@ -100,16 +100,76 @@ describe("html-require-script-nonce", () => {
       `)
     })
 
-    test("passes when tag.script is used with nonce", () => {
-      expectNoOffenses(dedent`
+    test("warns when tag.script is used with nonce: true", () => {
+      expectError(
+        '`nonce: true` on `tag.script` outputs a literal `nonce="true"` attribute, which will not match the Content Security Policy header and the browser will block the script. Only `javascript_tag` and `javascript_include_tag` resolve `nonce: true` to the per-request `content_security_policy_nonce`. Use `javascript_tag` with `nonce: true` instead.'
+      )
+
+      assertOffenses(dedent`
         <%= tag.script nonce: true %>
+      `)
+    })
+  })
+
+  describe("literal nonce warnings for tag helpers", () => {
+    test("warns when content_tag :script uses nonce: true", () => {
+      expectError(
+        '`nonce: true` on `content_tag` outputs a literal `nonce="true"` attribute, which will not match the Content Security Policy header and the browser will block the script. Only `javascript_tag` and `javascript_include_tag` resolve `nonce: true` to the per-request `content_security_policy_nonce`. Use `javascript_tag` with `nonce: true` instead.'
+      )
+
+      assertOffenses(dedent`
+        <%= content_tag(:script, "alert(1)", nonce: true) %>
+      `)
+    })
+
+    test("warns when content_tag :script uses nonce: false", () => {
+      expectError(
+        '`nonce: false` on `content_tag` outputs a literal `nonce="false"` attribute, which will not match the Content Security Policy header and the browser will block the script. Only `javascript_tag` and `javascript_include_tag` resolve `nonce: true` to the per-request `content_security_policy_nonce`. Use `javascript_tag` with `nonce: true` instead.'
+      )
+
+      assertOffenses(dedent`
+        <%= content_tag(:script, "alert(1)", nonce: false) %>
+      `)
+    })
+
+    test("warns when tag.script uses nonce: true", () => {
+      expectError(
+        '`nonce: true` on `tag.script` outputs a literal `nonce="true"` attribute, which will not match the Content Security Policy header and the browser will block the script. Only `javascript_tag` and `javascript_include_tag` resolve `nonce: true` to the per-request `content_security_policy_nonce`. Use `javascript_tag` with `nonce: true` instead.'
+      )
+
+      assertOffenses(dedent`
+        <%= tag.script(nonce: true) { "alert(1)".html_safe } %>
+      `)
+    })
+
+    test("warns when tag.script uses nonce: false", () => {
+      expectError(
+        '`nonce: false` on `tag.script` outputs a literal `nonce="false"` attribute, which will not match the Content Security Policy header and the browser will block the script. Only `javascript_tag` and `javascript_include_tag` resolve `nonce: true` to the per-request `content_security_policy_nonce`. Use `javascript_tag` with `nonce: true` instead.'
+      )
+
+      assertOffenses(dedent`
+        <%= tag.script(nonce: false) { "alert(1)".html_safe } %>
+      `)
+    })
+
+    test("does not warn when javascript_include_tag uses nonce: true", () => {
+      expectNoOffenses(dedent`
+        <%= javascript_include_tag "application", nonce: true %>
+      `)
+    })
+
+    test("does not warn when javascript_tag uses nonce: true", () => {
+      expectNoOffenses(dedent`
+        <%= javascript_tag nonce: true do %>
+          alert('Hello')
+        <% end %>
       `)
     })
   })
 
   test("passes using unrelated content_tag", () => {
     expectNoOffenses(dedent`
-      <%= content_tag :div, "hello" %>
+      <%= content_tag :div, "hello", nonce: true %>
     `)
   })
 })

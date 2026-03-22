@@ -254,6 +254,58 @@ static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
   }
 }
 
+static const char* get_attribute_name_string(AST_HTML_ATTRIBUTE_NODE_T* attribute) {
+  if (!attribute || !attribute->name || !attribute->name->children) { return NULL; }
+  if (hb_array_size(attribute->name->children) == 0) { return NULL; }
+
+  AST_NODE_T* first_child = (AST_NODE_T*) hb_array_get(attribute->name->children, 0);
+  if (!first_child || first_child->type != AST_LITERAL_NODE) { return NULL; }
+
+  AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) first_child;
+  return (const char*) literal->content.data;
+}
+
+void resolve_nonce_attribute(hb_array_T* attributes, hb_allocator_T* allocator) {
+  if (!attributes) { return; }
+
+  for (size_t index = 0; index < hb_array_size(attributes); index++) {
+    AST_NODE_T* node = hb_array_get(attributes, index);
+    if (!node || node->type != AST_HTML_ATTRIBUTE_NODE) { continue; }
+
+    AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
+    const char* name = get_attribute_name_string(attribute);
+    if (!name || strcmp(name, "nonce") != 0) { continue; }
+
+    if (!attribute->value || !attribute->value->children) { continue; }
+    if (hb_array_size(attribute->value->children) == 0) { continue; }
+
+    AST_NODE_T* value_child = (AST_NODE_T*) hb_array_get(attribute->value->children, 0);
+    if (!value_child || value_child->type != AST_LITERAL_NODE) { continue; }
+
+    AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) value_child;
+
+    if (hb_string_equals(literal->content, hb_string("true"))) {
+      AST_RUBY_LITERAL_NODE_T* ruby_node = ast_ruby_literal_node_init(
+        hb_string_from_c_string("content_security_policy_nonce"),
+        attribute->value->base.location.start,
+        attribute->value->base.location.end,
+        hb_array_init(0, allocator),
+        allocator
+      );
+
+      hb_array_T* new_children = hb_array_init(1, allocator);
+      hb_array_append(new_children, (AST_NODE_T*) ruby_node);
+      attribute->value->children = new_children;
+      return;
+    }
+
+    if (hb_string_equals(literal->content, hb_string("false"))) {
+      hb_array_remove(attributes, index);
+      return;
+    }
+  }
+}
+
 AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
   pm_assoc_node_t* assoc,
   const uint8_t* source,
