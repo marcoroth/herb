@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::AssetTagHelper::JavaScriptIncludeTagTest#test_0004_javascript_include_tag with nonce"
+source: "Analyze::ActionView::AssetTagHelper::JavaScriptIncludeTagTest#test_0004_javascript_include_tag with nonce true"
 input: |2-
 <%= javascript_include_tag "application", nonce: true %>
 options: {action_view_helpers: true}
@@ -47,8 +47,8 @@ options: {action_view_helpers: true}
     │   │                   └── @ HTMLAttributeValueNode (location: (1:49)-(1:53))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:49)-(1:53))
-    │   │                       │       └── content: "true"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:49)-(1:53))
+    │   │                       │       └── content: "content_security_policy_nonce"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: false

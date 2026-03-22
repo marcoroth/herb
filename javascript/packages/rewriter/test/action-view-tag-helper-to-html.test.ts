@@ -206,6 +206,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       expect(transform(input)).toBe(expected)
     })
+
+    test("tag.script with nonce true passes through as literal", () => {
+      expect(transform('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')).toBe(
+        '<script nonce="true"><%= "alert(1)".html_safe %></script>'
+      )
+    })
+
+    test("tag.script with nonce false passes through as literal", () => {
+      expect(transform('<%= tag.script(nonce: false) { "alert(1)".html_safe } %>')).toBe(
+        '<script nonce="false"><%= "alert(1)".html_safe %></script>'
+      )
+    })
   })
 
   describe("content_tag helpers", () => {
@@ -230,6 +242,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("content_tag with content argument and block prefers block content", () => {
       expect(transform('<%= content_tag(:div, "argument") { "Block" } %>')).toBe(
         "<div>Block</div>"
+      )
+    })
+
+    test("content_tag :script with nonce true passes through as literal", () => {
+      expect(transform('<%= content_tag(:script, "alert(1)", nonce: true) %>')).toBe(
+        '<script nonce="true">alert(1)</script>'
+      )
+    })
+
+    test("content_tag :script with nonce false passes through as literal", () => {
+      expect(transform('<%= content_tag(:script, "alert(1)", nonce: false) %>')).toBe(
+        '<script nonce="false">alert(1)</script>'
       )
     })
   })
@@ -430,6 +454,38 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         `<script type="application/javascript">alert('Hello')</script>`
       )
     })
+
+    test("javascript_tag with nonce true resolves to content_security_policy_nonce", () => {
+      const input = dedent`
+        <%= javascript_tag nonce: true do %>
+          alert('Hello')
+        <% end %>
+      `
+
+      const expected = dedent`
+        <script nonce="<%= content_security_policy_nonce %>">
+          alert('Hello')
+        </script>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("javascript_tag with nonce false omits nonce attribute", () => {
+      const input = dedent`
+        <%= javascript_tag nonce: false do %>
+          alert('Hello')
+        <% end %>
+      `
+
+      const expected = dedent`
+        <script>
+          alert('Hello')
+        </script>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
   })
 
   describe("javascript_include_tag helpers", () => {
@@ -454,15 +510,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("javascript_include_tag with nonce", () => {
+    test("javascript_include_tag with nonce true resolves to content_security_policy_nonce", () => {
       expect(transform(`<%= javascript_include_tag "application", nonce: true %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" nonce="true"></script>`
+        `<script src="<%= javascript_path("application") %>" nonce="<%= content_security_policy_nonce %>"></script>`
       )
     })
 
-    test("javascript_include_tag with nonce false", () => {
+    test("javascript_include_tag with nonce false omits nonce attribute", () => {
       expect(transform(`<%= javascript_include_tag "application", nonce: false %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" nonce="false"></script>`
+        `<script src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -504,7 +560,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with URL and nonce", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", nonce: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" nonce="true"></script>`
+        `<script src="http://www.example.com/xmlhr.js" nonce="<%= content_security_policy_nonce %>"></script>`
       )
     })
 

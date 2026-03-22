@@ -269,6 +269,11 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     );
   }
 
+  if (attributes && handler->name
+      && (strcmp(handler->name, "javascript_include_tag") == 0 || strcmp(handler->name, "javascript_tag") == 0)) {
+    resolve_nonce_attribute(attributes, allocator);
+  }
+
   char* helper_content = NULL;
   bool content_is_ruby_expression = false;
 
@@ -604,6 +609,8 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
   );
   if (!shared_attributes) { shared_attributes = hb_array_init(0, allocator); }
 
+  resolve_nonce_attribute(shared_attributes, allocator);
+
   hb_array_T* elements = hb_array_init(source_count * 2, allocator);
 
   for (size_t i = 0; i < source_count; i++) {
@@ -696,6 +703,12 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       parse_context->erb_content_offset,
       allocator
     );
+  }
+
+  if (attributes && parse_context->matched_handler && parse_context->matched_handler->name
+      && (strcmp(parse_context->matched_handler->name, "javascript_include_tag") == 0
+          || strcmp(parse_context->matched_handler->name, "javascript_tag") == 0)) {
+    resolve_nonce_attribute(attributes, allocator);
   }
 
   if (detect_link_to(parse_context->info->call_node, &parse_context->parser)
