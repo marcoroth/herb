@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
@@ -89,6 +90,7 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoVoidElementContentRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,

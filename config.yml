@@ -460,14 +460,17 @@ errors:
 
     - name: VoidElementContentError
       message:
-        template: "Void element `%s` cannot have content. `%s` does not accept positional arguments."
+        template: "Void element `%s` cannot have content. `%s` does not accept a positional argument for content."
         arguments:
           - tag_name->value
-          - tag_name->value
+          - helper_name
 
       fields:
         - name: tag_name
           type: token
+
+        - name: helper_name
+          type: string
 
     - name: DotNotationCasingError
       message:

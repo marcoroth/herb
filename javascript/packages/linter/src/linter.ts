@@ -419,10 +419,10 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (parser-no-errors handled above)
+      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
       // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
-        if (parseResult.recursiveErrors().length > 0) continue
+        if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
         continue
       }

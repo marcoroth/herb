@@ -1,6 +1,6 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
-import type { DiagnosticTag } from "@herb-tools/core"
+import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig } from "@herb-tools/config"
@@ -106,6 +106,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static unsafeAutocorrectable = false
   /** Indicates whether the source should be re-indented after autofix. Defaults to false. */
   static reindentAfterAutofix = false
+  /** Indicates whether this rule consumes parser errors (like parser-no-errors). Rules with this flag are not skipped when parse results contain errors. */
+  static consumesParserErrors = false
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName
@@ -129,6 +131,17 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
       autofixContext,
       severity,
       tags,
+    }
+  }
+
+  protected herbErrorToLintOffense(error: HerbError): LintOffense {
+    return {
+      message: error.message,
+      location: error.location,
+      severity: error.severity,
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "linter"
     }
   }
 
@@ -314,6 +327,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   ruleName: string
   introducedIn: RuleVersion
   reindentAfterAutofix?: boolean
+  consumesParserErrors?: boolean
 }
 
 export type LexerRuleClass = LexerRuleConstructor
