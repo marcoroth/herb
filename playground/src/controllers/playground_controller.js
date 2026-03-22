@@ -10,6 +10,7 @@ import Prism from "prismjs"
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
+import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
 import { Linter } from "@herb-tools/linter"
@@ -174,6 +175,7 @@ export default class extends Controller {
       )
 
       if (range) {
+        revealTreeLine(range.element)
         range.element.classList.add("tree-location-highlight")
         range.element.scrollIntoView({
           behavior: "smooth",
@@ -645,6 +647,18 @@ export default class extends Controller {
     element.classList.add("hover-highlight")
   }
 
+  expandAllNodes() {
+    if (this.hasParseOutputTarget) {
+      expandAll(this.parseOutputTarget)
+    }
+  }
+
+  collapseAllNodes() {
+    if (this.hasParseOutputTarget) {
+      collapseAll(this.parseOutputTarget)
+    }
+  }
+
   clearTreeLocationHighlights() {
     this.parseOutputTarget
       .querySelectorAll(".tree-location-highlight")
@@ -901,6 +915,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -1137,6 +1152,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
