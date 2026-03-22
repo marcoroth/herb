@@ -158,6 +158,7 @@ While Herb brings a fresh approach to HTML+ERB tooling, it builds upon and learn
 - [**erb_lint**](https://github.com/Shopify/erb_lint)
 - [**erb-formatter**](https://github.com/nebulab/erb-formatter)
 - [**erb-formatter-vscode**](https://github.com/nebulab/erb-formatter-vscode)
+- [**erblint-github**](https://github.com/github/erblint-github)
 - [**deface**](https://github.com/spree/deface)
 - [**html_press**](https://github.com/stereobooster/html_press)
 - [**htmlbeautifier**](https://github.com/threedaymonk/htmlbeautifier)
