@@ -7,6 +7,7 @@
 #include "../../include/herb.h"
 #include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_buffer.h"
 #include "../../include/lib/hb_string.h"
 #include "../../include/lib/string.h"
 #include "../../include/location/position.h"
@@ -438,11 +439,40 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
                   || string_equals(handler->name, "image_tag"));
 
   if (helper_content) {
-    if (is_void) {
+    if (is_void && tag_name) {
+      hb_buffer_T helper_name_buffer;
+      hb_buffer_init(&helper_name_buffer, 64, allocator);
+
+      if (string_equals(handler->name, "tag")) {
+        hb_buffer_append(&helper_name_buffer, "tag.");
+        hb_buffer_append(&helper_name_buffer, tag_name);
+      } else {
+        hb_buffer_append(&helper_name_buffer, handler->name);
+        hb_buffer_append(&helper_name_buffer, " :");
+        hb_buffer_append(&helper_name_buffer, tag_name);
+      }
+
+      hb_string_T helper_name = hb_string_from_c_string(hb_buffer_value(&helper_name_buffer));
+
+      position_T content_start = erb_node->base.location.start;
+      position_T content_end = erb_node->base.location.end;
+
+      pm_call_node_t* call = parse_context->info->call_node;
+
+      if (call && call->arguments) {
+        size_t content_arg_index = string_equals(handler->name, "content_tag") ? 1 : 0;
+
+        if (call->arguments->arguments.size > content_arg_index) {
+          pm_node_t* content_node = call->arguments->arguments.nodes[content_arg_index];
+          prism_node_location_to_positions(&content_node->location, parse_context, &content_start, &content_end);
+        }
+      }
+
       append_void_element_content_error(
         tag_name_token,
-        erb_node->base.location.start,
-        erb_node->base.location.end,
+        helper_name,
+        content_start,
+        content_end,
         allocator,
         element_errors
       );

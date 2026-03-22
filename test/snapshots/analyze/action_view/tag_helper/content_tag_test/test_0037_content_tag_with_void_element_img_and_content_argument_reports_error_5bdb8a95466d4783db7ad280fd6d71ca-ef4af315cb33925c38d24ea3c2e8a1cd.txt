@@ -8,9 +8,10 @@ options: {action_view_helpers: true}
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:32))
     │   ├── errors: (1 error)
-    │   │   └── @ VoidElementContentError (location: (1:0)-(1:32))
-    │   │       ├── message: "Void element `img` cannot have content. `img` does not accept positional arguments."
-    │   │       └── tag_name: "img" (location: (1:4)-(1:15))
+    │   │   └── @ VoidElementContentError (location: (1:22)-(1:29))
+    │   │       ├── message: "Void element `img` cannot have content. `content_tag :img` does not accept a positional argument for content."
+    │   │       ├── tag_name: "img" (location: (1:4)-(1:15))
+    │   │       └── helper_name: "content_tag :img"
     │   │
     │   ├── open_tag:
     │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:32))

@@ -5,6 +5,7 @@ export * from "./herb-disable-comment-base.js"
 
 export * from "./actionview-no-silent-helper.js"
 export * from "./actionview-no-silent-render.js"
+export * from "./actionview-no-void-element-content.js"
 
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"

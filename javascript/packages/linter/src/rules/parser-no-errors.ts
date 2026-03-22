@@ -20,14 +20,10 @@ export class ParserNoErrorsRule extends ParserRule {
     )
   }
 
-  private herbErrorToLintOffense(error: HerbError): LintOffense {
+  protected herbErrorToLintOffense(error: HerbError): LintOffense {
     return {
+      ...super.herbErrorToLintOffense(error),
       message: `${error.message} (\`${error.type}\`)`,
-      location: error.location,
-      severity: error.severity,
-      rule: this.ruleName,
-      code: this.ruleName,
-      source: "linter"
     }
   }
 }
