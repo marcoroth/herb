@@ -34,6 +34,32 @@ describe("parseHTMLDocument", () => {
     expect((root.herbNode as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
   })
 
+  test("parses ActionView tag.img with content argument as void element", () => {
+    const service = createService()
+    const document = createDocument('<%= tag.img "/image.png" %>')
+    const html = service.parseHTMLDocument(document)
+
+    expect(html.roots).toHaveLength(1)
+
+    const root = html.roots[0] as HerbHTMLNode
+    expect(root.tag).toBe("img")
+    expect(root.herbNode).toBeDefined()
+    expect((root.herbNode as any).element_source).toBe("ActionView::Helpers::TagHelper#tag")
+    expect((root.herbNode as any).is_void).toBe(true)
+  })
+
+  test("parses ActionView tag.img with content argument and data attributes", () => {
+    const service = createService()
+    const document = createDocument('<%= tag.img "/image.png", data: { controller: "image" } %>')
+    const html = service.parseHTMLDocument(document)
+
+    expect(html.roots).toHaveLength(1)
+
+    const root = html.roots[0] as HerbHTMLNode
+    expect(root.tag).toBe("img")
+    expect(root.attributes?.["data-controller"]).toBe('"image"')
+  })
+
   test("parses ActionView nested data hash into data-* attributes", () => {
     const service = createService()
     const document = createDocument(`<%= tag.div data: { controller: "scroll", action: "click->scroll#go" } %>`)

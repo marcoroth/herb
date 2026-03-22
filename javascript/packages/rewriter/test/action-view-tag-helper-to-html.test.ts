@@ -143,7 +143,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div data-controller="content" data-user-id="<%= 123 %>">
+        <div data-controller="content" data-user-id="123">
           Content
         </div>
       `
@@ -164,6 +164,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("tag.img void element with attributes", () => {
       expect(transform('<%= tag.img src: "image.png", alt: "Photo" %>')).toBe(
         '<img src="image.png" alt="Photo" />'
+      )
+    })
+
+    test("tag.img with content argument reports parser error", () => {
+      expect(() => transform('<%= tag.img "/image.png" %>')).toThrow(
+        "Void element `img` cannot have content"
+      )
+    })
+
+    test("tag.img with content argument and data attributes reports parser error", () => {
+      expect(() => transform('<%= tag.img "/image.png", data: { controller: "image" } %>')).toThrow(
+        "Void element `img` cannot have content"
       )
     })
 
@@ -680,6 +692,64 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("image_tag with data attributes", () => {
       expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
         '<img src="<%= image_path("icon.png") %>" data-controller="image" />'
+      )
+    })
+  })
+
+  describe("class attribute handling", () => {
+    test("tag.div with conditional class hash wraps in token_list", () => {
+      expect(transform('<%= tag.div class: { active: true, hidden: false } %>')).toBe(
+        '<div class="<%= token_list({ active: true, hidden: false }) %>"></div>'
+      )
+    })
+
+    test("tag.div with dynamic conditional class hash wraps in token_list", () => {
+      expect(transform('<%= tag.div class: { active: @is_active } %>')).toBe(
+        '<div class="<%= token_list({ active: @is_active }) %>"></div>'
+      )
+    })
+
+    test("tag.div with mixed array class wraps in token_list", () => {
+      expect(transform('<%= tag.div class: ["a", variable] %>')).toBe(
+        '<div class="<%= token_list(["a", variable]) %>"></div>'
+      )
+    })
+
+    test("tag.div with static string array class joins with spaces", () => {
+      expect(transform('<%= tag.div class: ["kitties", "puppies"] %>')).toBe(
+        '<div class="kitties puppies"></div>'
+      )
+    })
+
+    test("tag.div with %w() class joins with spaces", () => {
+      expect(transform('<%= tag.div class: %w( kitties puppies ) %>')).toBe(
+        '<div class="kitties puppies"></div>'
+      )
+    })
+
+    test("content_tag with mixed array and conditional hash class wraps in token_list", () => {
+      expect(transform('<%= content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) %>')).toBe(
+        '<div class="<%= token_list(["strong", { highlight: current_user.admin? }]) %>">Hello world!</div>'
+      )
+    })
+  })
+
+  describe("data attribute handling", () => {
+    test("tag.div with integer data attribute inlines directly", () => {
+      expect(transform('<%= tag.div data: { count: 42 } %>')).toBe(
+        '<div data-count="42"></div>'
+      )
+    })
+
+    test("tag.div with array data attribute wraps in .to_json", () => {
+      expect(transform('<%= tag.div data: { items: ["a", "b"] } %>')).toBe(
+        '<div data-items="<%= ["a", "b"].to_json %>"></div>'
+      )
+    })
+
+    test("tag.div with nested hash data attribute wraps in .to_json", () => {
+      expect(transform('<%= tag.div data: { config: { nested: "hash" } } %>')).toBe(
+        '<div data-config="<%= { nested: "hash" }.to_json %>"></div>'
       )
     })
   })

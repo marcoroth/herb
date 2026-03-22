@@ -67,6 +67,7 @@ class ActionViewRenderer
   end
 
   def render_template
+    require "bigdecimal"
     require "action_view"
 
     lookup_context = ActionView::LookupContext.new([])

@@ -2,6 +2,7 @@
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_buffer.h"
 #include "../../include/lib/hb_string.h"
 #include "../../include/util/html_util.h"
 #include "../../include/util/util.h"
@@ -208,12 +209,56 @@ static char* build_prefixed_key(const char* prefix, const char* raw_key, hb_allo
   return result;
 }
 
+static bool is_static_string_array(pm_array_node_t* array) {
+  if (!array || array->elements.size == 0) { return false; }
+
+  for (size_t i = 0; i < array->elements.size; i++) {
+    pm_node_t* element = array->elements.nodes[i];
+
+    if (element->type != PM_STRING_NODE && element->type != PM_SYMBOL_NODE) { return false; }
+  }
+
+  return true;
+}
+
+static char* join_static_string_array(pm_array_node_t* array, hb_allocator_T* allocator) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 64, allocator);
+
+  for (size_t i = 0; i < array->elements.size; i++) {
+    if (i > 0) { hb_buffer_append(&buffer, " "); }
+
+    char* value = extract_string_from_prism_node(array->elements.nodes[i], allocator);
+
+    if (value) {
+      hb_buffer_append(&buffer, value);
+      hb_allocator_dealloc(allocator, value);
+    }
+  }
+
+  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
+
+  return result;
+}
+
 static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
   const char* name_string,
   pm_node_t* value_node,
   attribute_positions_T* positions,
-  hb_allocator_T* allocator
+  hb_allocator_T* allocator,
+  bool is_nested
 ) {
+  if (value_node->type == PM_ARRAY_NODE && !is_nested && is_static_string_array((pm_array_node_t*) value_node)) {
+    char* joined = join_static_string_array((pm_array_node_t*) value_node, allocator);
+    if (!joined) { return NULL; }
+
+    AST_HTML_ATTRIBUTE_NODE_T* attribute =
+      create_html_attribute_node_precise(name_string, joined, positions, allocator);
+    hb_allocator_dealloc(allocator, joined);
+
+    return attribute;
+  }
+
   if (value_node->type == PM_SYMBOL_NODE || value_node->type == PM_STRING_NODE) {
     char* value_string = extract_string_from_prism_node(value_node, allocator);
     if (!value_string) { return NULL; }
@@ -227,10 +272,22 @@ static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
     if (is_boolean_attribute(hb_string((char*) name_string))) {
       return create_html_attribute_node_precise(name_string, NULL, positions, allocator);
     }
+
     return create_html_attribute_node_precise(name_string, "true", positions, allocator);
   } else if (value_node->type == PM_FALSE_NODE) {
     if (is_boolean_attribute(hb_string((char*) name_string))) { return NULL; }
+
     return create_html_attribute_node_precise(name_string, "false", positions, allocator);
+  } else if (value_node->type == PM_INTEGER_NODE) {
+    size_t value_length = value_node->location.end - value_node->location.start;
+    char* value_string = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
+    if (!value_string) { return NULL; }
+
+    AST_HTML_ATTRIBUTE_NODE_T* attribute =
+      create_html_attribute_node_precise(name_string, value_string, positions, allocator);
+    hb_allocator_dealloc(allocator, value_string);
+
+    return attribute;
   } else if (value_node->type == PM_INTERPOLATED_STRING_NODE) {
     return create_html_attribute_with_interpolated_value(
       name_string,
@@ -241,12 +298,36 @@ static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
     );
   } else {
     size_t value_length = value_node->location.end - value_node->location.start;
-    char* ruby_content = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
+    char* raw_content = hb_allocator_strndup(allocator, (const char*) value_node->location.start, value_length);
 
-    if (ruby_content && value_node->location.start) {
+    if (raw_content && value_node->location.start) {
+      char* ruby_content = raw_content;
+
+      if (!is_nested && strcmp(name_string, "class") == 0
+          && (value_node->type == PM_HASH_NODE || value_node->type == PM_ARRAY_NODE)) {
+        hb_buffer_T class_buffer;
+        hb_buffer_init(&class_buffer, value_length + 16, allocator);
+        hb_buffer_append(&class_buffer, "token_list(");
+        hb_buffer_append(&class_buffer, raw_content);
+        hb_buffer_append(&class_buffer, ")");
+
+        ruby_content = hb_buffer_value(&class_buffer);
+      }
+
+      // Rails calls .to_json on non-string/symbol values inside data:/aria: hashes
+      if (is_nested) {
+        hb_buffer_T json_buffer;
+        hb_buffer_init(&json_buffer, value_length + 16, allocator);
+        hb_buffer_append(&json_buffer, raw_content);
+        hb_buffer_append(&json_buffer, ".to_json");
+
+        ruby_content = hb_buffer_value(&json_buffer);
+      }
+
       AST_HTML_ATTRIBUTE_NODE_T* attribute =
         create_html_attribute_with_ruby_literal_precise(name_string, ruby_content, positions, allocator);
-      hb_allocator_dealloc(allocator, ruby_content);
+      hb_allocator_dealloc(allocator, raw_content);
+
       return attribute;
     }
 
@@ -318,6 +399,11 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
   char* name_string = extract_string_from_prism_node(assoc->key, allocator);
   if (!name_string) { return NULL; }
 
+  if (strcmp(name_string, "escape") == 0) {
+    hb_allocator_dealloc(allocator, name_string);
+    return NULL;
+  }
+
   if (!assoc->value) {
     hb_allocator_dealloc(allocator, name_string);
     return NULL;
@@ -365,7 +451,7 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
 
   char* dashed_name = convert_underscores_to_dashes(name_string);
   AST_HTML_ATTRIBUTE_NODE_T* attribute_node =
-    create_attribute_from_value(dashed_name ? dashed_name : name_string, assoc->value, &positions, allocator);
+    create_attribute_from_value(dashed_name ? dashed_name : name_string, assoc->value, &positions, allocator, false);
 
   if (dashed_name) { free(dashed_name); }
   hb_allocator_dealloc(allocator, name_string);
@@ -467,7 +553,7 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
             fill_attribute_positions(hash_assoc, source, original_source, erb_content_offset, &hash_positions);
 
             AST_HTML_ATTRIBUTE_NODE_T* attribute =
-              create_attribute_from_value(attribute_key_string, hash_assoc->value, &hash_positions, allocator);
+              create_attribute_from_value(attribute_key_string, hash_assoc->value, &hash_positions, allocator, true);
 
             if (attribute) { hb_array_append(attributes, attribute); }
             hb_allocator_dealloc(allocator, attribute_key_string);
