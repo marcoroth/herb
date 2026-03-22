@@ -217,7 +217,7 @@ describe("@herb-tools/config", () => {
         version: 0.9.2
         linter:
           rules:
-            html-img-require-alt:
+            a11y-img-require-alt:
               enabled: false
       `
 
@@ -231,7 +231,7 @@ describe("@herb-tools/config", () => {
 
       const updatedYaml = Config.applyMutationToYamlString(existingYaml, mutation)
 
-      expect(updatedYaml).toContain("html-img-require-alt:")
+      expect(updatedYaml).toContain("a11y-img-require-alt:")
       expect(updatedYaml).toContain("html-tag-name-lowercase:")
     })
 

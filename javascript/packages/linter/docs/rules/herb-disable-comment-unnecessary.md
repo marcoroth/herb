@@ -33,7 +33,7 @@ Removing unnecessary disable comments keeps the codebase clean and ensures that 
 
 <div id="test-1">content</div> <%# herb:disable all %>
 
-<DIV id='test-2'>content</DIV> <%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes, html-no-empty-headings %>
+<DIV id='test-2'>content</DIV> <%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes, a11y-no-empty-headings %>
 
 <div>test</div> <%# herb:disableall %>
 ```

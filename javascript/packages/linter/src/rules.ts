@@ -1,5 +1,24 @@
 import type { RuleClass } from "./types.js"
 
+import { A11yAnchorRequireHrefRule } from "./rules/a11y-anchor-require-href.js"
+import { A11yAriaAttributeMustBeValid } from "./rules/a11y-aria-attribute-must-be-valid.js"
+import { A11yAriaLabelIsWellFormattedRule } from "./rules/a11y-aria-label-is-well-formatted.js"
+import { A11yAriaLevelMustBeValidRule } from "./rules/a11y-aria-level-must-be-valid.js"
+import { A11yAriaRoleHeadingRequiresLevelRule } from "./rules/a11y-aria-role-heading-requires-level.js"
+import { A11yAriaRoleMustBeValidRule } from "./rules/a11y-aria-role-must-be-valid.js"
+import { A11yAvoidBothDisabledAndAriaDisabledRule } from "./rules/a11y-avoid-both-disabled-and-aria-disabled.js"
+import { A11yIframeHasTitleRule } from "./rules/a11y-iframe-has-title.js"
+import { A11yImgRequireAltRule } from "./rules/a11y-img-require-alt.js"
+import { A11yInputRequireAutocompleteRule } from "./rules/a11y-input-require-autocomplete.js"
+import { A11yNavigationHasLabelRule } from "./rules/a11y-navigation-has-label.js"
+import { A11yNoAbstractRolesRule } from "./rules/a11y-no-abstract-roles.js"
+import { A11yNoAriaHiddenOnBodyRule } from "./rules/a11y-no-aria-hidden-on-body.js"
+import { A11yNoAriaHiddenOnFocusableRule } from "./rules/a11y-no-aria-hidden-on-focusable.js"
+import { A11yNoEmptyHeadingsRule } from "./rules/a11y-no-empty-headings.js"
+import { A11yNoNestedLinksRule } from "./rules/a11y-no-nested-links.js"
+import { A11yNoPositiveTabIndexRule } from "./rules/a11y-no-positive-tab-index.js"
+import { A11yNoTitleAttributeRule } from "./rules/a11y-no-title-attribute.js"
+
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
@@ -44,38 +63,20 @@ import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 
 import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
-import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
-import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
-import { HTMLAriaLabelIsWellFormattedRule } from "./rules/html-aria-label-is-well-formatted.js"
-import { HTMLAriaLevelMustBeValidRule } from "./rules/html-aria-level-must-be-valid.js"
-import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-heading-requires-level.js"
-import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
-import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
-import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
-import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
-import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
-import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
-import { HTMLNoAbstractRolesRule } from "./rules/html-no-abstract-roles.js"
-import { HTMLNoAriaHiddenOnBodyRule } from "./rules/html-no-aria-hidden-on-body.js"
-import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
-import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
-import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
-import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
-import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
@@ -88,6 +89,25 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  A11yAnchorRequireHrefRule,
+  A11yAriaAttributeMustBeValid,
+  A11yAriaLabelIsWellFormattedRule,
+  A11yAriaLevelMustBeValidRule,
+  A11yAriaRoleHeadingRequiresLevelRule,
+  A11yAriaRoleMustBeValidRule,
+  A11yAvoidBothDisabledAndAriaDisabledRule,
+  A11yIframeHasTitleRule,
+  A11yImgRequireAltRule,
+  A11yInputRequireAutocompleteRule,
+  A11yNavigationHasLabelRule,
+  A11yNoAbstractRolesRule,
+  A11yNoAriaHiddenOnBodyRule,
+  A11yNoAriaHiddenOnFocusableRule,
+  A11yNoEmptyHeadingsRule,
+  A11yNoNestedLinksRule,
+  A11yNoPositiveTabIndexRule,
+  A11yNoTitleAttributeRule,
+
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoVoidElementContentRule,
@@ -132,38 +152,20 @@ export const rules: RuleClass[] = [
   HerbDisableCommentValidRuleNameRule,
 
   HTMLAllowedScriptTypeRule,
-  HTMLAnchorRequireHrefRule,
-  HTMLAriaAttributeMustBeValid,
-  HTMLAriaLabelIsWellFormattedRule,
-  HTMLAriaLevelMustBeValidRule,
-  HTMLAriaRoleHeadingRequiresLevelRule,
-  HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeEqualsSpacingRule,
   HTMLAttributeValuesRequireQuotesRule,
-  HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLDetailsHasSummaryRule,
   HTMLHeadOnlyElementsRule,
-  HTMLIframeHasTitleRule,
-  HTMLImgRequireAltRule,
-  HTMLInputRequireAutocompleteRule,
-  HTMLNavigationHasLabelRule,
-  HTMLNoAbstractRolesRule,
-  HTMLNoAriaHiddenOnBodyRule,
-  HTMLNoAriaHiddenOnFocusableRule,
   HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
-  HTMLNoEmptyHeadingsRule,
-  HTMLNoNestedLinksRule,
-  HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,
-  HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
   HTMLRequireScriptNonceRule,

@@ -345,7 +345,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: warning
               html-tag-name-lowercase:
                 enabled: false
@@ -365,7 +365,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: warning
         `)
 
@@ -383,7 +383,7 @@ describe("CLI Output Formatting", () => {
           linter:
             failLevel: warning
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: warning
               html-tag-name-lowercase:
                 enabled: false
@@ -404,7 +404,7 @@ describe("CLI Output Formatting", () => {
           linter:
             failLevel: error
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: warning
               html-tag-name-lowercase:
                 enabled: false
@@ -432,7 +432,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: warning
               html-tag-name-lowercase:
                 enabled: false
@@ -452,7 +452,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: info
               html-tag-name-lowercase:
                 enabled: false
@@ -472,7 +472,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: info
               html-tag-name-lowercase:
                 enabled: false
@@ -492,7 +492,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: hint
               html-tag-name-lowercase:
                 enabled: false
@@ -512,7 +512,7 @@ describe("CLI Output Formatting", () => {
         writeFileSync(configPath, dedent`
           linter:
             rules:
-              html-img-require-alt:
+              a11y-img-require-alt:
                 severity: hint
               html-tag-name-lowercase:
                 enabled: false

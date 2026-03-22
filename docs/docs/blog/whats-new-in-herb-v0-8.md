@@ -250,7 +250,7 @@ This release brings a total of 14 new linter rules to help you write better HTML
 - [`html-head-only-elements`](/linter/rules/html-head-only-elements.md) <br/>
   Require head-scoped elements inside `<head>`.
 
-- [`html-input-require-autocomplete`](/linter/rules/html-input-require-autocomplete.md) <br/>
+- [`html-input-require-autocomplete`](/linter/rules/a11y-input-require-autocomplete.md) <br/>
   Require `autocomplete` attributes on `<input>` tags.
 
 - [`html-no-duplicate-meta-names`](/linter/rules/html-no-duplicate-meta-names.md) <br/>

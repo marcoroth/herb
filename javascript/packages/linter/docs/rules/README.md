@@ -4,6 +4,24 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+- [`a11y-anchor-require-href`](./a11y-anchor-require-href.md) - Requires an href attribute on anchor tags
+- [`a11y-aria-attribute-must-be-valid`](./a11y-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
+- [`a11y-aria-label-is-well-formatted`](./a11y-aria-label-is-well-formatted.md) - `aria-label` must be well-formatted
+- [`a11y-aria-level-must-be-valid`](./a11y-aria-level-must-be-valid.md) - `aria-level` must be between 1 and 6
+- [`a11y-aria-role-heading-requires-level`](./a11y-aria-role-heading-requires-level.md) - Requires `aria-level` when supplying a `role`
+- [`a11y-aria-role-must-be-valid`](./a11y-aria-role-must-be-valid.md) - The `role` attribute must have a valid WAI-ARIA Role.
+- [`a11y-avoid-both-disabled-and-aria-disabled`](./a11y-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
+- [`a11y-iframe-has-title`](./a11y-iframe-has-title.md) - `iframe` elements must have a `title` attribute
+- [`a11y-img-require-alt`](./a11y-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
+- [`a11y-input-require-autocomplete`](./a11y-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
+- [`a11y-navigation-has-label`](./a11y-navigation-has-label.md) - Navigation landmarks must have accessible labels
+- [`a11y-no-abstract-roles`](./a11y-no-abstract-roles.md) - No abstract ARIA roles
+- [`a11y-no-aria-hidden-on-body`](./a11y-no-aria-hidden-on-body.md) - No `aria-hidden` on `<body>`
+- [`a11y-no-aria-hidden-on-focusable`](./a11y-no-aria-hidden-on-focusable.md) - Focusable elements should not have `aria-hidden="true"`
+- [`a11y-no-empty-headings`](./a11y-no-empty-headings.md) - Headings must not be empty
+- [`a11y-no-nested-links`](./a11y-no-nested-links.md) - Prevents nested anchor tags
+- [`a11y-no-positive-tab-index`](./a11y-no-positive-tab-index.md) - Avoid positive `tabindex` values
+- [`a11y-no-title-attribute`](./a11y-no-title-attribute.md) - Avoid using the `title` attribute
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
@@ -43,38 +61,22 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
 - [`html-allowed-script-type`](./html-allowed-script-type.md) - Restrict allowed `type` attributes for `<script>` tags
-- [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
-- [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
-- [`html-aria-label-is-well-formatted`](./html-aria-label-is-well-formatted.md) - `aria-label` must be well-formatted
-- [`html-aria-level-must-be-valid`](./html-aria-level-must-be-valid.md) - `aria-level` must be between 1 and 6
-- [`html-aria-role-heading-requires-level`](./html-aria-role-heading-requires-level.md) - Requires `aria-level` when supplying a `role`
-- [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - The `role` attribute must have a valid WAI-ARIA Role.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [`html-attribute-equals-spacing`](./html-attribute-equals-spacing.md) - No whitespace around `=` in HTML attributes
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
-- [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-details-has-summary`](./html-details-has-summary.md) - Require `<summary>` in `<details>` elements
 - [`html-head-only-elements`](./html-head-only-elements.md) - Require head-scoped elements inside `<head>`.
-- [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
-- [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
-- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
-- [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
-- [`html-no-abstract-roles`](./html-no-abstract-roles.md) - No abstract ARIA roles
-- [`html-no-aria-hidden-on-body`](./html-no-aria-hidden-on-body.md) - No `aria-hidden` on `<body>`
-- [`html-no-aria-hidden-on-focusable`](./html-no-aria-hidden-on-focusable.md) - Focusable elements should not have `aria-hidden="true"`
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
-- [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
-- [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
-- [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
+- [`html-require-closing-tags`](./html-require-closing-tags.md) - Require closing tags for non-void elements
 - [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents

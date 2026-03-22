@@ -633,7 +633,7 @@ export class Config {
    * await Config.mutateConfigFile('/path/to/.herb.yml', {
    *   linter: {
    *     rules: {
-   *       'html-img-require-alt': { enabled: false }
+   *       'a11y-img-require-alt': { enabled: false }
    *     }
    *   }
    * })
