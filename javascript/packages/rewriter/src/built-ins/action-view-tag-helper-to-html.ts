@@ -150,12 +150,12 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
       })
 
       mutableValue.children = newChildren
+    }
 
-      if (!value.quoted) {
-        mutableValue.quoted = true
-        mutableValue.open_quote = createSyntheticToken('"')
-        mutableValue.close_quote = createSyntheticToken('"')
-      }
+    if (!value.quoted) {
+      mutableValue.quoted = true
+      mutableValue.open_quote = createSyntheticToken('"')
+      mutableValue.close_quote = createSyntheticToken('"')
     }
   }
 }
