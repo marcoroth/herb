@@ -77,6 +77,10 @@ export default class extends Controller {
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "rewriteViewer",
+    "rewriteOutput",
+    "rewriteStatus",
+    "rewriteActionViewHelpers",
     "lexViewer",
     "formatViewer",
     "formatSuccess",
@@ -373,6 +377,9 @@ export default class extends Controller {
       case 'html':
         content = this.htmlViewerTarget.textContent
         break
+      case 'rewrite':
+        content = this.rewriteOutputTarget.textContent
+        break
       case 'format':
         if (!this.formatSuccessTarget.classList.contains('hidden')) {
           content = this.formatSuccessTarget.textContent
@@ -522,7 +529,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'full']
     return validTabs.includes(tab)
   }
 
@@ -934,6 +941,28 @@ export default class extends Controller {
       Prism.highlightElement(this.htmlViewerTarget)
     }
 
+    if (this.hasRewriteViewerTarget) {
+      const options = this.getParserOptions()
+
+      if (this.hasRewriteActionViewHelpersTarget) {
+        this.rewriteActionViewHelpersTarget.checked = !!options.action_view_helpers
+      }
+
+      if (!options.action_view_helpers) {
+        this.rewriteStatusTarget.textContent = '⚠ Enable "Action View helpers" option'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+        this.rewriteOutputTarget.classList.remove("language-html")
+        this.rewriteOutputTarget.textContent = ''
+      } else {
+        this.rewriteStatusTarget.textContent = 'ActionView Tag Helper → HTML'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+        this.rewriteOutputTarget.classList.add("language-html")
+        this.rewriteOutputTarget.textContent = result.rewritten || 'No rewritten output available'
+
+        Prism.highlightElement(this.rewriteOutputTarget)
+      }
+    }
+
     const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
     const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
     const isWellFormatted = currentSource === result.formatted
@@ -1228,6 +1257,18 @@ export default class extends Controller {
   }
 
   onPrinterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  onRewriteActionViewHelpersChange(event) {
+    const checked = event.target.checked
+    const parserCheckbox = this.parserOptionsTarget.querySelector('input[data-option="action_view_helpers"]')
+
+    if (parserCheckbox) {
+      parserCheckbox.checked = checked
+    }
+
     this.updateURL()
     this.analyze()
   }
