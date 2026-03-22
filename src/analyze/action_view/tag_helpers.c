@@ -1201,6 +1201,41 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
             }
           } else if (strcmp(parse_context->matched_handler->name, "link_to") == 0) {
             replacement = transform_link_to_helper(erb_node, context, parse_context);
+          } else if (string_equals(parse_context->matched_handler->name, "tag") && parse_context->info->tag_name
+                     && string_equals(parse_context->info->tag_name, "attributes")) {
+            hb_array_T* attributes = NULL;
+
+            if (parse_context->info->call_node) {
+              attributes = extract_html_attributes_from_call_node(
+                parse_context->info->call_node,
+                parse_context->prism_source,
+                parse_context->original_source,
+                parse_context->erb_content_offset,
+                context->allocator
+              );
+            }
+
+            if (attributes && hb_array_size(attributes) > 0) {
+              size_t old_size = hb_array_size(array);
+              size_t attributes_size = hb_array_size(attributes);
+              hb_array_T* new_array = hb_array_init(old_size - 1 + attributes_size, context->allocator);
+
+              for (size_t j = 0; j < old_size; j++) {
+                if (j == i) {
+                  for (size_t k = 0; k < attributes_size; k++) {
+                    hb_array_append(new_array, hb_array_get(attributes, k));
+                  }
+                } else {
+                  hb_array_append(new_array, hb_array_get(array, j));
+                }
+              }
+
+              array->items = new_array->items;
+              array->size = new_array->size;
+              array->capacity = new_array->capacity;
+
+              i += attributes_size - 1;
+            }
           } else {
             replacement = transform_tag_helper_with_attributes(erb_node, context, parse_context);
           }
@@ -1209,6 +1244,73 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
         }
 
         free(erb_string);
+      }
+    } else if (child->type == AST_HTML_ATTRIBUTE_NODE) {
+      AST_HTML_ATTRIBUTE_NODE_T* attribute_node = (AST_HTML_ATTRIBUTE_NODE_T*) child;
+
+      if (attribute_node->name && !attribute_node->equals && !attribute_node->value && attribute_node->name->children
+          && hb_array_size(attribute_node->name->children) == 1) {
+        AST_NODE_T* name_child = hb_array_get(attribute_node->name->children, 0);
+
+        if (name_child && name_child->type == AST_ERB_CONTENT_NODE) {
+          AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) name_child;
+          token_T* erb_content = erb_node->content;
+
+          if (erb_content && !hb_string_is_empty(erb_content->value)) {
+            char* erb_string = hb_string_to_c_string_using_malloc(erb_content->value);
+            size_t erb_content_offset = 0;
+
+            if (context->source) {
+              erb_content_offset = calculate_byte_offset_from_position(context->source, erb_content->location.start);
+            }
+
+            tag_helper_parse_context_T* parse_context =
+              parse_tag_helper_content(erb_string, context->source, erb_content_offset, context->allocator);
+
+            if (parse_context && string_equals(parse_context->matched_handler->name, "tag")
+                && parse_context->info->tag_name && string_equals(parse_context->info->tag_name, "attributes")) {
+              hb_array_T* attributes = NULL;
+
+              if (parse_context->info->call_node) {
+                attributes = extract_html_attributes_from_call_node(
+                  parse_context->info->call_node,
+                  parse_context->prism_source,
+                  parse_context->original_source,
+                  parse_context->erb_content_offset,
+                  context->allocator
+                );
+              }
+
+              if (attributes && hb_array_size(attributes) > 0) {
+                size_t old_size = hb_array_size(array);
+                size_t attributes_size = hb_array_size(attributes);
+                hb_array_T* new_array = hb_array_init(old_size - 1 + attributes_size, context->allocator);
+
+                for (size_t j = 0; j < old_size; j++) {
+                  if (j == i) {
+                    for (size_t k = 0; k < attributes_size; k++) {
+                      hb_array_append(new_array, hb_array_get(attributes, k));
+                    }
+                  } else {
+                    hb_array_append(new_array, hb_array_get(array, j));
+                  }
+                }
+
+                array->items = new_array->items;
+                array->size = new_array->size;
+                array->capacity = new_array->capacity;
+
+                i += attributes_size - 1;
+              }
+
+              free_tag_helper_parse_context(parse_context);
+            } else if (parse_context) {
+              free_tag_helper_parse_context(parse_context);
+            }
+
+            free(erb_string);
+          }
+        }
       }
     }
 

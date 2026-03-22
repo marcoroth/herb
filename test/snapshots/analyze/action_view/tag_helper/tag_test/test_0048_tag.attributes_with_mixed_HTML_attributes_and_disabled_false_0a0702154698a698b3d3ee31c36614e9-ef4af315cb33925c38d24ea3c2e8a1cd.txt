@@ -1,0 +1,94 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0048_tag.attributes with mixed HTML attributes and disabled false"
+input: |2-
+<button <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %> class="primary">Get Started!</button>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:133))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:112))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "button" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:111)-(1:112))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:27)-(1:47))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:29))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:27)-(1:29))
+    │   │       │   │   │               └── content: "id"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ": " (location: (1:29)-(1:31))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:31)-(1:47))
+    │   │       │   │           ├── open_quote: """ (location: (1:31)-(1:32))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:32)-(1:46))
+    │   │       │   │           │       └── content: "call-to-action"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:46)-(1:47))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:74)-(1:89))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:74)-(1:82))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:74)-(1:82))
+    │   │       │   │   │               └── content: "aria-expanded"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ": " (location: (1:82)-(1:84))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:84)-(1:89))
+    │   │       │   │           ├── open_quote: ∅
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:84)-(1:89))
+    │   │       │   │           │       └── content: "false"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: ∅
+    │   │       │   │           └── quoted: false
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:96)-(1:111))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:96)-(1:101))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:96)-(1:101))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:101)-(1:102))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:102)-(1:111))
+    │   │       │               ├── open_quote: """ (location: (1:102)-(1:103))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:103)-(1:110))
+    │   │       │               │       └── content: "primary"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:110)-(1:111))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "button" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:112)-(1:124))
+    │   │       └── content: "Get Started!"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:124)-(1:133))
+    │   │       ├── tag_opening: "</" (location: (1:124)-(1:126))
+    │   │       ├── tag_name: "button" (location: (1:126)-(1:132))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:132)-(1:133))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:133)-(2:0))
+        └── content: "\n"
