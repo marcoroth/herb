@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:49))
+    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:55))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:49))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:47))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:42)-(1:49))
+    │   │               │           └── @ LiteralNode (location: (1:42)-(1:47))
     │   │               │               └── content: "defer"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:42)-(1:49))
+    │   │               ├── equals: ": " (location: (1:47)-(1:49))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:42)-(1:49))
-    │   │                       ├── open_quote: """ (location: (1:42)-(1:49))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:49)-(1:55))
+    │   │                       ├── open_quote: """ (location: (1:49)-(1:50))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:42)-(1:49))
+    │   │                       │   └── @ LiteralNode (location: (1:50)-(1:54))
     │   │                       │       └── content: "true"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:49)-(1:49))
+    │   │                       ├── close_quote: """ (location: (1:54)-(1:55))
     │   │                       └── quoted: true
     │   │
     │   │

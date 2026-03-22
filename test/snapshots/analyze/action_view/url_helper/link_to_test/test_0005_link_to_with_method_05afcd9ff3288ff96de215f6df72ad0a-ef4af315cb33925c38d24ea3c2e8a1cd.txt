@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           ├── @ HTMLAttributeNode (location: (1:33)-(1:41))
+    │   │           ├── @ HTMLAttributeNode (location: (1:33)-(1:49))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:41))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:39))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:33)-(1:41))
+    │   │           │   │           └── @ LiteralNode (location: (1:33)-(1:39))
     │   │           │   │               └── content: "data-method"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:33)-(1:41))
+    │   │           │   ├── equals: ": " (location: (1:39)-(1:41))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:33)-(1:41))
-    │   │           │           ├── open_quote: """ (location: (1:33)-(1:41))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:41)-(1:49))
+    │   │           │           ├── open_quote: """ (location: (1:41)-(1:42))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:33)-(1:41))
+    │   │           │           │   └── @ LiteralNode (location: (1:42)-(1:48))
     │   │           │           │       └── content: "delete"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:41)-(1:41))
+    │   │           │           ├── close_quote: """ (location: (1:48)-(1:49))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │

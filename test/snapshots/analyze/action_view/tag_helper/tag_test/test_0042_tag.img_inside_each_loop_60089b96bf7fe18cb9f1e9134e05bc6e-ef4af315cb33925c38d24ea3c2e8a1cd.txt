@@ -24,40 +24,40 @@ options: {action_view_helpers: true}
     │   │   │   │       ├── tag_closing: "%>" (location: (2:50)-(2:52))
     │   │   │   │       ├── tag_name: "img" (location: (2:10)-(2:13))
     │   │   │   │       └── children: (2 items)
-    │   │   │   │           ├── @ HTMLAttributeNode (location: (2:14)-(2:19))
+    │   │   │   │           ├── @ HTMLAttributeNode (location: (2:14)-(2:33))
     │   │   │   │           │   ├── name:
-    │   │   │   │           │   │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:19))
+    │   │   │   │           │   │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:17))
     │   │   │   │           │   │       └── children: (1 item)
-    │   │   │   │           │   │           └── @ LiteralNode (location: (2:14)-(2:19))
+    │   │   │   │           │   │           └── @ LiteralNode (location: (2:14)-(2:17))
     │   │   │   │           │   │               └── content: "src"
     │   │   │   │           │   │
     │   │   │   │           │   │
-    │   │   │   │           │   ├── equals: ":" (location: (2:14)-(2:19))
+    │   │   │   │           │   ├── equals: ": " (location: (2:17)-(2:19))
     │   │   │   │           │   └── value:
-    │   │   │   │           │       └── @ HTMLAttributeValueNode (location: (2:14)-(2:19))
+    │   │   │   │           │       └── @ HTMLAttributeValueNode (location: (2:19)-(2:33))
     │   │   │   │           │           ├── open_quote: ∅
     │   │   │   │           │           ├── children: (1 item)
-    │   │   │   │           │           │   └── @ RubyLiteralNode (location: (2:14)-(2:19))
+    │   │   │   │           │           │   └── @ RubyLiteralNode (location: (2:19)-(2:33))
     │   │   │   │           │           │       └── content: "item.image_url"
     │   │   │   │           │           │
     │   │   │   │           │           ├── close_quote: ∅
     │   │   │   │           │           └── quoted: false
     │   │   │   │           │
     │   │   │   │           │
-    │   │   │   │           └── @ HTMLAttributeNode (location: (2:35)-(2:40))
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:35)-(2:49))
     │   │   │   │               ├── name:
-    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:35)-(2:40))
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:35)-(2:38))
     │   │   │   │               │       └── children: (1 item)
-    │   │   │   │               │           └── @ LiteralNode (location: (2:35)-(2:40))
+    │   │   │   │               │           └── @ LiteralNode (location: (2:35)-(2:38))
     │   │   │   │               │               └── content: "alt"
     │   │   │   │               │
     │   │   │   │               │
-    │   │   │   │               ├── equals: ":" (location: (2:35)-(2:40))
+    │   │   │   │               ├── equals: ": " (location: (2:38)-(2:40))
     │   │   │   │               └── value:
-    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:35)-(2:40))
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:40)-(2:49))
     │   │   │   │                       ├── open_quote: ∅
     │   │   │   │                       ├── children: (1 item)
-    │   │   │   │                       │   └── @ RubyLiteralNode (location: (2:35)-(2:40))
+    │   │   │   │                       │   └── @ RubyLiteralNode (location: (2:40)-(2:49))
     │   │   │   │                       │       └── content: "item.name"
     │   │   │   │                       │
     │   │   │   │                       ├── close_quote: ∅

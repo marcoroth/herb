@@ -293,5 +293,35 @@ module Analyze::ActionView::UrlHelper
         <%= link_to("#", "argument") { "Block" } %>
       HTML
     end
+
+    test "link_to with symbol hashrocket class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", :class => "classes" %>
+      HTML
+    end
+
+    test "link_to with string hashrocket class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", "class" => "classes" %>
+      HTML
+    end
+
+    test "link_to with label syntax class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", class: "classes" %>
+      HTML
+    end
+
+    test "link_to with quoted label syntax class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", "class": "classes" %>
+      HTML
+    end
+
+    test "link_to with mixed data attribute syntax" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= link_to "Click here", "/path", data: { controller: "hello", :hello => "value" } %>
+      HTML
+    end
   end
 end

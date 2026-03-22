@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:41)-(1:50))
+    │   │           └── @ HTMLAttributeNode (location: (1:41)-(1:65))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:50))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:48))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:41)-(1:50))
+    │   │               │           └── @ LiteralNode (location: (1:41)-(1:48))
     │   │               │               └── content: "data-confirm"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:41)-(1:50))
+    │   │               ├── equals: ": " (location: (1:48)-(1:50))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:41)-(1:50))
-    │   │                       ├── open_quote: """ (location: (1:41)-(1:50))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:50)-(1:65))
+    │   │                       ├── open_quote: """ (location: (1:50)-(1:51))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:41)-(1:50))
+    │   │                       │   └── @ LiteralNode (location: (1:51)-(1:64))
     │   │                       │       └── content: "Are you sure?"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:50)-(1:50))
+    │   │                       ├── close_quote: """ (location: (1:64)-(1:65))
     │   │                       └── quoted: true
     │   │
     │   │

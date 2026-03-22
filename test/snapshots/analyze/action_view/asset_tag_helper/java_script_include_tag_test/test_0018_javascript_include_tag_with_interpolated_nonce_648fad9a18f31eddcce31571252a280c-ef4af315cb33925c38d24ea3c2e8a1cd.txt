@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:49))
+    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:68))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:49))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:68))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:42)-(1:49))
+    │   │               │           └── @ LiteralNode (location: (1:42)-(1:68))
     │   │               │               └── content: "nonce"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:42)-(1:49))
+    │   │               ├── equals: "=" (location: (1:42)-(1:68))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:42)-(1:49))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:42)-(1:68))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (2 items)
-    │   │                       │   ├── @ LiteralNode (location: (1:42)-(1:49))
+    │   │                       │   ├── @ LiteralNode (location: (1:42)-(1:68))
     │   │                       │   │   └── content: "static-"
     │   │                       │   │
-    │   │                       │   └── @ RubyLiteralNode (location: (1:42)-(1:49))
+    │   │                       │   └── @ RubyLiteralNode (location: (1:42)-(1:68))
     │   │                       │       └── content: "dynamic"
     │   │                       │
     │   │                       ├── close_quote: ∅

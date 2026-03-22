@@ -31,23 +31,23 @@ options: {action_view_helpers: true}
     │   │   │   │       ├── tag_closing: "%>" (location: (2:29)-(2:31))
     │   │   │   │       ├── tag_name: "div" (location: (2:10)-(2:13))
     │   │   │   │       └── children: (1 item)
-    │   │   │   │           └── @ HTMLAttributeNode (location: (2:14)-(2:18))
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:14)-(2:25))
     │   │   │   │               ├── name:
-    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:18))
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:16))
     │   │   │   │               │       └── children: (1 item)
-    │   │   │   │               │           └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │               │           └── @ LiteralNode (location: (2:14)-(2:16))
     │   │   │   │               │               └── content: "id"
     │   │   │   │               │
     │   │   │   │               │
-    │   │   │   │               ├── equals: "=" (location: (2:14)-(2:18))
+    │   │   │   │               ├── equals: ": " (location: (2:16)-(2:18))
     │   │   │   │               └── value:
-    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:14)-(2:18))
-    │   │   │   │                       ├── open_quote: """ (location: (2:14)-(2:18))
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:18)-(2:25))
+    │   │   │   │                       ├── open_quote: """ (location: (2:18)-(2:19))
     │   │   │   │                       ├── children: (1 item)
-    │   │   │   │                       │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │                       │   └── @ LiteralNode (location: (2:19)-(2:24))
     │   │   │   │                       │       └── content: "my-id"
     │   │   │   │                       │
-    │   │   │   │                       ├── close_quote: """ (location: (2:18)-(2:18))
+    │   │   │   │                       ├── close_quote: """ (location: (2:24)-(2:25))
     │   │   │   │                       └── quoted: true
     │   │   │   │
     │   │   │   │
@@ -86,23 +86,23 @@ options: {action_view_helpers: true}
     │   │           │   │       ├── tag_closing: "%>" (location: (6:30)-(6:32))
     │   │           │   │       ├── tag_name: "span" (location: (6:10)-(6:14))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ HTMLAttributeNode (location: (6:15)-(6:19))
+    │   │           │   │           └── @ HTMLAttributeNode (location: (6:15)-(6:26))
     │   │           │   │               ├── name:
-    │   │           │   │               │   └── @ HTMLAttributeNameNode (location: (6:15)-(6:19))
+    │   │           │   │               │   └── @ HTMLAttributeNameNode (location: (6:15)-(6:17))
     │   │           │   │               │       └── children: (1 item)
-    │   │           │   │               │           └── @ LiteralNode (location: (6:15)-(6:19))
+    │   │           │   │               │           └── @ LiteralNode (location: (6:15)-(6:17))
     │   │           │   │               │               └── content: "id"
     │   │           │   │               │
     │   │           │   │               │
-    │   │           │   │               ├── equals: "=" (location: (6:15)-(6:19))
+    │   │           │   │               ├── equals: ": " (location: (6:17)-(6:19))
     │   │           │   │               └── value:
-    │   │           │   │                   └── @ HTMLAttributeValueNode (location: (6:15)-(6:19))
-    │   │           │   │                       ├── open_quote: """ (location: (6:15)-(6:19))
+    │   │           │   │                   └── @ HTMLAttributeValueNode (location: (6:19)-(6:26))
+    │   │           │   │                       ├── open_quote: """ (location: (6:19)-(6:20))
     │   │           │   │                       ├── children: (1 item)
-    │   │           │   │                       │   └── @ LiteralNode (location: (6:15)-(6:19))
+    │   │           │   │                       │   └── @ LiteralNode (location: (6:20)-(6:25))
     │   │           │   │                       │       └── content: "my-id"
     │   │           │   │                       │
-    │   │           │   │                       ├── close_quote: """ (location: (6:19)-(6:19))
+    │   │           │   │                       ├── close_quote: """ (location: (6:25)-(6:26))
     │   │           │   │                       └── quoted: true
     │   │           │   │
     │   │           │   │

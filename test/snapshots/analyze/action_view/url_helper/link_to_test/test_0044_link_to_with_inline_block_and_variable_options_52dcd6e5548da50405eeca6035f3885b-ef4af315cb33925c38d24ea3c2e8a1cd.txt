@@ -25,7 +25,7 @@ options: {action_view_helpers: true}
     │   │           │   ├── equals: "=" (location: (1:12)-(1:20))
     │   │           │   └── value:
     │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:20))
-    │   │           │           ├── open_quote: """ (location: (1:12)-(1:20))
+    │   │           │           ├── open_quote: """ (location: (1:12)-(1:12))
     │   │           │           ├── children: (1 item)
     │   │           │           │   └── @ LiteralNode (location: (1:12)-(1:20))
     │   │           │           │       └── content: "/about"
