@@ -10,6 +10,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
+- [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
 
 #### ERB
