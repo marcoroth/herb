@@ -242,6 +242,7 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
+  indentWidth: number | undefined
 }
 
 /**
@@ -251,7 +252,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   fileName: undefined,
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
-  ignoreDisableComments: undefined
+  ignoreDisableComments: undefined,
+  indentWidth: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

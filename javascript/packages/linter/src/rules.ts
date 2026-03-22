@@ -83,6 +83,8 @@ import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
+import { SourceIndentationRule } from "./rules/source-indentation.js"
+
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
@@ -170,6 +172,8 @@ export const rules: RuleClass[] = [
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
+
+  SourceIndentationRule,
 
   SVGTagNameCapitalizationRule,
 
