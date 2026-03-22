@@ -409,7 +409,8 @@ export class Linter {
     context = {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
-      ignoredOffensesByLine
+      ignoredOffensesByLine,
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
     }
 
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
@@ -522,6 +523,12 @@ export class Linter {
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
     const includeUnsafe = options?.includeUnsafe ?? false
+
+    context = {
+      ...context,
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
+    }
+
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
 
     const parserOffenses: LintOffense[] = []
