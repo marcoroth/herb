@@ -1,7 +1,7 @@
 import dedent from "dedent"
 
 import { describe, it, expect, beforeAll } from "vitest"
-import { Position, MarkupKind } from "vscode-languageserver/node"
+import { Position, MarkupKind, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { HoverService } from "../src/hover_service"
@@ -24,7 +24,20 @@ describe("HoverService", () => {
 
   function getHover(content: string, line: number, character: number) {
     const document = createDocument(content)
+
     return service.getHover(document, Position.create(line, character))
+  }
+
+  function hoverValue(content: string, line: number, character: number): string {
+    const hover = getHover(content, line, character)
+
+    return (hover!.contents as { value: string }).value
+  }
+
+  function hoverRange(content: string, line: number, character: number): Range {
+    const hover = getHover(content, line, character)
+
+    return hover!.range!
   }
 
   describe("tag.* helpers", () => {
@@ -39,94 +52,150 @@ describe("HoverService", () => {
 
       expect(hover).not.toBeNull()
       expect(hover!.contents).toHaveProperty("kind", MarkupKind.Markdown)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag name>(optional content, options)
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("```erb")
-      expect(value).toContain("<div>")
-      expect(value).toContain("HTML equivalent")
-    })
+        **HTML equivalent**
+        \`\`\`erb
+        <div>
+          Content
+        </div>
+        \`\`\`
 
-    it("shows signature for tag helper", () => {
-      const content = "<%= tag.div do %><% end %>"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("```ruby")
-      expect(value).toContain("tag.<tag name>(optional content, options)")
-    })
-
-    it("shows documentation link for tag helper", () => {
-      const content = "<%= tag.div do %><% end %>"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::TagHelper#tag")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag")
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
     it("shows hover for tag.div with attributes", () => {
       const content = '<%= tag.div class: "container" do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag name>(optional content, options)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="container"></div>
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<div")
-      expect(value).toContain("container")
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
-    it("shows hover for tag with content argument", () => {
+    it("shows hover for tag.p with content argument", () => {
       const content = '<%= tag.p "Hello" %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag name>(optional content, options)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        **HTML equivalent**
+        \`\`\`erb
+        <p>Hello</p>
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<p>")
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 9,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
   })
 
   describe("content_tag", () => {
-    it("shows hover for content_tag", () => {
+    it("shows hover for content_tag with block", () => {
       const content = '<%= content_tag :div do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        **HTML equivalent**
+        \`\`\`erb
+        <div></div>
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<div>")
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 15,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
-    it("shows signature for content_tag", () => {
-      const content = '<%= content_tag :div do %><% end %>'
+    it("shows hover for content_tag with content argument", () => {
+      const content = '<%= content_tag :div, "Hello" %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        **HTML equivalent**
+        \`\`\`erb
+        <div>Hello</div>
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("content_tag(")
-    })
-
-    it("shows documentation link for content_tag", () => {
-      const content = '<%= content_tag :div do %><% end %>'
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::TagHelper#content_tag")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag")
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 15,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
   })
 
@@ -134,61 +203,234 @@ describe("HoverService", () => {
     it("shows hover for link_to", () => {
       const content = '<%= link_to "Home", root_path %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="<%= root_path %>">Home</a>
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<a")
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
+  })
 
-    it("shows signature for link_to", () => {
+  describe("hover range targets method name only", () => {
+    it("only triggers hover on the method name for link_to", () => {
       const content = '<%= link_to "Home", root_path %>'
 
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("link_to(")
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 12)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 11)).not.toBeNull()
     })
 
-    it("shows documentation link for link_to", () => {
-      const content = '<%= link_to "Home", root_path %>'
+    it("only triggers hover on the method name for tag.div", () => {
+      const content = '<%= tag.div do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 12)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 11)).not.toBeNull()
+    })
 
-      expect(hover).not.toBeNull()
+    it("only triggers hover on the method name for content_tag", () => {
+      const content = '<%= content_tag :div do %><% end %>'
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::UrlHelper#link_to")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to")
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 16)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 15)).not.toBeNull()
+    })
+  })
+
+  describe("nested elements", () => {
+    it("shows hover for each nested method name independently", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          <%= tag.div class: "hello" %>
+        <% end %>
+      `
+
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
+
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="Devices">
+          ...
+        </a>
+        \`\`\`
+
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag name>(optional content, options)
+        \`\`\`
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="hello"></div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+      `)
+      expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 13,
+            "line": 1,
+          },
+          "start": {
+            "character": 6,
+            "line": 1,
+          },
+        }
+      `)
+    })
+
+    it("does not show hover on body content between nested elements", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          some text
+        <% end %>
+      `
+
+      expect(getHover(content, 1, 5)).toBeNull()
+    })
+
+    it("shows shallow output with expandable details for deeply nested elements", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          <%= tag.div class: "hello" do %>
+            <%= content_tag :div, "Inner" %>
+          <% end %>
+        <% end %>
+      `
+
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
+
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="Devices">
+          ...
+        </a>
+        \`\`\`
+
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag name>(optional content, options)
+        \`\`\`
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="hello">
+          ...
+        </div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+      `)
+      expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 13,
+            "line": 1,
+          },
+          "start": {
+            "character": 6,
+            "line": 1,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 2, 8)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div>Inner</div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+      `)
+      expect(hoverRange(content, 2, 8)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 19,
+            "line": 2,
+          },
+          "start": {
+            "character": 8,
+            "line": 2,
+          },
+        }
+      `)
     })
   })
 
   describe("non-ActionView elements", () => {
     it("returns null for plain HTML elements", () => {
-      const content = "<div>hello</div>"
-
-      const hover = getHover(content, 0, 2)
-
-      expect(hover).toBeNull()
+      expect(getHover("<div>hello</div>", 0, 2)).toBeNull()
     })
 
     it("returns null for plain text", () => {
-      const content = "just some text"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).toBeNull()
+      expect(getHover("just some text", 0, 5)).toBeNull()
     })
 
     it("returns null for regular ERB expressions", () => {
-      const content = "<%= some_method %>"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).toBeNull()
+      expect(getHover("<%= some_method %>", 0, 5)).toBeNull()
     })
   })
 })
