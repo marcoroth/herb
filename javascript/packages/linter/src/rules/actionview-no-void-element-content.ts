@@ -17,7 +17,6 @@ export class ActionViewNoVoidElementContentRule extends ParserRule {
 
   get parserOptions(): Partial<ParserOptions> {
     return {
-      track_whitespace: true,
       action_view_helpers: true,
     }
   }
