@@ -33,6 +33,7 @@ import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newl
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
+import { ERBStrictLocalsFirstLineRule } from "./rules/erb-strict-locals-first-line.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
@@ -120,6 +121,7 @@ export const rules: RuleClass[] = [
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
   ERBStrictLocalsCommentSyntaxRule,
+  ERBStrictLocalsFirstLineRule,
   ERBStrictLocalsRequiredRule,
 
   HerbDisableCommentMalformedRule,

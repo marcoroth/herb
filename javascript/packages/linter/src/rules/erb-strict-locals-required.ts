@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { Location, ERBStrictLocalsNode, LiteralNode } from "@herb-tools/core"
+import { Location, ERBStrictLocalsNode, createLiteral } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isPartialFile } from "./file-utils.js"
@@ -39,7 +39,7 @@ export class ERBStrictLocalsRequiredRule extends ParserRule {
 
     if (visitor.foundStrictLocals) return []
 
-    const document = result.value as DocumentNode
+    const document = result.value
     const firstChild = document.children[0]
     const end = firstChild ? firstChild.location.end : Location.zero.end
 
@@ -52,12 +52,7 @@ export class ERBStrictLocalsRequiredRule extends ParserRule {
   }
 
   autofix(_offense: LintOffense, result: ParseResult): ParseResult | null {
-    (result.value.children as unknown[]).unshift(LiteralNode.from({
-      type: "AST_LITERAL_NODE",
-      location: Location.zero,
-      errors: [],
-      content: "<%# locals: () %>\n\n",
-    }))
+    result.value.children.unshift(createLiteral("<%# locals: () %>\n\n"))
 
     return result
   }
