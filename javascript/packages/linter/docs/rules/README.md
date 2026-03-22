@@ -35,7 +35,6 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
-- [`erb-space-indentation`](./erb-space-indentation.md) - Indent with spaces instead of tabs.
 - [`erb-strict-locals-comment-syntax`](./erb-strict-locals-comment-syntax.md) - Enforce strict locals comment syntax.
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
 - [`herb-disable-comment-missing-rules`](./herb-disable-comment-missing-rules.md) - Require rule names in `herb:disable` comments.
@@ -79,6 +78,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
+- [`source-space-indentation`](./source-space-indentation.md) - Indent with spaces instead of tabs.
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 

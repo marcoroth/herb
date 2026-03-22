@@ -34,7 +34,6 @@ export * from "./erb-prefer-image-tag-helper.js"
 export * from "./erb-require-trailing-newline.js"
 export * from "./erb-require-whitespace-inside-tags.js"
 export * from "./erb-right-trim.js"
-export * from "./erb-space-indentation.js"
 export * from "./erb-strict-locals-comment-syntax.js"
 export * from "./erb-strict-locals-required.js"
 
@@ -81,5 +80,7 @@ export * from "./html-no-underscores-in-attribute-names.js"
 export * from "./html-require-closing-tags.js"
 export * from "./html-require-script-nonce.js"
 export * from "./html-tag-name-lowercase.js"
+
+export * from "./source-space-indentation.js"
 
 export * from "./svg-tag-name-capitalization.js"

@@ -111,9 +111,10 @@ test/fixtures/ignored.html.erb:8:8
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -180,9 +181,10 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -211,9 +213,10 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -268,9 +271,10 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
   Fixable      3 offenses | 3 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -318,9 +322,10 @@ test/fixtures/ignored.html.erb:6:14
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -353,9 +358,10 @@ test/fixtures/parser-errors.html.erb:2:16
   Fixable      1 offense
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -577,9 +583,10 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -683,9 +690,10 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -731,9 +739,10 @@ test/fixtures/bad-file.html.erb:1:16
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -749,9 +758,10 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Offenses     0 offenses
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -815,9 +825,10 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -860,9 +871,10 @@ test/fixtures/test-file-simple.html.erb:2:22
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -916,7 +928,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 74,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -937,7 +949,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 74,
+    "ruleCount": 72,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1010,7 +1022,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 74,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1073,9 +1085,10 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1101,9 +1114,10 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1129,9 +1143,10 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1150,9 +1165,10 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Offenses     0 offenses
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1171,9 +1187,10 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Offenses     0 offenses
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1215,9 +1232,10 @@ test/fixtures/bad-file.html.erb:1:16
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1356,9 +1374,10 @@ test/fixtures/disabled-1.html.erb:14:19
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1568,9 +1587,10 @@ test/fixtures/disabled-2.html.erb:2:44
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or
@@ -1637,9 +1657,10 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
 
  New rules available:
-  Your .herb.yml version is 0.9.2. 2 new rules are disabled to ease upgrades:
+  Your .herb.yml version is 0.9.2. 3 new rules are disabled to ease upgrades:
 
   actionview-no-void-element-content (introduced in next release)
+  erb-space-indentation (introduced in next release)
   html-require-script-nonce (introduced in next release)
 
   Run herb-lint --upgrade to update the version and disable all new rules, or

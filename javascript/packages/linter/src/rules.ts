@@ -33,7 +33,6 @@ import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
-import { ERBSpaceIndentationRule } from "./rules/erb-space-indentation.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
@@ -84,6 +83,8 @@ import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
+import { SourceSpaceIndentationRule } from "./rules/source-space-indentation.js"
+
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
@@ -120,7 +121,6 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeScriptInterpolationRule,
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
-  ERBSpaceIndentationRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
   ERBStrictLocalsCommentSyntaxRule,
@@ -172,6 +172,8 @@ export const rules: RuleClass[] = [
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
+
+  SourceSpaceIndentationRule,
 
   SVGTagNameCapitalizationRule,
 
