@@ -684,6 +684,32 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     })
   })
 
+  describe("tag.attributes", () => {
+    test("tag.attributes extracts attributes into parent element", () => {
+      expect(transform('<input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>')).toBe(
+        '<input type="text" aria-label="Search">'
+      )
+    })
+
+    test("tag.attributes with attributes after", () => {
+      expect(transform('<button <%= tag.attributes(id: "cta", aria: { expanded: false }) %> class="primary">Click</button>')).toBe(
+        '<button id="cta" aria-expanded="false" class="primary">Click</button>'
+      )
+    })
+
+    test("tag.attributes with attributes before", () => {
+      expect(transform('<button class="primary" <%= tag.attributes(id: "cta") %>>Click</button>')).toBe(
+        '<button class="primary" id="cta">Click</button>'
+      )
+    })
+
+    test("tag.attributes with data hash", () => {
+      expect(transform('<div <%= tag.attributes(data: { controller: "hello" }) %>></div>')).toBe(
+        '<div data-controller="hello"></div>'
+      )
+    })
+  })
+
   describe("non-ActionView elements", () => {
     test("regular HTML elements are not modified", () => {
       expect(transform('<div class="content">Hello</div>')).toBe(

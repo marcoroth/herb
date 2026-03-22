@@ -1,5 +1,5 @@
 import { Visitor, Location, HTMLOpenTagNode, HTMLCloseTagNode, HTMLElementNode, HTMLAttributeValueNode, WhitespaceNode, ERBContentNode } from "@herb-tools/core"
-import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, createSyntheticToken } from "@herb-tools/core"
+import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, createSyntheticToken } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -24,6 +24,36 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     super()
     this.shallow = options.shallow ?? false
     this.includeBody = options.includeBody ?? true
+  }
+
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    const newChildren: Node[] = []
+
+    for (let index = 0; index < node.children.length; index++) {
+      const child = node.children[index]
+
+      if (isHTMLAttributeNode(child)) {
+        if (child.equals && child.equals.value !== "=") {
+          asMutable(child).equals = createSyntheticToken("=")
+        }
+
+        if (child.value) {
+          this.transformAttributeValue(child.value)
+        }
+
+        const previous = index > 0 ? node.children[index - 1] : null
+
+        if (!previous || !isWhitespaceNode(previous)) {
+          newChildren.push(createWhitespaceNode())
+        }
+      }
+
+      newChildren.push(child)
+    }
+
+    asMutable(node).children = newChildren
+
+    this.visitChildNodes(node)
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {

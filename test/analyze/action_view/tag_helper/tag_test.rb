@@ -358,5 +358,31 @@ module Analyze::ActionView::TagHelper
         <%= tag.img "/image.png", data: { controller: "image" } %>
       HTML
     end
+
+    test "tag.attributes inside HTML open tag extracts attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+      HTML
+    end
+
+    test "tag.attributes with mixed HTML attributes and disabled false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %> class="primary">Get Started!</button>
+      HTML
+    end
+
+    test "tag.attributes with attribute before" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button class="primary" <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %>>Get Started!</button>
+      HTML
+    end
+
+    test "tag.attributes with attribute before and after" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button class="primary" <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %> data-controller="hello">
+          Get Started!
+        </button>
+      HTML
+    end
   end
 end
