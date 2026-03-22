@@ -37,11 +37,8 @@ options: {action_view_helpers: true}
     │   │
     │   ├── tag_name: "hr" (location: (1:4)-(1:15))
     │   ├── body: []
-    │   ├── close_tag:
-    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:40)-(1:40))
-    │   │       └── tag_name: "hr" (location: (1:4)-(1:15))
-    │   │
-    │   ├── is_void: false
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
     │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
     │
     └── @ HTMLTextNode (location: (1:40)-(2:0))
