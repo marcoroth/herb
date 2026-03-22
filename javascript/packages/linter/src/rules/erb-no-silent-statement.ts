@@ -34,6 +34,7 @@ class ERBNoSilentStatementVisitor extends BaseRuleVisitor {
 
 export class ERBNoSilentStatementRule extends ParserRule {
   static ruleName = "erb-no-silent-statement"
+  static introducedIn = this.version("0.9.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

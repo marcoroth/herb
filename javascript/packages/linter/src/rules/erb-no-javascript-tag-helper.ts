@@ -29,6 +29,7 @@ class ERBNoJavascriptTagHelperVisitor extends BaseRuleVisitor {
 
 export class ERBNoJavascriptTagHelperRule extends ParserRule {
   static ruleName = "erb-no-javascript-tag-helper"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

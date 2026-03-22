@@ -108,7 +108,18 @@ test/fixtures/ignored.html.erb:8:8
   Checked      1 file
   Offenses     5 errors | 2 warnings (7 offenses across 1 file)
   Note         3 additional offenses reported (would have been ignored)
-  Fixable      7 offenses | 4 autocorrectable using \`--fix\`"
+  Fixable      7 offenses | 4 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
@@ -165,7 +176,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
-  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -187,7 +206,15 @@ test/fixtures/no-trailing-newline.html.erb:1:29
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      1 offense | 1 autocorrectable using \`--fix\`"
+  Fixable      1 offense | 1 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
@@ -235,7 +262,18 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
  Summary:
   Checked      1 file
   Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 offenses | 3 autocorrectable using \`--fix\`"
+  Fixable      3 offenses | 3 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
@@ -273,7 +311,18 @@ test/fixtures/ignored.html.erb:6:14
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings | 3 ignored (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -296,7 +345,18 @@ test/fixtures/parser-errors.html.erb:2:16
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      1 offense"
+  Fixable      1 offense
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -508,7 +568,18 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
  Summary:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
-  Fixable      14 offenses | 4 autocorrectable using \`--fix\`"
+  Fixable      14 offenses | 4 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -602,7 +673,18 @@ test/fixtures/few-rule-offenses.html.erb:6:0
  Summary:
   Checked      1 file
   Offenses     4 errors | 2 warnings (6 offenses across 1 file)
-  Fixable      6 offenses | 3 autocorrectable using \`--fix\`"
+  Fixable      6 offenses | 3 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -638,7 +720,15 @@ test/fixtures/bad-file.html.erb:1:16
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -647,7 +737,15 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
 
  Summary:
   Checked      1 file
-  Offenses     0 offenses"
+  Offenses     0 offenses
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -704,7 +802,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
-  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -740,7 +846,18 @@ test/fixtures/test-file-simple.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -787,7 +904,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 73,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -808,7 +925,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 73,
+    "ruleCount": 72,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -881,7 +998,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 73,
+    "ruleCount": 72,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -941,7 +1058,18 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
-  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -957,7 +1085,18 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -973,7 +1112,18 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -982,7 +1132,18 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
 
  Summary:
   Checked      1 file
-  Offenses     0 offenses"
+  Offenses     0 offenses
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > handles boolean attributes 1`] = `
@@ -991,7 +1152,18 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
 
  Summary:
   Checked      1 file
-  Offenses     0 offenses"
+  Offenses     0 offenses
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
@@ -1023,7 +1195,18 @@ test/fixtures/bad-file.html.erb:1:16
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
@@ -1152,7 +1335,18 @@ test/fixtures/disabled-1.html.erb:14:19
  Summary:
   Checked      1 file
   Offenses     2 errors | 6 warnings | 8 ignored (8 offenses across 1 file)
-  Fixable      8 offenses | 1 autocorrectable using \`--fix\`"
+  Fixable      8 offenses | 1 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
@@ -1352,7 +1546,18 @@ test/fixtures/disabled-2.html.erb:2:44
  Summary:
   Checked      1 file
   Offenses     6 errors | 7 warnings | 5 ignored (13 offenses across 1 file)
-  Fixable      13 offenses | 6 autocorrectable using \`--fix\`"
+  Fixable      13 offenses | 6 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once.
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
@@ -1409,5 +1614,13 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
-  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+
+ New rules available:
+  Your .herb.yml version is 0.9.2. 1 new rule is disabled to ease upgrades:
+
+  html-require-script-nonce (introduced in next release)
+
+  Run herb-lint --upgrade to update the version and disable all new rules, or
+  update the version in your .herb.yml to "0.9.2" to enable them all at once."
 `;

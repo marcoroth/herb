@@ -184,6 +184,7 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
 export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-no-duplicate-meta-names"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

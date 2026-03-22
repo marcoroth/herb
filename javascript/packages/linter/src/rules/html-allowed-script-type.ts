@@ -66,6 +66,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
 
 export class HTMLAllowedScriptTypeRule extends ParserRule {
   static ruleName = "html-allowed-script-type"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

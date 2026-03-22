@@ -28,6 +28,7 @@ class ERBNoSilentTagInAttributeNameVisitor extends BaseRuleVisitor {
 
 export class ERBNoSilentTagInAttributeNameRule extends ParserRule {
   static ruleName = "erb-no-silent-tag-in-attribute-name"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

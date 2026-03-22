@@ -4,7 +4,10 @@ import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath }
 
 import { existsSync, statSync } from "fs"
 import { resolve, relative } from "path"
+import { colorize } from "@herb-tools/highlighter"
 
+import { Linter } from "./linter.js"
+import { rules } from "./rules.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
@@ -144,7 +147,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -171,6 +174,57 @@ export class CLI {
       process.exit(0)
     }
 
+    if (upgrade) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+      const configVersion = config.configVersion
+
+      if (configVersion === version) {
+        console.log(`\n✓ Your .herb.yml is already at version ${version}. Nothing to upgrade.\n`)
+        process.exit(0)
+      }
+
+      const { skippedByVersion } = Linter.filterRulesByConfig(rules, config.linter?.rules, configVersion)
+
+      const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+      for (const rule of skippedByVersion) {
+        rulesMutation[rule.ruleName] = { enabled: false }
+      }
+
+      await Config.mutateConfigFile(config.path, {
+        linter: { rules: rulesMutation }
+      })
+
+      const { promises: fs } = await import("fs")
+      let content = await fs.readFile(config.path, "utf-8")
+      content = content.replace(/^version:\s*.+$/m, `version: ${version}`)
+      await fs.writeFile(config.path, content, "utf-8")
+
+      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion, "cyan")} to ${colorize(version, "cyan")}`)
+
+      if (skippedByVersion.length > 0) {
+        console.log(`${colorize("✓", "brightGreen")} Disabled ${colorize(String(skippedByVersion.length), "bold")} newly introduced ${skippedByVersion.length === 1 ? "rule" : "rules"}:`)
+        console.log("")
+
+        for (const rule of skippedByVersion) {
+          console.log(`  ${colorize(rule.ruleName, "white")}: ${colorize("enabled: false", "gray")}`)
+        }
+
+        console.log("")
+        console.log(`  Enable rules individually in your ${colorize(".herb.yml", "cyan")} when you're ready.`)
+      }
+
+      console.log("")
+      process.exit(0)
+    }
+
     const silent = formatOption === 'json'
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
@@ -183,7 +237,8 @@ export class CLI {
       showTiming,
       useGitHubActions,
       startTime,
-      startDate
+      startDate,
+      toolVersion: version
     }
 
     try {
@@ -260,6 +315,13 @@ export class CLI {
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
+
+      if (!Config.exists(this.projectPath) && formatOption !== 'json' && !useGitHubActions) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
+        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
+      }
+
       await this.afterProcess(results, outputOptions)
 
       const effectiveFailLevel = failLevel || linterConfig.failLevel

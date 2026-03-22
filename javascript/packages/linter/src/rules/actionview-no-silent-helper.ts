@@ -33,6 +33,7 @@ class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
 
 export class ActionViewNoSilentHelperRule extends ParserRule {
   static ruleName = "actionview-no-silent-helper"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

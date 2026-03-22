@@ -79,6 +79,7 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
   static ruleName = "html-no-aria-hidden-on-focusable"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -22,6 +22,7 @@ class NoAbstractRolesVisitor extends AttributeVisitorMixin {
 
 export class HTMLNoAbstractRolesRule extends ParserRule {
   static ruleName = "html-no-abstract-roles"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

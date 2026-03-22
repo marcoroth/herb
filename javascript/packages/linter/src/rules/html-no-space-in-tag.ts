@@ -145,6 +145,7 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
   // TODO: enable and fix autofix
   static autocorrectable = false
   static ruleName = "html-no-space-in-tag"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

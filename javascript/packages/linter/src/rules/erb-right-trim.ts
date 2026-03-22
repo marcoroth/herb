@@ -27,6 +27,7 @@ class ERBRightTrimVisitor extends BaseRuleVisitor<ERBRightTrimAutofixContext> {
 export class ERBRightTrimRule extends ParserRule<ERBRightTrimAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-right-trim"
+  static introducedIn = this.version("0.7.5")
 
   get defaultConfig(): FullRuleConfig {
     return {

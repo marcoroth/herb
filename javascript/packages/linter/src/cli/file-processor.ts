@@ -1,5 +1,6 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
 import { Config } from "@herb-tools/config"
 
@@ -14,6 +15,7 @@ import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
+import type { VersionSkippedRule } from "../linter.js"
 
 export interface ProcessedFile {
   filename: string
@@ -47,6 +49,7 @@ export interface ProcessingResult {
   ruleCount: number
   allOffenses: ProcessedFile[]
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
+  rulesSkippedByVersion: VersionSkippedRule[]
   context?: ProcessingContext
 }
 
@@ -238,6 +241,7 @@ export class FileProcessor {
       ruleCount,
       allOffenses,
       ruleOffenses,
+      rulesSkippedByVersion: this.linter?.rulesSkippedByVersion ?? [],
       context
     }
 
@@ -253,6 +257,9 @@ export class FileProcessor {
     const chunks = this.splitIntoChunks(files, workerCount)
     const workerPath = this.resolveWorkerPath()
 
+    const configVersion = context?.config?.configVersion
+    const { skippedByVersion } = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion)
+
     const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
     const workerResults = await Promise.all(workerPromises)
 
@@ -262,7 +269,10 @@ export class FileProcessor {
       }
     }
 
-    return this.aggregateWorkerResults(workerResults, formatOption, context)
+    const aggregated = this.aggregateWorkerResults(workerResults, formatOption, context)
+    aggregated.rulesSkippedByVersion = skippedByVersion
+
+    return aggregated
   }
 
   private resolveWorkerPath(): string {
@@ -383,6 +393,7 @@ export class FileProcessor {
       ruleCount,
       allOffenses,
       ruleOffenses,
+      rulesSkippedByVersion: [],
       context
     }
 
