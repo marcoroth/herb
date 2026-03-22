@@ -267,9 +267,9 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=a11y-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [a11y-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
-[error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
+[error] Missing required `alt` attribute on `<img>` tag [a11y-img-require-alt]
 
 template.html.erb:3:3
 
@@ -282,10 +282,10 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=a11y-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [a11y-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
-  3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
+  3:3 ✗ Missing required `alt` attribute on `<img>` tag [a11y-img-require-alt]
 ```
 
 The GitHub Actions annotations include:
@@ -472,7 +472,7 @@ Apply rules to specific files using `include`, `only`, and `exclude` patterns:
 linter:
   rules:
     # Apply rule only to component files
-    html-img-require-alt:
+    a11y-img-require-alt:
       include:
         - 'app/components/**/*'
       exclude:

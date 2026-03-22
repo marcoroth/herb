@@ -124,13 +124,13 @@ test/fixtures/ignored.html.erb:8:8
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
-"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=a11y-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [a11y-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
 
 test/fixtures/test-file-with-errors.html.erb:3:3
 
@@ -171,7 +171,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
 
 
  Summary:
@@ -366,7 +366,7 @@ test/fixtures/parser-errors.html.erb:2:16
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
-"[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
+"[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (a11y-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:5:3
 
@@ -380,7 +380,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/14] ⎯⎯⎯⎯
 
-[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
+[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (a11y-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:10:1
 
@@ -394,7 +394,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:1
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/14] ⎯⎯⎯⎯
 
-[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
+[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (a11y-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
@@ -408,6 +408,48 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/14] ⎯⎯⎯⎯
 
+[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
+
+test/fixtures/multiple-rule-offenses.html.erb:4:3
+
+      2 │ 
+      3 │ <div id=test1 class='' data-value=bar>
+  →   4 │   <img />
+        │    ~~~
+      5 │   <a class="" class="">Link 1</a>
+      6 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/14] ⎯⎯⎯⎯
+
+[warning] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (a11y-no-empty-headings)
+
+test/fixtures/multiple-rule-offenses.html.erb:8:0
+
+      6 │ </div>
+      7 │ 
+  →   8 │ <h1></h1>
+        │ ~~~~~~~~~
+      9 │ 
+     10 │ <a><a>Nested</a></a>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/14] ⎯⎯⎯⎯
+
+[error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (a11y-no-nested-links)
+
+test/fixtures/multiple-rule-offenses.html.erb:10:4
+
+      8 │ <h1></h1>
+      9 │ 
+  →  10 │ <a><a>Nested</a></a>
+        │     ~
+     11 │ 
+     12 │ <div id="duplicate"></div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/14] ⎯⎯⎯⎯
+
 [warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. (html-attribute-double-quotes) [Correctable]
 
 test/fixtures/multiple-rule-offenses.html.erb:3:20
@@ -420,7 +462,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/14] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
@@ -434,7 +476,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/14] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
@@ -448,21 +490,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/14] ⎯⎯⎯⎯
-
-[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
-
-test/fixtures/multiple-rule-offenses.html.erb:4:3
-
-      2 │ 
-      3 │ <div id=test1 class='' data-value=bar>
-  →   4 │   <img />
-        │    ~~~
-      5 │   <a class="" class="">Link 1</a>
-      6 │ </div>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/14] ⎯⎯⎯⎯
 
 [error] Duplicate attribute \`class\`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values. (html-no-duplicate-attributes)
 
@@ -476,7 +504,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
       7 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/14] ⎯⎯⎯⎯
 
 [warning] Attribute \`class\` must not be empty. Either provide a meaningful value or remove the attribute entirely. (html-no-empty-attributes)
 
@@ -490,7 +518,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:14
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [11/14] ⎯⎯⎯⎯
 
 [warning] Attribute \`class\` must not be empty. Either provide a meaningful value or remove the attribute entirely. (html-no-empty-attributes)
 
@@ -504,7 +532,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:5
       7 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/14] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [12/14] ⎯⎯⎯⎯
 
 [warning] Attribute \`class\` must not be empty. Either provide a meaningful value or remove the attribute entirely. (html-no-empty-attributes)
 
@@ -516,34 +544,6 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
         │               ~~~~~~~~
       6 │ </div>
       7 │
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [11/14] ⎯⎯⎯⎯
-
-[warning] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
-
-test/fixtures/multiple-rule-offenses.html.erb:8:0
-
-      6 │ </div>
-      7 │ 
-  →   8 │ <h1></h1>
-        │ ~~~~~~~~~
-      9 │ 
-     10 │ <a><a>Nested</a></a>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [12/14] ⎯⎯⎯⎯
-
-[error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (html-no-nested-links)
-
-test/fixtures/multiple-rule-offenses.html.erb:10:4
-
-      8 │ <h1></h1>
-      9 │ 
-  →  10 │ <a><a>Nested</a></a>
-        │     ~
-     11 │ 
-     12 │ <div id="duplicate"></div>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [13/14] ⎯⎯⎯⎯
@@ -562,11 +562,11 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
 
 
  Most frequent rule offenses:
-  html-anchor-require-href (3 offenses in 1 file)
+  a11y-anchor-require-href (3 offenses in 1 file)
   html-no-empty-attributes (3 offenses in 1 file)
   html-attribute-values-require-quotes (2 offenses in 1 file)
-  html-attribute-double-quotes (1 offense in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
+  a11y-no-empty-headings (1 offense in 1 file)
 
   ...and 4 more rules with 4 offenses
 
@@ -590,7 +590,35 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
-"[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
+"[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
+
+test/fixtures/few-rule-offenses.html.erb:3:3
+
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
+      2 │ <div id=test class=foo>
+  →   3 │   <img src=image>
+        │    ~~~
+      4 │ </div>
+      5 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
+
+[warning] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (a11y-no-empty-headings)
+
+test/fixtures/few-rule-offenses.html.erb:6:0
+
+      4 │ </div>
+      5 │ 
+  →   6 │ <h1></h1>
+        │ ~~~~~~~~~
+      7 │ 
+      8 │ <div id="duplicate"></div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
+
+[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
 test/fixtures/few-rule-offenses.html.erb:2:8
 
@@ -601,7 +629,7 @@ test/fixtures/few-rule-offenses.html.erb:2:8
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
@@ -614,7 +642,7 @@ test/fixtures/few-rule-offenses.html.erb:2:19
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
@@ -628,21 +656,7 @@ test/fixtures/few-rule-offenses.html.erb:3:11
       5 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
-
-[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
-
-test/fixtures/few-rule-offenses.html.erb:3:3
-
-      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
-      2 │ <div id=test class=foo>
-  →   3 │   <img src=image>
-        │    ~~~
-      4 │ </div>
-      5 │
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/6] ⎯⎯⎯⎯
 
 [error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicate-ids)
 
@@ -655,26 +669,12 @@ test/fixtures/few-rule-offenses.html.erb:9:5
      10 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/6] ⎯⎯⎯⎯
-
-[warning] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
-
-test/fixtures/few-rule-offenses.html.erb:6:0
-
-      4 │ </div>
-      5 │ 
-  →   6 │ <h1></h1>
-        │ ~~~~~~~~~
-      7 │ 
-      8 │ <div id="duplicate"></div>
-
-
 
  Rule offenses:
   html-attribute-values-require-quotes (3 offenses in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
+  a11y-no-empty-headings (1 offense in 1 file)
   html-no-duplicate-ids (1 offense in 1 file)
-  html-no-empty-headings (1 offense in 1 file)
 
 
  Summary:
@@ -759,13 +759,13 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
-"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=a11y-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [a11y-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
 
 test/fixtures/test-file-with-errors.html.erb:3:3
 
@@ -806,7 +806,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
 
 
  Summary:
@@ -956,7 +956,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "message": null,
   "offenses": [
     {
-      "code": "html-img-require-alt",
+      "code": "a11y-img-require-alt",
       "filename": "test/fixtures/test-file-with-errors.html.erb",
       "location": {
         "end": {
@@ -1023,7 +1023,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
 `;
 
 exports[`CLI Output Formatting > formats detailed error output correctly 1`] = `
-"[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+"[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
 
 test/fixtures/test-file-with-errors.html.erb:3:3
 
@@ -1064,7 +1064,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
 
 
  Summary:
@@ -1384,7 +1384,7 @@ test/fixtures/disabled-2.html.erb:6:30
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/13] ⎯⎯⎯⎯
 
-[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`a11y-img-require-alt\`? (herb-disable-comment-valid-rule-name)
 
 test/fixtures/disabled-2.html.erb:4:30
 
@@ -1398,7 +1398,7 @@ test/fixtures/disabled-2.html.erb:4:30
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/13] ⎯⎯⎯⎯
 
-[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`a11y-img-require-alt\`? (herb-disable-comment-valid-rule-name)
 
 test/fixtures/disabled-2.html.erb:6:35
 
@@ -1413,7 +1413,7 @@ test/fixtures/disabled-2.html.erb:6:35
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/13] ⎯⎯⎯⎯
 
-[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`a11y-img-require-alt\`? (herb-disable-comment-valid-rule-name)
 
 test/fixtures/disabled-2.html.erb:8:55
 
@@ -1581,13 +1581,13 @@ test/fixtures/disabled-2.html.erb:2:44
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
-"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=a11y-img-require-alt • @herb-tools/linter@0.9.2::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [a11y-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 ::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.9.2::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+[warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (a11y-img-require-alt)
 
 test/fixtures/test-file-with-errors.html.erb:3:3
 
@@ -1628,7 +1628,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
-  html-img-require-alt (1 offense in 1 file)
+  a11y-img-require-alt (1 offense in 1 file)
 
 
  Summary:

@@ -104,7 +104,7 @@ linter:
       severity: warning  # Options: error, warning, info, hint
 
     # Rule with file pattern restrictions
-    html-img-require-alt:
+    a11y-img-require-alt:
       # Only apply this rule to files matching these patterns
       only:
         - 'app/views/**/*'

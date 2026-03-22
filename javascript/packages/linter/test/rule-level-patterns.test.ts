@@ -185,7 +185,7 @@ describe("Rule-level include/only/exclude patterns", () => {
             "html-tag-name-lowercase": {
               include: ["app/components/**/*"]
             },
-            "html-img-require-alt": {
+            "a11y-img-require-alt": {
               only: ["app/views/**/*"]
             }
           }
@@ -197,11 +197,11 @@ describe("Rule-level include/only/exclude patterns", () => {
 
       const result1 = linter.lint(source, { fileName: "app/components/card.html.erb" })
       expect(result1.offenses.some(offense => offense.rule === "html-tag-name-lowercase")).toBe(true)
-      expect(result1.offenses.some(offense => offense.rule === "html-img-require-alt")).toBe(false)
+      expect(result1.offenses.some(offense => offense.rule === "a11y-img-require-alt")).toBe(false)
 
       const result2 = linter.lint(source, { fileName: "app/views/home/index.html.erb" })
       expect(result2.offenses.some(offense => offense.rule === "html-tag-name-lowercase")).toBe(false)
-      expect(result2.offenses.some(offense => offense.rule === "html-img-require-alt")).toBe(true)
+      expect(result2.offenses.some(offense => offense.rule === "a11y-img-require-alt")).toBe(true)
     })
 
     test("rule patterns work with linter-level exclude", () => {

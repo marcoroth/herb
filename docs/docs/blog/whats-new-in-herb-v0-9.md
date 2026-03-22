@@ -441,8 +441,8 @@ This release also introduces two new rule categories: **`erb-safety-*`** rules e
 
 - [`html-allowed-script-type`](/linter/rules/html-allowed-script-type.md)<br/>Restrict allowed `type` attributes on `<script>` tags
 - [`html-details-has-summary`](/linter/rules/html-details-has-summary.md)<br/>Require `<summary>` inside `<details>` elements
-- [`html-no-abstract-roles`](/linter/rules/html-no-abstract-roles.md)<br/>Disallow abstract ARIA roles
-- [`html-no-aria-hidden-on-body`](/linter/rules/html-no-aria-hidden-on-body.md)<br/>Disallow `aria-hidden` on `<body>`
+- [`html-no-abstract-roles`](/linter/rules/a11y-no-abstract-roles.md)<br/>Disallow abstract ARIA roles
+- [`html-no-aria-hidden-on-body`](/linter/rules/a11y-no-aria-hidden-on-body.md)<br/>Disallow `aria-hidden` on `<body>`
 - [`html-require-closing-tags`](/linter/rules/html-require-closing-tags.md)<br/>Require explicit closing tags
 
 ##### Turbo Rules

@@ -76,7 +76,7 @@ export default class extends Generator {
         {
           type: "input",
           name: "ruleName",
-          message: "What is the rule name? (e.g., html-img-require-alt)",
+          message: "What is the rule name? (e.g., a11y-img-require-alt)",
           validate: input => /^[a-z-]+$/.test(input) || "Rule name should be lowercase with hyphens"
         },
         {

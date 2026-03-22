@@ -306,7 +306,7 @@ describe("herb:disable comment formatting", () => {
 
   test("keeps herb:disable comment on same line as tag name in multiline opening tag", () => {
     expectFormattedToMatch(dedent`
-      <a <%# herb:disable html-anchor-require-href %>
+      <a <%# herb:disable a11y-anchor-require-href %>
         class="btn btn-secondary no-donate-btn"
         aria-label="Close"
         data-dismiss="modal"
