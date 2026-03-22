@@ -257,5 +257,17 @@ module Analyze::ActionView::TagHelper
         <%= content_tag(:script, "alert('Hello')", nonce: false) %>
       HTML
     end
+
+    test "content_tag with void element img and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img, "hello" %>
+      HTML
+    end
+
+    test "content_tag with void element br and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :br, "hello" %>
+      HTML
+    end
   end
 end

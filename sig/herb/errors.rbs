@@ -655,6 +655,24 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class VoidElementContentError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_void_element_content_error
+      def to_hash: () -> serialized_void_element_content_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class DotNotationCasingError < Error
       include Colors
 

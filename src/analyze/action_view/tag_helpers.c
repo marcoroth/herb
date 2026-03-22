@@ -8,6 +8,7 @@
 #include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_array.h"
 #include "../../include/lib/hb_string.h"
+#include "../../include/lib/string.h"
 #include "../../include/location/position.h"
 #include "../../include/parser/parser_helpers.h"
 #include "../../include/util/html_util.h"
@@ -431,10 +432,22 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   );
 
   hb_array_T* body = hb_array_init(1, allocator);
-  bool is_void = tag_name && ((strcmp(handler->name, "tag") == 0) || (strcmp(handler->name, "image_tag") == 0))
-              && is_void_element(hb_string_from_c_string(tag_name));
+  hb_array_T* element_errors = hb_array_init(0, allocator);
+  bool is_void = tag_name && is_void_element(hb_string_from_c_string(tag_name))
+              && (string_equals(handler->name, "tag") || string_equals(handler->name, "content_tag")
+                  || string_equals(handler->name, "image_tag"));
 
   if (helper_content) {
+    if (is_void) {
+      append_void_element_content_error(
+        tag_name_token,
+        erb_node->base.location.start,
+        erb_node->base.location.end,
+        allocator,
+        element_errors
+      );
+    }
+
     append_body_content_node(
       body,
       helper_content,
@@ -468,7 +481,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     handler->source,
     erb_node->base.location.start,
     erb_node->base.location.end,
-    hb_array_init(0, allocator),
+    element_errors,
     allocator
   );
 

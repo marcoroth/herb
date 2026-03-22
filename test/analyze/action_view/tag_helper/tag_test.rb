@@ -346,5 +346,17 @@ module Analyze::ActionView::TagHelper
         <%= tag.script(nonce: false) { "alert('Hello')".html_safe } %>
       HTML
     end
+
+    test "tag.img with content argument reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img "/image.png" %>
+      HTML
+    end
+
+    test "tag.img with content argument and data attributes reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img "/image.png", data: { controller: "image" } %>
+      HTML
+    end
   end
 end
