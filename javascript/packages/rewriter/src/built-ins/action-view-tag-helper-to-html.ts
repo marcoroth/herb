@@ -17,6 +17,15 @@ function createWhitespaceNode(): WhitespaceNode {
 }
 
 class ActionViewTagHelperToHTMLVisitor extends Visitor {
+  private shallow: boolean
+  private includeBody: boolean
+
+  constructor(options: { shallow?: boolean; includeBody?: boolean } = {}) {
+    super()
+    this.shallow = options.shallow ?? false
+    this.includeBody = options.includeBody ?? true
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (!node.element_source) {
       this.visitChildNodes(node)
@@ -104,7 +113,9 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
     asMutable(node).element_source = "HTML"
 
-    if (node.body) {
+    if (!this.includeBody) {
+      asMutable(node).body = []
+    } else if (node.body) {
       asMutable(node).body = node.body.map(child => {
         if (isRubyLiteralNode(child)) {
           return new ERBContentNode({
@@ -120,7 +131,10 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
           })
         }
 
-        this.visit(child)
+        if (!this.shallow) {
+          this.visit(child)
+        }
+
         return child
       })
     }
@@ -169,8 +183,8 @@ export class ActionViewTagHelperToHTMLRewriter extends ASTRewriter {
     return "Converts ActionView tag helpers to raw HTML elements"
   }
 
-  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
-    const visitor = new ActionViewTagHelperToHTMLVisitor()
+  rewrite<T extends Node>(node: T, context: RewriteContext): T {
+    const visitor = new ActionViewTagHelperToHTMLVisitor({ shallow: context.shallow, includeBody: context.includeBody })
 
     visitor.visit(node)
 
