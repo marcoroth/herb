@@ -27,23 +27,23 @@ options: {action_view_helpers: true}
     │   │   │   │       ├── tag_closing: "%>" (location: (2:29)-(2:31))
     │   │   │   │       ├── tag_name: "div" (location: (2:10)-(2:13))
     │   │   │   │       └── children: (1 item)
-    │   │   │   │           └── @ HTMLAttributeNode (location: (2:14)-(2:18))
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:14)-(2:25))
     │   │   │   │               ├── name:
-    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:18))
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:16))
     │   │   │   │               │       └── children: (1 item)
-    │   │   │   │               │           └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │               │           └── @ LiteralNode (location: (2:14)-(2:16))
     │   │   │   │               │               └── content: "id"
     │   │   │   │               │
     │   │   │   │               │
-    │   │   │   │               ├── equals: "=" (location: (2:14)-(2:18))
+    │   │   │   │               ├── equals: ": " (location: (2:16)-(2:18))
     │   │   │   │               └── value:
-    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:14)-(2:18))
-    │   │   │   │                       ├── open_quote: """ (location: (2:14)-(2:18))
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:18)-(2:25))
+    │   │   │   │                       ├── open_quote: """ (location: (2:18)-(2:19))
     │   │   │   │                       ├── children: (1 item)
-    │   │   │   │                       │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │   │   │                       │   └── @ LiteralNode (location: (2:19)-(2:24))
     │   │   │   │                       │       └── content: "my-id"
     │   │   │   │                       │
-    │   │   │   │                       ├── close_quote: """ (location: (2:18)-(2:18))
+    │   │   │   │                       ├── close_quote: """ (location: (2:24)-(2:25))
     │   │   │   │                       └── quoted: true
     │   │   │   │
     │   │   │   │

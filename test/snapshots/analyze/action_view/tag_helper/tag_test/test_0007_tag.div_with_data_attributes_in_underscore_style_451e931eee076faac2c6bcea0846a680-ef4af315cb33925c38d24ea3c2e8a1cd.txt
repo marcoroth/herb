@@ -16,40 +16,40 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:66)-(1:68))
     │   │       ├── tag_name: "div" (location: (1:8)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:12)-(1:34))
+    │   │           ├── @ HTMLAttributeNode (location: (1:12)-(1:43))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:34))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:32))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:12)-(1:34))
+    │   │           │   │           └── @ LiteralNode (location: (1:12)-(1:32))
     │   │           │   │               └── content: "data-controller-name"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:12)-(1:34))
+    │   │           │   ├── equals: ": " (location: (1:32)-(1:34))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:34))
-    │   │           │           ├── open_quote: """ (location: (1:12)-(1:34))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:34)-(1:43))
+    │   │           │           ├── open_quote: """ (location: (1:34)-(1:35))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:12)-(1:34))
+    │   │           │           │   └── @ LiteralNode (location: (1:35)-(1:42))
     │   │           │           │       └── content: "content"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:34)-(1:34))
+    │   │           │           ├── close_quote: """ (location: (1:42)-(1:43))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:45)-(1:59))
+    │   │           └── @ HTMLAttributeNode (location: (1:45)-(1:62))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:45)-(1:59))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:45)-(1:57))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:45)-(1:59))
+    │   │               │           └── @ LiteralNode (location: (1:45)-(1:57))
     │   │               │               └── content: "data-user-id"
     │   │               │
     │   │               │
-    │   │               ├── equals: ":" (location: (1:45)-(1:59))
+    │   │               ├── equals: ": " (location: (1:57)-(1:59))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:45)-(1:59))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:59)-(1:62))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ RubyLiteralNode (location: (1:45)-(1:59))
+    │   │                       │   └── @ RubyLiteralNode (location: (1:59)-(1:62))
     │   │                       │       └── content: "123"
     │   │                       │
     │   │                       ├── close_quote: ∅

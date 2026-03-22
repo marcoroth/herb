@@ -16,24 +16,24 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:34)-(1:36))
     │   │       ├── tag_name: "script" (location: (1:4)-(1:18))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:19)-(1:26))
+    │   │           └── @ HTMLAttributeNode (location: (1:19)-(1:30))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:26))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:24))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:19)-(1:26))
+    │   │               │           └── @ LiteralNode (location: (1:19)-(1:24))
     │   │               │               └── content: "nonce"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:19)-(1:26))
+    │   │               ├── equals: ": " (location: (1:24)-(1:26))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:19)-(1:26))
-    │   │                       ├── open_quote: """ (location: (1:19)-(1:26))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:26)-(1:30))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:19)-(1:26))
+    │   │                       │   └── @ LiteralNode (location: (1:26)-(1:30))
     │   │                       │       └── content: "true"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:26)-(1:26))
-    │   │                       └── quoted: true
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
     │   │
     │   │
     │   │

@@ -34,11 +34,11 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:49))
+    │   │           └── @ HTMLAttributeNode (location: (1:42)-(1:47))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:49))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:42)-(1:47))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:42)-(1:49))
+    │   │               │           └── @ LiteralNode (location: (1:42)-(1:47))
     │   │               │               └── content: "defer"
     │   │               │
     │   │               │
