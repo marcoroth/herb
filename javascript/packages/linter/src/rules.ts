@@ -3,6 +3,7 @@ import type { RuleClass } from "./types.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
+import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
@@ -93,6 +94,7 @@ export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoVoidElementContentRule,
+  ActionViewStrictLocalsFirstLineRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
