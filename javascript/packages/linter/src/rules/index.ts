@@ -81,6 +81,6 @@ export * from "./html-require-closing-tags.js"
 export * from "./html-require-script-nonce.js"
 export * from "./html-tag-name-lowercase.js"
 
-export * from "./source-space-indentation.js"
+export * from "./source-indentation.js"
 
 export * from "./svg-tag-name-capitalization.js"

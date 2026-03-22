@@ -1,6 +1,6 @@
-# Linter Rule: Space Indentation
+# Linter Rule: Indentation
 
-**Rule:** `source-space-indentation`
+**Rule:** `source-indentation`
 
 ## Description
 

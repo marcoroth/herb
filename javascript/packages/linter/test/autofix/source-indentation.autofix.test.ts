@@ -4,9 +4,9 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 import { Linter } from "../../src/linter.js"
 
-import { SourceSpaceIndentationRule } from "../../src/rules/source-space-indentation.js"
+import { SourceIndentationRule } from "../../src/rules/source-indentation.js"
 
-describe("source-space-indentation autofix", () => {
+describe("source-indentation autofix", () => {
   beforeAll(async () => {
     await Herb.load()
   })
@@ -15,7 +15,7 @@ describe("source-space-indentation autofix", () => {
     const input = "\tthis is a line\n\tanother line\n"
     const expected = "  this is a line\n  another line\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(expected)
@@ -27,7 +27,7 @@ describe("source-space-indentation autofix", () => {
     const input = "\t\tthis is a line\n"
     const expected = "    this is a line\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(expected)
@@ -39,7 +39,7 @@ describe("source-space-indentation autofix", () => {
     const input = "  \t    this is a line\n  \t  another line\n"
     const expected = "        this is a line\n      another line\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(expected)
@@ -50,7 +50,7 @@ describe("source-space-indentation autofix", () => {
   test("ignores space-only indentation", () => {
     const input = "   this is a line\n   another line\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(input)
@@ -61,7 +61,7 @@ describe("source-space-indentation autofix", () => {
   test("ignores lines without indentation", () => {
     const input = "this is a line\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(input)
@@ -72,7 +72,7 @@ describe("source-space-indentation autofix", () => {
   test("ignores tabs in the middle of a line", () => {
     const input = "hello\tworld\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(input)
@@ -84,7 +84,7 @@ describe("source-space-indentation autofix", () => {
     const input = "<div>\n\t<p>hello</p>\n</div>\n"
     const expected = "<div>\n  <p>hello</p>\n</div>\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input)
 
     expect(result.source).toBe(expected)
@@ -96,7 +96,7 @@ describe("source-space-indentation autofix", () => {
     const input = "\tthis is a line\n\t\tindented twice\n"
     const expected = "    this is a line\n        indented twice\n"
 
-    const linter = new Linter(Herb, [SourceSpaceIndentationRule])
+    const linter = new Linter(Herb, [SourceIndentationRule])
     const result = linter.autofix(input, { indentWidth: 4 })
 
     expect(result.source).toBe(expected)
@@ -114,7 +114,7 @@ describe("source-space-indentation autofix", () => {
       },
       linter: {
         rules: {
-          "source-space-indentation": { enabled: true }
+          "source-indentation": { enabled: true }
         }
       }
     })

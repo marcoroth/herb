@@ -1,11 +1,11 @@
 import { describe, test } from "vitest"
 
-import { SourceSpaceIndentationRule } from "../../src/rules/source-space-indentation.js"
+import { SourceIndentationRule } from "../../src/rules/source-indentation.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(SourceSpaceIndentationRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(SourceIndentationRule)
 
-describe("SourceSpaceIndentationRule", () => {
+describe("SourceIndentationRule", () => {
   test("ignores empty lines", () => {
     expectNoOffenses("\n\n\n")
   })

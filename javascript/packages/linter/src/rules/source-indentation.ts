@@ -6,7 +6,7 @@ import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } fro
 
 const START_BLANKS = /^[^\S\n]*\t[^\S\n]*/
 
-class SourceSpaceIndentationVisitor extends BaseSourceRuleVisitor {
+class SourceIndentationVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
     const lines = source.split("\n")
     let offset = 0
@@ -30,9 +30,9 @@ class SourceSpaceIndentationVisitor extends BaseSourceRuleVisitor {
   }
 }
 
-export class SourceSpaceIndentationRule extends SourceRule {
+export class SourceIndentationRule extends SourceRule {
   static autocorrectable = true
-  static ruleName = "source-space-indentation"
+  static ruleName = "source-indentation"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
@@ -43,7 +43,7 @@ export class SourceSpaceIndentationRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new SourceSpaceIndentationVisitor(this.ruleName, context)
+    const visitor = new SourceIndentationVisitor(this.ruleName, context)
 
     visitor.visit(source)
 
