@@ -26,6 +26,7 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
 
 export class HTMLAriaAttributeMustBeValid extends ParserRule {
   static ruleName = "html-aria-attribute-must-be-valid"
+  static introducedIn = this.version("0.4.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

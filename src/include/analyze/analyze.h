@@ -1,10 +1,10 @@
 #ifndef HERB_ANALYZE_H
 #define HERB_ANALYZE_H
 
-#include "../ast_nodes.h"
-#include "../parser.h"
-#include "../util/hb_allocator.h"
-#include "../util/hb_array.h"
+#include "../ast/ast_nodes.h"
+#include "../lib/hb_allocator.h"
+#include "../lib/hb_array.h"
+#include "../parser/parser.h"
 #include "analyzed_ruby.h"
 
 typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {

@@ -108,6 +108,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
 
 export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
   static ruleName = "erb-strict-locals-comment-syntax"
+  static introducedIn = this.version("0.8.8")
 
   get parserOptions() {
     return { strict_locals: true }

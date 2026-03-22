@@ -40,6 +40,7 @@ class NoAriaHiddenBodyVisitor extends BaseRuleVisitor {
 
 export class HTMLNoAriaHiddenOnBodyRule extends ParserRule {
   static ruleName = "html-no-aria-hidden-on-body"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

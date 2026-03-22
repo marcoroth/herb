@@ -458,6 +458,20 @@ errors:
 
       fields: []
 
+    - name: VoidElementContentError
+      message:
+        template: "Void element `%s` cannot have content. `%s` does not accept a positional argument for content."
+        arguments:
+          - tag_name->value
+          - helper_name
+
+      fields:
+        - name: tag_name
+          type: token
+
+        - name: helper_name
+          type: string
+
     - name: DotNotationCasingError
       message:
         template: "Dot-notation component tags require the first segment to start with an uppercase letter. `%s` does not start with an uppercase letter."

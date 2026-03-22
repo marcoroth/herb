@@ -1,7 +1,7 @@
 #include <ruby.h>
 
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_arena_debug.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_arena_debug.h"
 
 #include "error_helpers.h"
 #include "extension.h"

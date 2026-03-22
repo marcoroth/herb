@@ -1,0 +1,34 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0037_content_tag with void element img and content argument reports error"
+input: |2-
+<%= content_tag :img, "hello" %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:32))
+    │   ├── errors: (1 error)
+    │   │   └── @ VoidElementContentError (location: (1:22)-(1:29))
+    │   │       ├── message: "Void element `img` cannot have content. `content_tag :img` does not accept a positional argument for content."
+    │   │       ├── tag_name: "img" (location: (1:4)-(1:15))
+    │   │       └── helper_name: "content_tag :img"
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:32))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag :img, "hello" " (location: (1:3)-(1:30))
+    │   │       ├── tag_closing: "%>" (location: (1:30)-(1:32))
+    │   │       ├── tag_name: "img" (location: (1:4)-(1:15))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "img" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:32))
+    │   │       └── content: "hello"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (1:32)-(2:0))
+        └── content: "\n"

@@ -450,4 +450,114 @@ describe("html-no-duplicate-ids", () => {
       <% end %>
     `)
   })
+
+  test("passes for tag helper with unique id", () => {
+    expectNoOffenses('<%= tag.div id: "unique" %>')
+  })
+
+  test("fails for duplicate IDs between tag helper and HTML element", () => {
+    expectError('Duplicate ID `my-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= tag.div id: "my-id" do %>
+        content
+      <% end %>
+      <div id="my-id">content</div>
+    `)
+  })
+
+  test("fails for duplicate IDs between two tag helpers", () => {
+    expectError('Duplicate ID `my-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= tag.div id: "my-id" do %>
+        content
+      <% end %>
+      <%= tag.span id: "my-id" %>
+    `)
+  })
+
+  test("passes for IDs in mutually exclusive branches with HTML and tag helper", () => {
+    expectNoOffenses(dedent`
+      <% if use_tag_helper? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate IDs in same branch with void tag helper and HTML", () => {
+    expectError('Duplicate ID `my-id` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+    assertOffenses(dedent`
+      <% if condition? %>
+        <%= tag.img id: "my-id", src: "/image.png", alt: "Photo" %>
+        <img id="my-id" src="/other.png" alt="Other">
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate IDs in same branch with block tag helper and HTML", () => {
+    expectError('Duplicate ID `my-id` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+    assertOffenses(dedent`
+      <% if condition? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("passes for IDs in mutually exclusive branches with tag helpers on both sides", () => {
+    expectNoOffenses(dedent`
+      <% if condition? %>
+        <%= tag.div id: "shared-id" do %>
+          branch one
+        <% end %>
+      <% else %>
+        <%= tag.span id: "shared-id" do %>
+          branch two
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for turbo_frame_tag with duplicate id from positional argument and another element", () => {
+    expectError('Duplicate ID `my-frame` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= turbo_frame_tag "my-frame" do %>
+        content
+      <% end %>
+      <div id="my-frame">content</div>
+    `)
+  })
+
+  test("passes for turbo_frame_tag id in mutually exclusive branch with HTML id", () => {
+    expectNoOffenses(dedent`
+      <% if turbo? %>
+        <%= turbo_frame_tag "my-frame" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-frame">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for image_tag with duplicate id and HTML element", () => {
+    expectError('Duplicate ID `logo` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= image_tag "logo.png", id: "logo" %>
+      <img src="logo.png" id="logo">
+    `)
+  })
+
+  test("fails for link_to with duplicate id and HTML element", () => {
+    expectError('Duplicate ID `home-link` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= link_to "Home", root_path, id: "home-link" %>
+      <a href="/" id="home-link">Home</a>
+    `)
+  })
 })

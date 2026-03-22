@@ -245,5 +245,29 @@ module Analyze::ActionView::TagHelper
       assert_parsed_snapshot(template, action_view_helpers: true)
       assert_parsed_snapshot(template)
     end
+
+    test "content_tag :script with nonce true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: true) %>
+      HTML
+    end
+
+    test "content_tag :script with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: false) %>
+      HTML
+    end
+
+    test "content_tag with void element img and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img, "hello" %>
+      HTML
+    end
+
+    test "content_tag with void element br and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :br, "hello" %>
+      HTML
+    end
   end
 end

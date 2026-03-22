@@ -1,9 +1,9 @@
 #ifndef TAG_HELPER_HANDLER_H
 #define TAG_HELPER_HANDLER_H
 
-#include "../../util/hb_allocator.h"
-#include "../../util/hb_array.h"
-#include "../../util/hb_string.h"
+#include "../../lib/hb_allocator.h"
+#include "../../lib/hb_array.h"
+#include "../../lib/hb_string.h"
 #include <prism.h>
 #include <stdbool.h>
 

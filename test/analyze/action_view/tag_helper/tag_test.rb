@@ -279,5 +279,110 @@ module Analyze::ActionView::TagHelper
       assert_parsed_snapshot(template, action_view_helpers: true)
       assert_parsed_snapshot(template)
     end
+
+    test "tag.div inside if block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.div id: "my-id" do %>
+            Content
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.img inside if block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.img src: "/image.png", alt: "Photo" %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.div inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if condition? %>
+          <%= tag.div id: "my-id" do %>
+            Branch one
+          <% end %>
+        <% else %>
+          <%= tag.span id: "my-id" do %>
+            Branch two
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.div inside case/when branches" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% case status %>
+        <% when "active" %>
+          <%= tag.div class: "active" do %>
+            Active
+          <% end %>
+        <% when "inactive" %>
+          <%= tag.div class: "inactive" do %>
+            Inactive
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.img inside each loop" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @items.each do |item| %>
+          <%= tag.img src: item.image_url, alt: item.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag.script with nonce true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script(nonce: true) { "alert('Hello')".html_safe } %>
+      HTML
+    end
+
+    test "tag.script with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.script(nonce: false) { "alert('Hello')".html_safe } %>
+      HTML
+    end
+
+    test "tag.img with content argument reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img "/image.png" %>
+      HTML
+    end
+
+    test "tag.img with content argument and data attributes reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img "/image.png", data: { controller: "image" } %>
+      HTML
+    end
+
+    test "tag.attributes inside HTML open tag extracts attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+      HTML
+    end
+
+    test "tag.attributes with mixed HTML attributes and disabled false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %> class="primary">Get Started!</button>
+      HTML
+    end
+
+    test "tag.attributes with attribute before" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button class="primary" <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %>>Get Started!</button>
+      HTML
+    end
+
+    test "tag.attributes with attribute before and after" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <button class="primary" <%= tag.attributes(id: "call-to-action", disabled: false, aria: { expanded: false }) %> data-controller="hello">
+          Get Started!
+        </button>
+      HTML
+    end
   end
 end

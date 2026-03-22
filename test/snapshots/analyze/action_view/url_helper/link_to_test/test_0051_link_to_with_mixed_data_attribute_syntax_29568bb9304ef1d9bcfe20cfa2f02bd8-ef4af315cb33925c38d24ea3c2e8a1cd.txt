@@ -1,0 +1,91 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0051_link_to with mixed data attribute syntax"
+input: |2-
+<%= link_to "Click here", "/path", data: { controller: "hello", :hello => "value" } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:86))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:86))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Click here", "/path", data: { controller: "hello", :hello => "value" } " (location: (1:3)-(1:84))
+    │   │       ├── tag_closing: "%>" (location: (1:84)-(1:86))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (3 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:33))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │           │   │               └── content: "href"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:26)-(1:33))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
+    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │           │           │       └── content: "/path"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:33)-(1:33))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           ├── @ HTMLAttributeNode (location: (1:43)-(1:62))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:43)-(1:53))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:43)-(1:53))
+    │   │           │   │               └── content: "data-controller"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:53)-(1:55))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:55)-(1:62))
+    │   │           │           ├── open_quote: """ (location: (1:55)-(1:56))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:56)-(1:61))
+    │   │           │           │       └── content: "hello"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:61)-(1:62))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:65)-(1:81))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:65)-(1:70))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:65)-(1:70))
+    │   │               │               └── content: "data-hello"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: " => " (location: (1:70)-(1:74))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:74)-(1:81))
+    │   │                       ├── open_quote: """ (location: (1:74)-(1:75))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:75)-(1:80))
+    │   │                       │       └── content: "value"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:80)-(1:81))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:86))
+    │   │       └── content: "Click here"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:86)-(1:86))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:86)-(2:0))
+        └── content: "\n"

@@ -75,7 +75,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
-  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors"
+  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors" || ('consumesParserErrors' in primaryRuleClass && primaryRuleClass.consumesParserErrors)
   const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride

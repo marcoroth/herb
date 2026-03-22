@@ -36,6 +36,7 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
 export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttributeAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-boolean-attributes-no-value"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

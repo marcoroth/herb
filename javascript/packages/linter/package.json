@@ -22,7 +22,8 @@
     "watch": "tsc -b -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "prepublishOnly": "yarn clean && yarn build && yarn test"
+    "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n✗ Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
+    "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
   "exports": {
     "./package.json": "./package.json",

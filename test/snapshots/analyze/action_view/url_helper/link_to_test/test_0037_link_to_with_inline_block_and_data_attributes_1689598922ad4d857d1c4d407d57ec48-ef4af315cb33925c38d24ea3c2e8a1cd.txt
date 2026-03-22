@@ -25,7 +25,7 @@ options: {action_view_helpers: true}
     │   │           │   ├── equals: "=" (location: (1:12)-(1:22))
     │   │           │   └── value:
     │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:22))
-    │   │           │           ├── open_quote: """ (location: (1:12)-(1:22))
+    │   │           │           ├── open_quote: """ (location: (1:12)-(1:12))
     │   │           │           ├── children: (1 item)
     │   │           │           │   └── @ LiteralNode (location: (1:12)-(1:22))
     │   │           │           │       └── content: "/profile"
@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:32)-(1:46))
+    │   │           └── @ HTMLAttributeNode (location: (1:32)-(1:54))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:46))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:44))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:32)-(1:46))
+    │   │               │           └── @ LiteralNode (location: (1:32)-(1:44))
     │   │               │               └── content: "data-turbo-method"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:32)-(1:46))
+    │   │               ├── equals: ": " (location: (1:44)-(1:46))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:32)-(1:46))
-    │   │                       ├── open_quote: """ (location: (1:32)-(1:46))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:46)-(1:54))
+    │   │                       ├── open_quote: """ (location: (1:46)-(1:47))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:32)-(1:46))
+    │   │                       │   └── @ LiteralNode (location: (1:47)-(1:53))
     │   │                       │       └── content: "delete"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:46)-(1:46))
+    │   │                       ├── close_quote: """ (location: (1:53)-(1:54))
     │   │                       └── quoted: true
     │   │
     │   │

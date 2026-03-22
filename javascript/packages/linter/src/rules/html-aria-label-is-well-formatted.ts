@@ -45,6 +45,7 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
 
 export class HTMLAriaLabelIsWellFormattedRule extends ParserRule {
   static ruleName = "html-aria-label-is-well-formatted"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -374,6 +374,16 @@
                 </button>
 
                 <button
+                  data-playground-target="viewerButton"
+                  data-viewer="rewrite"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                >
+                  <i class="fas fa-wand-magic-sparkles"></i>
+                  <span class="ml-1">Rewrite</span>
+                </button>
+
+                <button
                   disabled
                   data-playground-target="viewerButton"
                   data-viewer="full"
@@ -511,6 +521,20 @@
                     />
                     <span class="select-none">Dot-notation tags</span>
                   </label>
+
+                  <span class="text-gray-600 mx-1">|</span>
+
+                  <button
+                    data-action="click->playground#expandAllNodes"
+                    class="text-gray-300 hover:text-white text-sm underline"
+                    title="Expand all tree nodes"
+                  >Expand all</button>
+
+                  <button
+                    data-action="click->playground#collapseAllNodes"
+                    class="text-gray-300 hover:text-white text-sm underline"
+                    title="Collapse all tree nodes"
+                  >Collapse all</button>
                 </div>
 
                 <pre
@@ -535,6 +559,35 @@
                 data-action="click->playground#shrinkViewer"
                 class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               ></pre>
+
+              <div
+                data-viewer-target="rewrite"
+                data-playground-target="rewriteViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div class="p-3 border-b border-gray-600 flex gap-4 items-center justify-between">
+                  <div class="flex gap-2 items-center">
+                    <span class="text-sm text-gray-300 mr-2">Rewriter:</span>
+                    <span data-playground-target="rewriteStatus" class="px-2 py-1 text-xs rounded font-medium"></span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 text-gray-300 text-sm">
+                      <input
+                        type="checkbox"
+                        data-playground-target="rewriteActionViewHelpers"
+                        data-action="change->playground#onRewriteActionViewHelpersChange"
+                        class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                      />
+                      <span class="select-none">Action View helpers</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="w-full h-full overflow-auto">
+                  <pre data-playground-target="rewriteOutput" class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4] language-html highlight" style="white-space: pre; line-height: 1.3"></pre>
+                </div>
+              </div>
 
               <div
                 data-viewer-target="format"

@@ -74,6 +74,7 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
 export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-tag-name-lowercase"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

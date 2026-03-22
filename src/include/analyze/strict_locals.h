@@ -1,7 +1,7 @@
 #ifndef HERB_ANALYZE_STRICT_LOCALS_H
 #define HERB_ANALYZE_STRICT_LOCALS_H
 
-#include "../ast_nodes.h"
+#include "../ast/ast_nodes.h"
 #include "analyze.h"
 
 #include <stdbool.h>

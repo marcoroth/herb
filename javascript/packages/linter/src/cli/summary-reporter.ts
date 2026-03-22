@@ -1,6 +1,9 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
+import { UNRELEASED_VERSION, compareSemver } from "../semver.js"
 
 import { ruleDocumentationUrl } from "../urls.js"
+
+import type { VersionSkippedRule } from "../linter.js"
 
 export interface SummaryData {
   files: string[]
@@ -18,6 +21,9 @@ export interface SummaryData {
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   autofixableCount: number
   ignoreDisableComments?: boolean
+  rulesSkippedByVersion?: VersionSkippedRule[]
+  configVersion?: string
+  toolVersion?: string
 }
 
 export class SummaryReporter {
@@ -125,6 +131,51 @@ export class SummaryReporter {
       console.log("")
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
     }
+
+    this.displayVersionSkippedRules(data.rulesSkippedByVersion, data.configVersion, data.toolVersion)
+  }
+
+  displayVersionSkippedRules(skippedRules?: VersionSkippedRule[], configVersion?: string, toolVersion?: string): void {
+    if (!skippedRules || skippedRules.length === 0) return
+
+    const ruleCount = skippedRules.length
+    const suggestedVersion = toolVersion || configVersion || "latest"
+
+    console.log("")
+    console.log(` ${colorize(`New rules available:`, "bold")}`)
+
+    if (configVersion) {
+      console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
+    } else {
+      console.log(`  ${colorize(String(ruleCount), "bold")} ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} available in newer versions:`)
+    }
+
+    console.log("")
+
+    const grouped = new Map<string, string[]>()
+
+    for (const rule of skippedRules) {
+      const existing = grouped.get(rule.introducedIn) || []
+      existing.push(rule.ruleName)
+      grouped.set(rule.introducedIn, existing)
+    }
+
+    const sortedVersions = Array.from(grouped.keys()).sort((a, b) => compareSemver(a, b))
+
+    for (const version of sortedVersions) {
+      const ruleNames = grouped.get(version)!
+      const versionLabel = version === UNRELEASED_VERSION ? "next release" : version
+
+      for (const ruleName of ruleNames) {
+        const ruleText = colorize(ruleName, "white")
+        const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(ruleName))
+        console.log(`  ${ruleLink} ${colorize(`(introduced in ${versionLabel})`, "gray")}`)
+      }
+    }
+
+    console.log("")
+    console.log(`  Run ${colorize("herb-lint --upgrade", "cyan")} to update the version and disable all new rules, or`)
+    console.log(`  update the version in your ${colorize(".herb.yml", "cyan")} to ${colorize(`"${suggestedVersion}"`, "cyan")} to enable them all at once.`)
   }
 
   displayMostViolatedRules(ruleOffenses: Map<string, { count: number, files: Set<string> }>, limit: number = 5): void {

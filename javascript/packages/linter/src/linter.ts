@@ -12,8 +12,9 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
+import { semverGreaterThan } from "./semver.js"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
@@ -47,8 +48,20 @@ export interface LinterOptions {
   silentCustomRules?: boolean
 }
 
+export interface VersionSkippedRule {
+  ruleName: string
+  introducedIn: RuleVersion
+}
+
+export interface FilterRulesResult {
+  enabled: RuleClass[]
+  skippedByVersion: VersionSkippedRule[]
+}
+
 export class Linter {
   public rules: RuleClass[]
+  public rulesSkippedByVersion: VersionSkippedRule[] = []
+
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
   protected parseCache: ParseCache
@@ -65,11 +78,13 @@ export class Linter {
    */
   static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[]): Linter {
     const allRules = customRules ? [...rules, ...customRules] : rules
-    const filteredRules = config?.linter?.rules
-      ? Linter.filterRulesByConfig(allRules, config.linter.rules)
-      : undefined
+    const configVersion = config?.configVersion
+    const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion)
 
-    return new Linter(herb, filteredRules, config, allRules)
+    const linter = new Linter(herb, filterResult.enabled, config, allRules)
+    linter.rulesSkippedByVersion = filterResult.skippedByVersion
+
+    return linter
   }
 
   /**
@@ -93,32 +108,58 @@ export class Linter {
   }
 
   /**
-   * Filters rules based on default config and optional user config overrides.
+   * Filters rules based on default config, user config overrides, and version gating.
    *
    * Priority:
-   * 1. User config override (if rule config exists in userRulesConfig)
-   * 2. Default config from rule's defaultConfig getter
+   * 1. User explicitly enabled/disabled (if rule config exists in userRulesConfig)
+   * 2. Version gating (if rule.introducedIn > configVersion, skip unless explicitly enabled)
+   * 3. Default config from rule's defaultConfig getter
    *
    * @param allRules - All available rule classes to filter from
    * @param userRulesConfig - Optional user configuration for rules
-   * @returns Filtered array of rule classes that should be enabled
+   * @param configVersion - Optional version from the user's .herb.yml for version-gated filtering
+   * @returns Object with enabled rules and rules skipped due to version gating
    */
   static filterRulesByConfig(
     allRules: RuleClass[],
-    userRulesConfig?: Record<string, RuleConfig>
-  ): RuleClass[] {
-    return allRules.filter(ruleClass => {
-      const instance = new ruleClass()
+    userRulesConfig?: Record<string, RuleConfig>,
+    configVersion?: string
+  ): FilterRulesResult {
+    const enabled: RuleClass[] = []
+    const skippedByVersion: VersionSkippedRule[] = []
 
+    for (const ruleClass of allRules) {
+      const instance = new ruleClass()
       const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
       const userRuleConfig = userRulesConfig?.[ruleClass.ruleName]
 
       if (userRuleConfig !== undefined) {
-        return userRuleConfig.enabled !== false
+        if (userRuleConfig.enabled !== false) {
+          enabled.push(ruleClass)
+        }
+
+        continue
       }
 
-      return defaultEnabled
-    })
+      if (configVersion && ruleClass.introducedIn) {
+        if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
+          if (defaultEnabled) {
+            skippedByVersion.push({
+              ruleName: ruleClass.ruleName,
+              introducedIn: ruleClass.introducedIn,
+            })
+          }
+
+          continue
+        }
+      }
+
+      if (defaultEnabled) {
+        enabled.push(ruleClass)
+      }
+    }
+
+    return { enabled, skippedByVersion }
   }
 
   /**
@@ -128,7 +169,7 @@ export class Linter {
    * @returns Array of default rule classes
    */
   protected getDefaultRules(): RuleClass[] {
-    return Linter.filterRulesByConfig(rules)
+    return Linter.filterRulesByConfig(rules).enabled
   }
 
   /**
@@ -379,10 +420,10 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (parser-no-errors handled above)
+      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
       // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
-        if (parseResult.recursiveErrors().length > 0) continue
+        if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
         continue
       }

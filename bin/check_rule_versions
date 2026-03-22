@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Pre-release check: ensures no linter rules have introducedIn = "unreleased".
+# All rules must have a concrete version before publishing a release.
+
+set -euo pipefail
+
+RULES_DIR="javascript/packages/linter/src/rules"
+
+unreleased_rules=$(grep -rl 'static introducedIn = "unreleased"' "$RULES_DIR" 2>/dev/null || true)
+
+if [ -n "$unreleased_rules" ]; then
+  echo ""
+  echo "✗ Found linter rules with introducedIn = \"unreleased\":"
+  echo ""
+
+  for file in $unreleased_rules; do
+    rule_name=$(grep 'static ruleName' "$file" | head -1 | sed 's/.*= "//;s/".*//')
+    echo "  • $rule_name ($file)"
+  done
+
+  echo ""
+  echo "  Update these rules to the release version before publishing."
+  echo ""
+  exit 1
+fi
+
+echo "✓ All linter rules have concrete introducedIn versions."
