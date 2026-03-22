@@ -53,6 +53,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
 export class HTMLHeadOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   static ruleName = "html-head-only-elements"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -237,6 +237,7 @@ class ERBNoEmptyControlFlowVisitor extends BaseRuleVisitor {
 
 export class ERBNoEmptyControlFlowRule extends ParserRule {
   static ruleName = "erb-no-empty-control-flow"
+  static introducedIn = this.version("0.9.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

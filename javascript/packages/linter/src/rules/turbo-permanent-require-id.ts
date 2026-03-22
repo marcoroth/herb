@@ -31,6 +31,7 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
 
 export class TurboPermanentRequireIdRule extends ParserRule {
   static ruleName = "turbo-permanent-require-id"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

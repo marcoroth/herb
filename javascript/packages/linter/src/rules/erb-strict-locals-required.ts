@@ -18,6 +18,7 @@ class ERBStrictLocalsRequiredVisitor extends BaseRuleVisitor {
 export class ERBStrictLocalsRequiredRule extends ParserRule {
   static unsafeAutocorrectable = true
   static ruleName = "erb-strict-locals-required"
+  static introducedIn = this.version("0.8.8")
 
   get parserOptions() {
     return { strict_locals: true }

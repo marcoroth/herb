@@ -23,6 +23,7 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
 
 export class ERBNoEmptyTagsRule extends ParserRule {
   static ruleName = "erb-no-empty-tags"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

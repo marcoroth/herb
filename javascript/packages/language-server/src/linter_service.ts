@@ -161,7 +161,7 @@ export class LinterService {
         }
       }, { projectPath: projectConfig?.projectPath || process.cwd() })
 
-      const filteredRules = Linter.filterRulesByConfig(this.allRules, config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, config.configVersion)
 
       this.linter = new Linter(Herb, filteredRules, config, this.allRules)
     }

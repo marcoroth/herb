@@ -26,6 +26,7 @@ export interface ParsedArguments {
   ignoreDisableComments: boolean
   force: boolean
   init: boolean
+  upgrade: boolean
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
   jobs: number
@@ -43,6 +44,7 @@ export class ArgumentParser {
       -h, --help                    show help
       -v, --version                 show version
       --init                        create a .herb.yml configuration file in the current directory
+      --upgrade                     update .herb.yml version and disable all newly introduced rules
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
       --fix                         automatically fix auto-correctable offenses
@@ -71,6 +73,7 @@ export class ArgumentParser {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
         init: { type: "boolean" },
+        upgrade: { type: "boolean" },
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
         fix: { type: "boolean" },
@@ -155,6 +158,7 @@ export class ArgumentParser {
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
     const init = values.init || false
+    const upgrade = values.upgrade || false
     const loadCustomRules = !values["no-custom-rules"]
 
     let failLevel: DiagnosticSeverity | undefined
@@ -181,7 +185,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel, jobs }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, loadCustomRules, failLevel, jobs }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

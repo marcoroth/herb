@@ -51,6 +51,7 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
 
 export class ERBNoOutputControlFlowRule extends ParserRule {
   static ruleName = "erb-no-output-control-flow"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

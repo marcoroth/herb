@@ -14,6 +14,7 @@ interface OutputOptions {
   useGitHubActions: boolean
   startTime: number
   startDate: Date
+  toolVersion?: string
 }
 
 interface LintResults extends ProcessingResult {
@@ -27,7 +28,7 @@ export class OutputManager {
    * Output successful lint results
    */
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
-    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, ruleOffenses, context } = results
+    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, ruleOffenses, rulesSkippedByVersion, context } = results
 
     const autofixableCount = allOffenses.filter(offense => offense.autocorrectable).length
 
@@ -59,6 +60,9 @@ export class OutputManager {
           ruleOffenses,
           autofixableCount,
           ignoreDisableComments: context?.ignoreDisableComments,
+          rulesSkippedByVersion,
+          configVersion: context?.config?.configVersion,
+          toolVersion: options.toolVersion,
         })
       }
     } else if (options.formatOption === "json") {
@@ -119,6 +123,9 @@ export class OutputManager {
         ruleOffenses,
         autofixableCount,
         ignoreDisableComments: context?.ignoreDisableComments,
+        rulesSkippedByVersion,
+        configVersion: context?.config?.configVersion,
+        toolVersion: options.toolVersion,
       })
     }
   }

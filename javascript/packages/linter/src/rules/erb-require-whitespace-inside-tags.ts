@@ -135,6 +135,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
 export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-require-whitespace-inside-tags"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
