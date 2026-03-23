@@ -890,7 +890,7 @@ static void parser_skip_erb_content(lexer_T* lexer) {
   do {
     token = lexer_next_token(lexer);
 
-    if (token->type == TOKEN_ERB_END) {
+    if (token->type == TOKEN_ERB_END || token->type == TOKEN_EOF) {
       token_free(token, lexer->allocator);
       break;
     }
@@ -904,6 +904,11 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
 
   do {
     after = lexer_next_token(lexer);
+
+    if (after->type == TOKEN_EOF) {
+      token_free(after, lexer->allocator);
+      return false;
+    }
 
     if (after->type == TOKEN_EQUALS) {
       token_free(after, lexer->allocator);
