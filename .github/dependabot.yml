@@ -18,13 +18,6 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/javascript/packages/*"
-    exclude-directories:
-      - "/javascript/packages/tailwind-class-sorter"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "npm"
-    directory: "/javascript/packages/tailwind-class-sorter"
     schedule:
       interval: "weekly"
     ignore:
