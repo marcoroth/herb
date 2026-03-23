@@ -1,22 +1,15 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+import { isTagAttributesCall } from "./action-view-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, Location, ERBContentNode, createSyntheticToken } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLElementNode, HTMLOpenTagNode, ParserOptions, PrismNode, Node } from "@herb-tools/core"
+import type { ParseResult, HTMLElementNode, HTMLOpenTagNode, ParserOptions, Node } from "@herb-tools/core"
 
 interface UnnecessaryTagAttributesAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
   tagName: string
   isVoid: boolean
-}
-
-function isTagAttributesCall(prismNode: PrismNode): boolean {
-  if (prismNode?.constructor?.name !== "CallNode") return false
-  if (prismNode.name !== "attributes") return false
-  if (prismNode.receiver?.constructor?.name !== "CallNode") return false
-
-  return prismNode.receiver.name === "tag"
 }
 
 function hasOnlyTagAttributesChildren(openTag: HTMLOpenTagNode): boolean {

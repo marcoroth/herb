@@ -1,15 +1,29 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { isERBNode, isERBOutputNode } from "@herb-tools/core"
+import { isTagAttributesCall, isConditionalTagAttributesCall } from "./action-view-utils.js"
+import { isERBNode, isERBOutputNode, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
+import type { ParseResult, HTMLOpenTagNode, ParserOptions } from "@herb-tools/core"
 
 class ERBNoOutputInAttributePositionVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     for (const child of node.children) {
       if (!isERBNode(child)) continue
       if (!isERBOutputNode(child)) continue
+      if (!isERBContentNode(child)) continue
+
+      const prismNode = child.prismNode
+      if (prismNode && isTagAttributesCall(prismNode)) continue
+
+      if (prismNode && isConditionalTagAttributesCall(prismNode)) {
+        this.addOffense(
+          "Avoid using conditional `tag.attributes` in attribute position. Use `<% if ... %><%= tag.attributes(...) %><% end %>` instead.",
+          child.location,
+        )
+
+        continue
+      }
 
       this.addOffense(
         "Avoid `<%= %>` in attribute position. Use `<% if ... %>` with static attributes instead.",
@@ -29,6 +43,12 @@ export class ERBNoOutputInAttributePositionRule extends ParserRule {
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true,
     }
   }
 
