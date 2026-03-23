@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0007_content_tag with inline block and attributes"
+input: "{source: \"<%= content_tag(:div, class: \\\"container\\\") { \\\"Hello\\\" } %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<div class="container">Hello</div>'.freeze;
+_buf.to_s

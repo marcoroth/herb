@@ -108,7 +108,8 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: @action_view_helpers)
+      action_view_helpers = @action_view_helpers && source_may_contain_action_view_helpers?(input)
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -352,6 +353,24 @@ module Herb
     end
 
     private
+
+    ACTION_VIEW_HELPER_NAMES = %w[
+      tag.
+      content_tag
+      link_to
+      turbo_frame_tag
+      javascript_tag
+      javascript_include_tag
+      image_tag
+    ].freeze
+
+    ACTION_VIEW_HELPER_PATTERN = Regexp.new(
+      "\\b(?:#{ACTION_VIEW_HELPER_NAMES.map { |name| Regexp.escape(name) }.join("|")})"
+    )
+
+    def source_may_contain_action_view_helpers?(source)
+      ACTION_VIEW_HELPER_PATTERN.match?(source)
+    end
 
     def run_validation(ast)
       validators = [

@@ -1,0 +1,46 @@
+<%= tag.div class: container_class do %>
+  <%= tag.nav class: nav_class, data: { controller: nav_controller } do %>
+    <%= link_to home_text, home_url %>
+    <%= link_to about_text, about_url, class: link_class %>
+    <%= link_to user_name, profile_url, class: link_class, data: { turbo_frame: frame_target } %>
+  <% end %>
+
+  <%= turbo_frame_tag "main" do %>
+    <%= tag.section class: section_class, id: section_id do %>
+      <%= tag.h1 heading %>
+      <%= tag.p description %>
+      <%= tag.div class: actions_class do %>
+        <%= link_to cta_text, cta_url, class: cta_class %>
+        <%= link_to secondary_text, secondary_url, class: secondary_class %>
+      <% end %>
+    <% end %>
+
+    <%= tag.div class: card_class, data: { controller: card_controller, index: card_index } do %>
+      <%= image_tag image_url, alt: image_alt, class: image_class %>
+      <%= tag.h3 card_title %>
+      <%= tag.p card_description %>
+      <%= link_to card_link_text, card_link_url, class: card_link_class %>
+    <% end %>
+
+    <%= tag.div class: card_class, data: { controller: card_controller, index: card_index_2 } do %>
+      <%= image_tag image_url_2, alt: image_alt_2, class: image_class %>
+      <%= tag.h3 card_title_2 %>
+      <%= tag.p card_description_2 %>
+      <%= link_to card_link_text, card_link_url_2, class: card_link_class %>
+    <% end %>
+
+    <%= content_tag :div, class: footer_class do %>
+      <%= tag.span copyright %>
+      <%= link_to privacy_text, privacy_url %>
+      <%= link_to terms_text, terms_url %>
+    <% end %>
+  <% end %>
+
+  <%= turbo_frame_tag "sidebar", src: sidebar_url, loading: "lazy" do %>
+    <%= tag.div class: skeleton_class do %>
+      <%= tag.div class: skeleton_line_class %>
+      <%= tag.div class: skeleton_line_class %>
+      <%= tag.div class: skeleton_line_class %>
+    <% end %>
+  <% end %>
+<% end %>

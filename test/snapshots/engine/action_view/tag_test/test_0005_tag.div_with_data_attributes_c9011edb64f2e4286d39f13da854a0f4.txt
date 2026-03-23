@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0005_tag.div with data attributes"
-input: "{source: \"<%= tag.div data: { controller: \\\"content\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
----
-<div data-controller="content"></div>

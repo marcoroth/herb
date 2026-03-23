@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0002_tag.attributes with simple attributes"
+input: "{source: \"<input <%= tag.attributes(type: :text, aria: { label: \\\"Search\\\" }) %>>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<input type="text" aria-label="Search">'.freeze;
+_buf.to_s

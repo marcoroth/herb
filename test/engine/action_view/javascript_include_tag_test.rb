@@ -19,6 +19,16 @@ module Engine
       test "javascript_include_tag with URL" do
         assert_action_view_helper('<%= javascript_include_tag "http://www.example.com/xmlhr.js" %>')
       end
+
+      # TODO: Boolean attribute style (async vs async="async") and attribute ordering
+      test "javascript_include_tag with URL and async" do
+        assert_action_view_helper_mismatch('<%= javascript_include_tag "http://www.example.com/xmlhr.js", async: true %>')
+      end
+
+      # TODO: Attribute ordering (data-turbo-track before src vs after)
+      test "javascript_include_tag with data attributes" do
+        assert_action_view_helper_mismatch('<%= javascript_include_tag "application", data: { turbo_track: "reload" } %>')
+      end
     end
   end
 end

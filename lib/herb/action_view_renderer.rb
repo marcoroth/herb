@@ -12,13 +12,16 @@ end
 
 module Herb
   class ActionViewRenderer
-    def self.render(source)
-      new.render(source)
+    def self.render(source, locals = {})
+      new.render(source, locals)
     end
 
-    def render(source)
+    def render(source, locals = {})
+      local_names = locals.reject { |k, _| k.to_s.start_with?("@") }.keys.map(&:to_sym)
+      assigns = locals.select { |k, _| k.to_s.start_with?("@") }.transform_keys { |k| k.to_s.delete_prefix("@") }
+
       lookup_context = ActionView::LookupContext.new([])
-      view = ActionView::Base.with_empty_template_cache.new(lookup_context, {}, nil)
+      view = ActionView::Base.with_empty_template_cache.new(lookup_context, assigns, nil)
       view.class.include(Turbo::FramesHelper) if defined?(Turbo::FramesHelper)
       handler = ActionView::Template::Handlers::ERB.new
 
@@ -26,11 +29,12 @@ module Herb
         source,
         "(eval)",
         handler,
-        locals: [],
+        locals: local_names,
         format: :html
       )
 
-      template.render(view, {})
+      local_values = locals.reject { |k, _| k.to_s.start_with?("@") }
+      template.render(view, local_values)
     end
   end
 end

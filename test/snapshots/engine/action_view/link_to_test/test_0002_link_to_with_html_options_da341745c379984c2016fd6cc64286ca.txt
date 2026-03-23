@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0002_link_to with html options"
-input: "{source: \"<%= link_to \\\"Click me\\\", \\\"#\\\", class: \\\"example\\\" %>\", type: \"rails_output\", action_view_helpers: true}"
----
-<a class="example" href="#">Click me</a>

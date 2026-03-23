@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0025_tag.div with data attribute ruby literal value"
+input: "{source: \"<%= tag.div data: { controller: \\\"content\\\", user_id: 123 } do %>Content<% end %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<div data-controller="content" data-user-id="123">Content</div>'.freeze;
+_buf.to_s

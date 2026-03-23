@@ -22,6 +22,23 @@ module Engine
       test "javascript_tag with type attribute" do
         assert_action_view_helper('<%= javascript_tag "alert(\'Hello\')", type: "application/javascript" %>')
       end
+
+      # TODO: content_security_policy_nonce is not available without Rails CSP setup
+      test "javascript_tag with nonce true" do
+        assert_action_view_helper(<<~ERB, evaluate: false)
+          <%= javascript_tag nonce: true do %>
+            alert('Hello')
+          <% end %>
+        ERB
+      end
+
+      test "javascript_tag with nonce false" do
+        assert_action_view_helper(<<~ERB)
+          <%= javascript_tag nonce: false do %>
+            alert('Hello')
+          <% end %>
+        ERB
+      end
     end
   end
 end

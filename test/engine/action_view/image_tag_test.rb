@@ -22,6 +22,21 @@ module Engine
       test "image_tag with URL source" do
         assert_action_view_helper('<%= image_tag "http://example.com/icon.png" %>')
       end
+
+      test "image_tag with protocol-relative URL" do
+        assert_action_view_helper('<%= image_tag "//cdn.example.com/icon.png" %>')
+      end
+
+      test "image_tag with ruby expression source" do
+        assert_action_view_helper(
+          '<%= image_tag user_avatar %>',
+          { user_avatar: "http://example.com/avatar.png" }
+        )
+      end
+
+      test "image_tag with data attributes" do
+        assert_action_view_helper('<%= image_tag "icon.png", data: { controller: "image" } %>')
+      end
     end
   end
 end

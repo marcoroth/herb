@@ -16,9 +16,8 @@ module Engine
 
       if evaluate
         assert_action_view_evaluated_snapshot(template, locals)
+        assert_action_view_match(template, locals)
       end
-
-      assert_action_view_match(template)
     end
 
     def assert_action_view_helper_mismatch(template, locals = {}, evaluate: true)
@@ -30,7 +29,7 @@ module Engine
 
       engine = Herb::Engine.new(template, escape: false, action_view_helpers: true)
       herb_result = action_view_eval(engine.src, locals).strip
-      rails_result = render_with_action_view(template).strip
+      rails_result = render_with_action_view(template, locals).strip
 
       herb_snapshot_key = { source: template, type: "herb_output", action_view_helpers: true }.to_s
       rails_snapshot_key = { source: template, type: "rails_output", action_view_helpers: true }.to_s
@@ -47,7 +46,7 @@ module Engine
     def assert_action_view_match(template, locals = {})
       engine = Herb::Engine.new(template, escape: false, action_view_helpers: true)
       herb_result = action_view_eval(engine.src, locals).strip
-      rails_result = render_with_action_view(template).strip
+      rails_result = render_with_action_view(template, locals).strip
 
       assert_equal rails_result, herb_result, <<~MESSAGE
         Herb output does not match Rails output for template:
@@ -94,17 +93,44 @@ module Engine
       context.instance_eval(compiled_source)
     end
 
+    module SimpleUrlFor
+      def url_for(options = {})
+        case options
+        when String then options
+        when Symbol then super
+        when Hash then super
+        else options.to_s
+        end
+      end
+    end
+
     def action_view_context
       @action_view_context ||= begin
         lookup_context = ::ActionView::LookupContext.new([])
         view = ::ActionView::Base.with_empty_template_cache.new(lookup_context, {}, nil)
         view.class.include(Turbo::FramesHelper) if defined?(Turbo::FramesHelper)
+        view.class.include(SimpleUrlFor)
         view
       end
     end
 
-    def render_with_action_view(template)
-      Herb::ActionViewRenderer.render(template.strip)
+    def render_with_action_view(template, locals = {})
+      renderer = Herb::ActionViewRenderer.new
+      original_render = renderer.method(:render)
+
+      lookup_context = ::ActionView::LookupContext.new([])
+      local_names = locals.reject { |k, _| k.to_s.start_with?("@") }.keys.map(&:to_sym)
+      assigns = locals.select { |k, _| k.to_s.start_with?("@") }.transform_keys { |k| k.to_s.delete_prefix("@") }
+
+      view = ::ActionView::Base.with_empty_template_cache.new(lookup_context, assigns, nil)
+      view.class.include(Turbo::FramesHelper) if defined?(Turbo::FramesHelper)
+      view.class.include(SimpleUrlFor)
+
+      handler = ::ActionView::Template::Handlers::ERB.new
+      action_view_template = ::ActionView::Template.new(template.strip, "(eval)", handler, locals: local_names, format: :html)
+      local_values = locals.reject { |k, _| k.to_s.start_with?("@") }
+
+      action_view_template.render(view, local_values)
     end
   end
 end

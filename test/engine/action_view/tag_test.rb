@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "action_view_test_helper"
-require_relative "../../snapshot_utils"
 
 module Engine
   module ActionView
     class TagTest < Minitest::Spec
       include ActionViewTestHelper
-      include SnapshotUtils
 
       test "tag.div with block" do
         assert_action_view_helper(<<~ERB)
@@ -33,7 +31,7 @@ module Engine
         assert_action_view_helper('<%= tag.div "Content", class: "content" %>')
       end
 
-      test "tag.div with data attributes" do
+      test "tag.div with data attributes in hash style" do
         assert_action_view_helper('<%= tag.div data: { controller: "content" } %>')
       end
 
@@ -46,7 +44,6 @@ module Engine
       end
 
       # TODO: Rails renders `disabled="disabled"` — we render `disabled` (boolean attribute without value).
-      # Both are valid HTML, but we could match Rails by rendering `disabled="disabled"` for `true` values.
       test "tag.input with boolean attribute" do
         assert_action_view_helper_mismatch('<%= tag.input type: "text", disabled: true %>')
       end
@@ -81,6 +78,60 @@ module Engine
 
       test "tag.div with escape false" do
         assert_action_view_helper('<%= tag.img src: "open & shut.png", escape: false %>')
+      end
+
+      test "tag.details with inline block" do
+        assert_action_view_helper('<%= tag.details { "Some content" } %>')
+      end
+
+      test "tag.div with inline block and attributes" do
+        assert_action_view_helper('<%= tag.div(class: "container") { "Hello" } %>')
+      end
+
+      test "tag.p with inline block and ruby expression" do
+        assert_action_view_helper(
+          '<%= tag.p { @user_name } %>',
+          { "@user_name": "Alice" }
+        )
+      end
+
+      test "tag.script with nonce true" do
+        assert_action_view_helper('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')
+      end
+
+      test "tag.script with nonce false" do
+        assert_action_view_helper('<%= tag.script(nonce: false) { "alert(1)".html_safe } %>')
+      end
+
+      test "nested tag helpers are also converted" do
+        assert_action_view_helper(<<~ERB)
+          <%= tag.div class: "outer" do %>
+            <%= tag.span "Inner" %>
+          <% end %>
+        ERB
+      end
+
+      test "tag.div with multiple attributes" do
+        assert_action_view_helper(<<~ERB)
+          <%= tag.div class: "content", id: "main" do %>
+            Content
+          <% end %>
+        ERB
+      end
+
+      test "tag.div with variable attribute value" do
+        assert_action_view_helper(
+          '<%= tag.div class: class_name do %>Content<% end %>',
+          { class_name: "dynamic-class" }
+        )
+      end
+
+      test "tag.div with data attribute ruby literal value" do
+        assert_action_view_helper('<%= tag.div data: { controller: "content", user_id: 123 } do %>Content<% end %>')
+      end
+
+      test "tag.hr void element with attributes" do
+        assert_action_view_helper('<%= tag.hr class: "divider" %>')
       end
     end
   end

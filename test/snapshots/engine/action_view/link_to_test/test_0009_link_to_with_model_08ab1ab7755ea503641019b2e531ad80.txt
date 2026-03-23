@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0009_link_to with model"
+input: "{source: \"<%= link_to @profile %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<a href="'.freeze; _buf << ::Herb::Engine.attr((url_for(@profile))); _buf << '">'.freeze; _buf << (@profile.to_s).to_s; _buf << '</a>'.freeze;
+_buf.to_s

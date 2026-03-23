@@ -38,6 +38,17 @@ module Engine
           <% end %>
         ERB
       end
+
+      test "turbo_frame_tag with variable id" do
+        assert_action_view_helper(
+          '<%= turbo_frame_tag dom_id do %>Content<% end %>',
+          { dom_id: "post_1" }
+        )
+      end
+
+      test "turbo_frame_tag with data attributes" do
+        assert_action_view_helper('<%= turbo_frame_tag "tray", data: { controller: "frame" } do %>Content<% end %>')
+      end
     end
   end
 end

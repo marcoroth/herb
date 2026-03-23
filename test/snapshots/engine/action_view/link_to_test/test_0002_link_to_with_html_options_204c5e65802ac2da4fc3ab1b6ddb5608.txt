@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0002_link_to with html options"
-input: "{source: \"<%= link_to \\\"Click me\\\", \\\"#\\\", class: \\\"example\\\" %>\", type: \"herb_output\", action_view_helpers: true}"
----
-<a href="#" class="example">Click me</a>

@@ -1,0 +1,59 @@
+<div class="page">
+  <header>
+    <%= tag.nav class: nav_class do %>
+      <%= link_to "Home", root_url %>
+      <%= link_to "About", about_url, class: "nav-link" %>
+      <%= link_to user_name, profile_url, class: "nav-link", data: { turbo_frame: "content" } %>
+    <% end %>
+  </header>
+
+  <main>
+    <%= turbo_frame_tag "content" do %>
+      <%= tag.section class: "hero", id: :hero do %>
+        <%= tag.h1 page_title %>
+        <%= tag.p page_description %>
+        <%= tag.div class: "actions" do %>
+          <%= link_to cta_text, cta_url, class: ["btn", "btn-primary"] %>
+          <%= link_to "Learn More", learn_url, class: "btn btn-secondary" %>
+        <% end %>
+      <% end %>
+
+      <%= tag.section class: "features", data: { controller: "features", count: feature_count } do %>
+        <%= tag.div class: "grid" do %>
+          <% features.each do |feature| %>
+            <%= tag.div class: "card" do %>
+              <%= image_tag feature[:image], alt: feature[:alt], class: "card-img" %>
+              <%= tag.h3 feature[:title] %>
+              <%= tag.p feature[:description] %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+
+      <%= tag.section class: cta_class, data: { controller: "cta" } do %>
+        <%= content_tag :div, class: "container" do %>
+          <%= tag.h2 cta_heading %>
+          <%= link_to cta_button_text, signup_url, class: "btn btn-lg" %>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <%= turbo_frame_tag "sidebar", src: sidebar_url, loading: "lazy" do %>
+      <%= tag.div class: "skeleton" do %>
+        <%= tag.div class: "skeleton-line" %>
+        <%= tag.div class: "skeleton-line" %>
+      <% end %>
+    <% end %>
+  </main>
+
+  <footer>
+    <%= tag.div class: "footer-content", data: { year: current_year } do %>
+      <%= tag.div class: "footer-links" do %>
+        <%= link_to "Privacy", privacy_url %>
+        <%= link_to "Terms", terms_url %>
+        <%= link_to contact_email, "mailto:#{contact_email}" %>
+      <% end %>
+      <%= tag.p copyright_text %>
+    <% end %>
+  </footer>
+</div>

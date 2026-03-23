@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0001_tag.attributes with class array and dynamic id"
+input: "{source: \"<div data-controller=\\\"one\\\" <%= tag.attributes(class: [\\\"one\\\", \\\"two\\\", name], id: dom_id) %>>Content</div>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<div data-controller="one" class="'.freeze; _buf << ::Herb::Engine.attr((token_list(["one", "two", name]))); _buf << '" id="'.freeze; _buf << ::Herb::Engine.attr((dom_id)); _buf << '">Content</div>'.freeze;
+_buf.to_s

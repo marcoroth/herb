@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0004_tag.attributes with data hash containing special characters"
+input: "{source: \"<div <%= tag.attributes(data: { controller: \\\"hello\\\", action: \\\"click->hello#greet\\\" }) %>></div>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<div data-controller="hello" data-action="click->hello#greet"></div>'.freeze;
+_buf.to_s

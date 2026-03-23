@@ -298,7 +298,7 @@ class Herb::CLI
         self.track_whitespace = true
       end
 
-      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
+      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse/compile/render commands) (default: false)") do
         self.action_view_helpers = true
       end
 
@@ -446,6 +446,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:action_view_helpers] = true if action_view_helpers
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
@@ -532,6 +533,8 @@ class Herb::CLI
         options[:debug] = true
         options[:debug_filename] = @file if @file
       end
+
+      options[:action_view_helpers] = true if action_view_helpers
 
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src

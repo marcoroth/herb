@@ -1,5 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0007_link_to with inline block and attributes"
-input: "{source: \"<%= link_to(\\\"/about\\\", class: \\\"btn\\\") { \\\"About\\\" } %>\", type: \"rails_output\", action_view_helpers: true}"
----
-<a class="btn" href="/about">About</a>

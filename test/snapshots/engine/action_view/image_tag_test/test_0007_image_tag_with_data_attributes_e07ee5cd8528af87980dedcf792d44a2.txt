@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0007_image_tag with data attributes"
+input: "{source: \"<%= image_tag \\\"icon.png\\\", data: { controller: \\\"image\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img data-controller="image" src="/images/icon.png" />
