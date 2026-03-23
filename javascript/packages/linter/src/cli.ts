@@ -192,15 +192,58 @@ export class CLI {
 
       const { skippedByVersion } = Linter.filterRulesByConfig(rules, config.linter?.rules, configVersion)
 
-      const rulesMutation: Record<string, { enabled: boolean }> = {}
+      let rulesToDisable: typeof skippedByVersion = []
+      let rulesToEnable: typeof skippedByVersion = []
+      const ruleOffenseCounts = new Map<string, number>()
 
-      for (const rule of skippedByVersion) {
-        rulesMutation[rule.ruleName] = { enabled: false }
+      if (skippedByVersion.length > 0) {
+        console.log(`\n${colorize("↻", "cyan")} Checking ${colorize(String(skippedByVersion.length), "bold")} new ${skippedByVersion.length === 1 ? "rule" : "rules"} against your codebase...`)
+
+        const skippedRulesConfig: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of skippedByVersion) {
+          skippedRulesConfig[rule.ruleName] = { enabled: true }
+        }
+
+        const upgradeConfig = Config.fromObject({
+          ...config.options,
+          linter: {
+            ...config.options.linter,
+            rules: { ...config.options.linter?.rules, ...skippedRulesConfig }
+          }
+        }, { projectPath: this.projectPath, configVersion: version })
+
+        const upgradeContext: ProcessingContext = {
+          projectPath: this.projectPath,
+          config: upgradeConfig,
+          jobs,
+        }
+
+        await Herb.load()
+
+        const files = await config.findFilesForTool('linter', this.projectPath)
+        const upgradeProcessor = new FileProcessor()
+        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+
+        for (const [ruleName, data] of results.ruleOffenses) {
+          ruleOffenseCounts.set(ruleName, data.count)
+        }
+
+        rulesToDisable = skippedByVersion.filter(rule => ruleOffenseCounts.has(rule.ruleName))
+        rulesToEnable = skippedByVersion.filter(rule => !ruleOffenseCounts.has(rule.ruleName))
+
+        const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of rulesToDisable) {
+          rulesMutation[rule.ruleName] = { enabled: false }
+        }
+
+        if (Object.keys(rulesMutation).length > 0) {
+          await Config.mutateConfigFile(config.path, {
+            linter: { rules: rulesMutation }
+          })
+        }
       }
-
-      await Config.mutateConfigFile(config.path, {
-        linter: { rules: rulesMutation }
-      })
 
       const { promises: fs } = await import("fs")
       let content = await fs.readFile(config.path, "utf-8")
@@ -209,16 +252,29 @@ export class CLI {
 
       console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion, "cyan")} to ${colorize(version, "cyan")}`)
 
-      if (skippedByVersion.length > 0) {
-        console.log(`${colorize("✓", "brightGreen")} Disabled ${colorize(String(skippedByVersion.length), "bold")} newly introduced ${skippedByVersion.length === 1 ? "rule" : "rules"}:`)
-        console.log("")
+      if (rulesToEnable.length > 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} Enabled ${colorize(String(rulesToEnable.length), "bold")} new ${rulesToEnable.length === 1 ? "rule" : "rules"} (no offenses found):\n`)
 
-        for (const rule of skippedByVersion) {
-          console.log(`  ${colorize(rule.ruleName, "white")}: ${colorize("enabled: false", "gray")}`)
+        for (const rule of rulesToEnable) {
+          console.log(`  ${colorize("✓", "brightGreen")} ${colorize(rule.ruleName, "white")}`)
+        }
+      }
+
+      if (rulesToDisable.length > 0) {
+        const totalOffenses = Array.from(ruleOffenseCounts.values()).reduce((sum, count) => sum + count, 0)
+
+        console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(rulesToDisable.length), "bold")} new ${rulesToDisable.length === 1 ? "rule" : "rules"}. Disabled to ease the upgrade:\n`)
+
+        for (const rule of rulesToDisable) {
+          const offenseCount = ruleOffenseCounts.get(rule.ruleName) || 0
+          console.log(`  ${colorize("✗", "red")} ${colorize(rule.ruleName, "white")} ${colorize(`(${offenseCount} ${offenseCount === 1 ? "offense" : "offenses"})`, "gray")}`)
         }
 
-        console.log("")
-        console.log(`  Enable rules individually in your ${colorize(".herb.yml", "cyan")} when you're ready.`)
+        console.log(`\n  When you're ready, review the disabled ${rulesToDisable.length === 1 ? "rule" : "rules"} in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.`)
+      }
+
+      if (skippedByVersion.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No new rules to configure.`)
       }
 
       console.log("")
@@ -299,6 +355,8 @@ export class CLI {
         processingConfig = modifiedConfig
       }
 
+      const hasConfigFile = Config.exists(configFile || this.projectPath)
+
       const context: ProcessingContext = {
         projectPath: this.projectPath,
         configPath: configFile,
@@ -308,6 +366,7 @@ export class CLI {
         ignoreDisableComments,
         linterConfig,
         config: processingConfig,
+        hasConfigFile,
         loadCustomRules,
         jobs
       }

@@ -23,6 +23,8 @@ export interface SummaryData {
   ignoreDisableComments?: boolean
   rulesSkippedByVersion?: VersionSkippedRule[]
   configVersion?: string
+  configPath?: string
+  hasConfigFile?: boolean
   toolVersion?: string
 }
 
@@ -132,22 +134,24 @@ export class SummaryReporter {
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
     }
 
-    this.displayVersionSkippedRules(data.rulesSkippedByVersion, data.configVersion, data.toolVersion)
+    this.displayVersionSkippedRules(data)
   }
 
-  displayVersionSkippedRules(skippedRules?: VersionSkippedRule[], configVersion?: string, toolVersion?: string): void {
+  displayVersionSkippedRules(data: SummaryData): void {
+    const { rulesSkippedByVersion: skippedRules, configVersion, configPath, hasConfigFile, toolVersion } = data
+
     if (!skippedRules || skippedRules.length === 0) return
+    if (!hasConfigFile) return
 
     const ruleCount = skippedRules.length
     const suggestedVersion = toolVersion || configVersion || "latest"
 
     console.log("")
     console.log(` ${colorize(`New rules available:`, "bold")}`)
+    console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
 
-    if (configVersion) {
-      console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
-    } else {
-      console.log(`  ${colorize(String(ruleCount), "bold")} ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} available in newer versions:`)
+    if (configPath) {
+      console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
     }
 
     console.log("")
@@ -174,8 +178,8 @@ export class SummaryReporter {
     }
 
     console.log("")
-    console.log(`  Run ${colorize("herb-lint --upgrade", "cyan")} to update the version and disable all new rules, or`)
-    console.log(`  update the version in your ${colorize(".herb.yml", "cyan")} to ${colorize(`"${suggestedVersion}"`, "cyan")} to enable them all at once.`)
+    console.log(`  Run ${colorize("herb-lint --upgrade", "cyan")} to update the version. Rules with no offenses will be`)
+    console.log(`  enabled automatically; rules with offenses will be disabled to ease the upgrade.`)
   }
 
   displayMostViolatedRules(ruleOffenses: Map<string, { count: number, files: Set<string> }>, limit: number = 5): void {

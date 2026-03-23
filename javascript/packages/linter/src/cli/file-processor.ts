@@ -33,6 +33,7 @@ export interface ProcessingContext {
   ignoreDisableComments?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
+  hasConfigFile?: boolean
   loadCustomRules?: boolean
   jobs?: number
 }
