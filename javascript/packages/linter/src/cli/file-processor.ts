@@ -51,6 +51,8 @@ export interface ProcessingResult {
   allOffenses: ProcessedFile[]
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   rulesSkippedByVersion: VersionSkippedRule[]
+  rulesDisabledByConfig: number
+  rulesNotEnabledByDefault: number
   context?: ProcessingContext
 }
 
@@ -243,6 +245,8 @@ export class FileProcessor {
       allOffenses,
       ruleOffenses,
       rulesSkippedByVersion: this.linter?.rulesSkippedByVersion ?? [],
+      rulesDisabledByConfig: this.linter?.rulesDisabledByConfig ?? 0,
+      rulesNotEnabledByDefault: this.linter?.rulesNotEnabledByDefault ?? 0,
       context
     }
 
@@ -259,7 +263,7 @@ export class FileProcessor {
     const workerPath = this.resolveWorkerPath()
 
     const configVersion = context?.config?.configVersion
-    const { skippedByVersion } = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion)
+    const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion)
 
     const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
     const workerResults = await Promise.all(workerPromises)
@@ -271,7 +275,9 @@ export class FileProcessor {
     }
 
     const aggregated = this.aggregateWorkerResults(workerResults, formatOption, context)
-    aggregated.rulesSkippedByVersion = skippedByVersion
+    aggregated.rulesSkippedByVersion = filterResult.skippedByVersion
+    aggregated.rulesDisabledByConfig = filterResult.disabledByConfig
+    aggregated.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
 
     return aggregated
   }
@@ -395,6 +401,8 @@ export class FileProcessor {
       allOffenses,
       ruleOffenses,
       rulesSkippedByVersion: [],
+      rulesDisabledByConfig: 0,
+      rulesNotEnabledByDefault: 0,
       context
     }
 
