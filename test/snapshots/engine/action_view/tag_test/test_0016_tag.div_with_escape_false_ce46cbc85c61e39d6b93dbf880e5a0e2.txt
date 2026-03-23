@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0016_tag.div with escape false"
+input: "{source: \"<%= tag.img src: \\\"open & shut.png\\\", escape: false %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<img src="open & shut.png">'.freeze;
+_buf.to_s

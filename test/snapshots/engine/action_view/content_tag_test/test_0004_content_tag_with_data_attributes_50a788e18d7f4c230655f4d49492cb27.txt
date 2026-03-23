@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0004_content_tag with data attributes"
+input: "{source: \"<%= content_tag :div, data: { controller: \\\"example\\\" } do %>Content<% end %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div data-controller="example">Content</div>

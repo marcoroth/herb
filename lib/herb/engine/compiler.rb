@@ -49,6 +49,7 @@ module Herb
         tag_name = node.tag_name&.value&.downcase
 
         @element_stack.push(tag_name) if tag_name
+        @current_element_source = node.element_source
 
         if tag_name == "script"
           push_context(:script_content)
@@ -57,8 +58,22 @@ module Herb
         end
 
         visit(node.open_tag)
-        visit_all(node.body)
-        visit(node.close_tag)
+
+        is_javascript_tag = node.element_source == "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+
+        if is_javascript_tag && node.body.any?
+          add_text("\n//<![CDATA[\n")
+          visit_all(node.body)
+          add_text("\n//]]>\n")
+        else
+          visit_all(node.body)
+        end
+
+        if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
+          add_text("</#{tag_name}>")
+        else
+          visit(node.close_tag)
+        end
 
         pop_context if ["script", "style"].include?(tag_name)
 
@@ -101,7 +116,8 @@ module Herb
 
         return unless node.value
 
-        add_text(node.equals.value)
+        equals = node.equals&.value || "="
+        add_text(equals == "=" ? "=" : "=")
         visit(node.value)
       end
 
@@ -112,13 +128,51 @@ module Herb
       def visit_html_attribute_value_node(node)
         push_context(:attribute_value)
 
-        add_text(node.open_quote&.value) if node.quoted
-
-        visit_all(node.children)
-
-        add_text(node.close_quote&.value) if node.quoted
+        if node.quoted
+          add_text(node.open_quote&.value || '"')
+          visit_all(node.children)
+          add_text(node.close_quote&.value || '"')
+        else
+          add_text('"')
+          visit_all(node.children)
+          add_text('"')
+        end
 
         pop_context
+      end
+
+      def visit_erb_open_tag_node(node)
+        tag_name = node.tag_name&.value
+
+        if tag_name
+          is_void = %w[area base br col embed hr img input link meta param source track wbr].include?(tag_name.downcase)
+          uses_self_closing = is_void && @current_element_source != "ActionView::Helpers::TagHelper#tag"
+
+          add_text("<")
+          add_text(tag_name)
+
+          node.children.each do |child|
+            visit(child)
+          end
+
+          add_text(uses_self_closing ? " />" : ">")
+        else
+          process_erb_tag(node)
+        end
+      end
+
+      def visit_html_virtual_close_tag_node(node)
+        tag_name = node.tag_name&.value
+
+        if tag_name
+          add_text("</")
+          add_text(tag_name)
+          add_text(">")
+        end
+      end
+
+      def visit_ruby_literal_node(node)
+        add_expression(node.content)
       end
 
       def visit_html_close_tag_node(node)
