@@ -22,6 +22,8 @@ export interface SummaryData {
   autofixableCount: number
   ignoreDisableComments?: boolean
   rulesSkippedByVersion?: VersionSkippedRule[]
+  rulesDisabledByConfig?: number
+  rulesNotEnabledByDefault?: number
   configVersion?: string
   configPath?: string
   hasConfigFile?: boolean
@@ -121,12 +123,23 @@ export class SummaryReporter {
       console.log(`  ${colorize(pad("Fixable"), "gray")} ${fixableLine}`)
     }
 
+    const notEnabledCount = data.rulesNotEnabledByDefault ?? 0
+    const disabledCount = data.rulesDisabledByConfig ?? 0
+    const skippedCount = data.rulesSkippedByVersion?.length ?? 0
+    const rulesParts = [colorize(colorize(`${ruleCount} enabled`, "green"), "bold")]
+
+    if (notEnabledCount > 0) rulesParts.push(colorize(`${notEnabledCount} not enabled`, "cyan"))
+    if (disabledCount > 0) rulesParts.push(colorize(`${disabledCount} disabled`, "yellow"))
+    if (skippedCount > 0) rulesParts.push(colorize(`${skippedCount} skipped (version)`, "gray"))
+
+    console.log(`  ${colorize(pad("Rules"), "gray")} ${rulesParts.join(" | ")}`)
+
     if (showTiming) {
       const duration = Date.now() - startTime
       const timeString = startDate.toTimeString().split(' ')[0]
 
       console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
-      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray")}`)
+      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")}`)
     }
 
     if (filesWithOffenses === 0 && files.length > 1) {

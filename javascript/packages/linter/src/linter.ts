@@ -56,11 +56,15 @@ export interface VersionSkippedRule {
 export interface FilterRulesResult {
   enabled: RuleClass[]
   skippedByVersion: VersionSkippedRule[]
+  disabledByConfig: number
+  notEnabledByDefault: number
 }
 
 export class Linter {
   public rules: RuleClass[]
   public rulesSkippedByVersion: VersionSkippedRule[] = []
+  public rulesDisabledByConfig: number = 0
+  public rulesNotEnabledByDefault: number = 0
 
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
@@ -83,6 +87,8 @@ export class Linter {
 
     const linter = new Linter(herb, filterResult.enabled, config, allRules)
     linter.rulesSkippedByVersion = filterResult.skippedByVersion
+    linter.rulesDisabledByConfig = filterResult.disabledByConfig
+    linter.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
 
     return linter
   }
@@ -127,6 +133,8 @@ export class Linter {
   ): FilterRulesResult {
     const enabled: RuleClass[] = []
     const skippedByVersion: VersionSkippedRule[] = []
+    let disabledByConfig = 0
+    let notEnabledByDefault = 0
 
     for (const ruleClass of allRules) {
       const instance = new ruleClass()
@@ -136,6 +144,8 @@ export class Linter {
       if (userRuleConfig !== undefined) {
         if (userRuleConfig.enabled !== false) {
           enabled.push(ruleClass)
+        } else {
+          disabledByConfig++
         }
 
         continue
@@ -148,6 +158,8 @@ export class Linter {
               ruleName: ruleClass.ruleName,
               introducedIn: ruleClass.introducedIn,
             })
+          } else {
+            notEnabledByDefault++
           }
 
           continue
@@ -156,10 +168,12 @@ export class Linter {
 
       if (defaultEnabled) {
         enabled.push(ruleClass)
+      } else {
+        notEnabledByDefault++
       }
     }
 
-    return { enabled, skippedByVersion }
+    return { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault }
   }
 
   /**
