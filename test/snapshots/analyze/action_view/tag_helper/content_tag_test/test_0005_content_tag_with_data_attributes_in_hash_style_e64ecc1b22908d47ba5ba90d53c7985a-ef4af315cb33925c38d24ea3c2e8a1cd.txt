@@ -49,7 +49,7 @@ options: {action_view_helpers: true}
     │   │                   └── @ HTMLAttributeValueNode (location: (1:62)-(1:65))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ RubyLiteralNode (location: (1:62)-(1:65))
+    │   │                       │   └── @ LiteralNode (location: (1:62)-(1:65))
     │   │                       │       └── content: "123"
     │   │                       │
     │   │                       ├── close_quote: ∅

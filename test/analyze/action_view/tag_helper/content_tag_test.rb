@@ -269,5 +269,20 @@ module Analyze::ActionView::TagHelper
         <%= content_tag :br, "hello" %>
       HTML
     end
+
+    test "content_tag with mixed array and conditional hash class" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) %>
+      HTML
+    end
+
+    # TODO: The outer content_tag(:div) is correctly detected, but the inner content_tag(:p, "Hello world!")
+    # remains as a RubyLiteralNode in the body instead of being resolved to <p>Hello world!</p>.
+    # Rails renders: <div class="strong"><p>Hello world!</p></div>
+    test "content_tag with nested content_tag as content argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, content_tag(:p, "Hello world!"), class: "strong") %>
+      HTML
+    end
   end
 end

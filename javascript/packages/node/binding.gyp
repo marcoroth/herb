@@ -64,6 +64,7 @@
         "./extension/libherb/prism/ruby_parser.c",
         "./extension/libherb/util/html_util.c",
         "./extension/libherb/util/io.c",
+        "./extension/libherb/util/ruby_util.c",
         "./extension/libherb/util/utf8.c",
         "./extension/libherb/util/util.c",
         "./extension/libherb/visitor.c",

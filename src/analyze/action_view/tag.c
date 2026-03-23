@@ -1,4 +1,5 @@
 #include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/util/ruby_util.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -22,6 +23,10 @@ char* extract_tag_dot_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
 
   pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
   if (!constant) { return NULL; }
+
+  if (is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
+    return NULL;
+  }
 
   char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
 

@@ -384,5 +384,133 @@ module Analyze::ActionView::TagHelper
         </button>
       HTML
     end
+
+    test "tag.send is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.send(:some_tag_name) %>
+      HTML
+    end
+
+    test "tag.public_send is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.public_send(:div) %>
+      HTML
+    end
+
+    test "tag.try is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.try(:div) %>
+      HTML
+    end
+
+    test "tag.class is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.class %>
+      HTML
+    end
+
+    test "tag.method is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.method(:div) %>
+      HTML
+    end
+
+    test "tag.frozen? is treated as dynamic and not converted" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.frozen? %>
+      HTML
+    end
+
+    # TODO: Rails renders `disabled="disabled"` — we render as a boolean attribute without a value.
+    # Both are valid HTML, but we could match Rails by rendering `disabled="disabled"` for `true` values.
+    test "tag.input void element with boolean attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.input type: "text", disabled: true %>
+      HTML
+    end
+
+    test "tag.section with %w() class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.section class: %w( kitties puppies ) %>
+      HTML
+    end
+
+    test "tag.section with array class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.section class: ["kitties", "puppies"] %>
+      HTML
+    end
+
+    test "tag.section with mixed array class attribute keeps as ruby literal" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.section class: ["kitties", variable] %>
+      HTML
+    end
+
+    test "tag.section with symbol array class attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.section class: [:kitties, :puppies] %>
+      HTML
+    end
+
+    test "tag.div with conditional class hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div class: { active: true, hidden: false } %>
+      HTML
+    end
+
+    test "tag.div with dynamic conditional class hash" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div class: { active: @is_active } %>
+      HTML
+    end
+
+    test "tag.div with symbol id attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div id: :main %>
+      HTML
+    end
+
+    test "tag.div with aria hash attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div aria: { label: "hello", hidden: true } %>
+      HTML
+    end
+
+    test "tag.div with data hash containing %w() array value" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { city_state: %w( Chicago IL ) } %>
+      HTML
+    end
+
+    test "tag.div with data hash containing array value" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { city_state: ["Chicago", "IL"] } %>
+      HTML
+    end
+
+    test "tag.img with escape false option" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img src: "open & shut.png", escape: false %>
+      HTML
+    end
+
+    test "tag.div with data hash containing symbol value" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { status: :active } %>
+      HTML
+    end
+
+    test "tag.div with data hash containing integer value" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { count: 42 } %>
+      HTML
+    end
+
+    test "tag.div with data hash containing nested hash value" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { config: { nested: "hash" } } %>
+      HTML
+    end
   end
 end

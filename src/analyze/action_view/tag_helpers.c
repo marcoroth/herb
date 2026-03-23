@@ -132,7 +132,7 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
           search_data->info->has_block = handlers[i].supports_block();
         }
 
-        return true;
+        return false;
       }
     }
 
