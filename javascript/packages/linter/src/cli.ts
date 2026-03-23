@@ -147,7 +147,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -225,8 +225,11 @@ export class CLI {
         const upgradeProcessor = new FileProcessor()
         const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
 
-        for (const [ruleName, data] of results.ruleOffenses) {
-          ruleOffenseCounts.set(ruleName, data.count)
+        for (const { offense } of results.allOffenses) {
+          if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+          const ruleName = offense.code || ""
+          ruleOffenseCounts.set(ruleName, (ruleOffenseCounts.get(ruleName) || 0) + 1)
         }
 
         rulesToDisable = skippedByVersion.filter(rule => ruleOffenseCounts.has(rule.ruleName))
@@ -278,6 +281,68 @@ export class CLI {
       }
 
       console.log("")
+      process.exit(0)
+    }
+
+    if (disableFailing) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+
+      console.log(`\n${colorize("↻", "cyan")} Linting codebase to find rules with offenses...`)
+
+      await Herb.load()
+
+      const files = await config.findFilesForTool('linter', this.projectPath)
+
+      const disableFailingContext: ProcessingContext = {
+        projectPath: this.projectPath,
+        config,
+        jobs,
+      }
+
+      const processor = new FileProcessor()
+      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const failingRules = new Map<string, number>()
+      const PROTECTED_RULES = new Set(["parser-no-errors"])
+
+      for (const { offense } of results.allOffenses) {
+        if (PROTECTED_RULES.has(offense.code || "")) continue
+        if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+        failingRules.set(offense.code || "", (failingRules.get(offense.code || "") || 0) + 1)
+      }
+
+      if (failingRules.size === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No offenses found. All rules are passing!\n`)
+        process.exit(0)
+      }
+
+      const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+      for (const ruleName of failingRules.keys()) {
+        rulesMutation[ruleName] = { enabled: false }
+      }
+
+      await Config.mutateConfigFile(config.path, {
+        linter: { rules: rulesMutation }
+      })
+
+      const totalOffenses = Array.from(failingRules.values()).reduce((sum, count) => sum + count, 0)
+      const sortedRules = Array.from(failingRules.entries()).sort((a, b) => b[1] - a[1])
+
+      console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(failingRules.size), "bold")} ${failingRules.size === 1 ? "rule" : "rules"}. Disabled in ${colorize(".herb.yml", "cyan")}:\n`)
+
+      for (const [ruleName, count] of sortedRules) {
+        console.log(`  ${colorize("✗", "red")} ${colorize(ruleName, "white")} ${colorize(`(${count} ${count === 1 ? "offense" : "offenses"})`, "gray")}`)
+      }
+
+      console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
       process.exit(0)
     }
 

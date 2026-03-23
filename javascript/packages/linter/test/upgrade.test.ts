@@ -141,4 +141,5 @@ describe("Smart upgrade", () => {
       expect(rulesToDisable).toHaveLength(0)
     })
   })
+
 })
