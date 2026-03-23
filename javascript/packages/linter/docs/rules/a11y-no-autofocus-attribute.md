@@ -4,7 +4,7 @@
 
 ## Description
 
-Prevent usage of the `autofocus` attribute on HTML elements.
+Prevent usage of the `autofocus` attribute on HTML elements, Action View Form Tag Helpers and Action View Form Builder methods.
 
 ## Rationale
 
@@ -20,6 +20,14 @@ Its use should be limited to form fields that serve as the main purpose of the p
 <input type="text">
 ```
 
+```erb
+<%= text_field_tag :name, "value" %>
+```
+
+```erb
+<%= f.text_field :name %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -28,6 +36,14 @@ Its use should be limited to form fields that serve as the main purpose of the p
 
 ```erb
 <input type="password" autofocus="autofocus">
+```
+
+```erb
+<%= text_field_tag :name, "value", autofocus: true %>
+```
+
+```erb
+<%= f.text_area :body, autofocus: true %>
 ```
 
 ## References

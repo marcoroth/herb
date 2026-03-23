@@ -1,9 +1,47 @@
-import { hasAttribute } from "@herb-tools/core"
-import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+import { hasAttribute, PrismVisitor } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
+
+import type { HTMLOpenTagNode, ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+
+const FORM_TAG_HELPERS = new Set([
+  "text_area_tag",
+  "text_field_tag",
+  "textarea_tag",
+])
+
+const FORM_BUILDER_METHODS = new Set([
+  "text_area",
+  "text_field",
+  "textarea",
+])
+
+class AutofocusKeywordDetector extends PrismVisitor {
+  public hasAutofocus = false
+  private isInsideFormHelper = false
+
+  visitCallNode(node: PrismNode): void {
+    const isBuilderMethod = node.receiver && FORM_BUILDER_METHODS.has(node.name)
+    const isTagHelper = !node.receiver && FORM_TAG_HELPERS.has(node.name)
+
+    if (isBuilderMethod || isTagHelper) {
+      this.isInsideFormHelper = true
+      this.visitChildNodes(node)
+      this.isInsideFormHelper = false
+    } else {
+      this.visitChildNodes(node)
+    }
+  }
+
+  visitAssocNode(node: PrismNode): void {
+    if (!this.isInsideFormHelper) return
+    if (node.key?.constructor?.name !== "SymbolNode") return
+
+    this.hasAutofocus = node.key.unescaped?.value === "autofocus"
+  }
+}
 
 class NoAutofocusAttributeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -12,12 +50,32 @@ class NoAutofocusAttributeVisitor extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
+  visitERBContentNode(node: ERBContentNode): void {
+    this.checkERBHelper(node)
+
+    super.visitERBContentNode(node)
+  }
+
   private checkAutofocusAttribute(node: HTMLOpenTagNode): void {
-    if (!hasAttribute(node, "autofocus")) return;
+    if (!hasAttribute(node, "autofocus")) return
 
     this.addOffense(
       "Avoid using the `autofocus` attribute. It reduces accessibility by moving users to an element without warning and context.",
       node.tag_name!.location,
+    )
+  }
+
+  private checkERBHelper(node: ERBContentNode): void {
+    const prismNode = node.prismNode
+    if (!prismNode) return
+
+    const detector = new AutofocusKeywordDetector()
+    detector.visit(prismNode)
+    if (!detector.hasAutofocus) return;
+
+    this.addOffense(
+      "Avoid using the `autofocus` option in form helpers. It reduces accessibility by moving users to an element without warning and context.",
+      node.location,
     )
   }
 }
@@ -29,7 +87,13 @@ export class A11yNoAutofocusAttributeRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true,
     }
   }
 
