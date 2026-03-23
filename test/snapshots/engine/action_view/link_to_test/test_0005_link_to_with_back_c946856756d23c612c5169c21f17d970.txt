@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0005_link_to with :back"
+input: "{source: \"<%= link_to \\\"Back\\\", :back %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<a href="'.freeze; _buf << ::Herb::Engine.attr((url_for(:back))); _buf << '">Back</a>'.freeze;
+_buf.to_s

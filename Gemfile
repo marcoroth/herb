@@ -7,6 +7,7 @@ gemspec
 gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
 gem "actionview", "~> 8.0"
+gem "turbo-rails", "~> 2.0"
 gem "digest", "~> 3.2"
 gem "erubi"
 gem "irb", "~> 1.16"

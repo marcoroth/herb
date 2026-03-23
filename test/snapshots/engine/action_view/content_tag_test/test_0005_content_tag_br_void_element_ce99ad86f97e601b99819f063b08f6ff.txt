@@ -2,5 +2,5 @@
 source: "Engine::ActionView::ContentTagTest#test_0005_content_tag br void element"
 input: "{source: \"<%= content_tag :br %>\", options: {action_view_helpers: true}}"
 ---
-_buf = ::String.new; _buf << '<br>'.freeze;
+_buf = ::String.new; _buf << '<br />'.freeze;
 _buf.to_s

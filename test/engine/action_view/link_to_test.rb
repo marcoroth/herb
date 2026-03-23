@@ -23,9 +23,8 @@ module Engine
         assert_action_view_helper('<%= link_to "#", class: "btn" do %>Click me<% end %>')
       end
 
-      # TODO: Compiled output references `url_for(:back)` which needs ActionView context to evaluate.
       test "link_to with :back" do
-        assert_action_view_helper_mismatch('<%= link_to "Back", :back %>')
+        assert_action_view_helper('<%= link_to "Back", :back %>')
       end
 
       test "link_to with inline block" do

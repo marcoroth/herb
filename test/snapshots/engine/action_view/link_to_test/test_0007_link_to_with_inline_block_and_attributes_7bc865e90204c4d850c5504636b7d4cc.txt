@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0007_link_to with inline block and attributes"
+input: "{source: \"<%= link_to(\\\"/about\\\", class: \\\"btn\\\") { \\\"About\\\" } %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<a class="btn" href="/about">About</a>'.freeze;
+_buf.to_s

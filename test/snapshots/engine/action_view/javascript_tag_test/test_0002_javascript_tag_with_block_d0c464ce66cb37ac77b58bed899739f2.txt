@@ -1,0 +1,11 @@
+---
+source: "Engine::ActionView::JavascriptTagTest#test_0002_javascript_tag with block"
+input: "{source: \"<%= javascript_tag do %>\\n  alert('Hello')\\n<% end %>\\n\", type: \"rails_output\", action_view_helpers: true}"
+---
+<script>
+//<![CDATA[
+
+  alert('Hello')
+
+//]]>
+</script>

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0004_image_tag with URL source"
+input: "{source: \"<%= image_tag \\\"http://example.com/icon.png\\\" %>\", type: \"herb_output\", action_view_helpers: true}"
+---
+<img src="http://example.com/icon.png">

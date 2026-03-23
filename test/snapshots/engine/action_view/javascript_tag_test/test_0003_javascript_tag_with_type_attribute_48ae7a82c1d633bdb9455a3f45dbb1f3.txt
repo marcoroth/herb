@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptTagTest#test_0003_javascript_tag with type attribute"
+input: "{source: \"<%= javascript_tag \\\"alert('Hello')\\\", type: \\\"application/javascript\\\" %>\", type: \"herb_output\", action_view_helpers: true}"
+---
+<script type="application/javascript">alert('Hello')</script>

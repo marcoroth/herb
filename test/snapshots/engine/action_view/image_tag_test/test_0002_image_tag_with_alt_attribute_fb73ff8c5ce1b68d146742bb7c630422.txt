@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0002_image_tag with alt attribute"
+input: "{source: \"<%= image_tag \\\"icon.png\\\", alt: \\\"Icon\\\" %>\", options: {action_view_helpers: true}}"
+---
+_buf = ::String.new; _buf << '<img alt="Icon" src="'.freeze; _buf << ::Herb::Engine.attr((image_path("icon.png"))); _buf << '" />'.freeze;
+_buf.to_s
