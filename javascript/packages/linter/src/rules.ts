@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
@@ -94,6 +95,7 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 export const rules: RuleClass[] = [
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoVoidElementContentRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
