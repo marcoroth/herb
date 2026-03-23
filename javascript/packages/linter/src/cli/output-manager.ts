@@ -62,6 +62,8 @@ export class OutputManager {
           ignoreDisableComments: context?.ignoreDisableComments,
           rulesSkippedByVersion,
           configVersion: context?.config?.configVersion,
+          configPath: context?.config?.path,
+          hasConfigFile: context?.hasConfigFile,
           toolVersion: options.toolVersion,
         })
       }
@@ -125,6 +127,8 @@ export class OutputManager {
         ignoreDisableComments: context?.ignoreDisableComments,
         rulesSkippedByVersion,
         configVersion: context?.config?.configVersion,
+        configPath: context?.config?.path,
+        hasConfigFile: context?.hasConfigFile,
         toolVersion: options.toolVersion,
       })
     }
