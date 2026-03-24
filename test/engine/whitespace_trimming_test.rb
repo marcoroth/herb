@@ -194,5 +194,19 @@ module Engine
 
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
+
+    test "whitespace between consecutive end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% outer do %>
+          <% form_tag("/t") do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
   end
 end
