@@ -86,7 +86,7 @@ export class A11yNoAutofocusAttributeRule extends ParserRule {
 
   get defaultConfig(): FullRuleConfig {
     return {
-      enabled: true,
+      enabled: false,
       severity: "warning"
     }
   }
