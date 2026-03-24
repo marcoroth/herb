@@ -548,5 +548,30 @@ module Analyze::ActionView::TagHelper
         <%= tag.div content %>
       HTML
     end
+
+    test "tag.p with postfix if condition" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.p message, class: "text" if show_message? %>
+      HTML
+    end
+
+    test "tag.div with postfix unless condition" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div "Content", class: "box" unless hidden? %>
+      HTML
+    end
+
+    test "tag.div with nested tag helpers and postfix conditions" do
+      assert_parsed_snapshot(<<~'HTML', action_view_helpers: true)
+        <%= tag.div(class: wrapper_classes) do %>
+          <%= tag.div(render("icons/#{icon}"), class: icon_classes) if icon.present? %>
+
+          <%= tag.div do %>
+            <%= tag.h3(title, class: title_classes) if title.present? %>
+            <%= tag.p(message, class: message_classes) %>
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end
