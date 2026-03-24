@@ -11,7 +11,7 @@ module Herb
     attr_reader :new_index #: Integer
 
     #: (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
-    def initialize(type, path, old_node, new_node, old_index, new_index)
+    def initialize(type, path, old_node, new_node, old_index, new_index) # rubocop:disable Metrics/ParameterLists
       @type = type
       @path = path
       @old_node = old_node

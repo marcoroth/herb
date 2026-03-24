@@ -98,5 +98,15 @@ module Herb
     def reset_configuration!
       @configuration = nil
     end
+
+    def dev_server_port(project_path = nil)
+      require_relative "herb/dev/server_entry"
+
+      project_path ||= Dir.pwd
+      entry = Dev::ServerEntry.find_by_project(project_path)
+      entry&.port
+    rescue StandardError
+      nil
+    end
   end
 end

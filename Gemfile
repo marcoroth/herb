@@ -20,6 +20,7 @@ gem "rbs-inline", "~> 0.12"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
+gem "cruise"
 
 # TODO: Remove once https://github.com/ruby/rbs/pull/2850 is merged and released
 gem "rbs", github: "marcoroth/rbs", branch: "psych-load-unsafe-file"

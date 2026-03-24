@@ -296,6 +296,61 @@
   letter-spacing: 0.2px;
 }
 
+.herb-connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  display: block;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+@keyframes herb-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.herb-dev-server-section {
+  padding: 8px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  min-height: 32px;
+}
+
+.herb-dev-server-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+.herb-dev-server-status {
+  color: #6b7280;
+}
+
+.herb-dev-server-retry {
+  display: none;
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  color: #374151;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.herb-dev-server-retry:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
 .herb-menu-panel {
   position: absolute;
   top: 28px;

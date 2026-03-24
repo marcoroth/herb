@@ -65,33 +65,35 @@ Metrics/CyclomaticComplexity:
 Metrics/MethodLength:
   Max: 20
   Exclude:
+    - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - bin/**/*
 
 Metrics/AbcSize:
   Exclude:
+    - bin/**/*
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/errors.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - lib/herb/token.rb
+    - lib/herb/errors.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
+    - lib/herb/token.rb
     - templates/template.rb
+    - test/engine/rails_compatibility_test.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - test/engine/rails_compatibility_test.rb
-    - bin/**/*
 
 Metrics/ClassLength:
   Exclude:
@@ -103,6 +105,7 @@ Metrics/ClassLength:
     - lib/herb/project.rb
     - lib/herb/visitor.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/server.rb
     - test/**/*_test.rb
 
 Metrics/ModuleLength:
@@ -133,15 +136,16 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Exclude:
+    - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/prism_inspect.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/**/*.rb
-    - bin/**/*
 
 Layout/LineLength:
   Enabled: false
