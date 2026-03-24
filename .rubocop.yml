@@ -55,48 +55,50 @@ Style/TrailingCommaInHashLiteral:
 Metrics/CyclomaticComplexity:
   Max: 15
   Exclude:
-    - lib/herb/project.rb
+    - bench/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/engine.rb
-    - lib/herb/prism_inspect.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
-    - bench/**/*
 
 Metrics/MethodLength:
   Max: 20
   Exclude:
+    - bench/**/*
+    - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - bin/**/*
-    - bench/**/*
 
 Metrics/AbcSize:
   Exclude:
+    - bench/**/*
+    - bin/**/*
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/errors.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - lib/herb/token.rb
+    - lib/herb/errors.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
+    - lib/herb/token.rb
     - templates/template.rb
+    - test/engine/action_view/action_view_test_helper.rb
+    - test/engine/rails_compatibility_test.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - test/engine/rails_compatibility_test.rb
-    - bin/**/*
-    - bench/**/*
-    - test/engine/action_view/action_view_test_helper.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -108,6 +110,7 @@ Metrics/ClassLength:
     - lib/herb/project.rb
     - lib/herb/visitor.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/server.rb
     - test/**/*_test.rb
     - templates/template.rb
 
@@ -141,16 +144,17 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Exclude:
+    - bench/**/*
+    - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/prism_inspect.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/**/*.rb
-    - bin/**/*
-    - bench/**/*
 
 Layout/LineLength:
   Enabled: false
