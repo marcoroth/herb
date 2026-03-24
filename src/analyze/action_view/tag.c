@@ -44,7 +44,8 @@ char* extract_tag_dot_content(pm_call_node_t* call_node, pm_parser_t* parser, hb
   if (call_node->name) {
     pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
 
-    if (constant && is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
+    if (constant
+        && is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
       return NULL;
     }
   }
