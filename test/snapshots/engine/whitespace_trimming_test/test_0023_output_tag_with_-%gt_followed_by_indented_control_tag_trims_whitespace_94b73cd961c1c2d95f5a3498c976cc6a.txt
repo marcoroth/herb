@@ -1,5 +1,0 @@
----
-source: "Engine::WhitespaceTrimmingTest#test_0023_output tag with -%> followed by indented control tag trims whitespace"
-input: "{source: \"A<%= -%>\\n <% if true %>\\nB\\n<% end %>\", locals: {}, options: {}}"
----
-AB

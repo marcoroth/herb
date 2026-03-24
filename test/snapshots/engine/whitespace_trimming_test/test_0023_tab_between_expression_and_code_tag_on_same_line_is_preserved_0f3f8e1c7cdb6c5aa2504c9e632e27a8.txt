@@ -1,5 +1,5 @@
 ---
-source: "Engine::WhitespaceTrimmingTest#test_0022_tab between expression and code tag on same line is preserved"
+source: "Engine::WhitespaceTrimmingTest#test_0023_tab between expression and code tag on same line is preserved"
 input: "{source: \"<%= value %>\\t<% if true %>extra<% end %>\", locals: {value: \"hello.\"}, options: {}}"
 ---
 hello.	extra

@@ -177,6 +177,13 @@ module Engine
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
 
+    test "leading whitespace before statement tag with inline content is preserved" do
+      template = "<p>\n  <% if true %>text<% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
     test "whitespace between expression and code tag on same line is preserved" do
       template = "<%= value %> <% if true %>extra<% end %>"
 

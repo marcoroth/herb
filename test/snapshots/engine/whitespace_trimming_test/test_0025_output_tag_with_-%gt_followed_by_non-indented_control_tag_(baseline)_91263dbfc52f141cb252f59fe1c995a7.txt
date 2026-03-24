@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0025_output tag with -%> followed by non-indented control tag (baseline)"
+input: "{source: \"A<%= -%>\\n<% if true %>\\nB\\n<% end %>\", locals: {}, options: {}}"
+---
+AB
