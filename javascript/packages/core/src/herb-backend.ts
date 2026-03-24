@@ -11,6 +11,7 @@ import type { LibHerbBackend, BackendPromise } from "./backend.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { PrismParseResult } from "./prism/index.js"
+import type { DiffResult } from "./diff-result.js"
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -115,6 +116,19 @@ export abstract class HerbBackend {
     }
 
     return deserializePrismParseResult(bytes, source)
+  }
+
+  /**
+   * Diffs two source strings and returns the minimal set of AST differences.
+   * @param oldSource - The old source code.
+   * @param newSource - The new source code.
+   * @returns A DiffResult containing the operations.
+   * @throws Error if the backend is not loaded.
+   */
+  diff(oldSource: string, newSource: string): DiffResult {
+    this.ensureBackend()
+
+    return this.backend.diff(ensureString(oldSource), ensureString(newSource))
   }
 
   /**

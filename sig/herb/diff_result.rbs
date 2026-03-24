@@ -1,0 +1,25 @@
+# Generated from lib/herb/diff_result.rb with RBS::Inline
+
+module Herb
+  class DiffResult
+    attr_reader operations: Array[Herb::DiffOperation]
+
+    # : (bool, Array[Herb::DiffOperation]) -> void
+    def initialize: (bool, Array[Herb::DiffOperation]) -> void
+
+    # : () -> bool
+    def identical?: () -> bool
+
+    # : () -> Integer
+    def operation_count: () -> Integer
+
+    # : () -> bool
+    def changed?: () -> bool
+
+    # : () -> Hash[Symbol, untyped]
+    def to_hash: () -> Hash[Symbol, untyped]
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

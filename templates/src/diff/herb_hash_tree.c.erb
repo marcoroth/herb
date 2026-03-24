@@ -1,0 +1,141 @@
+#include "../include/diff/herb_diff.h"
+
+static herb_hash_T hash_token(herb_hash_T hash, const token_T* token) {
+  if (token == NULL) { return herb_hash_byte(hash, 0); }
+
+  hash = herb_hash_uint32(hash, (uint32_t) token->type);
+  hash = herb_hash_string(hash, token->value);
+
+  return hash;
+}
+
+static herb_hash_T hash_child_array(herb_hash_T hash, const hb_array_T* children, herb_hash_map_T* hash_map) {
+  if (children == NULL) { return herb_hash_byte(hash, 0); }
+
+  const size_t count = hb_array_size(children);
+  hash = herb_hash_uint64(hash, (uint64_t) count);
+
+  for (size_t index = 0; index < count; index++) {
+    const AST_NODE_T* child = (const AST_NODE_T*) hb_array_get(children, index);
+    herb_hash_T child_hash = herb_hash_tree(child, hash_map);
+    hash = herb_hash_combine(hash, child_hash);
+  }
+
+  return hash;
+}
+
+herb_hash_T herb_hash_tree(const AST_NODE_T* node, herb_hash_map_T* hash_map) {
+  if (node == NULL) { return HERB_HASH_INIT; }
+
+  if (herb_hash_map_has(hash_map, node)) { return herb_hash_map_get(hash_map, node); }
+
+  herb_hash_T hash = HERB_HASH_INIT;
+  hash = herb_hash_uint32(hash, (uint32_t) node->type);
+
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    case <%= node.type %>: {
+      <%- hashable_fields = node.fields.reject(&:always_invisible?).reject { |field| field.is_a?(Herb::Template::PrismNodeField) } -%>
+      <%- if hashable_fields.any? -%>
+      const <%= node.struct_type %>* <%= node.human %> = (const <%= node.struct_type %>*) node;
+      <%- hashable_fields.each do |field| -%>
+
+      <%- case field -%>
+      <%- when Herb::Template::TokenField -%>
+      hash = hash_token(hash, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      hash = herb_hash_string(hash, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::ArrayField -%>
+      hash = hash_child_array(hash, <%= node.human %>-><%= field.name %>, hash_map);
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+      hash = herb_hash_combine(hash, herb_hash_tree((const AST_NODE_T*) <%= node.human %>-><%= field.name %>, hash_map));
+      <%- when Herb::Template::BooleanField -%>
+      hash = herb_hash_bool(hash, <%= node.human %>-><%= field.name %>);
+      <%- when Herb::Template::LocationField -%>
+      // skip location field: <%= field.name %>
+      <%- end -%>
+      <%- end -%>
+      <%- end -%>
+    } break;
+
+    <%- end -%>
+  }
+
+  herb_hash_map_set(hash_map, node, hash);
+
+  return hash;
+}
+
+static herb_hash_T identity_hash_attributes(const hb_array_T* attributes, const herb_hash_map_T* hash_map) {
+  if (attributes == NULL) { return 0; }
+
+  const size_t count = hb_array_size(attributes);
+  herb_hash_T combined = 0;
+
+  for (size_t index = 0; index < count; index++) {
+    const AST_NODE_T* attribute = (const AST_NODE_T*) hb_array_get(attributes, index);
+    herb_hash_T attribute_hash = herb_hash_map_get(hash_map, attribute);
+    combined ^= attribute_hash;
+  }
+
+  return combined;
+}
+
+herb_hash_T herb_hash_node_move_identity(const AST_NODE_T* node, const herb_hash_map_T* hash_map) {
+  if (node == NULL) { return HERB_HASH_INIT; }
+
+  herb_hash_T hash = HERB_HASH_INIT;
+  hash = herb_hash_uint32(hash, (uint32_t) node->type);
+
+  switch (node->type) {
+    case AST_HTML_ELEMENT_NODE: {
+      const AST_HTML_ELEMENT_NODE_T* element = (const AST_HTML_ELEMENT_NODE_T*) node;
+      hash = hash_token(hash, element->tag_name);
+
+      if (element->open_tag != NULL) {
+        const AST_HTML_OPEN_TAG_NODE_T* open_tag = (const AST_HTML_OPEN_TAG_NODE_T*) element->open_tag;
+        hash = herb_hash_combine(hash, identity_hash_attributes(open_tag->children, hash_map));
+      }
+    } break;
+
+    case AST_HTML_CONDITIONAL_ELEMENT_NODE: {
+      const AST_HTML_CONDITIONAL_ELEMENT_NODE_T* element = (const AST_HTML_CONDITIONAL_ELEMENT_NODE_T*) node;
+      hash = hash_token(hash, element->tag_name);
+
+      if (element->open_tag != NULL) {
+        hash = herb_hash_combine(hash, identity_hash_attributes(element->open_tag->children, hash_map));
+      }
+    } break;
+
+    default: {
+      hash = herb_hash_map_get(hash_map, node);
+    } break;
+  }
+
+  return hash;
+}
+
+herb_hash_T herb_hash_node_identity(const AST_NODE_T* node, const herb_hash_map_T* hash_map) {
+  if (node == NULL) { return HERB_HASH_INIT; }
+
+  herb_hash_T hash = HERB_HASH_INIT;
+  hash = herb_hash_uint32(hash, (uint32_t) node->type);
+
+  switch (node->type) {
+    case AST_HTML_ELEMENT_NODE: {
+      const AST_HTML_ELEMENT_NODE_T* element = (const AST_HTML_ELEMENT_NODE_T*) node;
+      hash = hash_token(hash, element->tag_name);
+    } break;
+
+    case AST_HTML_CONDITIONAL_ELEMENT_NODE: {
+      const AST_HTML_CONDITIONAL_ELEMENT_NODE_T* element = (const AST_HTML_CONDITIONAL_ELEMENT_NODE_T*) node;
+      hash = hash_token(hash, element->tag_name);
+    } break;
+
+    default: {
+      hash = herb_hash_map_get(hash_map, node);
+    } break;
+  }
+
+  return hash;
+}

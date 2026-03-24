@@ -13,6 +13,8 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
+require_relative "herb/diff_operation"
+require_relative "herb/diff_result"
 
 require_relative "herb/ast"
 require_relative "herb/ast/node"

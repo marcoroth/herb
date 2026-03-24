@@ -128,6 +128,9 @@ src/include/ast/ast_pretty_print.h
 src/include/errors.h
 src/include/lib/hb_foreach.h
 src/parser/match_tags.c
+src/diff/herb_diff_helpers.c
+src/diff/herb_diff_nodes.c
+src/diff/herb_hash_tree.c
 src/visitor.c
 wasm/error_helpers.cpp
 wasm/error_helpers.h
