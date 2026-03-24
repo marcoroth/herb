@@ -31,6 +31,9 @@ options: {prism_program: true}
 │       │               └── tag_closing: "%>" (location: (1:71)-(1:73))
 │       │
 │       │
+│       ├── rescue_clause: ∅
+│       ├── else_clause: ∅
+│       ├── ensure_clause: ∅
 │       └── end_node:
 │           └── @ ERBEndNode (location: (1:73)-(1:82))
 │               ├── tag_opening: "<%" (location: (1:73)-(1:75))

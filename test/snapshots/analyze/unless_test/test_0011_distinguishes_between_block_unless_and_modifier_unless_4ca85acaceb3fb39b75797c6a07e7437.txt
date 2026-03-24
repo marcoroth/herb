@@ -161,6 +161,9 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (7:11)-(8:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (8:0)-(8:9))
     │           ├── tag_opening: "<%" (location: (8:0)-(8:2))

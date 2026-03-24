@@ -882,6 +882,18 @@ nodes:
           type: array
           kind: Node
 
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
         - name: end_node
           type: node
           kind: ERBEndNode

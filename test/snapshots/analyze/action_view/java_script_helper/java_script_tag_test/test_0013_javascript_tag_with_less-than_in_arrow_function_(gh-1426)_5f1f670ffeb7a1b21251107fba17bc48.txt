@@ -50,4 +50,7 @@ input: |2-
         │       │
         │       └── is_void: false
         │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node: ∅
