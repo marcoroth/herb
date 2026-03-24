@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineBlockTest#test_0015_block with rescue compiles correctly"
+input: "{source: \"<% 5.times do %>\\n  <%= \\\"foo\\\" %>\\n<% rescue %>\\n  <%= \\\"error\\\" %>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; 5.times do 
+ _buf << '  '.freeze; _buf << ("foo").to_s; _buf << '
+'.freeze; rescue 
+ _buf << '  '.freeze; _buf << ("error").to_s; _buf << '
+'.freeze; end 
+_buf.to_s

@@ -276,6 +276,9 @@ module Herb
         else
           visit_erb_control_node(node) do
             visit_all(node.body)
+            visit(node.rescue_clause)
+            visit(node.else_clause)
+            visit(node.ensure_clause)
             visit(node.end_node)
           end
         end

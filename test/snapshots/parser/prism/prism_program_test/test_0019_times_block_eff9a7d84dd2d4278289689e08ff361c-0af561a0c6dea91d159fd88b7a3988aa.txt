@@ -17,6 +17,9 @@ options: {prism_program: true}
 │       │       ├── parsed: true
 │       │       └── valid: true
 │       │
+│       ├── rescue_clause: ∅
+│       ├── else_clause: ∅
+│       ├── ensure_clause: ∅
 │       └── end_node:
 │           └── @ ERBEndNode (location: (1:28)-(1:37))
 │               ├── tag_opening: "<%" (location: (1:28)-(1:30))

@@ -69,6 +69,9 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── name: :item
         │               └── depth: 0
         │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node:
             └── @ ERBEndNode (location: (1:37)-(1:46))
                 ├── tag_opening: "<%" (location: (1:37)-(1:39))

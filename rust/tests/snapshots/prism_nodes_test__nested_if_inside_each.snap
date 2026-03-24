@@ -132,6 +132,9 @@ expression: result.inspect()
         │               ├── tag_opening: "<%" (location: (1:64)-(1:66))
         │               ├── content: " end " (location: (1:66)-(1:71))
         │               └── tag_closing: "%>" (location: (1:71)-(1:73))
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node: 
             └── @ ERBEndNode (location: (1:73)-(1:82))
                 ├── tag_opening: "<%" (location: (1:73)-(1:75))

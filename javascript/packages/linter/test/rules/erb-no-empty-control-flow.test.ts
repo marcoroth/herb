@@ -357,6 +357,76 @@ describe("ERBNoEmptyControlFlowRule", () => {
         <% end %>
       `)
     })
+
+    test("detects empty rescue in block", () => {
+      expectHint("Empty rescue block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% 5.times do %>
+          <p>Content</p>
+        <% rescue %>
+        <% end %>
+      `)
+    })
+
+    test("detects empty ensure in block", () => {
+      expectHint("Empty ensure block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% 5.times do %>
+          <p>Content</p>
+        <% ensure %>
+        <% end %>
+      `)
+    })
+
+    test("detects empty else in block with rescue", () => {
+      expectHint("Empty else block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% 5.times do %>
+          <p>Content</p>
+        <% rescue %>
+          <p>Error</p>
+        <% else %>
+        <% end %>
+      `)
+    })
+
+    test("detects empty body and empty rescue in block", () => {
+      expectHint("Empty do block: this control flow statement has no content")
+      expectHint("Empty rescue block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% 5.times do %>
+        <% rescue %>
+        <% end %>
+      `)
+    })
+
+    test("does not flag block with rescue that has content", () => {
+      expectNoOffenses(dedent`
+        <% 5.times do %>
+          <p>Content</p>
+        <% rescue %>
+          <p>Error</p>
+        <% end %>
+      `)
+    })
+
+    test("does not flag block with rescue, else, and ensure that have content", () => {
+      expectNoOffenses(dedent`
+        <% items.each do |item| %>
+          <%= item %>
+        <% rescue StandardError => e %>
+          <%= e.message %>
+        <% else %>
+          <p>Success</p>
+        <% ensure %>
+          <p>Cleanup</p>
+        <% end %>
+      `)
+    })
   })
 
   describe("combined scenarios", () => {

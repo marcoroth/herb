@@ -48,6 +48,9 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (2:29)-(2:30))
     │   │       └── content: "b"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (2:30)-(2:44))
     │           ├── tag_opening: "<%" (location: (2:30)-(2:32))

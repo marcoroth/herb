@@ -36,6 +36,9 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (3:27)-(5:2))
     │   │           │   │       └── content: "\n    Yep\n  "
     │   │           │   │
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
     │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))

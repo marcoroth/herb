@@ -74,6 +74,9 @@ options: {action_view_helpers: true}
     │   │   └── @ HTMLTextNode (location: (2:52)-(3:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (3:0)-(3:9))
     │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
