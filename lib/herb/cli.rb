@@ -99,6 +99,7 @@ class Herb::CLI
         bundle exec herb config [path]        Show configuration and file patterns for a project
         bundle exec herb ruby [file]          Extract Ruby from a file.
         bundle exec herb html [file]          Extract HTML from a file.
+        bundle exec herb dev [path]           Start the dev server and watch for file changes.
         bundle exec herb diff [old] [new]     Diff two files and show the minimal set of AST differences.
         bundle exec herb playground [file]    Open the content of the source file in the playground
         bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
@@ -198,6 +199,8 @@ class Herb::CLI
                     system(%(open "#{url}##{hash}"))
                     exit(0)
                   end
+                when "dev"
+                  run_dev_server
                 when "diff"
                   diff_files
                 when "lint"
@@ -436,6 +439,261 @@ class Herb::CLI
     end
 
     project.print_file_report(@file)
+  end
+
+  def run_dev_server
+    begin
+      require "cruise"
+    rescue LoadError
+      puts "The 'cruise' gem is required for the dev server."
+      puts
+      puts "Install it:"
+      puts "  gem install cruise"
+      puts "  # or add to your Gemfile: gem 'cruise'"
+      exit(1)
+    end
+
+    print CLEAR_SCREEN
+    print HIDE_CURSOR
+    puts
+    puts fg_bg(" \u{1F33F} Herb Dev Server ", 255, 28)
+    puts
+
+    path = @file || "."
+
+    unless File.directory?(path)
+      print SHOW_CURSOR
+      puts "Not a directory: '#{path}'."
+      exit(1)
+    end
+
+    config = Herb::Configuration.load(path)
+    expanded_path = File.realpath(File.expand_path(config.project_root || path))
+    include_patterns = config.file_include_patterns
+    exclude_patterns = config.file_exclude_patterns
+
+    puts "  #{fg("Herb:", 245)}    #{fg(Herb::VERSION, 250)}"
+    puts "  #{fg("Project:", 245)} #{fg(expanded_path, 250)}"
+
+    if config.config_path
+      relative_config = config.config_path.to_s.delete_prefix("#{expanded_path}/")
+      puts "  #{fg("Config:", 245)}  #{fg(relative_config, 250)}"
+      puts
+
+      File.readlines(config.config_path.to_s).each do |line|
+        puts "  #{fg(line.rstrip, 241)}"
+      end
+    else
+      puts "  #{fg("Config:", 245)}  #{fg("(defaults)", 241)}"
+    end
+
+    puts "  #{fg("Indexing files...", 241)}"
+
+    file_states = {}
+    initial_files = config.find_files(path)
+
+    initial_files.each do |file_path|
+      file_states[file_path] = File.read(file_path)
+    rescue StandardError
+      # skip files that can't be read
+    end
+
+    print "\e[1A\e[2K"
+    puts "  #{fg("Files:", 245)}   #{fg("#{file_states.size} templates indexed", 250)}"
+    puts
+    puts "  #{fg("Ready!", 42)} #{fg("Watching for changes...", 241)}"
+    puts
+
+    first_change = true
+
+    Thread.new do
+      $stdin.gets(nil)
+      Thread.main.raise(Interrupt)
+    end
+
+    Cruise.watch(expanded_path, only: ["created", "modified", "removed"]) do |event|
+      file_path = event.path
+      relative_path = file_path.delete_prefix("#{expanded_path}/")
+
+      next if config.path_excluded?(relative_path, exclude_patterns)
+      next unless config.path_included?(relative_path, include_patterns)
+
+      if first_change
+        print "\e[2A\e[J"
+        puts "  #{fg("Recent changes:", 245)}"
+        puts
+        first_change = false
+      end
+
+      timestamp = fg(Time.now.strftime("%H:%M:%S.%L"), 241)
+      display_path = fg(relative_path, 250)
+
+      case event.kind
+      when "created", "modified"
+        next unless File.exist?(file_path)
+
+        current_content = File.read(file_path)
+        previous_content = file_states[file_path]
+
+        if previous_content.nil?
+          file_states[file_path] = current_content
+          badge = bold(fg("+ added  ", 42))
+          puts "    #{timestamp} #{badge} #{display_path}"
+          next
+        end
+
+        next if previous_content == current_content
+
+        current_parse = Herb.parse(current_content, strict: true, analyze: true)
+        current_errors = current_parse.errors
+
+        if current_errors.any?
+          previous_parse = Herb.parse(previous_content, strict: true, analyze: true)
+          previous_errors = previous_parse.errors
+
+          new_errors = current_errors.select { |error|
+            previous_errors.none? { |previous_error|
+              previous_error.error_name == error.error_name &&
+                previous_error.location.start.line == error.location.start.line
+            }
+          }
+
+          badge = bold(fg("\u{2717} error  ", 196))
+          puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{current_errors.size} error#{"s" unless current_errors.size == 1})", 241)}"
+
+          new_errors.each do |error|
+            location = fg("#{relative_path}:#{error.location.start.line}:#{error.location.start.column}", 241)
+            puts "                        #{fg(error.error_name, 196)} #{location}"
+            puts "                        #{fg(error.message, 250)}" if error.message && !error.message.empty?
+          end
+
+          puts
+          next
+        end
+
+        previous_parse = Herb.parse(previous_content, strict: true, analyze: true)
+
+        if previous_parse.errors.any?
+          file_states[file_path] = current_content
+          badge = bold(fg("\u{2713} fixed  ", 42))
+          puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{previous_parse.errors.size} error#{"s" unless previous_parse.errors.size == 1} resolved)", 241)}"
+          puts
+          next
+        end
+
+        diff_result = Herb.diff(previous_content, current_content)
+        file_states[file_path] = current_content
+
+        if diff_result.identical?
+          next
+        end
+
+        operations = diff_result.operations
+        badge = bold(fg("\u{21BB} reload ", 214))
+        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{operations.size} operation#{"s" unless operations.size == 1})", 241)}"
+
+        operations.each_with_index do |operation, index|
+          type = operation.type.to_s
+          operation_path = operation.path
+          old_node = operation.old_node
+          new_node = operation.new_node
+
+          type_color = case type
+                       when "node_inserted" then 114                                        # #90b874
+                       when "node_removed", "attribute_removed" then 168                    # #e06c75
+                       when "node_replaced", "tag_name_changed" then 173                    # #d19a66
+                       when "node_wrapped", "node_unwrapped",
+                            "attribute_added", "attribute_value_changed" then 75 # #61afef
+                       when "node_moved" then 73                                            # #56b6c2
+                       when "text_changed" then 186                                         # #e5c07b
+                       when "erb_content_changed" then 176                                  # #c678dd
+                       else 241
+                       end
+
+          type_label = type.tr("_", " ")
+          index_label = fg("##{index + 1}", 241)
+          path_label = fg("[#{operation_path.join(", ")}]", 241)
+          indent = "                        "
+
+          puts "#{indent}#{index_label} #{bold(fg(type_label, type_color))} #{path_label}"
+
+          if old_node
+            print_diff_node(indent, "-", 168, old_node, type)
+          end
+
+          next unless new_node
+
+          print_diff_node(indent, "+", 114, new_node, type)
+        end
+
+        puts
+
+      when "removed"
+        file_states.delete(file_path)
+        badge = bold(fg("- removed", 196))
+        puts "    #{timestamp} #{badge} #{display_path}"
+      end
+    end
+  rescue Interrupt
+    print SHOW_CURSOR
+    puts
+    puts "Stopped."
+    exit(0)
+  ensure
+    print SHOW_CURSOR
+  end
+
+  def print_diff_node(indent, sign, color, node, type)
+    value = extract_node_value(node, type)
+
+    if value
+      puts "#{indent}  #{fg(sign, color)} #{fg(value, color)}"
+    else
+      location = node_location_label(node)
+      puts "#{indent}  #{fg(sign, color)} #{fg(node.type, 250)}#{location}"
+    end
+  end
+
+  def node_location_label(node)
+    return "" unless node.respond_to?(:location)
+
+    " #{fg("(#{node.location.start.line}:#{node.location.start.column})", 241)}"
+  end
+
+  def extract_node_value(node, _operation_type)
+    return nil unless node
+
+    if node.is_a?(Herb::AST::HTMLTextNode)
+      return node.content&.to_s
+    end
+
+    if node.is_a?(Herb::AST::ERBContentNode)
+      return node.content&.value&.to_s
+    end
+
+    if node.is_a?(Herb::AST::HTMLElementNode)
+      name = node.tag_name
+      name = name.value if name.respond_to?(:value)
+      return "<#{name}>"
+    end
+
+    if node.is_a?(Herb::AST::HTMLAttributeNode)
+      parts = []
+
+      if node.name.respond_to?(:children)
+        parts << node.name.children.map { |child| child.respond_to?(:content) ? child.content.to_s : "" }.join
+      end
+
+      if node.value.respond_to?(:children)
+        value = node.value.children.map { |child| child.respond_to?(:content) ? child.content.to_s : "" }.join
+        parts << "=\"#{value}\""
+      end
+
+      result = parts.join
+      return result.empty? ? nil : result
+    end
+
+    nil
   end
 
   def diff_files
