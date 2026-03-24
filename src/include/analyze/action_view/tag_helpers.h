@@ -17,6 +17,7 @@ typedef struct {
   tag_helper_info_T* info;
   const tag_helper_handler_T* matched_handler;
   bool found;
+  const pm_node_t* postfix_conditional_node;
 } tag_helper_search_data_T;
 
 bool search_tag_helper_node(const pm_node_t* node, void* data);
