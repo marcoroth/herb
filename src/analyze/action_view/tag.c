@@ -39,9 +39,16 @@ char* extract_tag_dot_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
 
 // TODO: this should probably be an array of nodes
 char* extract_tag_dot_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) parser;
-
   if (!call_node) { return NULL; }
+
+  if (call_node->name) {
+    pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+
+    if (constant
+        && is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
+      return NULL;
+    }
+  }
 
   char* block_content = extract_inline_block_content(call_node, allocator);
   if (block_content) { return block_content; }
@@ -52,11 +59,16 @@ char* extract_tag_dot_content(pm_call_node_t* call_node, pm_parser_t* parser, hb
     if (arguments->arguments.size) {
       pm_node_t* first_argument = arguments->arguments.nodes[0];
 
+      if (first_argument->type == PM_KEYWORD_HASH_NODE) { return NULL; }
+
       if (first_argument->type == PM_STRING_NODE) {
         pm_string_node_t* string_node = (pm_string_node_t*) first_argument;
         size_t length = pm_string_length(&string_node->unescaped);
         return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
       }
+
+      size_t source_length = first_argument->location.end - first_argument->location.start;
+      return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
     }
   }
 

@@ -219,6 +219,42 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       expect(transform(input)).toBe(expected)
     })
 
+    test("tag.h3 with variable content argument and attributes", () => {
+      expect(transform('<%= tag.h3(title, class: "heading") if title.present? %>')).toBe(
+        '<h3 class="heading"><%= title %></h3>'
+      )
+    })
+
+    test("tag.p with variable content argument and attributes without parens", () => {
+      expect(transform('<%= tag.p message, class: "text" %>')).toBe(
+        '<p class="text"><%= message %></p>'
+      )
+    })
+
+    test("tag.div with render call as content argument and attributes", () => {
+      expect(transform('<%= tag.div(render("icons/icon"), class: "icon") %>')).toBe(
+        '<div class="icon"><%= render("icons/icon") %></div>'
+      )
+    })
+
+    test("tag.span with instance variable content argument", () => {
+      expect(transform('<%= tag.span @user.name, class: "name" %>')).toBe(
+        '<span class="name"><%= @user.name %></span>'
+      )
+    })
+
+    test("tag.h1 with method call content argument", () => {
+      expect(transform('<%= tag.h1 t(".title"), class: "heading" %>')).toBe(
+        '<h1 class="heading"><%= t(".title") %></h1>'
+      )
+    })
+
+    test("tag.div with variable content argument only", () => {
+      expect(transform('<%= tag.div content %>')).toBe(
+        '<div><%= content %></div>'
+      )
+    })
+
     test("tag.script with nonce true passes through as literal", () => {
       expect(transform('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')).toBe(
         '<script nonce="true"><%= "alert(1)".html_safe %></script>'
