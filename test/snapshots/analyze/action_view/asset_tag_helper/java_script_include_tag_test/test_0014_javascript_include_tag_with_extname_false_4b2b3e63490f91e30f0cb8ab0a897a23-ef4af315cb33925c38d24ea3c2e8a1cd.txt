@@ -13,42 +13,22 @@ options: {action_view_helpers: true}
     │   │       ├── content: " javascript_include_tag "template.jst", extname: false " (location: (1:3)-(1:58))
     │   │       ├── tag_closing: "%>" (location: (1:58)-(1:60))
     │   │       ├── tag_name: "script" (location: (1:4)-(1:26))
-    │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:27)-(1:41))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:41))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:27)-(1:41))
-    │   │           │   │               └── content: "src"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: ":" (location: (1:27)-(1:41))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:27)-(1:41))
-    │   │           │           ├── open_quote: ∅
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ RubyLiteralNode (location: (1:27)-(1:41))
-    │   │           │           │       └── content: "javascript_path(\"template.jst\")"
-    │   │           │           │
-    │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
-    │   │           │
-    │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:43)-(1:57))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:27)-(1:41))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:43)-(1:50))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:41))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:43)-(1:50))
-    │   │               │               └── content: "extname"
+    │   │               │           └── @ LiteralNode (location: (1:27)-(1:41))
+    │   │               │               └── content: "src"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:50)-(1:52))
+    │   │               ├── equals: ":" (location: (1:27)-(1:41))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:52)-(1:57))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:27)-(1:41))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:52)-(1:57))
-    │   │                       │       └── content: "false"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:27)-(1:41))
+    │   │                       │       └── content: "javascript_path(\"template.jst\", extname: false)"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: false
