@@ -10,9 +10,6 @@ module Herb
 
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
-        @attrfunc = options.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
-        @jsfunc = options.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
-        @cssfunc = options.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
         @tokens = [] #: Array[untyped]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -28,26 +25,16 @@ module Herb
             @engine.send(:add_text, value)
           when :code
             @engine.send(:add_code, value)
-          when :expr
-            if [:attribute_value, :script_content, :style_content].include?(context)
-              add_context_aware_expression(value, context)
+          when :expr, :expr_escaped
+            indicator = indicator_for(type)
+
+            if context_aware_context?(context)
+              @engine.send(:add_context_aware_expression, indicator, value, context)
             else
-              indicator = @escape ? "==" : "="
               @engine.send(:add_expression, indicator, value)
             end
-          when :expr_escaped
-            if [:attribute_value, :script_content, :style_content].include?(context)
-              add_context_aware_expression(value, context)
-            else
-              indicator = @escape ? "=" : "=="
-              @engine.send(:add_expression, indicator, value)
-            end
-          when :expr_block
-            indicator = @escape ? "==" : "="
-            @engine.send(:add_expression_block, indicator, value)
-          when :expr_block_escaped
-            indicator = @escape ? "=" : "=="
-            @engine.send(:add_expression_block, indicator, value)
+          when :expr_block, :expr_block_escaped
+            @engine.send(:add_expression_block, indicator_for(type), value)
           when :expr_block_end
             @engine.send(:add_expression_block_end, value, escaped: escaped)
           end
@@ -289,6 +276,9 @@ module Herb
         else
           visit_erb_control_node(node) do
             visit_all(node.body)
+            visit(node.rescue_clause)
+            visit(node.else_clause)
+            visit(node.ensure_clause)
             visit(node.end_node)
           end
         end
@@ -340,27 +330,6 @@ module Herb
 
       def pop_context
         @context_stack.pop
-      end
-
-      def add_context_aware_expression(code, context)
-        closing = code.include?("#") ? "\n))" : "))"
-
-        case context
-        when :attribute_value
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@attrfunc}((" << code << closing
-          }
-        when :script_content
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@jsfunc}((" << code << closing
-          }
-        when :style_content
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@cssfunc}((" << code << closing
-          }
-        else
-          @engine.send(:add_expression_result_escaped, code)
-        end
       end
 
       def process_erb_tag(node, skip_comment_check: false)
@@ -501,6 +470,16 @@ module Herb
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
         @trim_next_whitespace = true if has_right_trim
+      end
+
+      def indicator_for(type)
+        escaped = [:expr_escaped, :expr_block_escaped].include?(type)
+
+        escaped ^ @escape ? "==" : "="
+      end
+
+      def context_aware_context?(context)
+        [:attribute_value, :script_content, :style_content].include?(context)
       end
 
       def should_escape_output?(opening)
