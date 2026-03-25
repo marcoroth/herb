@@ -359,6 +359,7 @@ static void calculate_tag_name_positions(
 }
 
 static const char* JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS[] = { "protocol", "extname", "host", "skip_pipeline", NULL };
+static const char* IMAGE_TAG_PATH_OPTIONS[] = { "skip_pipeline", NULL };
 
 static char* extract_path_options_from_keyword_hash(
   pm_call_node_t* call_node,
@@ -497,6 +498,96 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     remove_attribute_by_name(attributes, "host");
     remove_attribute_by_name(attributes, "protocol");
     remove_attribute_by_name(attributes, "skip-pipeline");
+  }
+
+  if (attributes && handler->name && strcmp(handler->name, "image_tag") == 0) {
+    path_options =
+      extract_path_options_from_keyword_hash(parse_context->info->call_node, IMAGE_TAG_PATH_OPTIONS, allocator);
+    remove_attribute_by_name(attributes, "skip-pipeline");
+
+    AST_NODE_T* size_node = remove_attribute_by_name(attributes, "size");
+
+    if (size_node && size_node->type == AST_HTML_ATTRIBUTE_NODE) {
+      AST_HTML_ATTRIBUTE_NODE_T* size_attribute_node = (AST_HTML_ATTRIBUTE_NODE_T*) size_node;
+
+      if (size_attribute_node->value && size_attribute_node->value->children
+          && hb_array_size(size_attribute_node->value->children) > 0) {
+        AST_NODE_T* value_node = (AST_NODE_T*) hb_array_get(size_attribute_node->value->children, 0);
+        position_T position = size_attribute_node->base.location.start;
+
+        if (value_node->type == AST_LITERAL_NODE) {
+          AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) value_node;
+          char* size_string = hb_allocator_strndup(allocator, literal->content.data, literal->content.length);
+
+          if (size_string) {
+            const char* x_position = strchr(size_string, 'x');
+            char width_string[32];
+            char height_string[32];
+
+            if (x_position) {
+              size_t width_length = (size_t) (x_position - size_string);
+              strncpy(width_string, size_string, width_length);
+              width_string[width_length] = '\0';
+              strncpy(height_string, x_position + 1, sizeof(height_string) - 1);
+              height_string[sizeof(height_string) - 1] = '\0';
+            } else {
+              strncpy(width_string, size_string, sizeof(width_string) - 1);
+              width_string[sizeof(width_string) - 1] = '\0';
+              strncpy(height_string, size_string, sizeof(height_string) - 1);
+              height_string[sizeof(height_string) - 1] = '\0';
+            }
+
+            AST_HTML_ATTRIBUTE_NODE_T* width_attribute =
+              create_html_attribute_node("width", width_string, position, position, allocator);
+            AST_HTML_ATTRIBUTE_NODE_T* height_attribute =
+              create_html_attribute_node("height", height_string, position, position, allocator);
+
+            if (width_attribute) { hb_array_append(attributes, (AST_NODE_T*) width_attribute); }
+            if (height_attribute) { hb_array_append(attributes, (AST_NODE_T*) height_attribute); }
+
+            hb_allocator_dealloc(allocator, size_string);
+          }
+        } else if (value_node->type == AST_RUBY_LITERAL_NODE) {
+          AST_RUBY_LITERAL_NODE_T* ruby_literal = (AST_RUBY_LITERAL_NODE_T*) value_node;
+          char* size_expression =
+            hb_allocator_strndup(allocator, ruby_literal->content.data, ruby_literal->content.length);
+
+          if (size_expression) {
+            hb_buffer_T width_buffer;
+            hb_buffer_init(&width_buffer, ruby_literal->content.length + 32, allocator);
+            hb_buffer_append(&width_buffer, size_expression);
+            hb_buffer_append(&width_buffer, ".to_s.split(\"x\", 2)[0]");
+
+            hb_buffer_T height_buffer;
+            hb_buffer_init(&height_buffer, ruby_literal->content.length + 32, allocator);
+            hb_buffer_append(&height_buffer, size_expression);
+            hb_buffer_append(&height_buffer, ".to_s.split(\"x\", 2)[-1]");
+
+            AST_HTML_ATTRIBUTE_NODE_T* width_attribute = create_html_attribute_with_ruby_literal(
+              "width",
+              hb_buffer_value(&width_buffer),
+              position,
+              position,
+              allocator
+            );
+            AST_HTML_ATTRIBUTE_NODE_T* height_attribute = create_html_attribute_with_ruby_literal(
+              "height",
+              hb_buffer_value(&height_buffer),
+              position,
+              position,
+              allocator
+            );
+
+            if (width_attribute) { hb_array_append(attributes, (AST_NODE_T*) width_attribute); }
+            if (height_attribute) { hb_array_append(attributes, (AST_NODE_T*) height_attribute); }
+
+            hb_buffer_free(&width_buffer);
+            hb_buffer_free(&height_buffer);
+            hb_allocator_dealloc(allocator, size_expression);
+          }
+        }
+      }
+    }
   }
 
   char* helper_content = NULL;
