@@ -14,6 +14,7 @@ module Herb
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
+        @trimmed_newline = false
       end
 
       def generate_output
@@ -360,8 +361,12 @@ module Herb
         return if text.empty?
 
         if @trim_next_whitespace
+          original = text
           text = text.sub(/\A[ \t]*\r?\n/, "")
           @trim_next_whitespace = false
+          @trimmed_newline = (text != original)
+        else
+          @trimmed_newline = false
         end
 
         return if text.empty?
@@ -505,10 +510,16 @@ module Herb
       end
 
       def preceding_token_ends_with_newline?
+<<<<<<< HEAD
         return true unless @tokens.length >= 2
 
         preceding = @tokens[-2]
         return false if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
+=======
+        preceding = @tokens.length >= 2 ? @tokens[-2] : nil
+        return true unless preceding
+        return @trimmed_newline if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
+>>>>>>> 1174a666 (Herb emitted the leading whitespace as literal text)
         return preceding[1].end_with?("\n") if preceding[0] == :expr_block_end
         return true unless preceding[0] == :text
 

@@ -195,6 +195,24 @@ module Engine
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
 
+    test "output tag with -%> followed by indented control tag trims whitespace" do
+      template = "A<%= -%>\n <% if true %>\nB\n<% end %>"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by non-indented control tag (baseline)" do
+      template = "A<%= -%>\n<% if true %>\nB\n<% end %>"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "real-world pattern: text joined across conditional with -%>" do
+      template = "  as of X<%= -%>\n  <% if true %>\n    with filters<%= -%>\n  <% end %>\n."
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
     test "whitespace between consecutive end tags after expression block is trimmed" do
       template = <<~ERB
         <% outer do %>
