@@ -79,7 +79,38 @@ GEM
     base64 (0.3.0)
     benchmark (0.5.0)
     bigdecimal (4.0.1)
+    bubbles (0.1.1)
+      bubbletea
+      harmonica
+      lipgloss
+    bubbletea (0.1.3-aarch64-linux-gnu)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.3-aarch64-linux-musl)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.3-arm64-darwin)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.3-x86_64-darwin)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.3-x86_64-linux-gnu)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.3-x86_64-linux-musl)
+      lipgloss (~> 0.1)
+    bubblezone (0.1.2-aarch64-linux-gnu)
+    bubblezone (0.1.2-aarch64-linux-musl)
+    bubblezone (0.1.2-arm64-darwin)
+    bubblezone (0.1.2-x86_64-darwin)
+    bubblezone (0.1.2-x86_64-linux-gnu)
+    bubblezone (0.1.2-x86_64-linux-musl)
     builder (3.3.0)
+    charm (0.1.0)
+      bubbles
+      bubbletea
+      bubblezone
+      glamour
+      gum
+      harmonica
+      lipgloss
+      ntcharts
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
@@ -106,6 +137,17 @@ GEM
     ffi (1.17.3-x86_64-linux-gnu)
     ffi (1.17.3-x86_64-linux-musl)
     fileutils (1.8.0)
+    glamour (0.2.2-aarch64-linux-gnu)
+    glamour (0.2.2-aarch64-linux-musl)
+    glamour (0.2.2-arm64-darwin)
+    glamour (0.2.2-x86_64-darwin)
+    glamour (0.2.2-x86_64-linux-gnu)
+    glamour (0.2.2-x86_64-linux-musl)
+    gum (0.3.2-aarch64-linux)
+    gum (0.3.2-arm64-darwin)
+    gum (0.3.2-x86_64-darwin)
+    gum (0.3.2-x86_64-linux)
+    harmonica (0.1.1)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     io-console (0.8.2)
@@ -149,6 +191,12 @@ GEM
       racc (~> 1.4)
     nokogiri (1.19.2-x86_64-linux-musl)
       racc (~> 1.4)
+    ntcharts (0.1.2-aarch64-linux-gnu)
+    ntcharts (0.1.2-aarch64-linux-musl)
+    ntcharts (0.1.2-arm64-darwin)
+    ntcharts (0.1.2-x86_64-darwin)
+    ntcharts (0.1.2-x86_64-linux-gnu)
+    ntcharts (0.1.2-x86_64-linux-musl)
     parallel (1.27.0)
     parser (3.3.10.1)
       ast (~> 2.4.1)
@@ -260,11 +308,11 @@ PLATFORMS
 DEPENDENCIES
   actionview (~> 8.0)
   benchmark
+  charm
   digest (~> 3.2)
   erubi
   herb!
   irb (~> 1.16)
-  lipgloss
   lz_string
   maxitest (~> 6.0)
   minitest-difftastic (~> 0.2)

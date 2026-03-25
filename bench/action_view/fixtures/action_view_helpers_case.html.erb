@@ -1,0 +1,8 @@
+<%= tag.div(class: wrapper_classes) do %>
+  <%= tag.div("icons/#{icon}", class: icon_classes) if icon.present? %>
+
+  <%= tag.div do %>
+    <%= tag.h3(title, class: title_classes) if title.present? %>
+    <%= tag.p message, class: message_classes %>
+  <% end %>
+<% end %>

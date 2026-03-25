@@ -19,6 +19,7 @@ module Bench
     def bold(str)    = "\e[1m#{str}\e[0m"
     def dimmed(str)  = "\e[2m#{str}\e[0m"
     def green(str)   = "\e[32m#{str}\e[0m"
+    def red(str)     = "\e[31m#{str}\e[0m"
 
     class ActionViewHelperCounter < Herb::Visitor
       attr_reader :count
@@ -65,7 +66,7 @@ module Bench
     end
 
     def format_compile_ratio(ratio)
-      ratio < 1.5 ? "~baseline" : "%.1fx slower" % ratio
+      ratio < 1.1 ? "~baseline" : "%.1fx slower" % ratio
     end
 
     def run_benchmark(title:, template:, locals: {}, subtitle: nil, fixture: nil, results: nil)
@@ -140,8 +141,14 @@ module Bench
       puts "  #{bold("Compile")} #{dimmed("(#{COMPILE_ITERATIONS} iterations)")}"
       puts ""
       puts "  #{"Erubi via ActionView".ljust(LABEL_WIDTH)} #{bar(compile_times[:erubi].real / max_compile, width: 20)}  #{bold(format_time(compile_times[:erubi].real))}  #{dimmed("(%s/compile)" % format_time(compile_times[:erubi].real / COMPILE_ITERATIONS))}  #{dimmed("(baseline)")}"
-      puts "  #{"Herb via ActionView".ljust(LABEL_WIDTH)} #{bar(compile_times[:herb].real / max_compile, width: 20)}  #{bold(format_time(compile_times[:herb].real))}  #{dimmed("(%s/compile)" % format_time(compile_times[:herb].real / COMPILE_ITERATIONS))}  #{dimmed(format_compile_ratio(herb_compile_ratio))}"
-      puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bar(compile_times[:herb_pre].real / max_compile, width: 20)}  #{bold(format_time(compile_times[:herb_pre].real))}  #{dimmed("(%s/compile)" % format_time(compile_times[:herb_pre].real / COMPILE_ITERATIONS))}  #{dimmed(format_compile_ratio(herb_pre_compile_ratio))}"
+
+      herb_compile_label = format_compile_ratio(herb_compile_ratio)
+      herb_pre_compile_label = format_compile_ratio(herb_pre_compile_ratio)
+      herb_compile_styled = herb_compile_label.include?("slower") ? bold(red(herb_compile_label)) : dimmed(herb_compile_label)
+      herb_pre_compile_styled = herb_pre_compile_label.include?("slower") ? bold(red(herb_pre_compile_label)) : dimmed(herb_pre_compile_label)
+
+      puts "  #{"Herb via ActionView".ljust(LABEL_WIDTH)} #{bar(compile_times[:herb].real / max_compile, width: 20)}  #{bold(format_time(compile_times[:herb].real))}  #{dimmed("(%s/compile)" % format_time(compile_times[:herb].real / COMPILE_ITERATIONS))}  #{herb_compile_styled}"
+      puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bar(compile_times[:herb_pre].real / max_compile, width: 20)}  #{bold(format_time(compile_times[:herb_pre].real))}  #{dimmed("(%s/compile)" % format_time(compile_times[:herb_pre].real / COMPILE_ITERATIONS))}  #{herb_pre_compile_styled}"
       puts ""
 
       puts "  #{bold("Render")} #{dimmed("(#{RENDER_ITERATIONS} iterations)")}"
@@ -151,10 +158,13 @@ module Bench
       herb_pre_render_label = format_ratio(herb_pre_render_ratio)
 
       puts "  #{"Erubi via ActionView".ljust(LABEL_WIDTH)} #{bar(render_times[:erubi].real / max_render)}  #{bold(format_time(render_times[:erubi].real))}  #{dimmed("(%s/render)" % format_time(render_times[:erubi].real / RENDER_ITERATIONS))}  #{dimmed("(baseline)")}"
-      puts "  #{"Herb via ActionView".ljust(LABEL_WIDTH)} #{bar(render_times[:herb].real / max_render)}  #{bold(format_time(render_times[:herb].real))}  #{dimmed("(%s/render)" % format_time(render_times[:herb].real / RENDER_ITERATIONS))}  #{dimmed(herb_render_label)}"
+      herb_render_styled = herb_render_label.include?("slower") ? bold(red(herb_render_label)) : dimmed(herb_render_label)
+      puts "  #{"Herb via ActionView".ljust(LABEL_WIDTH)} #{bar(render_times[:herb].real / max_render)}  #{bold(format_time(render_times[:herb].real))}  #{dimmed("(%s/render)" % format_time(render_times[:herb].real / RENDER_ITERATIONS))}  #{herb_render_styled}"
 
-      if herb_pre_render_ratio >= 1.0
+      if herb_pre_render_label.include?("faster")
         puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bar(render_times[:herb_pre].real / max_render)}  #{bold(green(format_time(render_times[:herb_pre].real)))}  #{dimmed("(%s/render)" % format_time(render_times[:herb_pre].real / RENDER_ITERATIONS))}  #{bold(green(herb_pre_render_label))}"
+      elsif herb_pre_render_label.include?("slower")
+        puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bar(render_times[:herb_pre].real / max_render)}  #{bold(red(format_time(render_times[:herb_pre].real)))}  #{dimmed("(%s/render)" % format_time(render_times[:herb_pre].real / RENDER_ITERATIONS))}  #{bold(red(herb_pre_render_label))}"
       else
         puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bar(render_times[:herb_pre].real / max_render)}  #{bold(format_time(render_times[:herb_pre].real))}  #{dimmed("(%s/render)" % format_time(render_times[:herb_pre].real / RENDER_ITERATIONS))}  #{dimmed(herb_pre_render_label)}"
       end
@@ -163,7 +173,17 @@ module Bench
       puts "  #{bold("Compiled size:")}"
       puts "  #{"Erubi via ActionView".ljust(LABEL_WIDTH)} #{erubi_compiled.length} bytes"
       puts "  #{"Herb via ActionView".ljust(LABEL_WIDTH)} #{reactionview_without.length} bytes"
-      puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bold(green("#{reactionview_with.length} bytes"))} #{dimmed("(%.0f%% smaller)" % ((1 - reactionview_with.length.to_f / erubi_compiled.length) * 100))}"
+
+      size_change = (1 - reactionview_with.length.to_f / erubi_compiled.length) * 100
+
+      if size_change >= 0
+        size_label = "#{size_change.round}% smaller"
+        puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bold(green("#{reactionview_with.length} bytes"))} #{dimmed("(#{size_label})")}"
+      else
+        size_label = "#{size_change.abs.round}% larger"
+        puts "  #{"Herb via ActionView (precompiled helpers)".ljust(LABEL_WIDTH)} #{bold(red("#{reactionview_with.length} bytes"))} #{bold(red("(#{size_label})"))}"
+      end
+
       puts ""
 
       results << {
@@ -180,7 +200,7 @@ module Bench
     def print_summary(results)
       return if results.empty?
 
-      sorted = results.sort_by { |r| r[:render_speedup] }
+      sorted = results.sort_by { |result| result[:render_speedup] }
 
       green_style = Lipgloss::Style.new.bold(true).foreground("2").padding(0, 1).align(Lipgloss::RIGHT)
       dimmed_style = Lipgloss::Style.new.foreground("8").padding(0, 1).align(Lipgloss::RIGHT)
@@ -200,15 +220,15 @@ module Bench
           end
         }
 
-      sorted.each do |r|
-        render_label = format_ratio(r[:render_speedup], faster_threshold: 1.05, slower_threshold: 0.95)
-        size_label = r[:size_reduction] >= 0 ? "#{r[:size_reduction]}% smaller" : "#{-r[:size_reduction]}% larger"
+      sorted.each do |result|
+        render_label = format_ratio(result[:render_speedup], faster_threshold: 1.05, slower_threshold: 0.95)
+        size_label = result[:size_reduction] >= 0 ? "#{result[:size_reduction]}% smaller" : "#{-result[:size_reduction]}% larger"
 
         table.row([
-          r[:title],
-          r[:lines].to_s,
-          r[:helpers].to_s,
-          r[:compile_slower] < 1.5 ? "~baseline" : "%.0fx slower" % r[:compile_slower],
+          result[:title],
+          result[:lines].to_s,
+          result[:helpers].to_s,
+          result[:compile_slower] < 1.1 ? "~baseline" : "%.0fx slower" % result[:compile_slower],
           size_label,
           render_label,
         ])
@@ -220,7 +240,7 @@ module Bench
       puts ""
       puts "  " + title
       puts ""
-      puts table.render.lines.map { |l| "  " + l }.join
+      puts table.render.lines.map { |line| "  " + line }.join
       puts ""
     end
   end
