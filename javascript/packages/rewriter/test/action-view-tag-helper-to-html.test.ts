@@ -692,15 +692,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("javascript_include_tag with extname false", () => {
+    test("javascript_include_tag with extname false forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
-        `<script extname="false" src="<%= javascript_path("template.jst") %>"></script>`
+        `<script src="<%= javascript_path("template.jst", extname: false) %>"></script>`
       )
     })
 
-    test("javascript_include_tag with host and protocol", () => {
+    test("javascript_include_tag with host and protocol forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
-        `<script host="localhost" protocol="https" src="<%= javascript_path("xmlhr") %>"></script>`
+        `<script src="<%= javascript_path("xmlhr", host: "localhost", protocol: "https") %>"></script>`
       )
     })
 
