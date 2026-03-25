@@ -211,7 +211,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div class="content" <%= **attributes %>>
+        <div class="content" <%= tag.attributes(attributes) %>>
           Content
         </div>
       `
@@ -353,6 +353,54 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       expect(transform('<%= content_tag(:script, "alert(1)", nonce: false) %>')).toBe(
         '<script nonce="false">alert(1)</script>'
       )
+    })
+
+    test("content_tag with splat attributes", () => {
+      const input = dedent`
+        <%= content_tag(:div, **attributes) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div <%= tag.attributes(attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in data", () => {
+      const input = dedent`
+        <%= content_tag(:div, data: { controller: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div data-controller="one" <%= tag.attributes(data: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in aria", () => {
+      const input = dedent`
+        <%= content_tag(:div, aria: { label: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div aria-label="one" <%= tag.attributes(aria: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
     })
   })
 
@@ -515,7 +563,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" <%= **attributes %>>
+        <turbo-frame id="tray" <%= tag.attributes(attributes) %>>
           Content
         </turbo-frame>
       `
@@ -778,6 +826,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("image_tag with data attributes", () => {
       expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
         '<img src="<%= image_path("icon.png") %>" data-controller="image" />'
+      )
+    })
+
+    test("image_tag with splat attributes", () => {
+      expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(attributes) %> />'
       )
     })
   })
