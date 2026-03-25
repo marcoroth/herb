@@ -21,10 +21,8 @@ module Engine
 
       assigns.each { |key, value| view.instance_variable_set(:"@#{key}", value) }
 
-      view.instance_eval("@output_buffer = ::ActionView::OutputBuffer.new; #{engine.src}")
+      view.instance_eval("@output_buffer = ::ActionView::OutputBuffer.new; #{engine.src}", __FILE__, __LINE__)
     end
-
-    public
 
     # TODO: reactionview 0.3.0 uses safe_expr_append which does not escape.
     # This should use append= for proper XSS protection. Tracked upstream.

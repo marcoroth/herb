@@ -41,7 +41,7 @@ module Engine
 
       test "turbo_frame_tag with variable id" do
         assert_precompiled_snapshot(
-          '<%= turbo_frame_tag dom_id do %>Content<% end %>',
+          "<%= turbo_frame_tag dom_id do %>Content<% end %>",
           { dom_id: "post_1" }
         )
       end

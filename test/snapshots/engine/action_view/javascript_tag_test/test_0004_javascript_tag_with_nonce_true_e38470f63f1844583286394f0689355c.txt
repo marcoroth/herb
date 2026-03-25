@@ -1,0 +1,13 @@
+---
+source: "Engine::ActionView::JavascriptTagTest#test_0004_javascript_tag with nonce true"
+input: "{source: \"<%= javascript_tag nonce: true do %>\\n  alert('Hello')\\n<% end %>\\n\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<script nonce="'.freeze; _buf << ::Herb::Engine.attr((content_security_policy_nonce)); _buf << '">
+//<![CDATA[
+
+  alert(\'Hello\')
+
+//]]>
+</script>
+'.freeze;
+_buf.to_s

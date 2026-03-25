@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0001_tag.div with block"
-input: "{source: \"<%= tag.div do %>\\n  Content\\n<% end %>\\n\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<div>
-  Content
-</div>
-'.freeze;
-_buf.to_s

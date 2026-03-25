@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0017_tag.details with inline block"
+input: "{source: \"<%= tag.details { \\\"Some content\\\" } %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<details>Some content</details>'.freeze;
+_buf.to_s

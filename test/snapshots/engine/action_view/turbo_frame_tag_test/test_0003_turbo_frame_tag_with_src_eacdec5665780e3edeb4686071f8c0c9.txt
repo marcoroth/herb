@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TurboFrameTagTest#test_0003_turbo_frame_tag with src"
-input: "{source: \"<%= turbo_frame_tag \\\"tray\\\", src: \\\"/path\\\" %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<turbo-frame id="tray" src="/path"></turbo-frame>'.freeze;
-_buf.to_s

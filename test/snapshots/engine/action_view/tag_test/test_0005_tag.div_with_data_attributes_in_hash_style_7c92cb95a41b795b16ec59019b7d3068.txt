@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0005_tag.div with data attributes in hash style"
-input: "{source: \"<%= tag.div data: { controller: \\\"content\\\" } %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<div data-controller="content"></div>'.freeze;
-_buf.to_s

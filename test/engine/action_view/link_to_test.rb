@@ -49,7 +49,7 @@ module Engine
 
       test "link_to with model" do
         assert_precompiled_snapshot(
-          '<%= link_to @profile %>',
+          "<%= link_to @profile %>",
           { "@profile": Profile.new(id: 42, name: "Alice") }
         )
       end

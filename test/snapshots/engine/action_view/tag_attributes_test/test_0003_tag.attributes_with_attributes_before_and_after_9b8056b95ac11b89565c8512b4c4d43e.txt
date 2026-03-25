@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagAttributesTest#test_0003_tag.attributes with attributes before and after"
-input: "{source: \"<button class=\\\"primary\\\" <%= tag.attributes(id: \\\"cta\\\", disabled: false) %> data-action=\\\"click->submit\\\">Go</button>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<button class="primary" id="cta" data-action="click->submit">Go</button>'.freeze;
-_buf.to_s

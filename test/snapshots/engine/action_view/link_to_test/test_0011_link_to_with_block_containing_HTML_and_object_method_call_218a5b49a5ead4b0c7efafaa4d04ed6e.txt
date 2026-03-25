@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0011_link_to with block containing HTML and object method call"
-input: "{source: \"<%= link_to @profile do %>\\n  <strong><%= @profile.name %></strong> -- <span>Check it out!</span>\\n<% end %>\\n\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<a href="'.freeze; _buf << ::Herb::Engine.attr((url_for(@profile))); _buf << '">
-  <strong>'.freeze; _buf << (@profile.name).to_s; _buf << '</strong> -- <span>Check it out!</span>
-</a>
-'.freeze;
-_buf.to_s

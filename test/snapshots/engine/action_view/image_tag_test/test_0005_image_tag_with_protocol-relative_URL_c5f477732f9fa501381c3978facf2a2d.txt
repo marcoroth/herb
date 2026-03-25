@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0005_image_tag with protocol-relative URL"
+input: "{source: \"<%= image_tag \\\"//cdn.example.com/icon.png\\\" %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<img src="//cdn.example.com/icon.png" />'.freeze;
+_buf.to_s

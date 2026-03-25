@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TurboFrameTagTest#test_0005_turbo_frame_tag with loading lazy"
-input: "{source: \"<%= turbo_frame_tag \\\"tray\\\", src: \\\"/path\\\", loading: \\\"lazy\\\" %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<turbo-frame loading="lazy" id="tray" src="/path"></turbo-frame>'.freeze;
-_buf.to_s

@@ -61,6 +61,7 @@ Metrics/CyclomaticComplexity:
     - lib/herb/prism_inspect.rb
     - lib/herb/engine/**/*.rb
     - templates/template.rb
+    - bench/**/*
 
 Metrics/MethodLength:
   Max: 20
@@ -75,6 +76,7 @@ Metrics/MethodLength:
     - test/fork_helper.rb
     - test/snapshot_utils.rb
     - bin/**/*
+    - bench/**/*
 
 Metrics/AbcSize:
   Exclude:
@@ -92,6 +94,8 @@ Metrics/AbcSize:
     - test/snapshot_utils.rb
     - test/engine/rails_compatibility_test.rb
     - bin/**/*
+    - bench/**/*
+    - test/engine/action_view/action_view_test_helper.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -110,6 +114,7 @@ Metrics/ModuleLength:
     - test/**/*.rb
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
+    - bench/**/*
 
 Metrics/BlockLength:
   Max: 30
@@ -142,6 +147,7 @@ Metrics/PerceivedComplexity:
     - templates/template.rb
     - test/**/*.rb
     - bin/**/*
+    - bench/**/*
 
 Layout/LineLength:
   Enabled: false
@@ -174,6 +180,7 @@ Security/Eval:
     - bin/erubi-render
     - bin/compare-render
     - bin/compare-render
+    - bench/action_view/benchmark_helper.rb
 
 Security/MarshalLoad:
   Exclude:
@@ -188,4 +195,7 @@ Lint/UnusedMethodArgument:
     - lib/herb/errors.rb
 
 Style/IfUnlessModifier:
+  Enabled: false
+
+Style/DocumentDynamicEvalDefinition:
   Enabled: false

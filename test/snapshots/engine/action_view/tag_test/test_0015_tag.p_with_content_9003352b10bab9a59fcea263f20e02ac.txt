@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0015_tag.p with content"
-input: "{source: \"<%= tag.p \\\"Hello\\\" %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<p>Hello</p>'.freeze;
-_buf.to_s

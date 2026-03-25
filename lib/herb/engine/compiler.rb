@@ -116,8 +116,7 @@ module Herb
 
         return unless node.value
 
-        equals = node.equals&.value || "="
-        add_text(equals == "=" ? "=" : "=")
+        add_text("=")
         visit(node.value)
       end
 
@@ -145,7 +144,7 @@ module Herb
         tag_name = node.tag_name&.value
 
         if tag_name
-          is_void = %w[area base br col embed hr img input link meta param source track wbr].include?(tag_name.downcase)
+          is_void = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].include?(tag_name.downcase)
           uses_self_closing = is_void && @current_element_source != "ActionView::Helpers::TagHelper#tag"
 
           add_text("<")
@@ -164,11 +163,11 @@ module Herb
       def visit_html_virtual_close_tag_node(node)
         tag_name = node.tag_name&.value
 
-        if tag_name
-          add_text("</")
-          add_text(tag_name)
-          add_text(">")
-        end
+        return unless tag_name
+
+        add_text("</")
+        add_text(tag_name)
+        add_text(">")
       end
 
       def visit_ruby_literal_node(node)

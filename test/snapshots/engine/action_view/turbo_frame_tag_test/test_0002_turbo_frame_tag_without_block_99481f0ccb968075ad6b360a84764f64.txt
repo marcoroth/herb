@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TurboFrameTagTest#test_0002_turbo_frame_tag without block"
-input: "{source: \"<%= turbo_frame_tag \\\"tray\\\" %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<turbo-frame id="tray"></turbo-frame>'.freeze;
-_buf.to_s

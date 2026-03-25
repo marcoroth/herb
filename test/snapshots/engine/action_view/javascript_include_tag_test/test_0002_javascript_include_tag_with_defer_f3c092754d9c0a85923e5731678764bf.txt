@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::JavascriptIncludeTagTest#test_0002_javascript_include_tag with defer"
-input: "{source: \"<%= javascript_include_tag \\\"application\\\", defer: true %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<script defer src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '"></script>'.freeze;
-_buf.to_s

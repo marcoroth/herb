@@ -14,10 +14,10 @@ module Engine
     def assert_precompiled_snapshot(template, locals = {}, evaluate: true)
       assert_compiled_snapshot(template, precompile: true)
 
-      if evaluate
-        assert_precompiled_evaluated_snapshot(template, locals)
-        assert_precompiled_match(template, locals)
-      end
+      return unless evaluate
+
+      assert_precompiled_evaluated_snapshot(template, locals)
+      assert_precompiled_match(template, locals)
     end
 
     def assert_precompiled_mismatch_snapshot(template, locals = {}, evaluate: true)
@@ -97,8 +97,7 @@ module Engine
       def url_for(options = {})
         case options
         when String then options
-        when Symbol then super
-        when Hash then super
+        when Symbol, Hash then super
         else options.to_s
         end
       end
@@ -116,7 +115,7 @@ module Engine
 
     def render_with_action_view(template, locals = {})
       renderer = Herb::ActionViewRenderer.new
-      original_render = renderer.method(:render)
+      renderer.method(:render)
 
       lookup_context = ::ActionView::LookupContext.new([])
       local_names = locals.reject { |k, _| k.to_s.start_with?("@") }.keys.map(&:to_sym)

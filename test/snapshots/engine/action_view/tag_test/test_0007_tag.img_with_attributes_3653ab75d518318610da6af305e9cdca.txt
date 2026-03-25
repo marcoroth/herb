@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0007_tag.img with attributes"
-input: "{source: \"<%= tag.img src: \\\"image.png\\\", alt: \\\"Photo\\\" %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<img src="image.png" alt="Photo">'.freeze;
-_buf.to_s

@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::ImageTagTest#test_0006_image_tag with ruby expression source"
-input: "{source: \"<%= image_tag user_avatar %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<img src="'.freeze; _buf << ::Herb::Engine.attr((image_path(user_avatar))); _buf << '" />'.freeze;
-_buf.to_s

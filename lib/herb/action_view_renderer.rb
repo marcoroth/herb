@@ -17,24 +17,37 @@ module Herb
     end
 
     def render(source, locals = {})
-      local_names = locals.reject { |k, _| k.to_s.start_with?("@") }.keys.map(&:to_sym)
-      assigns = locals.select { |k, _| k.to_s.start_with?("@") }.transform_keys { |k| k.to_s.delete_prefix("@") }
+      view = build_view(locals)
+      template = build_template(source, locals)
+      local_values = locals.reject { |key, _| key.to_s.start_with?("@") }
+
+      template.render(view, local_values)
+    end
+
+    private
+
+    def build_view(locals)
+      assigns = locals
+                .select { |key, _| key.to_s.start_with?("@") }
+                .transform_keys { |key| key.to_s.delete_prefix("@") }
 
       lookup_context = ActionView::LookupContext.new([])
       view = ActionView::Base.with_empty_template_cache.new(lookup_context, assigns, nil)
       view.class.include(Turbo::FramesHelper) if defined?(Turbo::FramesHelper)
+      view
+    end
+
+    def build_template(source, locals)
+      local_names = locals.reject { |key, _| key.to_s.start_with?("@") }.keys.map(&:to_sym)
       handler = ActionView::Template::Handlers::ERB.new
 
-      template = ActionView::Template.new(
+      ActionView::Template.new(
         source,
         "(eval)",
         handler,
         locals: local_names,
         format: :html
       )
-
-      local_values = locals.reject { |k, _| k.to_s.start_with?("@") }
-      template.render(view, local_values)
     end
   end
 end

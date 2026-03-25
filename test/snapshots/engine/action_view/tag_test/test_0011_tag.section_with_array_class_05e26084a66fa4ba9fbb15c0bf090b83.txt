@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0011_tag.section with array class"
-input: "{source: \"<%= tag.section class: [\\\"kitties\\\", \\\"puppies\\\"] %>\", options: {action_view_helpers: true}}"
----
-_buf = ::String.new; _buf << '<section class="kitties puppies"></section>'.freeze;
-_buf.to_s

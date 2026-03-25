@@ -49,7 +49,7 @@ module Engine
       end
 
       test "tag.div with symbol id" do
-        assert_precompiled_snapshot('<%= tag.div id: :main %>')
+        assert_precompiled_snapshot("<%= tag.div id: :main %>")
       end
 
       test "tag.div with aria hash" do
@@ -61,11 +61,11 @@ module Engine
       end
 
       test "tag.section with %w() class" do
-        assert_precompiled_snapshot('<%= tag.section class: %w( kitties puppies ) %>')
+        assert_precompiled_snapshot("<%= tag.section class: %w( kitties puppies ) %>")
       end
 
       test "tag.div with integer data attribute" do
-        assert_precompiled_snapshot('<%= tag.div data: { count: 42 } %>')
+        assert_precompiled_snapshot("<%= tag.div data: { count: 42 } %>")
       end
 
       test "tag.div with string style" do
@@ -90,7 +90,7 @@ module Engine
 
       test "tag.p with inline block and ruby expression" do
         assert_precompiled_snapshot(
-          '<%= tag.p { @user_name } %>',
+          "<%= tag.p { @user_name } %>",
           { "@user_name": "Alice" }
         )
       end
@@ -121,7 +121,7 @@ module Engine
 
       test "tag.div with variable attribute value" do
         assert_precompiled_snapshot(
-          '<%= tag.div class: class_name do %>Content<% end %>',
+          "<%= tag.div class: class_name do %>Content<% end %>",
           { class_name: "dynamic-class" }
         )
       end

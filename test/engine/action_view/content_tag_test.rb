@@ -30,7 +30,7 @@ module Engine
       # TODO: Rails renders `<br></br>` (content_tag doesn't know about void elements).
       # We render `<br>` because we set is_void: true. Our output is more correct HTML.
       test "content_tag br void element" do
-        assert_precompiled_mismatch_snapshot('<%= content_tag :br %>')
+        assert_precompiled_mismatch_snapshot("<%= content_tag :br %>")
       end
 
       test "content_tag with inline block" do
@@ -43,7 +43,7 @@ module Engine
 
       test "content_tag with inline block and ruby expression" do
         assert_precompiled_snapshot(
-          '<%= content_tag(:p) { @user_name } %>',
+          "<%= content_tag(:p) { @user_name } %>",
           { "@user_name": "Alice" }
         )
       end

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0009_tag.div with symbol id"
+input: "{source: \"<%= tag.div id: :main %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<div id="main"></div>'.freeze;
+_buf.to_s

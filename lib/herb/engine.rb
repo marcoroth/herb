@@ -352,21 +352,21 @@ module Herb
       @src << "; " if @chain_appends && @buffer_on_stack
     end
 
-    private
-
-    ACTION_VIEW_HELPER_NAMES = %w[
-      tag.
-      content_tag
-      link_to
-      turbo_frame_tag
-      javascript_tag
-      javascript_include_tag
-      image_tag
+    ACTION_VIEW_HELPER_NAMES = [
+      "tag.",
+      "content_tag",
+      "link_to",
+      "turbo_frame_tag",
+      "javascript_tag",
+      "javascript_include_tag",
+      "image_tag"
     ].freeze
 
     ACTION_VIEW_HELPER_PATTERN = Regexp.new(
       "\\b(?:#{ACTION_VIEW_HELPER_NAMES.map { |name| Regexp.escape(name) }.join("|")})"
     )
+
+    private
 
     def source_may_contain_action_view_helpers?(source)
       ACTION_VIEW_HELPER_PATTERN.match?(source)

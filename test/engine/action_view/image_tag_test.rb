@@ -29,7 +29,7 @@ module Engine
 
       test "image_tag with ruby expression source" do
         assert_precompiled_snapshot(
-          '<%= image_tag user_avatar %>',
+          "<%= image_tag user_avatar %>",
           { user_avatar: "http://example.com/avatar.png" }
         )
       end
