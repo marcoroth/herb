@@ -113,11 +113,13 @@ export class SummaryReporter {
 
     const totalOffenses = totalErrors + totalWarnings + totalInfo + totalHints
 
-    if (autofixableCount > 0 || totalOffenses > 0) {
-      let fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")}`
+    {
+      let fixableLine: string
 
       if (autofixableCount > 0) {
-        fixableLine += ` | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+        fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")} | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+      } else {
+        fixableLine = `${colorize(colorize(`${autofixableCount} ${this.pluralize(autofixableCount, "offense")}`, "gray"), "bold")}`
       }
 
       console.log(`  ${colorize(pad("Fixable"), "gray")} ${fixableLine}`)
