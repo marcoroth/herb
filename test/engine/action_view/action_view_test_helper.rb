@@ -11,23 +11,23 @@ module Engine
 
     private
 
-    def assert_action_view_helper(template, locals = {}, evaluate: true)
-      assert_compiled_snapshot(template, action_view_helpers: true)
+    def assert_precompiled_snapshot(template, locals = {}, evaluate: true)
+      assert_compiled_snapshot(template, precompile: true)
 
       if evaluate
-        assert_action_view_evaluated_snapshot(template, locals)
-        assert_action_view_match(template, locals)
+        assert_precompiled_evaluated_snapshot(template, locals)
+        assert_precompiled_match(template, locals)
       end
     end
 
-    def assert_action_view_helper_mismatch(template, locals = {}, evaluate: true)
-      assert_compiled_snapshot(template, action_view_helpers: true)
+    def assert_precompiled_mismatch_snapshot(template, locals = {}, evaluate: true)
+      assert_compiled_snapshot(template, precompile: true)
 
       if evaluate
-        assert_action_view_evaluated_snapshot(template, locals)
+        assert_precompiled_evaluated_snapshot(template, locals)
       end
 
-      engine = Herb::Engine.new(template, escape: false, action_view_helpers: true)
+      engine = Herb::Engine.new(template, escape: false, precompile: true)
       herb_result = action_view_eval(engine.src, locals).strip
       rails_result = render_with_action_view(template, locals).strip
 
@@ -43,8 +43,8 @@ module Engine
       MESSAGE
     end
 
-    def assert_action_view_match(template, locals = {})
-      engine = Herb::Engine.new(template, escape: false, action_view_helpers: true)
+    def assert_precompiled_match(template, locals = {})
+      engine = Herb::Engine.new(template, escape: false, precompile: true)
       herb_result = action_view_eval(engine.src, locals).strip
       rails_result = render_with_action_view(template, locals).strip
 
@@ -63,8 +63,8 @@ module Engine
       MESSAGE
     end
 
-    def assert_action_view_evaluated_snapshot(template, locals = {})
-      engine = Herb::Engine.new(template, escape: false, action_view_helpers: true)
+    def assert_precompiled_evaluated_snapshot(template, locals = {})
+      engine = Herb::Engine.new(template, escape: false, precompile: true)
 
       result = action_view_eval(engine.src, locals)
 

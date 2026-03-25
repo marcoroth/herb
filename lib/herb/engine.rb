@@ -67,7 +67,7 @@ module Herb
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @strict = properties.fetch(:strict, true)
-      @action_view_helpers = properties.fetch(:action_view_helpers, false)
+      @precompile = properties.fetch(:precompile, false)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -108,7 +108,7 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      action_view_helpers = @action_view_helpers && source_may_contain_action_view_helpers?(input)
+      action_view_helpers = @precompile && source_may_contain_action_view_helpers?(input)
       parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers)
       ast = parse_result.value
       parser_errors = parse_result.errors

@@ -8,11 +8,11 @@ module Engine
       include ActionViewTestHelper
 
       test "javascript_tag with content" do
-        assert_action_view_helper("<%= javascript_tag \"alert('Hello')\" %>")
+        assert_precompiled_snapshot("<%= javascript_tag \"alert('Hello')\" %>")
       end
 
       test "javascript_tag with block" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= javascript_tag do %>
             alert('Hello')
           <% end %>
@@ -20,12 +20,12 @@ module Engine
       end
 
       test "javascript_tag with type attribute" do
-        assert_action_view_helper('<%= javascript_tag "alert(\'Hello\')", type: "application/javascript" %>')
+        assert_precompiled_snapshot('<%= javascript_tag "alert(\'Hello\')", type: "application/javascript" %>')
       end
 
       # TODO: content_security_policy_nonce is not available without Rails CSP setup
       test "javascript_tag with nonce true" do
-        assert_action_view_helper(<<~ERB, evaluate: false)
+        assert_precompiled_snapshot(<<~ERB, evaluate: false)
           <%= javascript_tag nonce: true do %>
             alert('Hello')
           <% end %>
@@ -33,7 +33,7 @@ module Engine
       end
 
       test "javascript_tag with nonce false" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= javascript_tag nonce: false do %>
             alert('Hello')
           <% end %>

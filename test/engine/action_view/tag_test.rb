@@ -8,7 +8,7 @@ module Engine
       include ActionViewTestHelper
 
       test "tag.div with block" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= tag.div do %>
             Content
           <% end %>
@@ -16,11 +16,11 @@ module Engine
       end
 
       test "tag.div with content as argument" do
-        assert_action_view_helper('<%= tag.div "Content" %>')
+        assert_precompiled_snapshot('<%= tag.div "Content" %>')
       end
 
       test "tag.div with attributes" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= tag.div class: "content" do %>
             Content
           <% end %>
@@ -28,83 +28,83 @@ module Engine
       end
 
       test "tag.div with content and attributes" do
-        assert_action_view_helper('<%= tag.div "Content", class: "content" %>')
+        assert_precompiled_snapshot('<%= tag.div "Content", class: "content" %>')
       end
 
       test "tag.div with data attributes in hash style" do
-        assert_action_view_helper('<%= tag.div data: { controller: "content" } %>')
+        assert_precompiled_snapshot('<%= tag.div data: { controller: "content" } %>')
       end
 
       test "tag.br void element" do
-        assert_action_view_helper("<%= tag.br %>")
+        assert_precompiled_snapshot("<%= tag.br %>")
       end
 
       test "tag.img with attributes" do
-        assert_action_view_helper('<%= tag.img src: "image.png", alt: "Photo" %>')
+        assert_precompiled_snapshot('<%= tag.img src: "image.png", alt: "Photo" %>')
       end
 
       # TODO: Rails renders `disabled="disabled"` — we render `disabled` (boolean attribute without value).
       test "tag.input with boolean attribute" do
-        assert_action_view_helper_mismatch('<%= tag.input type: "text", disabled: true %>')
+        assert_precompiled_mismatch_snapshot('<%= tag.input type: "text", disabled: true %>')
       end
 
       test "tag.div with symbol id" do
-        assert_action_view_helper('<%= tag.div id: :main %>')
+        assert_precompiled_snapshot('<%= tag.div id: :main %>')
       end
 
       test "tag.div with aria hash" do
-        assert_action_view_helper('<%= tag.div aria: { label: "hello", hidden: true } %>')
+        assert_precompiled_snapshot('<%= tag.div aria: { label: "hello", hidden: true } %>')
       end
 
       test "tag.section with array class" do
-        assert_action_view_helper('<%= tag.section class: ["kitties", "puppies"] %>')
+        assert_precompiled_snapshot('<%= tag.section class: ["kitties", "puppies"] %>')
       end
 
       test "tag.section with %w() class" do
-        assert_action_view_helper('<%= tag.section class: %w( kitties puppies ) %>')
+        assert_precompiled_snapshot('<%= tag.section class: %w( kitties puppies ) %>')
       end
 
       test "tag.div with integer data attribute" do
-        assert_action_view_helper('<%= tag.div data: { count: 42 } %>')
+        assert_precompiled_snapshot('<%= tag.div data: { count: 42 } %>')
       end
 
       test "tag.div with string style" do
-        assert_action_view_helper('<%= tag.div style: "color: red" %>')
+        assert_precompiled_snapshot('<%= tag.div style: "color: red" %>')
       end
 
       test "tag.p with content" do
-        assert_action_view_helper('<%= tag.p "Hello" %>')
+        assert_precompiled_snapshot('<%= tag.p "Hello" %>')
       end
 
       test "tag.div with escape false" do
-        assert_action_view_helper('<%= tag.img src: "open & shut.png", escape: false %>')
+        assert_precompiled_snapshot('<%= tag.img src: "open & shut.png", escape: false %>')
       end
 
       test "tag.details with inline block" do
-        assert_action_view_helper('<%= tag.details { "Some content" } %>')
+        assert_precompiled_snapshot('<%= tag.details { "Some content" } %>')
       end
 
       test "tag.div with inline block and attributes" do
-        assert_action_view_helper('<%= tag.div(class: "container") { "Hello" } %>')
+        assert_precompiled_snapshot('<%= tag.div(class: "container") { "Hello" } %>')
       end
 
       test "tag.p with inline block and ruby expression" do
-        assert_action_view_helper(
+        assert_precompiled_snapshot(
           '<%= tag.p { @user_name } %>',
           { "@user_name": "Alice" }
         )
       end
 
       test "tag.script with nonce true" do
-        assert_action_view_helper('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')
+        assert_precompiled_snapshot('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')
       end
 
       test "tag.script with nonce false" do
-        assert_action_view_helper('<%= tag.script(nonce: false) { "alert(1)".html_safe } %>')
+        assert_precompiled_snapshot('<%= tag.script(nonce: false) { "alert(1)".html_safe } %>')
       end
 
       test "nested tag helpers are also converted" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= tag.div class: "outer" do %>
             <%= tag.span "Inner" %>
           <% end %>
@@ -112,7 +112,7 @@ module Engine
       end
 
       test "tag.div with multiple attributes" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= tag.div class: "content", id: "main" do %>
             Content
           <% end %>
@@ -120,18 +120,18 @@ module Engine
       end
 
       test "tag.div with variable attribute value" do
-        assert_action_view_helper(
+        assert_precompiled_snapshot(
           '<%= tag.div class: class_name do %>Content<% end %>',
           { class_name: "dynamic-class" }
         )
       end
 
       test "tag.div with data attribute ruby literal value" do
-        assert_action_view_helper('<%= tag.div data: { controller: "content", user_id: 123 } do %>Content<% end %>')
+        assert_precompiled_snapshot('<%= tag.div data: { controller: "content", user_id: 123 } do %>Content<% end %>')
       end
 
       test "tag.hr void element with attributes" do
-        assert_action_view_helper('<%= tag.hr class: "divider" %>')
+        assert_precompiled_snapshot('<%= tag.hr class: "divider" %>')
       end
     end
   end

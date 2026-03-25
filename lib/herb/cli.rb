@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :precompile
 
   def initialize(args)
     @args = args
@@ -298,8 +298,12 @@ class Herb::CLI
         self.track_whitespace = true
       end
 
-      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse/compile/render commands) (default: false)") do
+      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
         self.action_view_helpers = true
+      end
+
+      parser.on("--precompile", "Precompile Action View helpers to HTML+ERB (for compile/render commands) (default: false)") do
+        self.precompile = true
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -446,7 +450,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
-      options[:action_view_helpers] = true if action_view_helpers
+      options[:precompile] = true if precompile
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
@@ -534,7 +538,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
-      options[:action_view_helpers] = true if action_view_helpers
+      options[:precompile] = true if precompile
 
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src

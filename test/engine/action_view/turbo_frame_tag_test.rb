@@ -8,7 +8,7 @@ module Engine
       include ActionViewTestHelper
 
       test "turbo_frame_tag with block" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= turbo_frame_tag "tray" do %>
             Content
           <% end %>
@@ -16,23 +16,23 @@ module Engine
       end
 
       test "turbo_frame_tag without block" do
-        assert_action_view_helper('<%= turbo_frame_tag "tray" %>')
+        assert_precompiled_snapshot('<%= turbo_frame_tag "tray" %>')
       end
 
       test "turbo_frame_tag with src" do
-        assert_action_view_helper('<%= turbo_frame_tag "tray", src: "/path" %>')
+        assert_precompiled_snapshot('<%= turbo_frame_tag "tray", src: "/path" %>')
       end
 
       test "turbo_frame_tag with src and target" do
-        assert_action_view_helper('<%= turbo_frame_tag "tray", src: "/path", target: "_top" %>')
+        assert_precompiled_snapshot('<%= turbo_frame_tag "tray", src: "/path", target: "_top" %>')
       end
 
       test "turbo_frame_tag with loading lazy" do
-        assert_action_view_helper('<%= turbo_frame_tag "tray", src: "/path", loading: "lazy" %>')
+        assert_precompiled_snapshot('<%= turbo_frame_tag "tray", src: "/path", loading: "lazy" %>')
       end
 
       test "turbo_frame_tag with class and block" do
-        assert_action_view_helper(<<~ERB)
+        assert_precompiled_snapshot(<<~ERB)
           <%= turbo_frame_tag "tray", class: "frame" do %>
             Content
           <% end %>
@@ -40,14 +40,14 @@ module Engine
       end
 
       test "turbo_frame_tag with variable id" do
-        assert_action_view_helper(
+        assert_precompiled_snapshot(
           '<%= turbo_frame_tag dom_id do %>Content<% end %>',
           { dom_id: "post_1" }
         )
       end
 
       test "turbo_frame_tag with data attributes" do
-        assert_action_view_helper('<%= turbo_frame_tag "tray", data: { controller: "frame" } do %>Content<% end %>')
+        assert_precompiled_snapshot('<%= turbo_frame_tag "tray", data: { controller: "frame" } do %>Content<% end %>')
       end
     end
   end

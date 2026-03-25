@@ -99,12 +99,12 @@ module Bench
 
       Benchmark.bm(1) do |x|
         compile_times[:erubi] = x.report("") { COMPILE_ITERATIONS.times { ::ActionView::Template::Handlers::ERB::Erubi.new(template) } }
-        compile_times[:herb] = x.report("") { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, action_view_helpers: false) } }
-        compile_times[:herb_precompiled] = x.report("") { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, action_view_helpers: true) } }
+        compile_times[:herb] = x.report("") { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: false) } }
+        compile_times[:herb_precompiled] = x.report("") { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: true) } }
       end
 
-      reactionview_with = ReActionView::Template::Handlers::Herb::Herb.new(template, action_view_helpers: true).src
-      reactionview_without = ReActionView::Template::Handlers::Herb::Herb.new(template, action_view_helpers: false).src
+      reactionview_with = ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: true).src
+      reactionview_without = ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: false).src
       erubi_compiled = ::ActionView::Template::Handlers::ERB::Erubi.new(template).src
 
       local_assigns_code = locals.map { |k, _| "#{k} = local_assigns[:#{k}]" }.join("; ")
