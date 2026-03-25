@@ -59,15 +59,7 @@ module Herb
 
         visit(node.open_tag)
 
-        is_javascript_tag = node.element_source == "ActionView::Helpers::JavaScriptHelper#javascript_tag"
-
-        if is_javascript_tag && node.body.any?
-          add_text("\n//<![CDATA[\n")
-          visit_all(node.body)
-          add_text("\n//]]>\n")
-        else
-          visit_all(node.body)
-        end
+        visit_all(node.body)
 
         if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
           add_text("</#{tag_name}>")
@@ -116,7 +108,9 @@ module Herb
 
         return unless node.value
 
-        add_text("=")
+        has_equals = node.equals.value&.include?("=")
+        add_text(has_equals ? node.equals.value : "=")
+
         visit(node.value)
       end
 
@@ -222,9 +216,9 @@ module Herb
       end
 
       def visit_cdata_node(node)
-        add_text(node.cdata_opening.value)
+        add_text(node.tag_opening.value)
         visit_all(node.children)
-        add_text(node.cdata_closing.value)
+        add_text(node.tag_closing.value)
       end
 
       def visit_erb_content_node(node)

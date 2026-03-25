@@ -1,4 +1,9 @@
 #include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/analyze/action_view/tag_helper_node_builders.h"
+#include "../../include/ast/ast_nodes.h"
+#include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_string.h"
+#include "../../include/visitor.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -43,6 +48,52 @@ char* extract_javascript_tag_content(pm_call_node_t* call_node, pm_parser_t* par
 
 bool javascript_tag_supports_block(void) {
   return true;
+}
+
+bool wrap_javascript_tag_body_visitor(const AST_NODE_T* node, void* data) {
+  hb_allocator_T* allocator = (hb_allocator_T*) data;
+
+  if (node == NULL || node->type != AST_HTML_ELEMENT_NODE) { return true; }
+
+  AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
+
+  if (!hb_string_equals(element->element_source, hb_string("ActionView::Helpers::JavaScriptHelper#javascript_tag"))) {
+    return true;
+  }
+
+  if (element->body == NULL || hb_array_size(element->body) == 0) { return false; }
+
+  for (size_t i = 0; i < hb_array_size(element->body); i++) {
+    AST_NODE_T* child = (AST_NODE_T*) hb_array_get(element->body, i);
+    if (child && child->type == AST_CDATA_NODE) { return false; }
+  }
+
+  hb_array_T* cdata_children = hb_array_init(hb_array_size(element->body), allocator);
+
+  for (size_t i = 0; i < hb_array_size(element->body); i++) {
+    hb_array_append(cdata_children, hb_array_get(element->body, i));
+  }
+
+  token_T* cdata_opening = create_synthetic_token(
+    allocator, "\n//<![CDATA[\n", TOKEN_CDATA_START,
+    element->base.location.start, element->base.location.end
+  );
+
+  token_T* cdata_closing = create_synthetic_token(
+    allocator, "\n//]]>\n", TOKEN_CDATA_END,
+    element->base.location.start, element->base.location.end
+  );
+
+  AST_CDATA_NODE_T* cdata_node = ast_cdata_node_init(
+    cdata_opening, cdata_children, cdata_closing,
+    element->base.location.start, element->base.location.end,
+    hb_array_init(0, allocator), allocator
+  );
+
+  element->body->size = 0;
+  hb_array_append(element->body, (AST_NODE_T*) cdata_node);
+
+  return false;
 }
 
 const tag_helper_handler_T javascript_tag_handler = {

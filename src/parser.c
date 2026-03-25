@@ -1,4 +1,5 @@
 #include "include/parser/parser.h"
+#include "include/analyze/action_view/tag_helper_handler.h"
 #include "include/ast/ast_node.h"
 #include "include/ast/ast_nodes.h"
 #include "include/errors.h"
@@ -1895,4 +1896,11 @@ void herb_parser_match_html_tags_post_analyze(
   if (document == NULL) { return; }
 
   match_tags_in_node_array(document->children, document->base.errors, options, allocator);
+
+  if (options && options->action_view_helpers) {
+    for (size_t i = 0; i < hb_array_size(document->children); i++) {
+      AST_NODE_T* node = (AST_NODE_T*) hb_array_get(document->children, i);
+      herb_visit_node(node, wrap_javascript_tag_body_visitor, allocator);
+    }
+  }
 }

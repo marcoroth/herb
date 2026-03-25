@@ -20,19 +20,28 @@ options: {action_view_helpers: true}
     │   │       └── children: []
     │   │
     │   ├── tag_name: "script" (location: (1:4)-(1:18))
-    │   ├── body: (3 items)
-    │   │   ├── @ LiteralNode (location: (1:24)-(2:22))
-    │   │   │   └── content: "\n  const html = \"<code>"
-    │   │   │
-    │   │   ├── @ ERBContentNode (location: (2:22)-(2:36))
-    │   │   │   ├── tag_opening: "<%=" (location: (2:22)-(2:25))
-    │   │   │   ├── content: " content " (location: (2:25)-(2:34))
-    │   │   │   ├── tag_closing: "%>" (location: (2:34)-(2:36))
-    │   │   │   ├── parsed: false
-    │   │   │   └── valid: false
-    │   │   │
-    │   │   └── @ LiteralNode (location: (2:36)-(5:0))
-    │   │       └── content: "</code>\";\n\n  console.log(html)\n"
+    │   ├── body: (1 item)
+    │   │   └── @ CDATANode (location: (1:0)-(5:9))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(5:9))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ LiteralNode (location: (1:24)-(2:22))
+    │   │       │   │   └── content: "\n  const html = \"<code>"
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (2:22)-(2:36))
+    │   │       │   │   ├── tag_opening: "<%=" (location: (2:22)-(2:25))
+    │   │       │   │   ├── content: " content " (location: (2:25)-(2:34))
+    │   │       │   │   ├── tag_closing: "%>" (location: (2:34)-(2:36))
+    │   │       │   │   ├── parsed: false
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   └── @ LiteralNode (location: (2:36)-(5:0))
+    │   │       │       └── content: "</code>\";\n\n  console.log(html)\n"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(5:9))
     │   │
     │   ├── close_tag:
     │   │   └── @ ERBEndNode (location: (5:0)-(5:9))

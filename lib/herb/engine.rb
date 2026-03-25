@@ -352,6 +352,7 @@ module Herb
       @src << "; " if @chain_appends && @buffer_on_stack
     end
 
+    # TODO: migrate to new Action View helper registry
     ACTION_VIEW_HELPER_NAMES = [
       "tag.",
       "content_tag",

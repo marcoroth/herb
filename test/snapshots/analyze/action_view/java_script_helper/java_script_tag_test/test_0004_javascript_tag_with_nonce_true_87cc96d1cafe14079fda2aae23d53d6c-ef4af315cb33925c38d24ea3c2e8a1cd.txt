@@ -39,8 +39,17 @@ options: {action_view_helpers: true}
     │   │
     │   ├── tag_name: "script" (location: (1:4)-(1:18))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:36)-(3:0))
-    │   │       └── content: "\n  alert('Hello')\n"
+    │   │   └── @ CDATANode (location: (1:0)-(3:9))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(3:9))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ LiteralNode (location: (1:36)-(3:0))
+    │   │       │       └── content: "\n  alert('Hello')\n"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(3:9))
     │   │
     │   ├── close_tag:
     │   │   └── @ ERBEndNode (location: (3:0)-(3:9))

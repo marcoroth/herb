@@ -629,14 +629,56 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       );
     }
 
-    append_body_content_node(
-      body,
-      helper_content,
-      content_is_ruby_expression,
-      erb_node->base.location.start,
-      erb_node->base.location.end,
-      allocator
-    );
+    if (string_equals(handler->name, "javascript_tag")) {
+      hb_array_T* cdata_children = hb_array_init(1, allocator);
+
+      append_body_content_node(
+        cdata_children,
+        helper_content,
+        content_is_ruby_expression,
+        erb_node->base.location.start,
+        erb_node->base.location.end,
+        allocator
+      );
+
+      token_T* cdata_opening = create_synthetic_token(
+        allocator,
+        "\n//<![CDATA[\n",
+        TOKEN_CDATA_START,
+        erb_node->base.location.start,
+        erb_node->base.location.end
+      );
+
+      token_T* cdata_closing = create_synthetic_token(
+        allocator,
+        "\n//]]>\n",
+        TOKEN_CDATA_END,
+        erb_node->base.location.start,
+        erb_node->base.location.end
+      );
+
+      AST_CDATA_NODE_T* cdata_node = ast_cdata_node_init(
+        cdata_opening,
+        cdata_children,
+        cdata_closing,
+        erb_node->base.location.start,
+        erb_node->base.location.end,
+        hb_array_init(0, allocator),
+        allocator
+      );
+
+      if (cdata_node) { hb_array_append(body, (AST_NODE_T*) cdata_node); }
+    } else {
+      append_body_content_node(
+        body,
+        helper_content,
+        content_is_ruby_expression,
+        erb_node->base.location.start,
+        erb_node->base.location.end,
+        allocator
+      );
+    }
+
     hb_allocator_dealloc(allocator, helper_content);
   }
 
