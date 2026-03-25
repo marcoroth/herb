@@ -680,15 +680,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("javascript_include_tag with extname false", () => {
+    test("javascript_include_tag with extname false forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
-        `<script src="<%= javascript_path("template.jst") %>" extname="false"></script>`
+        `<script src="<%= javascript_path("template.jst", extname: false) %>"></script>`
       )
     })
 
-    test("javascript_include_tag with host and protocol", () => {
+    test("javascript_include_tag with host and protocol forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
-        `<script src="<%= javascript_path("xmlhr") %>" host="localhost" protocol="https"></script>`
+        `<script src="<%= javascript_path("xmlhr", host: "localhost", protocol: "https") %>"></script>`
       )
     })
 
@@ -704,6 +704,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("javascript_include_tag with asset_path", () => {
       expect(transform(`<%= javascript_include_tag asset_path("application.js") %>`)).toBe(
         `<script src="<%= asset_path("application.js") %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with skip_pipeline forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", skip_pipeline: true %>`)).toBe(
+        `<script src="<%= javascript_path("application", skip_pipeline: true) %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with protocol forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", protocol: "https" %>`)).toBe(
+        `<script src="<%= javascript_path("application", protocol: "https") %>"></script>`
       )
     })
   })
