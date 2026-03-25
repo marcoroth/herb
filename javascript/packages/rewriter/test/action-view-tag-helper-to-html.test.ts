@@ -401,7 +401,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("link_to with inline block and attributes", () => {
       expect(transform('<%= link_to("/about", class: "btn") { "About" } %>')).toBe(
-        '<a href="/about" class="btn">About</a>'
+        '<a class="btn" href="/about">About</a>'
       )
     })
 
@@ -455,7 +455,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("turbo_frame_tag with loading lazy", () => {
       expect(transform('<%= turbo_frame_tag "tray", src: tray_path(tray), loading: "lazy" %>')).toBe(
-        '<turbo-frame id="tray" src="<%= tray_path(tray) %>" loading="lazy"></turbo-frame>'
+        '<turbo-frame loading="lazy" id="tray" src="<%= tray_path(tray) %>"></turbo-frame>'
       )
     })
 
@@ -467,7 +467,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" class="frame">
+        <turbo-frame class="frame" id="tray">
           Content
         </turbo-frame>
       `
@@ -499,7 +499,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" data-controller="frame">
+        <turbo-frame data-controller="frame" id="tray">
           Content
         </turbo-frame>
       `
@@ -515,7 +515,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" <%= **attributes %>>
+        <turbo-frame <%= **attributes %> id="tray">
           Content
         </turbo-frame>
       `
@@ -607,7 +607,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with defer", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: true %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" defer></script>`
+        `<script defer src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -622,7 +622,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with nonce true resolves to content_security_policy_nonce", () => {
       expect(transform(`<%= javascript_include_tag "application", nonce: true %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" nonce="<%= content_security_policy_nonce %>"></script>`
+        `<script nonce="<%= content_security_policy_nonce %>" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -634,13 +634,13 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with interpolated nonce", () => {
       expect(transform('<%= javascript_include_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
-        '<script src="<%= javascript_path("application") %>" nonce="static-<%= dynamic %>"></script>'
+        '<script nonce="static-<%= dynamic %>" src="<%= javascript_path("application") %>"></script>'
       )
     })
 
     test("javascript_include_tag with data attributes", () => {
       expect(transform(`<%= javascript_include_tag "application", data: { turbo_track: "reload" } %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" data-turbo-track="reload"></script>`
+        `<script data-turbo-track="reload" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
@@ -670,37 +670,37 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with URL and nonce", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", nonce: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" nonce="<%= content_security_policy_nonce %>"></script>`
+        `<script nonce="<%= content_security_policy_nonce %>" src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with URL and async", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", async: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" async></script>`
+        `<script async src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with URL and defer", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", defer: true %>`)).toBe(
-        `<script src="http://www.example.com/xmlhr.js" defer></script>`
+        `<script defer src="http://www.example.com/xmlhr.js"></script>`
       )
     })
 
     test("javascript_include_tag with defer as string", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: "true" %>`)).toBe(
-        `<script src="<%= javascript_path("application") %>" defer="true"></script>`
+        `<script defer="true" src="<%= javascript_path("application") %>"></script>`
       )
     })
 
     test("javascript_include_tag with extname false", () => {
       expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
-        `<script src="<%= javascript_path("template.jst") %>" extname="false"></script>`
+        `<script extname="false" src="<%= javascript_path("template.jst") %>"></script>`
       )
     })
 
     test("javascript_include_tag with host and protocol", () => {
       expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
-        `<script src="<%= javascript_path("xmlhr") %>" host="localhost" protocol="https"></script>`
+        `<script host="localhost" protocol="https" src="<%= javascript_path("xmlhr") %>"></script>`
       )
     })
 
@@ -729,13 +729,13 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with alt attribute", () => {
       expect(transform('<%= image_tag "icon.png", alt: "Icon" %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" alt="Icon" />'
+        '<img alt="Icon" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with multiple attributes", () => {
       expect(transform('<%= image_tag "photo.jpg", alt: "Photo", class: "avatar" %>')).toBe(
-        '<img src="<%= image_path("photo.jpg") %>" alt="Photo" class="avatar" />'
+        '<img alt="Photo" class="avatar" src="<%= image_path("photo.jpg") %>" />'
       )
     })
 
@@ -789,7 +789,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with data attributes", () => {
       expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" data-controller="image" />'
+        '<img data-controller="image" src="<%= image_path("icon.png") %>" />'
       )
     })
   })
