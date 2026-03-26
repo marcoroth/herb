@@ -6,6 +6,7 @@ import { ParserRule } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
+// TODO: migrate to `action_view_helpers: true` once we support them all
 const FORM_TAG_HELPERS = new Set([
   "text_area_tag",
   "text_field_tag",
