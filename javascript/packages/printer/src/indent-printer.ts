@@ -104,6 +104,18 @@ export class IndentPrinter extends IdentityPrinter {
       this.indentLevel--
     }
 
+    if (node.rescue_clause) {
+      this.visit(node.rescue_clause)
+    }
+
+    if (node.else_clause) {
+      this.visit(node.else_clause)
+    }
+
+    if (node.ensure_clause) {
+      this.visit(node.ensure_clause)
+    }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }

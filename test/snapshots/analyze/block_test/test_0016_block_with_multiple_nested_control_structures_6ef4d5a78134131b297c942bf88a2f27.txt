@@ -78,6 +78,9 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (5:0)-(5:9))
     │           ├── tag_opening: "<%" (location: (5:0)-(5:2))

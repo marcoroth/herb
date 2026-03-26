@@ -219,6 +219,92 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       expect(transform(input)).toBe(expected)
     })
 
+    test("tag.h3 with variable content argument and attributes", () => {
+      expect(transform('<%= tag.h3(title, class: "heading") %>')).toBe(
+        '<h3 class="heading"><%= title %></h3>'
+      )
+    })
+
+    test("tag.p with variable content argument and attributes without parens", () => {
+      expect(transform('<%= tag.p message, class: "text" %>')).toBe(
+        '<p class="text"><%= message %></p>'
+      )
+    })
+
+    test("tag.div with render call as content argument and attributes", () => {
+      expect(transform('<%= tag.div(render("icons/icon"), class: "icon") %>')).toBe(
+        '<div class="icon"><%= render("icons/icon") %></div>'
+      )
+    })
+
+    test("tag.span with instance variable content argument", () => {
+      expect(transform('<%= tag.span @user.name, class: "name" %>')).toBe(
+        '<span class="name"><%= @user.name %></span>'
+      )
+    })
+
+    test("tag.h1 with method call content argument", () => {
+      expect(transform('<%= tag.h1 t(".title"), class: "heading" %>')).toBe(
+        '<h1 class="heading"><%= t(".title") %></h1>'
+      )
+    })
+
+    test("tag.div with variable content argument only", () => {
+      expect(transform('<%= tag.div content %>')).toBe(
+        '<div><%= content %></div>'
+      )
+    })
+
+    test("tag.h3 with postfix if condition", () => {
+      expect(transform('<%= tag.h3(title, class: "heading") if title.present? %>')).toBe(
+        '<% if title.present? %><h3 class="heading"><%= title %></h3><% end %>'
+      )
+    })
+
+    test("tag.p with postfix unless condition", () => {
+      expect(transform('<%= tag.p message, class: "text" unless hidden? %>')).toBe(
+        '<% unless hidden? %><p class="text"><%= message %></p><% end %>'
+      )
+    })
+
+    test("tag.div with postfix if condition and string content", () => {
+      expect(transform('<%= tag.div "Content", class: "box" if show? %>')).toBe(
+        '<% if show? %><div class="box">Content</div><% end %>'
+      )
+    })
+
+    test("tag.span with postfix if condition and no attributes", () => {
+      expect(transform('<%= tag.span @user.name if @user %>')).toBe(
+        '<% if @user %><span><%= @user.name %></span><% end %>'
+      )
+    })
+
+    test("tag.div with nested tag helpers and postfix conditions", () => {
+      const input = dedent`
+        <%= tag.div(class: wrapper_classes) do %>
+          <%= tag.div(render("icons/\#{icon}"), class: icon_classes) if icon.present? %>
+
+          <%= tag.div do %>
+            <%= tag.h3(title, class: title_classes) if title.present? %>
+            <%= tag.p(message, class: message_classes) %>
+          <% end %>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div class="<%= wrapper_classes %>">
+          <% if icon.present? %><div class="<%= icon_classes %>"><%= render("icons/\#{icon}") %></div><% end %>
+
+          <div>
+            <% if title.present? %><h3 class="<%= title_classes %>"><%= title %></h3><% end %>
+            <p class="<%= message_classes %>"><%= message %></p>
+          </div>
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
     test("tag.script with nonce true passes through as literal", () => {
       expect(transform('<%= tag.script(nonce: true) { "alert(1)".html_safe } %>')).toBe(
         '<script nonce="true"><%= "alert(1)".html_safe %></script>'

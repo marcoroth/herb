@@ -310,7 +310,7 @@ test/fixtures/parser-errors.html.erb:2:16
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      1 offense
+  Fixable      0 offense
   Rules        72 enabled | 8 not enabled | 5 skipped (version)
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
@@ -675,6 +675,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
  Summary:
   Checked      1 file
   Offenses     0 offenses
+  Fixable      0 offenses
   Rules        72 enabled | 8 not enabled | 5 skipped (version)"
 `;
 
@@ -1028,6 +1029,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
  Summary:
   Checked      1 file
   Offenses     0 offenses
+  Fixable      0 offenses
   Rules        72 enabled | 8 not enabled | 5 skipped (version)
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
@@ -1041,6 +1043,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
  Summary:
   Checked      1 file
   Offenses     0 offenses
+  Fixable      0 offenses
   Rules        72 enabled | 8 not enabled | 5 skipped (version)
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.

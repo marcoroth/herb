@@ -512,5 +512,66 @@ module Analyze::ActionView::TagHelper
         <%= tag.div data: { config: { nested: "hash" } } %>
       HTML
     end
+
+    test "tag.h3 with variable content argument and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.h3(title, class: title_classes) if title.present? %>
+      HTML
+    end
+
+    test "tag.p with variable content argument and attributes without parens" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.p message, class: message_classes %>
+      HTML
+    end
+
+    test "tag.div with render call as content argument and attributes" do
+      assert_parsed_snapshot(<<~'HTML', action_view_helpers: true)
+        <%= tag.div(render("icons/#{icon}"), class: icon_classes) if icon.present? %>
+      HTML
+    end
+
+    test "tag.span with instance variable content argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.span @user.name, class: "name" %>
+      HTML
+    end
+
+    test "tag.h1 with method call content argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.h1 t(".title"), class: "heading" %>
+      HTML
+    end
+
+    test "tag.div with variable content argument only" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div content %>
+      HTML
+    end
+
+    test "tag.p with postfix if condition" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.p message, class: "text" if show_message? %>
+      HTML
+    end
+
+    test "tag.div with postfix unless condition" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div "Content", class: "box" unless hidden? %>
+      HTML
+    end
+
+    test "tag.div with nested tag helpers and postfix conditions" do
+      assert_parsed_snapshot(<<~'HTML', action_view_helpers: true)
+        <%= tag.div(class: wrapper_classes) do %>
+          <%= tag.div(render("icons/#{icon}"), class: icon_classes) if icon.present? %>
+
+          <%= tag.div do %>
+            <%= tag.h3(title, class: title_classes) if title.present? %>
+            <%= tag.p(message, class: message_classes) %>
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end
