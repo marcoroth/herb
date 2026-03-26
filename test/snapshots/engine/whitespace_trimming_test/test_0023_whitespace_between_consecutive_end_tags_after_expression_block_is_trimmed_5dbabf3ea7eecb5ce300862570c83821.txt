@@ -1,8 +1,8 @@
 ---
 source: "Engine::WhitespaceTrimmingTest#test_0023_whitespace between consecutive end tags after expression block is trimmed"
-input: "{source: \"<% outer do %>\\n  <% form_tag(\\\"/t\\\") do %>\\n    <%= tag.p do %>\\n      text\\n    <% end %>\\n  <% end %>\\n<% end %>\\n\", options: {}}"
+input: "{source: \"<% 1.times do %>\\n  <% form_tag(\\\"/t\\\") do %>\\n    <%= tag.p do %>\\n      text\\n    <% end %>\\n  <% end %>\\n<% end %>\\n\", options: {}}"
 ---
-_buf = ::String.new; outer do 
+_buf = ::String.new; 1.times do 
    form_tag("/t") do 
  _buf << '    '.freeze; _buf << (tag.p do; _buf << '
       text
