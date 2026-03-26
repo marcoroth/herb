@@ -4,6 +4,11 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+#### Accessibility
+
+- [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
+
+
 #### Action View
 
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
