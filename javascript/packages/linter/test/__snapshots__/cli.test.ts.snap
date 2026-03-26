@@ -310,7 +310,7 @@ test/fixtures/parser-errors.html.erb:2:16
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      0 offense
+  Fixable      0 offenses
   Rules        72 enabled | 8 not enabled | 5 skipped (version)
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
