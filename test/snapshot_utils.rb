@@ -44,7 +44,9 @@ module SnapshotUtils
     engine = Herb::Engine.new(source, engine_options)
     expected = engine.src
 
-    snapshot_key = { source: source, options: engine_options }.to_s
+    snapshot_options = engine_options.dup
+    snapshot_options[:visitors] = engine_options[:visitors].map { |visitor| PrettyPlease.prettify(visitor) } if engine_options.key?(:visitors)
+    snapshot_key = { source: source, options: snapshot_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
 
     prism_result = Prism.parse(engine.src)
@@ -212,7 +214,9 @@ module SnapshotUtils
     test_name = sanitize_name_for_filesystem(name)
 
     if options && !options.empty?
-      options_hash = Digest::MD5.hexdigest(options.inspect)
+      options_for_hash = options.dup
+      options_for_hash[:visitors] = options[:visitors].map { |visitor| PrettyPlease.prettify(visitor) } if options.is_a?(Hash) && options.key?(:visitors)
+      options_hash = Digest::MD5.hexdigest(options_for_hash.inspect)
       expected_snapshot_filename = "#{test_name}_#{content_hash}-#{options_hash}.txt"
     else
       expected_snapshot_filename = "#{test_name}_#{content_hash}.txt"
@@ -345,7 +349,12 @@ module SnapshotUtils
       "input" => source.to_s,
     }
 
-    metadata["options"] = options unless options.empty?
+    if options && !options.empty?
+      display_options = options.dup
+      display_options[:visitors] = options[:visitors].map { |visitor| PrettyPlease.prettify(visitor) } if options.is_a?(Hash) && options.key?(:visitors)
+      metadata["options"] = display_options
+    end
+
     metadata
   end
 

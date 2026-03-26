@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "herb/version"
 require_relative "herb/colors"
 require_relative "herb/range"
 require_relative "herb/position"
@@ -27,9 +28,13 @@ require_relative "herb/cli"
 require_relative "herb/project"
 require_relative "herb/configuration"
 
-require_relative "herb/version"
+require_relative "herb/ast/node_builder"
+require_relative "herb/ast/literal_node"
 
 require_relative "herb/visitor"
+require_relative "herb/rewriter"
+require_relative "herb/rewriter/match_context"
+
 require_relative "herb/engine"
 
 begin

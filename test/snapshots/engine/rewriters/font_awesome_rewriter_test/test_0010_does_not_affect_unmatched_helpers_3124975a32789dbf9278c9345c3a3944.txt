@@ -1,0 +1,6 @@
+---
+source: "Engine::Rewriters::FontAwesomeRewriterTest#test_0010_does not affect unmatched helpers"
+input: "{source: \"<%= fa(\\\"home\\\") %><%= link_to \\\"About\\\", \\\"/about\\\" %>\", options: {escape: false, visitors: [\"Herb::Rewriters::FontAwesomeRewriter(\\n  @replacements = {},\\n  @in_attribute = false,\\n  @in_html_comment = false,\\n)\"]}}"
+---
+_buf = ::String.new; _buf << '<i class="fa fa-home"></i>'.freeze; _buf << (link_to "About", "/about").to_s;
+_buf.to_s

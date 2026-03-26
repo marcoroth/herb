@@ -5,15 +5,15 @@ require "json"
 require "time"
 require "pathname"
 
-require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
+require_relative "engine/debug_visitor"
 require_relative "engine/error_formatter"
-require_relative "engine/validation_errors"
 require_relative "engine/parser_error_overlay"
 require_relative "engine/validation_error_overlay"
-require_relative "engine/validators/security_validator"
-require_relative "engine/validators/nesting_validator"
+require_relative "engine/validation_errors"
 require_relative "engine/validators/accessibility_validator"
+require_relative "engine/validators/nesting_validator"
+require_relative "engine/validators/security_validator"
 
 module Herb
   class Engine
@@ -27,6 +27,12 @@ module Herb
       '"' => "&quot;",
       "'" => "&#39;",
     }.freeze
+
+    ATTR_ESCAPE_TABLE = ESCAPE_TABLE.merge(
+      "\n" => "&#10;",
+      "\r" => "&#13;",
+      "\t" => "&#9;"
+    ).freeze
 
     class CompilationError < StandardError
     end
@@ -107,7 +113,8 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
+      has_rewriters = @visitors.grep(Herb::Rewriter).any?
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, prism_nodes: has_rewriters)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -163,15 +170,7 @@ module Herb
     end
 
     def self.attr(value)
-      value.to_s
-           .gsub("&", "&amp;")
-           .gsub('"', "&quot;")
-           .gsub("'", "&#39;")
-           .gsub("<", "&lt;")
-           .gsub(">", "&gt;")
-           .gsub("\n", "&#10;")
-           .gsub("\r", "&#13;")
-           .gsub("\t", "&#9;")
+      value.to_s.gsub(/[&<>"'\n\r\t]/, ATTR_ESCAPE_TABLE)
     end
 
     def self.js(value)
@@ -440,15 +439,7 @@ module Herb
     end
 
     def escape_attr(text)
-      text.to_s
-          .gsub("&", "&amp;")
-          .gsub('"', "&quot;")
-          .gsub("'", "&#39;")
-          .gsub("<", "&lt;")
-          .gsub(">", "&gt;")
-          .gsub("\n", "&#10;")
-          .gsub("\r", "&#13;")
-          .gsub("\t", "&#9;")
+      self.class.attr(text)
     end
 
     def add_parser_error_overlay(parser_errors, input)

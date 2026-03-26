@@ -14,7 +14,7 @@ module Herb
 
       <%- node.fields.each do |field| -%>
       <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %><%= if is_nilable then "?" end %>
+      attr_accessor :<%= field.name %> #: <%= field.ruby_type %><%= if is_nilable then "?" end %>
       <%- end -%>
 
       #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -48,6 +48,12 @@ module Herb
       end
 
       <%- end -%>
+      def copy(<%= node.fields.map { |f| "#{f.name}: self.#{f.name}" }.join(", ") %>)
+        node = self.class.new(type, location, errors, <%= node.fields.map(&:name).join(", ") %>)
+        node.source = source if source
+        node
+      end
+
       #: () -> serialized_<%= node.human %>
       def to_hash
         super.merge({

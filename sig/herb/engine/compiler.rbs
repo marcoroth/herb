@@ -31,6 +31,8 @@ module Herb
 
       def visit_literal_node: (untyped node) -> untyped
 
+      def visit_ruby_literal_node: (untyped node) -> untyped
+
       def visit_whitespace_node: (untyped node) -> untyped
 
       def visit_html_comment_node: (untyped node) -> untyped

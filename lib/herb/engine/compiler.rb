@@ -146,6 +146,10 @@ module Herb
         add_text(node.content)
       end
 
+      def visit_ruby_literal_node(node)
+        add_expression(node.content)
+      end
+
       def visit_whitespace_node(node)
         add_whitespace(node.value.value)
       end

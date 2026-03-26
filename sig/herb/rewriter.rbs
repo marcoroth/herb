@@ -1,0 +1,45 @@
+# Generated from lib/herb/rewriter.rb with RBS::Inline
+
+module Herb
+  class Rewriter < Visitor
+    include AST::NodeBuilder
+
+    # : () -> void
+    def initialize: () -> void
+
+    # : () -> String
+    def self.transformer_name: () -> String
+
+    # : () -> Array[String]
+    def self.matches: () -> Array[String]
+
+    # : () -> String
+    def self.description: () -> String
+
+    # : (Herb::AST::Node, Herb::Rewriter::MatchContext) -> Herb::AST::Node?
+    def transform: (Herb::AST::Node, Herb::Rewriter::MatchContext) -> Herb::AST::Node?
+
+    # : (Herb::AST::DocumentNode) -> void
+    def visit_document_node: (Herb::AST::DocumentNode) -> void
+
+    # : (Herb::AST::HTMLAttributeNode) -> void
+    def visit_html_attribute_node: (Herb::AST::HTMLAttributeNode) -> void
+
+    # : (Herb::AST::HTMLCommentNode) -> void
+    def visit_html_comment_node: (Herb::AST::HTMLCommentNode) -> void
+
+    # : (Herb::AST::ERBContentNode) -> void
+    def visit_erb_content_node: (Herb::AST::ERBContentNode) -> void
+
+    # : (Herb::AST::ERBBlockNode) -> void
+    def visit_erb_block_node: (Herb::AST::ERBBlockNode) -> void
+
+    private
+
+    # : (Herb::AST::Node) -> void
+    def apply_pending_replacements: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node, Herb::AST::Node, Herb::AST::Node) -> void
+    def replace_child: (Herb::AST::Node, Herb::AST::Node, Herb::AST::Node) -> void
+  end
+end

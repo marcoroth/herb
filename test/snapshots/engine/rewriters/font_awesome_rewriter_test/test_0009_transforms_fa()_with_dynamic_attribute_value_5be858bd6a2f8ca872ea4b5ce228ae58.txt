@@ -1,0 +1,6 @@
+---
+source: "Engine::Rewriters::FontAwesomeRewriterTest#test_0009_transforms fa() with dynamic attribute value"
+input: "{source: \"<%= fa(\\\"home\\\", title: @tooltip) %>\", options: {escape: false, visitors: [\"Herb::Rewriters::FontAwesomeRewriter(\\n  @replacements = {},\\n  @in_attribute = false,\\n  @in_html_comment = false,\\n)\"]}}"
+---
+_buf = ::String.new; _buf << '<i class="fa fa-home" title="'.freeze; _buf << ::Herb::Engine.attr((@tooltip)); _buf << '"></i>'.freeze;
+_buf.to_s

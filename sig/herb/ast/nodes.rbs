@@ -10,17 +10,19 @@ module Herb
     class DocumentNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader prism_context: nil
+      attr_accessor prism_context: nil
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?children: untyped, ?prism_context: untyped, ?prism_node: untyped) -> untyped
 
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
@@ -47,10 +49,12 @@ module Herb
     class LiteralNode < Node
       include Colors
 
-      attr_reader content: String?
+      attr_accessor content: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+
+      def copy: (?content: untyped) -> untyped
 
       # : () -> serialized_literal_node
       def to_hash: () -> serialized_literal_node
@@ -81,18 +85,20 @@ module Herb
     class HTMLOpenTagNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader is_void: bool
+      attr_accessor is_void: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
+
+      def copy: (?tag_opening: untyped, ?tag_name: untyped, ?tag_closing: untyped, ?children: untyped, ?is_void: untyped) -> untyped
 
       # : () -> serialized_html_open_tag_node
       def to_hash: () -> serialized_html_open_tag_node
@@ -121,14 +127,16 @@ module Herb
     class HTMLConditionalOpenTagNode < Node
       include Colors
 
-      attr_reader conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+      attr_accessor conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader is_void: bool
+      attr_accessor is_void: bool
 
       # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, bool) -> void
+
+      def copy: (?conditional: untyped, ?tag_name: untyped, ?is_void: untyped) -> untyped
 
       # : () -> serialized_html_conditional_open_tag_node
       def to_hash: () -> serialized_html_conditional_open_tag_node
@@ -158,16 +166,18 @@ module Herb
     class HTMLCloseTagNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::WhitespaceNode]?
+      attr_accessor children: Array[Herb::AST::WhitespaceNode]?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?tag_name: untyped, ?children: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
@@ -194,10 +204,12 @@ module Herb
     class HTMLOmittedCloseTagNode < Node
       include Colors
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      def copy: (?tag_name: untyped) -> untyped
 
       # : () -> serialized_html_omitted_close_tag_node
       def to_hash: () -> serialized_html_omitted_close_tag_node
@@ -224,10 +236,12 @@ module Herb
     class HTMLVirtualCloseTagNode < Node
       include Colors
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      def copy: (?tag_name: untyped) -> untyped
 
       # : () -> serialized_html_virtual_close_tag_node
       def to_hash: () -> serialized_html_virtual_close_tag_node
@@ -259,20 +273,22 @@ module Herb
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?
+      attr_accessor open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader body: Array[Herb::AST::Node]
+      attr_accessor body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?
+      attr_accessor close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?
 
-      attr_reader is_void: bool
+      attr_accessor is_void: bool
 
-      attr_reader element_source: String?
+      attr_accessor element_source: String?
 
       # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode), bool, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode, bool, String) -> void
+
+      def copy: (?open_tag: untyped, ?tag_name: untyped, ?body: untyped, ?close_tag: untyped, ?is_void: untyped, ?element_source: untyped) -> untyped
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
@@ -306,24 +322,26 @@ module Herb
     class HTMLConditionalElementNode < Node
       include Colors
 
-      attr_reader condition: String?
+      attr_accessor condition: String?
 
-      attr_reader open_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+      attr_accessor open_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
 
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode?
+      attr_accessor open_tag: Herb::AST::HTMLOpenTagNode?
 
-      attr_reader body: Array[Herb::AST::Node]
+      attr_accessor body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?
+      attr_accessor close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?
 
-      attr_reader close_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+      attr_accessor close_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader element_source: String?
+      attr_accessor element_source: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String, (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode), (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, String) -> void
+
+      def copy: (?condition: untyped, ?open_conditional: untyped, ?open_tag: untyped, ?body: untyped, ?close_tag: untyped, ?close_conditional: untyped, ?tag_name: untyped, ?element_source: untyped) -> untyped
 
       # : () -> serialized_html_conditional_element_node
       def to_hash: () -> serialized_html_conditional_element_node
@@ -353,16 +371,18 @@ module Herb
     class HTMLAttributeValueNode < Node
       include Colors
 
-      attr_reader open_quote: Herb::Token?
+      attr_accessor open_quote: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader close_quote: Herb::Token?
+      attr_accessor close_quote: Herb::Token?
 
-      attr_reader quoted: bool
+      attr_accessor quoted: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
+
+      def copy: (?open_quote: untyped, ?children: untyped, ?close_quote: untyped, ?quoted: untyped) -> untyped
 
       # : () -> serialized_html_attribute_value_node
       def to_hash: () -> serialized_html_attribute_value_node
@@ -389,10 +409,12 @@ module Herb
     class HTMLAttributeNameNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?
+      attr_accessor children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?
 
       # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]) -> void
+
+      def copy: (?children: untyped) -> untyped
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
@@ -421,14 +443,16 @@ module Herb
     class HTMLAttributeNode < Node
       include Colors
 
-      attr_reader name: Herb::AST::HTMLAttributeNameNode?
+      attr_accessor name: Herb::AST::HTMLAttributeNameNode?
 
-      attr_reader equals: Herb::Token?
+      attr_accessor equals: Herb::Token?
 
-      attr_reader value: Herb::AST::HTMLAttributeValueNode?
+      attr_accessor value: Herb::AST::HTMLAttributeValueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
+
+      def copy: (?name: untyped, ?equals: untyped, ?value: untyped) -> untyped
 
       # : () -> serialized_html_attribute_node
       def to_hash: () -> serialized_html_attribute_node
@@ -455,10 +479,12 @@ module Herb
     class RubyLiteralNode < Node
       include Colors
 
-      attr_reader content: String?
+      attr_accessor content: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+
+      def copy: (?content: untyped) -> untyped
 
       # : () -> serialized_ruby_literal_node
       def to_hash: () -> serialized_ruby_literal_node
@@ -486,12 +512,14 @@ module Herb
     class RubyHTMLAttributesSplatNode < Node
       include Colors
 
-      attr_reader content: String?
+      attr_accessor content: String?
 
-      attr_reader prefix: String?
+      attr_accessor prefix: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String, String) -> void
+
+      def copy: (?content: untyped, ?prefix: untyped) -> untyped
 
       # : () -> serialized_ruby_html_attributes_splat_node
       def to_hash: () -> serialized_ruby_html_attributes_splat_node
@@ -522,18 +550,20 @@ module Herb
     class ERBOpenTagNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader tag_name: Herb::Token?
+      attr_accessor tag_name: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?tag_name: untyped, ?children: untyped) -> untyped
 
       # : () -> serialized_erb_open_tag_node
       def to_hash: () -> serialized_erb_open_tag_node
@@ -560,10 +590,12 @@ module Herb
     class HTMLTextNode < Node
       include Colors
 
-      attr_reader content: String?
+      attr_accessor content: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+
+      def copy: (?content: untyped) -> untyped
 
       # : () -> serialized_html_text_node
       def to_hash: () -> serialized_html_text_node
@@ -592,14 +624,16 @@ module Herb
     class HTMLCommentNode < Node
       include Colors
 
-      attr_reader comment_start: Herb::Token?
+      attr_accessor comment_start: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader comment_end: Herb::Token?
+      attr_accessor comment_end: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+
+      def copy: (?comment_start: untyped, ?children: untyped, ?comment_end: untyped) -> untyped
 
       # : () -> serialized_html_comment_node
       def to_hash: () -> serialized_html_comment_node
@@ -628,14 +662,16 @@ module Herb
     class HTMLDoctypeNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?children: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_html_doctype_node
       def to_hash: () -> serialized_html_doctype_node
@@ -664,14 +700,16 @@ module Herb
     class XMLDeclarationNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?children: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_xml_declaration_node
       def to_hash: () -> serialized_xml_declaration_node
@@ -700,14 +738,16 @@ module Herb
     class CDATANode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?children: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_cdata_node
       def to_hash: () -> serialized_cdata_node
@@ -734,10 +774,12 @@ module Herb
     class WhitespaceNode < Node
       include Colors
 
-      attr_reader value: Herb::Token?
+      attr_accessor value: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      def copy: (?value: untyped) -> untyped
 
       # : () -> serialized_whitespace_node
       def to_hash: () -> serialized_whitespace_node
@@ -770,25 +812,27 @@ module Herb
     class ERBContentNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader analyzed_ruby: nil
+      attr_accessor analyzed_ruby: nil
 
-      attr_reader parsed: bool
+      attr_accessor parsed: bool
 
-      attr_reader valid: bool
+      attr_accessor valid: bool
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?analyzed_ruby: untyped, ?parsed: untyped, ?valid: untyped, ?prism_node: untyped) -> untyped
 
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
@@ -817,14 +861,16 @@ module Herb
     class ERBEndNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_erb_end_node
       def to_hash: () -> serialized_erb_end_node
@@ -854,16 +900,18 @@ module Herb
     class ERBElseNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?statements: untyped) -> untyped
 
       # : () -> serialized_erb_else_node
       def to_hash: () -> serialized_erb_else_node
@@ -897,27 +945,29 @@ module Herb
     class ERBIfNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader then_keyword: Herb::Location?
+      attr_accessor then_keyword: Herb::Location?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?
+      attr_accessor subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode), Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBIfNode | Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?then_keyword: untyped, ?prism_node: untyped, ?statements: untyped, ?subsequent: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
@@ -952,29 +1002,31 @@ module Herb
     class ERBBlockNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader body: Array[Herb::AST::Node]
+      attr_accessor body: Array[Herb::AST::Node]
 
-      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
+      attr_accessor rescue_clause: Herb::AST::ERBRescueNode?
 
-      attr_reader else_clause: Herb::AST::ERBElseNode?
+      attr_accessor else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
+      attr_accessor ensure_clause: Herb::AST::ERBEnsureNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?prism_node: untyped, ?body: untyped, ?rescue_clause: untyped, ?else_clause: untyped, ?ensure_clause: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
@@ -1005,18 +1057,20 @@ module Herb
     class ERBWhenNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader then_keyword: Herb::Location?
+      attr_accessor then_keyword: Herb::Location?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?then_keyword: untyped, ?statements: untyped) -> untyped
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
@@ -1050,27 +1104,29 @@ module Herb
     class ERBCaseNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader conditions: Array[Herb::AST::ERBWhenNode]
+      attr_accessor conditions: Array[Herb::AST::ERBWhenNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode?
+      attr_accessor else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?children: untyped, ?prism_node: untyped, ?conditions: untyped, ?else_clause: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
@@ -1104,27 +1160,29 @@ module Herb
     class ERBCaseMatchNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_accessor children: Array[Herb::AST::Node]
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader conditions: Array[Herb::AST::ERBInNode]
+      attr_accessor conditions: Array[Herb::AST::ERBInNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode?
+      attr_accessor else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?children: untyped, ?prism_node: untyped, ?conditions: untyped, ?else_clause: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
@@ -1156,23 +1214,25 @@ module Herb
     class ERBWhileNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?prism_node: untyped, ?statements: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
@@ -1204,23 +1264,25 @@ module Herb
     class ERBUntilNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?prism_node: untyped, ?statements: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
@@ -1252,23 +1314,25 @@ module Herb
     class ERBForNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?prism_node: untyped, ?statements: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
@@ -1299,18 +1363,20 @@ module Herb
     class ERBRescueNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::ERBRescueNode?
+      attr_accessor subsequent: Herb::AST::ERBRescueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?statements: untyped, ?subsequent: untyped) -> untyped
 
       # : () -> serialized_erb_rescue_node
       def to_hash: () -> serialized_erb_rescue_node
@@ -1340,16 +1406,18 @@ module Herb
     class ERBEnsureNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?statements: untyped) -> untyped
 
       # : () -> serialized_erb_ensure_node
       def to_hash: () -> serialized_erb_ensure_node
@@ -1384,29 +1452,31 @@ module Herb
     class ERBBeginNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
+      attr_accessor rescue_clause: Herb::AST::ERBRescueNode?
 
-      attr_reader else_clause: Herb::AST::ERBElseNode?
+      attr_accessor else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
+      attr_accessor ensure_clause: Herb::AST::ERBEnsureNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?prism_node: untyped, ?statements: untyped, ?rescue_clause: untyped, ?else_clause: untyped, ?ensure_clause: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
@@ -1440,27 +1510,29 @@ module Herb
     class ERBUnlessNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader then_keyword: Herb::Location?
+      attr_accessor then_keyword: Herb::Location?
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode?
+      attr_accessor else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode?
+      attr_accessor end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?then_keyword: untyped, ?prism_node: untyped, ?statements: untyped, ?else_clause: untyped, ?end_node: untyped) -> untyped
 
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
@@ -1488,12 +1560,14 @@ module Herb
     class RubyRenderLocalNode < Node
       include Colors
 
-      attr_reader name: Herb::Token?
+      attr_accessor name: Herb::Token?
 
-      attr_reader value: Herb::AST::RubyLiteralNode?
+      attr_accessor value: Herb::AST::RubyLiteralNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
+
+      def copy: (?name: untyped, ?value: untyped) -> untyped
 
       # : () -> serialized_ruby_render_local_node
       def to_hash: () -> serialized_ruby_render_local_node
@@ -1542,57 +1616,59 @@ module Herb
     class ERBRenderNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader analyzed_ruby: nil
+      attr_accessor analyzed_ruby: nil
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader partial: Herb::Token?
+      attr_accessor partial: Herb::Token?
 
-      attr_reader template_path: Herb::Token?
+      attr_accessor template_path: Herb::Token?
 
-      attr_reader layout: Herb::Token?
+      attr_accessor layout: Herb::Token?
 
-      attr_reader file: Herb::Token?
+      attr_accessor file: Herb::Token?
 
-      attr_reader inline_template: Herb::Token?
+      attr_accessor inline_template: Herb::Token?
 
-      attr_reader body: Herb::Token?
+      attr_accessor body: Herb::Token?
 
-      attr_reader plain: Herb::Token?
+      attr_accessor plain: Herb::Token?
 
-      attr_reader html: Herb::Token?
+      attr_accessor html: Herb::Token?
 
-      attr_reader renderable: Herb::Token?
+      attr_accessor renderable: Herb::Token?
 
-      attr_reader collection: Herb::Token?
+      attr_accessor collection: Herb::Token?
 
-      attr_reader object: Herb::Token?
+      attr_accessor object: Herb::Token?
 
-      attr_reader as_name: Herb::Token?
+      attr_accessor as_name: Herb::Token?
 
-      attr_reader spacer_template: Herb::Token?
+      attr_accessor spacer_template: Herb::Token?
 
-      attr_reader formats: Herb::Token?
+      attr_accessor formats: Herb::Token?
 
-      attr_reader variants: Herb::Token?
+      attr_accessor variants: Herb::Token?
 
-      attr_reader handlers: Herb::Token?
+      attr_accessor handlers: Herb::Token?
 
-      attr_reader content_type: Herb::Token?
+      attr_accessor content_type: Herb::Token?
 
-      attr_reader locals: Array[Herb::AST::RubyRenderLocalNode]?
+      attr_accessor locals: Array[Herb::AST::RubyRenderLocalNode]?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?analyzed_ruby: untyped, ?prism_node: untyped, ?partial: untyped, ?template_path: untyped, ?layout: untyped, ?file: untyped, ?inline_template: untyped, ?body: untyped, ?plain: untyped, ?html: untyped, ?renderable: untyped, ?collection: untyped, ?object: untyped, ?as_name: untyped, ?spacer_template: untyped, ?formats: untyped, ?variants: untyped, ?handlers: untyped, ?content_type: untyped, ?locals: untyped) -> untyped
 
       # : () -> serialized_erb_render_node
       def to_hash: () -> serialized_erb_render_node
@@ -1622,16 +1698,18 @@ module Herb
     class RubyStrictLocalNode < Node
       include Colors
 
-      attr_reader name: Herb::Token?
+      attr_accessor name: Herb::Token?
 
-      attr_reader default_value: Herb::AST::RubyLiteralNode?
+      attr_accessor default_value: Herb::AST::RubyLiteralNode?
 
-      attr_reader required: bool
+      attr_accessor required: bool
 
-      attr_reader double_splat: bool
+      attr_accessor double_splat: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
+
+      def copy: (?name: untyped, ?default_value: untyped, ?required: untyped, ?double_splat: untyped) -> untyped
 
       # : () -> serialized_ruby_strict_local_node
       def to_hash: () -> serialized_ruby_strict_local_node
@@ -1663,23 +1741,25 @@ module Herb
     class ERBStrictLocalsNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader analyzed_ruby: nil
+      attr_accessor analyzed_ruby: nil
 
-      attr_reader prism_node: String?
+      attr_accessor prism_node: String?
 
-      attr_reader locals: Array[Herb::AST::RubyStrictLocalNode]?
+      attr_accessor locals: Array[Herb::AST::RubyStrictLocalNode]?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
 
       # : () -> Prism::node?
       def deserialized_prism_node: () -> Prism::node?
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?analyzed_ruby: untyped, ?prism_node: untyped, ?locals: untyped) -> untyped
 
       # : () -> serialized_erb_strict_locals_node
       def to_hash: () -> serialized_erb_strict_locals_node
@@ -1708,14 +1788,16 @@ module Herb
     class ERBYieldNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped) -> untyped
 
       # : () -> serialized_erb_yield_node
       def to_hash: () -> serialized_erb_yield_node
@@ -1746,18 +1828,20 @@ module Herb
     class ERBInNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token?
+      attr_accessor tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token?
+      attr_accessor content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token?
+      attr_accessor tag_closing: Herb::Token?
 
-      attr_reader then_keyword: Herb::Location?
+      attr_accessor then_keyword: Herb::Location?
 
-      attr_reader statements: Array[Herb::AST::Node]
+      attr_accessor statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+
+      def copy: (?tag_opening: untyped, ?content: untyped, ?tag_closing: untyped, ?then_keyword: untyped, ?statements: untyped) -> untyped
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node

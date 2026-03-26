@@ -24,6 +24,8 @@ module Herb
 
     ESCAPE_TABLE: untyped
 
+    ATTR_ESCAPE_TABLE: untyped
+
     class CompilationError < StandardError
     end
 

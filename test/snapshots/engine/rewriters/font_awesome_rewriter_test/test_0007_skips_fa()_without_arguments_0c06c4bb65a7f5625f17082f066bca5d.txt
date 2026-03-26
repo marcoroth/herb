@@ -1,0 +1,6 @@
+---
+source: "Engine::Rewriters::FontAwesomeRewriterTest#test_0007_skips fa() without arguments"
+input: "{source: \"<%= fa %>\", options: {escape: false, visitors: [\"Herb::Rewriters::FontAwesomeRewriter(\\n  @replacements = {},\\n  @in_attribute = false,\\n  @in_html_comment = false,\\n)\"]}}"
+---
+_buf = ::String.new; _buf << (fa).to_s;
+_buf.to_s

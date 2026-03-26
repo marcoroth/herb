@@ -3,7 +3,11 @@
 
 module Herb
   class Engine
-    class DebugVisitor < Herb::Visitor
+    class DebugVisitor < Herb::Rewriter
+      def self.transformer_name
+        "debug"
+      end
+
       def initialize(file_path: nil, project_path: nil)
         super()
 
@@ -28,42 +32,23 @@ module Herb
         @element_stack = [] #: Array[String]
         @erb_block_stack = [] #: Array[Herb::AST::ERBBlockNode]
         @debug_attributes_applied = false
-        @in_attribute = false
-        @in_html_comment = false
         @in_html_doctype = false
-        @erb_nodes_to_wrap = [] #: Array[Herb::AST::ERBContentNode]
-        @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
       end
 
       def visit_document_node(node)
         find_top_level_elements(node)
-
         super
-
-        wrap_all_erb_nodes(node)
       end
 
       def visit_html_element_node(node)
         tag_name = node.tag_name&.value&.downcase
         @element_stack.push(tag_name) if tag_name
 
-        add_debug_attributes_to_element(node.open_tag) if should_add_debug_attributes_to_element?(node.open_tag)
+        add_debug_attributes_to_element(node) if should_add_debug_attributes?(node)
 
         super
 
         @element_stack.pop if tag_name
-      end
-
-      def visit_html_attribute_node(node)
-        @in_attribute = true
-        super
-        @in_attribute = false
-      end
-
-      def visit_html_comment_node(node)
-        @in_html_comment = true
-        super
-        @in_html_comment = false
       end
 
       def visit_html_doctype_node(node)
@@ -76,7 +61,10 @@ module Herb
         if !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
-          @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
+          unless complex_rails_helper?(code)
+            debug_span = create_debug_span_for_erb(node)
+            @replacements[node] = debug_span
+          end
         end
 
         super
@@ -106,107 +94,34 @@ module Herb
         @filename.to_s
       end
 
-      def wrap_all_erb_nodes(node)
-        replace_erb_nodes_recursive(node)
-      end
-
-      # Creates a dummy location for AST nodes that don't need real location info
-      #: () -> Herb::Location
-      def dummy_location
-        @dummy_location ||= Herb::Location.from(0, 0, 0, 0)
-      end
-
-      # Creates a dummy range for tokens that don't need real range info
-      #: () -> Herb::Range
-      def dummy_range
-        @dummy_range ||= Herb::Range.from(0, 0)
-      end
-
-      def replace_erb_nodes_recursive(node)
-        array_properties = [:children, :body, :statements]
-
-        array_properties.each do |prop|
-          next unless node.respond_to?(prop) && node.send(prop).is_a?(Array)
-
-          array = node.send(prop)
-
-          array.each_with_index do |child, index|
-            if @erb_nodes_to_wrap.include?(child)
-              debug_span = create_debug_span_for_erb(child)
-              array[index] = debug_span
-            else
-              replace_erb_nodes_recursive(child)
-            end
-          end
-        end
-
-        node_properties = [:subsequent, :else_clause, :end_node, :rescue_clause, :ensure_clause]
-
-        node_properties.each do |prop|
-          if node.respond_to?(prop) && node.send(prop)
-            child_node = node.send(prop)
-            replace_erb_nodes_recursive(child_node)
-          end
-        end
-      end
-
       def find_top_level_elements(document_node)
         document_node.children.each do |child|
           @top_level_elements << child if child.is_a?(Herb::AST::HTMLElementNode)
         end
       end
 
-      def should_add_debug_attributes_to_element?(open_tag_node)
+      def should_add_debug_attributes?(element_node)
         return false if @debug_attributes_applied
+        return false if @top_level_elements.empty?
 
-        parent_element = find_parent_element_for_open_tag(open_tag_node)
-        return false unless parent_element
-
-        return @top_level_elements.first == parent_element if @top_level_elements.length >= 1
-
-        false
+        @top_level_elements.first == element_node
       end
 
-      def find_parent_element_for_open_tag(open_tag_node)
-        @top_level_elements.find { |element| element.open_tag == open_tag_node }
-      end
-
-      def add_debug_attributes_to_element(open_tag_node)
+      def add_debug_attributes_to_element(element_node)
         return if @debug_attributes_applied
 
         view_type = determine_view_type
 
-        debug_attributes = [
-          create_debug_attribute("data-herb-debug-outline-type", view_type),
-          create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown")
-        ]
+        add_attribute(element_node, "data-herb-debug-outline-type", view_type)
+        add_attribute(element_node, "data-herb-debug-file-name", component_display_name)
+        add_attribute(element_node, "data-herb-debug-file-relative-path", @relative_file_path || "unknown")
+        add_attribute(element_node, "data-herb-debug-file-full-path", @filename&.to_s || "unknown")
 
         if @top_level_elements.length > 1
-          debug_attributes << create_debug_attribute("data-herb-debug-attach-to-parent", "true")
+          add_attribute(element_node, "data-herb-debug-attach-to-parent", "true")
         end
 
-        open_tag_node.children.concat(debug_attributes)
-
         @debug_attributes_applied = true
-      end
-
-      def create_debug_attribute(name, value)
-        name_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], name.dup)
-        name_node = Herb::AST::HTMLAttributeNameNode.new("HTMLAttributeNameNode", dummy_location, [], [name_literal])
-
-        value_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], value.dup)
-        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode", dummy_location, [], create_token(:quote, '"'),
-                                                           [value_literal], create_token(:quote, '"'), true)
-
-        equals_token = create_token(:equals, "=")
-
-        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", dummy_location, [], name_node, equals_token, value_node)
-      end
-
-      def create_token(type, value)
-        Herb::Token.new(value.dup, dummy_range, dummy_location, type.to_s)
       end
 
       def create_debug_span_for_erb(erb_node)
@@ -218,54 +133,29 @@ module Herb
 
         line = erb_node.location&.start&.line
         column = erb_node.location&.start&.column
+        escaped_erb = ::Herb::Engine.h(erb_code)
 
-        escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
-                                                                                                               "&#39;")
+        outline_type = @top_level_elements.empty? ? "erb-output #{determine_view_type}" : "erb-output"
 
-        outline_type = if @top_level_elements.empty?
-                         "erb-output #{determine_view_type}"
-                       else
-                         "erb-output"
-                       end
-
-        debug_attributes = [
-          create_debug_attribute("data-herb-debug-outline-type", outline_type),
-          create_debug_attribute("data-herb-debug-erb", escaped_erb),
-          create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
-          create_debug_attribute("data-herb-debug-inserted", "true")
+        attributes = [
+          build_attribute("data-herb-debug-outline-type", outline_type),
+          build_attribute("data-herb-debug-erb", escaped_erb),
+          build_attribute("data-herb-debug-file-name", component_display_name),
+          build_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
+          build_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
+          build_attribute("data-herb-debug-inserted", "true")
         ]
 
-        debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
-        debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
-        debug_attributes << create_debug_attribute("style", "display: contents;")
+        attributes << build_attribute("data-herb-debug-line", line.to_s) if line
+        attributes << build_attribute("data-herb-debug-column", (column + 1).to_s) if column
+        attributes << build_attribute("style", "display: contents;")
 
-        tag_name_token = create_token(:tag_name, "span")
-
-        open_tag = Herb::AST::HTMLOpenTagNode.new(
-          "HTMLOpenTagNode",
-          dummy_location,
-          [],
-          create_token(:tag_opening, "<"),
-          tag_name_token,
-          create_token(:tag_closing, ">"),
-          debug_attributes,
-          false
+        build_element(
+          tag_name: "span",
+          attributes: attributes,
+          body: [erb_node],
+          element_source: "Debug"
         )
-
-        close_tag = Herb::AST::HTMLCloseTagNode.new(
-          "HTMLCloseTagNode",
-          dummy_location,
-          [],
-          create_token(:tag_opening, "</"),
-          create_token(:tag_name, "span"),
-          [],
-          create_token(:tag_closing, ">")
-        )
-
-        Herb::AST::HTMLElementNode.new("HTMLElementNode", dummy_location, [], open_tag, tag_name_token, [erb_node], close_tag,
-                                       false, "Debug")
       end
 
       def determine_view_type
@@ -281,8 +171,7 @@ module Herb
       def partial?
         return false unless @filename
 
-        basename = @filename.basename.to_s
-        basename.start_with?("_")
+        @filename.basename.to_s.start_with?("_")
       end
 
       def component?

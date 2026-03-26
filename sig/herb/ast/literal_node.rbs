@@ -1,0 +1,10 @@
+# Generated from lib/herb/ast/literal_node.rb with RBS::Inline
+
+module Herb
+  module AST
+    class LiteralNode < Node
+      # : (String) -> LiteralNode
+      def self.from: (String) -> LiteralNode
+    end
+  end
+end

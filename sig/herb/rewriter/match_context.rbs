@@ -1,0 +1,32 @@
+# Generated from lib/herb/rewriter/match_context.rb with RBS::Inline
+
+module Herb
+  class Rewriter
+    class MatchContext
+      attr_reader erb_node: Herb::AST::Node
+
+      attr_reader prism_node: Prism::CallNode
+
+      attr_reader method_name: String
+
+      attr_reader body: Array[Herb::AST::Node]
+
+      # : (erb_node: Herb::AST::Node, prism_node: Prism::CallNode, method_name: String, ?body: Array[Herb::AST::Node]) -> void
+      def initialize: (erb_node: Herb::AST::Node, prism_node: Prism::CallNode, method_name: String, ?body: Array[Herb::AST::Node]) -> void
+
+      # : () -> Array[Prism::Node]
+      def arguments: () -> Array[Prism::Node]
+
+      # : () -> String?
+      def first_string_argument: () -> String?
+
+      EMPTY_KEYWORD_ARGUMENTS: Hash[String, Prism::Node]
+
+      # : () -> Hash[String, Prism::Node]
+      def keyword_arguments: () -> Hash[String, Prism::Node]
+
+      # : () -> bool
+      def block?: () -> bool
+    end
+  end
+end

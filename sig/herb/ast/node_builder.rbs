@@ -1,0 +1,82 @@
+# Generated from lib/herb/ast/node_builder.rb with RBS::Inline
+
+module Herb
+  module AST
+    module NodeBuilder
+      # : (tag_name: String, ?attributes: Array[Herb::AST::HTMLAttributeNode], ?body: Array[Herb::AST::Node], ?is_void: bool, ?element_source: String) -> Herb::AST::HTMLElementNode
+      def build_element: (tag_name: String, ?attributes: Array[Herb::AST::HTMLAttributeNode], ?body: Array[Herb::AST::Node], ?is_void: bool, ?element_source: String) -> Herb::AST::HTMLElementNode
+
+      # : (String, ?(String | nil)) -> Herb::AST::HTMLAttributeNode
+      def build_attribute: (String, ?String | nil) -> Herb::AST::HTMLAttributeNode
+
+      # : (String, String) -> Herb::AST::HTMLAttributeNode
+      def build_attribute_with_erb: (String, String) -> Herb::AST::HTMLAttributeNode
+
+      # : (String | Symbol) -> Herb::AST::LiteralNode
+      def build_literal: (String | Symbol) -> Herb::AST::LiteralNode
+
+      # : (String) -> Herb::AST::HTMLTextNode
+      def build_text: (String) -> Herb::AST::HTMLTextNode
+
+      # : (Symbol, String) -> Herb::Token
+      def build_token: (Symbol, String) -> Herb::Token
+
+      # : (Herb::AST::Node, tag_name: String, ?attributes: Array[Herb::AST::HTMLAttributeNode], ?element_source: String) -> Herb::AST::HTMLElementNode
+      def wrap_in_element: (Herb::AST::Node, tag_name: String, ?attributes: Array[Herb::AST::HTMLAttributeNode], ?element_source: String) -> Herb::AST::HTMLElementNode
+
+      # : (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+      def replace_node: (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+
+      # : (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+      def insert_before: (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+
+      # : (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+      def insert_after: (Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::Node) -> void
+
+      # : (Array[Herb::AST::Node], Herb::AST::Node) -> void
+      def remove_node: (Array[Herb::AST::Node], Herb::AST::Node) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> void
+      def rename_tag: (Herb::AST::HTMLElementNode, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String, ?String?) -> void
+      def add_attribute: (Herb::AST::HTMLElementNode, String, ?String?) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> void
+      def remove_attribute: (Herb::AST::HTMLElementNode, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> Herb::AST::HTMLAttributeNode?
+      def find_attribute: (Herb::AST::HTMLElementNode, String) -> Herb::AST::HTMLAttributeNode?
+
+      # : (Herb::AST::HTMLElementNode, String, String) -> void
+      def set_attribute: (Herb::AST::HTMLElementNode, String, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> String?
+      def attribute_value: (Herb::AST::HTMLElementNode, String) -> String?
+
+      # : (Herb::AST::HTMLElementNode, String, String) -> void
+      def add_token: (Herb::AST::HTMLElementNode, String, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String, String) -> void
+      def remove_token: (Herb::AST::HTMLElementNode, String, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String, String, String) -> void
+      def replace_token: (Herb::AST::HTMLElementNode, String, String, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String, String) -> bool
+      def includes_token?: (Herb::AST::HTMLElementNode, String, String) -> bool
+
+      # : (Herb::AST::HTMLElementNode, String) -> void
+      def add_class: (Herb::AST::HTMLElementNode, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> void
+      def remove_class: (Herb::AST::HTMLElementNode, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String, String) -> void
+      def replace_class: (Herb::AST::HTMLElementNode, String, String) -> void
+
+      # : (Herb::AST::HTMLElementNode, String) -> bool
+      def includes_class?: (Herb::AST::HTMLElementNode, String) -> bool
+    end
+  end
+end

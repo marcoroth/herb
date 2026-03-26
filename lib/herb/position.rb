@@ -23,6 +23,11 @@ module Herb
       new(line, column)
     end
 
+    #: () -> Position
+    def self.zero
+      @zero ||= new(0, 0)
+    end
+
     #: () -> serialized_position
     def to_hash
       { line: line, column: column } #: Herb::serialized_position
