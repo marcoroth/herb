@@ -207,7 +207,7 @@ module Engine
       ERB
 
       assert_compiled_snapshot(template)
-      assert_evaluated_snapshot(template, {},  enforce_actionview_erubi_equality: true)      
+      assert_evaluated_snapshot(template, {}, enforce_actionview_erubi_equality: true)
     end
   end
 end
