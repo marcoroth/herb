@@ -1,3 +1,5 @@
+export * from "./a11y-no-autofocus-attribute.js"
+
 export * from "./rule-utils.js"
 export * from "./file-utils.js"
 export * from "./string-utils.js"
