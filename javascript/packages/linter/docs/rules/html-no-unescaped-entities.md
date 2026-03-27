@@ -4,11 +4,13 @@
 
 ## Description
 
-Disallow unescaped special characters in HTML attribute values and text content. Characters like `<`, `>`, `&`, `"`, and `'` have special meaning in HTML and should be replaced with their corresponding character references when used as literal values.
+Disallow unescaped special characters in HTML attribute values and text content. Characters like `<`, `>`, and `&` have special meaning in HTML and should be replaced with their corresponding character references when used as literal values.
 
-This rule checks both attribute values and text content. In attribute values, all five characters are checked depending on the quote context. In text content, only bare `&` characters are flagged, since `<` and `>` are handled by the parser as tag boundaries.
+This rule checks both attribute values and text content for unescaped `<`, `>`, and `&` characters. ERB output tags are ignored, as the escaping responsibility belongs to the Ruby layer. Only the static (literal) portions of mixed attribute values are checked.
 
-ERB output tags inside attribute values are ignored, as the escaping responsibility belongs to the Ruby layer.
+Content inside raw text elements (`<script>` and `<style>`) is not checked, as character references are not decoded in those contexts per the HTML spec. Content inside escapable raw text elements (`<textarea>` and `<title>`) is still checked.
+
+The `&` detection validates named references against the full HTML spec character reference list, so `&amp;`, `&lt;`, `&copy;`, etc. are recognized as valid, while `&notavalidname;` would be flagged.
 
 ## Rationale
 
@@ -18,11 +20,13 @@ Using proper character references ensures that the document is parsed correctly 
 
 | Character | Entity | Context |
 |-----------|--------|---------|
-| `<` | `&lt;` | Attribute values |
-| `>` | `&gt;` | Attribute values |
+| `<` | `&lt;` | Attribute values and text content |
+| `>` | `&gt;` | Attribute values and text content |
 | `&` | `&amp;` | Attribute values and text content |
-| `"` | `&quot;` | Double-quoted attribute values |
-| `'` | `&#39;` | Single-quoted attribute values |
+
+## Autofix
+
+This rule provides an **unsafe** autofix that replaces unescaped characters with their corresponding character references. The autofix is considered unsafe because replacing characters may change the intended behavior in some contexts (e.g., URLs with query parameters).
 
 ## Examples
 
@@ -42,6 +46,9 @@ Using proper character references ensures that the document is parsed correctly 
 
 ```html
 <div data-char="&#60;&#62;"></div>
+```
+
+```html
 <div data-char="&#x3C;&#x3E;"></div>
 ```
 
@@ -49,18 +56,24 @@ Using proper character references ensures that the document is parsed correctly 
 <div data-html="&lt;div class=&quot;test&quot;&gt;content&lt;/div&gt;"></div>
 ```
 
-```html
-<div data-msg="it's fine"></div>
-<div data-msg='she said "hi"'></div>
+```erb
+<div class="<%= value %>"></div>
 ```
 
 ```erb
-<div class="<%= value %>"></div>
 <div data-value="prefix-<%= value %>-suffix"></div>
 ```
 
 ```html
 <div>Tom &amp; Jerry</div>
+```
+
+```html
+<script>var x = a & b;</script>
+```
+
+```html
+<style>.foo { content: "a & b"; }</style>
 ```
 
 ### 🚫 Bad
@@ -85,7 +98,16 @@ Using proper character references ensures that the document is parsed correctly 
 <div>Tom & Jerry</div>
 ```
 
+```html
+<p>Hello this is < content</p>
+```
+
+```html
+<p>a > b</p>
+```
+
 ## References
 
 - [HTML Living Standard - Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)
 - [HTML Living Standard - Attributes](https://html.spec.whatwg.org/multipage/syntax.html#attributes-2)
+- [HTML Living Standard - Raw text elements](https://html.spec.whatwg.org/multipage/syntax.html#raw-text-elements)
