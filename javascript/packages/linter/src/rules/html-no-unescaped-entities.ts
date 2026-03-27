@@ -1,6 +1,6 @@
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, DynamicAttributeStaticValueParams, DynamicAttributeDynamicValueParams, locationFromContentOffset } from "./rule-utils.js"
-import { hasAttributeValue, isLiteralNode, getTagLocalName, Location } from "@herb-tools/core"
+import { hasAttributeValue, isLiteralNode, getTagLocalName, Location, isValidCharacterReference } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode, LiteralNode, Node, HTMLAttributeNode } from "@herb-tools/core"
@@ -11,7 +11,7 @@ interface UnescapedEntitiesAutofixContext extends BaseAutofixContext {
   entity: string
 }
 
-const BARE_AMPERSAND_PATTERN = /&(?!(?:#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);)/g
+const AMPERSAND_PATTERN = /&(?:#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*)?;?/g
 
 interface UnescapedOccurrence {
   character: string
@@ -41,11 +41,13 @@ function findAllIndexes(value: string, character: string): number[] {
 
 function findBareAmpersandIndexes(value: string): number[] {
   const indexes: number[] = []
-  const pattern = new RegExp(BARE_AMPERSAND_PATTERN.source, "g")
+  const pattern = new RegExp(AMPERSAND_PATTERN.source, "g")
   let match: RegExpExecArray | null
 
   while ((match = pattern.exec(value)) !== null) {
-    indexes.push(match.index)
+    if (!isValidCharacterReference(match[0])) {
+      indexes.push(match.index)
+    }
   }
 
   return indexes
@@ -213,7 +215,10 @@ export class HTMLNoUnescapedEntitiesRule extends ParserRule<UnescapedEntitiesAut
 
     const { node } = offense.autofixContext
 
-    node.content = node.content.replace(new RegExp(BARE_AMPERSAND_PATTERN.source, "g"), "&amp;")
+    node.content = node.content.replace(new RegExp(AMPERSAND_PATTERN.source, "g"), (match) => {
+      if (isValidCharacterReference(match)) return match
+      return "&amp;" + match.slice(1)
+    })
     node.content = node.content.replaceAll("<", "&lt;")
     node.content = node.content.replaceAll(">", "&gt;")
 
