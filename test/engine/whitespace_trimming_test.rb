@@ -198,7 +198,7 @@ module Engine
     test "whitespace between consecutive end tags after expression block is trimmed" do
       template = <<~ERB
         <% 1.times do %>
-          <% form_tag("/t") do %>
+          <%= form_tag("/t") do %>
             <%= tag.p do %>
               text
             <% end %>
@@ -207,6 +207,22 @@ module Engine
       ERB
 
       assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "whitespace between nested end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% 1.times do %>
+          <% 1.times do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
     end
   end
 end
