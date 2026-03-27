@@ -8,10 +8,9 @@ import {
 } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, HTML_NAMED_CHARACTER_REFERENCES } from "@herb-tools/core"
+import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange, isPositionInRange, rangeSize } from "./range_utils"
-import { HTML_TAGS } from "./html_tags"
 import { ACTION_VIEW_HELPERS } from "./action_view_helpers"
 
 import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode } from "@herb-tools/core"
@@ -235,7 +234,7 @@ export class CompletionService {
   }
 
   private getTagDotCompletions(prefix: string, hasClosingERBTag: boolean): CompletionList {
-    const items: CompletionItem[] = HTML_TAGS
+    const items: CompletionItem[] = HTML_ELEMENTS
       .filter(tag => tag.name.startsWith(prefix))
       .map((tag, index) => {
         const isCommon = COMMON_TAGS.has(tag.name)
@@ -265,7 +264,7 @@ export class CompletionService {
   }
 
   private getContentTagCompletions(prefix: string, hasSpaceAfterCursor: boolean): CompletionList {
-    const items: CompletionItem[] = HTML_TAGS
+    const items: CompletionItem[] = HTML_ELEMENTS
       .filter(tag => tag.name.startsWith(prefix))
       .map((tag, index) => {
         const isCommon = COMMON_TAGS.has(tag.name)
@@ -286,7 +285,7 @@ export class CompletionService {
   }
 
   private getHTMLTagCompletions(prefix: string): CompletionList {
-    const items: CompletionItem[] = HTML_TAGS
+    const items: CompletionItem[] = HTML_ELEMENTS
       .filter(tag => tag.name.startsWith(prefix))
       .map((tag, index) => {
         const isCommon = COMMON_TAGS.has(tag.name)

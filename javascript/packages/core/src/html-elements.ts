@@ -1,12 +1,15 @@
-export interface HTMLTagInfo {
+// https://html.spec.whatwg.org/multipage/indices.html#elements-3
+
+export interface HTMLElementInfo {
   name: string
   description: string
   isVoid: boolean
 }
 
-export const HTML_TAGS: HTMLTagInfo[] = [
+export const HTML_ELEMENTS: HTMLElementInfo[] = [
   { name: "a", description: "Hyperlink", isVoid: false },
   { name: "abbr", description: "Abbreviation", isVoid: false },
+  { name: "acronym", description: "Acronym (deprecated)", isVoid: false },
   { name: "address", description: "Contact information", isVoid: false },
   { name: "area", description: "Image map area", isVoid: true },
   { name: "article", description: "Article content", isVoid: false },
@@ -16,6 +19,7 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "base", description: "Document base URL", isVoid: true },
   { name: "bdi", description: "Bidirectional isolation", isVoid: false },
   { name: "bdo", description: "Bidirectional override", isVoid: false },
+  { name: "big", description: "Larger text (deprecated)", isVoid: false },
   { name: "blockquote", description: "Block quotation", isVoid: false },
   { name: "body", description: "Document body", isVoid: false },
   { name: "br", description: "Line break", isVoid: true },
@@ -67,6 +71,7 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "main", description: "Main content", isVoid: false },
   { name: "map", description: "Image map", isVoid: false },
   { name: "mark", description: "Highlighted text", isVoid: false },
+  { name: "math", description: "MathML content", isVoid: false },
   { name: "menu", description: "Menu", isVoid: false },
   { name: "meta", description: "Metadata", isVoid: true },
   { name: "meter", description: "Scalar measurement", isVoid: false },
@@ -78,6 +83,7 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "option", description: "Select option", isVoid: false },
   { name: "output", description: "Output result", isVoid: false },
   { name: "p", description: "Paragraph", isVoid: false },
+  { name: "param", description: "Object parameter (deprecated)", isVoid: true },
   { name: "picture", description: "Responsive image", isVoid: false },
   { name: "pre", description: "Preformatted text", isVoid: false },
   { name: "progress", description: "Progress indicator", isVoid: false },
@@ -91,6 +97,7 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "search", description: "Search section", isVoid: false },
   { name: "section", description: "Document section", isVoid: false },
   { name: "select", description: "Select control", isVoid: false },
+  { name: "selectedcontent", description: "Selected content placeholder", isVoid: false },
   { name: "slot", description: "Web component slot", isVoid: false },
   { name: "small", description: "Small text", isVoid: false },
   { name: "source", description: "Media source", isVoid: true },
@@ -100,6 +107,7 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "sub", description: "Subscript", isVoid: false },
   { name: "summary", description: "Disclosure summary", isVoid: false },
   { name: "sup", description: "Superscript", isVoid: false },
+  { name: "svg", description: "SVG content", isVoid: false },
   { name: "table", description: "Table", isVoid: false },
   { name: "tbody", description: "Table body", isVoid: false },
   { name: "td", description: "Table cell", isVoid: false },
@@ -112,9 +120,28 @@ export const HTML_TAGS: HTMLTagInfo[] = [
   { name: "title", description: "Document title", isVoid: false },
   { name: "tr", description: "Table row", isVoid: false },
   { name: "track", description: "Text track", isVoid: true },
+  { name: "tt", description: "Teletype text (deprecated)", isVoid: false },
   { name: "u", description: "Underline", isVoid: false },
   { name: "ul", description: "Unordered list", isVoid: false },
   { name: "var", description: "Variable", isVoid: false },
   { name: "video", description: "Video content", isVoid: false },
   { name: "wbr", description: "Word break opportunity", isVoid: true },
 ]
+
+export const HTML_ELEMENT_NAMES = new Set(HTML_ELEMENTS.map(element => element.name))
+
+export const HTML_VOID_ELEMENTS = new Set(
+  HTML_ELEMENTS.filter(element => element.isVoid).map(element => element.name),
+)
+
+export function isKnownHTMLElement(tagName: string): boolean {
+  return HTML_ELEMENT_NAMES.has(tagName.toLowerCase())
+}
+
+export function isVoidElement(tagName: string): boolean {
+  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isCustomElement(tagName: string): boolean {
+  return tagName.includes("-")
+}
