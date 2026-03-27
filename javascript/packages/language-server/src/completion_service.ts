@@ -8,7 +8,7 @@ import {
 } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode } from "@herb-tools/core"
+import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, HTML_NAMED_CHARACTER_REFERENCES } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange, isPositionInRange, rangeSize } from "./range_utils"
 import { HTML_TAGS } from "./html_tags"
@@ -18,6 +18,7 @@ import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode } from "@herb-
 import type { Range } from "vscode-languageserver/node"
 
 const HTML_OPEN_TAG_PATTERN = /<(\w*)$/
+const CHARACTER_REFERENCE_PATTERN = /&([a-zA-Z]*)$/
 
 const TAG_DOT_PATTERN = /tag\.(\w*)$/
 const CONTENT_TAG_SYMBOL_PATTERN = /content_tag\s+:(\w*)$/
@@ -109,11 +110,26 @@ export class CompletionService {
     }
 
     if (node && isHTMLOpenTagNode(node)) {
-      return this.getHTMLOpenTagCompletions(node, position)
+      return this.getHTMLOpenTagCompletions(node, position, document)
     }
 
     if (node && isHTMLTextNode(node)) {
       return this.getHTMLTextCompletions(document, position)
+    }
+
+    return this.getDocumentLevelCompletions(document, position)
+  }
+
+  private getDocumentLevelCompletions(document: TextDocument, position: Position): CompletionList | null {
+    const lineText = document.getText({
+      start: Position.create(position.line, 0),
+      end: position,
+    })
+
+    const entityMatch = lineText.match(CHARACTER_REFERENCE_PATTERN)
+
+    if (entityMatch) {
+      return this.getCharacterReferenceCompletions(entityMatch[1])
     }
 
     return null
@@ -167,8 +183,19 @@ export class CompletionService {
     return null
   }
 
-  private getHTMLOpenTagCompletions(node: HTMLOpenTagNode, position: Position): CompletionList | null {
+  private getHTMLOpenTagCompletions(node: HTMLOpenTagNode, position: Position, document: TextDocument): CompletionList | null {
     if (!node.tag_opening) return null
+
+    const lineText = document.getText({
+      start: Position.create(position.line, 0),
+      end: position,
+    })
+
+    const entityMatch = lineText.match(CHARACTER_REFERENCE_PATTERN)
+
+    if (entityMatch) {
+      return this.getCharacterReferenceCompletions(entityMatch[1])
+    }
 
     const tagOpenEnd = node.tag_opening.location.end
     const tagNameStart = node.tag_name?.location.start
@@ -192,10 +219,16 @@ export class CompletionService {
       end: position,
     })
 
-    const match = lineText.match(HTML_OPEN_TAG_PATTERN)
+    const tagMatch = lineText.match(HTML_OPEN_TAG_PATTERN)
 
-    if (match) {
-      return this.getHTMLTagCompletions(match[1])
+    if (tagMatch) {
+      return this.getHTMLTagCompletions(tagMatch[1])
+    }
+
+    const entityMatch = lineText.match(CHARACTER_REFERENCE_PATTERN)
+
+    if (entityMatch) {
+      return this.getCharacterReferenceCompletions(entityMatch[1])
     }
 
     return null
@@ -273,6 +306,50 @@ export class CompletionService {
       })
 
     return CompletionList.create(items, false)
+  }
+
+  private getCharacterReferenceCompletions(prefix: string): CompletionList {
+    const entries = Object.entries(HTML_NAMED_CHARACTER_REFERENCES)
+    const lowercasePrefix = prefix.toLowerCase()
+
+    const items: CompletionItem[] = entries
+      .filter(([name]) => name.toLowerCase().startsWith(lowercasePrefix))
+      .sort((a, b) => {
+        const aExact = a[0].startsWith(prefix)
+        const bExact = b[0].startsWith(prefix)
+
+        if (aExact !== bExact) return aExact ? -1 : 1
+
+        return a[0].localeCompare(b[0])
+      })
+      .slice(0, 100)
+      .map(([name, reference], index) => {
+        const codepoints = reference.codepoints
+          .map(codepoint => `U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`)
+          .join(", ")
+
+        return {
+          label: `&${name};`,
+          kind: CompletionItemKind.Value,
+          detail: `\`${reference.characters}\` (${codepoints})`,
+          documentation: {
+            kind: MarkupKind.Markdown,
+            value: [
+              `| | |`,
+              `|---|---|`,
+              `| **Character** | \`${reference.characters}\` |`,
+              `| **Codepoints** | ${codepoints} |`,
+              `| **Reference** | \`&${name};\` |`,
+            ].join("\n"),
+          },
+          sortText: `!0${String(index).padStart(4, "0")}`,
+          filterText: `&${name}`,
+          insertText: `${name};`,
+          insertTextFormat: InsertTextFormat.PlainText,
+        }
+      })
+
+    return CompletionList.create(items, true)
   }
 
   private getHelperCompletions(prefix: string): CompletionList | null {

@@ -396,6 +396,110 @@ describe("CompletionService", () => {
     })
   })
 
+  describe("character reference completions", () => {
+    it("returns character references after '&' in text content", () => {
+      const result = getCompletions("<p>&</p>", 0, 4)
+
+      expect(result).not.toBeNull()
+      expect(result!.items.length).toBeGreaterThan(0)
+
+      const labels = result!.items.map(item => item.label)
+      expect(labels).toContain("&amp;")
+      expect(labels).toContain("&apos;")
+    })
+
+    it("filters by prefix", () => {
+      const result = getCompletions("<p>&lt</p>", 0, 6)
+
+      expect(result).not.toBeNull()
+
+      const labels = result!.items.map(item => item.label)
+      expect(labels).toContain("&lt;")
+      expect(labels).not.toContain("&amp;")
+      expect(labels).not.toContain("&gt;")
+    })
+
+    it("filters case-insensitively", () => {
+      const result = getCompletions("<p>&AMP</p>", 0, 7)
+
+      expect(result).not.toBeNull()
+
+      const labels = result!.items.map(item => item.label)
+      expect(labels).toContain("&AMP;")
+      expect(labels).toContain("&amp;")
+    })
+
+    it("returns correct detail with character and codepoints", () => {
+      const result = getCompletions("<p>&copy</p>", 0, 8)
+
+      expect(result).not.toBeNull()
+
+      const copyItem = result!.items.find(item => item.label === "&copy;")
+      expect(copyItem).toBeDefined()
+      expect(copyItem!.detail).toContain("`\u00A9`")
+      expect(copyItem!.detail).toContain("U+00A9")
+    })
+
+    it("uses Value completion kind", () => {
+      const result = getCompletions("<p>&amp</p>", 0, 7)
+
+      expect(result).not.toBeNull()
+
+      const ampItem = result!.items.find(item => item.label === "&amp;")
+      expect(ampItem!.kind).toBe(CompletionItemKind.Value)
+    })
+
+    it("inserts name with semicolon", () => {
+      const result = getCompletions("<p>&amp</p>", 0, 7)
+
+      expect(result).not.toBeNull()
+
+      const ampItem = result!.items.find(item => item.label === "&amp;")
+      expect(ampItem!.insertText).toBe("amp;")
+    })
+
+    it("works in attribute values", () => {
+      const result = getCompletions('<div data-value="&amp"></div>', 0, 21)
+
+      expect(result).not.toBeNull()
+
+      const labels = result!.items.map(item => item.label)
+      expect(labels).toContain("&amp;")
+    })
+
+    it("filters in attribute values", () => {
+      const result = getCompletions('<div data-value="&lt"></div>', 0, 20)
+
+      expect(result).not.toBeNull()
+
+      const labels = result!.items.map(item => item.label)
+      expect(labels).toContain("&lt;")
+      expect(labels).not.toContain("&amp;")
+    })
+
+    it("limits results to 100", () => {
+      const result = getCompletions("<p>&</p>", 0, 4)
+
+      expect(result).not.toBeNull()
+      expect(result!.items.length).toBeLessThanOrEqual(100)
+      expect(result!.isIncomplete).toBe(true)
+    })
+
+    it("includes documentation with markdown table", () => {
+      const result = getCompletions("<p>&amp</p>", 0, 7)
+
+      expect(result).not.toBeNull()
+
+      const ampItem = result!.items.find(item => item.label === "&amp;")
+      const documentation = ampItem!.documentation as { kind: string; value: string }
+      expect(documentation.kind).toBe(MarkupKind.Markdown)
+      expect(documentation.value).toContain("**Character**")
+      expect(documentation.value).toContain("**Codepoints**")
+      expect(documentation.value).toContain("**Reference**")
+      expect(documentation.value).toContain("`&amp;`")
+    })
+  })
+
   describe("non-matching contexts", () => {
     it("returns null inside HTML content", () => {
       const result = getCompletions("<div>hello</div>", 0, 8)

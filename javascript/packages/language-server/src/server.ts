@@ -63,7 +63,7 @@ export class Server {
           documentHighlightProvider: true,
           hoverProvider: true,
           completionProvider: {
-            triggerCharacters: [".", ":", "<"],
+            triggerCharacters: [".", ":", "<", "&"],
           },
         },
       }
