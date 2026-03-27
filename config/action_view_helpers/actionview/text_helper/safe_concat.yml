@@ -1,0 +1,16 @@
+---
+name: safe_concat
+source: "ActionView::Helpers::TextHelper#safe_concat"
+gem: actionview
+output: void
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Concatenates a string to the output buffer without HTML escaping. The string must already be `html_safe`.
+signature: "safe_concat(string)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-safe_concat"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

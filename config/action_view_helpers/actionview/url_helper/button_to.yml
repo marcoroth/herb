@@ -1,0 +1,55 @@
+---
+name: button_to
+source: "ActionView::Helpers::UrlHelper#button_to"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Generates a form containing a single button that submits to the URL created by the set of options. This is the safest method to ensure links that cause changes to your data are not triggered by search bots or accelerators.
+signature: "button_to(name = nil, options = nil, html_options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-button_to"
+tag:
+  name: form
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "Button label text."
+  - name: options
+    position: 2
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "URL string or `url_for` options hash."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options:
+  - name: method
+    type: symbol
+    description: "HTTP verb. Supported verbs are `:post`, `:get`, `:delete`, `:patch`, and `:put`. Defaults to `:post`."
+  - name: disabled
+    type: boolean
+    description: "If set to `true`, generates a disabled button."
+  - name: form_class
+    type: string
+    description: |-
+      CSS class for the form element. Defaults to `"button_to"`.
+  - name: params
+    type: hash
+    description: "Hash of parameters to be rendered as hidden fields within the form."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

@@ -1,0 +1,16 @@
+---
+name: session
+source: "ActionView::Helpers::ControllerHelper#session"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the current session hash. Delegated to the controller.
+signature: "session"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

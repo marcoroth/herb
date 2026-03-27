@@ -1,0 +1,42 @@
+---
+name: radio_button_tag
+source: "ActionView::Helpers::FormTagHelper#radio_button_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a radio button form input tag.
+signature: "radio_button_tag(name, value, checked = false, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-radio_button_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the radio button."
+  - name: value
+    position: 2
+    type: string
+    optional: false
+    description: "Value submitted when selected."
+  - name: checked
+    position: 3
+    type: boolean
+    optional: true
+    default: "false"
+    description: "Whether the radio button is selected by default."
+  - name: options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []

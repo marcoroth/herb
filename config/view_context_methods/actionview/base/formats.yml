@@ -1,0 +1,8 @@
+---
+name: formats
+source: "ActionView::Base#formats"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the list of formats being rendered (e.g. `[:html]`, `[:json]`).

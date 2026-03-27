@@ -10,4 +10,8 @@ src/include/ast/ast_pretty_print.h
 src/include/errors.h
 src/include/lib/hb_foreach.h
 src/parser/match_tags.c
+src/analyze/action_view/helper_registry.c
+src/analyze/action_view/generated_handlers.c
+src/analyze/action_view/generated_handlers.h
+src/include/analyze/action_view/helper_registry.h
 src/visitor.c

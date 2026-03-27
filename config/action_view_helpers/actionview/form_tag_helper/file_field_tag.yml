@@ -1,0 +1,41 @@
+---
+name: file_field_tag
+source: "ActionView::Helpers::FormTagHelper#file_field_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a file upload field. If you are using file uploads then you will also need to set the `multipart` option for the form tag.
+signature: "file_field_tag(name, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-file_field_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the file input."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the input is disabled."
+  - name: multiple
+    type: boolean
+    description: "If `true`, allows multiple file selection."
+  - name: accept
+    type: string
+    description: |-
+      File types to accept (e.g. `"image/*"`).
+special_behaviors: []

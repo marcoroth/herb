@@ -1,0 +1,21 @@
+---
+name: escape_once
+source: "ActionView::Helpers::TagHelper#escape_once"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns an escaped version of HTML without affecting existing escaped entities.
+signature: "escape_once(html)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-escape_once"
+tag: null
+arguments:
+  - name: html
+    position: 1
+    type: string
+    optional: false
+    description: "HTML string to escape."
+options: []
+special_behaviors: []

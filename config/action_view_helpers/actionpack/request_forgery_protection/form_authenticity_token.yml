@@ -1,0 +1,19 @@
+---
+name: form_authenticity_token
+source: "ActionController::RequestForgeryProtection#form_authenticity_token"
+gem: actionpack
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates the authenticity token for the current request. Returns the masked CSRF token string used for protecting forms against cross-site request forgery.
+signature: "form_authenticity_token(form_options: {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionController/RequestForgeryProtection.html#method-i-form_authenticity_token"
+tag: null
+arguments: []
+options:
+  - name: form_options
+    type: hash
+    description: "A hash that may contain `:action` and `:method` keys for per-form CSRF tokens."
+special_behaviors: []

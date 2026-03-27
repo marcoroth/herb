@@ -1,0 +1,39 @@
+---
+name: select_second
+source: "ActionView::Helpers::DateHelper#select_second"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the seconds 0 through 59 with the current second selected. The `datetime` can be either a `Time` or `DateTime` object or an integer. Override the field name using the `:field_name` option, `"second"` by default.
+signature: "select_second(datetime, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_second"
+tag: null
+arguments:
+  - name: datetime
+    position: 1
+    type: [time, datetime, integer]
+    optional: false
+    description: "The time, datetime, or integer to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the second select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"second\"`."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

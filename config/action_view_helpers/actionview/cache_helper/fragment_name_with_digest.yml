@@ -1,0 +1,16 @@
+---
+name: fragment_name_with_digest
+source: "ActionView::Helpers::CacheHelper#fragment_name_with_digest"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the fragment cache name with the template digest appended for cache busting.
+signature: "fragment_name_with_digest(name, digest_path)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

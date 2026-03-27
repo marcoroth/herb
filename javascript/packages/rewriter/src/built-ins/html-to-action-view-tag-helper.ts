@@ -1,4 +1,4 @@
-import { Visitor, Location, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken } from "@herb-tools/core"
+import { Visitor, Location, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
 import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -121,37 +121,39 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       }
     }
 
-    const isAnchor = tagName.value === "a"
-    const isTurboFrame = tagName.value === "turbo-frame"
-    const isScript = tagName.value === "script"
-    const isImg = tagName.value === "img"
+    const preferredHelper = findPreferredHelperForTag(tagName.value)
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
-    const hasSrcAttribute = (isScript || isImg) && attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
-    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, { extractHref: isAnchor, extractId: isTurboFrame, extractSrc: isScript || isImg })
+    const implicitAttrName = preferredHelper?.implicitAttribute?.name
+    const hasSrcAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
+    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, {
+      extractHref: implicitAttrName === "href",
+      extractId: implicitAttrName === "id",
+      extractSrc: implicitAttrName === "src" || tagName.value === "script",
+    })
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
     let content: string
     let elementSource: string
 
-    if (isAnchor) {
+    if (preferredHelper?.name === "link_to") {
       content = this.buildLinkToContent(node, attributesString, href, isInlineContent)
-      elementSource = "ActionView::Helpers::UrlHelper#link_to"
-    } else if (isTurboFrame) {
+      elementSource = preferredHelper.source
+    } else if (preferredHelper?.name === "turbo_frame_tag") {
       content = this.buildTurboFrameTagContent(node, attributesString, id, isInlineContent)
-      elementSource = "Turbo::FramesHelper#turbo_frame_tag"
-    } else if (isScript && hasSrcAttribute) {
-      content = this.buildJavascriptIncludeTagContent(attributesString, src)
-      elementSource = "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
-    } else if (isScript) {
-      content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
-      elementSource = "ActionView::Helpers::JavaScriptHelper#javascript_tag"
-    } else if (isImg) {
+      elementSource = preferredHelper.source
+    } else if (preferredHelper?.name === "image_tag") {
       content = this.buildImageTagContent(attributesString, src)
-      elementSource = "ActionView::Helpers::AssetTagHelper#image_tag"
+      elementSource = preferredHelper.source
+    } else if (tagName.value === "script" && hasSrcAttribute) {
+      content = this.buildJavascriptIncludeTagContent(attributesString, src)
+      elementSource = HELPER_REGISTRY["javascript_include_tag"].source
+    } else if (tagName.value === "script") {
+      content = this.buildJavascriptTagContent(node, attributesString, isInlineContent)
+      elementSource = HELPER_REGISTRY["javascript_tag"].source
     } else {
       content = this.buildTagContent(tagName.value, node, attributesString, isInlineContent)
-      elementSource = "ActionView::Helpers::TagHelper#tag"
+      elementSource = HELPER_REGISTRY["tag"].source
     }
 
     const erbOpenTag = new ERBOpenTagNode({
@@ -168,8 +170,10 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     asMutable(node).open_tag = erbOpenTag
     asMutable(node).element_source = elementSource
 
+    const isScript = tagName.value === "script"
     const isInlineLiteralContent = isScript && hasBody && node.body.length === 1 && isLiteralNode(node.body[0]) && !node.body[0].content.includes("\n")
-    const isInlineForm = isInlineContent || isInlineLiteralContent || (isTurboFrame && !hasBody) || (isScript && hasSrcAttribute) || isImg
+    const isVoidHelper = preferredHelper?.isVoid ?? node.is_void
+    const isInlineForm = isInlineContent || isInlineLiteralContent || isVoidHelper || (preferredHelper?.name === "turbo_frame_tag" && !hasBody) || (isScript && hasSrcAttribute)
 
     if (node.is_void) {
       asMutable(node).close_tag = null

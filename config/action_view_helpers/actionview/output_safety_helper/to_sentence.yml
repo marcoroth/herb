@@ -1,0 +1,33 @@
+---
+name: to_sentence
+source: "ActionView::Helpers::OutputSafetyHelper#to_sentence"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Converts an array to a comma-separated sentence where the last element is joined by a connector.
+signature: "to_sentence(array, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-to_sentence"
+tag: null
+arguments:
+  - name: array
+    position: 1
+    type: array
+    optional: false
+    description: "Array to convert."
+options:
+  - name: words_connector
+    type: string
+    description: |-
+      Connector between words. Defaults to `", "`.
+  - name: two_words_connector
+    type: string
+    description: |-
+      Connector for two words. Defaults to `" and "`.
+  - name: last_word_connector
+    type: string
+    description: |-
+      Connector before last word. Defaults to `", and "`.
+special_behaviors: []

@@ -4,12 +4,11 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode, getNamedCharacterReference, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize } from "./range_utils"
-import { ACTION_VIEW_HELPERS } from "./action_view_helpers"
 
-import type { HTMLElementNode, ERBOpenTagNode, HTMLCharacterReference } from "@herb-tools/core"
+import type { Node, HTMLElementNode, ERBOpenTagNode, ERBContentNode, HTMLCharacterReference, HelperEntry } from "@herb-tools/core"
 
 class ActionViewElementCollector extends Visitor {
   public elements: { node: HTMLElementNode; openTag: ERBOpenTagNode; range: Range }[] = []
@@ -40,6 +39,76 @@ class ActionViewElementCollector extends Visitor {
     }
 
     this.visitChildNodes(node)
+  }
+}
+
+interface ERBHelperMatch {
+  node: ERBContentNode
+  helper: HelperEntry
+  range: Range
+}
+
+class ERBHelperCollector extends Visitor {
+  public matches: ERBHelperMatch[] = []
+
+  visitERBContentNode(node: ERBContentNode): void {
+    this.scanContentToken(node, node.content)
+  }
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    // Scan transformed action view helper open tags for nested helper calls
+    // e.g. turbo_frame_tag dom_id(user) → scan for dom_id inside the content
+    if (isERBOpenTagNode(node.open_tag)) {
+      this.scanContentToken(node.open_tag, node.open_tag.content)
+    }
+
+    this.visitChildNodes(node)
+  }
+
+  private scanContentToken(node: ERBContentNode | ERBOpenTagNode, contentToken: { value: string; location: { start: { line: number; column: number } } } | null | undefined): void {
+    if (!contentToken?.value) return
+
+    const value = contentToken.value
+    const contentStart = lspPosition(contentToken.location.start)
+
+    // Find all method calls that match registered helpers.
+    // Matches: dom_id(, truncate(, link_to , csrf_meta_tags etc.
+    const pattern = /\b(\w+[?!]?)\s*[(\s,]/g
+    let match: RegExpExecArray | null
+
+    while ((match = pattern.exec(value)) !== null) {
+      const methodName = match[1]
+      const helper = HELPER_REGISTRY[methodName]
+      if (!helper) continue
+
+      const offset = match.index
+      const start = Position.create(contentStart.line, contentStart.character + offset)
+      const end = Position.create(start.line, start.character + methodName.length)
+
+      this.matches.push({ node: node as any, helper, range: Range.create(start, end) })
+    }
+
+    // Also match helpers at the end of content (no trailing paren/space),
+    // e.g. "<%= csrf_meta_tags %>"
+    const trailingMatch = value.match(/\b(\w+[?!]?)\s*$/)
+    if (trailingMatch) {
+      const methodName = trailingMatch[1]
+      const helper = HELPER_REGISTRY[methodName]
+
+      if (helper) {
+        const offset = value.lastIndexOf(methodName)
+        const start = Position.create(contentStart.line, contentStart.character + offset)
+        const end = Position.create(start.line, start.character + methodName.length)
+
+        const alreadyMatched = this.matches.some(m =>
+          m.range.start.character === start.character && m.range.start.line === start.line
+        )
+
+        if (!alreadyMatched) {
+          this.matches.push({ node: node as any, helper, range: Range.create(start, end) })
+        }
+      }
+    }
   }
 }
 
@@ -83,17 +152,32 @@ export class HoverService {
       }
     }
 
+    // Check for nested helper calls (e.g. dom_id inside turbo_frame_tag).
+    // Only use the ERB helper hover if it matches a DIFFERENT range than the
+    // outer action view element — meaning the cursor is on a nested call,
+    // not on the outer helper name itself.
+    const erbHelperHover = this.getERBHelperHover(parseResult.value, position)
+
     if (!bestElement) {
-      return this.getEntityHover(textDocument, position)
+      return erbHelperHover ?? this.getEntityHover(textDocument, position)
     }
+
+    if (erbHelperHover && !this.rangesEqual(erbHelperHover.range!, bestElement.range)) {
+      return erbHelperHover
+    }
+
+    const parts: string[] = []
 
     const elementSource = bestElement.node.element_source
     const isLeaf = !bestElement.node.body.some(child => isHTMLElementNode(child))
-    const helper = ACTION_VIEW_HELPERS[elementSource]
-    const parts: string[] = []
+    const helper = HELPER_BY_SOURCE[elementSource]
 
     if (helper) {
       parts.push(`\`\`\`ruby\n${helper.signature}\n\`\`\``)
+
+      if (helper.description) {
+        parts.push(helper.description)
+      }
     }
 
     if (isLeaf) {
@@ -109,7 +193,13 @@ export class HoverService {
     }
 
     if (helper) {
-      parts.push(`[${elementSource}](${helper.documentationURL})`)
+      const gemLabel = helper.gem === "actionview" ? "Action View" : helper.gem
+
+      if (helper.documentationURL) {
+        parts.push(`[${elementSource}](${helper.documentationURL}) · ${gemLabel}`)
+      } else {
+        parts.push(`${elementSource} · ${gemLabel}`)
+      }
     }
 
     return {
@@ -118,6 +208,52 @@ export class HoverService {
         value: parts.join("\n\n"),
       },
       range: bestElement.range,
+    }
+  }
+
+  private getERBHelperHover(root: Node, position: Position): Hover | null {
+    const collector = new ERBHelperCollector()
+    collector.visit(root)
+
+    let bestMatch: ERBHelperMatch | null = null
+    let bestSize = Infinity
+
+    for (const match of collector.matches) {
+      if (isPositionInRange(position, match.range)) {
+        const size = rangeSize(match.range)
+
+        if (size < bestSize) {
+          bestSize = size
+          bestMatch = match
+        }
+      }
+    }
+
+    if (!bestMatch) return null
+
+    const { helper } = bestMatch
+    const parts: string[] = []
+
+    parts.push(`\`\`\`ruby\n${helper.signature}\n\`\`\``)
+
+    if (helper.description) {
+      parts.push(helper.description)
+    }
+
+    const gemLabel = helper.gem === "actionview" ? "Action View" : helper.gem
+
+    if (helper.documentationURL) {
+      parts.push(`[${helper.source}](${helper.documentationURL}) · ${gemLabel}`)
+    } else {
+      parts.push(`${helper.source} · ${gemLabel}`)
+    }
+
+    return {
+      contents: {
+        kind: MarkupKind.Markdown,
+        value: parts.join("\n\n"),
+      },
+      range: bestMatch.range,
     }
   }
 
@@ -152,6 +288,13 @@ export class HoverService {
     }
 
     return IdentityPrinter.print(rewrittenNode)
+  }
+
+  private rangesEqual(a: Range, b: Range): boolean {
+    return a.start.line === b.start.line
+        && a.start.character === b.start.character
+        && a.end.line === b.end.line
+        && a.end.character === b.end.character
   }
 
   private getEntityHover(textDocument: TextDocument, position: Position): Hover | null {
