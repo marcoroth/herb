@@ -569,5 +569,25 @@ module Parser
     test "attribute value with multiple greater than signs" do
       assert_parsed_snapshot(%(<div data-arrows="a >> b >>> c"></div>))
     end
+
+    test "attribute value with ERB output containing angle brackets" do
+      assert_parsed_snapshot(%(<div data-html="<span><%= content %></span>"></div>))
+    end
+
+    test "attribute value with ERB output containing quotes" do
+      assert_parsed_snapshot(%(<div data-something="<%= hello("hello") %>"></div>))
+    end
+
+    test "attribute value with angle brackets before ERB" do
+      assert_parsed_snapshot(%(<div data-html="<b><%= label %></b>"></div>))
+    end
+
+    test "attribute value with angle brackets after ERB" do
+      assert_parsed_snapshot(%(<div data-html="<%= prefix %><br>"></div>))
+    end
+
+    test "attribute value with ERB between angle brackets" do
+      assert_parsed_snapshot(%(<div data-html="<<%= tag %>>"></div>))
+    end
   end
 end

@@ -886,6 +886,27 @@ export function locationFromOffset(source: string, startOffset: number, length: 
 }
 
 /**
+ * Creates a Location from a known start line/column and a character offset within content.
+ * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * the position relative to a node's start position.
+ */
+export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {
+  let line = startLine
+  let column = startColumn
+
+  for (let index = 0; index < offset; index++) {
+    if (content[index] === "\n") {
+      line++
+      column = 0
+    } else {
+      column++
+    }
+  }
+
+  return Location.from(line, column, line, column + 1)
+}
+
+/**
  * Checks if a position (line, column) is within a node's location range.
  * @param node - The node to check
  * @param line - Line number (1-based)
