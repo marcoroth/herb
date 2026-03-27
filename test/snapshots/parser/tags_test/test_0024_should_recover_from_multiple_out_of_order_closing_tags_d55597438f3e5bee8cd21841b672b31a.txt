@@ -35,38 +35,50 @@ input: |2-
     │   │   │   │       └── is_void: false
     │   │   │   │
     │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
-    │   │   │   ├── body: (5 items)
+    │   │   │   ├── body: (2 items)
     │   │   │   │   ├── @ HTMLTextNode (location: (2:7)-(3:4))
     │   │   │   │   │   └── content: "\n    "
     │   │   │   │   │
-    │   │   │   │   ├── @ HTMLOpenTagNode (location: (3:4)-(3:7))
-    │   │   │   │   │   ├── errors: (1 error)
-    │   │   │   │   │   │   └── @ MissingClosingTagError (location: (3:4)-(3:7))
-    │   │   │   │   │   │       ├── message: "Opening tag `<p>` at (3:5) doesn't have a matching closing tag `</p>` in the same scope."
-    │   │   │   │   │   │       └── opening_tag: "p" (location: (3:5)-(3:6))
-    │   │   │   │   │   │
-    │   │   │   │   │   ├── tag_opening: "<" (location: (3:4)-(3:5))
-    │   │   │   │   │   ├── tag_name: "p" (location: (3:5)-(3:6))
-    │   │   │   │   │   ├── tag_closing: ">" (location: (3:6)-(3:7))
-    │   │   │   │   │   ├── children: []
-    │   │   │   │   │   └── is_void: false
-    │   │   │   │   │
-    │   │   │   │   ├── @ HTMLTextNode (location: (3:7)-(4:6))
-    │   │   │   │   │   └── content: "\n      "
-    │   │   │   │   │
-    │   │   │   │   ├── @ HTMLCloseTagNode (location: (4:6)-(4:13))
-    │   │   │   │   │   ├── errors: (1 error)
-    │   │   │   │   │   │   └── @ MissingOpeningTagError (location: (4:6)-(4:13))
-    │   │   │   │   │   │       ├── message: "Found closing tag `</span>` at (4:8) without a matching opening tag in the same scope."
-    │   │   │   │   │   │       └── closing_tag: "span" (location: (4:8)-(4:12))
-    │   │   │   │   │   │
-    │   │   │   │   │   ├── tag_opening: "</" (location: (4:6)-(4:8))
-    │   │   │   │   │   ├── tag_name: "span" (location: (4:8)-(4:12))
-    │   │   │   │   │   ├── children: []
-    │   │   │   │   │   └── tag_closing: ">" (location: (4:12)-(4:13))
-    │   │   │   │   │
-    │   │   │   │   └── @ HTMLTextNode (location: (4:13)-(5:4))
-    │   │   │   │       └── content: "\n    "
+    │   │   │   │   └── @ HTMLElementNode (location: (3:4)-(5:4))
+    │   │   │   │       ├── errors: (1 error)
+    │   │   │   │       │   └── @ OmittedClosingTagError (location: (3:4)-(3:7))
+    │   │   │   │       │       ├── message: "Element `<p>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (5:4) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       │       ├── opening_tag: "p" (location: (3:5)-(3:6))
+    │   │   │   │       │       └── insertion_point: (5:4)
+    │   │   │   │       │
+    │   │   │   │       ├── open_tag:
+    │   │   │   │       │   └── @ HTMLOpenTagNode (location: (3:4)-(3:7))
+    │   │   │   │       │       ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │       │       ├── tag_name: "p" (location: (3:5)-(3:6))
+    │   │   │   │       │       ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── is_void: false
+    │   │   │   │       │
+    │   │   │   │       ├── tag_name: "p" (location: (3:5)-(3:6))
+    │   │   │   │       ├── body: (3 items)
+    │   │   │   │       │   ├── @ HTMLTextNode (location: (3:7)-(4:6))
+    │   │   │   │       │   │   └── content: "\n      "
+    │   │   │   │       │   │
+    │   │   │   │       │   ├── @ HTMLCloseTagNode (location: (4:6)-(4:13))
+    │   │   │   │       │   │   ├── errors: (1 error)
+    │   │   │   │       │   │   │   └── @ MissingOpeningTagError (location: (4:6)-(4:13))
+    │   │   │   │       │   │   │       ├── message: "Found closing tag `</span>` at (4:8) without a matching opening tag in the same scope."
+    │   │   │   │       │   │   │       └── closing_tag: "span" (location: (4:8)-(4:12))
+    │   │   │   │       │   │   │
+    │   │   │   │       │   │   ├── tag_opening: "</" (location: (4:6)-(4:8))
+    │   │   │   │       │   │   ├── tag_name: "span" (location: (4:8)-(4:12))
+    │   │   │   │       │   │   ├── children: []
+    │   │   │   │       │   │   └── tag_closing: ">" (location: (4:12)-(4:13))
+    │   │   │   │       │   │
+    │   │   │   │       │   └── @ HTMLTextNode (location: (4:13)-(5:4))
+    │   │   │   │       │       └── content: "\n    "
+    │   │   │   │       │
+    │   │   │   │       ├── close_tag:
+    │   │   │   │       │   └── @ HTMLOmittedCloseTagNode (location: (5:4)-(5:4))
+    │   │   │   │       │       └── tag_name: "p" (location: (3:5)-(3:6))
+    │   │   │   │       │
+    │   │   │   │       ├── is_void: false
+    │   │   │   │       └── element_source: "HTML"
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (5:4)-(5:10))
@@ -76,7 +88,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:9)-(5:10))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (5:10)-(6:2))
     │   │   │   └── content: "\n  "
@@ -103,7 +115,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (7:6)-(7:7))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (7:7)-(8:0))
         └── content: "\n"

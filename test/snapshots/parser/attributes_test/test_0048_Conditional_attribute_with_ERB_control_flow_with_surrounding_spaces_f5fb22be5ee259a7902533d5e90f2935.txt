@@ -1,0 +1,71 @@
+---
+source: "Parser::AttributesTest#test_0048_Conditional attribute with ERB control flow with surrounding spaces"
+input: "<dialog data-controller=\"dialog\" <% if local_assigns[:permanent] %> data-turbo-permanent <% end %>></dialog>"
+---
+@ DocumentNode (location: (1:0)-(1:108))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:108))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:99))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "dialog" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:98)-(1:99))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:8)-(1:32))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:23))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:8)-(1:23))
+        │       │   │   │               └── content: "data-controller"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:23)-(1:24))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:24)-(1:32))
+        │       │   │           ├── open_quote: """ (location: (1:24)-(1:25))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:25)-(1:31))
+        │       │   │           │       └── content: "dialog"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:31)-(1:32))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ ERBIfNode (location: (1:33)-(1:98))
+        │       │       ├── tag_opening: "<%" (location: (1:33)-(1:35))
+        │       │       ├── content: " if local_assigns[:permanent] " (location: (1:35)-(1:65))
+        │       │       ├── tag_closing: "%>" (location: (1:65)-(1:67))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:68)-(1:88))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:68)-(1:88))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:68)-(1:88))
+        │       │       │       │               └── content: "data-turbo-permanent"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:89)-(1:98))
+        │       │               ├── tag_opening: "<%" (location: (1:89)-(1:91))
+        │       │               ├── content: " end " (location: (1:91)-(1:96))
+        │       │               └── tag_closing: "%>" (location: (1:96)-(1:98))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "dialog" (location: (1:1)-(1:7))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:99)-(1:108))
+        │       ├── tag_opening: "</" (location: (1:99)-(1:101))
+        │       ├── tag_name: "dialog" (location: (1:101)-(1:107))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:107)-(1:108))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

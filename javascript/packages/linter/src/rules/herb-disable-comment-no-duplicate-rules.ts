@@ -27,7 +27,8 @@ class HerbDisableCommentNoDuplicateRulesVisitor extends HerbDisableCommentParsed
 }
 
 export class HerbDisableCommentNoDuplicateRulesRule extends ParserRule {
-  name = "herb-disable-comment-no-duplicate-rules"
+  static ruleName = "herb-disable-comment-no-duplicate-rules"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -37,7 +38,7 @@ export class HerbDisableCommentNoDuplicateRulesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HerbDisableCommentNoDuplicateRulesVisitor(this.name, context)
+    const visitor = new HerbDisableCommentNoDuplicateRulesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

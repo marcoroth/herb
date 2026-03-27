@@ -1,0 +1,12 @@
+---
+source: "Engine::EngineTest#test_0023_heredoc in escaped expression tag compiles to valid Ruby"
+input: "{source: \"<%== method_call <<~GRAPHQL, variables\\n  query {\\n    field\\n  }\\nGRAPHQL\\n%>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << ::Herb::Engine.h((method_call <<~GRAPHQL, variables
+  query {
+    field
+  }
+GRAPHQL
+)); _buf << '
+'.freeze;
+_buf.to_s

@@ -1,6 +1,12 @@
 # Generated from lib/herb/token.rb with RBS::Inline
 
 module Herb
+  # : type serialized_token = {
+  # |  value: String,
+  # |  range: serialized_range?,
+  # |  location: serialized_location?,
+  # |  type: String
+  # | }
   class Token
     include Colors
 

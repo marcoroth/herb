@@ -1,0 +1,65 @@
+---
+source: "Parser::AttributesTest#test_0101_self-closing tag with conditional attribute"
+input: "<input type=\"text\" <% if required? %>required<% end %> />"
+---
+@ DocumentNode (location: (1:0)-(1:57))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:57))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:57))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "input" (location: (1:1)-(1:6))
+        │       ├── tag_closing: "/>" (location: (1:55)-(1:57))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:18))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:11))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:7)-(1:11))
+        │       │   │   │               └── content: "type"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:11)-(1:12))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:18))
+        │       │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:13)-(1:17))
+        │       │   │           │       └── content: "text"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:17)-(1:18))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ ERBIfNode (location: (1:19)-(1:54))
+        │       │       ├── tag_opening: "<%" (location: (1:19)-(1:21))
+        │       │       ├── content: " if required? " (location: (1:21)-(1:35))
+        │       │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:37)-(1:45))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:37)-(1:45))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:37)-(1:45))
+        │       │       │       │               └── content: "required"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:45)-(1:54))
+        │       │               ├── tag_opening: "<%" (location: (1:45)-(1:47))
+        │       │               ├── content: " end " (location: (1:47)-(1:52))
+        │       │               └── tag_closing: "%>" (location: (1:52)-(1:54))
+        │       │
+        │       │
+        │       └── is_void: true
+        │
+        ├── tag_name: "input" (location: (1:1)-(1:6))
+        ├── body: []
+        ├── close_tag: ∅
+        ├── is_void: true
+        └── element_source: "HTML"

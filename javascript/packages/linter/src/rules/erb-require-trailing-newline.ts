@@ -24,7 +24,8 @@ class ERBRequireTrailingNewlineVisitor extends BaseSourceRuleVisitor {
 
 export class ERBRequireTrailingNewlineRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-require-trailing-newline"
+  static ruleName = "erb-require-trailing-newline"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -34,7 +35,7 @@ export class ERBRequireTrailingNewlineRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBRequireTrailingNewlineVisitor(this.name, context)
+    const visitor = new ERBRequireTrailingNewlineVisitor(this.ruleName, context)
 
     visitor.visit(source)
 

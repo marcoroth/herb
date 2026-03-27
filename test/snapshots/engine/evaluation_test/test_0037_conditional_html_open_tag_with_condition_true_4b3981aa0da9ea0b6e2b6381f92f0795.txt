@@ -1,0 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0037_conditional html open tag with condition true"
+input: "{source: \"<% if some_condition %>\\n  <div class=\\\"a\\\">\\n<% else %>\\n  <div class=\\\"b\\\">\\n<% end %>\\n  Content\\n</div>\\n\", locals: {some_condition: true}, options: {escape: false}}"
+---
+  <div class="a">
+  Content
+</div>

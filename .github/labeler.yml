@@ -47,17 +47,21 @@ java:
     - any-glob-to-any-file:
       - '**/*.java'
       - '**/*.java.erb'
+      - 'templates/java/**/*'
 
 ruby:
   - changed-files:
     - any-glob-to-any-file:
       - 'lib/**/*.rb'
       - 'ext/**/*.rb'
+      - 'templates/lib/**/*'
+      - 'templates/ext/**/*'
 
 c-extension:
   - changed-files:
     - any-glob-to-any-file:
       - 'ext/**/*'
+      - 'templates/ext/**/*'
 
 sorbet:
   - changed-files:
@@ -68,6 +72,7 @@ rbs:
   - changed-files:
     - any-glob-to-any-file:
       - 'sig/**/*.rbs'
+      - 'templates/sig/**/*'
 
 parser:
   - changed-files:
@@ -194,6 +199,7 @@ wasm:
   - changed-files:
     - any-glob-to-any-file:
       - 'wasm/**/*'
+      - 'templates/wasm/**/*'
 
 playground:
   - changed-files:
@@ -205,6 +211,7 @@ rubygem:
     - any-glob-to-any-file:
       - 'herb.gemspec'
       - 'lib/**/*'
+      - 'templates/lib/**/*'
 
 documentation:
   - changed-files:

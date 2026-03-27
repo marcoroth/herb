@@ -14,6 +14,10 @@ module Herb
 
         def validate_attribute_name_security: (untyped node) -> untyped
 
+        def tag_attributes_prism_node?: (untyped prism_node) -> untyped
+
+        def conditional_tag_attributes_prism_node?: (untyped prism_node) -> untyped
+
         def add_security_error: (untyped location, untyped message, untyped suggestion) -> untyped
 
         def add_diagnostic: (untyped message, untyped location, untyped severity, ?code: untyped, ?source: untyped, ?suggestion: untyped) -> untyped

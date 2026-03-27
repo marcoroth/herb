@@ -10,9 +10,6 @@ module Herb
 
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
-        @attrfunc = options.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
-        @jsfunc = options.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
-        @cssfunc = options.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
         @tokens = [] #: Array[untyped]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -22,32 +19,24 @@ module Herb
       def generate_output
         optimized_tokens = optimize_tokens(@tokens)
 
-        optimized_tokens.each do |type, value, context|
+        optimized_tokens.each do |type, value, context, escaped|
           case type
           when :text
             @engine.send(:add_text, value)
           when :code
             @engine.send(:add_code, value)
-          when :expr
-            if [:attribute_value, :script_content, :style_content].include?(context)
-              add_context_aware_expression(value, context)
+          when :expr, :expr_escaped
+            indicator = indicator_for(type)
+
+            if context_aware_context?(context)
+              @engine.send(:add_context_aware_expression, indicator, value, context)
             else
-              indicator = @escape ? "==" : "="
               @engine.send(:add_expression, indicator, value)
             end
-          when :expr_escaped
-            if [:attribute_value, :script_content, :style_content].include?(context)
-              add_context_aware_expression(value, context)
-            else
-              indicator = @escape ? "=" : "=="
-              @engine.send(:add_expression, indicator, value)
-            end
-          when :expr_block
-            indicator = @escape ? "==" : "="
-            @engine.send(:add_expression_block, indicator, value)
-          when :expr_block_escaped
-            indicator = @escape ? "=" : "=="
-            @engine.send(:add_expression_block, indicator, value)
+          when :expr_block, :expr_block_escaped
+            @engine.send(:add_expression_block, indicator_for(type), value)
+          when :expr_block_end
+            @engine.send(:add_expression_block_end, value, escaped: escaped)
           end
         end
       end
@@ -71,7 +60,27 @@ module Herb
         visit_all(node.body)
         visit(node.close_tag)
 
-        pop_context if %w[script style].include?(tag_name)
+        pop_context if ["script", "style"].include?(tag_name)
+
+        @element_stack.pop if tag_name
+      end
+
+      def visit_html_conditional_element_node(node)
+        tag_name = node.tag_name&.value&.downcase
+
+        @element_stack.push(tag_name) if tag_name
+
+        if tag_name == "script"
+          push_context(:script_content)
+        elsif tag_name == "style"
+          push_context(:style_content)
+        end
+
+        visit(node.open_conditional)
+        visit_all(node.body)
+        visit(node.close_conditional)
+
+        pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
@@ -125,6 +134,10 @@ module Herb
         add_text(node.tag_closing&.value)
       end
 
+      def visit_html_omitted_close_tag_node(node)
+        # no-op
+      end
+
       def visit_html_text_node(node)
         add_text(node.content)
       end
@@ -168,7 +181,9 @@ module Herb
       end
 
       def visit_erb_control_node(node, &_block)
-        apply_trim(node, node.content.value.strip)
+        if node.content
+          apply_trim(node, node.content.value.strip)
+        end
 
         yield if block_given?
       end
@@ -257,12 +272,33 @@ module Herb
                      end
 
           visit_all(node.body)
-          visit(node.end_node)
+          visit_erb_block_end_node(node.end_node, escaped: should_escape)
         else
           visit_erb_control_node(node) do
             visit_all(node.body)
+            visit(node.rescue_clause)
+            visit(node.else_clause)
+            visit(node.ensure_clause)
             visit(node.end_node)
           end
+        end
+      end
+
+      def visit_erb_block_end_node(node, escaped: false)
+        has_left_trim = node.tag_opening.value.start_with?("<%-")
+
+        remove_trailing_whitespace_from_last_token! if has_left_trim
+
+        code = node.content.value.strip
+
+        if at_line_start?
+          lspace = extract_and_remove_lspace!
+          rspace = " \n"
+
+          @tokens << [:expr_block_end, "#{lspace}#{code}#{rspace}", current_context, escaped]
+          @trim_next_whitespace = true
+        else
+          @tokens << [:expr_block_end, code, current_context, escaped]
         end
       end
 
@@ -296,35 +332,25 @@ module Herb
         @context_stack.pop
       end
 
-      def add_context_aware_expression(code, context)
-        case context
-        when :attribute_value
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@attrfunc}((" << code << "))"
-          }
-        when :script_content
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@jsfunc}((" << code << "))"
-          }
-        when :style_content
-          @engine.send(:with_buffer) {
-            @engine.src << " << #{@cssfunc}((" << code << "))"
-          }
-        else
-          @engine.send(:add_expression_result_escaped, code)
-        end
-      end
-
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
-        return if !skip_comment_check && erb_comment?(opening)
+        if !skip_comment_check && erb_comment?(opening)
+          has_left_trim = opening.start_with?("<%-")
+          remove_trailing_whitespace_from_last_token! if has_left_trim
+
+          if at_line_start?
+            extract_and_remove_lspace!
+            @trim_next_whitespace = true
+          end
+          return
+        end
         return if erb_graphql?(opening)
 
         code = node.content.value.strip
 
         if erb_output?(opening)
-          process_erb_output(opening, code)
+          process_erb_output(node, opening, code)
         else
           apply_trim(node, code)
         end
@@ -368,7 +394,7 @@ module Herb
         current_text = ""
         current_context = nil
 
-        compacted.each do |type, value, context|
+        compacted.each do |type, value, context, escaped|
           if type == :text
             current_text += value
             current_context ||= context
@@ -380,7 +406,7 @@ module Herb
               current_context = nil
             end
 
-            optimized << [type, value, context]
+            optimized << [type, value, context, escaped]
           end
         end
 
@@ -439,9 +465,21 @@ module Herb
         search_index >= 0 ? tokens[search_index] : nil
       end
 
-      def process_erb_output(opening, code)
+      def process_erb_output(node, opening, code)
+        has_right_trim = node.tag_closing&.value == "-%>"
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
+        @trim_next_whitespace = true if has_right_trim
+      end
+
+      def indicator_for(type)
+        escaped = [:expr_escaped, :expr_block_escaped].include?(type)
+
+        escaped ^ @escape ? "==" : "="
+      end
+
+      def context_aware_context?(context)
+        [:attribute_value, :script_content, :style_content].include?(context)
       end
 
       def should_escape_output?(opening)
@@ -462,8 +500,19 @@ module Herb
           @tokens.last[0] != :text ||
           @tokens.last[1].empty? ||
           @tokens.last[1].end_with?("\n") ||
-          @tokens.last[1] =~ /\A[ \t]+\z/ ||
+          (@tokens.last[1] =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) ||
           @tokens.last[1] =~ /\n[ \t]+\z/
+      end
+
+      def preceding_token_ends_with_newline?
+        return true unless @tokens.length >= 2
+
+        preceding = @tokens[-2]
+        return false if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
+        return preceding[1].end_with?("\n") if preceding[0] == :expr_block_end
+        return true unless preceding[0] == :text
+
+        preceding[1].end_with?("\n")
       end
 
       def extract_lspace
@@ -499,7 +548,7 @@ module Herb
 
         if at_line_start?
           lspace = extract_and_remove_lspace!
-          rspace = " \n"
+          rspace = Herb::Engine.heredoc?(code) ? "\n" : " \n"
 
           @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
           @trim_next_whitespace = true

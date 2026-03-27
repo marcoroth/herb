@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLNoEmptyHeadingsRule } from "../../src/rules/html-no-empty-headings.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoEmptyHeadingsRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoEmptyHeadingsRule)
 
 describe("html-no-empty-headings", () => {
   test("passes for heading with text content", () => {
@@ -18,36 +18,36 @@ describe("html-no-empty-headings", () => {
   })
 
   test("fails for empty heading", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h1></h1>')
   })
 
   test("fails for heading with only whitespace", () => {
-    expectError("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h2>   \n\t  </h2>')
   })
 
   test("fails for self-closing heading", () => {
-    expectError("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h3 />')
   })
 
   test("handles all heading levels h1-h6", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h4>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h5>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h6>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h4>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h5>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h6>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h1></h1><h2></h2><h3></h3><h4></h4><h5></h5><h6></h6>')
   })
 
   test("handles mixed case heading tags", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<H1></H1>')
   })
@@ -65,8 +65,8 @@ describe("html-no-empty-headings", () => {
   })
 
   test("handles multiple empty headings", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h1></h1><h2>Valid</h2><h3></h3>')
   })
@@ -76,19 +76,19 @@ describe("html-no-empty-headings", () => {
   })
 
   test("fails for empty div with role='heading'", () => {
-    expectError('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expectWarning('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
 
     assertOffenses('<div role="heading" aria-level="1"></div>')
   })
 
   test("fails for div with role='heading' containing only whitespace", () => {
-    expectError('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expectWarning('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
 
     assertOffenses('<div role="heading" aria-level="2">   </div>')
   })
 
   test("fails for self-closing div with role='heading'", () => {
-    expectError('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expectWarning('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
 
     assertOffenses('<div role="heading" aria-level="3" />')
   })
@@ -98,20 +98,20 @@ describe("html-no-empty-headings", () => {
   })
 
   test("handles mixed standard headings and ARIA headings", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expectError('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
 
     assertOffenses('<h1></h1><div role="heading">Valid</div><h2>Valid</h2><div role="heading"></div>')
   })
 
   test("fails for heading with only aria-hidden content", () => {
-    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h1><span aria-hidden="true">Inaccessible text</span></h1>')
   })
 
   test("fails for heading with mixed accessible and inaccessible content", () => {
-    expectError("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expectWarning("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h2><span aria-hidden="true">Hidden</span><span aria-hidden="true">Also hidden</span></h2>')
   })
@@ -134,5 +134,63 @@ describe("html-no-empty-headings", () => {
 
   test("passes for heading with nested span containing text", () => {
     expectNoOffenses('<h2 class="class" data-turbo-temporary><%= content %></h2>')
+  })
+
+  test("passes for empty heading inside template tag", () => {
+    expectNoOffenses('<template><h1></h1></template>')
+  })
+
+  test("passes for heading with only whitespace inside template tag", () => {
+    expectNoOffenses('<template><h2>   </h2></template>')
+  })
+
+  test("passes for deeply nested empty heading inside template tag", () => {
+    expectNoOffenses('<template><div><section><h3></h3></section></div></template>')
+  })
+
+  test("passes for multiple empty headings inside template tag", () => {
+    expectNoOffenses('<template><h1></h1><h2></h2><h3></h3></template>')
+  })
+
+  test("fails for empty heading outside template tag", () => {
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<div><h1></h1></div><template><h2></h2></template>')
+  })
+
+  test("passes for empty ARIA heading inside template tag", () => {
+    expectNoOffenses('<template><div role="heading"></div></template>')
+  })
+
+  test("fails for heading with only non-output ERB (issue #847)", () => {
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><% title %></h1>')
+  })
+
+  test("fails for heading with non-output ERB and whitespace", () => {
+    expectWarning("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h2> <% some_method %> </h2>')
+  })
+
+  test("passes for heading with ERB if containing output ERB", () => {
+    expectNoOffenses('<h1><% if show_title %><%= title %><% end %></h1>')
+  })
+
+  test("fails for heading with ERB if not containing any ERB output", () => {
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><% if show_title %><% title %><% end %></h1>')
+  })
+
+  test("passes for heading with ERB block containing output", () => {
+    expectNoOffenses('<h1><% items.each do |item| %><%= item.name %><% end %></h1>')
+  })
+
+  test("fails for heading with only ERB comment", () => {
+    expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><%# this is a comment %></h1>')
   })
 })

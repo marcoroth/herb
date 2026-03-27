@@ -1,23 +1,32 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_buffer.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_buffer.h"
+
+static hb_allocator_T test_allocator;
+
+static void setup(void) {
+  test_allocator = hb_allocator_with_malloc();
+}
 
 // Test buffer initialization
 TEST(test_hb_buffer_init)
+  setup();
   hb_buffer_T buffer;
 
-  ck_assert(hb_buffer_init(&buffer, 1024));
+  ck_assert(hb_buffer_init(&buffer, 1024, &test_allocator));
   ck_assert_int_eq(buffer.capacity, 1024);
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_ptr_nonnull(buffer.value);
   ck_assert_str_eq(buffer.value, "");
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test appending text to buffer
 TEST(test_hb_buffer_append)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   ck_assert_str_eq(buffer.value, "");
 
@@ -29,28 +38,30 @@ TEST(test_hb_buffer_append)
   ck_assert_str_eq(buffer.value, "Hello World");
   ck_assert_int_eq(buffer.length, 11);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test prepending text to buffer
 TEST(test_hb_buffer_prepend)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   hb_buffer_append(&buffer, "World");
   hb_buffer_prepend(&buffer, "Hello ");
   ck_assert_str_eq(buffer.value, "Hello World");
   ck_assert_int_eq(buffer.length, 11);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test concatenating two buffers
 TEST(test_hb_buffer_concat)
+  setup();
   hb_buffer_T buffer1;
-  hb_buffer_init(&buffer1, 1024);
+  hb_buffer_init(&buffer1, 1024, &test_allocator);
   hb_buffer_T buffer2;
-  hb_buffer_init(&buffer2, 1024);
+  hb_buffer_init(&buffer2, 1024, &test_allocator);
 
   hb_buffer_append(&buffer1, "Hello");
   hb_buffer_append(&buffer2, " World");
@@ -59,26 +70,28 @@ TEST(test_hb_buffer_concat)
   ck_assert_str_eq(buffer1.value, "Hello World");
   ck_assert_int_eq(buffer1.length, 11);
 
-  free(buffer1.value);
-  free(buffer2.value);
+  hb_buffer_free(&buffer1);
+  hb_buffer_free(&buffer2);
 END
 
 // Test appending a string to the buffer
 TEST(test_hb_buffer_append_string)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1);
+  hb_buffer_init(&buffer, 1, &test_allocator);
 
   hb_buffer_append_string(&buffer, hb_string("Hello, world"));
 
   ck_assert_str_eq(buffer.value, "Hello, world");
   ck_assert_int_eq(buffer.length, 12);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 TEST(test_hb_buffer_resizing_behavior)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -91,13 +104,14 @@ TEST(test_hb_buffer_resizing_behavior)
   hb_buffer_append_whitespace(&buffer, 2048);
   ck_assert_int_eq(buffer.capacity, 6144);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test clearing buffer without freeing memory
 TEST(test_hb_buffer_clear)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -112,13 +126,14 @@ TEST(test_hb_buffer_clear)
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_int_eq(buffer.capacity, 1024); // Capacity should remain unchanged
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test buffer UTF-8 integrity
 TEST(test_buffer_utf8_integrity)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   // UTF-8 String
   const char *utf8_text = "こんにちは";
@@ -129,13 +144,14 @@ TEST(test_buffer_utf8_integrity)
   ck_assert_int_eq(buffer.length, 15);
   ck_assert_str_eq(buffer.value, utf8_text);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test: Buffer Appending UTF-8 Characters
 TEST(test_hb_buffer_append_utf8)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   // Append UTF-8 string
   hb_buffer_append(&buffer, "こんにちは"); // "Hello" in Japanese
@@ -143,13 +159,14 @@ TEST(test_hb_buffer_append_utf8)
   ck_assert_int_eq(hb_buffer_length(&buffer), 15);
   ck_assert_str_eq(hb_buffer_value(&buffer), "こんにちは");
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test buffer length correctness
 TEST(test_hb_buffer_length_correctness)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   hb_buffer_append(&buffer, "Short");
   size_t length = hb_buffer_length(&buffer);
@@ -159,18 +176,19 @@ TEST(test_hb_buffer_length_correctness)
   length = hb_buffer_length(&buffer);
   ck_assert_int_eq(length, 12);
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 // Test: Buffer Null-Termination
 TEST(test_buffer_null_termination)
+  setup();
   hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  hb_buffer_init(&buffer, 1024, &test_allocator);
 
   hb_buffer_append(&buffer, "Test");
   ck_assert(hb_buffer_value(&buffer)[hb_buffer_length(&buffer)] == '\0'); // Ensure null termination
 
-  free(buffer.value);
+  hb_buffer_free(&buffer);
 END
 
 TCase *hb_buffer_tests(void) {

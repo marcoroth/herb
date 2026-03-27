@@ -1,4 +1,4 @@
-import { Token, Location, WhitespaceNode } from "@herb-tools/core"
+import { Token, WhitespaceNode, createWhitespaceNode } from "@herb-tools/core"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 
 import { findParent, BaseRuleVisitor } from "./rule-utils.js"
@@ -15,7 +15,7 @@ const MESSAGES = {
 } as const
 
 interface HTMLNoSpaceInTagAutofixContext extends BaseAutofixContext {
-  node: WhitespaceNode | HTMLOpenTagNode
+  node: WhitespaceNode | HTMLOpenTagNode
   message: string
 }
 
@@ -144,7 +144,8 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
   // TODO: enable and fix autofix
   static autocorrectable = false
-  name = "html-no-space-in-tag"
+  static ruleName = "html-no-space-in-tag"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -154,7 +155,7 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<HTMLNoSpaceInTagAutofixContext>[] {
-    const visitor = new HTMLNoSpaceInTagVisitor(this.name, context)
+    const visitor = new HTMLNoSpaceInTagVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
@@ -168,10 +169,7 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
     if (!node) return null
 
     if (isHTMLOpenTagNode(node)) {
-      const token = Token.from({ type: "TOKEN_WHITESPACE", value: " ", range: [0, 0], location: Location.zero })
-      const whitespace = new WhitespaceNode({ type: "AST_WHITESPACE_NODE", value: token, location: Location.zero, errors: [] })
-
-      node.children.push(whitespace)
+      node.children.push(createWhitespaceNode())
 
       return result
     }

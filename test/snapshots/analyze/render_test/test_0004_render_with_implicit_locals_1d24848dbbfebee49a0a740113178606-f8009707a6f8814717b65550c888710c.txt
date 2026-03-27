@@ -1,0 +1,47 @@
+---
+source: "Analyze::RenderTest#test_0004_render with implicit locals"
+input: |2-
+<%= render "card", title: @title, subtitle: "Hello" %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:54))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render "card", title: @title, subtitle: "Hello" " (location: (1:3)-(1:52))
+    │   ├── tag_closing: "%>" (location: (1:52)-(1:54))
+    │   ├── partial: "card" (location: (1:11)-(1:17))
+    │   ├── template_path: ∅
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: ∅
+    │   ├── collection: ∅
+    │   ├── object: ∅
+    │   ├── as_name: ∅
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: ∅
+    │   ├── content_type: ∅
+    │   └── locals: (2 items)
+    │       ├── @ RubyRenderLocalNode (location: (1:19)-(1:32))
+    │       │   ├── name: "title" (location: (1:19)-(1:25))
+    │       │   └── value:
+    │       │       └── @ RubyLiteralNode (location: (1:26)-(1:32))
+    │       │           └── content: "@title"
+    │       │
+    │       │
+    │       └── @ RubyRenderLocalNode (location: (1:34)-(1:51))
+    │           ├── name: "subtitle" (location: (1:34)-(1:43))
+    │           └── value:
+    │               └── @ RubyLiteralNode (location: (1:44)-(1:51))
+    │                   └── content: "\"Hello\""
+    │
+    │
+    │
+    └── @ HTMLTextNode (location: (1:54)-(2:0))
+        └── content: "\n"

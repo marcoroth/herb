@@ -12,6 +12,11 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
+  FoldingRangeParams,
+  DocumentHighlightParams,
+  HoverParams,
+  TextDocumentIdentifier,
+  Range,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -51,8 +56,11 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
           },
+          foldingRangeProvider: true,
+          documentHighlightProvider: true,
+          hoverProvider: true,
         },
       }
 
@@ -157,10 +165,29 @@ export class Server {
       return this.service.formattingService.formatRange(params)
     })
 
+    this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
+    })
+
+    this.connection.onHover((params: HoverParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return null
+
+      return this.service.hoverService.getHover(document, params.position)
+    })
+
     this.connection.onCodeAction((params: CodeActionParams) => {
       const document = this.service.documentService.get(params.textDocument.uri)
 
       if (!document) return []
+
+      const parseResult = this.service.parserService.parseDocument(document)
+      if (parseResult.diagnostics.length > 0) return []
 
       const diagnostics = params.context.diagnostics
       const documentText = document.getText()
@@ -172,8 +199,33 @@ export class Server {
       )
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+      const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
+    })
+
+    this.connection.onFoldingRanges((params: FoldingRangeParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.foldingRangeService.getFoldingRanges(document)
+    })
+
+    this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleLineComment(document, params.range)
+    })
+
+    this.connection.onRequest('herb/toggleBlockComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleBlockComment(document, params.range)
     })
   }
 

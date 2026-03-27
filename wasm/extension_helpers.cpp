@@ -8,34 +8,34 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../src/include/util/hb_array.h"
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
-#include "../src/include/pretty_print.h"
-#include "../src/include/ast_pretty_print.h"
-#include "../src/include/util/hb_buffer.h"
+#include "../src/include/lib/hb_array.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
+#include "../src/include/ast/pretty_print.h"
+#include "../src/include/ast/ast_pretty_print.h"
+#include "../src/include/lib/hb_buffer.h"
 #include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/position.h"
-#include "../src/include/location.h"
-#include "../src/include/range.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/location/position.h"
+#include "../src/include/location/location.h"
+#include "../src/include/location/range.h"
 #include "../src/include/extract.h"
 }
 
 using namespace emscripten;
 
 val CreateString(const char* string) {
-  return string ? val(string) : val::null();
+  return string ? val::u8string(string) : val::null();
 }
 
 val CreateStringFromHbString(hb_string_T string) {
-  if (hb_string_is_empty(string)) {
+  if (hb_string_is_null(string)) {
     return val::null();
-  } else {
-    std::string cppString(string.data, string.length);
-
-    return val(cppString);
   }
+
+  std::string cpp_string(string.data, string.length);
+
+  return val::u8string(cpp_string.c_str());
 }
 
 val CreatePosition(position_T position) {
@@ -76,13 +76,8 @@ val CreateToken(token_T* token) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  if (token->value) {
-    result.set("value", std::string(token->value));
-  } else {
-    result.set("value", val::null());
-  }
-
-  result.set("type", std::string(token_type_to_string(token->type)));
+  result.set("value", CreateStringFromHbString(token->value));
+  result.set("type", CreateStringFromHbString(token_type_to_string(token->type)));
   result.set("range", CreateRange(token->range));
   result.set("location", CreateLocation(token->location));
 
@@ -115,7 +110,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   return result;
 }
 
-val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
+val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, parser_options_T* options){
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -128,6 +123,20 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
   result.set("source", val(source));
   result.set("warnings", warningsArray);
   result.set("errors", errorsArray);
+
+  val options_object = Object.new_();
+  options_object.set("strict", val(options->strict));
+  options_object.set("track_whitespace", val(options->track_whitespace));
+  options_object.set("analyze", val(options->analyze));
+  options_object.set("action_view_helpers", val(options->action_view_helpers));
+  options_object.set("render_nodes", val(options->render_nodes));
+  options_object.set("prism_nodes", val(options->prism_nodes));
+  options_object.set("prism_nodes_deep", val(options->prism_nodes_deep));
+  options_object.set("prism_program", val(options->prism_program));
+  options_object.set("dot_notation_tags", val(options->dot_notation_tags));
+  options_object.set("html", val(options->html));
+
+  result.set("options", options_object);
 
   return result;
 }

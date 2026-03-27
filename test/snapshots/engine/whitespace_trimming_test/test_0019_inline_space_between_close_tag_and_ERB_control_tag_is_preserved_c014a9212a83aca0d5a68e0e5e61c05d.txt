@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0019_inline space between close tag and ERB control tag is preserved"
+input: "{source: \"<strong>Foo:</strong> <% if true %>Bar<% end %>\", locals: {}, options: {}}"
+---
+<strong>Foo:</strong> Bar

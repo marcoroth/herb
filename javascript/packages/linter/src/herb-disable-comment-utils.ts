@@ -2,9 +2,6 @@
  * Utilities for parsing herb:disable comments
  */
 
-import { isERBCommentNode } from "@herb-tools/core"
-import type { Node } from "@herb-tools/core"
-
 /**
  * Information about a single rule name in a herb:disable comment
  */

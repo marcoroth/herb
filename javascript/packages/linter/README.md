@@ -192,7 +192,7 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 npx @herb-tools/linter template.html.erb --no-github
 ```
 
-**Exit Behavior:** <Badge type="info" text="v0.9.0+" />
+**Exit Behavior:** <Badge type="info" text="v0.8.7+" />
 ```bash
 # Exit with error code when warnings or higher are present
 npx @herb-tools/linter template.html.erb --fail-level warning
@@ -213,6 +213,32 @@ linter:
 ```
 
 The CLI flag takes precedence over the configuration file.
+
+**Autofix:**
+
+Automatically fix auto-correctable offenses:
+```bash
+npx @herb-tools/linter --fix
+```
+
+Also apply unsafe auto-fixes (implies `--fix`):
+```bash
+npx @herb-tools/linter --fix-unsafely
+```
+
+The `--fix` flag automatically corrects offenses that have safe, deterministic fixes (like formatting issues). The `--fix-unsafely` flag additionally applies fixes that may change code behavior or require manual review after application.
+
+**Safe fixes** (`--fix`):
+- Formatting corrections (whitespace, quotes, trailing newlines)
+- Syntax normalization (tag casing, attribute formatting)
+
+**Unsafe fixes** (`--fix-unsafely`):
+- Changes that may alter runtime behavior
+- Insertions that require manual completion (e.g., adding empty strict locals declarations)
+
+::: warning
+Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
+:::
 
 **Help and Version:**
 ```bash
@@ -241,7 +267,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.6::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -256,7 +282,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.6::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -506,7 +532,7 @@ class NoDivTagsVisitor extends BaseRuleVisitor {
 }
 
 export default class NoDivTagsRule extends ParserRule {
-  name = "no-div-tags"
+  static ruleName = "no-div-tags"
 
   check(result, context) {
     const visitor = new NoDivTagsVisitor(this.name, context)
@@ -540,7 +566,7 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
 }
 
 export default class NoInlineStylesRule {
-  name = "no-inline-styles"
+  static ruleName = "no-inline-styles"
 
   check(parseResult, context) {
     const visitor = new NoInlineStylesVisitor(this.name, context)
@@ -564,7 +590,7 @@ You can override the `defaultConfig` getter to customize these defaults, as show
 **Rule Properties:**
 
 - `static type` - Optional, defaults to `"parser"`. Can be `"parser"`, `"lexer"`, or `"source"`
-- `name` - Required, the rule identifier used in configuration and output
+- `static ruleName` - Required, the rule identifier used in configuration and output
 - `check()` - Required, the method that checks for offenses
 - `defaultConfig` - Optional, returns the default configuration for the rule
 - `isEnabled()` - Optional, dynamically determines if the rule should run

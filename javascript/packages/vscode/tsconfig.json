@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "module": "Node16",
+    "types": ["node", "mocha"],
+    "rootDir": "./src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "dom"
-    ],
+    "lib": ["ES2022"],
     "moduleDetection": "force",
     "sourceMap": true,
-    "rootDir": "src",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,

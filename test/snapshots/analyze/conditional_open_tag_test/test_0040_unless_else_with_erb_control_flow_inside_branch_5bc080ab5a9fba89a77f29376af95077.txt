@@ -1,0 +1,109 @@
+---
+source: "Analyze::ConditionalOpenTagTest#test_0040_unless/else with erb control flow inside branch"
+input: |2-
+<% unless condition %>
+  <div>
+    <% if inner %><% end %>
+  </div>
+<% else %>
+  <div></div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBUnlessNode (location: (1:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " unless condition " (location: (1:2)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:22)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:8))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:6)-(2:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:7)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBIfNode (location: (3:4)-(3:27))
+    │   │   │   │   │   ├── tag_opening: "<%" (location: (3:4)-(3:6))
+    │   │   │   │   │   ├── content: " if inner " (location: (3:6)-(3:16))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:16)-(3:18))
+    │   │   │   │   │   ├── then_keyword: ∅
+    │   │   │   │   │   ├── statements: []
+    │   │   │   │   │   ├── subsequent: ∅
+    │   │   │   │   │   └── end_node:
+    │   │   │   │   │       └── @ ERBEndNode (location: (3:18)-(3:27))
+    │   │   │   │   │           ├── tag_opening: "<%" (location: (3:18)-(3:20))
+    │   │   │   │   │           ├── content: " end " (location: (3:20)-(3:25))
+    │   │   │   │   │           └── tag_closing: "%>" (location: (3:25)-(3:27))
+    │   │   │   │   │
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:27)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:2)-(4:8))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:2)-(4:4))
+    │   │   │   │       ├── tag_name: "div" (location: (4:4)-(4:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (5:0)-(7:0))
+    │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       ├── content: " else " (location: (5:2)-(5:8))
+    │   │       ├── tag_closing: "%>" (location: (5:8)-(5:10))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (5:10)-(6:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (6:2)-(6:13))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (6:2)-(6:7))
+    │   │           │   │       ├── tag_opening: "<" (location: (6:2)-(6:3))
+    │   │           │   │       ├── tag_name: "div" (location: (6:3)-(6:6))
+    │   │           │   │       ├── tag_closing: ">" (location: (6:6)-(6:7))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "div" (location: (6:3)-(6:6))
+    │   │           │   ├── body: []
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (6:7)-(6:13))
+    │   │           │   │       ├── tag_opening: "</" (location: (6:7)-(6:9))
+    │   │           │   │       ├── tag_name: "div" (location: (6:9)-(6:12))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (6:12)-(6:13))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── element_source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (6:13)-(7:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

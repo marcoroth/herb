@@ -57,6 +57,12 @@ module Herb
 
       def component?: () -> untyped
 
+      def sidecar_component?: () -> untyped
+
+      def component_display_name: () -> untyped
+
+      def classify: (untyped name) -> untyped
+
       def in_head_context?: () -> untyped
 
       def in_script_or_style_context?: () -> untyped
@@ -70,6 +76,8 @@ module Herb
 
       # TODO: Rewrite using Prism Nodes once available
       def javascript_tag?: (untyped code) -> untyped
+
+      def include_debug_disable_comment?: (untyped code) -> untyped
     end
   end
 end

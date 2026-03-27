@@ -48,11 +48,14 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (3:24)-(3:25))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:25)-(4:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (4:0)-(4:9))
     │           ├── tag_opening: "<%" (location: (4:0)-(4:2))

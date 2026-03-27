@@ -110,11 +110,11 @@ class StimulusFileProcessor extends FileProcessor {
       }
     }
 
-    let totalTargets = 0, usedTargets = 0
-    let totalActions = 0, usedActions = 0
-    let totalValues  = 0, usedValues  = 0
-    let totalClasses = 0, usedClasses = 0
-    let totalOutlets = 0, usedOutlets = 0
+    const totalTargets = 0, usedTargets = 0
+    const totalActions = 0, usedActions = 0
+    const totalValues  = 0, usedValues  = 0
+    const totalClasses = 0, usedClasses = 0
+    const totalOutlets = 0, usedOutlets = 0
 
     return {
       targets: { total: totalTargets, used: usedTargets, unused: totalTargets - usedTargets },
@@ -153,7 +153,7 @@ export class CLI extends HerbLinterCLI {
       console.log(`Found ${controllerCount} Stimulus controllers`)
 
       this.fileProcessor = new StimulusFileProcessor(this.fileProcessor, this.stimulusProject)
-    } catch (error) {
+    } catch (_error) {
       console.log("No Stimulus project found, running without controller validation")
       this.stimulusProject = undefined
 

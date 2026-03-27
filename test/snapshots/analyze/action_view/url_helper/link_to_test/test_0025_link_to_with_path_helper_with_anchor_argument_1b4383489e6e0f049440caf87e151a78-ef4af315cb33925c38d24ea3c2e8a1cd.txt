@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0025_link_to with path helper with anchor argument"
+input: |2-
+<%= link_to "Comment wall", profile_path(@profile, anchor: "wall") %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:69))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:69))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Comment wall", profile_path(@profile, anchor: "wall") " (location: (1:3)-(1:67))
+    │   │       ├── tag_closing: "%>" (location: (1:67)-(1:69))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:28)-(1:66))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:28)-(1:66))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:28)-(1:66))
+    │   │               │               └── content: "href"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:28)-(1:66))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:28)-(1:66))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:28)-(1:66))
+    │   │                       │       └── content: "profile_path(@profile, anchor: \"wall\")"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:69))
+    │   │       └── content: "Comment wall"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:69)-(1:69))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:69)-(2:0))
+        └── content: "\n"

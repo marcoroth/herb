@@ -1,0 +1,33 @@
+---
+source: "Analyze::RenderTest#test_0019_render with handlers"
+input: |2-
+<%= render template: "posts/content", handlers: [:builder] %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:61))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render template: "posts/content", handlers: [:builder] " (location: (1:3)-(1:59))
+    │   ├── tag_closing: "%>" (location: (1:59)-(1:61))
+    │   ├── partial: ∅
+    │   ├── template_path: "posts/content" (location: (1:21)-(1:36))
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: ∅
+    │   ├── collection: ∅
+    │   ├── object: ∅
+    │   ├── as_name: ∅
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: "[:builder]" (location: (1:48)-(1:58))
+    │   ├── content_type: ∅
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:61)-(2:0))
+        └── content: "\n"

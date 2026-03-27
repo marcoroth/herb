@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBCommentsTest#test_0014_trailing comment in output tag with method call"
+input: "{source: \"<%= helper_method arg1, arg2 # trailing comment %>\", options: {}}"
+---
+_buf = ::String.new; _buf << (helper_method arg1, arg2 # trailing comment
+).to_s;
+_buf.to_s

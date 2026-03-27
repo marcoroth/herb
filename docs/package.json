@@ -13,20 +13,20 @@
     "dev": "vitepress dev",
     "build": "yarn vendor:playground && yarn vendor:c-reference && yarn fetch:contributors && vitepress build",
     "vendor:c-reference": "cd .. && doxygen Doxyfile",
-    "vendor:playground": "cd ../playground && yarn build && cd - && cp ../playground/dist/index.html ./docs/public/playground-embed.html && cp -R ../playground/dist/assets ./docs/public",
+    "vendor:playground": "cd ../playground && yarn build && cd - && cp ../playground/dist/index.html ./docs/public/playground-embed.html && cp ../playground/dist/prism/index.html ./docs/public/playground-prism-embed.html && cp -R ../playground/dist/assets ./docs/public",
     "preview": "vitepress preview",
-    "clean": "rimraf .vitepress/dist/ && rimraf .vitepress/cache/ && rimraf ./.vitepress/data/contributors.json && rimraf ./docs/public/assets && rimraf ./docs/public/playground-embed.html&& rimraf ./docs/public/c-reference",
+    "clean": "rimraf .vitepress/dist/ && rimraf .vitepress/cache/ && rimraf ./.vitepress/data/contributors.json && rimraf ./docs/public/assets && rimraf ./docs/public/playground-embed.html && rimraf ./docs/public/playground-prism-embed.html && rimraf ./docs/public/c-reference",
     "fetch:contributors": "mkdir -p .vitepress/data/ && gh api -X get https://api.github.com/repos/marcoroth/herb/contributors > .vitepress/data/contributors.json"
   },
   "dependencies": {
-    "@herb-tools/browser": "0.8.6",
-    "@herb-tools/core": "0.8.6",
-    "@herb-tools/node": "0.8.6",
+    "@herb-tools/browser": "0.9.2",
+    "@herb-tools/core": "0.9.2",
+    "@herb-tools/node": "0.9.2",
     "medium-zoom": "^1.1.0"
   },
   "devDependencies": {
-    "@shikijs/vitepress-twoslash": "^3.20.0",
-    "vitepress": "^2.0.0-alpha.15",
-    "vitepress-plugin-group-icons": "^1.6.5"
+    "@shikijs/vitepress-twoslash": "^4.0.2",
+    "vitepress": "^2.0.0-alpha.17",
+    "vitepress-plugin-group-icons": "^1.7.1"
   }
 }

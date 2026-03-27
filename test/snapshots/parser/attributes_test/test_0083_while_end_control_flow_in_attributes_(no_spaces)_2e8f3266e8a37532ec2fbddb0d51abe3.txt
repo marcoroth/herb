@@ -1,0 +1,49 @@
+---
+source: "Parser::AttributesTest#test_0083_while/end control flow in attributes (no spaces)"
+input: "<div <%while cond%>data-item<%end%>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:42))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:42))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:36))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:35)-(1:36))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBWhileNode (location: (1:5)-(1:35))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: "while cond" (location: (1:7)-(1:17))
+        │       │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:19)-(1:28))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:28))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:19)-(1:28))
+        │       │       │       │               └── content: "data-item"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:28)-(1:35))
+        │       │               ├── tag_opening: "<%" (location: (1:28)-(1:30))
+        │       │               ├── content: "end" (location: (1:30)-(1:33))
+        │       │               └── tag_closing: "%>" (location: (1:33)-(1:35))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:36)-(1:42))
+        │       ├── tag_opening: "</" (location: (1:36)-(1:38))
+        │       ├── tag_name: "div" (location: (1:38)-(1:41))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:41)-(1:42))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

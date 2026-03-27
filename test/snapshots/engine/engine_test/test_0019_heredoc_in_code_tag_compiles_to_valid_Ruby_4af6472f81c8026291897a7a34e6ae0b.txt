@@ -1,0 +1,8 @@
+---
+source: "Engine::EngineTest#test_0019_heredoc in code tag compiles to valid Ruby"
+input: "{source: \"<%\\n  text = <<~TEXT\\n    Hello, world!\\n  TEXT\\n%>\\n\", options: {}}"
+---
+_buf = ::String.new; text = <<~TEXT
+    Hello, world!
+  TEXT
+_buf.to_s

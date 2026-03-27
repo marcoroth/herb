@@ -26,7 +26,7 @@ input: "<script>var s = \"He said \\\"</script>\\\" yesterday\";</script>"
     │   │       └── tag_closing: ">" (location: (1:35)-(1:36))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:36)-(1:50))
     │   └── content: "\\\" yesterday\";"

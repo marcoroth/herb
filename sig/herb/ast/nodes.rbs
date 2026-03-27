@@ -2,13 +2,25 @@
 
 module Herb
   module AST
+    # : type serialized_document_node = {
+    # |  children: Array[Herb::AST::Node],
+    # |  prism_context: nil,
+    # |  prism_node: String?,
+    # | }
     class DocumentNode < Node
       include Colors
 
       attr_reader children: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      attr_reader prism_context: nil
+
+      attr_reader prism_node: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node], nil, String) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
@@ -29,10 +41,13 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_literal_node = {
+    # |  content: String?,
+    # | }
     class LiteralNode < Node
       include Colors
 
-      attr_reader content: String
+      attr_reader content: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -56,14 +71,21 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_open_tag_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  tag_name: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  is_void: bool,
+    # | }
     class HTMLOpenTagNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
@@ -91,19 +113,61 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_conditional_open_tag_node = {
+    # |  conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?,
+    # |  tag_name: Herb::Token?,
+    # |  is_void: bool,
+    # | }
+    class HTMLConditionalOpenTagNode < Node
+      include Colors
+
+      attr_reader conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+
+      attr_reader tag_name: Herb::Token?
+
+      attr_reader is_void: bool
+
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, bool) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, bool) -> void
+
+      # : () -> serialized_html_conditional_open_tag_node
+      def to_hash: () -> serialized_html_conditional_open_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_html_close_tag_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  tag_name: Herb::Token?,
+    # |  children: Array[Herb::AST::WhitespaceNode]?,
+    # |  tag_closing: Herb::Token?,
+    # | }
     class HTMLCloseTagNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_reader children: Array[Herb::AST::WhitespaceNode]?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
@@ -124,23 +188,91 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_omitted_close_tag_node = {
+    # |  tag_name: Herb::Token?,
+    # | }
+    class HTMLOmittedCloseTagNode < Node
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      # : () -> serialized_html_omitted_close_tag_node
+      def to_hash: () -> serialized_html_omitted_close_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_html_virtual_close_tag_node = {
+    # |  tag_name: Herb::Token?,
+    # | }
+    class HTMLVirtualCloseTagNode < Node
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+
+      # : () -> serialized_html_virtual_close_tag_node
+      def to_hash: () -> serialized_html_virtual_close_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_html_element_node = {
+    # |  open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?,
+    # |  tag_name: Herb::Token?,
+    # |  body: Array[Herb::AST::Node],
+    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?,
+    # |  is_void: bool,
+    # |  element_source: String?,
+    # | }
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+      attr_reader open_tag: (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode)?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: Herb::AST::HTMLCloseTagNode
+      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode)?
 
       attr_reader is_void: bool
 
-      attr_reader source: String
+      attr_reader element_source: String?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode), Herb::Token, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode), bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode | Herb::AST::ERBOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode | Herb::AST::HTMLVirtualCloseTagNode | Herb::AST::ERBEndNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
@@ -161,14 +293,71 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_conditional_element_node = {
+    # |  condition: String?,
+    # |  open_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?,
+    # |  open_tag: Herb::AST::HTMLOpenTagNode?,
+    # |  body: Array[Herb::AST::Node],
+    # |  close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?,
+    # |  close_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?,
+    # |  tag_name: Herb::Token?,
+    # |  element_source: String?,
+    # | }
+    class HTMLConditionalElementNode < Node
+      include Colors
+
+      attr_reader condition: String?
+
+      attr_reader open_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+
+      attr_reader open_tag: Herb::AST::HTMLOpenTagNode?
+
+      attr_reader body: Array[Herb::AST::Node]
+
+      attr_reader close_tag: (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode)?
+
+      attr_reader close_conditional: (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode)?
+
+      attr_reader tag_name: Herb::Token?
+
+      attr_reader element_source: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], String, (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], (Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode), (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode | Herb::AST::HTMLOmittedCloseTagNode, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, String) -> void
+
+      # : () -> serialized_html_conditional_element_node
+      def to_hash: () -> serialized_html_conditional_element_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_html_attribute_value_node = {
+    # |  open_quote: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  close_quote: Herb::Token?,
+    # |  quoted: bool,
+    # | }
     class HTMLAttributeValueNode < Node
       include Colors
 
-      attr_reader open_quote: Herb::Token
+      attr_reader open_quote: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader close_quote: Herb::Token
+      attr_reader close_quote: Herb::Token?
 
       attr_reader quoted: bool
 
@@ -194,13 +383,16 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_attribute_name_node = {
+    # |  children: Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]?,
+    # | }
     class HTMLAttributeNameNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]?
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]) -> void
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
@@ -221,14 +413,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_attribute_node = {
+    # |  name: Herb::AST::HTMLAttributeNameNode?,
+    # |  equals: Herb::Token?,
+    # |  value: Herb::AST::HTMLAttributeValueNode?,
+    # | }
     class HTMLAttributeNode < Node
       include Colors
 
-      attr_reader name: Herb::AST::HTMLAttributeNameNode
+      attr_reader name: Herb::AST::HTMLAttributeNameNode?
 
-      attr_reader equals: Herb::Token
+      attr_reader equals: Herb::Token?
 
-      attr_reader value: Herb::AST::HTMLAttributeValueNode
+      attr_reader value: Herb::AST::HTMLAttributeValueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
@@ -252,10 +449,118 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_ruby_literal_node = {
+    # |  content: String?,
+    # | }
+    class RubyLiteralNode < Node
+      include Colors
+
+      attr_reader content: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+
+      # : () -> serialized_ruby_literal_node
+      def to_hash: () -> serialized_ruby_literal_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_ruby_html_attributes_splat_node = {
+    # |  content: String?,
+    # |  prefix: String?,
+    # | }
+    class RubyHTMLAttributesSplatNode < Node
+      include Colors
+
+      attr_reader content: String?
+
+      attr_reader prefix: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], String, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, String) -> void
+
+      # : () -> serialized_ruby_html_attributes_splat_node
+      def to_hash: () -> serialized_ruby_html_attributes_splat_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_open_tag_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  tag_name: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # | }
+    class ERBOpenTagNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader tag_name: Herb::Token?
+
+      attr_reader children: Array[Herb::AST::Node]
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+
+      # : () -> serialized_erb_open_tag_node
+      def to_hash: () -> serialized_erb_open_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_html_text_node = {
+    # |  content: String?,
+    # | }
     class HTMLTextNode < Node
       include Colors
 
-      attr_reader content: String
+      attr_reader content: String?
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -279,14 +584,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_comment_node = {
+    # |  comment_start: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  comment_end: Herb::Token?,
+    # | }
     class HTMLCommentNode < Node
       include Colors
 
-      attr_reader comment_start: Herb::Token
+      attr_reader comment_start: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader comment_end: Herb::Token
+      attr_reader comment_end: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
@@ -310,14 +620,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_html_doctype_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  tag_closing: Herb::Token?,
+    # | }
     class HTMLDoctypeNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
@@ -341,14 +656,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_xml_declaration_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  tag_closing: Herb::Token?,
+    # | }
     class XMLDeclarationNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
@@ -372,14 +692,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_cdata_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  tag_closing: Herb::Token?,
+    # | }
     class CDATANode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
@@ -403,10 +728,13 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_whitespace_node = {
+    # |  value: Herb::Token?,
+    # | }
     class WhitespaceNode < Node
       include Colors
 
-      attr_reader value: Herb::Token
+      attr_reader value: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
@@ -430,14 +758,23 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_content_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  analyzed_ruby: nil,
+    # |  parsed: bool,
+    # |  valid: bool,
+    # |  prism_node: String?,
+    # | }
     class ERBContentNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader analyzed_ruby: nil
 
@@ -445,8 +782,13 @@ module Herb
 
       attr_reader valid: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
+      attr_reader prism_node: String?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool, String) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
@@ -467,14 +809,19 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_end_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # | }
     class ERBEndNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
@@ -498,14 +845,20 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_else_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  statements: Array[Herb::AST::Node],
+    # | }
     class ERBElseNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
@@ -531,23 +884,40 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_if_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  then_keyword: Herb::Location?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBIfNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader then_keyword: Herb::Location?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::Node
+      attr_reader subsequent: (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode)?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode), Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBIfNode | Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
@@ -568,21 +938,43 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_block_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
+    # |  body: Array[Herb::AST::Node],
+    # |  rescue_clause: Herb::AST::ERBRescueNode?,
+    # |  else_clause: Herb::AST::ERBElseNode?,
+    # |  ensure_clause: Herb::AST::ERBEnsureNode?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBBlockNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader prism_node: String?
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      attr_reader else_clause: Herb::AST::ERBElseNode?
+
+      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
+
+      attr_reader end_node: Herb::AST::ERBEndNode?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
@@ -603,19 +995,28 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_when_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  then_keyword: Herb::Location?,
+    # |  statements: Array[Herb::AST::Node],
+    # | }
     class ERBWhenNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader then_keyword: Herb::Location?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
@@ -636,25 +1037,40 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_case_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  prism_node: String?,
+    # |  conditions: Array[Herb::AST::ERBWhenNode],
+    # |  else_clause: Herb::AST::ERBElseNode?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBCaseNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
+      attr_reader prism_node: String?
+
       attr_reader conditions: Array[Herb::AST::ERBWhenNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
@@ -675,25 +1091,40 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_case_match_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  children: Array[Herb::AST::Node],
+    # |  prism_node: String?,
+    # |  conditions: Array[Herb::AST::ERBInNode],
+    # |  else_clause: Herb::AST::ERBElseNode?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBCaseMatchNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
+      attr_reader prism_node: String?
+
       attr_reader conditions: Array[Herb::AST::ERBInNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], String, Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
@@ -714,21 +1145,34 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_while_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBWhileNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
@@ -749,21 +1193,34 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_until_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBUntilNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
@@ -784,21 +1241,34 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_for_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBForNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
@@ -819,18 +1289,25 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_rescue_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  subsequent: Herb::AST::ERBRescueNode?,
+    # | }
     class ERBRescueNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::ERBRescueNode
+      attr_reader subsequent: Herb::AST::ERBRescueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
@@ -854,14 +1331,20 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_ensure_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  statements: Array[Herb::AST::Node],
+    # | }
     class ERBEnsureNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
@@ -887,27 +1370,43 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_begin_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  rescue_clause: Herb::AST::ERBRescueNode?,
+    # |  else_clause: Herb::AST::ERBElseNode?,
+    # |  ensure_clause: Herb::AST::ERBEnsureNode?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBBeginNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader rescue_clause: Herb::AST::ERBRescueNode
+      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader ensure_clause: Herb::AST::ERBEnsureNode
+      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, String, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
@@ -928,23 +1427,40 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_unless_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  then_keyword: Herb::Location?,
+    # |  prism_node: String?,
+    # |  statements: Array[Herb::AST::Node],
+    # |  else_clause: Herb::AST::ERBElseNode?,
+    # |  end_node: Herb::AST::ERBEndNode?,
+    # | }
     class ERBUnlessNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader then_keyword: Herb::Location?
+
+      attr_reader prism_node: String?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, String, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
 
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
@@ -965,14 +1481,238 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_ruby_render_local_node = {
+    # |  name: Herb::Token?,
+    # |  value: Herb::AST::RubyLiteralNode?,
+    # | }
+    class RubyRenderLocalNode < Node
+      include Colors
+
+      attr_reader name: Herb::Token?
+
+      attr_reader value: Herb::AST::RubyLiteralNode?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode) -> void
+
+      # : () -> serialized_ruby_render_local_node
+      def to_hash: () -> serialized_ruby_render_local_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_render_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  analyzed_ruby: nil,
+    # |  prism_node: String?,
+    # |  partial: Herb::Token?,
+    # |  template_path: Herb::Token?,
+    # |  layout: Herb::Token?,
+    # |  file: Herb::Token?,
+    # |  inline_template: Herb::Token?,
+    # |  body: Herb::Token?,
+    # |  plain: Herb::Token?,
+    # |  html: Herb::Token?,
+    # |  renderable: Herb::Token?,
+    # |  collection: Herb::Token?,
+    # |  object: Herb::Token?,
+    # |  as_name: Herb::Token?,
+    # |  spacer_template: Herb::Token?,
+    # |  formats: Herb::Token?,
+    # |  variants: Herb::Token?,
+    # |  handlers: Herb::Token?,
+    # |  content_type: Herb::Token?,
+    # |  locals: Array[Herb::AST::RubyRenderLocalNode]?,
+    # | }
+    class ERBRenderNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader analyzed_ruby: nil
+
+      attr_reader prism_node: String?
+
+      attr_reader partial: Herb::Token?
+
+      attr_reader template_path: Herb::Token?
+
+      attr_reader layout: Herb::Token?
+
+      attr_reader file: Herb::Token?
+
+      attr_reader inline_template: Herb::Token?
+
+      attr_reader body: Herb::Token?
+
+      attr_reader plain: Herb::Token?
+
+      attr_reader html: Herb::Token?
+
+      attr_reader renderable: Herb::Token?
+
+      attr_reader collection: Herb::Token?
+
+      attr_reader object: Herb::Token?
+
+      attr_reader as_name: Herb::Token?
+
+      attr_reader spacer_template: Herb::Token?
+
+      attr_reader formats: Herb::Token?
+
+      attr_reader variants: Herb::Token?
+
+      attr_reader handlers: Herb::Token?
+
+      attr_reader content_type: Herb::Token?
+
+      attr_reader locals: Array[Herb::AST::RubyRenderLocalNode]?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::RubyRenderLocalNode]) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
+
+      # : () -> serialized_erb_render_node
+      def to_hash: () -> serialized_erb_render_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_ruby_strict_local_node = {
+    # |  name: Herb::Token?,
+    # |  default_value: Herb::AST::RubyLiteralNode?,
+    # |  required: bool,
+    # |  double_splat: bool,
+    # | }
+    class RubyStrictLocalNode < Node
+      include Colors
+
+      attr_reader name: Herb::Token?
+
+      attr_reader default_value: Herb::AST::RubyLiteralNode?
+
+      attr_reader required: bool
+
+      attr_reader double_splat: bool
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::AST::RubyLiteralNode, bool, bool) -> void
+
+      # : () -> serialized_ruby_strict_local_node
+      def to_hash: () -> serialized_ruby_strict_local_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_strict_locals_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  analyzed_ruby: nil,
+    # |  prism_node: String?,
+    # |  locals: Array[Herb::AST::RubyStrictLocalNode]?,
+    # | }
+    class ERBStrictLocalsNode < Node
+      include Colors
+
+      attr_reader tag_opening: Herb::Token?
+
+      attr_reader content: Herb::Token?
+
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader analyzed_ruby: nil
+
+      attr_reader prism_node: String?
+
+      attr_reader locals: Array[Herb::AST::RubyStrictLocalNode]?
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, String, Array[Herb::AST::RubyStrictLocalNode]) -> void
+
+      # : () -> Prism::node?
+      def deserialized_prism_node: () -> Prism::node?
+
+      # : () -> serialized_erb_strict_locals_node
+      def to_hash: () -> serialized_erb_strict_locals_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    # : type serialized_erb_yield_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # | }
     class ERBYieldNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
@@ -996,19 +1736,28 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    # : type serialized_erb_in_node = {
+    # |  tag_opening: Herb::Token?,
+    # |  content: Herb::Token?,
+    # |  tag_closing: Herb::Token?,
+    # |  then_keyword: Herb::Location?,
+    # |  statements: Array[Herb::AST::Node],
+    # | }
     class ERBInNode < Node
       include Colors
 
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
+
+      attr_reader then_keyword: Herb::Location?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node

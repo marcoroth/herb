@@ -1,0 +1,71 @@
+---
+source: "Analyze::ActionView::UrlHelper::LinkToTest#test_0049_link_to with label syntax class attribute"
+input: |2-
+<%= link_to "Click here", "/path", class: "classes" %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:54))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:54))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Click here", "/path", class: "classes" " (location: (1:3)-(1:52))
+    │   │       ├── tag_closing: "%>" (location: (1:52)-(1:54))
+    │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:33))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │           │   │               └── content: "href"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:26)-(1:33))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
+    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │           │           │       └── content: "/path"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:33)-(1:33))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:35)-(1:51))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:35)-(1:40))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:35)-(1:40))
+    │   │               │               └── content: "class"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:40)-(1:42))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:42)-(1:51))
+    │   │                       ├── open_quote: """ (location: (1:42)-(1:43))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:43)-(1:50))
+    │   │                       │       └── content: "classes"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:50)-(1:51))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:4)-(1:11))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:54))
+    │   │       └── content: "Click here"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:54)-(1:54))
+    │   │       └── tag_name: "a" (location: (1:4)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:54)-(2:0))
+        └── content: "\n"

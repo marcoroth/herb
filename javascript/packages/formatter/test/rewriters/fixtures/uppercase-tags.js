@@ -39,11 +39,11 @@ export default class UppercaseTagsRewriter extends ASTRewriter {
     return "Uppercases all HTML tag names (for testing custom rewriters)"
   }
 
-  async initialize(context) {
+  async initialize(_context) {
     // No initialization needed
   }
 
-  rewrite(node, context) {
+  rewrite(node, _context) {
     const visitor = new UppercaseTagsVisitor()
     visitor.visit(node)
     return node

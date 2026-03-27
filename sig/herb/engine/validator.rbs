@@ -5,7 +5,11 @@ module Herb
     class Validator < Herb::Visitor
       attr_reader diagnostics: untyped
 
-      def initialize: () -> untyped
+      attr_reader enabled: untyped
+
+      def initialize: (?enabled: untyped) -> untyped
+
+      def enabled?: () -> untyped
 
       def validate: (untyped node) -> untyped
 

@@ -39,9 +39,20 @@ export const FormatterConfigSchema = z.object({
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
+export const ValidatorsConfigSchema = z.object({
+  security: z.boolean().optional().describe("Enable or disable the security validator (default: true)"),
+  nesting: z.boolean().optional().describe("Enable or disable the nesting validator (default: true)"),
+  accessibility: z.boolean().optional().describe("Enable or disable the accessibility validator (default: true)"),
+}).strict().optional()
+
+export const EngineConfigSchema = z.object({
+  validators: ValidatorsConfigSchema.describe("Per-validator enable/disable configuration"),
+}).strict().optional()
+
 export const HerbConfigSchema = z.object({
   version: z.string().describe("Configuration file version"),
   files: FilesConfigSchema.describe("Top-level file configuration"),
+  engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,
   formatter: FormatterConfigSchema,
 }).strict()

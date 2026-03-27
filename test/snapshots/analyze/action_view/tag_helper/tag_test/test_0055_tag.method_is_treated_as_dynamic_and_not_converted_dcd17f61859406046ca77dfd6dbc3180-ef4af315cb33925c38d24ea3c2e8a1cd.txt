@@ -1,0 +1,28 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0055_tag.method is treated as dynamic and not converted"
+input: |2-
+<%= tag.method(:div) %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:23))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:23))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.method(:div) " (location: (1:3)-(1:21))
+    │   │       ├── tag_closing: "%>" (location: (1:21)-(1:23))
+    │   │       ├── tag_name: ∅
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: ∅
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:23)-(1:23))
+    │   │       └── tag_name: ∅
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (1:23)-(2:0))
+        └── content: "\n"

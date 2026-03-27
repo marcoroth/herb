@@ -26,6 +26,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :active " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (5 items)
     │   │           ├── @ HTMLTextNode (location: (2:18)-(3:2))
     │   │           │   └── content: "\n  "
@@ -38,6 +39,9 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │           │   │       └── content: "\n    Active\n  "
     │   │           │   │
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
     │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
@@ -56,6 +60,9 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (6:30)-(8:2))
     │   │           │   │       └── content: "\n    Badge\n  "
     │   │           │   │
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (8:2)-(8:11))
     │   │           │           ├── tag_opening: "<%" (location: (8:2)-(8:4))

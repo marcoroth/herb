@@ -1,0 +1,110 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "json"
+
+class ActionViewRenderer
+  def initialize
+    @file = nil
+    @source = nil
+    @json = false
+    @silent = false
+    @locals = {}
+  end
+
+  def run(args)
+    parse_options(args)
+
+    unless @file || @source
+      puts "Error: No file or source specified"
+      puts "Usage: actionview-render [options] <file>"
+      puts "       actionview-render -e '<%= link_to \"Profile\", @profile %>'"
+      exit(1)
+    end
+
+    if @file && !File.exist?(@file)
+      puts "Error: File '#{@file}' not found"
+      exit(1)
+    end
+
+    render_template
+  end
+
+  private
+
+  def parse_options(args)
+    OptionParser.new do |opts|
+      opts.banner = "Usage: actionview-render [options] <file>"
+      opts.separator ""
+      opts.separator "Render ERB templates using ActionView helpers"
+      opts.separator ""
+      opts.separator "Options:"
+
+      opts.on("-e", "--eval SOURCE", "Evaluate source string instead of file") do |source|
+        @source = source
+      end
+
+      opts.on("--json", "Output results as JSON") do
+        @json = true
+      end
+
+      opts.on("--silent", "Silent mode (only success/failure)") do
+        @silent = true
+      end
+
+      opts.on("-h", "--help", "Show this help message") do
+        puts opts
+        exit(0)
+      end
+    end.parse!(args)
+
+    @file = args.first unless @source
+  end
+
+  def template_source
+    @template_source ||= @source || File.read(@file)
+  end
+
+  def render_template
+    require "bigdecimal"
+    require "action_view"
+
+    lookup_context = ActionView::LookupContext.new([])
+    view = ActionView::Base.with_empty_template_cache.new(lookup_context, {}, nil)
+    handler = ActionView::Template::Handlers::ERB.new
+
+    template = ActionView::Template.new(
+      template_source,
+      @file || "(eval)",
+      handler,
+      locals: [],
+      format: :html
+    )
+
+    rendered = template.render(view, {})
+
+    if @json
+      puts({ success: true, output: rendered, source: template_source }.to_json)
+    elsif @silent
+      puts "Success"
+    else
+      puts rendered
+    end
+
+    exit(0)
+  rescue StandardError => e
+    if @json
+      puts({ success: false, error: e.message, source: template_source }.to_json)
+    elsif @silent
+      puts "Failed"
+    else
+      puts "Error: #{e.class}: #{e.message}"
+      puts e.backtrace.first(5).map { |l| "  #{l}" }.join("\n") unless @silent
+    end
+
+    exit(1)
+  end
+end
+
+ActionViewRenderer.new.run(ARGV) if __FILE__ == $PROGRAM_NAME

@@ -4,9 +4,13 @@ import { ensureString } from "./util.js"
 import { LexResult } from "./lex-result.js"
 import { ParseResult } from "./parse-result.js"
 import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
+import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
+import { deserializePrismParseResult } from "./prism/index.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
-import type { ParserOptions } from "./parser-options.js"
+import type { ParseOptions } from "./parser-options.js"
+import type { ExtractRubyOptions } from "./extract-ruby-options.js"
+import type { PrismParseResult } from "./prism/index.js"
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -55,13 +59,8 @@ export abstract class HerbBackend {
    * Lexes a file.
    * @param path - The file path to lex.
    * @returns A `LexResult` instance.
-   * @throws Error if the backend is not loaded.
    */
-  lexFile(path: string): LexResult {
-    this.ensureBackend()
-
-    return LexResult.from(this.backend.lexFile(ensureString(path)))
-  }
+  abstract lexFile(path: string): LexResult
 
   /**
    * Parses the given source string into a `ParseResult`.
@@ -70,7 +69,7 @@ export abstract class HerbBackend {
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string, options?: ParserOptions): ParseResult {
+  parse(source: string, options?: ParseOptions): ParseResult {
     this.ensureBackend()
 
     const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
@@ -82,24 +81,40 @@ export abstract class HerbBackend {
    * Parses a file.
    * @param path - The file path to parse.
    * @returns A `ParseResult` instance.
-   * @throws Error if the backend is not loaded.
    */
-  parseFile(path: string): ParseResult {
-    this.ensureBackend()
-
-    return ParseResult.from(this.backend.parseFile(ensureString(path)))
-  }
+  abstract parseFile(path: string): ParseResult
 
   /**
    * Extracts embedded Ruby code from the given source.
    * @param source - The source code to extract Ruby from.
+   * @param options - Optional extraction options.
    * @returns The extracted Ruby code as a string.
    * @throws Error if the backend is not loaded.
    */
-  extractRuby(source: string): string {
+  extractRuby(source: string, options?: ExtractRubyOptions): string {
     this.ensureBackend()
 
-    return this.backend.extractRuby(ensureString(source))
+    const mergedOptions = { ...DEFAULT_EXTRACT_RUBY_OPTIONS, ...options }
+
+    return this.backend.extractRuby(ensureString(source), mergedOptions)
+  }
+
+  /**
+   * Parses a Ruby source string using Prism via the libherb backend.
+   * @param source - The Ruby source code to parse.
+   * @returns A Prism ParseResult containing the AST.
+   * @throws Error if the backend is not loaded.
+   */
+  parseRuby(source: string): PrismParseResult {
+    this.ensureBackend()
+
+    const bytes = this.backend.parseRuby(ensureString(source))
+
+    if (!bytes) {
+      throw new Error("Failed to parse Ruby source")
+    }
+
+    return deserializePrismParseResult(bytes, source)
   }
 
   /**

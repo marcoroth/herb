@@ -21,7 +21,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bundle exec rake test"
+        "command": "bundle exec rake test:all"
       },
       "dependsOn": ["ruby-gem:build"]
     }

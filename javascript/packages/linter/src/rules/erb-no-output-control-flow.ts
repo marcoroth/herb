@@ -25,6 +25,13 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     this.visitChildNodes(node)
   }
 
+  private static readonly CONTROL_BLOCK_NAMES: Record<string, string> = {
+    "AST_ERB_IF_NODE": "if",
+    "AST_ERB_ELSE_NODE": "else",
+    "AST_ERB_END_NODE": "end",
+    "AST_ERB_UNLESS_NODE": "unless"
+  }
+
   private checkOutputControlFlow(controlBlock: ERBIfNode | ERBUnlessNode | ERBElseNode | ERBEndNode): void {
     const openTag = controlBlock.tag_opening;
     if (!openTag) {
@@ -32,25 +39,19 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     }
 
     if (openTag.value === "<%="){
-      let controlBlockType: string = controlBlock.type
-
-      if (controlBlock.type === "AST_ERB_IF_NODE") controlBlockType = "if"
-      if (controlBlock.type === "AST_ERB_ELSE_NODE") controlBlockType = "else"
-      if (controlBlock.type === "AST_ERB_END_NODE") controlBlockType = "end"
-      if (controlBlock.type === "AST_ERB_UNLESS_NODE") controlBlockType = "unless"
+      const controlBlockType = ERBNoOutputControlFlowRuleVisitor.CONTROL_BLOCK_NAMES[controlBlock.type] || controlBlock.type
 
       this.addOffense(
         `Control flow statements like \`${controlBlockType}\` should not be used with output tags. Use \`<% ${controlBlockType} ... %>\` instead.`,
         openTag.location,
       )
     }
-
-    return
   }
 }
 
 export class ERBNoOutputControlFlowRule extends ParserRule {
-  name = "erb-no-output-control-flow"
+  static ruleName = "erb-no-output-control-flow"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -60,7 +61,7 @@ export class ERBNoOutputControlFlowRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoOutputControlFlowRuleVisitor(this.name, context)
+    const visitor = new ERBNoOutputControlFlowRuleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

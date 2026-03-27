@@ -5,10 +5,11 @@
 #include "nodes.h"
 
 #include "../../src/include/herb.h"
-#include "../../src/include/io.h"
-#include "../../src/include/location.h"
-#include "../../src/include/position.h"
-#include "../../src/include/token.h"
+#include "../../src/include/lexer/token.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_string.h"
+#include "../../src/include/location/location.h"
+#include "../../src/include/location/position.h"
 
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
@@ -44,14 +45,19 @@ VALUE rb_range_from_c_struct(range_T range) {
   return rb_class_new_instance(2, args, cRange);
 }
 
+VALUE rb_string_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  return rb_utf8_str_new(string.data, string.length);
+}
+
 VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
-  VALUE value = token->value ? rb_utf8_str_new_cstr(token->value) : Qnil;
-
+  VALUE value = rb_string_from_hb_string(token->value);
   VALUE range = rb_range_from_c_struct(token->range);
   VALUE location = rb_location_from_c_struct(token->location);
-  VALUE type = rb_utf8_str_new_cstr(token_type_to_string(token->type));
+  VALUE type = rb_string_from_hb_string(token_type_to_string(token->type));
 
   VALUE args[4] = { value, range, location, type };
 
@@ -73,21 +79,26 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
   return rb_class_new_instance(4, args, cLexResult);
 }
 
-VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
+VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_options_T* options) {
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
 
-  VALUE args[4] = { value, source, warnings, errors };
+  VALUE kwargs = rb_hash_new();
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict")), options->strict ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("action_view_helpers")), options->action_view_helpers ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("render_nodes")), options->render_nodes ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict_locals")), options->strict_locals ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes")), options->prism_nodes ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes_deep")), options->prism_nodes_deep ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_program")), options->prism_program ? Qtrue : Qfalse);
 
-  return rb_class_new_instance(4, args, cParseResult);
-}
+  VALUE parser_options_args[1] = { kwargs };
+  VALUE parser_options = rb_class_new_instance_kw(1, parser_options_args, cParserOptions, RB_PASS_KEYWORDS);
 
-VALUE read_file_to_ruby_string(const char* file_path) {
-  char* source = herb_read_file(file_path);
-  VALUE source_value = rb_utf8_str_new_cstr(source);
+  VALUE args[5] = { value, source, warnings, errors, parser_options };
 
-  free(source);
-
-  return source_value;
+  return rb_class_new_instance(5, args, cParseResult);
 }

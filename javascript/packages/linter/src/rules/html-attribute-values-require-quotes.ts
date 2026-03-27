@@ -52,7 +52,8 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin<Attribut
 
 export class HTMLAttributeValuesRequireQuotesRule extends ParserRule<AttributeValuesRequireQuotesAutofixContext> {
   static autocorrectable = true
-  name = "html-attribute-values-require-quotes"
+  static ruleName = "html-attribute-values-require-quotes"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -62,7 +63,7 @@ export class HTMLAttributeValuesRequireQuotesRule extends ParserRule<AttributeVa
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeValuesRequireQuotesAutofixContext>[] {
-    const visitor = new AttributeValuesRequireQuotesVisitor(this.name, context)
+    const visitor = new AttributeValuesRequireQuotesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

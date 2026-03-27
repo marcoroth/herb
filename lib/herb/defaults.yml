@@ -1,0 +1,32 @@
+files:
+  include:
+    - "**/*.herb"
+    - "**/*.html.erb"
+    - "**/*.html.herb"
+    - "**/*.html"
+    - "**/*.html+*.erb"
+    - "**/*.rhtml"
+    - "**/*.turbo_stream.erb"
+
+  exclude:
+    - "coverage/**/*"
+    - "log/**/*"
+    - "node_modules/**/*"
+    - "storage/**/*"
+    - "tmp/**/*"
+    - "vendor/**/*"
+
+engine:
+  validators:
+    security: true
+    nesting: true
+    accessibility: true
+
+linter:
+  enabled: true
+  rules: {}
+
+formatter:
+  enabled: false
+  indentWidth: 2
+  maxLineLength: 80

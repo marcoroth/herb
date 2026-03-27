@@ -8,10 +8,6 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoSelfClosingRule)
 
 describe("html-no-self-closing", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for standard HTML tags", () => {
     expectNoOffenses(`
       <div></div>
@@ -131,6 +127,14 @@ describe("html-no-self-closing", () => {
         <circle cx="12" cy="12" r="10" />
       </svg>
       <span />
+    `)
+  })
+
+  test("passes for self-closing elements inside tag.svg helper", () => {
+    expectNoOffenses(`
+      <%= tag.svg(height:, width:) do %>
+        <path d="M29.396,2.303 L27.867,2.924 L25.13,18.045 L25.735,18.571 L27.167,18.045 L29.953,2.781 z" fill="currentColor" />
+      <% end %>
     `)
   })
 

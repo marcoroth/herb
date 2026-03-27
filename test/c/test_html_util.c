@@ -1,26 +1,29 @@
 #include "../../src/include/herb.h"
-#include "../../src/include/html_util.h"
+#include "../../src/include/util/html_util.h"
+#include "../../src/include/lib/hb_allocator.h"
 #include "include/test.h"
 #include <stdio.h>
 
 TEST(html_util_html_closing_tag_string)
-  ck_assert(hb_string_equals(html_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }), hb_string("</>")));
-  ck_assert(hb_string_equals(html_closing_tag_string(hb_string("")), hb_string("</>")));
-  ck_assert(hb_string_equals(html_closing_tag_string(hb_string(" ")), hb_string("</ >")));
-  ck_assert(hb_string_equals(html_closing_tag_string(hb_string("div")), hb_string("</div>")));
+  hb_allocator_T alloc = hb_allocator_with_malloc();
+  ck_assert(hb_string_equals(html_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }, &alloc), hb_string("</>")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string(""), &alloc), hb_string("</>")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string(" "), &alloc), hb_string("</ >")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string("div"), &alloc), hb_string("</div>")));
 
   ck_assert(hb_string_equals(
-    html_closing_tag_string(hb_string("somelongerstring")),
+    html_closing_tag_string(hb_string("somelongerstring"), &alloc),
     hb_string("</somelongerstring>")
   ));
 END
 
 TEST(html_util_html_self_closing_tag_string)
-  ck_assert(hb_string_equals(html_self_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }), hb_string("< />")));
-  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("")), hb_string("< />")));
-  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string(" ")), hb_string("<  />")));
-  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("br")), hb_string("<br />")));
-  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("somelongerstring")), hb_string("<somelongerstring />")));
+  hb_allocator_T alloc = hb_allocator_with_malloc();
+  ck_assert(hb_string_equals(html_self_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }, &alloc), hb_string("< />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string(""), &alloc), hb_string("< />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string(" "), &alloc), hb_string("<  />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("br"), &alloc), hb_string("<br />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("somelongerstring"), &alloc), hb_string("<somelongerstring />")));
 END
 
 TCase* html_util_tests(void) {

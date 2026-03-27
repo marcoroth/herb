@@ -1,0 +1,31 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0002_javascript_tag with content as argument"
+input: |2-
+<%= javascript_tag "alert('Hello')" %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:38))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:38))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " javascript_tag "alert('Hello')" " (location: (1:3)-(1:36))
+    │   │       ├── tag_closing: "%>" (location: (1:36)-(1:38))
+    │   │       ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:38))
+    │   │       └── content: "alert('Hello')"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:38)-(1:38))
+    │   │       └── tag_name: "script" (location: (1:4)-(1:18))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+    │
+    └── @ HTMLTextNode (location: (1:38)-(2:0))
+        └── content: "\n"

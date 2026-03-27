@@ -13,6 +13,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_html_conditional_element_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
@@ -22,6 +24,8 @@ module Herb
       def visit_html_attribute_value_node: (untyped node) -> untyped
 
       def visit_html_close_tag_node: (untyped node) -> untyped
+
+      def visit_html_omitted_close_tag_node: (untyped node) -> untyped
 
       def visit_html_text_node: (untyped node) -> untyped
 
@@ -73,6 +77,8 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
@@ -82,8 +88,6 @@ module Herb
       def push_context: (untyped context) -> untyped
 
       def pop_context: () -> untyped
-
-      def add_context_aware_expression: (untyped code, untyped context) -> untyped
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
@@ -111,13 +115,19 @@ module Herb
 
       def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
 
-      def process_erb_output: (untyped opening, untyped code) -> untyped
+      def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
+
+      def indicator_for: (untyped type) -> untyped
+
+      def context_aware_context?: (untyped context) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
 
       def at_line_start?: () -> untyped
+
+      def preceding_token_ends_with_newline?: () -> untyped
 
       def extract_lspace: () -> untyped
 

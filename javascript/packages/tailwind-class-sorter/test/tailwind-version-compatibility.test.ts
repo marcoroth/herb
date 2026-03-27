@@ -1,5 +1,5 @@
 import path from 'path'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { sortTailwindClasses, TailwindClassSorter } from '../src/index'
 
 const v3ConfigPath = path.join(__dirname, 'fixtures', 'tailwind.config.js')

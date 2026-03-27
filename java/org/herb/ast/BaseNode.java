@@ -31,6 +31,11 @@ public abstract class BaseNode implements Node {
   }
 
   @Override
+  public String inspect(String source) {
+    return inspect();
+  }
+
+  @Override
   public <R, C> R accept(NodeVisitor<R, C> visitor, C context) {
     return visitor.visitNode(this, context);
   }
@@ -79,6 +84,13 @@ public abstract class BaseNode implements Node {
    * Helper to format an array of nodes for tree inspection.
    */
   protected String inspectArray(java.util.List<Node> array, String prefix) {
+    return inspectArray(array, prefix, null);
+  }
+
+  /**
+   * Helper to format an array of nodes for tree inspection with source for Prism nodes.
+   */
+  protected String inspectArray(java.util.List<Node> array, String prefix, String source) {
     if (array == null) return "∅\n";
     if (array.isEmpty()) return "[]\n";
 
@@ -92,7 +104,7 @@ public abstract class BaseNode implements Node {
       String nextPrefix = isLast ? "    " : "│   ";
 
       if (item != null) {
-        String tree = item.inspect();
+        String tree = source != null ? item.inspect(source) : item.inspect();
 
         if (tree.endsWith("\n")) {
           tree = tree.substring(0, tree.length() - 1);
@@ -119,8 +131,15 @@ public abstract class BaseNode implements Node {
    * Helper to format a single node for tree inspection.
    */
   protected String inspectNode(Node node, String prefix) {
+    return inspectNode(node, prefix, null);
+  }
+
+  /**
+   * Helper to format a single node for tree inspection with source for Prism nodes.
+   */
+  protected String inspectNode(Node node, String prefix, String source) {
     if (node == null) return "∅\n";
-    String tree = node.inspect();
+    String tree = source != null ? node.inspect(source) : node.inspect();
 
     if (tree.endsWith("\n")) {
       tree = tree.substring(0, tree.length() - 1);

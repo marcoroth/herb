@@ -138,6 +138,9 @@ input: |2-
     │   │   │   │   │   │   └── @ HTMLTextNode (location: (5:10)-(7:4))
     │   │   │   │   │   │       └── content: "\n\n    "
     │   │   │   │   │   │
+    │   │   │   │   │   ├── rescue_clause: ∅
+    │   │   │   │   │   ├── else_clause: ∅
+    │   │   │   │   │   ├── ensure_clause: ∅
     │   │   │   │   │   └── end_node:
     │   │   │   │   │       └── @ ERBEndNode (location: (7:4)-(7:13))
     │   │   │   │   │           ├── tag_opening: "<%" (location: (7:4)-(7:6))
@@ -156,7 +159,7 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (8:7)-(8:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (8:8)-(9:0))
     │   │       └── content: "\n"
@@ -169,7 +172,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (9:5)-(9:6))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (9:6)-(10:0))
         └── content: "\n"

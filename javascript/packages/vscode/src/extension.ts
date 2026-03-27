@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
 
@@ -50,7 +51,7 @@ async function updateConfigStatusBarItem() {
     configStatusBarItem.command = 'herb.showConfigDetails'
 
     configStatusBarItem.show()
-  } catch (error) {
+  } catch (_error) {
     configStatusBarItem.text = '$(settings-gear) Herb (Personal Settings)'
     configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yml'
     configStatusBarItem.command = 'herb.showConfigDetails'
@@ -157,6 +158,22 @@ export async function activate(context: vscode.ExtensionContext) {
 
     vscode.commands.registerCommand('herb.refreshLanguageServer', async () => {
       await client.updateConfiguration()
+    }),
+
+    vscode.commands.registerCommand('herb.toggleLineComment', async () => {
+      const editor = vscode.window.activeTextEditor
+
+      if (editor) {
+        await sendCommentRequest(editor, 'herb/toggleLineComment')
+      }
+    }),
+
+    vscode.commands.registerCommand('herb.toggleBlockComment', async () => {
+      const editor = vscode.window.activeTextEditor
+
+      if (editor) {
+        await sendCommentRequest(editor, 'herb/toggleBlockComment')
+      }
     })
   )
 
@@ -201,6 +218,29 @@ export async function activate(context: vscode.ExtensionContext) {
   console.log("Herb extension is now active!")
 }
 
+async function sendCommentRequest(editor: vscode.TextEditor, method: string) {
+  const selection = editor.selection
+  const edits = await client.sendRequest<TextEdit[]>(method, {
+    textDocument: { uri: editor.document.uri.toString() },
+    range: {
+      start: { line: selection.start.line, character: selection.start.character },
+      end: { line: selection.end.line, character: selection.end.character }
+    }
+  })
+
+  if (edits && edits.length > 0) {
+    await editor.edit(editBuilder => {
+      for (const edit of edits) {
+        const range = new vscode.Range(
+          new vscode.Position(edit.range.start.line, edit.range.start.character),
+          new vscode.Position(edit.range.end.line, edit.range.end.character)
+        )
+
+        editBuilder.replace(range, edit.newText)
+      }
+    })
+  }
+}
 
 async function runAutoAnalysis() {
   if (!vscode.workspace.workspaceFolders) {

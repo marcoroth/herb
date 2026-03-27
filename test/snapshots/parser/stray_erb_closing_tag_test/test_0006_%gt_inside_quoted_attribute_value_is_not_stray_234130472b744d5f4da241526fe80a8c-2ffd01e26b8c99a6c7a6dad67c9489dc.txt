@@ -1,0 +1,54 @@
+---
+source: "Parser::StrayERBClosingTagTest#test_0006_%> inside quoted attribute value is not stray"
+input: |2-
+<div class="foo %> bar">hello</div>
+options: {strict: false}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:35))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:24))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:23)-(1:24))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:23))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:23))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:12)-(1:22))
+    │   │       │               │       └── content: "foo %> bar"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:22)-(1:23))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:24)-(1:29))
+    │   │       └── content: "hello"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:29)-(1:35))
+    │   │       ├── tag_opening: "</" (location: (1:29)-(1:31))
+    │   │       ├── tag_name: "div" (location: (1:31)-(1:34))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:34)-(1:35))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:35)-(2:0))
+        └── content: "\n"

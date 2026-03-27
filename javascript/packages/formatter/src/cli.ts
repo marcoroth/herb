@@ -1,5 +1,5 @@
 import dedent from "dedent"
-import { readFileSync, writeFileSync, statSync } from "fs"
+import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
 
@@ -18,6 +18,26 @@ const pluralize = (count: number, singular: string, plural: string = singular + 
 }
 
 export class CLI {
+  protected projectPath: string = process.cwd()
+
+  protected determineProjectPath(patterns: string[]): void {
+    const pattern = patterns[0]
+
+    if (pattern && pattern !== '-') {
+      const resolvedPattern = resolve(pattern)
+
+      if (existsSync(resolvedPattern)) {
+        this.projectPath = Config.findProjectRootSync(resolvedPattern)
+      } else {
+        const baseDir = pattern.split(/[*?{[\]]/)[0].replace(/\/$/, '')
+
+        if (baseDir && existsSync(baseDir)) {
+          this.projectPath = Config.findProjectRootSync(resolve(baseDir))
+        }
+      }
+    }
+  }
+
   private usage = dedent`
     Usage: herb-format [files|directories|glob-patterns...] [options]
 
@@ -133,14 +153,15 @@ export class CLI {
         process.exit(1)
       }
 
+      this.determineProjectPath(positionals)
+
       const file = positionals[0]
-      const startPath = file || process.cwd()
 
       if (isInitMode) {
-        const configPath = configFile || startPath
+        const configPath = configFile || this.projectPath
 
         if (Config.exists(configPath)) {
-          const fullPath = configFile || Config.configPathFromProjectPath(startPath)
+          const fullPath = configFile || Config.configPathFromProjectPath(this.projectPath)
           console.log(`\n✗ Configuration file already exists at ${fullPath}`)
           console.log(`  Use --config-file to specify a different location.\n`)
           process.exit(1)
@@ -154,8 +175,8 @@ export class CLI {
           }
         })
 
-        const projectPath = configFile ? resolve(configFile) : startPath
-        const projectDir = statSync(projectPath).isDirectory() ? projectPath : resolve(projectPath, '..')
+        const initProjectPath = configFile ? resolve(configFile) : this.projectPath
+        const projectDir = statSync(initProjectPath).isDirectory() ? initProjectPath : resolve(initProjectPath, '..')
         const extensionAdded = addHerbExtensionRecommendation(projectDir)
 
         console.log(`\n✓ Configuration initialized at ${config.path}`)
@@ -170,7 +191,7 @@ export class CLI {
         process.exit(0)
       }
 
-      const config = await Config.loadForCLI(configFile || startPath, version)
+      const config = await Config.loadForCLI(configFile || this.projectPath, version)
       const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 
@@ -198,8 +219,8 @@ export class CLI {
         formatterConfig.maxLineLength = maxLineLength
       }
 
-      let preRewriters: ASTRewriter[] = []
-      let postRewriters: StringRewriter[] = []
+      const preRewriters: ASTRewriter[] = []
+      const postRewriters: StringRewriter[] = []
       const rewriterNames = { pre: formatterConfig.rewriter?.pre || [], post: formatterConfig.rewriter?.post || [] }
 
       if (formatterConfig.rewriter && (rewriterNames.pre.length > 0 || rewriterNames.post.length > 0)) {
@@ -398,7 +419,7 @@ export class CLI {
         }
 
         let formattedCount = 0
-        let unformattedFiles: string[] = []
+        const unformattedFiles: string[] = []
 
         for (const filePath of files) {
           const displayPath = relative(process.cwd(), filePath)
@@ -446,7 +467,7 @@ export class CLI {
         }
 
         let formattedCount = 0
-        let unformattedFiles: string[] = []
+        const unformattedFiles: string[] = []
 
         for (const filePath of files) {
           const displayPath = relative(process.cwd(), filePath)

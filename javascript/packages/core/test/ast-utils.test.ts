@@ -15,7 +15,7 @@ import {
   getValidatableStaticContent,
   getCombinedStringFromNodes,
   hasStaticAttributeName,
-  hasDynamicAttributeName,
+  hasDynamicAttributeNameNode,
   getStaticAttributeName,
   getCombinedAttributeName,
   Location,
@@ -359,14 +359,14 @@ describe("ast-utils", () => {
     })
   })
 
-  describe("hasDynamicAttributeName", () => {
+  describe("hasDynamicAttributeNameNode", () => {
     test("returns true for attribute with ERB children", () => {
       const attributeNode = createAttributeNameNode([
         createLiteralNode("data-"),
         createERBContentNode("<%=", "name")
       ])
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(true)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(true)
     })
 
     test("returns false for attribute with only literal children", () => {
@@ -375,14 +375,14 @@ describe("ast-utils", () => {
         createLiteralNode("-test")
       ])
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(false)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
       attributeNode.children = undefined as any
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(false)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
   })
 

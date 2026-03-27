@@ -23,6 +23,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in { status: :success } " (location: (2:2)-(2:27))
     │   │       ├── tag_closing: "%>" (location: (2:27)-(2:29))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:29)-(3:2))
     │   │           │   └── content: "\n  "
@@ -35,6 +36,9 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │           │   │       └── content: "\n    Success!\n  "
     │   │           │   │
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
     │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))

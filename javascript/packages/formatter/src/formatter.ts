@@ -6,7 +6,7 @@ import { hasFormatterIgnoreDirective } from "./format-ignore.js"
 
 import type { Config } from "@herb-tools/config"
 import type { RewriteContext } from "@herb-tools/rewriter"
-import type { HerbBackend, ParseResult } from "@herb-tools/core"
+import type { HerbBackend, ParseResult, ParseOptions } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 
 /**
@@ -16,6 +16,7 @@ import type { FormatOptions } from "./options.js"
 export class Formatter {
   private herb: HerbBackend
   private options: Required<FormatOptions>
+  private parseOptions: ParseOptions
 
   /**
    * Creates a Formatter instance from a Config object (recommended).
@@ -48,16 +49,21 @@ export class Formatter {
    * @param herb - The Herb backend instance for parsing
    * @param options - Format options (including rewriters)
    */
-  constructor(herb: HerbBackend, options: FormatOptions = {}) {
+  constructor(herb: HerbBackend, options: FormatOptions = {}, parseOptions: ParseOptions = {}) {
     this.herb = herb
     this.options = resolveFormatOptions(options)
+    this.parseOptions = parseOptions
   }
 
   /**
    * Format a source string, optionally overriding format options per call.
    */
   format(source: string, options: FormatOptions = {}, filePath?: string): string {
-    let result = this.parse(source)
+    const result = this.parse(source)
+
+    if (result.options.action_view_helpers) {
+      console.warn("[Herb Formatter] Warning: Formatting a document parsed with `action_view_helpers: true`. The result may not be 100% accurate.")
+    }
 
     if (result.failed) return source
     if (isScaffoldTemplate(result)) return source
@@ -104,6 +110,6 @@ export class Formatter {
 
   private parse(source: string): ParseResult {
     this.herb.ensureBackend()
-    return this.herb.parse(source)
+    return this.herb.parse(source, this.parseOptions)
   }
 }

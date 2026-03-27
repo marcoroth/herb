@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBCommentsTest#test_0019_evaluation: standalone erb comment trims trailing newline"
+input: "{source: \"<%# comment %>\\n\", locals: {}, options: {}}"
+---

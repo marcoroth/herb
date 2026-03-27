@@ -10,10 +10,12 @@ import Prism from "prismjs"
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
+import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
 import { Linter } from "@herb-tools/linter"
 import { analyze } from "../analyze"
+import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
 window.analyze = analyze
@@ -48,13 +50,37 @@ const exampleFile = dedent`
   <div>
 `
 
+const rubyExampleFile = dedent`
+  class User
+    attr_reader :name, :email
+
+    def initialize(name, email)
+      @name = name
+      @email = email
+    end
+
+    def greeting
+      "Hello, #{name}!"
+    end
+  end
+`
+
 export default class extends Controller {
+  static values = {
+    mode: { type: String, default: "erb" },
+  }
+
   static targets = [
     "input",
     "parseViewer",
+    "parseOutput",
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "rewriteViewer",
+    "rewriteOutput",
+    "rewriteStatus",
+    "rewriteActionViewHelpers",
     "lexViewer",
     "formatViewer",
     "formatSuccess",
@@ -69,6 +95,7 @@ export default class extends Controller {
     "printerVerification",
     "printerIgnoreErrors",
     "printerDiff",
+    "formatterMaxLineLength",
     "printerDiffContent",
     "printerLegend",
     "shareButton",
@@ -96,7 +123,17 @@ export default class extends Controller {
     "warningCount",
     "infoCount",
     "commitHash",
+    "prismNodesDeepLabel",
+    "switchLink",
   ]
+
+  get isRubyMode() {
+    return this.modeValue === "ruby"
+  }
+
+  get currentExampleFile() {
+    return this.isRubyMode ? rubyExampleFile : exampleFile
+  }
 
   connect() {
     this.currentDiagnosticsFilter = this.restoreDiagnosticsFilter()
@@ -112,15 +149,20 @@ export default class extends Controller {
 
     this.restoreInput()
     this.restoreActiveTab()
-    this.restoreParserOptions()
-    this.restorePrinterOptions()
+
+    if (!this.isRubyMode) {
+      this.restoreParserOptions()
+      this.restorePrinterOptions()
+      this.restoreFormatterOptions()
+    }
+
     this.inputTarget.focus()
     this.load()
 
     this.urlUpdatedFromChangeEvent = false
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
-      language: "erb",
+      language: this.isRubyMode ? "ruby" : "erb",
       theme: this.isDarkMode ? 'vs-dark' : 'vs',
       automaticLayout: true,
       minimap: { enabled: false },
@@ -137,6 +179,7 @@ export default class extends Controller {
       )
 
       if (range) {
+        revealTreeLine(range.element)
         range.element.classList.add("tree-location-highlight")
         range.element.scrollIntoView({
           behavior: "smooth",
@@ -157,6 +200,7 @@ export default class extends Controller {
     window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
 
+    this.setupSwitchLinks()
     this.setupThemeListener()
     this.setupTooltip()
     this.setupAutofixTooltip()
@@ -176,6 +220,31 @@ export default class extends Controller {
     }
 
     return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  setupSwitchLinks() {
+    if (!this.hasSwitchLinkTarget) return
+
+    const isEmbedded = window.frameElement
+
+    if (isEmbedded) {
+      const linkMap = {
+        "/": "/playground/",
+        "/prism/": "/playground/prism",
+      }
+
+      this.switchLinkTargets.forEach(link => {
+        const href = link.getAttribute("href")
+        const parentHref = linkMap[href]
+
+        if (parentHref) {
+          link.addEventListener("click", (event) => {
+            event.preventDefault()
+            window.parent.location.href = parentHref
+          })
+        }
+      })
+    }
   }
 
   setupThemeListener() {
@@ -204,7 +273,7 @@ export default class extends Controller {
     this.removePrinterVerificationTooltip()
   }
 
-  handlePopState = async (event) => {
+  handlePopState = async (_event) => {
     if (this.urlUpdatedFromChangeEvent === false) {
       this.editor.setValue(this.decompressedValue)
     }
@@ -218,10 +287,14 @@ export default class extends Controller {
   updateURL() {
     window.parent.location.hash = this.compressedValue
 
-    const options = this.getParserOptions()
-    const printerOptions = this.getPrinterOptions()
-    this.setOptionsInURL(options)
-    this.setPrinterOptionsInURL(printerOptions)
+    if (!this.isRubyMode) {
+      const options = this.getParserOptions()
+      const printerOptions = this.getPrinterOptions()
+      const formatterOptions = this.getFormatterOptions()
+      this.setOptionsInURL(options)
+      this.setPrinterOptionsInURL(printerOptions)
+      this.setFormatterOptionsInURL(formatterOptions)
+    }
   }
 
   async insert(event) {
@@ -233,9 +306,9 @@ export default class extends Controller {
     }
 
     if (this.editor) {
-      this.editor.setValue(exampleFile)
+      this.editor.setValue(this.currentExampleFile)
     } else {
-      this.inputTarget.value = exampleFile
+      this.inputTarget.value = this.currentExampleFile
     }
 
     const button = this.getClosestButton(event.target)
@@ -258,7 +331,7 @@ export default class extends Controller {
 
       button.querySelector(".fa-circle-check").classList.remove("hidden")
       this.showShareSuccessMessage()
-    } catch (error) {
+    } catch (_error) {
       button.querySelector(".fa-circle-xmark").classList.remove("hidden")
       this.showShareErrorMessage()
     }
@@ -293,7 +366,7 @@ export default class extends Controller {
 
     switch(activeViewer) {
       case 'parse':
-        content = this.parseViewerTarget.textContent
+        content = this.parseOutputTarget.textContent
         break
       case 'lex':
         content = this.lexViewerTarget.textContent
@@ -303,6 +376,9 @@ export default class extends Controller {
         break
       case 'html':
         content = this.htmlViewerTarget.textContent
+        break
+      case 'rewrite':
+        content = this.rewriteOutputTarget.textContent
         break
       case 'format':
         if (!this.formatSuccessTarget.classList.contains('hidden')) {
@@ -432,14 +508,28 @@ export default class extends Controller {
     }
   }
 
+  restoreFormatterOptions() {
+    const formatterOptionsFromURL = this.getFormatterOptionsFromURL()
+
+    if (Object.keys(formatterOptionsFromURL).length > 0) {
+      this.setFormatterOptions(formatterOptionsFromURL)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
     }
   }
 
+  setFormatterOptions(formatterOptions) {
+    if (this.hasFormatterMaxLineLengthTarget && formatterOptions.hasOwnProperty('maxLineLength')) {
+      this.formatterMaxLineLengthTarget.value = formatterOptions.maxLineLength
+    }
+  }
+
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'full']
     return validTabs.includes(tab)
   }
 
@@ -501,7 +591,7 @@ export default class extends Controller {
     )
   }
 
-  selectViewer(event) {
+  selectViewer(_event) {
     const button = this.getClosestButton(event.target)
     const tabName = button.dataset.viewer
 
@@ -509,7 +599,7 @@ export default class extends Controller {
     this.updateTabInURL(tabName)
   }
 
-  showDiagnostics(event) {
+  showDiagnostics(_event) {
     this.setActiveTab('diagnostics')
     this.updateTabInURL('diagnostics')
   }
@@ -525,7 +615,7 @@ export default class extends Controller {
     }
   }
 
-  enclargeViewer(event) {
+  enclargeViewer(_event) {
     this.currentViewer.style.position = "absolute"
     this.currentViewer.style.top = `0px`
     this.currentViewer.style.right = `10px`
@@ -537,7 +627,7 @@ export default class extends Controller {
     this.currentViewer.style.cursor = "zoom-out"
   }
 
-  shrinkViewer(event) {
+  shrinkViewer(_event) {
     this.currentViewer.style.position = null
     this.currentViewer.style.left = null
     this.currentViewer.style.top = null
@@ -564,8 +654,20 @@ export default class extends Controller {
     element.classList.add("hover-highlight")
   }
 
+  expandAllNodes() {
+    if (this.hasParseOutputTarget) {
+      expandAll(this.parseOutputTarget)
+    }
+  }
+
+  collapseAllNodes() {
+    if (this.hasParseOutputTarget) {
+      collapseAll(this.parseOutputTarget)
+    }
+  }
+
   clearTreeLocationHighlights() {
-    this.parseViewerTarget
+    this.parseOutputTarget
       .querySelectorAll(".tree-location-highlight")
       .forEach((element) => {
         element.classList.remove("tree-location-highlight")
@@ -574,7 +676,7 @@ export default class extends Controller {
 
   get treeLocations() {
     return Array.from(
-      this.parseViewerTarget?.querySelectorAll(".token.location") || [],
+      this.parseOutputTarget?.querySelectorAll(".token.location") || [],
     ).map((locationElement) => {
       const element = locationElement.previousElementSibling
       const location = Array.from(
@@ -595,6 +697,8 @@ export default class extends Controller {
   }
 
   async formatEditor(event) {
+    if (this.isRubyMode) return
+
     const button = this.getClosestButton(event.target)
 
     if (button.disabled) {
@@ -603,7 +707,8 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const result = await analyze(Herb, value)
+      const formatterOptions = this.getFormatterOptions()
+      const result = await analyze(Herb, value, {}, {}, formatterOptions)
 
       if (result.formatted) {
         if (this.editor) {
@@ -627,6 +732,8 @@ export default class extends Controller {
   }
 
   async autofixEditor(event) {
+    if (this.isRubyMode) return
+
     const button = this.getClosestButton(event.target)
 
     if (button.disabled) {
@@ -682,9 +789,15 @@ export default class extends Controller {
     this.updateURL()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.isRubyMode) {
+      return this.analyzeRuby(value)
+    }
+
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
-    const result = await analyze(Herb, value, options, printerOptions)
+    const formatterOptions = this.getFormatterOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -738,7 +851,7 @@ export default class extends Controller {
     }
 
     if (this.hasTimeTarget) {
-      if (result.duration.toFixed(2) == 0.0) {
+      if (result.duration.toFixed(2) === 0.0) {
         this.timeTarget.textContent = `(in < 0.00 ms)`
       } else {
         this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
@@ -781,7 +894,6 @@ export default class extends Controller {
 
         if (commitInfo.prNumber) {
           const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
-          const commitUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
           this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
           this.commitHashTarget.href = prUrl
@@ -805,11 +917,12 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasParseViewerTarget) {
-      this.parseViewerTarget.classList.add("language-tree")
-      this.parseViewerTarget.textContent = result.string
+    if (this.hasParseOutputTarget) {
+      this.parseOutputTarget.classList.add("language-tree")
+      this.parseOutputTarget.textContent = result.string
 
-      Prism.highlightElement(this.parseViewerTarget)
+      Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -826,6 +939,28 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasRewriteViewerTarget) {
+      const options = this.getParserOptions()
+
+      if (this.hasRewriteActionViewHelpersTarget) {
+        this.rewriteActionViewHelpersTarget.checked = !!options.action_view_helpers
+      }
+
+      if (!options.action_view_helpers) {
+        this.rewriteStatusTarget.textContent = '⚠ Enable "Action View helpers" option'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+        this.rewriteOutputTarget.classList.remove("language-html")
+        this.rewriteOutputTarget.textContent = ''
+      } else {
+        this.rewriteStatusTarget.textContent = 'ActionView Tag Helper → HTML'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+        this.rewriteOutputTarget.classList.add("language-html")
+        this.rewriteOutputTarget.textContent = result.rewritten || 'No rewritten output available'
+
+        Prism.highlightElement(this.rewriteOutputTarget)
+      }
     }
 
     const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
@@ -969,6 +1104,96 @@ export default class extends Controller {
     }
   }
 
+  async analyzeRuby(value) {
+    const result = await analyzeRuby(Herb, value)
+
+    this.updatePosition(1, 0, value.length)
+
+    if (this.hasTimeTarget) {
+      if (result.duration.toFixed(2) === 0.0) {
+        this.timeTarget.textContent = `(in < 0.00 ms)`
+      } else {
+        this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
+      }
+    }
+
+    if (this.hasVersionTarget) {
+      const fullVersion = result.version
+      let displayVersion = fullVersion
+
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        displayVersion = fullVersion.split(',').map(component => {
+          if (component.includes('libprism')) {
+            return component
+          }
+
+          return component.replace(/@[\d]+\.[\d]+\.[\d]+/g, `@${commitInfo.hash}`)
+        }).join(',')
+      }
+
+      const shortVersion = displayVersion.split(',')[0]
+
+      const icon = this.versionTarget.querySelector('i')
+      if (icon) {
+        const textNodes = Array.from(this.versionTarget.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)
+        textNodes.forEach(node => node.remove())
+        this.versionTarget.insertBefore(document.createTextNode(shortVersion), icon)
+      } else {
+        this.versionTarget.textContent = shortVersion
+      }
+
+      this.versionTarget.title = displayVersion
+    }
+
+    if (this.hasCommitHashTarget) {
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        if (commitInfo.prNumber) {
+          const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
+
+          this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
+          this.commitHashTarget.href = prUrl
+          this.commitHashTarget.title = `View PR #${commitInfo.prNumber} on GitHub (commit ${commitInfo.hash})`
+        } else {
+          const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
+
+          if (commitInfo.ahead > 0) {
+            this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+          } else {
+            this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
+          }
+
+          this.commitHashTarget.href = githubUrl
+          this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+        }
+      } else {
+        this.commitHashTarget.textContent = 'unknown'
+        this.commitHashTarget.removeAttribute('href')
+        this.commitHashTarget.removeAttribute('title')
+      }
+    }
+
+    if (this.hasParseOutputTarget) {
+      this.parseOutputTarget.classList.add("language-tree")
+      this.parseOutputTarget.textContent = result.string
+
+      Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
+
+      this.treeLocations.forEach(({ element, locationElement, location }) => {
+        this.setupHoverListener(locationElement, location)
+        this.setupHoverListener(element, location)
+
+        if (element.classList.contains("string")) {
+          this.setupHoverListener(element.previousElementSibling, location)
+        }
+      })
+    }
+  }
+
   get compressedValue() {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     return lz.compressToEncodedURIComponent(value)
@@ -982,6 +1207,7 @@ export default class extends Controller {
 
   getParserOptions() {
     const options = {}
+    if (!this.hasParserOptionsTarget) return options
     const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
 
     optionInputs.forEach(input => {
@@ -997,6 +1223,7 @@ export default class extends Controller {
   }
 
   setParserOptions(options) {
+    if (!this.hasParserOptionsTarget) return
     const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
 
     optionInputs.forEach(input => {
@@ -1009,14 +1236,44 @@ export default class extends Controller {
         }
       }
     })
+
+    if (this.hasPrismNodesDeepLabelTarget) {
+      const prismNodesInput = this.parserOptionsTarget.querySelector('input[data-option="prism_nodes"]')
+      this.prismNodesDeepLabelTarget.classList.toggle("hidden", !prismNodesInput?.checked)
+    }
   }
 
-  onOptionChange(event) {
+  onOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onPrinterOptionChange(event) {
+  onPrismNodesChange(event) {
+    const checked = event.target.checked
+
+    if (this.hasPrismNodesDeepLabelTarget) {
+      this.prismNodesDeepLabelTarget.classList.toggle("hidden", !checked)
+    }
+  }
+
+  onPrinterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  onRewriteActionViewHelpersChange(event) {
+    const checked = event.target.checked
+    const parserCheckbox = this.parserOptionsTarget.querySelector('input[data-option="action_view_helpers"]')
+
+    if (parserCheckbox) {
+      parserCheckbox.checked = checked
+    }
+
+    this.updateURL()
+    this.analyze()
+  }
+
+  onFormatterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
@@ -1026,6 +1283,20 @@ export default class extends Controller {
     if (this.hasPrinterIgnoreErrorsTarget) {
       options.ignoreErrors = this.printerIgnoreErrorsTarget.checked
     }
+    return options
+  }
+
+  getFormatterOptions() {
+    const options = {}
+
+    if (this.hasFormatterMaxLineLengthTarget) {
+      const value = parseInt(this.formatterMaxLineLengthTarget.value, 10)
+
+      if (!isNaN(value) && value > 0) {
+        options.maxLineLength = value
+      }
+    }
+
     return options
   }
 
@@ -1047,11 +1318,28 @@ export default class extends Controller {
   setOptionsInURL(options) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      track_whitespace: false,
+      analyze: true,
+      strict: true,
+      action_view_helpers: false,
+      render_nodes: false,
+      strict_locals: false,
+      prism_program: false,
+      prism_nodes: false,
+      prism_nodes_deep: false,
+      dot_notation_tags: false,
+      html: true,
+    }
+
     const nonDefaultOptions = {}
 
     Object.keys(options).forEach(key => {
-      if (options[key] !== false && options[key] !== '' && options[key] !== null && options[key] !== undefined) {
-        nonDefaultOptions[key] = options[key]
+      const value = options[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultOptions[key] = value
       }
     })
 
@@ -1067,11 +1355,18 @@ export default class extends Controller {
   setPrinterOptionsInURL(printerOptions) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      ignoreErrors: false,
+    }
+
     const nonDefaultPrinterOptions = {}
 
     Object.keys(printerOptions).forEach(key => {
-      if (printerOptions[key] !== false && printerOptions[key] !== '' && printerOptions[key] !== null && printerOptions[key] !== undefined) {
-        nonDefaultPrinterOptions[key] = printerOptions[key]
+      const value = printerOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultPrinterOptions[key] = value
       }
     })
 
@@ -1093,6 +1388,41 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(printerOptionsString))
       } catch (e) {
         console.warn('Failed to parse printer options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setFormatterOptionsInURL(formatterOptions) {
+    const url = new URL(window.parent.location)
+
+    const nonDefaultFormatterOptions = {}
+
+    Object.keys(formatterOptions).forEach(key => {
+      if (key === 'maxLineLength' && formatterOptions[key] !== 80) {
+        nonDefaultFormatterOptions[key] = formatterOptions[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+    } else {
+      url.searchParams.delete('formatterOptions')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
+  getFormatterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const formatterOptionsString = urlParams.get('formatterOptions')
+
+    if (formatterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(formatterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse formatter options from URL:', e)
       }
     }
 
@@ -1176,7 +1506,7 @@ export default class extends Controller {
         const startLine = diagnostic.line || diagnostic.startLineNumber || 1
         const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
         const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
-        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+        const endColumn = (diagnostic.endColumn || diagnostic.column || 0) + 1
 
         groupHtml += `
           <div
@@ -1653,7 +1983,7 @@ export default class extends Controller {
       }
     }
 
-    let containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
+    const containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
 
     if (!containerDiv) {
       this.noDiagnosticsTarget.innerHTML = `
@@ -1736,7 +2066,7 @@ export default class extends Controller {
   }
 
 
-  openGitHubIssue(event) {
+  openGitHubIssue(_event) {
     const currentUrl = window.parent.location.href
 
     const issueTitle = encodeURIComponent('Bug report from Herb Playground')

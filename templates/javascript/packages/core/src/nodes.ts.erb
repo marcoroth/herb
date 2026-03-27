@@ -1,7 +1,8 @@
 import { Location } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError } from "./errors.js"
-import { convertToUTF8 } from "./util.js"
+import { deserializePrismNode, inspectPrismSerialized } from "./prism/index.js"
+import type { PrismNode } from "./prism/index.js"
 
 import type { SerializedLocation } from "./location.js"
 import type { SerializedHerbError } from "./errors.js"
@@ -25,6 +26,7 @@ export abstract class Node implements BaseNodeProps {
   readonly type: NodeType
   readonly location: Location
   readonly errors: HerbError[]
+  source: string | null = null
 
   static from(node: SerializedNode): Node {
     return fromSerializedNode(node)
@@ -38,6 +40,11 @@ export abstract class Node implements BaseNodeProps {
     this.type = type
     this.location = location
     this.errors = errors
+  }
+
+  setSource(source: string): void {
+    this.source = source
+    this.compactChildNodes().forEach(child => child.setSource(source))
   }
 
   toJSON(): SerializedNode {
@@ -143,15 +150,21 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%= field.name %>: boolean;
   <%- when Herb::Template::ElementSourceField -%>
   <%= field.name %>: string;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::LocationField -%>
+  <%= field.name %>: SerializedLocation | null;
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: Serialized<%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  <%= field.name %>: <%= field.union_kind.map { |k| "Serialized#{k}" }.join(" | ") %> | null;
   <%- else -%>
   <%= field.name %>: SerializedNode | null;
   <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%= field.name %>: SerializedNode[];
-  <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+  <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+  <%= field.name %>: number[] | null;
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
   // no-op for <%= field.name %>
   <%- else -%>
   <% raise "Unhandled class #{field.class}" %>
@@ -159,7 +172,8 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%- end -%>
 }
 
-export interface <%= node.name %>Props extends BaseNodeProps {
+export interface <%= node.name %>Props extends Omit<BaseNodeProps, 'type'> {
+  type: "<%= node.type %>";
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
@@ -170,9 +184,13 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%= field.name %>: boolean;
   <%- when Herb::Template::ElementSourceField -%>
   <%= field.name %>: string;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::LocationField -%>
+  <%= field.name %>: Location | null;
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  <%= field.name %>: <%= field.union_kind.join(" | ") %> | null;
   <%- else -%>
   <%= field.name %>: Node | null;
   <%- end -%>
@@ -182,7 +200,9 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- else -%>
   <%= field.name %>: any[];
   <%- end -%>
-  <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+  <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+  <%= field.name %>: Uint8Array | null;
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
   // no-op for <%= field.name %>
   <%- else -%>
   <% raise "Unhandled class #{field.class}" %>
@@ -191,6 +211,7 @@ export interface <%= node.name %>Props extends BaseNodeProps {
 }
 
 export class <%= node.name %> extends Node {
+  declare readonly type: "<%= node.type %>";
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
@@ -201,9 +222,13 @@ export class <%= node.name %> extends Node {
   readonly <%= field.name %>: boolean;
   <%- when Herb::Template::ElementSourceField -%>
   readonly <%= field.name %>: string;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::LocationField -%>
+  readonly <%= field.name %>: Location | null;
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   readonly <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  readonly <%= field.name %>: <%= field.union_kind.join(" | ") %> | null;
   <%- else -%>
   readonly <%= field.name %>: Node | null;
   <%- end -%>
@@ -213,7 +238,9 @@ export class <%= node.name %> extends Node {
   <%- else -%>
   readonly <%= field.name %>: Node[];
   <%- end -%>
-  <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+  <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+  readonly <%= field.name %>: Uint8Array | null;
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
   // no-op for <%= field.name %>
   <%- else -%>
   <% raise "Unhandled class #{field.class}" %>
@@ -239,11 +266,21 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::ElementSourceField -%>
       <%= field.name %>: data.<%= field.name %>,
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::LocationField -%>
+      <%= field.name %>: data.<%= field.name %> ? Location.from(data.<%= field.name %>) : null,
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+      <%- if field.union_kind -%>
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) as <%= field.union_kind.join(" | ") %> : null,
+      <%- elsif field.specific_kind -%>
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) as <%= field.specific_kind %> : null,
+      <%- else -%>
       <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) : null,
+      <%- end -%>
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
-      <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+      <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+      <%= field.name %>: data.<%= field.name %> ? new Uint8Array(data.<%= field.name %>) : null,
+      <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
       // no-op for <%= field.name %>
       <%- else -%>
       <% raise "Unhandled class #{field.class}" %>
@@ -260,15 +297,19 @@ export class <%= node.name %> extends Node {
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::TokenField -%>
     this.<%= field.name %> = props.<%= field.name %>;
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::StringField -%>
-    this.<%= field.name %> = convertToUTF8(props.<%= field.name %>);
+    this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::BooleanField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::ElementSourceField -%>
     this.<%= field.name %> = props.<%= field.name %>;
-    <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+    <%- when Herb::Template::LocationField -%>
+    this.<%= field.name %> = props.<%= field.name %>;
+    <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+    this.<%= field.name %> = props.<%= field.name %>;
+    <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
     // no-op for <%= field.name %>
     <%- else -%>
     <% raise "Unhandled class #{field.class}" %>
@@ -284,7 +325,7 @@ export class <%= node.name %> extends Node {
     return [
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       this.<%= field.name %>,
       <%- when Herb::Template::ArrayField -%>
       ...this.<%= field.name %>,
@@ -297,12 +338,20 @@ export class <%= node.name %> extends Node {
     return this.childNodes().filter(node => node !== null && node !== undefined)
   }
 
+  <%- if node.fields.any? { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
+  <%- prism_field = node.fields.find { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
+  get prismNode(): PrismNode | null {
+    if (!this.<%= prism_field.name %> || !this.source) return null;
+    return deserializePrismNode(this.<%= prism_field.name %>, this.source);
+  }
+  <%- end -%>
+
   recursiveErrors(): HerbError[] {
     return [
       ...this.errors,
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       this.<%= field.name %> ? this.<%= field.name %>.recursiveErrors() : [],
       <%- when Herb::Template::ArrayField -%>
       ...this.<%= field.name %>.map(node => node.recursiveErrors()),
@@ -325,11 +374,15 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: this.<%= field.name %>,
       <%- when Herb::Template::ElementSourceField -%>
       <%= field.name %>: this.<%= field.name %>,
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::LocationField -%>
+      <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: this.<%= field.name %>.map(node => node.toJSON()),
-      <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
+      <%- when Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+      <%= field.name %>: this.<%= field.name %> ? Array.from(this.<%= field.name %>) : null,
+      <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
       // no-op for <%= field.name %>
       <%- else -%>
       <% raise "Unhandled class #{field.class}" %>
@@ -343,26 +396,64 @@ export class <%= node.name %> extends Node {
 
     output += `@ <%= node.name %> ${this.location.treeInspectWithLabel()}\n`;
     output += `├── errors: ${this.inspectArray(this.errors, "<%= node.fields.any? ? "│   " : "    " %>")}`;
-    <%- node.fields.each do |field| -%>
-    <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
-    <%- name = "#{symbol} #{field.name}: " -%>
+    <%- node.field_visibilities.each do |visibility| -%>
+    <%- field = visibility.field -%>
+    <%- next if field.always_invisible? -%>
+    <%- if field.conditionally_invisible? -%>
+    if (this.<%= field.name %>) {
+      output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.source ? inspectPrismSerialized(this.<%= field.name %>, this.source, "<%= visibility.prefix %>") : `(${this.<%= field.name %>.length} bytes)`}\n`;
+    }
+    <%- else -%>
+    <%- if visibility.dynamic_last? -%>
+    {
+      const isLast = !this.<%= visibility.prism_field_name %>;
+      const symbol = isLast ? "└──" : "├──";
+    <%- end -%>
     <%- case field -%>
-    <%- when Herb::Template::StringField -%>
-    output += `<%= name %>${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
+    <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+    <%- if visibility.dynamic_last? -%>
+      output += `${symbol} <%= field.name %>: ${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
+    <%- end -%>
     <%- when Herb::Template::TokenField -%>
-    output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
+    <%- if visibility.dynamic_last? -%>
+      output += `${symbol} <%= field.name %>: ${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
+    <%- end -%>
     <%- when Herb::Template::BooleanField -%>
-    output += `<%= name %>${typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅"}\n`;
-    <%- when Herb::Template::ElementSourceField -%>
-    output += `<%= name %>${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
-    <%- when Herb::Template::NodeField -%>
-    output += `<%= name %>${this.inspectNode(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
+    <%- if visibility.dynamic_last? -%>
+      output += `${symbol} <%= field.name %>: ${typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅"}\n`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅"}\n`;
+    <%- end -%>
+    <%- when Herb::Template::LocationField -%>
+    <%- if visibility.dynamic_last? -%>
+      output += `${symbol} <%= field.name %>: ${this.<%= field.name %> ? "(location: " + this.<%= field.name %>.treeInspect() + ")" : "∅"}\n`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.<%= field.name %> ? "(location: " + this.<%= field.name %>.treeInspect() + ")" : "∅"}\n`;
+    <%- end -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+    <%- if visibility.dynamic_last? -%>
+      const childPrefix = isLast ? "    " : "│   ";
+      output += `${symbol} <%= field.name %>: ${this.inspectNode(this.<%= field.name %>, childPrefix)}`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.inspectNode(this.<%= field.name %>, "<%= visibility.prefix %>")}`;
+    <%- end -%>
     <%- when Herb::Template::ArrayField -%>
-    output += `<%= name %>${this.inspectArray(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
-    <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
-    // no-op for <%= field.name %>
+    <%- if visibility.dynamic_last? -%>
+      const childPrefix = isLast ? "    " : "│   ";
+      output += `${symbol} <%= field.name %>: ${this.inspectArray(this.<%= field.name %>, childPrefix)}`;
+    <%- else -%>
+    output += `<%= visibility.symbol.strip %> <%= field.name %>: ${this.inspectArray(this.<%= field.name %>, "<%= visibility.prefix %>")}`;
+    <%- end -%>
     <%- else -%>
     <% raise "Unhandled class #{field.class}" %>
+    <%- end -%>
+    <%- if visibility.dynamic_last? -%>
+    }
+    <%- end -%>
     <%- end -%>
     <%- end -%>
 

@@ -1,6 +1,5 @@
 import type { EnhanceAppContext } from "vitepress"
 import Theme from "vitepress/theme"
-import { h } from "vue"
 import { onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import mediumZoom from 'medium-zoom'
@@ -23,7 +22,7 @@ export default {
     const route = useRoute()
 
     const initZoom = () => {
-      mediumZoom('.main img', {
+      mediumZoom('.main img:not([data-no-zoom])', {
         background: 'var(--vp-c-bg)',
         margin: 24,
         scrollOffset: 0

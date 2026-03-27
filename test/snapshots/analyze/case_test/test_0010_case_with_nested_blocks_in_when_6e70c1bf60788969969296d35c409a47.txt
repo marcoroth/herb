@@ -25,6 +25,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when 1 " (location: (2:2)-(2:10))
     │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
     │   │           │   └── content: "\n  "
@@ -45,6 +46,9 @@ input: |2-
     │   │           │   │   │   │   └── @ HTMLTextNode (location: (4:29)-(6:4))
     │   │           │   │   │   │       └── content: "\n      Nested\n    "
     │   │           │   │   │   │
+    │   │           │   │   │   ├── rescue_clause: ∅
+    │   │           │   │   │   ├── else_clause: ∅
+    │   │           │   │   │   ├── ensure_clause: ∅
     │   │           │   │   │   └── end_node:
     │   │           │   │   │       └── @ ERBEndNode (location: (6:4)-(6:13))
     │   │           │   │   │           ├── tag_opening: "<%" (location: (6:4)-(6:6))
@@ -55,6 +59,9 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (6:13)-(7:2))
     │   │           │   │       └── content: "\n  "
     │   │           │   │
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (7:2)-(7:11))
     │   │           │           ├── tag_opening: "<%" (location: (7:2)-(7:4))

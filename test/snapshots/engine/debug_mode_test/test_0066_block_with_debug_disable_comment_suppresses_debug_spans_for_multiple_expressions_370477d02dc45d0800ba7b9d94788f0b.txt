@@ -1,0 +1,10 @@
+---
+source: "Engine::DebugModeTest#test_0066_block with debug disable comment suppresses debug spans for multiple expressions"
+input: "{source: \"<%= content_for :title do # herb:debug disable %>\\n  <%= [t('app_title.text', app_name: AppSettings.app_name), breadcrumb_trail&.first&.name].compact.join(\\\" | \\\") %>\\n  <%= :subtitle %>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << (content_for :title do # herb:debug disable
+; _buf << '
+  '.freeze; _buf << ([t('app_title.text', app_name: AppSettings.app_name), breadcrumb_trail&.first&.name].compact.join(" | ")).to_s; _buf << '
+  '.freeze; _buf << (:subtitle).to_s; _buf << '
+'.freeze; end )
+_buf.to_s

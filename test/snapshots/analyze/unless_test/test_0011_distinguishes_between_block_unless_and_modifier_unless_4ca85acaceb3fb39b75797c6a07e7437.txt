@@ -34,6 +34,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │   │   ├── content: " unless item.special? " (location: (3:4)-(3:26))
     │   │   │   ├── tag_closing: "%>" (location: (3:26)-(3:28))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (3 items)
     │   │   │   │   ├── @ HTMLTextNode (location: (3:28)-(4:4))
     │   │   │   │   │   └── content: "\n    "
@@ -84,7 +85,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (4:45)-(4:46))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (4:46)-(5:2))
     │   │   │   │       └── content: "\n  "
@@ -144,7 +145,7 @@ input: |2-
     │   │   │   │           │   │       └── tag_closing: ">" (location: (6:46)-(6:47))
     │   │   │   │           │   │
     │   │   │   │           │   ├── is_void: false
-    │   │   │   │           │   └── source: "HTML"
+    │   │   │   │           │   └── element_source: "HTML"
     │   │   │   │           │
     │   │   │   │           └── @ HTMLTextNode (location: (6:47)-(7:2))
     │   │   │   │               └── content: "\n  "
@@ -160,6 +161,9 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (7:11)-(8:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (8:0)-(8:9))
     │           ├── tag_opening: "<%" (location: (8:0)-(8:2))

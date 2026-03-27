@@ -1,4 +1,18 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
+  # : (String path, ?arena_stats: bool) -> LexResult
+  def self.lex_file: (String path, ?arena_stats: bool) -> LexResult
+
+  # : (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+  def self.parse_file: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+
+  # : (String source) -> Prism::ParseResult
+  def self.parse_ruby: (String source) -> Prism::ParseResult
+
+  def self.configuration: (?untyped project_path) -> untyped
+
+  def self.configure: (?untyped project_path) -> untyped
+
+  def self.reset_configuration!: () -> untyped
 end

@@ -85,6 +85,49 @@ code.language-tree {
   white-space: pre;
 }
 
+.tree-line {
+  display: block;
+  position: relative;
+}
+
+.tree-toggle {
+  display: none;
+}
+
+.tree-collapsible .token.node,
+.tree-collapsible .token.error-class {
+  cursor: pointer;
+  font-size: 0;
+}
+
+.tree-collapsible .token.node::before,
+.tree-collapsible .token.error-class::before {
+  content: attr(data-prefix) " " attr(data-name);
+  font-size: 14px;
+}
+
+.tree-collapsible:not([data-collapsed="true"]) .token.node:hover::before,
+.tree-collapsible:not([data-collapsed="true"]) .token.error-class:hover::before {
+  content: "- " attr(data-name);
+}
+
+.tree-collapsible[data-collapsed="true"] .token.node:hover::before,
+.tree-collapsible[data-collapsed="true"] .token.error-class:hover::before {
+  content: "+ " attr(data-name);
+}
+
+
+.tree-collapsible[data-collapsed="true"] .token.node::after,
+.tree-collapsible[data-collapsed="true"] .token.error-class::after {
+  content: " \2026";
+  color: #607d8b;
+  font-style: italic;
+}
+
+.tree-collapsible[data-collapsed="true"] {
+  opacity: 0.25;
+}
+
 #monaco-input-container {
   width: 100%;
   height: 100% !important;

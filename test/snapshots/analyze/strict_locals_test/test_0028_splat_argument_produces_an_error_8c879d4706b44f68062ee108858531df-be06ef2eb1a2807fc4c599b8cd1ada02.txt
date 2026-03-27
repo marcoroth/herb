@@ -1,0 +1,27 @@
+---
+source: "Analyze::StrictLocalsTest#test_0028_splat argument produces an error"
+input: |2-
+<%# locals: (*args) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:22))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (*args) " (location: (1:3)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   └── locals: (1 item)
+    │       └── @ RubyStrictLocalNode (location: (1:14)-(1:18))
+    │           ├── errors: (1 error)
+    │           │   └── @ StrictLocalsSplatArgumentError (location: (1:14)-(1:18))
+    │           │       ├── message: "Strict locals only support keyword arguments. Splat argument `*args` is not allowed."
+    │           │       └── name: "args"
+    │           │
+    │           ├── name: "args" (location: (1:14)-(1:18))
+    │           ├── default_value: ∅
+    │           ├── required: false
+    │           └── double_splat: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:22)-(2:0))
+        └── content: "\n"

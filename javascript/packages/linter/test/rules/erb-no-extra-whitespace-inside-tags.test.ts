@@ -4,7 +4,7 @@ import dedent from "dedent";
 import { ERBNoExtraWhitespaceRule } from "../../src/rules/erb-no-extra-whitespace-inside-tags";
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoExtraWhitespaceRule)
+const { expectNoOffenses, expectError, expectInfo, assertOffenses } = createLinterTest(ERBNoExtraWhitespaceRule)
 
 describe("erb-no-extra-whitespace-inside-tags", () => {
   it("should not report for correct single whitespace in ERB tags", () => {
@@ -116,7 +116,7 @@ describe("erb-no-extra-whitespace-inside-tags", () => {
   })
 
   it("should report ERB comment tags with equals sign and extra whitespace", () => {
-    expectError("Remove extra whitespace after `<%#=`.", [1, 4])
+    expectInfo("Remove extra whitespace after `<%#=`. This looks like a temporarily commented ERB tag.", [1, 4])
     expectError("Remove extra whitespace before `%>`.", [1, 75])
 
     assertOffenses(dedent`
@@ -124,8 +124,10 @@ describe("erb-no-extra-whitespace-inside-tags", () => {
     `)
   })
 
-  it("should not report ERB comment tags with single space after equals", () => {
-    expectNoOffenses(dedent`
+  it("should report info for ERB comment tags with single space after equals", () => {
+    expectInfo("`<%#=` looks like a temporarily commented ERB tag.", [1, 0])
+
+    assertOffenses(dedent`
       <%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
     `)
   })

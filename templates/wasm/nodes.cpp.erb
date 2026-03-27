@@ -4,12 +4,12 @@
 #include "error_helpers.h"
 #include "extension_helpers.h"
 
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
 #include "../src/include/herb.h"
-#include "../src/include/location.h"
-#include "../src/include/token.h"
-#include "../src/include/util/hb_array.h"
+#include "../src/include/location/location.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/lib/hb_array.h"
 
 using namespace emscripten;
 
@@ -28,8 +28,8 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  result.set("<%= field.name %>", CreateString(<%= node.human %>-><%= field.name %>));
-  <%- when Herb::Template::NodeField -%>
+  result.set("<%= field.name %>", CreateStringFromHbString(<%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*) <%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::TokenField -%>
   result.set("<%= field.name %>", CreateToken(<%= node.human %>-><%= field.name %>));
@@ -38,8 +38,51 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   <%- when Herb::Template::ArrayField -%>
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::ElementSourceField -%>
-  result.set("<%= field.name %>", CreateStringFromHbString(element_source_to_string(<%= node.human %>-><%= field.name %>)));
+  result.set("<%= field.name %>", CreateStringFromHbString(<%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::LocationField -%>
+  if (<%= node.human %>-><%= field.name %>) {
+    result.set("<%= field.name %>", CreateLocation(*<%= node.human %>-><%= field.name %>));
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
+  <%- when Herb::Template::PrismSerializedField -%>
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    val jsArray = val::array();
+
+    for (size_t i = 0; i < <%= node.human %>-><%= field.name %>.length; i++) {
+      jsArray.call<void>("push", (int)<%= node.human %>-><%= field.name %>.data[i]);
+    }
+
+    result.set("<%= field.name %>", jsArray);
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
+  <%- when Herb::Template::PrismNodeField -%>
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+
+    if (pm_buffer.length > 0) {
+      val jsArray = val::array();
+
+      for (size_t i = 0; i < pm_buffer.length; i++) {
+        jsArray.call<void>("push", (int)((uint8_t*)pm_buffer.value)[i]);
+      }
+
+      result.set("<%= field.name %>", jsArray);
+    } else {
+      result.set("<%= field.name %>", val::null());
+    }
+
+    pm_buffer_free(&pm_buffer);
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
+  /* <%= field.name %> is internal parser state, not exposed to JavaScript */
+  result.set("<%= field.name %>", val::null());
   <%- else -%>
+  /* Unhandled field type: <%= field.class.name %> */
   result.set("<%= field.name %>", val::null());
   <%- end -%>
   <%- end -%>
@@ -71,7 +114,7 @@ val NodesArrayFromCArray(hb_array_T* array) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
-      jsArray.set(i, NodeFromCStruct(child_node));
+      jsArray.call<void>("push", NodeFromCStruct(child_node));
     }
   }
 

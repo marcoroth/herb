@@ -6,11 +6,13 @@ docs/docs/linter/rules/
 # Herb output
 /herb
 /run_herb_tests
+/bench_allocs
 
 # Herb Ruby extension
 /ext/herb/extconf.h
 /ext/herb/herb.bundle
 /ext/herb/Makefile
+/ext/herb/mkmf.log
 /lib/herb/herb.bundle
 
 # Prerequisites
@@ -98,6 +100,7 @@ java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
 java/org/herb/ast/Visitor.java
 javascript/packages/core/src/errors.ts
+javascript/packages/core/src/html-entities.json
 javascript/packages/core/src/node-type-guards.ts
 javascript/packages/core/src/nodes.ts
 javascript/packages/core/src/visitor.ts
@@ -111,17 +114,20 @@ lib/herb/visitor.rb
 rust/src/ast/nodes.rs
 rust/src/errors.rs
 rust/src/nodes.rs
+rust/src/union_types.rs
+rust/src/visitor.rs
 sig/serialized_ast_errors.rbs
 sig/serialized_ast_nodes.rbs
-src/analyze_missing_end.c
-src/analyze_transform.c
-src/ast_nodes.c
-src/ast_pretty_print.c
+src/analyze/missing_end.c
+src/analyze/transform.c
+src/ast/ast_nodes.c
+src/ast/ast_pretty_print.c
 src/errors.c
-src/include/ast_nodes.h
-src/include/ast_pretty_print.h
+src/include/ast/ast_nodes.h
+src/include/ast/ast_pretty_print.h
 src/include/errors.h
-src/parser_match_tags.c
+src/include/lib/hb_foreach.h
+src/parser/match_tags.c
 src/visitor.c
 wasm/error_helpers.cpp
 wasm/error_helpers.h
@@ -131,6 +137,7 @@ wasm/nodes.h
 # Java Build Artifacts
 java/target/
 java/.java_compiled
+java/lib/*.jar
 
 # Rust Build Artifacts
 rust/target/
@@ -160,3 +167,6 @@ docs/docs/public/c-reference
 
 # Clangd config
 compile_flags.txt
+
+# Local .envrc overrides
+.envrc.local

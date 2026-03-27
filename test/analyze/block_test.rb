@@ -200,5 +200,184 @@ module Analyze
         <% content = capture { yield } if block_given? %>
       HTML
     end
+
+    # https://github.com/marcoroth/herb/issues/1037
+    test "yield with fallback block" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= yield(:sidebar).presence || capture do %>
+          default sidebar
+        <% end %>
+      HTML
+    end
+
+    test "stabby lambda with do block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = -> do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "stabby lambda with do block and params" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = ->(x) do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "lambda keyword with do block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "lambda keyword with do block and params" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda do |x| %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "inline stabby lambda with do/end in single tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = -> do; end %>
+      HTML
+    end
+
+    test "inline lambda keyword with do/end in single tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda do; end %>
+      HTML
+    end
+
+    test "stabby lambda with brace block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = -> { %>
+          Content
+        <% } %>
+      HTML
+    end
+
+    test "lambda keyword with brace block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda { %>
+          Content
+        <% } %>
+      HTML
+    end
+
+    test "unclosed stabby lambda with do block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = -> do %>
+          Content
+      HTML
+    end
+
+    test "unclosed stabby lambda with brace block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = -> { %>
+          Content
+      HTML
+    end
+
+    test "unclosed lambda keyword with do block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda do %>
+          Content
+      HTML
+    end
+
+    test "unclosed lambda keyword with brace block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = lambda { %>
+          Content
+      HTML
+    end
+
+    test "block with rescue" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and else" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue, else, and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with multiple rescues" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue StandardError %>
+          <%= "standard error" %>
+        <% rescue ArgumentError %>
+          <%= "argument error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue wrapped in element" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <% items.each do |item| %>
+            <%= item %>
+          <% rescue %>
+            <span>Error</span>
+          <% end %>
+        </div>
+      HTML
+    end
   end
 end

@@ -36,6 +36,7 @@ input: |2-
     │   │       │   │           │       ├── tag_opening: "<%" (location: (1:12)-(1:14))
     │   │       │   │           │       ├── content: " if some_condition " (location: (1:14)-(1:33))
     │   │       │   │           │       ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   │       │   │           │       ├── then_keyword: ∅
     │   │       │   │           │       ├── statements: (1 item)
     │   │       │   │           │       │   └── @ LiteralNode (location: (1:35)-(1:36))
     │   │       │   │           │       │       └── content: "a"
@@ -83,7 +84,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

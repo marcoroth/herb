@@ -11,15 +11,21 @@ pub mod parse_result;
 pub mod position;
 pub mod range;
 pub mod token;
+pub mod union_types;
+pub mod visitor;
 
 pub use errors::{AnyError, ErrorNode, ErrorType};
-pub use herb::{extract_html, extract_ruby, herb_version, lex, parse, prism_version, version};
+pub use herb::{
+  extract_html, extract_ruby, extract_ruby_with_options, herb_version, lex, parse, parse_ruby, parse_with_options, prism_version, version, ExtractRubyOptions,
+  ParserOptions, RubyParseResult,
+};
 pub use lex_result::LexResult;
 pub use location::Location;
-pub use nodes::{AnyNode, Node};
+pub use nodes::{AnyNode, ERBNode, Node};
 pub use parse_result::ParseResult;
 pub use position::Position;
 pub use range::Range;
 pub use token::Token;
+pub use visitor::Visitor;
 
-pub const VERSION: &str = "0.8.6";
+pub const VERSION: &str = "0.9.2";

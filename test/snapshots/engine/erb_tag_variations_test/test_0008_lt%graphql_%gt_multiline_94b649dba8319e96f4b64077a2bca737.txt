@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0008_<%graphql %> multiline"
+input: "{source: \"<%graphql\\n  fragment UserFragment on User {\\n    name\\n  }\\n%>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '
+'.freeze;
+_buf.to_s

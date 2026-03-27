@@ -1,0 +1,38 @@
+---
+source: "Analyze::RenderTest#test_0028_render with invalid as option error"
+input: |2-
+<%= render partial: "product", collection: @products, as: "Invalid-Name" %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:75))
+    │   ├── errors: (1 error)
+    │   │   └── @ RenderInvalidAsOptionError (location: (1:0)-(1:75))
+    │   │       ├── message: "The `as:` value `'Invalid-Name'` is not a valid Ruby identifier. Use a name that starts with a lowercase letter or underscore, like `as: :item`."
+    │   │       └── as_value: "Invalid-Name"
+    │   │
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render partial: "product", collection: @products, as: "Invalid-Name" " (location: (1:3)-(1:73))
+    │   ├── tag_closing: "%>" (location: (1:73)-(1:75))
+    │   ├── partial: "product" (location: (1:20)-(1:29))
+    │   ├── template_path: ∅
+    │   ├── layout: ∅
+    │   ├── file: ∅
+    │   ├── inline_template: ∅
+    │   ├── body: ∅
+    │   ├── plain: ∅
+    │   ├── html: ∅
+    │   ├── renderable: ∅
+    │   ├── collection: "@products" (location: (1:43)-(1:52))
+    │   ├── object: ∅
+    │   ├── as_name: "Invalid-Name" (location: (1:58)-(1:72))
+    │   ├── spacer_template: ∅
+    │   ├── formats: ∅
+    │   ├── variants: ∅
+    │   ├── handlers: ∅
+    │   ├── content_type: ∅
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:75)-(2:0))
+        └── content: "\n"

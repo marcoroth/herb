@@ -1,4 +1,4 @@
-import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, Position, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Config } from "@herb-tools/config"
@@ -6,7 +6,7 @@ import { Project } from "./project"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 
-import { getFullDocumentRange } from "./utils"
+import { getFullDocumentRange, lspRangeFromLocation } from "./range_utils"
 
 import type { LintOffense } from "@herb-tools/linter"
 
@@ -23,6 +23,7 @@ export class CodeActionService {
 
   setConfig(config: Config) {
     this.config = config
+    this.linter = Linter.from(Herb, config)
   }
 
   createCodeActions(uri: string, diagnostics: Diagnostic[], documentText: string): CodeAction[] {
@@ -108,6 +109,19 @@ export class CodeActionService {
         }
 
         codeActions.push(codeAction)
+      } else {
+        const unsafeFixResult = this.linter.autofix(text, { fileName: document.uri }, [offense], { includeUnsafe: true })
+
+        if (unsafeFixResult.fixed.length > 0 && unsafeFixResult.source !== text) {
+          const codeAction: CodeAction = {
+            title: `Herb Linter: Unsafely fix "${offense.message}"`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: this.createDocumentEdit(document, unsafeFixResult.source)
+          }
+
+          codeActions.push(codeAction)
+        }
       }
     }
 
@@ -348,10 +362,7 @@ export class CodeActionService {
   }
 
   private offenseToRange(offense: LintOffense): Range {
-    return {
-      start: Position.create(offense.location.start.line - 1, offense.location.start.column),
-      end: Position.create(offense.location.end.line - 1, offense.location.end.column)
-    }
+    return lspRangeFromLocation(offense.location)
   }
 
   private rangesEqual(r1: Range, r2: Range): boolean {

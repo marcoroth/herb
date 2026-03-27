@@ -1,0 +1,75 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0008_content_tag with attributes in string key hash style"
+input: |2-
+<%= content_tag :div, "data-controller" => "example", "data-user-id": 123 do %>
+  Content
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:9))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:79))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag :div, "data-controller" => "example", "data-user-id": 123 do " (location: (1:3)-(1:77))
+    │   │       ├── tag_closing: "%>" (location: (1:77)-(1:79))
+    │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:23)-(1:52))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:23)-(1:38))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:23)-(1:38))
+    │   │           │   │               └── content: "data-controller"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: " => " (location: (1:39)-(1:43))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:43)-(1:52))
+    │   │           │           ├── open_quote: """ (location: (1:43)-(1:44))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:44)-(1:51))
+    │   │           │           │       └── content: "example"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:51)-(1:52))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:55)-(1:73))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:55)-(1:67))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:55)-(1:67))
+    │   │               │               └── content: "data-user-id"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:68)-(1:70))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:70)-(1:73))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:70)-(1:73))
+    │   │                       │       └── content: "123"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:79)-(3:0))
+    │   │       └── content: "\n  Content\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ ERBEndNode (location: (3:0)-(3:9))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " end " (location: (3:2)-(3:7))
+    │   │       └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

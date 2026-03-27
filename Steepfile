@@ -10,8 +10,11 @@ target :lib do
   library "json"
   library "pathname"
   library "tempfile"
+  library "yaml"
+  library "prism"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"
   ignore "lib/herb/engine/error_formatter.rb"
+  ignore "lib/herb/bootstrap.rb"
 end

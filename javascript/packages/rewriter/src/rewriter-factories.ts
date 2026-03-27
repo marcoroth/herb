@@ -1,4 +1,6 @@
 import { TailwindClassSorterRewriter } from "./built-ins/tailwind-class-sorter.js"
+import { ActionViewTagHelperToHTMLRewriter } from "./built-ins/action-view-tag-helper-to-html.js"
+import { HTMLToActionViewTagHelperRewriter } from "./built-ins/html-to-action-view-tag-helper.js"
 
 export interface TailwindClassSorterOptions {
   /**
@@ -34,4 +36,12 @@ export async function tailwindClassSorter(options: TailwindClassSorterOptions = 
   await rewriter.initialize({ baseDir })
 
   return rewriter
+}
+
+export function actionViewTagHelperToHTML(): ActionViewTagHelperToHTMLRewriter {
+  return new ActionViewTagHelperToHTMLRewriter()
+}
+
+export function htmlToActionViewTagHelper(): HTMLToActionViewTagHelperRewriter {
+  return new HTMLToActionViewTagHelperRewriter()
 }

@@ -35,12 +35,12 @@ describe("@herb-tools/config", () => {
     })
 
     test("can be instantiated", () => {
-      const config = new Config(testDir, { version: "0.8.6" })
+      const config = new Config(testDir, { version: "0.9.2" })
       expect(config).toBeInstanceOf(Config)
     })
 
     test("sets correct config path", () => {
-      const config = new Config(testDir, { version: "0.8.6" })
+      const config = new Config(testDir, { version: "0.9.2" })
       expect(config.path).toBe(join(testDir, ".herb.yml"))
     })
   })
@@ -66,14 +66,14 @@ describe("@herb-tools/config", () => {
 
     test("returns true when config file exists", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.8.6\n")
+      writeFileSync(configPath, "version: 0.9.2\n")
 
       expect(Config.exists(testDir)).toBe(true)
     })
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.8.6\n")
+      writeFileSync(configPath, "version: 0.9.2\n")
 
       expect(Config.exists(configPath)).toBe(true)
     })
@@ -83,7 +83,7 @@ describe("@herb-tools/config", () => {
     test("reads raw YAML content from config file", () => {
       const configPath = join(testDir, ".herb.yml")
       const yamlContent = dedent`
-        version: 0.8.6
+        version: 0.9.2
         linter:
           enabled: true
           rules:
@@ -98,7 +98,7 @@ describe("@herb-tools/config", () => {
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      const yamlContent = "version: 0.8.6\n"
+      const yamlContent = "version: 0.9.2\n"
       writeFileSync(configPath, yamlContent)
 
       const rawYaml = Config.readRawYaml(configPath)
@@ -191,7 +191,7 @@ describe("@herb-tools/config", () => {
   describe("Config.applyMutationToYamlString", () => {
     test("applies mutation to existing YAML", () => {
       const existingYaml = dedent`
-        version: 0.8.6
+        version: 0.9.2
         linter:
           enabled: true
       `
@@ -206,7 +206,7 @@ describe("@herb-tools/config", () => {
 
       const updatedYaml = Config.applyMutationToYamlString(existingYaml, mutation)
 
-      expect(updatedYaml).toContain("version: 0.8.6")
+      expect(updatedYaml).toContain("version: 0.9.2")
       expect(updatedYaml).toContain("enabled: true")
       expect(updatedYaml).toContain("html-tag-name-lowercase:")
       expect(updatedYaml).toContain("enabled: false")
@@ -214,7 +214,7 @@ describe("@herb-tools/config", () => {
 
     test("merges rules without overwriting existing rules", () => {
       const existingYaml = dedent`
-        version: 0.8.6
+        version: 0.9.2
         linter:
           rules:
             html-img-require-alt:
@@ -237,7 +237,7 @@ describe("@herb-tools/config", () => {
 
     test("updates existing rule configuration", () => {
       const existingYaml = dedent`
-        version: 0.8.6
+        version: 0.9.2
         linter:
           rules:
             html-tag-name-lowercase:
@@ -707,16 +707,126 @@ describe("@herb-tools/config", () => {
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/legacy/old.html.erb")).toBe(false)
     })
 
-    test("isEnabledForPath works for linter tool", () => {
+    test("isRuleEnabledForPath rule.exclude is additive with linter.exclude", () => {
       const configOptions: HerbConfigOptions = {
         linter: {
-          exclude: ["vendor/**/*"]
+          exclude: ["vendor/**/*"],
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: true,
+              exclude: ["legacy/**/*"]
+            }
+          }
         }
       }
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/home/index.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "vendor/bundle/file.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "legacy/old.html.erb")).toBe(false)
+    })
+
+    test("full exclude inheritance chain: defaults + files + linter + rule", () => {
+      const configOptions: HerbConfigOptions = {
+        files: {
+          exclude: ["public/**/*"]
+        },
+        linter: {
+          exclude: ["legacy/**/*"],
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: true,
+              exclude: ["generated/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/home/index.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "node_modules/pkg/file.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "public/assets/file.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "legacy/old.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "generated/output.html.erb")).toBe(false)
+    })
+
+    test("rule.include can override parent-level excludes", () => {
+      const configOptions: HerbConfigOptions = {
+        files: {
+          exclude: ["public/**/*"]
+        },
+        linter: {
+          exclude: ["legacy/**/*"],
+          rules: {
+            "html-tag-name-lowercase": {
+              include: ["legacy/**/*", "public/**/*", "node_modules/**/*"],
+              exclude: ["generated/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "legacy/index.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "public/page.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "node_modules/pkg/file.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "generated/output.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/index.html.erb")).toBe(false)
+    })
+
+    test("linter.exclude combines with files.exclude for file discovery", () => {
+      const configOptions: HerbConfigOptions = {
+        files: {
+          exclude: ["public/**/*"]
+        },
+        linter: {
+          exclude: ["legacy/**/*"]
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+      const linterFiles = config.getFilesConfigForTool("linter")
+
+      expect(linterFiles.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "public/**/*",
+        "legacy/**/*"
+      ])
+    })
+
+    test("isEnabledForPath works for linter tool", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          exclude: ["legacy/**/*"]
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
       expect(config.isEnabledForPath("app/views/home/index.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("legacy/old.html.erb", "linter")).toBe(false)
+    })
+
+    test("isEnabledForPath respects defaults and files.exclude", () => {
+      const configOptions: HerbConfigOptions = {
+        files: {
+          exclude: ["public/**/*"]
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isEnabledForPath("app/views/home/index.html.erb", "linter")).toBe(true)
+      expect(config.isEnabledForPath("node_modules/pkg/file.html.erb", "linter")).toBe(false)
       expect(config.isEnabledForPath("vendor/bundle/file.html.erb", "linter")).toBe(false)
+      expect(config.isEnabledForPath("public/assets/file.html.erb", "linter")).toBe(false)
     })
 
     test("isEnabledForPath works for formatter tool", () => {
@@ -726,6 +836,7 @@ describe("@herb-tools/config", () => {
           exclude: ["test/**/*"]
         }
       }
+
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
       expect(config.isEnabledForPath("app/views/home/index.html.erb", "formatter")).toBe(true)
@@ -734,13 +845,15 @@ describe("@herb-tools/config", () => {
 
     test("getFilesConfigForTool returns default patterns when no config", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
-
       const linterFiles = config.getFilesConfigForTool("linter")
+
       expect(linterFiles.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb'
       ])
     })
@@ -749,21 +862,33 @@ describe("@herb-tools/config", () => {
       const configOptions: HerbConfigOptions = {
         linter: {
           include: ["**/*.xml.erb"],
-          exclude: ["vendor/**/*"]
+          exclude: ["legacy/**/*"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const linterFiles = config.getFilesConfigForTool("linter")
+
       expect(linterFiles.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml.erb'
       ])
-      expect(linterFiles.exclude).toEqual(["vendor/**/*"])
+
+      expect(linterFiles.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "legacy/**/*"
+      ])
     })
 
     test("getFilesConfigForTool combines top-level with defaults", () => {
@@ -773,19 +898,51 @@ describe("@herb-tools/config", () => {
           exclude: ["public/**/*"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const linterFiles = config.getFilesConfigForTool("linter")
 
       expect(linterFiles.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml'
       ])
-      expect(linterFiles.exclude).toEqual(["public/**/*"])
+
+      expect(linterFiles.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "public/**/*"
+      ])
+    })
+
+    test("exclude patterns that duplicate defaults result in duplicates", () => {
+      const configOptions: HerbConfigOptions = {
+        files: {
+          exclude: ["vendor/**/*"]
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+      const linterFiles = config.getFilesConfigForTool("linter")
+
+      expect(linterFiles.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "vendor/**/*"
+      ])
     })
 
     test("getFilesConfigForTool combines all levels (default + top + tool)", () => {
@@ -799,40 +956,64 @@ describe("@herb-tools/config", () => {
           exclude: ["test/**/*"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const formatterFiles = config.getFilesConfigForTool("formatter")
 
       expect(formatterFiles.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml',
         '**/*.custom.erb'
       ])
-      expect(formatterFiles.exclude).toEqual(["test/**/*"])
+
+      expect(formatterFiles.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "public/**/*",
+        "test/**/*"
+      ])
     })
 
     test("filesConfigForLinter adds to defaults", () => {
       const configOptions: HerbConfigOptions = {
         linter: {
           include: ["**/*.xml.erb"],
-          exclude: ["vendor/**/*"]
+          exclude: ["legacy/**/*"]
         }
       }
+
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
       expect(config.filesConfigForLinter.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml.erb'
       ])
-      expect(config.filesConfigForLinter.exclude).toEqual(["vendor/**/*"])
+
+      expect(config.filesConfigForLinter.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "legacy/**/*"
+      ])
     })
 
     test("filesConfigForFormatter adds to defaults", () => {
@@ -841,13 +1022,16 @@ describe("@herb-tools/config", () => {
           include: ["**/*.custom.erb"]
         }
       }
+
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
       expect(config.filesConfigForFormatter.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.custom.erb'
       ])
@@ -857,10 +1041,12 @@ describe("@herb-tools/config", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 
       expect(config.filesConfigForLinter.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb'
       ])
     })
@@ -869,20 +1055,32 @@ describe("@herb-tools/config", () => {
       const configOptions: HerbConfigOptions = {
         files: {
           include: ["**/*.custom.erb"],
-          exclude: ["tmp/**/*"]
+          exclude: ["custom-exclude/**/*"]
         }
       }
+
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
       expect(config.filesConfigForFormatter.include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.custom.erb'
       ])
-      expect(config.filesConfigForFormatter.exclude).toEqual(["tmp/**/*"])
+
+      expect(config.filesConfigForFormatter.exclude).toEqual([
+        "coverage/**/*",
+        "log/**/*",
+        "node_modules/**/*",
+        "storage/**/*",
+        "tmp/**/*",
+        "vendor/**/*",
+        "custom-exclude/**/*"
+      ])
     })
 
     test("getFilesConfigForTool combines at all levels", () => {
@@ -894,22 +1092,28 @@ describe("@herb-tools/config", () => {
           include: ["**/*.custom.erb"]
         }
       }
+
       const config = Config.fromObject(configOptions, { projectPath: testDir })
 
       expect(config.getFilesConfigForTool("linter").include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml',
         '**/*.custom.erb'
       ])
+
       expect(config.getFilesConfigForTool("formatter").include).toEqual([
-        '**/*.html',
-        '**/*.rhtml',
+        '**/*.herb',
         '**/*.html.erb',
+        '**/*.html.herb',
+        '**/*.html',
         '**/*.html+*.erb',
+        '**/*.rhtml',
         '**/*.turbo_stream.erb',
         '**/*.xml'
       ])
@@ -935,8 +1139,8 @@ describe("@herb-tools/config", () => {
           exclude: ["vendor/**/*"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const files = await config.findFilesForTool("linter", testDir)
 
       expect(files).toEqual([file1])
@@ -951,8 +1155,8 @@ describe("@herb-tools/config", () => {
           include: ["**/*.xml.erb"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const files = await config.findFilesForTool("formatter", testDir)
 
       expect(files.sort()).toEqual([file1, file2].sort())
@@ -973,7 +1177,6 @@ describe("@herb-tools/config", () => {
       createTestFile(testDir, "app/views/home/other.xml")
 
       const config = Config.fromObject({}, { projectPath: testDir })
-
       const files = await config.findFilesForFormatter(testDir)
 
       expect(files).toEqual([file1])
@@ -988,8 +1191,8 @@ describe("@herb-tools/config", () => {
           exclude: ["app/views/posts/**/*"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const files = await config.findFilesForTool("linter", testDir)
 
       expect(files).toEqual([file1])
@@ -1005,8 +1208,8 @@ describe("@herb-tools/config", () => {
           include: ["**/*.xml.erb"]
         }
       }
-      const config = Config.fromObject(configOptions, { projectPath: testDir })
 
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
       const files = await config.findFilesForTool("linter", testDir)
 
       expect(files.sort()).toEqual([file1, file2].sort())
@@ -1022,6 +1225,124 @@ describe("@herb-tools/config", () => {
       expect(defaultPatterns).toContain("**/*.html")
       expect(defaultPatterns).toContain("**/*.rhtml")
       expect(defaultPatterns).toContain("**/*.turbo_stream.erb")
+    })
+  })
+
+  describe("Config.configVersion", () => {
+    test("defaults to config.version when not provided", () => {
+      const config = new Config(testDir, { version: "0.9.2" })
+
+      expect(config.configVersion).toBe("0.9.2")
+    })
+
+    test("preserves explicit configVersion", () => {
+      const config = new Config(testDir, { version: "0.9.2" }, "0.8.0")
+
+      expect(config.version).toBe("0.9.2")
+      expect(config.configVersion).toBe("0.8.0")
+    })
+
+    test("fromObject passes configVersion through", () => {
+      const config = Config.fromObject({}, { projectPath: testDir, configVersion: "0.7.0" })
+
+      expect(config.configVersion).toBe("0.7.0")
+    })
+
+    test("fromObject defaults configVersion to tool version when not specified", () => {
+      const config = Config.fromObject({}, { projectPath: testDir })
+
+      expect(config.configVersion).toBe(config.version)
+    })
+
+    test("load preserves user config version from .herb.yml", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.8.0\n\nlinter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.version).toBe("0.9.2")
+      expect(config.configVersion).toBe("0.8.0")
+    })
+
+    test("load defaults configVersion to tool version when .herb.yml has no version", async () => {
+      createTestFile(testDir, ".herb.yml", "linter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.configVersion).toBe("0.9.2")
+    })
+  })
+
+  describe("Config upgrade workflow", () => {
+    test("mutateConfigFile adds disabled rules", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+      `
+
+      createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      await Config.mutateConfigFile(join(testDir, ".herb.yml"), {
+        linter: {
+          rules: {
+            "new-rule-a": { enabled: false },
+            "new-rule-b": { enabled: false }
+          }
+        }
+      })
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.linter?.rules?.["new-rule-a"]?.enabled).toBe(false)
+      expect(config.linter?.rules?.["new-rule-b"]?.enabled).toBe(false)
+    })
+
+    test("mutateConfigFile preserves existing rules", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+          rules:
+            existing-rule:
+              enabled: false
+      `
+
+      createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      await Config.mutateConfigFile(join(testDir, ".herb.yml"), {
+        linter: {
+          rules: {
+            "new-rule": { enabled: false }
+          }
+        }
+      })
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.linter?.rules?.["existing-rule"]?.enabled).toBe(false)
+      expect(config.linter?.rules?.["new-rule"]?.enabled).toBe(false)
+    })
+
+    test("version can be updated via file content replacement", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+      `
+
+      const configPath = createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      const { readFileSync, writeFileSync } = await import("fs")
+      let content = readFileSync(configPath, "utf-8")
+      content = content.replace(/^version:\s*.+$/m, "version: 0.9.2")
+      writeFileSync(configPath, content, "utf-8")
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.configVersion).toBe("0.9.2")
     })
   })
 })

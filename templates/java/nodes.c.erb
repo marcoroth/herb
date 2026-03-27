@@ -2,10 +2,10 @@
 #include "extension_helpers.h"
 #include "error_helpers.h"
 
-#include "../../src/include/ast_node.h"
-#include "../../src/include/ast_nodes.h"
-#include "../../src/include/location.h"
-#include "../../src/include/util/hb_array.h"
+#include "../../src/include/ast/ast_node.h"
+#include "../../src/include/ast/ast_nodes.h"
+#include "../../src/include/location/location.h"
+#include "../../src/include/lib/hb_array.h"
 
 #include <stdlib.h>
 
@@ -25,28 +25,52 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
 
   <%- node.fields.each do |field| -%>
   <%- if field.is_a?(Herb::Template::StringField) -%>
-  jstring <%= field.name %> = (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>);
+  jstring <%= field.name %> = CreateStringFromHbString(env, <%= node.human %>-><%= field.name %>);
   <%- elsif field.is_a?(Herb::Template::TokenField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateToken(env, <%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
   jboolean <%= field.name %> = <%= node.human %>-><%= field.name %> ? JNI_TRUE : JNI_FALSE;
   <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
   jobject <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
-  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
-  // TODO: Convert element_source to string
-  jstring <%= field.name %> = (*env)->NewStringUTF(env, "");
-  <%- elsif field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>
-  // Skip <%= field.name %> (<%= field.class.name.split('::').last %>) - not supported in Java yet
+  jstring <%= field.name %> = <%= node.human %>-><%= field.name %>.data ? (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>.data) : NULL;
+  <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateLocation(env, *<%= node.human %>-><%= field.name %>) : NULL;
+  <%- elsif field.is_a?(Herb::Template::PrismSerializedField) -%>
+  jbyteArray <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    <%= field.name %> = (*env)->NewByteArray(env, (jsize)<%= node.human %>-><%= field.name %>.length);
+    (*env)->SetByteArrayRegion(env, <%= field.name %>, 0, (jsize)<%= node.human %>-><%= field.name %>.length, (const jbyte*)<%= node.human %>-><%= field.name %>.data);
+  } else {
+    <%= field.name %> = NULL;
+  }
+  <%- elsif field.is_a?(Herb::Template::PrismNodeField) -%>
+  jbyteArray <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+    if (pm_buffer.length > 0) {
+      <%= field.name %> = (*env)->NewByteArray(env, (jsize)pm_buffer.length);
+      (*env)->SetByteArrayRegion(env, <%= field.name %>, 0, (jsize)pm_buffer.length, (const jbyte*)pm_buffer.value);
+    } else {
+      <%= field.name %> = NULL;
+    }
+    pm_buffer_free(&pm_buffer);
+  } else {
+    <%= field.name %> = NULL;
+  }
+  <%- elsif field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismContextField) -%>
+  // Skip <%= field.name %> (<%= field.class.name.split('::').last %>) - internal parser state
   <%- end -%>
   <%- end -%>
 
-  const char* signature = "(Ljava/lang/String;Lorg/herb/Location;Ljava/util/List;<%- node.fields.each do |f| -%><%- unless f.is_a?(Herb::Template::AnalyzedRubyField) || f.is_a?(Herb::Template::PrismNodeField) -%><%- if f.is_a?(Herb::Template::StringField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::TokenField) -%>Lorg/herb/Token;<%- elsif f.is_a?(Herb::Template::BooleanField) -%>Z<%- elsif f.is_a?(Herb::Template::ArrayField) -%>Ljava/util/List;<%- elsif f.is_a?(Herb::Template::NodeField) -%>Lorg/herb/ast/<%= f.specific_kind || 'Node' %>;<%- elsif f.is_a?(Herb::Template::ElementSourceField) -%>Ljava/lang/String;<%- end -%><%- end -%><%- end -%>)V";
+  const char* signature = "(Ljava/lang/String;Lorg/herb/Location;Ljava/util/List;<%- node.fields.each do |f| -%><%- unless f.is_a?(Herb::Template::AnalyzedRubyField) || f.is_a?(Herb::Template::PrismContextField) -%><%- if f.is_a?(Herb::Template::StringField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::TokenField) -%>Lorg/herb/Token;<%- elsif f.is_a?(Herb::Template::BooleanField) -%>Z<%- elsif f.is_a?(Herb::Template::ArrayField) -%>Ljava/util/List;<%- elsif f.is_a?(Herb::Template::NodeField) -%>Lorg/herb/ast/<%= f.specific_kind || 'Node' %>;<%- elsif f.is_a?(Herb::Template::ElementSourceField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::LocationField) -%>Lorg/herb/Location;<%- elsif f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) -%>[B<%- end -%><%- end -%><%- end -%>)V";
   jmethodID constructor = (*env)->GetMethodID(env, nodeClass, "<init>", signature);
   if (!constructor) { return NULL; }
 
-  jobject result = (*env)->NewObject(env, nodeClass, constructor, type, location, errors<%- node.fields.each do |field| -%><%- unless field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>, <%= field.name %><%- end -%><%- end -%>);
+  jobject result = (*env)->NewObject(env, nodeClass, constructor, type, location, errors<%- node.fields.each do |field| -%><%- unless field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismContextField) -%>, <%= field.name %><%- end -%><%- end -%>);
 
   return result;
 }

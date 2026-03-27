@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/encoding.h>
 
 #include "error_helpers.h"
 #include "extension_helpers.h"
@@ -6,10 +7,24 @@
 #include "nodes.h"
 
 #include "../../src/include/herb.h"
-#include "../../src/include/token.h"
+#include "../../src/include/lexer/token.h"
 
 VALUE rb_node_from_c_struct(AST_NODE_T* node);
 static VALUE rb_nodes_array_from_c_array(hb_array_T* array);
+
+static VALUE mAST;
+static VALUE cNode;
+<%- nodes.each do |node| -%>
+static VALUE c<%= node.name %>;
+<%- end -%>
+
+void rb_init_node_classes(void) {
+  mAST = rb_define_module_under(mHerb, "AST");
+  cNode = rb_define_class_under(mAST, "Node", rb_cObject);
+  <%- nodes.each do |node| -%>
+  c<%= node.name %> = rb_define_class_under(mAST, "<%= node.name %>", cNode);
+  <%- end -%>
+}
 
 <%- nodes.each do |node| -%>
 static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>) {
@@ -17,21 +32,15 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
 
   AST_NODE_T* node = &<%= node.human %>->base;
 
-  VALUE Herb = rb_define_module("Herb");
-  VALUE AST = rb_define_module_under(Herb, "AST");
-  VALUE Node = rb_define_class_under(AST, "Node", rb_cObject);
-  VALUE <%= node.name %> = rb_define_class_under(AST, "<%= node.name %>", Node);
-
-  hb_string_T node_type = ast_node_type_to_string(node);
-  VALUE type = rb_utf8_str_new(node_type.data, node_type.length);
+  VALUE type = rb_string_from_hb_string(ast_node_type_to_string(node));
   VALUE location = rb_location_from_c_struct(node->location);
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= node.human %>-><%= field.name %>);
-  <%- when Herb::Template::NodeField -%>
+  VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_token_from_c_struct(<%= node.human %>-><%= field.name %>);
@@ -40,13 +49,40 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when Herb::Template::ArrayField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ElementSourceField -%>
+  VALUE <%= node.human %>_<%= field.name %> = rb_string_from_hb_string(<%= node.human %>-><%= field.name %>);
+  <%- when Herb::Template::LocationField -%>
+  VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
+  <%- when Herb::Template::PrismSerializedField -%>
   VALUE <%= node.human %>_<%= field.name %>;
-  {
-    hb_string_T element_source_string = element_source_to_string(<%= node.human %>-><%= field.name %>);
-    <%= node.human %>_<%= field.name %> = rb_utf8_str_new(element_source_string.data, element_source_string.length);
+  if (<%= node.human %>-><%= field.name %>.data != NULL && <%= node.human %>-><%= field.name %>.length > 0) {
+    <%= node.human %>_<%= field.name %> = rb_str_new((const char*)<%= node.human %>-><%= field.name %>.data, <%= node.human %>-><%= field.name %>.length);
+    rb_enc_associate(<%= node.human %>_<%= field.name %>, rb_ascii8bit_encoding());
+    OBJ_FREEZE(<%= node.human %>_<%= field.name %>);
+  } else {
+    <%= node.human %>_<%= field.name %> = Qnil;
   }
+  <%- when Herb::Template::PrismNodeField -%>
+  VALUE <%= node.human %>_<%= field.name %>;
+  if (<%= node.human %>-><%= field.name %>.node != NULL && <%= node.human %>-><%= field.name %>.parser != NULL) {
+    pm_buffer_t pm_buffer = { 0 };
+    pm_serialize(<%= node.human %>-><%= field.name %>.parser, <%= node.human %>-><%= field.name %>.node, &pm_buffer);
+
+    if (pm_buffer.length > 0) {
+      <%= node.human %>_<%= field.name %> = rb_str_new(pm_buffer.value, pm_buffer.length);
+      rb_enc_associate(<%= node.human %>_<%= field.name %>, rb_ascii8bit_encoding());
+      OBJ_FREEZE(<%= node.human %>_<%= field.name %>);
+    } else {
+      <%= node.human %>_<%= field.name %> = Qnil;
+    }
+    pm_buffer_free(&pm_buffer);
+  } else {
+    <%= node.human %>_<%= field.name %> = Qnil;
+  }
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField, Herb::Template::VoidPointerField -%>
+  /* <%= field.name %> is internal parser state, not exposed to Ruby */
+  VALUE <%= node.human %>_<%= field.name %> = Qnil;
   <%- else -%>
-  /* <%= field.inspect %> */
+  /* Unhandled field type: <%= field.class.name %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;
   <%- end -%>
   <%- end -%>
@@ -60,7 +96,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
     <%- end -%>
   };
 
-  return rb_class_new_instance(<%= 3 + node.fields.count %>, args, <%= node.name %>);
+  return rb_class_new_instance(<%= 3 + node.fields.count %>, args, c<%= node.name %>);
 };
 
 <%- end -%>

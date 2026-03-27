@@ -1,0 +1,123 @@
+---
+source: "Parser::AttributesTest#test_0065_mixed ERB output types in multiple attribute names"
+input: |2-
+
+        <div
+          data-<%= valid_key %>-target="value"
+          prefix-<% invalid_key %>-id="test"
+          class="<%= valid_class %>"
+        ></div>
+      
+---
+@ DocumentNode (location: (1:0)-(7:6))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(2:8))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLElementNode (location: (2:8)-(6:15))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:8)-(6:9))
+    │   │       ├── tag_opening: "<" (location: (2:8)-(2:9))
+    │   │       ├── tag_name: "div" (location: (2:9)-(2:12))
+    │   │       ├── tag_closing: ">" (location: (6:8)-(6:9))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (3:10)-(3:46))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (3:10)-(3:38))
+    │   │       │   │   │       └── children: (3 items)
+    │   │       │   │   │           ├── @ LiteralNode (location: (3:10)-(3:15))
+    │   │       │   │   │           │   └── content: "data-"
+    │   │       │   │   │           │
+    │   │       │   │   │           ├── @ ERBContentNode (location: (3:15)-(3:31))
+    │   │       │   │   │           │   ├── tag_opening: "<%=" (location: (3:15)-(3:18))
+    │   │       │   │   │           │   ├── content: " valid_key " (location: (3:18)-(3:29))
+    │   │       │   │   │           │   ├── tag_closing: "%>" (location: (3:29)-(3:31))
+    │   │       │   │   │           │   ├── parsed: true
+    │   │       │   │   │           │   └── valid: true
+    │   │       │   │   │           │
+    │   │       │   │   │           └── @ LiteralNode (location: (3:31)-(3:38))
+    │   │       │   │   │               └── content: "-target"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (3:38)-(3:39))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (3:39)-(3:46))
+    │   │       │   │           ├── open_quote: """ (location: (3:39)-(3:40))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (3:40)-(3:45))
+    │   │       │   │           │       └── content: "value"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (3:45)-(3:46))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (4:10)-(4:44))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (4:10)-(4:37))
+    │   │       │   │   │       └── children: (3 items)
+    │   │       │   │   │           ├── @ LiteralNode (location: (4:10)-(4:17))
+    │   │       │   │   │           │   └── content: "prefix-"
+    │   │       │   │   │           │
+    │   │       │   │   │           ├── @ ERBContentNode (location: (4:17)-(4:34))
+    │   │       │   │   │           │   ├── tag_opening: "<%" (location: (4:17)-(4:19))
+    │   │       │   │   │           │   ├── content: " invalid_key " (location: (4:19)-(4:32))
+    │   │       │   │   │           │   ├── tag_closing: "%>" (location: (4:32)-(4:34))
+    │   │       │   │   │           │   ├── parsed: true
+    │   │       │   │   │           │   └── valid: true
+    │   │       │   │   │           │
+    │   │       │   │   │           └── @ LiteralNode (location: (4:34)-(4:37))
+    │   │       │   │   │               └── content: "-id"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (4:37)-(4:38))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (4:38)-(4:44))
+    │   │       │   │           ├── open_quote: """ (location: (4:38)-(4:39))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (4:39)-(4:43))
+    │   │       │   │           │       └── content: "test"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (4:43)-(4:44))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (5:10)-(5:36))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (5:10)-(5:15))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (5:10)-(5:15))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (5:15)-(5:16))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (5:16)-(5:36))
+    │   │       │               ├── open_quote: """ (location: (5:16)-(5:17))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ ERBContentNode (location: (5:17)-(5:35))
+    │   │       │               │       ├── tag_opening: "<%=" (location: (5:17)-(5:20))
+    │   │       │               │       ├── content: " valid_class " (location: (5:20)-(5:33))
+    │   │       │               │       ├── tag_closing: "%>" (location: (5:33)-(5:35))
+    │   │       │               │       ├── parsed: true
+    │   │       │               │       └── valid: true
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (5:35)-(5:36))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (2:9)-(2:12))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:9)-(6:15))
+    │   │       ├── tag_opening: "</" (location: (6:9)-(6:11))
+    │   │       ├── tag_name: "div" (location: (6:11)-(6:14))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:14)-(6:15))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:15)-(7:6))
+        └── content: "\n      "

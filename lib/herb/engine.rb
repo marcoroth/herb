@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 require "json"
 require "time"
@@ -17,7 +18,7 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template, :visitors
+                :validation_error_template, :visitors, :enabled_validators
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -28,6 +29,16 @@ module Herb
     }.freeze
 
     class CompilationError < StandardError
+    end
+
+    class InvalidRubyError < CompilationError
+      attr_reader :compiled_source
+
+      def initialize(message, compiled_source: nil)
+        @compiled_source = compiled_source
+
+        super(message)
+      end
     end
 
     def initialize(input, properties = {})
@@ -44,6 +55,9 @@ module Herb
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
       @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
+      @attrfunc = properties.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
+      @jsfunc = properties.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
+      @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -51,6 +65,8 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
+      @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -75,6 +91,8 @@ module Herb
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
 
+      preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
+
       @src << "# frozen_string_literal: true\n" if @freeze
 
       if properties[:ensure]
@@ -89,7 +107,7 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true)
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -104,12 +122,12 @@ module Herb
           # Skip both errors and compilation, but still need minimal Ruby code
         end
       else
-        validation_errors = run_validation(ast) unless @validation_mode == :none
-        all_errors = parser_errors + (validation_errors || [])
+        validators = run_validation(ast) unless @validation_mode == :none
 
-        handle_validation_errors(all_errors, input) if @validation_mode == :raise && all_errors.any?
-
-        add_validation_overlay(validation_errors, input) if @validation_mode == :overlay && validation_errors&.any?
+        if validators
+          handle_validation_errors(validators, input) if @validation_mode == :raise
+          add_validation_overlay(validators, input) if @validation_mode == :overlay
+        end
 
         @visitors.each do |visitor|
           ast.accept(visitor)
@@ -131,6 +149,10 @@ module Herb
       add_postamble(postamble)
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
+
+      if properties.fetch(:validate_ruby, false)
+        ensure_valid_ruby!(@src)
+      end
 
       @src.freeze
       freeze
@@ -172,6 +194,14 @@ module Herb
       end
     end
 
+    def self.comment?(code)
+      code.include?("#")
+    end
+
+    def self.heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
     protected
 
     def add_text(text)
@@ -193,8 +223,8 @@ module Herb
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if code.include?("#")
-          @src << "\n"
+        if self.class.comment?(code) || self.class.heredoc?(code)
+          @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
         end
@@ -203,36 +233,100 @@ module Herb
       @buffer_on_stack = false
     end
 
+    def expression_block?
+      @_in_expression_block || false
+    end
+
     def add_expression(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_result(code)
+      unescaped = (indicator == "=") ^ @escape
+
+      if expression_block?
+        unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
-        add_expression_result_escaped(code)
+        unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
+      end
+    end
+
+    def add_context_aware_expression(indicator, code, context)
+      escapefunc = context_escape_function(context)
+
+      if escapefunc.nil?
+        add_expression(indicator, code)
+      else
+        with_buffer { @src << " << #{escapefunc}((" << code << trailing_newline(code) << "))" }
+      end
+    end
+
+    def context_escape_function(context)
+      case context
+      when :attribute_value then @attrfunc
+      when :script_content then @jsfunc
+      when :style_content then @cssfunc
       end
     end
 
     def add_expression_result(code)
-      with_buffer { @src << " << (" << code << ").to_s" }
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code) << ").to_s"
+      }
     end
 
     def add_expression_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code) << "))"
+      }
     end
 
     def add_expression_block(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_block_result(code)
-      else
-        add_expression_block_result_escaped(code)
-      end
+      @_in_expression_block = true
+      @_expression_block_open_paren = false
+
+      add_expression(indicator, code)
+    ensure
+      @_in_expression_block = false
     end
 
     def add_expression_block_result(code)
-      with_buffer { @src << " << " << code }
+      @_expression_block_open_paren = true
+
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code)
+      }
     end
 
     def add_expression_block_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
+      @_expression_block_open_paren = true
+
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
+      }
+    end
+
+    def add_expression_block_end(code, escaped: false)
+      if @_expression_block_open_paren
+        terminate_expression
+
+        trailing_newline = code.end_with?("\n")
+        code_stripped = code.chomp
+
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+
+        @src << " " << code_stripped
+        @src << "\n" if self.class.comment?(code_stripped)
+        @src << (escaped ? "))" : ")")
+        @src << (trailing_newline ? "\n" : ";")
+
+        @buffer_on_stack = false
+      else
+        add_code(code)
+      end
+    end
+
+    def trailing_newline(code)
+      return "\n" if self.class.comment?(code)
+      return "\n" if self.class.heredoc?(code)
+
+      ""
     end
 
     def add_postamble(postamble)
@@ -260,19 +354,16 @@ module Herb
 
     def run_validation(ast)
       validators = [
-        Validators::SecurityValidator.new,
-        Validators::NestingValidator.new,
-        Validators::AccessibilityValidator.new
+        Validators::SecurityValidator.new(enabled: @enabled_validators[:security]),
+        Validators::NestingValidator.new(enabled: @enabled_validators[:nesting]),
+        Validators::AccessibilityValidator.new(enabled: @enabled_validators[:accessibility])
       ]
 
-      errors = [] #: Array[untyped]
-
-      validators.each do |validator|
+      validators.select(&:enabled?).each do |validator|
         ast.accept(validator)
-        errors.concat(validator.errors)
       end
 
-      errors
+      validators
     end
 
     def handle_parser_errors(parser_errors, input, _ast)
@@ -292,24 +383,19 @@ module Herb
       end
     end
 
-    def handle_validation_errors(errors, input)
+    def handle_validation_errors(validators, input)
+      errors = validators.select(&:enabled?).flat_map(&:errors)
       return unless errors.any?
 
-      security_error = errors.find { |error|
-        error.is_a?(Hash) && error[:source] == "SecurityValidator"
-      }
+      security_error = errors.find { |error| error[:source] == "SecurityValidator" }
 
       if security_error
-        line = security_error[:location]&.start&.line
-        column = security_error[:location]&.start&.column
-        suggestion = security_error[:suggestion]
-
         raise SecurityError.new(
           security_error[:message],
-          line: line,
-          column: column,
+          line: security_error[:location]&.start&.line,
+          column: security_error[:location]&.start&.column,
           filename: @filename,
-          suggestion: suggestion
+          suggestion: security_error[:suggestion]
         )
       end
 
@@ -318,7 +404,8 @@ module Herb
       raise CompilationError, "\n#{message}"
     end
 
-    def add_validation_overlay(errors, input = nil)
+    def add_validation_overlay(validators, input = nil)
+      errors = validators.select(&:enabled?).flat_map(&:errors)
       return unless errors.any?
 
       templates = errors.map { |error|
@@ -380,6 +467,28 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    def ensure_valid_ruby!(source)
+      RubyVM::InstructionSequence.compile(source)
+    rescue SyntaxError => e
+      return if e.message.include?("Invalid yield")
+
+      begin
+        require "prism"
+      rescue LoadError
+        # Prism not available, fall through
+      end
+
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n  - #{e.message}", compiled_source: @src) unless defined?(Prism)
+
+      prism_result = Prism.parse(@src)
+      syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
+
+      if syntax_errors.any?
+        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
+      end
     end
   end
 end

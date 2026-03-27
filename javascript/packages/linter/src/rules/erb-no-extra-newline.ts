@@ -1,32 +1,12 @@
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
-import { SourceRule } from "../types.js"
-import { Location, Position } from "@herb-tools/core"
+import { type Node, Location } from "@herb-tools/core"
 
-import type { Node } from "@herb-tools/core"
+import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
   startOffset: number
   endOffset: number
-}
-
-function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
 }
 
 class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAutofixContext> {
@@ -61,7 +41,8 @@ class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAu
 
 export class ERBNoExtraNewLineRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-no-extra-newline"
+  static ruleName = "erb-no-extra-newline"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -71,7 +52,7 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
+    const visitor = new ERBNoExtraNewLineVisitor(this.ruleName, context)
 
     visitor.visit(source)
 

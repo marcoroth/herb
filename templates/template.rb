@@ -7,12 +7,61 @@ require "yaml"
 
 module Herb
   module Template
+    def self.underscore(name)
+      name
+        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+    end
+
+    ALWAYS_INVISIBLE_FIELD_CLASSES = ["PrismContextField", "AnalyzedRubyField"].freeze
+    CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
+    ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
+
     class Field
       attr_reader :name, :options
 
       def initialize(name:, **options)
         @name = name
         @options = options
+      end
+
+      def always_invisible?
+        ALWAYS_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def conditionally_invisible?
+        CONDITIONALLY_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def invisible?
+        ALL_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+    end
+
+    class FieldVisibility
+      attr_reader :field, :prism_field_name
+
+      def initialize(field:, static_last:, dynamic_last:, prism_field_name:)
+        @field = field
+        @static_last = static_last
+        @dynamic_last = dynamic_last
+        @prism_field_name = prism_field_name
+      end
+
+      def static_last?
+        @static_last
+      end
+
+      def dynamic_last?
+        @dynamic_last
+      end
+
+      def symbol
+        @static_last ? "└── " : "├── "
+      end
+
+      def prefix
+        @static_last ? "    " : "│   "
       end
     end
 
@@ -23,10 +72,17 @@ module Herb
       end
 
       def ruby_type
-        return "Array" unless specific_kind
-        return "Array[Herb::AST::#{specific_kind}]" if specific_kind.end_with?("Node")
-
-        "Array[#{specific_kind}]"
+        if specific_kind
+          if specific_kind.end_with?("Node")
+            "Array[Herb::AST::#{specific_kind}]"
+          else
+            "Array[#{specific_kind}]"
+          end
+        elsif union_kind
+          "Array[(#{union_kind.map { |k| "Herb::AST::#{k}" }.join(" | ")})]"
+        else
+          "Array"
+        end
       end
 
       def c_type
@@ -35,7 +91,7 @@ module Herb
 
       def c_item_type
         if specific_kind
-          "AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_T*"
+          "AST_#{Template.underscore(specific_kind).upcase}_T*"
         else
           "void*"
         end
@@ -58,14 +114,20 @@ module Herb
 
       def c_type
         if specific_kind
-          "struct AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_STRUCT*"
+          "struct AST_#{Template.underscore(specific_kind).upcase}_STRUCT*"
         else
           "AST_NODE_T*"
         end
       end
 
       def ruby_type
-        "Herb::AST::#{specific_kind || "Node"}"
+        if specific_kind
+          "Herb::AST::#{specific_kind}"
+        elsif union_kind
+          "(#{union_kind.map { |k| "Herb::AST::#{k}" }.join(" | ")})"
+        else
+          "Herb::AST::Node"
+        end
       end
 
       def specific_kind
@@ -75,6 +137,29 @@ module Herb
       def union_kind
         @kind if @kind.is_a?(Array)
       end
+
+      def union_type_name
+        return nil unless union_kind
+
+        union_kind.sort.join("Or")
+      end
+
+      def rust_type
+        if specific_kind && specific_kind != "Node"
+          "Option<Box<#{specific_kind}>>"
+        elsif union_kind
+          "Option<#{union_type_name}>"
+        else
+          "Option<Box<AnyNode>>"
+        end
+      end
+
+      def java_type
+        specific_kind || "Node" # Java uses base type for union_kind, could use sealed interface in future
+      end
+    end
+
+    class BorrowedNodeField < NodeField
     end
 
     class TokenField < Field
@@ -103,7 +188,7 @@ module Herb
       end
 
       def c_type
-        "const char*"
+        "hb_string_T"
       end
     end
 
@@ -113,7 +198,17 @@ module Herb
       end
 
       def c_type
-        "position_T*"
+        "position_T"
+      end
+    end
+
+    class LocationField < Field
+      def ruby_type
+        "Herb::Location"
+      end
+
+      def c_type
+        "location_T*"
       end
     end
 
@@ -149,11 +244,33 @@ module Herb
 
     class PrismNodeField < Field
       def ruby_type
-        "Prism::Node"
+        "String"
       end
 
       def c_type
-        "pm_node_t*"
+        "herb_prism_node_T"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
+    class PrismContextField < Field
+      def ruby_type
+        "nil"
+      end
+
+      def c_type
+        "herb_prism_context_T*"
       end
     end
 
@@ -177,13 +294,35 @@ module Herb
       end
     end
 
+    class PrismSerializedField < Field
+      def ruby_type
+        "String"
+      end
+
+      def c_type
+        "prism_serialized_T"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
     class ElementSourceField < Field
       def ruby_type
         "String"
       end
 
       def c_type
-        "element_source_t"
+        "hb_string_T"
       end
     end
 
@@ -204,18 +343,22 @@ module Herb
 
       def field_type_for(name)
         case name
-        when "array"      then ArrayField
-        when "node"       then NodeField
-        when "token"      then TokenField
-        when "token_type" then TokenTypeField
-        when "string"     then StringField
-        when "position"   then PositionField
-        when "size_t"     then SizeTField
-        when "boolean"    then BooleanField
-        when "prism_node" then PrismNodeField
-        when "analyzed_ruby" then AnalyzedRubyField
-        when "element_source" then ElementSourceField
-        when "void*" then VoidPointerField
+        when "array"            then ArrayField
+        when "node"             then NodeField
+        when "borrowed_node"    then BorrowedNodeField
+        when "token"            then TokenField
+        when "token_type"       then TokenTypeField
+        when "string"           then StringField
+        when "position"         then PositionField
+        when "location"         then LocationField
+        when "size_t"           then SizeTField
+        when "boolean"          then BooleanField
+        when "prism_node"       then PrismNodeField
+        when "prism_context"    then PrismContextField
+        when "analyzed_ruby"    then AnalyzedRubyField
+        when "prism_serialized" then PrismSerializedField
+        when "element_source"   then ElementSourceField
+        when "void*"            then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end
@@ -231,7 +374,7 @@ module Herb
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
 
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = camelized.upcase
         @struct_type = "#{camelized.upcase}_T"
         @struct_name = "#{camelized.upcase}_STRUCT"
@@ -258,7 +401,7 @@ module Herb
 
       def initialize(config)
         @name = config.fetch("name")
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = "AST_#{camelized.upcase}"
         @struct_type = "AST_#{camelized.upcase}_T"
         @struct_name = "AST_#{camelized.upcase}_STRUCT"
@@ -275,6 +418,34 @@ module Herb
 
       def c_type
         @struct_type
+      end
+
+      def field_visibilities
+        @field_visibilities ||= begin
+          prism_fields = @fields.select(&:conditionally_invisible?)
+          last_prism_field_name = prism_fields.last&.name
+
+          @fields.each_with_index.map do |field, index|
+            remaining = @fields[(index + 1)..] || []
+            all_remaining_always_invisible = remaining.all?(&:always_invisible?)
+            all_remaining_invisible = remaining.all?(&:invisible?)
+            any_remaining_conditionally_invisible = remaining.any?(&:conditionally_invisible?)
+
+            static_last = all_remaining_always_invisible
+            dynamic_last = !static_last && all_remaining_invisible && any_remaining_conditionally_invisible
+
+            FieldVisibility.new(
+              field: field,
+              static_last: static_last,
+              dynamic_last: dynamic_last,
+              prism_field_name: dynamic_last ? last_prism_field_name : nil
+            )
+          end
+        end
+      end
+
+      def field_visibility(index)
+        field_visibilities[index]
       end
     end
 
@@ -297,7 +468,7 @@ module Herb
         base_length = template.length
         total_size = base_length
 
-        format_specifiers = template.scan(/%[sdulfz]/)
+        format_specifiers = template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)
 
         format_specifiers.each_with_index do |specifier, _i|
           estimated_size = ESTIMATED_SIZES[specifier] || 16 # Default extra buffer
@@ -370,7 +541,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -412,6 +583,21 @@ module Herb
 
     def self.nodes
       (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
+    end
+
+    # Collect all unique union kinds from node fields
+    def self.union_kinds
+      union_kinds_set = Set.new
+
+      nodes.each do |node|
+        node.fields.each do |field|
+          if field.respond_to?(:union_kind) && field.union_kind
+            union_kinds_set.add(field.union_kind.sort)
+          end
+        end
+      end
+
+      union_kinds_set.to_a.sort
     end
 
     def self.errors

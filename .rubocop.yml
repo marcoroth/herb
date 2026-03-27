@@ -29,10 +29,12 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 Style/WordArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/SymbolArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/BlockDelimiters:
   Enabled: false
@@ -56,7 +58,9 @@ Metrics/CyclomaticComplexity:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/engine.rb
+    - lib/herb/prism_inspect.rb
     - lib/herb/engine/**/*.rb
+    - templates/template.rb
 
 Metrics/MethodLength:
   Max: 20
@@ -66,6 +70,7 @@ Metrics/MethodLength:
     - lib/herb/project.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
@@ -81,6 +86,7 @@ Metrics/AbcSize:
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/token.rb
+    - lib/herb/prism_inspect.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
@@ -89,12 +95,14 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Exclude:
+    - bin/**/*
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/visitor.rb
+    - lib/herb/configuration.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - bin/**/*
+    - lib/herb/project.rb
+    - lib/herb/visitor.rb
+    - lib/herb/ast/nodes.rb
     - test/**/*_test.rb
 
 Metrics/ModuleLength:
@@ -118,14 +126,17 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
-    - lib/herb/errors.rb
     - lib/herb/engine/validators/security_validator.rb
+    - lib/herb/errors.rb
+    - lib/herb/parser_options.rb
+    - lib/herb/prism_inspect.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/project.rb
+    - lib/herb/prism_inspect.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - templates/template.rb

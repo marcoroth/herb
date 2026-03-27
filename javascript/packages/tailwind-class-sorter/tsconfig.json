@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"],
+    "types": ["node"],
+    "rootDir": "./src",
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
