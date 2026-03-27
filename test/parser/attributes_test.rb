@@ -513,5 +513,61 @@ module Parser
     test "issue #1211: attribute value with backslash" do
       assert_parsed_snapshot('<button data-shortcut="S,s,\">S \</button>')
     end
+
+    test "attribute value with HTML content in double quotes" do
+      assert_parsed_snapshot(%(<iframe srcdoc="<base target='foo'>"></iframe>))
+    end
+
+    test "attribute value with HTML content in single quotes" do
+      assert_parsed_snapshot(%(<iframe srcdoc='<base target="foo">'></iframe>))
+    end
+
+    test "attribute value with angle brackets and nested tags" do
+      assert_parsed_snapshot(%(<div data-template="<h1>Hello</h1>"></div>))
+    end
+
+    test "attribute value with self-closing tag inside" do
+      assert_parsed_snapshot(%(<div data-content="<br/>"></div>))
+    end
+
+    test "attribute value with inner attributes using different quote type in double quotes" do
+      assert_parsed_snapshot(%(<div data-html="<span class='highlight'>text</span>"></div>))
+    end
+
+    test "attribute value with inner attributes using different quote type in single quotes" do
+      assert_parsed_snapshot(%(<div data-html='<span class="highlight">text</span>'></div>))
+    end
+
+    test "attribute value with multiple nested attributes same quote type" do
+      assert_parsed_snapshot(%(<iframe srcdoc="<div class="test">"></iframe>))
+    end
+
+    test "attribute value with greater than comparison" do
+      assert_parsed_snapshot(%(<div data-expr="a > b"></div>))
+    end
+
+    test "attribute value with less than comparison" do
+      assert_parsed_snapshot(%(<div data-expr="a < b"></div>))
+    end
+
+    test "attribute value with both angle brackets as comparison" do
+      assert_parsed_snapshot(%(<div data-expr="a < b > c"></div>))
+    end
+
+    test "attribute value with closing tag syntax" do
+      assert_parsed_snapshot(%(<div data-html="</div>"></div>))
+    end
+
+    test "attribute value with self-closing slash gt" do
+      assert_parsed_snapshot(%(<div data-html="a /> b"></div>))
+    end
+
+    test "attribute value with HTML comment syntax" do
+      assert_parsed_snapshot(%(<div data-html="<!-- comment -->"></div>))
+    end
+
+    test "attribute value with multiple greater than signs" do
+      assert_parsed_snapshot(%(<div data-arrows="a >> b >>> c"></div>))
+    end
   end
 end
