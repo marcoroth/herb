@@ -17,7 +17,6 @@ import {
 import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
-  HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
   Token,
@@ -189,6 +188,39 @@ export const HTML_VOID_ELEMENTS = new Set([
 ])
 
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
+
+export const HTML_KNOWN_ELEMENTS = new Set([
+  "html", "head", "body",
+  "base", "link", "meta", "style", "title",
+  "script", "noscript", "template", "slot", "selectedcontent",
+  "address", "article", "aside", "footer", "header", "hgroup",
+  "main", "nav", "section", "search",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "blockquote", "dd", "details", "dialog", "div", "dl", "dt",
+  "figcaption", "figure", "hr", "li", "menu", "ol", "p", "pre",
+  "summary", "ul",
+  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
+  "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
+  "s", "samp", "small", "span", "strong", "sub", "sup", "time",
+  "u", "var", "wbr",
+  "del", "ins",
+  "area", "audio", "canvas", "embed", "iframe", "img", "map",
+  "math", "object", "param", "picture", "source", "svg", "track", "video",
+  "caption", "col", "colgroup", "table", "tbody", "td", "tfoot",
+  "th", "thead", "tr",
+  "button", "datalist", "fieldset", "form", "input", "label",
+  "legend", "meter", "optgroup", "option", "output", "progress",
+  "select", "textarea",
+  "acronym", "big", "tt",
+])
+
+export function isKnownHTMLElement(tagName: string): boolean {
+  return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isCustomElement(tagName: string): boolean {
+  return tagName.includes("-")
+}
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 

@@ -94,6 +94,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
+- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
