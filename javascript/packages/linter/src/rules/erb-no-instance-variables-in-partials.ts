@@ -60,6 +60,7 @@ class InstanceVariableCollector extends PrismVisitor {
 
 export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
   static ruleName = "erb-no-instance-variables-in-partials"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

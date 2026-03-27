@@ -8,17 +8,17 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../src/include/util/hb_array.h"
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
-#include "../src/include/pretty_print.h"
-#include "../src/include/ast_pretty_print.h"
-#include "../src/include/util/hb_buffer.h"
+#include "../src/include/lib/hb_array.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
+#include "../src/include/ast/pretty_print.h"
+#include "../src/include/ast/ast_pretty_print.h"
+#include "../src/include/lib/hb_buffer.h"
 #include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/position.h"
-#include "../src/include/location.h"
-#include "../src/include/range.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/location/position.h"
+#include "../src/include/location/location.h"
+#include "../src/include/location/range.h"
 #include "../src/include/extract.h"
 }
 
@@ -129,9 +129,12 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, pars
   options_object.set("track_whitespace", val(options->track_whitespace));
   options_object.set("analyze", val(options->analyze));
   options_object.set("action_view_helpers", val(options->action_view_helpers));
+  options_object.set("render_nodes", val(options->render_nodes));
   options_object.set("prism_nodes", val(options->prism_nodes));
   options_object.set("prism_nodes_deep", val(options->prism_nodes_deep));
   options_object.set("prism_program", val(options->prism_program));
+  options_object.set("dot_notation_tags", val(options->dot_notation_tags));
+  options_object.set("html", val(options->html));
 
   result.set("options", options_object);
 

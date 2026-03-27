@@ -1,5 +1,5 @@
 import { Visitor, Location, HTMLOpenTagNode, HTMLCloseTagNode, HTMLElementNode, HTMLAttributeValueNode, WhitespaceNode, ERBContentNode } from "@herb-tools/core"
-import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, createSyntheticToken } from "@herb-tools/core"
+import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, createSyntheticToken } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -17,6 +17,45 @@ function createWhitespaceNode(): WhitespaceNode {
 }
 
 class ActionViewTagHelperToHTMLVisitor extends Visitor {
+  private shallow: boolean
+  private includeBody: boolean
+
+  constructor(options: { shallow?: boolean; includeBody?: boolean } = {}) {
+    super()
+    this.shallow = options.shallow ?? false
+    this.includeBody = options.includeBody ?? true
+  }
+
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    const newChildren: Node[] = []
+
+    for (let index = 0; index < node.children.length; index++) {
+      const child = node.children[index]
+
+      if (isHTMLAttributeNode(child)) {
+        if (child.equals && child.equals.value !== "=") {
+          asMutable(child).equals = createSyntheticToken("=")
+        }
+
+        if (child.value) {
+          this.transformAttributeValue(child.value)
+        }
+
+        const previous = index > 0 ? node.children[index - 1] : null
+
+        if (!previous || !isWhitespaceNode(previous)) {
+          newChildren.push(createWhitespaceNode())
+        }
+      }
+
+      newChildren.push(child)
+    }
+
+    asMutable(node).children = newChildren
+
+    this.visitChildNodes(node)
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (!node.element_source) {
       this.visitChildNodes(node)
@@ -104,7 +143,9 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
     asMutable(node).element_source = "HTML"
 
-    if (node.body) {
+    if (!this.includeBody) {
+      asMutable(node).body = []
+    } else if (node.body) {
       asMutable(node).body = node.body.map(child => {
         if (isRubyLiteralNode(child)) {
           return new ERBContentNode({
@@ -120,7 +161,10 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
           })
         }
 
-        this.visit(child)
+        if (!this.shallow) {
+          this.visit(child)
+        }
+
         return child
       })
     }
@@ -150,12 +194,12 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
       })
 
       mutableValue.children = newChildren
+    }
 
-      if (!value.quoted) {
-        mutableValue.quoted = true
-        mutableValue.open_quote = createSyntheticToken('"')
-        mutableValue.close_quote = createSyntheticToken('"')
-      }
+    if (!value.quoted) {
+      mutableValue.quoted = true
+      mutableValue.open_quote = createSyntheticToken('"')
+      mutableValue.close_quote = createSyntheticToken('"')
     }
   }
 }
@@ -166,11 +210,11 @@ export class ActionViewTagHelperToHTMLRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts ActionView tag helpers (tag.*, content_tag, link_to, turbo_frame_tag) to raw HTML elements"
+    return "Converts ActionView tag helpers to raw HTML elements"
   }
 
-  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
-    const visitor = new ActionViewTagHelperToHTMLVisitor()
+  rewrite<T extends Node>(node: T, context: RewriteContext): T {
+    const visitor = new ActionViewTagHelperToHTMLVisitor({ shallow: context.shallow, includeBody: context.includeBody })
 
     visitor.visit(node)
 

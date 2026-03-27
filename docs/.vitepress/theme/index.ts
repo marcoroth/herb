@@ -22,7 +22,7 @@ export default {
     const route = useRoute()
 
     const initZoom = () => {
-      mediumZoom('.main img', {
+      mediumZoom('.main img:not([data-no-zoom])', {
         background: 'var(--vp-c-bg)',
         margin: 24,
         scrollOffset: 0

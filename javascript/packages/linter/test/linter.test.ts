@@ -89,6 +89,7 @@ describe("@herb-tools/linter", () => {
   describe("Rule enablement", () => {
     class EnabledParserRule extends ParserRule {
       static ruleName = "enabled-parser-rule"
+      static introducedIn = "0.1.0"
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -107,6 +108,7 @@ describe("@herb-tools/linter", () => {
 
     class DisabledParserRule extends ParserRule {
       static ruleName = "disabled-parser-rule"
+      static introducedIn = "0.1.0"
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -129,6 +131,7 @@ describe("@herb-tools/linter", () => {
 
     class FileBasedRule extends SourceRule {
       static ruleName = "file-based-rule"
+      static introducedIn = "0.1.0"
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -151,6 +154,7 @@ describe("@herb-tools/linter", () => {
 
     class ContentBasedRule extends ParserRule {
       static ruleName = "content-based-rule"
+      static introducedIn = "0.1.0"
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -385,6 +389,7 @@ describe("@herb-tools/linter", () => {
     test("filters rules based on default config", () => {
       class EnabledByDefaultRule extends ParserRule {
         static ruleName = "enabled-by-default-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -406,6 +411,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledByDefaultRule extends ParserRule {
         static ruleName = "disabled-by-default-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -426,7 +432,7 @@ describe("@herb-tools/linter", () => {
       }
 
       const html = `<div>test</div>`
-      const filteredRules = Linter.filterRulesByConfig([EnabledByDefaultRule, DisabledByDefaultRule])
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([EnabledByDefaultRule, DisabledByDefaultRule])
       const linter = new Linter(Herb, filteredRules)
       const lintResult = linter.lint(html)
 
@@ -437,6 +443,7 @@ describe("@herb-tools/linter", () => {
     test("user config can enable a disabled-by-default rule", () => {
       class DisabledByDefaultRule extends ParserRule {
         static ruleName = "disabled-by-default-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -467,7 +474,7 @@ describe("@herb-tools/linter", () => {
         }
       })
 
-      const filteredRules = Linter.filterRulesByConfig([DisabledByDefaultRule], config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([DisabledByDefaultRule], config.linter?.rules)
       const linter = new Linter(Herb, filteredRules, config)
       const lintResult = linter.lint(html)
 
@@ -487,7 +494,7 @@ describe("@herb-tools/linter", () => {
         }
       })
 
-      const filteredRules = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.linter?.rules)
       const linter = new Linter(Herb, filteredRules, config)
       const lintResult = linter.lint(html)
 
@@ -556,6 +563,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.from() with config enables and overrides severity", () => {
       class TestRule extends ParserRule {
         static ruleName = "test-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -587,7 +595,7 @@ describe("@herb-tools/linter", () => {
         }
       })
 
-      const filteredRules = Linter.filterRulesByConfig([TestRule], config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([TestRule], config.linter?.rules)
       const linter = new Linter(Herb, filteredRules, config)
       const lintResult = linter.lint(html)
 
@@ -614,6 +622,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.filterRulesByConfig with empty config returns default enabled", () => {
       class EnabledRule extends ParserRule {
         static ruleName = "enabled-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -624,6 +633,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledRule extends ParserRule {
         static ruleName = "disabled-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -632,7 +642,7 @@ describe("@herb-tools/linter", () => {
         check(): UnboundLintOffense[] { return [] }
       }
 
-      const filtered = Linter.filterRulesByConfig([EnabledRule, DisabledRule])
+      const { enabled: filtered } = Linter.filterRulesByConfig([EnabledRule, DisabledRule])
 
       expect(filtered).toHaveLength(1)
       expect(filtered[0].ruleName).toBe("enabled-rule")
@@ -641,6 +651,7 @@ describe("@herb-tools/linter", () => {
     test("Linter.filterRulesByConfig respects user config", () => {
       class EnabledRule extends ParserRule {
         static ruleName = "enabled-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -651,6 +662,7 @@ describe("@herb-tools/linter", () => {
 
       class DisabledRule extends ParserRule {
         static ruleName = "disabled-rule"
+        static introducedIn = "0.1.0"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -664,10 +676,205 @@ describe("@herb-tools/linter", () => {
         "disabled-rule": { enabled: true }
       }
 
-      const filtered = Linter.filterRulesByConfig([EnabledRule, DisabledRule], config)
+      const { enabled: filtered } = Linter.filterRulesByConfig([EnabledRule, DisabledRule], config)
 
       expect(filtered).toHaveLength(1)
       expect(filtered[0].ruleName).toBe("disabled-rule")
+    })
+  })
+
+  describe("Version-gated rule filtering", () => {
+    class OldRule extends ParserRule {
+      static ruleName = "old-rule"
+      static introducedIn = "0.4.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class NewRule extends ParserRule {
+      static ruleName = "new-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(_result: ParseResult): UnboundLintOffense[] {
+        return [{
+          message: "New rule triggered",
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
+          source: "linter"
+        }]
+      }
+    }
+
+    class NewerRule extends ParserRule {
+      static ruleName = "newer-rule"
+      static introducedIn = "0.9.1" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "warning" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledNewRule extends ParserRule {
+      static ruleName = "disabled-new-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("includes all rules when no configVersion is provided", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig([OldRule, NewRule, NewerRule])
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("skips rules introduced after the config version", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("old-rule")
+
+      expect(skippedByVersion).toHaveLength(2)
+      expect(skippedByVersion[0].ruleName).toBe("new-rule")
+      expect(skippedByVersion[0].introducedIn).toBe("0.9.0")
+      expect(skippedByVersion[1].ruleName).toBe("newer-rule")
+      expect(skippedByVersion[1].introducedIn).toBe("0.9.1")
+    })
+
+    test("includes rules matching the config version exactly", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.9.0"
+      )
+
+      expect(enabled).toHaveLength(2)
+      expect(enabled[0].ruleName).toBe("old-rule")
+      expect(enabled[1].ruleName).toBe("new-rule")
+
+      expect(skippedByVersion).toHaveLength(1)
+      expect(skippedByVersion[0].ruleName).toBe("newer-rule")
+    })
+
+    test("includes all rules when config version matches latest", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.9.1"
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("user explicitly enabling a rule overrides version gating", () => {
+      const userConfig = {
+        "new-rule": { enabled: true }
+      }
+
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        userConfig,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(2)
+
+      const enabledNames = enabled.map(rule => rule.ruleName)
+      expect(enabledNames).toContain("new-rule")
+      expect(enabledNames).toContain("old-rule")
+
+      expect(skippedByVersion).toHaveLength(1)
+      expect(skippedByVersion[0].ruleName).toBe("newer-rule")
+    })
+
+    test("user explicitly disabling a rule is respected regardless of version", () => {
+      const userConfig = {
+        "old-rule": { enabled: false }
+      }
+
+      const { enabled } = Linter.filterRulesByConfig(
+        [OldRule, NewRule],
+        userConfig,
+        "0.9.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("new-rule")
+    })
+
+    test("disabled-by-default rules are not included in skippedByVersion", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, DisabledNewRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("old-rule")
+
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("Linter.from() applies version gating from config", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      }, { configVersion: "0.8.0" })
+
+      const linter = Linter.from(Herb, config)
+
+      expect(linter.rulesSkippedByVersion.length).toBeGreaterThan(0)
+    })
+
+    test("Linter.from() includes all released rules when config version is current", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      const linter = Linter.from(Herb, config)
+
+      const releasedSkipped = linter.rulesSkippedByVersion.filter(
+        rule => rule.introducedIn !== "unreleased"
+      )
+
+      expect(releasedSkipped).toHaveLength(0)
+    })
+
+    test("version-gated rules do not produce offenses", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      }, { configVersion: "0.8.0" })
+
+      const filteredRules = Linter.filterRulesByConfig(
+        [OldRule, NewRule],
+        config.linter?.rules,
+        config.configVersion
+      )
+
+      const linter = new Linter(Herb, filteredRules.enabled, config)
+      const result = linter.lint("<div>test</div>")
+
+      const ruleNames = result.offenses.map(offense => offense.rule)
+      expect(ruleNames).not.toContain("new-rule")
     })
   })
 })

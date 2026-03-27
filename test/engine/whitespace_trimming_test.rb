@@ -169,5 +169,60 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "inline space between close tag and ERB control tag is preserved" do
+      template = "<strong>Foo:</strong> <% if true %>Bar<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "whitespace between expression and code tag on same line is preserved" do
+      template = "<%= value %> <% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
+
+    test "multiple spaces between expression and code tag on same line are preserved" do
+      template = "<%= value %>   <% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
+
+    test "tab between expression and code tag on same line is preserved" do
+      template = "<%= value %>\t<% if true %>extra<% end %>"
+
+      assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
+    end
+
+    test "whitespace between consecutive end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% 1.times do %>
+          <%= form_tag("/t") do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "whitespace between nested end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% 1.times do %>
+          <% 1.times do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
   end
 end

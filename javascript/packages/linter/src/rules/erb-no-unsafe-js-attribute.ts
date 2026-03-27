@@ -31,6 +31,7 @@ class ERBNoUnsafeJSAttributeVisitor extends AttributeVisitorMixin {
 
 export class ERBNoUnsafeJSAttributeRule extends ParserRule {
   static ruleName = "erb-no-unsafe-js-attribute"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

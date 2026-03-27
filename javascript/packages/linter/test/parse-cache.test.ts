@@ -71,8 +71,12 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: true,
+        strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
+        html: true,
       })
     })
 
@@ -86,8 +90,12 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: false,
+        strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
+        html: true,
       })
     })
 
@@ -101,8 +109,12 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: true,
+        strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
+        html: true,
       })
     })
 
@@ -116,8 +128,12 @@ describe("ParseCache", () => {
         prism_nodes: false,
         prism_nodes_deep: false,
         prism_program: false,
+        render_nodes: false,
         strict: false,
+        strict_locals: false,
         action_view_helpers: false,
+        dot_notation_tags: false,
+        html: true,
       })
     })
   })

@@ -1,7 +1,7 @@
 #include <ruby.h>
 
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_arena_debug.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_arena_debug.h"
 
 #include "error_helpers.h"
 #include "extension.h"
@@ -136,6 +136,20 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
     if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
 
+    VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
+    if (NIL_P(dot_notation_tags)) {
+      dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
+    }
+    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
+
+    VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
+    if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
+    if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }
+
+    VALUE strict_locals = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict_locals"));
+    if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
+    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
+
     VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
     if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
     if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
@@ -147,6 +161,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
     if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
     if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
+
+    VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
+    if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
+    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
 
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }

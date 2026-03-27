@@ -1,7 +1,7 @@
 #ifndef ATTRIBUTE_EXTRACTION_HELPERS_H
 #define ATTRIBUTE_EXTRACTION_HELPERS_H
 
-#include "../../util/hb_allocator.h"
+#include "../../lib/hb_allocator.h"
 #include "tag_helper_handler.h"
 #include "tag_helpers.h"
 
@@ -22,6 +22,8 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
   size_t erb_content_offset,
   hb_allocator_T* allocator
 );
+
+void resolve_nonce_attribute(hb_array_T* attributes, hb_allocator_T* allocator);
 
 bool has_html_attributes_in_call(pm_call_node_t* call_node);
 

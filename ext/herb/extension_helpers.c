@@ -5,11 +5,11 @@
 #include "nodes.h"
 
 #include "../../src/include/herb.h"
-#include "../../src/include/location.h"
-#include "../../src/include/position.h"
-#include "../../src/include/token.h"
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_string.h"
+#include "../../src/include/lexer/token.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_string.h"
+#include "../../src/include/location/location.h"
+#include "../../src/include/location/position.h"
 
 const char* check_string(VALUE value) {
   if (NIL_P(value)) { return NULL; }
@@ -89,6 +89,8 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_
   rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("action_view_helpers")), options->action_view_helpers ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("render_nodes")), options->render_nodes ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict_locals")), options->strict_locals ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes")), options->prism_nodes ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_nodes_deep")), options->prism_nodes_deep ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("prism_program")), options->prism_program ? Qtrue : Qfalse);

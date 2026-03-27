@@ -171,7 +171,7 @@ unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
 
   match node_type {
     <%- nodes.each do |node| -%>
-    <%= node.type %> => convert_<%= node.human %>(node_pointer).map(AnyNode::<%= node.name %>),
+    <%= node.type %> => convert_<%= node.human %>(node_pointer).map(|n| AnyNode::<%= node.name %>(Box::new(n))),
     <%- end -%>
     _ => {
       eprintln!("Warning: Unknown node type {}", node_type);

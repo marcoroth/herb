@@ -34,23 +34,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:41)-(1:55))
+    │   │           └── @ HTMLAttributeNode (location: (1:41)-(1:63))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:55))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:53))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:41)-(1:55))
+    │   │               │           └── @ LiteralNode (location: (1:41)-(1:53))
     │   │               │               └── content: "data-turbo-method"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:41)-(1:55))
+    │   │               ├── equals: ": " (location: (1:53)-(1:55))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:41)-(1:55))
-    │   │                       ├── open_quote: """ (location: (1:41)-(1:55))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:55)-(1:63))
+    │   │                       ├── open_quote: """ (location: (1:55)-(1:56))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:41)-(1:55))
+    │   │                       │   └── @ LiteralNode (location: (1:56)-(1:62))
     │   │                       │       └── content: "delete"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:55)-(1:55))
+    │   │                       ├── close_quote: """ (location: (1:62)-(1:63))
     │   │                       └── quoted: true
     │   │
     │   │

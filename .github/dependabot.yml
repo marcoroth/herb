@@ -20,6 +20,8 @@ updates:
       - "/javascript/packages/*"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "tailwindcss"
 
   - package-ecosystem: "cargo"
     directory: "/rust"

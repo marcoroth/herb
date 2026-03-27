@@ -10,6 +10,7 @@ import Prism from "prismjs"
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
+import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
 import { Linter } from "@herb-tools/linter"
@@ -76,6 +77,10 @@ export default class extends Controller {
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "rewriteViewer",
+    "rewriteOutput",
+    "rewriteStatus",
+    "rewriteActionViewHelpers",
     "lexViewer",
     "formatViewer",
     "formatSuccess",
@@ -174,6 +179,7 @@ export default class extends Controller {
       )
 
       if (range) {
+        revealTreeLine(range.element)
         range.element.classList.add("tree-location-highlight")
         range.element.scrollIntoView({
           behavior: "smooth",
@@ -371,6 +377,9 @@ export default class extends Controller {
       case 'html':
         content = this.htmlViewerTarget.textContent
         break
+      case 'rewrite':
+        content = this.rewriteOutputTarget.textContent
+        break
       case 'format':
         if (!this.formatSuccessTarget.classList.contains('hidden')) {
           content = this.formatSuccessTarget.textContent
@@ -520,7 +529,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'full']
     return validTabs.includes(tab)
   }
 
@@ -643,6 +652,18 @@ export default class extends Controller {
     })
 
     element.classList.add("hover-highlight")
+  }
+
+  expandAllNodes() {
+    if (this.hasParseOutputTarget) {
+      expandAll(this.parseOutputTarget)
+    }
+  }
+
+  collapseAllNodes() {
+    if (this.hasParseOutputTarget) {
+      collapseAll(this.parseOutputTarget)
+    }
   }
 
   clearTreeLocationHighlights() {
@@ -901,6 +922,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -917,6 +939,28 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasRewriteViewerTarget) {
+      const options = this.getParserOptions()
+
+      if (this.hasRewriteActionViewHelpersTarget) {
+        this.rewriteActionViewHelpersTarget.checked = !!options.action_view_helpers
+      }
+
+      if (!options.action_view_helpers) {
+        this.rewriteStatusTarget.textContent = '⚠ Enable "Action View helpers" option'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+        this.rewriteOutputTarget.classList.remove("language-html")
+        this.rewriteOutputTarget.textContent = ''
+      } else {
+        this.rewriteStatusTarget.textContent = 'ActionView Tag Helper → HTML'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+        this.rewriteOutputTarget.classList.add("language-html")
+        this.rewriteOutputTarget.textContent = result.rewritten || 'No rewritten output available'
+
+        Prism.highlightElement(this.rewriteOutputTarget)
+      }
     }
 
     const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
@@ -1137,6 +1181,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -1216,6 +1261,18 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onRewriteActionViewHelpersChange(event) {
+    const checked = event.target.checked
+    const parserCheckbox = this.parserOptionsTarget.querySelector('input[data-option="action_view_helpers"]')
+
+    if (parserCheckbox) {
+      parserCheckbox.checked = checked
+    }
+
+    this.updateURL()
+    this.analyze()
+  }
+
   onFormatterOptionChange(_event) {
     this.updateURL()
     this.analyze()
@@ -1266,9 +1323,13 @@ export default class extends Controller {
       analyze: true,
       strict: true,
       action_view_helpers: false,
+      render_nodes: false,
+      strict_locals: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
+      dot_notation_tags: false,
+      html: true,
     }
 
     const nonDefaultOptions = {}

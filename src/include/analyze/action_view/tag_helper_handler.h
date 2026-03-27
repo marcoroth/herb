@@ -1,9 +1,9 @@
 #ifndef TAG_HELPER_HANDLER_H
 #define TAG_HELPER_HANDLER_H
 
-#include "../../util/hb_allocator.h"
-#include "../../util/hb_array.h"
-#include "../../util/hb_string.h"
+#include "../../lib/hb_allocator.h"
+#include "../../lib/hb_array.h"
+#include "../../lib/hb_string.h"
 #include <prism.h>
 #include <stdbool.h>
 
@@ -37,5 +37,7 @@ void tag_helper_info_free(tag_helper_info_T** info);
 
 tag_helper_handler_T* get_tag_helper_handlers(void);
 size_t get_tag_helper_handlers_count(void);
+
+char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator);
 
 #endif

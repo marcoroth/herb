@@ -3,8 +3,8 @@
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_buffer.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_buffer.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +69,22 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
     }
 
+    jmethodID getRenderNodes =
+        (*env)->GetMethodID(env, optionsClass, "isRenderNodes", "()Z");
+
+    if (getRenderNodes != NULL) {
+      jboolean renderNodes = (*env)->CallBooleanMethod(env, options, getRenderNodes);
+      parser_options.render_nodes = (renderNodes == JNI_TRUE);
+    }
+
+    jmethodID getStrictLocals =
+        (*env)->GetMethodID(env, optionsClass, "isStrictLocals", "()Z");
+
+    if (getStrictLocals != NULL) {
+      jboolean strictLocals = (*env)->CallBooleanMethod(env, options, getStrictLocals);
+      parser_options.strict_locals = (strictLocals == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 
@@ -91,6 +107,22 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     if (getPrismProgram != NULL) {
       jboolean prismProgram = (*env)->CallBooleanMethod(env, options, getPrismProgram);
       parser_options.prism_program = (prismProgram == JNI_TRUE);
+    }
+
+    jmethodID getDotNotationTags =
+        (*env)->GetMethodID(env, optionsClass, "isDotNotationTags", "()Z");
+
+    if (getDotNotationTags != NULL) {
+      jboolean dotNotationTags = (*env)->CallBooleanMethod(env, options, getDotNotationTags);
+      parser_options.dot_notation_tags = (dotNotationTags == JNI_TRUE);
+    }
+
+    jmethodID getHtml =
+        (*env)->GetMethodID(env, optionsClass, "isHtml", "()Z");
+
+    if (getHtml != NULL) {
+      jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
+      parser_options.html = (html == JNI_TRUE);
     }
   }
 

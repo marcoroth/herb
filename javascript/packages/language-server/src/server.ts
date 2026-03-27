@@ -198,6 +198,9 @@ export class Server {
 
       if (!document) return []
 
+      const parseResult = this.service.parserService.parseDocument(document)
+      if (parseResult.diagnostics.length > 0) return []
+
       const diagnostics = params.context.diagnostics
       const documentText = document.getText()
 

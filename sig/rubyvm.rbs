@@ -1,0 +1,5 @@
+class RubyVM
+  class InstructionSequence
+    def self.compile: (String source, ?String? file, ?String? path, ?Integer? line, ?freeze: bool, **untyped options) -> RubyVM::InstructionSequence
+  end
+end

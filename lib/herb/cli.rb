@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim
 
   def initialize(args)
     @args = args
@@ -160,7 +160,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -296,6 +296,14 @@ class Herb::CLI
 
       parser.on("--track-whitespace", "Enable whitespace tracking (for parse command) (default: false)") do
         self.track_whitespace = true
+      end
+
+      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
+        self.action_view_helpers = true
+      end
+
+      parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
+        self.trim = true
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -442,6 +450,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:trim] = true if trim
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
@@ -529,6 +538,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:trim] = true if trim
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src
 

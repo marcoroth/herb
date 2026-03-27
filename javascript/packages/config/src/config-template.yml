@@ -11,7 +11,7 @@
 # GitHub Repo: https://github.com/marcoroth/herb
 #
 
-version: 0.8.10
+version: 0.9.2
 
 # files:
 #   # Additional patterns beyond the defaults (**.html, **.rhtml, **.html.erb, etc.)
@@ -25,9 +25,10 @@ version: 0.8.10
 #     - 'tmp/**/*'
 
 # engine:
-#   # Security mode for ERB output in HTML attributes
-#   # Valid values: error (default), warn, ignore
-#   security: error
+#   validators:
+#     security: true       # default: true
+#     nesting: true        # default: true
+#     accessibility: true  # default: true
 
 linter:
   enabled: true

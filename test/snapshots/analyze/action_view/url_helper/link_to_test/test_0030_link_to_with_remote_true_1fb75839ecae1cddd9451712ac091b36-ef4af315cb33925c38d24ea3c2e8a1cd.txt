@@ -34,20 +34,20 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: false
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:33)-(1:41))
+    │   │           └── @ HTMLAttributeNode (location: (1:33)-(1:45))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:41))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:33)-(1:39))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:33)-(1:41))
+    │   │               │           └── @ LiteralNode (location: (1:33)-(1:39))
     │   │               │               └── content: "data-remote"
     │   │               │
     │   │               │
-    │   │               ├── equals: ":" (location: (1:33)-(1:41))
+    │   │               ├── equals: ": " (location: (1:39)-(1:41))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:33)-(1:41))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:41)-(1:45))
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ RubyLiteralNode (location: (1:33)-(1:41))
+    │   │                       │   └── @ LiteralNode (location: (1:41)-(1:45))
     │   │                       │       └── content: "true"
     │   │                       │
     │   │                       ├── close_quote: ∅

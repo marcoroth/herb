@@ -64,6 +64,9 @@ expression: result.inspect()
         │           └── @ LocalVariableReadNode (location: (0,30)-(0,34))
         │               ├── name: :item
         │               └── depth: 0
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node: 
             └── @ ERBEndNode (location: (1:37)-(1:46))
                 ├── tag_opening: "<%" (location: (1:37)-(1:39))

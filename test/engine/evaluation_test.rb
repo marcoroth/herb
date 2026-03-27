@@ -484,5 +484,43 @@ module Engine
 
       assert_evaluated_snapshot(template, { some_condition: false }, { escape: false })
     end
+
+    test "block with rescue when no error occurs" do
+      template = <<~ERB
+        <% 3.times do |i| %>
+          <p><%= i %></p>
+        <% rescue %>
+          <p>Error</p>
+        <% end %>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "block with rescue when error occurs" do
+      template = <<~ERB
+        <% [1, 0].each do |n| %>
+          <p><%= 10 / n %></p>
+        <% rescue ZeroDivisionError %>
+          <p>Cannot divide by zero</p>
+        <% end %>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "block with rescue and ensure" do
+      template = <<~ERB
+        <% 2.times do |i| %>
+          <p><%= i %></p>
+        <% rescue %>
+          <p>Error</p>
+        <% ensure %>
+          <p>Done</p>
+        <% end %>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end

@@ -87,6 +87,8 @@ import {
   ERBUnlessNode,
   ERBYieldNode,
   ERBInNode,
+  ERBRenderNode,
+  RubyRenderLocalNode,
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
   XMLDeclarationNode,
@@ -1019,6 +1021,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.printERBNode(node)
   }
 
+  visitERBRenderNode(node: ERBRenderNode) {
+    this.printERBNode(node)
+  }
+
+  visitRubyRenderLocalNode(_node: RubyRenderLocalNode) {
+    // extracted metadata, nothing to print
+  }
+
   visitERBYieldNode(node: ERBYieldNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
@@ -1058,6 +1068,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       })
 
+      if (node.rescue_clause) this.visit(node.rescue_clause)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.ensure_clause) this.visit(node.ensure_clause)
       if (node.end_node) this.visit(node.end_node)
     })
   }

@@ -2,7 +2,7 @@
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
-#include "../include/ast_node.h"
+#include "../include/ast/ast_node.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -213,6 +213,7 @@ bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {
     case CONTROL_TYPE_CASE:
     case CONTROL_TYPE_CASE_MATCH: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_BEGIN:
+    case CONTROL_TYPE_BLOCK:
       return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_ENSURE;
     case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE;
     case CONTROL_TYPE_UNLESS: return child_type == CONTROL_TYPE_ELSE;
@@ -227,7 +228,8 @@ bool is_terminator_type(control_type_t parent_type, control_type_t child_type) {
   switch (parent_type) {
     case CONTROL_TYPE_WHEN: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_IN: return child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_ELSE;
-    case CONTROL_TYPE_BLOCK: return child_type == CONTROL_TYPE_BLOCK_CLOSE;
+    case CONTROL_TYPE_BLOCK:
+      return child_type == CONTROL_TYPE_BLOCK_CLOSE || is_subsequent_type(parent_type, child_type);
 
     default: return is_subsequent_type(parent_type, child_type);
   }

@@ -2,9 +2,4 @@
 source: "Engine::ERBTagVariationsTest#test_0025_all linter-formatted commented tag variations"
 input: "{source: \"<%# regular comment %>\\n<%# = commented output %>\\n<%# == commented raw output %>\\n<%# - commented trim %>\\n<%# graphql query { user { id } } %>\\n<p>Visible</p>\\n\", locals: {}, options: {}}"
 ---
-
-
-
-
-
 <p>Visible</p>

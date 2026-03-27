@@ -257,6 +257,18 @@ export class IdentityPrinter extends Printer {
       node.body.forEach(child => this.visit(child))
     }
 
+    if (node.rescue_clause) {
+      this.visit(node.rescue_clause)
+    }
+
+    if (node.else_clause) {
+      this.visit(node.else_clause)
+    }
+
+    if (node.ensure_clause) {
+      this.visit(node.ensure_clause)
+    }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -384,6 +396,22 @@ export class IdentityPrinter extends Printer {
     if (node.end_node) {
       this.visit(node.end_node)
     }
+  }
+
+  visitERBRenderNode(node: Nodes.ERBRenderNode): void {
+    this.printERBNode(node)
+  }
+
+  visitRubyRenderLocalNode(_node: Nodes.RubyRenderLocalNode): void {
+    // extracted metadata, nothing to print
+  }
+
+  visitERBStrictLocalsNode(node: Nodes.ERBStrictLocalsNode): void {
+    this.printERBNode(node)
+  }
+
+  visitRubyStrictLocalNode(_node: Nodes.RubyStrictLocalNode): void {
+    // extracted metadata, nothing to print
   }
 
   visitERBYieldNode(node: Nodes.ERBYieldNode): void {

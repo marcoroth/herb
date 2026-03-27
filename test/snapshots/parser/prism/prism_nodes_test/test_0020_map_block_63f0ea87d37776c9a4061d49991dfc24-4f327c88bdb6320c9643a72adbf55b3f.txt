@@ -74,6 +74,9 @@ options: {prism_nodes: true}
         │               ├── equal_loc: ∅
         │               └── block: ∅
         │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node:
             └── @ ERBEndNode (location: (1:41)-(1:50))
                 ├── tag_opening: "<%" (location: (1:41)-(1:43))

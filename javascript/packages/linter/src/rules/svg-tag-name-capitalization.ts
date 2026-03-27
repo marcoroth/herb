@@ -70,6 +70,7 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
 export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitalizationAutofixContext> {
   static autocorrectable = true
   static ruleName = "svg-tag-name-capitalization"
+  static introducedIn = this.version("0.4.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

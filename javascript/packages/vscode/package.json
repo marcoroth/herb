@@ -2,7 +2,7 @@
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
-  "version": "0.8.10",
+  "version": "0.9.2",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -140,6 +140,16 @@
         "when": "false"
       },
       {
+        "command": "herb.toggleLineComment",
+        "title": "Herb: Toggle Line Comment",
+        "when": "editorLangId == erb"
+      },
+      {
+        "command": "herb.toggleBlockComment",
+        "title": "Herb: Toggle Block Comment",
+        "when": "editorLangId == erb"
+      },
+      {
         "command": "herb.toggleLinter",
         "title": "Herb: Toggle Linter",
         "icon": "$(symbol-boolean)"
@@ -158,6 +168,20 @@
         "command": "herb.setMaxLineLength",
         "title": "Herb: Set Max Line Length",
         "icon": "$(symbol-numeric)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "herb.toggleLineComment",
+        "key": "ctrl+/",
+        "mac": "cmd+/",
+        "when": "editorTextFocus && editorLangId == erb"
+      },
+      {
+        "command": "herb.toggleBlockComment",
+        "key": "shift+alt+a",
+        "mac": "shift+alt+a",
+        "when": "editorTextFocus && editorLangId == erb"
       }
     ],
     "viewsContainers": {
@@ -243,17 +267,16 @@
   "scripts": {
     "vscode:prepublish": "yarn run package",
     "publish": "vsce publish",
-    "build": "yarn clean && yarn sync-defaults && yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
+    "build": "yarn clean && yarn sync-defaults && yarn run check-types && yarn build:language-server && node esbuild.js",
     "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "yarn run check-types && yarn run lint && node esbuild.js --production",
+    "package": "yarn run check-types && node esbuild.js --production",
     "build-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "yarn run build-tests && yarn run build && yarn run lint",
+    "pretest": "yarn run build-tests && yarn run build",
     "check-types": "tsc --noEmit",
-    "lint": "eslint src",
     "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
     "vscode:test": "vscode-test",
     "clean": "rimraf dist",
@@ -261,21 +284,17 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/config": "0.8.10",
-    "@herb-tools/formatter": "0.8.10",
-    "@herb-tools/linter": "0.8.10",
-    "@herb-tools/node-wasm": "0.8.10",
+    "@herb-tools/config": "0.9.2",
+    "@herb-tools/formatter": "0.9.2",
+    "@herb-tools/linter": "0.9.2",
+    "@herb-tools/node-wasm": "0.9.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
-    "@types/vscode": "^1.109.0",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
+    "@types/vscode": "^1.110.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
-    "esbuild": "^0.27.3",
-    "esbuild-plugin-copy": "^2.1.1",
-    "eslint": "^10.0.0",
+    "esbuild": "^0.27.4",
     "npm-run-all": "^4.1.5",
     "vscode-languageclient": "^9.0.1"
   }

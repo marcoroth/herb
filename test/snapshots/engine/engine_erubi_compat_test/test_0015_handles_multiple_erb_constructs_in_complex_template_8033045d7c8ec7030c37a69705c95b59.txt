@@ -19,8 +19,7 @@ _buf = ::String.new; _buf << '<!DOCTYPE html>
    else 
  _buf << '    <p>Please log in</p>
 '.freeze;   end 
- _buf << '  
-</body>
+ _buf << '</body>
 </html>
 '.freeze;
 _buf.to_s

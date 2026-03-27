@@ -1,13 +1,13 @@
 #ifndef HERB_H
 #define HERB_H
 
-#include "ast_node.h"
+#include "ast/ast_node.h"
 #include "extract.h"
+#include "lib/hb_allocator.h"
+#include "lib/hb_array.h"
+#include "lib/hb_buffer.h"
 #include "macros.h"
-#include "parser.h"
-#include "util/hb_allocator.h"
-#include "util/hb_array.h"
-#include "util/hb_buffer.h"
+#include "parser/parser.h"
 
 #include <prism.h>
 #include <stdbool.h>

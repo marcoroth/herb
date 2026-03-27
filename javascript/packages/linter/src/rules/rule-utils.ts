@@ -7,7 +7,7 @@ import {
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
-  hasDynamicAttributeNameOnAttribute as hasDynamicAttributeName,
+  hasDynamicAttributeName,
   getCombinedAttributeNameString,
   getAttributeValueNodes,
   getAttributeValue,
@@ -17,7 +17,6 @@ import {
 import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
-  HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
   Token,
@@ -27,6 +26,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
+import type { DiagnosticTag } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
@@ -53,7 +53,7 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -62,14 +62,15 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
   }
 }
 
@@ -186,13 +187,40 @@ export const HTML_VOID_ELEMENTS = new Set([
   "param", "source", "track", "wbr",
 ])
 
-export const HTML_BOOLEAN_ATTRIBUTES = new Set([
-  "autofocus", "autoplay", "checked", "controls", "defer", "disabled", "hidden",
-  "loop", "multiple", "muted", "readonly", "required", "reversed", "selected",
-  "open", "default", "formnovalidate", "novalidate", "itemscope", "scoped",
-  "seamless", "allowfullscreen", "async", "compact", "declare", "nohref",
-  "noresize", "noshade", "nowrap", "sortable", "truespeed", "typemustmatch"
+export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
+
+export const HTML_KNOWN_ELEMENTS = new Set([
+  "html", "head", "body",
+  "base", "link", "meta", "style", "title",
+  "script", "noscript", "template", "slot", "selectedcontent",
+  "address", "article", "aside", "footer", "header", "hgroup",
+  "main", "nav", "section", "search",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "blockquote", "dd", "details", "dialog", "div", "dl", "dt",
+  "figcaption", "figure", "hr", "li", "menu", "ol", "p", "pre",
+  "summary", "ul",
+  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
+  "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
+  "s", "samp", "small", "span", "strong", "sub", "sup", "time",
+  "u", "var", "wbr",
+  "del", "ins",
+  "area", "audio", "canvas", "embed", "iframe", "img", "map",
+  "math", "object", "param", "picture", "source", "svg", "track", "video",
+  "caption", "col", "colgroup", "table", "tbody", "td", "tfoot",
+  "th", "thead", "tr",
+  "button", "datalist", "fieldset", "form", "input", "label",
+  "legend", "meter", "optgroup", "option", "output", "progress",
+  "select", "textarea",
+  "acronym", "big", "tt",
 ])
+
+export function isKnownHTMLElement(tagName: string): boolean {
+  return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isCustomElement(tagName: string): boolean {
+  return tagName.includes("-")
+}
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
@@ -400,13 +428,6 @@ export function isVoidElement(tagName: string): boolean {
 }
 
 /**
- * Checks if an attribute is a boolean attribute
- */
-export function isBooleanAttribute(attributeName: string): boolean {
-  return HTML_BOOLEAN_ATTRIBUTES.has(attributeName.toLowerCase())
-}
-
-/**
  * Attribute visitor that provides granular processing based on both
  * attribute name type (static/dynamic) and value type (static/dynamic)
  *
@@ -515,7 +536,7 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -524,14 +545,15 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
   }
 
   /**
@@ -578,7 +600,7 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -587,14 +609,15 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
       location,
       autofixContext,
       severity,
+      tags,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
   }
 
   /**
@@ -860,6 +883,27 @@ export function locationFromOffset(source: string, startOffset: number, length: 
   const start = positionFromOffset(source, startOffset)
   const end = positionFromOffset(source, startOffset + length)
   return Location.from(start.line, start.column, end.line, end.column)
+}
+
+/**
+ * Creates a Location from a known start line/column and a character offset within content.
+ * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * the position relative to a node's start position.
+ */
+export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {
+  let line = startLine
+  let column = startColumn
+
+  for (let index = 0; index < offset; index++) {
+    if (content[index] === "\n") {
+      line++
+      column = 0
+    } else {
+      column++
+    }
+  }
+
+  return Location.from(line, column, line, column + 1)
 }
 
 /**

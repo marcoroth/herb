@@ -210,7 +210,7 @@ pub trait ERBNode {
 #[derive(Debug, Clone)]
 pub enum AnyNode {
   <%- nodes.each do |node| -%>
-  <%= node.name %>(<%= node.name %>),
+  <%= node.name %>(Box<<%= node.name %>>),
   <%- end -%>
 }
 

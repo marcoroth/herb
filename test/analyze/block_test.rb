@@ -297,5 +297,87 @@ module Analyze
           Content
       HTML
     end
+
+    test "block with rescue" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and else" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue, else, and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with multiple rescues" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue StandardError %>
+          <%= "standard error" %>
+        <% rescue ArgumentError %>
+          <%= "argument error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue wrapped in element" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <% items.each do |item| %>
+            <%= item %>
+          <% rescue %>
+            <span>Error</span>
+          <% end %>
+        </div>
+      HTML
+    end
   end
 end

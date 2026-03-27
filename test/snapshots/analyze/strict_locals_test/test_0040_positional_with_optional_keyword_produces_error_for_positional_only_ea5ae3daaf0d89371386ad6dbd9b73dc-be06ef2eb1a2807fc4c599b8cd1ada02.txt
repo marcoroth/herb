@@ -1,0 +1,36 @@
+---
+source: "Analyze::StrictLocalsTest#test_0040_positional with optional keyword produces error for positional only"
+input: |2-
+<%# locals: (message, something: "else") %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:43))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message, something: "else") " (location: (1:3)-(1:41))
+    │   ├── tag_closing: "%>" (location: (1:41)-(1:43))
+    │   └── locals: (2 items)
+    │       ├── @ RubyStrictLocalNode (location: (1:13)-(1:20))
+    │       │   ├── errors: (1 error)
+    │       │   │   └── @ StrictLocalsPositionalArgumentError (location: (1:13)-(1:20))
+    │       │   │       ├── message: "Strict locals only support keyword arguments. Positional argument `message` is not allowed. Use keyword argument format: `message:`."
+    │       │   │       └── name: "message"
+    │       │   │
+    │       │   ├── name: "message" (location: (1:13)-(1:20))
+    │       │   ├── default_value: ∅
+    │       │   ├── required: true
+    │       │   └── double_splat: false
+    │       │
+    │       └── @ RubyStrictLocalNode (location: (1:22)-(1:39))
+    │           ├── name: "something" (location: (1:22)-(1:32))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:33)-(1:39))
+    │           │       └── content: "\"else\""
+    │           │
+    │           ├── required: false
+    │           └── double_splat: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:43)-(2:0))
+        └── content: "\n"

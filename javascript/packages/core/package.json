@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/core",
-  "version": "0.8.10",
+  "version": "0.9.2",
   "description": "Core module exporting shared interfaces, AST node definitions, and common utilities for Herb",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -14,7 +14,8 @@
   "module": "./dist/herb-core.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && rollup -c",
+    "download-html-entities": "node scripts/download-html-entities.mjs",
+    "build": "yarn download-html-entities && yarn clean && rollup -c",
     "dev": "rollup -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",

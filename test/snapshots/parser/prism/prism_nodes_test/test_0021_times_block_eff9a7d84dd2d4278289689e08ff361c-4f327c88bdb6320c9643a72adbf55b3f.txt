@@ -56,6 +56,9 @@ options: {prism_nodes: true}
         │               ├── name: :i
         │               └── depth: 0
         │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
         └── end_node:
             └── @ ERBEndNode (location: (1:28)-(1:37))
                 ├── tag_opening: "<%" (location: (1:28)-(1:30))

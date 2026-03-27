@@ -160,23 +160,19 @@ export async function activate(context: vscode.ExtensionContext) {
       await client.updateConfiguration()
     }),
 
-    vscode.commands.registerCommand('editor.action.commentLine', async () => {
+    vscode.commands.registerCommand('herb.toggleLineComment', async () => {
       const editor = vscode.window.activeTextEditor
 
-      if (editor?.document.languageId === 'erb') {
+      if (editor) {
         await sendCommentRequest(editor, 'herb/toggleLineComment')
-      } else {
-        await vscode.commands.executeCommand('default:editor.action.commentLine')
       }
     }),
 
-    vscode.commands.registerCommand('editor.action.blockComment', async () => {
+    vscode.commands.registerCommand('herb.toggleBlockComment', async () => {
       const editor = vscode.window.activeTextEditor
 
-      if (editor?.document.languageId === 'erb') {
+      if (editor) {
         await sendCommentRequest(editor, 'herb/toggleBlockComment')
-      } else {
-        await vscode.commands.executeCommand('default:editor.action.blockComment')
       }
     })
   )

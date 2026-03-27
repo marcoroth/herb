@@ -27,7 +27,7 @@ options: {action_view_helpers: true}
     │   │           │   ├── equals: "=" (location: (1:20)-(1:26))
     │   │           │   └── value:
     │   │           │       └── @ HTMLAttributeValueNode (location: (1:20)-(1:26))
-    │   │           │           ├── open_quote: """ (location: (1:20)-(1:26))
+    │   │           │           ├── open_quote: """ (location: (1:20)-(1:20))
     │   │           │           ├── children: (1 item)
     │   │           │           │   └── @ LiteralNode (location: (1:20)-(1:26))
     │   │           │           │       └── content: "tray"
@@ -36,23 +36,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:28)-(1:35))
+    │   │           └── @ HTMLAttributeNode (location: (1:28)-(1:42))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:28)-(1:35))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:28)-(1:33))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:28)-(1:35))
+    │   │               │           └── @ LiteralNode (location: (1:28)-(1:33))
     │   │               │               └── content: "class"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:28)-(1:35))
+    │   │               ├── equals: ": " (location: (1:33)-(1:35))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:28)-(1:35))
-    │   │                       ├── open_quote: """ (location: (1:28)-(1:35))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:35)-(1:42))
+    │   │                       ├── open_quote: """ (location: (1:35)-(1:36))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:28)-(1:35))
+    │   │                       │   └── @ LiteralNode (location: (1:36)-(1:41))
     │   │                       │       └── content: "frame"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:35)-(1:35))
+    │   │                       ├── close_quote: """ (location: (1:41)-(1:42))
     │   │                       └── quoted: true
     │   │
     │   │

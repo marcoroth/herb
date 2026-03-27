@@ -67,6 +67,7 @@ class ERBNoUnsafeRawVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnsafeRawRule extends ParserRule {
   static ruleName = "erb-no-unsafe-raw"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

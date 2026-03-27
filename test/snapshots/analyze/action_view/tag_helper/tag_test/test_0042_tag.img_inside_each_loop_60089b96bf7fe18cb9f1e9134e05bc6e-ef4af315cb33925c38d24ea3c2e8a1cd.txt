@@ -1,0 +1,88 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0042_tag.img inside each loop"
+input: |2-
+<% @items.each do |item| %>
+  <%= tag.img src: item.image_url, alt: item.name %>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @items.each do |item| " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:52))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ ERBOpenTagNode (location: (2:2)-(2:52))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   │       ├── content: " tag.img src: item.image_url, alt: item.name " (location: (2:5)-(2:50))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:50)-(2:52))
+    │   │   │   │       ├── tag_name: "img" (location: (2:10)-(2:13))
+    │   │   │   │       └── children: (2 items)
+    │   │   │   │           ├── @ HTMLAttributeNode (location: (2:14)-(2:33))
+    │   │   │   │           │   ├── name:
+    │   │   │   │           │   │   └── @ HTMLAttributeNameNode (location: (2:14)-(2:17))
+    │   │   │   │           │   │       └── children: (1 item)
+    │   │   │   │           │   │           └── @ LiteralNode (location: (2:14)-(2:17))
+    │   │   │   │           │   │               └── content: "src"
+    │   │   │   │           │   │
+    │   │   │   │           │   │
+    │   │   │   │           │   ├── equals: ": " (location: (2:17)-(2:19))
+    │   │   │   │           │   └── value:
+    │   │   │   │           │       └── @ HTMLAttributeValueNode (location: (2:19)-(2:33))
+    │   │   │   │           │           ├── open_quote: ∅
+    │   │   │   │           │           ├── children: (1 item)
+    │   │   │   │           │           │   └── @ RubyLiteralNode (location: (2:19)-(2:33))
+    │   │   │   │           │           │       └── content: "item.image_url"
+    │   │   │   │           │           │
+    │   │   │   │           │           ├── close_quote: ∅
+    │   │   │   │           │           └── quoted: false
+    │   │   │   │           │
+    │   │   │   │           │
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:35)-(2:49))
+    │   │   │   │               ├── name:
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:35)-(2:38))
+    │   │   │   │               │       └── children: (1 item)
+    │   │   │   │               │           └── @ LiteralNode (location: (2:35)-(2:38))
+    │   │   │   │               │               └── content: "alt"
+    │   │   │   │               │
+    │   │   │   │               │
+    │   │   │   │               ├── equals: ": " (location: (2:38)-(2:40))
+    │   │   │   │               └── value:
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:40)-(2:49))
+    │   │   │   │                       ├── open_quote: ∅
+    │   │   │   │                       ├── children: (1 item)
+    │   │   │   │                       │   └── @ RubyLiteralNode (location: (2:40)-(2:49))
+    │   │   │   │                       │       └── content: "item.name"
+    │   │   │   │                       │
+    │   │   │   │                       ├── close_quote: ∅
+    │   │   │   │                       └── quoted: false
+    │   │   │   │
+    │   │   │   │
+    │   │   │   │
+    │   │   │   ├── tag_name: "img" (location: (2:10)-(2:13))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
+    │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:52)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

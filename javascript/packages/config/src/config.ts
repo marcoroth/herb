@@ -61,8 +61,14 @@ export type FormatterConfig = {
   }
 }
 
+export type ValidatorsConfig = {
+  security?: boolean
+  nesting?: boolean
+  accessibility?: boolean
+}
+
 export type EngineConfig = {
-  security?: 'error' | 'warn' | 'ignore'
+  validators?: ValidatorsConfig
 }
 
 export type HerbConfigOptions = {
@@ -86,6 +92,7 @@ export type LoadOptions = {
 export type FromObjectOptions = {
   projectPath?: string
   version?: string
+  configVersion?: string
 }
 
 export class Config {
@@ -105,10 +112,12 @@ export class Config {
 
   public readonly path: string
   public config: HerbConfig
+  public readonly configVersion: string
 
-  constructor(projectPath: string, config: HerbConfig) {
+  constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
     this.path = Config.configPathFromProjectPath(projectPath)
     this.config = config
+    this.configVersion = configVersion ?? config.version
   }
 
   get projectPath(): string {
@@ -801,7 +810,7 @@ export class Config {
     partial: Partial<HerbConfigOptions>,
     options: FromObjectOptions = {}
   ): Config {
-    const { projectPath = process.cwd(), version = DEFAULT_VERSION } = options
+    const { projectPath = process.cwd(), version = DEFAULT_VERSION, configVersion } = options
     const defaults = this.getDefaultConfig(version)
     const merged: HerbConfig = deepMerge(defaults, partial as any)
 
@@ -819,7 +828,7 @@ export class Config {
       throw error
     }
 
-    return new Config(projectPath, merged)
+    return new Config(projectPath, merged, configVersion)
   }
 
   /**
@@ -1142,19 +1151,14 @@ export class Config {
       throw error
     }
 
-    if (parsed.version && parsed.version !== version) {
-      console.error(`\n⚠️ Configuration version mismatch in ${configPath}`)
-      console.error(`   Config version: ${parsed.version}`)
-      console.error(`   Current version: ${version}`)
-      console.error(`   Consider updating your .herb.yml file.\n`)
-    }
+    const userConfigVersion: string = parsed.version || version
 
     const defaults = this.getDefaultConfig(version)
     const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved)
+    return new Config(projectRoot, resolved, userConfigVersion)
   }
 
   /**

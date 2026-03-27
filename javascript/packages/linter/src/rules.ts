@@ -1,9 +1,17 @@
 import type { RuleClass } from "./types.js"
 
+import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
+
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
+import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
+import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
+import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
+import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
@@ -18,6 +26,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
 import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
@@ -52,6 +61,7 @@ import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-val
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -69,23 +79,36 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
+import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
+import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
+import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
+
+import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  A11yNoAutofocusAttributeRule,
+
   ActionViewNoSilentHelperRule,
+  ActionViewNoSilentRenderRule,
+  ActionViewNoUnnecessaryTagAttributesRule,
+  ActionViewNoVoidElementContentRule,
+  ActionViewStrictLocalsFirstLineRule,
+  ActionViewStrictLocalsPartialOnlyRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
   ERBNoDuplicateBranchElementsRule,
@@ -100,6 +123,7 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoSilentStatementRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
@@ -134,6 +158,7 @@ export const rules: RuleClass[] = [
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   HTMLBodyOnlyElementsRule,
   HTMLBooleanAttributesNoValueRule,
+  HTMLDetailsHasSummaryRule,
   HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
@@ -151,13 +176,18 @@ export const rules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
+  HTMLNoUnescapedEntitiesRule,
+  HTMLNoUnknownTagRule,
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
+  HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
+
+  SourceIndentationRule,
 
   SVGTagNameCapitalizationRule,
 

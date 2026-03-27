@@ -1,12 +1,12 @@
 #include "../../include/analyze/action_view/tag_helper_node_builders.h"
-#include "../../include/ast_nodes.h"
-#include "../../include/location.h"
-#include "../../include/position.h"
-#include "../../include/range.h"
-#include "../../include/token_struct.h"
-#include "../../include/util/hb_allocator.h"
-#include "../../include/util/hb_array.h"
-#include "../../include/util/hb_string.h"
+#include "../../include/ast/ast_nodes.h"
+#include "../../include/lexer/token_struct.h"
+#include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_array.h"
+#include "../../include/lib/hb_string.h"
+#include "../../include/location/location.h"
+#include "../../include/location/position.h"
+#include "../../include/location/range.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -26,7 +26,7 @@ token_T* create_synthetic_token(
   if (value) {
     size_t length = strlen(value);
     char* copied = hb_allocator_strndup(allocator, value, length);
-    token->value = (hb_string_T) { .data = copied, .length = (uint32_t) length };
+    token->value = hb_string_from_data(copied, length);
   } else {
     token->value = HB_STRING_EMPTY;
   }
@@ -76,32 +76,47 @@ hb_array_T* prepend_attribute(hb_array_T* attributes, AST_NODE_T* attribute, hb_
   return new_attributes;
 }
 
-AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
+AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node_precise(
   const char* name_string,
   const char* value_string,
-  position_T start_position,
-  position_T end_position,
+  attribute_positions_T* positions,
   hb_allocator_T* allocator
 ) {
   if (!name_string) { return NULL; }
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    create_attribute_name_node(name_string, start_position, end_position, allocator);
+    create_attribute_name_node(name_string, positions->name_start, positions->name_end, allocator);
 
-  token_T* equals_token = create_synthetic_token(allocator, "=", TOKEN_EQUALS, start_position, end_position);
+  token_T* equals_token = value_string ? create_synthetic_token(
+                                           allocator,
+                                           positions->separator_string,
+                                           positions->separator_type,
+                                           positions->separator_start,
+                                           positions->separator_end
+                                         )
+                                       : NULL;
+
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = NULL;
 
   if (value_string) {
-    token_T* open_quote = create_synthetic_token(allocator, "\"", TOKEN_QUOTE, start_position, end_position);
-    token_T* close_quote = create_synthetic_token(allocator, "\"", TOKEN_QUOTE, end_position, end_position);
+    token_T* open_quote =
+      positions->quoted
+        ? create_synthetic_token(allocator, "\"", TOKEN_QUOTE, positions->value_start, positions->content_start)
+        : NULL;
+
+    token_T* close_quote =
+      positions->quoted
+        ? create_synthetic_token(allocator, "\"", TOKEN_QUOTE, positions->content_end, positions->value_end)
+        : NULL;
 
     AST_LITERAL_NODE_T* value_literal = ast_literal_node_init(
       hb_string_from_c_string(value_string),
-      start_position,
-      end_position,
+      positions->content_start,
+      positions->content_end,
       hb_array_init(0, allocator),
       allocator
     );
+
     hb_array_T* value_children = hb_array_init(1, allocator);
     hb_array_append(value_children, (AST_NODE_T*) value_literal);
 
@@ -109,43 +124,50 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
       open_quote,
       value_children,
       close_quote,
-      true,
-      start_position,
-      end_position,
+      positions->quoted,
+      positions->value_start,
+      positions->value_end,
       hb_array_init(0, allocator),
       allocator
     );
   }
 
+  position_T attribute_end = value_string ? positions->value_end : positions->name_end;
+
   return ast_html_attribute_node_init(
     name_node,
     equals_token,
     value_node,
-    start_position,
-    end_position,
+    positions->name_start,
+    attribute_end,
     hb_array_init(0, allocator),
     allocator
   );
 }
 
-AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
+AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
   const char* name_string,
   const char* ruby_content,
-  position_T start_position,
-  position_T end_position,
+  attribute_positions_T* positions,
   hb_allocator_T* allocator
 ) {
   if (!name_string || !ruby_content) { return NULL; }
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name_node =
-    create_attribute_name_node(name_string, start_position, end_position, allocator);
+    create_attribute_name_node(name_string, positions->name_start, positions->name_end, allocator);
 
-  token_T* equals_token = create_synthetic_token(allocator, ":", TOKEN_COLON, start_position, end_position);
+  token_T* equals_token = create_synthetic_token(
+    allocator,
+    positions->separator_string,
+    positions->separator_type,
+    positions->separator_start,
+    positions->separator_end
+  );
 
   AST_RUBY_LITERAL_NODE_T* ruby_node = ast_ruby_literal_node_init(
     hb_string_from_c_string(ruby_content),
-    start_position,
-    end_position,
+    positions->content_start,
+    positions->content_end,
     hb_array_init(0, allocator),
     allocator
   );
@@ -158,8 +180,8 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
     value_children,
     NULL,
     false,
-    start_position,
-    end_position,
+    positions->content_start,
+    positions->content_end,
     hb_array_init(0, allocator),
     allocator
   );
@@ -168,11 +190,59 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
     name_node,
     equals_token,
     value_node,
-    start_position,
-    end_position,
+    positions->name_start,
+    positions->content_end,
     hb_array_init(0, allocator),
     allocator
   );
+}
+
+AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
+  const char* name_string,
+  const char* value_string,
+  position_T start_position,
+  position_T end_position,
+  hb_allocator_T* allocator
+) {
+  attribute_positions_T positions = {
+    .name_start = start_position,
+    .name_end = end_position,
+    .separator_string = "=",
+    .separator_type = TOKEN_EQUALS,
+    .separator_start = start_position,
+    .separator_end = end_position,
+    .value_start = start_position,
+    .value_end = end_position,
+    .content_start = start_position,
+    .content_end = end_position,
+    .quoted = true,
+  };
+
+  return create_html_attribute_node_precise(name_string, value_string, &positions, allocator);
+}
+
+AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal(
+  const char* name_string,
+  const char* ruby_content,
+  position_T start_position,
+  position_T end_position,
+  hb_allocator_T* allocator
+) {
+  attribute_positions_T positions = {
+    .name_start = start_position,
+    .name_end = end_position,
+    .separator_string = ":",
+    .separator_type = TOKEN_COLON,
+    .separator_start = start_position,
+    .separator_end = end_position,
+    .value_start = start_position,
+    .value_end = end_position,
+    .content_start = start_position,
+    .content_end = end_position,
+    .quoted = false,
+  };
+
+  return create_html_attribute_with_ruby_literal_precise(name_string, ruby_content, &positions, allocator);
 }
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
@@ -210,8 +280,20 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* create_interpolated_attribute_value(
         }
       }
     } else if (part->type == PM_EMBEDDED_STATEMENTS_NODE) {
-      size_t ruby_length = part->location.end - part->location.start;
-      char* ruby_content = hb_allocator_strndup(allocator, (const char*) part->location.start, ruby_length);
+      pm_embedded_statements_node_t* embedded = (pm_embedded_statements_node_t*) part;
+      const uint8_t* content_start;
+      const uint8_t* content_end;
+
+      if (embedded->statements) {
+        content_start = embedded->statements->base.location.start;
+        content_end = embedded->statements->base.location.end;
+      } else {
+        content_start = part->location.start;
+        content_end = part->location.end;
+      }
+
+      size_t ruby_length = content_end - content_start;
+      char* ruby_content = hb_allocator_strndup(allocator, (const char*) content_start, ruby_length);
 
       if (ruby_content) {
         AST_RUBY_LITERAL_NODE_T* ruby_node = ast_ruby_literal_node_init(

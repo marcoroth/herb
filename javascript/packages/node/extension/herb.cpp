@@ -1,13 +1,13 @@
 extern "C" {
-#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/extract.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/location.h"
-#include "../extension/libherb/include/range.h"
-#include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/util/hb_allocator.h"
-#include "../extension/libherb/include/util/hb_array.h"
-#include "../extension/libherb/include/util/hb_buffer.h"
+#include "../extension/libherb/include/location/location.h"
+#include "../extension/libherb/include/location/range.h"
+#include "../extension/libherb/include/lexer/token.h"
+#include "../extension/libherb/include/lib/hb_allocator.h"
+#include "../extension/libherb/include/lib/hb_array.h"
+#include "../extension/libherb/include/lib/hb_buffer.h"
 }
 
 #include "error_helpers.h"
@@ -117,6 +117,28 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         bool action_view_helpers_value;
         napi_get_value_bool(env, action_view_helpers_prop, &action_view_helpers_value);
         parser_options.action_view_helpers = action_view_helpers_value;
+      }
+
+      napi_value render_nodes_prop;
+      bool has_render_nodes_prop;
+      napi_has_named_property(env, args[1], "render_nodes", &has_render_nodes_prop);
+
+      if (has_render_nodes_prop) {
+        napi_get_named_property(env, args[1], "render_nodes", &render_nodes_prop);
+        bool render_nodes_value;
+        napi_get_value_bool(env, render_nodes_prop, &render_nodes_value);
+        parser_options.render_nodes = render_nodes_value;
+      }
+
+      napi_value strict_locals_prop;
+      bool has_strict_locals_prop;
+      napi_has_named_property(env, args[1], "strict_locals", &has_strict_locals_prop);
+
+      if (has_strict_locals_prop) {
+        napi_get_named_property(env, args[1], "strict_locals", &strict_locals_prop);
+        bool strict_locals_value;
+        napi_get_value_bool(env, strict_locals_prop, &strict_locals_value);
+        parser_options.strict_locals = strict_locals_value;
       }
 
       napi_value prism_nodes_prop;

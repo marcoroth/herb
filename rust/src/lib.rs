@@ -28,4 +28,4 @@ pub use range::Range;
 pub use token::Token;
 pub use visitor::Visitor;
 
-pub const VERSION: &str = "0.8.10";
+pub const VERSION: &str = "0.9.2";

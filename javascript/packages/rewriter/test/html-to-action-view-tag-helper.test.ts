@@ -184,7 +184,7 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
 
     test("img with attributes", () => {
       expect(transform('<img src="image.png" alt="Photo">')).toBe(
-        '<%= tag.img src: "image.png", alt: "Photo" %>'
+        '<%= image_tag "image.png", alt: "Photo" %>'
       )
     })
   })
@@ -372,6 +372,94 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
       `
 
       expect(transform(input)).toBe(expected)
+    })
+  })
+
+  describe("javascript_tag for script elements", () => {
+    test("script with inline content", () => {
+      expect(transform(`<script>alert('Hello')</script>`)).toBe(
+        `<%= javascript_tag "alert('Hello')" %>`
+      )
+    })
+
+    test("script with block content", () => {
+      const input = dedent`
+        <script>
+          alert('Hello')
+        </script>
+      `
+
+      const expected = dedent`
+        <%= javascript_tag do %>
+          alert('Hello')
+        <% end %>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("script with type attribute and content", () => {
+      expect(transform(`<script type="application/javascript">alert('Hello')</script>`)).toBe(
+        `<%= javascript_tag "alert('Hello')", type: "application/javascript" %>`
+      )
+    })
+  })
+
+  describe("javascript_include_tag for script elements with src", () => {
+    test("script with src attribute", () => {
+      expect(transform(`<script src="application.js"></script>`)).toBe(
+        `<%= javascript_include_tag "application.js" %>`
+      )
+    })
+
+    test("script with src and defer", () => {
+      expect(transform(`<script src="application.js" defer="defer"></script>`)).toBe(
+        `<%= javascript_include_tag "application.js", defer: "defer" %>`
+      )
+    })
+
+    test("script with src and type", () => {
+      expect(transform(`<script src="app.js" type="module"></script>`)).toBe(
+        `<%= javascript_include_tag "app.js", type: "module" %>`
+      )
+    })
+  })
+
+  describe("image_tag for img elements", () => {
+    test("img with src attribute", () => {
+      expect(transform('<img src="icon.png">')).toBe(
+        '<%= image_tag "icon.png" %>'
+      )
+    })
+
+    test("img with src and alt", () => {
+      expect(transform('<img src="icon.png" alt="Icon">')).toBe(
+        '<%= image_tag "icon.png", alt: "Icon" %>'
+      )
+    })
+
+    test("img with src, alt and class", () => {
+      expect(transform('<img src="photo.jpg" alt="Photo" class="avatar">')).toBe(
+        '<%= image_tag "photo.jpg", alt: "Photo", class: "avatar" %>'
+      )
+    })
+
+    test("img with src and data attributes", () => {
+      expect(transform('<img src="icon.png" data-controller="image">')).toBe(
+        '<%= image_tag "icon.png", data: { controller: "image" } %>'
+      )
+    })
+
+    test("img self-closing", () => {
+      expect(transform('<img src="icon.png" />')).toBe(
+        '<%= image_tag "icon.png" %>'
+      )
+    })
+
+    test("img without src", () => {
+      expect(transform('<img alt="Photo">')).toBe(
+        '<%= image_tag alt: "Photo" %>'
+      )
     })
   })
 

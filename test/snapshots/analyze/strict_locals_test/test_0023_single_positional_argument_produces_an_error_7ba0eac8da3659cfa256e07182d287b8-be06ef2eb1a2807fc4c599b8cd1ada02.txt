@@ -1,0 +1,27 @@
+---
+source: "Analyze::StrictLocalsTest#test_0023_single positional argument produces an error"
+input: |2-
+<%# locals: (message) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:24))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message) " (location: (1:3)-(1:22))
+    │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   └── locals: (1 item)
+    │       └── @ RubyStrictLocalNode (location: (1:13)-(1:20))
+    │           ├── errors: (1 error)
+    │           │   └── @ StrictLocalsPositionalArgumentError (location: (1:13)-(1:20))
+    │           │       ├── message: "Strict locals only support keyword arguments. Positional argument `message` is not allowed. Use keyword argument format: `message:`."
+    │           │       └── name: "message"
+    │           │
+    │           ├── name: "message" (location: (1:13)-(1:20))
+    │           ├── default_value: ∅
+    │           ├── required: true
+    │           └── double_splat: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:24)-(2:0))
+        └── content: "\n"

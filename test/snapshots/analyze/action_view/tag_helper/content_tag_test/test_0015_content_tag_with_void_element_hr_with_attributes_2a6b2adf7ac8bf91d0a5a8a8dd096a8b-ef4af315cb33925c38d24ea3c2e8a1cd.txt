@@ -14,34 +14,31 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:38)-(1:40))
     │   │       ├── tag_name: "hr" (location: (1:4)-(1:15))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:21)-(1:28))
+    │   │           └── @ HTMLAttributeNode (location: (1:21)-(1:37))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:28))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:26))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:21)-(1:28))
+    │   │               │           └── @ LiteralNode (location: (1:21)-(1:26))
     │   │               │               └── content: "class"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:21)-(1:28))
+    │   │               ├── equals: ": " (location: (1:26)-(1:28))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:21)-(1:28))
-    │   │                       ├── open_quote: """ (location: (1:21)-(1:28))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:28)-(1:37))
+    │   │                       ├── open_quote: """ (location: (1:28)-(1:29))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:21)-(1:28))
+    │   │                       │   └── @ LiteralNode (location: (1:29)-(1:36))
     │   │                       │       └── content: "divider"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:28)-(1:28))
+    │   │                       ├── close_quote: """ (location: (1:36)-(1:37))
     │   │                       └── quoted: true
     │   │
     │   │
     │   │
     │   ├── tag_name: "hr" (location: (1:4)-(1:15))
     │   ├── body: []
-    │   ├── close_tag:
-    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:40)-(1:40))
-    │   │       └── tag_name: "hr" (location: (1:4)-(1:15))
-    │   │
-    │   ├── is_void: false
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
     │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
     │
     └── @ HTMLTextNode (location: (1:40)-(2:0))
