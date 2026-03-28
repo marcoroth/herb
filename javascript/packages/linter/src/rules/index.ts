@@ -1,3 +1,4 @@
+export * from "./a11y-no-aria-unsupported-elements.js"
 export * from "./a11y-no-autofocus-attribute.js"
 
 export * from "./rule-utils.js"
