@@ -36,6 +36,8 @@ describe("ERBNoUnusedLiteralsRule", () => {
       <% x = 1 %>
       <% name = "hello" %>
       <% @title = "Hello" %>
+      <% names = ["Alice", "Bob"] %>
+      <% config = { key: "value" } %>
     `)
   })
 
