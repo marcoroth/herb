@@ -1,31 +1,76 @@
-import { isERBOutputNode, PrismNode } from "@herb-tools/core"
-import type { ParseResult, ERBContentNode, ParserOptions } from "@herb-tools/core"
+import { isERBOutputNode, PrismVisitor, PrismNodes } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor, locationFromOffset } from "./rule-utils.js"
+import { isAssignmentNode } from "./prism-rule-utils.js"
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
-const LITERAL_NODE_TYPES = new Set([
-  "ArrayNode",
-  "FalseNode",
-  "FloatNode",
-  "HashNode",
-  "ImaginaryNode",
-  "IntegerNode",
-  "NilNode",
-  "RangeNode",
-  "RationalNode",
-  "RegularExpressionNode",
-  "StringNode",
-  "SymbolNode",
-  "TrueNode",
-])
+function isCallNode(node: PrismNode): boolean {
+  return node?.constructor?.name === "CallNode"
+}
 
-function isLiteralPrismNode(prismNode: PrismNode): boolean {
-  const type: string = prismNode?.constructor?.name
-  if (!type) return false
+class LiteralCollector extends PrismVisitor {
+  public readonly literals: PrismNode[] = []
 
-  return LITERAL_NODE_TYPES.has(type)
+  override visit(node: PrismNode): void {
+    if (!node) return
+    if (isAssignmentNode(node) || isCallNode(node)) return
+
+    super.visit(node)
+  }
+
+  visitArrayNode(node: PrismNodes.ArrayNode): void {
+    this.literals.push(node)
+  }
+
+  visitFalseNode(node: PrismNodes.FalseNode): void {
+    this.literals.push(node)
+  }
+
+  visitFloatNode(node: PrismNodes.FloatNode): void {
+    this.literals.push(node)
+  }
+
+  visitHashNode(node: PrismNodes.HashNode): void {
+    this.literals.push(node)
+  }
+
+  visitImaginaryNode(node: PrismNodes.ImaginaryNode): void {
+    this.literals.push(node)
+  }
+
+  visitIntegerNode(node: PrismNodes.IntegerNode): void {
+    this.literals.push(node)
+  }
+
+  visitNilNode(node: PrismNodes.NilNode): void {
+    this.literals.push(node)
+  }
+
+  visitRangeNode(node: PrismNodes.RangeNode): void {
+    this.literals.push(node)
+  }
+
+  visitRationalNode(node: PrismNodes.RationalNode): void {
+    this.literals.push(node)
+  }
+
+  visitRegularExpressionNode(node: PrismNodes.RegularExpressionNode): void {
+    this.literals.push(node)
+  }
+
+  visitStringNode(node: PrismNodes.StringNode): void {
+    this.literals.push(node)
+  }
+
+  visitSymbolNode(node: PrismNodes.SymbolNode): void {
+    this.literals.push(node)
+  }
+
+  visitTrueNode(node: PrismNodes.TrueNode): void {
+    this.literals.push(node)
+  }
 }
 
 class ERBNoUnusedLiteralsVisitor extends BaseRuleVisitor {
@@ -33,15 +78,24 @@ class ERBNoUnusedLiteralsVisitor extends BaseRuleVisitor {
     if (isERBOutputNode(node)) return
 
     const prismNode = node.prismNode
-    if (!prismNode || !isLiteralPrismNode(prismNode)) return
+    if (!prismNode) return
 
-    const content = node.content?.value?.trim()
-    if (!content) return
+    const source = node.source
+    if (!source) return
 
-    this.addOffense(
-      `Avoid using silent ERB tags for literals. \`${content}\` is evaluated but never used or output.`,
-      node.location,
-    )
+    const collector = new LiteralCollector()
+    collector.visit(prismNode)
+
+    for (const literal of collector.literals) {
+      const { startOffset, length } = literal.location
+      const literalSource = source.substring(startOffset, startOffset + length)
+      const location = locationFromOffset(source, startOffset, length)
+
+      this.addOffense(
+        `Avoid using silent ERB tags for literals. \`${literalSource}\` is evaluated but never used or output.`,
+        location,
+      )
+    }
   }
 }
 
