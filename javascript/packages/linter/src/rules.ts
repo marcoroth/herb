@@ -1,5 +1,6 @@
 import type { RuleClass } from "./types.js"
 
+import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
 import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
 
@@ -98,6 +99,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  A11yNoAccesskeyAttributeRule,
   A11yNoAriaUnsupportedElementsRule,
   A11yNoAutofocusAttributeRule,
 
