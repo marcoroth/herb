@@ -103,6 +103,9 @@ class ERBNoUnusedLiteralsVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Avoid using silent ERB tags for literals. \`${literalSource}\` is evaluated but never used or output.`,
         location,
+        undefined,
+        undefined,
+        ["unnecessary"],
       )
     }
   }
