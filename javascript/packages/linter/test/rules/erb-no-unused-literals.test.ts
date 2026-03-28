@@ -121,6 +121,109 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("fails for interpolated string literals", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `"Hello #{name}"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% "Hello #{name}" %>
+    `)
+  })
+
+  test("fails for arithmetic on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `10` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% 10 / 1 %>
+    `)
+  })
+
+  test("fails for string method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% "hello".upcase %>
+    `)
+  })
+
+  test("fails for chained method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% "hello".strip.downcase %>
+    `)
+  })
+
+  test("fails for integer arithmetic expressions", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `1` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% 1 + 2 %>
+    `)
+  })
+
+  test("fails for float arithmetic expressions", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `3.14` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% 3.14 * 2 %>
+    `)
+  })
+
+  test("fails for array method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `[1, 2, 3]` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% [1, 2, 3].length %>
+    `)
+  })
+
+  test("fails for hash method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `{ a: 1 }` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% { a: 1 }.keys %>
+    `)
+  })
+
+  test("fails for symbol method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `:hello` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% :hello.to_s %>
+    `)
+  })
+
+  test("fails for nil method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `nil` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% nil.to_s %>
+    `)
+  })
+
+  test("fails for true method calls on literal receivers", () => {
+    expectWarning('Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% true.to_s %>
+    `)
+  })
+
+  test("passes for method calls without literal receiver", () => {
+    expectNoOffenses(dedent`
+      <% some_method.call %>
+      <% helper(arg) %>
+      <% foo.bar.baz %>
+    `)
+  })
+
+  test("passes for method calls with no receiver", () => {
+    expectNoOffenses(dedent`
+      <% puts "hello" %>
+      <% render partial: "header" %>
+    `)
+  })
+
   test("fails for literals in conditional statements", () => {
     expectWarning('Avoid using silent ERB tags for literals. `"success"` is evaluated but never used or output.')
 

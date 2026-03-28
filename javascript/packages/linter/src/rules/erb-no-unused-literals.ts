@@ -15,7 +15,12 @@ class LiteralCollector extends PrismVisitor {
 
   override visit(node: PrismNode): void {
     if (!node) return
-    if (isAssignmentNode(node) || isCallNode(node)) return
+    if (isAssignmentNode(node)) return
+
+    if (isCallNode(node)) {
+      this.visit(node.receiver)
+      return
+    }
 
     super.visit(node)
   }
@@ -61,6 +66,10 @@ class LiteralCollector extends PrismVisitor {
   }
 
   visitStringNode(node: PrismNodes.StringNode): void {
+    this.literals.push(node)
+  }
+
+  visitInterpolatedStringNode(node: PrismNodes.InterpolatedStringNode): void {
     this.literals.push(node)
   }
 
