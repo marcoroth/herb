@@ -11,12 +11,14 @@ import {
   getCombinedAttributeNameString,
   getAttributeValueNodes,
   getAttributeValue,
+  getTagLocalName,
   forEachAttribute,
 } from "@herb-tools/core"
 
 import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
+  HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
   Token,
@@ -164,6 +166,73 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   protected abstract onExitBranch(stateToRestore: TBranchState): void
 }
 
+
+/**
+ * Mixin that tracks the current HTML element stack during AST traversal.
+ * Provides convenient access to the current element, tag name, parent element,
+ * and ancestry checks.
+ *
+ * Useful for rules that need element context when visiting child nodes
+ * (e.g., checking attributes in the context of their parent element).
+ *
+ * @template TAutofixContext - Type for autofix context (node + custom data)
+ */
+export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
+  private elementStack: HTMLElementNode[] = []
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    this.elementStack.push(node)
+    super.visitHTMLElementNode(node)
+    this.elementStack.pop()
+  }
+
+  /**
+   * The current HTML element being visited, or null if not inside an element.
+   */
+  protected get currentElement(): HTMLElementNode | null {
+    return this.elementStack.at(-1) ?? null
+  }
+
+  /**
+   * The tag name of the current HTML element, or null if not inside an element.
+   */
+  protected get currentTagName(): string | null {
+    const element = this.currentElement
+    return element ? getTagLocalName(element) : null
+  }
+
+  /**
+   * The parent HTML element (one level up), or null if at the top level.
+   */
+  protected get parentElement(): HTMLElementNode | null {
+    return this.elementStack.at(-2) ?? null
+  }
+
+  /**
+   * The tag name of the parent HTML element, or null if at the top level.
+   */
+  protected get parentTagName(): string | null {
+    const element = this.parentElement
+    return element ? getTagLocalName(element) : null
+  }
+
+  /**
+   * Checks if the current traversal position is inside an element with any of the given tag names.
+   */
+  protected isInsideElement(...tagNames: string[]): boolean {
+    return this.elementStack.some(element => {
+      const name = getTagLocalName(element)
+      return name !== null && tagNames.includes(name)
+    })
+  }
+
+  /**
+   * The current nesting depth (number of ancestor HTML elements).
+   */
+  protected get elementDepth(): number {
+    return this.elementStack.length
+  }
+}
 
 /**
  * Common HTML element categorization

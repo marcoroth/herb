@@ -1,8 +1,8 @@
-import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin } from "./rule-utils.js"
+
+import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
 import type { StaticAttributeDynamicValueParams } from "./rule-utils.js"
