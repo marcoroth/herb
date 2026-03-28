@@ -6,6 +6,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Accessibility
 
+- [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
 - [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
 
 
