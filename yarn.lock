@@ -429,10 +429,10 @@
   dependencies:
     "@iconify/types" "*"
 
-"@iconify-json/vscode-icons@^1.2.39":
-  version "1.2.40"
-  resolved "https://registry.yarnpkg.com/@iconify-json/vscode-icons/-/vscode-icons-1.2.40.tgz#3063ff6374c81add6b8b82527838a358d6d5b6b7"
-  integrity sha512-Q7JIWAxENwmcRg4EGRY+u16gBwrAj6mWeuSmuyuPvNvoTJHh8Ss8qoeDhrFYNgtWqNkzH5hSf4b2T9XLK5MsrA==
+"@iconify-json/vscode-icons@^1.2.45":
+  version "1.2.45"
+  resolved "https://registry.yarnpkg.com/@iconify-json/vscode-icons/-/vscode-icons-1.2.45.tgz#94d2ee47bcca643dcce834d6b2c292058daed4a4"
+  integrity sha512-ow+ueibMIq79ueM1kv6cOWgHx8jfh1XJQi2RrqMHb4HLbvIBlxpy5PCMvOJXlA68R6fBAHpWQeh6uWx7VKEVsA==
   dependencies:
     "@iconify/types" "*"
 
@@ -9800,13 +9800,13 @@ vite@^8.0.2:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vitepress-plugin-group-icons@^1.7.1:
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/vitepress-plugin-group-icons/-/vitepress-plugin-group-icons-1.7.1.tgz#49fe5547e9dd8460e68fd379fa3e093b4b22e43f"
-  integrity sha512-3ZPcIqwHNBg1btrOOSecOqv8yJxHdu3W2ugxE5LusclDF005LAm60URMEmBQrkgl4JvM32AqJirqghK6lGIk8g==
+vitepress-plugin-group-icons@^1.7.3:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/vitepress-plugin-group-icons/-/vitepress-plugin-group-icons-1.7.3.tgz#fcf0855cbe43b76f2cac3f6907004085743702c5"
+  integrity sha512-Nj2znOveQC7KH1CQ1k2WlVvEDAuymhumcUvD51ognVUv2yjrfAhOzL1VEESPzoJN0kWoRxXK+iu+OKNLe7unGQ==
   dependencies:
     "@iconify-json/logos" "^1.2.10"
-    "@iconify-json/vscode-icons" "^1.2.39"
+    "@iconify-json/vscode-icons" "^1.2.45"
     "@iconify/utils" "^3.1.0"
 
 vitepress@^2.0.0-alpha.17:
