@@ -1,30 +1,19 @@
-import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
-import { hasAttribute, isERBOpenTagNode, findAttributeByName } from "@herb-tools/core"
+import { type ParseResult, type ParserOptions, type HTMLAttributeNode, getAttributeName } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 class NoAccesskeyAttributeVisitor extends BaseRuleVisitor {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    if (this.hasAccesskey(node)) {
+  visitHTMLAttributeNode(node: HTMLAttributeNode): void {
+    if (getAttributeName(node) === "accesskey") {
       this.addOffense(
         "Avoid using the `accesskey` attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screen readers and keyboard-only users create accessibility complications.",
-        node.tag_name!.location,
+        node.location,
       )
     }
 
-    super.visitHTMLElementNode(node)
-  }
-
-  private hasAccesskey(node: HTMLElementNode): boolean {
-    const openTag = node.open_tag
-
-    if (isERBOpenTagNode(openTag)) {
-      return findAttributeByName(openTag.children, "accesskey") !== null
-    } else {
-      return hasAttribute(node, "accesskey")
-    }
+    super.visitHTMLAttributeNode(node)
   }
 }
 
