@@ -1,6 +1,8 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
-import { A11yNoAriaUnsupportedElementsRule } from "../../src/rules/a11y-no-aria-unsupported-elements.js"
+
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { A11yNoAriaUnsupportedElementsRule } from "../../src/rules/a11y-no-aria-unsupported-elements.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(A11yNoAriaUnsupportedElementsRule)
 
@@ -58,5 +60,35 @@ describe("a11y-no-aria-unsupported-elements", () => {
     expectWarning('The `aria-label` attribute is not supported on the `<meta>` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.')
 
     assertOffenses('<meta aria-hidden="true" aria-label="test" />')
+  })
+
+  describe("javascript_tag helper", () => {
+    test("fails for javascript_tag with aria-hidden", () => {
+      expectWarning('The `aria-hidden` attribute is not supported on the `<script>` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.')
+
+      assertOffenses(dedent`
+        <%= javascript_tag aria_hidden: "true" do %>
+          alert("hello")
+        <% end %>`
+      )
+    })
+
+    test("fails for javascript_tag with role", () => {
+      expectWarning('The `role` attribute is not supported on the `<script>` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.')
+
+      assertOffenses(dedent`
+        <%= javascript_tag role: "application" do %>
+          alert("hello")
+        <% end %>`
+      )
+    })
+
+    test("passes for javascript_tag without ARIA attributes", () => {
+      expectNoOffenses(dedent`
+        <%= javascript_tag nonce: true do %>
+          alert("hello")
+        <% end %>`
+      )
+    })
   })
 })

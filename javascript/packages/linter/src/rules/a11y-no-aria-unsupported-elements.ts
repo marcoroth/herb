@@ -1,9 +1,9 @@
-import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
-import { getTagLocalName } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
+import { getTagLocalName, getAttributeName, isERBOpenTagNode, isHTMLOpenTagNode, filterHTMLAttributeNodes } from "@herb-tools/core"
 
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLOpenTagNode, HTMLAttributeNode } from "@herb-tools/core"
 
 const UNSUPPORTED_ELEMENTS = new Set([
   "html",
@@ -12,25 +12,42 @@ const UNSUPPORTED_ELEMENTS = new Set([
   "style",
 ])
 
-class NoAriaUnsupportedElementsVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue({ attributeName, attributeNode, parentNode }: StaticAttributeStaticValueParams) {
-    this.check(attributeName, attributeNode, parentNode)
+class NoAriaUnsupportedElementsVisitor extends BaseRuleVisitor {
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    const tagName = getTagLocalName(node)
+
+    if (tagName && UNSUPPORTED_ELEMENTS.has(tagName)) {
+      this.checkAttributes(node, tagName)
+    }
+
+    super.visitHTMLElementNode(node)
   }
 
-  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode, parentNode }: StaticAttributeDynamicValueParams) {
-    this.check(attributeName, attributeNode, parentNode)
+  private checkAttributes(node: HTMLElementNode, tagName: string): void {
+    const attributes = this.getAttributeNodes(node)
+
+    for (const attributeNode of attributes) {
+      const attributeName = getAttributeName(attributeNode)
+      if (!attributeName) continue
+      if (!attributeName.startsWith("aria-") && attributeName !== "role") continue
+
+      this.addOffense(
+        `The \`${attributeName}\` attribute is not supported on the \`<${tagName}>\` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.`,
+        attributeNode.location,
+      )
+    }
   }
 
-  private check(attributeName: string, attributeNode: HTMLAttributeNode, parentNode: HTMLOpenTagNode) {
-    const tagName = getTagLocalName(parentNode)
+  private getAttributeNodes(node: HTMLElementNode): HTMLAttributeNode[] {
+    const openTag = node.open_tag
 
-    if (!tagName || !UNSUPPORTED_ELEMENTS.has(tagName)) return
-    if (!attributeName.startsWith("aria-") && attributeName !== "role") return
-
-    this.addOffense(
-      `The \`${attributeName}\` attribute is not supported on the \`<${tagName}>\` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.`,
-      attributeNode.location,
-    )
+    if (isERBOpenTagNode(openTag)) {
+      return filterHTMLAttributeNodes(openTag.children)
+    } else if (isHTMLOpenTagNode(openTag)) {
+      return filterHTMLAttributeNodes(openTag.children)
+    } else {
+      return []
+    }
   }
 }
 
@@ -40,8 +57,14 @@ export class A11yNoAriaUnsupportedElementsRule extends ParserRule {
 
   get defaultConfig(): FullRuleConfig {
     return {
-      enabled: true,
+      enabled: false,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

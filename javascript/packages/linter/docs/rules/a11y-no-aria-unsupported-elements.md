@@ -17,6 +17,8 @@ These elements include:
 - `<script>`
 - `<style>`
 
+Also handles `javascript_tag` helper with `aria_label` option key.
+
 ## Examples
 
 ### ✅ Good
@@ -37,6 +39,16 @@ These elements include:
 <style></style>
 ```
 
+```erb
+<div role="button" aria-hidden="false"></div>
+```
+
+```erb
+<%= javascript_tag do %>
+  console.log("Hello, world!");
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -53,6 +65,12 @@ These elements include:
 
 ```erb
 <style aria-label="styles"></style>
+```
+
+```erb
+<%= javascript_tag aria_label: "script block" do %>
+  console.log("Hello, world!");
+<% end %>
 ```
 
 ## References
