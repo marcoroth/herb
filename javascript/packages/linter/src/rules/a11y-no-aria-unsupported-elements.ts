@@ -13,41 +13,27 @@ const UNSUPPORTED_ELEMENTS = new Set([
 ])
 
 class NoAriaUnsupportedElementsVisitor extends BaseRuleVisitor {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagLocalName(node)
-
-    if (tagName && UNSUPPORTED_ELEMENTS.has(tagName)) {
-      this.checkAttributes(node, tagName)
-    }
-
+  private currentTagName: string | null = null
+  
+  visitHTMLElementNode(node: HTMLElementNode): void {  
+    this.currentTagName = getTagLocalName(node)
     super.visitHTMLElementNode(node)
+    this.currentTagName = null
   }
-
-  private checkAttributes(node: HTMLElementNode, tagName: string): void {
-    const attributes = this.getAttributeNodes(node)
-
-    for (const attributeNode of attributes) {
-      const attributeName = getAttributeName(attributeNode)
-      if (!attributeName) continue
-      if (!attributeName.startsWith("aria-") && attributeName !== "role") continue
-
-      this.addOffense(
-        `The \`${attributeName}\` attribute is not supported on the \`<${tagName}>\` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.`,
-        attributeNode.location,
-      )
-    }
-  }
-
-  private getAttributeNodes(node: HTMLElementNode): HTMLAttributeNode[] {
-    const openTag = node.open_tag
-
-    if (isERBOpenTagNode(openTag)) {
-      return filterHTMLAttributeNodes(openTag.children)
-    } else if (isHTMLOpenTagNode(openTag)) {
-      return filterHTMLAttributeNodes(openTag.children)
-    } else {
-      return []
-    }
+  
+  visitHTMLAttributeNode(node: HTMLAttributeNode): void {
+    if (!this.currentTagName || !UNSUPPORTED_ELEMENTS.has(this.currentTagName)) return
+  
+    const attributeName = getAttributeName(node)
+    if (!attributeName) return
+    if (!attributeName.startsWith("aria-") && attributeName !== "role") return
+  
+    this.addOffense(
+      `The \`${attributeName}\` attribute is not supported on the \`<${this.currentTagName}>\` element. ARIA roles, states, and properties should not be used on elements that are not visible or not interactive.`,
+      node.location,
+    )
+  
+    super.visitHTMLAttributeNode(node)
   }
 }
 
