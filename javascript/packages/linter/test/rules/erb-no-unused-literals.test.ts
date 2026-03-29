@@ -41,6 +41,68 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for bracket assignment", () => {
+    expectNoOffenses(dedent`
+      <% @hash[:key] = value %>
+      <% @array[0] = value %>
+      <% @hash["string_key"] = value %>
+    `)
+  })
+
+  test("passes for method calls with literal arguments", () => {
+    expectNoOffenses(dedent`
+      <% render partial: "header" %>
+      <% redirect_to "/home" %>
+      <% flash[:notice] = "Saved" %>
+      <% link_to "Home", root_path %>
+    `)
+  })
+
+  test("passes for method calls with integer arguments", () => {
+    expectNoOffenses(dedent`
+      <% sleep 1 %>
+      <% @items.insert(0, item) %>
+      <% @items.delete_at(2) %>
+    `)
+  })
+
+  test("passes for method calls with symbol arguments", () => {
+    expectNoOffenses(dedent`
+      <% content_for :head do %>
+        <title>Page Title</title>
+      <% end %>
+    `)
+  })
+
+  test("passes for method calls with hash arguments", () => {
+    expectNoOffenses(dedent`
+      <% render partial: "header", locals: { title: "Hello" } %>
+    `)
+  })
+
+  test("passes for method calls with array arguments", () => {
+    expectNoOffenses(dedent`
+      <% @items.push([1, 2, 3]) %>
+    `)
+  })
+
+  test("passes for shovel operator with literal", () => {
+    expectNoOffenses(dedent`
+      <% @items << "new item" %>
+      <% @items << 42 %>
+      <% @items << :symbol %>
+    `)
+  })
+
+  test("passes for mutation methods with literal arguments", () => {
+    expectNoOffenses(dedent`
+      <% @items.push("item") %>
+      <% @items.unshift(0) %>
+      <% @hash.delete(:key) %>
+      <% @items.concat(["a", "b"]) %>
+    `)
+  })
+
   test("fails for array literals", () => {
     expectError("Avoid using silent ERB tags for literals. `[:foo, :bar]` is evaluated but never used or output.")
 

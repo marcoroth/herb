@@ -1,14 +1,13 @@
-import { isERBOutputNode, PrismVisitor, PrismNodes } from "@herb-tools/core"
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
-
-import { BaseRuleVisitor, locationFromOffset } from "./rule-utils.js"
-import { isAssignmentNode } from "./prism-rule-utils.js"
 import { ParserRule } from "../types.js"
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { PrismVisitor, PrismNodes } from "@herb-tools/core"
 
-function isCallNode(node: PrismNode): boolean {
-  return node?.constructor?.name === "CallNode"
-}
+import { isERBOutputNode} from "@herb-tools/core"
+import { locationFromOffset } from "./rule-utils.js"
+import { isAssignmentNode } from "./prism-rule-utils.js"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 class LiteralCollector extends PrismVisitor {
   public readonly literals: PrismNode[] = []
@@ -17,12 +16,11 @@ class LiteralCollector extends PrismVisitor {
     if (!node) return
     if (isAssignmentNode(node)) return
 
-    if (isCallNode(node)) {
-      this.visit(node.receiver)
-      return
-    }
-
     super.visit(node)
+  }
+
+  visitCallNode(node: PrismNode): void {
+    this.visit(node.receiver)
   }
 
   visitArrayNode(node: PrismNodes.ArrayNode): void {
