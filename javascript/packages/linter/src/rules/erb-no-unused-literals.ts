@@ -118,7 +118,10 @@ export class ERBNoUnusedLiteralsRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 

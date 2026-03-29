@@ -4,7 +4,7 @@ import { describe, test } from "vitest"
 import { ERBNoUnusedLiteralsRule } from "../../src/rules/erb-no-unused-literals.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBNoUnusedLiteralsRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoUnusedLiteralsRule)
 
 describe("ERBNoUnusedLiteralsRule", () => {
   test("passes for output tags", () => {
@@ -42,7 +42,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for array literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `[:foo, :bar]` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `[:foo, :bar]` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% [:foo, :bar] %>
@@ -50,7 +50,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for false literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `false` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `false` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% false %>
@@ -58,7 +58,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for float literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `3.14` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `3.14` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% 3.14 %>
@@ -66,7 +66,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for hash literals", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `{ key: "value" }` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `{ key: "value" }` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% { key: "value" } %>
@@ -74,7 +74,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for integer literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `42` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `42` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% 42 %>
@@ -82,7 +82,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for nil literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `nil` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `nil` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% nil %>
@@ -90,7 +90,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for regex literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `/pattern/` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `/pattern/` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% /pattern/ %>
@@ -98,7 +98,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for string literals", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `"Logged in"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"Logged in"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% "Logged in" %>
@@ -106,7 +106,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for symbol literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `:symbol` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `:symbol` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% :symbol %>
@@ -114,7 +114,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for true literals", () => {
-    expectWarning("Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.")
+    expectError("Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.")
 
     assertOffenses(dedent`
       <% true %>
@@ -122,7 +122,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for interpolated string literals", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `"Hello #{name}"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"Hello #{name}"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% "Hello #{name}" %>
@@ -130,7 +130,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for arithmetic on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `10` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `10` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% 10 / 1 %>
@@ -138,7 +138,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for string method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% "hello".upcase %>
@@ -146,7 +146,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for chained method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% "hello".strip.downcase %>
@@ -154,7 +154,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for integer arithmetic expressions", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `1` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `1` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% 1 + 2 %>
@@ -162,7 +162,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for float arithmetic expressions", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `3.14` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `3.14` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% 3.14 * 2 %>
@@ -170,7 +170,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for array method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `[1, 2, 3]` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `[1, 2, 3]` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% [1, 2, 3].length %>
@@ -178,7 +178,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for hash method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `{ a: 1 }` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `{ a: 1 }` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% { a: 1 }.keys %>
@@ -186,7 +186,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for symbol method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `:hello` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `:hello` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% :hello.to_s %>
@@ -194,7 +194,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for nil method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `nil` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `nil` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% nil.to_s %>
@@ -202,7 +202,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for true method calls on literal receivers", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% true.to_s %>
@@ -225,7 +225,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
   })
 
   test("fails for literals in conditional statements", () => {
-    expectWarning('Avoid using silent ERB tags for literals. `"success"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"success"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
       <% valid? && "success" %>
