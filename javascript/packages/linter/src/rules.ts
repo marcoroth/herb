@@ -68,6 +68,7 @@ import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-bot
 import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLDetailsHasSummaryRule } from "./rules/html-details-has-summary.js"
+import { HTMLDisallowInlineScriptsRule } from "./rules/html-disallow-inline-scripts.js"
 import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -85,11 +86,11 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
-import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
-import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
+import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
+import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
@@ -171,6 +172,7 @@ export const rules: RuleClass[] = [
   HTMLBodyOnlyElementsRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLDetailsHasSummaryRule,
+  HTMLDisallowInlineScriptsRule,
   HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
@@ -188,11 +190,11 @@ export const rules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
-  HTMLNoUnescapedEntitiesRule,
-  HTMLNoUnknownTagRule,
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
+  HTMLNoUnescapedEntitiesRule,
+  HTMLNoUnknownTagRule,
   HTMLRequireClosingTagsRule,
   HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,

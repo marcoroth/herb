@@ -20,7 +20,7 @@ test/fixtures/ignored.html.erb:8:2
 test/fixtures/ignored.html.erb:6:3
 
       4 │   </h1>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV>
         │    ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
@@ -34,7 +34,7 @@ test/fixtures/ignored.html.erb:6:3
 test/fixtures/ignored.html.erb:6:14
 
       4 │   </h1>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV>
         │               ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
@@ -47,7 +47,7 @@ test/fixtures/ignored.html.erb:6:14
 
 test/fixtures/ignored.html.erb:7:3
 
-      5 │ 
+      5 │
       6 │   <DIV>hello</DIV>
   →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
         │    ~~~
@@ -61,7 +61,7 @@ test/fixtures/ignored.html.erb:7:3
 
 test/fixtures/ignored.html.erb:7:14
 
-      5 │ 
+      5 │
       6 │   <DIV>hello</DIV>
   →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
         │               ~~~
@@ -75,7 +75,7 @@ test/fixtures/ignored.html.erb:7:14
 
 test/fixtures/ignored.html.erb:7:19
 
-      5 │ 
+      5 │
       6 │   <DIV>hello</DIV>
   →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
         │                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,7 +109,7 @@ test/fixtures/ignored.html.erb:8:8
   Offenses     5 errors | 2 warnings (7 offenses across 1 file)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -170,7 +170,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -193,7 +193,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
@@ -203,7 +203,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
 
   →   1 │ <%  extra_whitespace  %>
         │   ~~
-      2 │ 
+      2 │
       3 │ <%
 
 
@@ -215,7 +215,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
 
   →   1 │ <%  extra_whitespace  %>
         │                     ~~
-      2 │ 
+      2 │
       3 │ <%
 
 
@@ -226,7 +226,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
 
       7 │ <% end %>
-      8 │ 
+      8 │
   →   9 │ <%=  render partial: "post",
         │    ~~
      10 │            as: :post
@@ -241,7 +241,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
   →   1 │ <%  extra_whitespace  %>
         │     ~~~~~~~~~~~~~~~~
-      2 │ 
+      2 │
       3 │ <%
 
 
@@ -255,7 +255,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
   Checked      1 file
   Offenses     4 errors | 0 warnings (4 offenses across 1 file)
   Fixable      4 offenses | 3 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -267,7 +267,7 @@ exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
 test/fixtures/ignored.html.erb:6:3
 
       4 │   </h1>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV>
         │    ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
@@ -281,7 +281,7 @@ test/fixtures/ignored.html.erb:6:3
 test/fixtures/ignored.html.erb:6:14
 
       4 │   </h1>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV>
         │               ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
@@ -297,7 +297,7 @@ test/fixtures/ignored.html.erb:6:14
   Checked      1 file
   Offenses     2 errors | 0 warnings | 3 ignored (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -324,7 +324,7 @@ test/fixtures/parser-errors.html.erb:2:16
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -350,10 +350,10 @@ test/fixtures/multiple-rule-offenses.html.erb:5:3
 test/fixtures/multiple-rule-offenses.html.erb:10:1
 
       8 │ <h1></h1>
-      9 │ 
+      9 │
   →  10 │ <a><a>Nested</a></a>
         │  ~
-     11 │ 
+     11 │
      12 │ <div id="duplicate"></div>
 
 
@@ -364,10 +364,10 @@ test/fixtures/multiple-rule-offenses.html.erb:10:1
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
-      9 │ 
+      9 │
   →  10 │ <a><a>Nested</a></a>
         │     ~
-     11 │ 
+     11 │
      12 │ <div id="duplicate"></div>
 
 
@@ -378,7 +378,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 test/fixtures/multiple-rule-offenses.html.erb:3:20
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │ 
+      2 │
   →   3 │ <div id=test1 class='' data-value=bar>
         │                     ~~
       4 │   <img />
@@ -392,7 +392,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
 test/fixtures/multiple-rule-offenses.html.erb:3:8
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │ 
+      2 │
   →   3 │ <div id=test1 class='' data-value=bar>
         │         ~~~~~
       4 │   <img />
@@ -406,7 +406,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
 test/fixtures/multiple-rule-offenses.html.erb:3:34
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │ 
+      2 │
   →   3 │ <div id=test1 class='' data-value=bar>
         │                                   ~~~
       4 │   <img />
@@ -419,7 +419,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
 
 test/fixtures/multiple-rule-offenses.html.erb:4:3
 
-      2 │ 
+      2 │
       3 │ <div id=test1 class='' data-value=bar>
   →   4 │   <img />
         │    ~~~
@@ -448,7 +448,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
 test/fixtures/multiple-rule-offenses.html.erb:3:14
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │ 
+      2 │
   →   3 │ <div id=test1 class='' data-value=bar>
         │               ~~~~~~~~
       4 │   <img />
@@ -490,10 +490,10 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
 test/fixtures/multiple-rule-offenses.html.erb:8:0
 
       6 │ </div>
-      7 │ 
+      7 │
   →   8 │ <h1></h1>
         │ ~~~~~~~~~
-      9 │ 
+      9 │
      10 │ <a><a>Nested</a></a>
 
 
@@ -504,10 +504,10 @@ test/fixtures/multiple-rule-offenses.html.erb:8:0
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
-      9 │ 
+      9 │
   →  10 │ <a><a>Nested</a></a>
         │     ~
-     11 │ 
+     11 │
      12 │ <div id="duplicate"></div>
 
 
@@ -517,7 +517,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 test/fixtures/multiple-rule-offenses.html.erb:4:2
 
-      2 │ 
+      2 │
       3 │ <div id=test1 class='' data-value=bar>
   →   4 │   <img />
         │   ~~~~~~~
@@ -540,7 +540,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -605,7 +605,7 @@ test/fixtures/few-rule-offenses.html.erb:3:3
 
 test/fixtures/few-rule-offenses.html.erb:9:5
 
-      7 │ 
+      7 │
       8 │ <div id="duplicate"></div>
   →   9 │ <div id="duplicate"></div>
         │      ~~~~~~~~~~~~~~
@@ -619,10 +619,10 @@ test/fixtures/few-rule-offenses.html.erb:9:5
 test/fixtures/few-rule-offenses.html.erb:6:0
 
       4 │ </div>
-      5 │ 
+      5 │
   →   6 │ <h1></h1>
         │ ~~~~~~~~~
-      7 │ 
+      7 │
       8 │ <div id="duplicate"></div>
 
 
@@ -638,7 +638,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Checked      1 file
   Offenses     4 errors | 2 warnings (6 offenses across 1 file)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -678,7 +678,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -689,7 +689,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -747,7 +747,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -784,7 +784,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -989,7 +989,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1009,7 +1009,7 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1029,7 +1029,7 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1043,7 +1043,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1057,7 +1057,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1093,7 +1093,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1105,10 +1105,10 @@ exports[`CLI Output Formatting > herb:disable rules 1`] = `
 test/fixtures/disabled-1.html.erb:12:19
 
      10 │   <div>hello</div> <%# herb:disable %>
-     11 │ 
+     11 │
   →  12 │   <div>hello</div> <% # herb:disable %>
         │                    ~~~~~~~~~~~~~~~~~~~~
-     13 │ 
+     13 │
      14 │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
 
 
@@ -1118,12 +1118,12 @@ test/fixtures/disabled-1.html.erb:12:19
 
 test/fixtures/disabled-1.html.erb:10:19
 
-      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase,
         │ html-tag-name-lowercase %>
-      9 │ 
+      9 │
   →  10 │   <div>hello</div> <%# herb:disable %>
         │                    ~~~~~~~~~~~~~~~~~~~
-     11 │ 
+     11 │
      12 │   <div>hello</div> <% # herb:disable %>
 
 
@@ -1134,11 +1134,11 @@ test/fixtures/disabled-1.html.erb:10:19
 test/fixtures/disabled-1.html.erb:6:41
 
       4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
         │                                          ~~~
-      7 │ 
-      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+      7 │
+      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase,
         │ html-tag-name-lowercase %>
 
 
@@ -1149,11 +1149,11 @@ test/fixtures/disabled-1.html.erb:6:41
 test/fixtures/disabled-1.html.erb:8:61
 
       6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
-      7 │ 
-  →   8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+      7 │
+  →   8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase,
         │ html-tag-name-lowercase %>
         │                                                              ~~~~~~~~~~~~~~~~~~~~~~~
-      9 │ 
+      9 │
      10 │   <div>hello</div> <%# herb:disable %>
 
 
@@ -1166,7 +1166,7 @@ test/fixtures/disabled-1.html.erb:2:36
       1 │ <div>
   →   2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
         │                                     ~~~
-      3 │ 
+      3 │
       4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
 
 
@@ -1177,10 +1177,10 @@ test/fixtures/disabled-1.html.erb:2:36
 test/fixtures/disabled-1.html.erb:4:61
 
       2 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
-      3 │ 
+      3 │
   →   4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
         │                                                              ~~~
-      5 │ 
+      5 │
       6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
 
 
@@ -1191,11 +1191,11 @@ test/fixtures/disabled-1.html.erb:4:61
 test/fixtures/disabled-1.html.erb:6:36
 
       4 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
-      5 │ 
+      5 │
   →   6 │   <DIV>hello</DIV> <%# herb:disable all, all %>
         │                                     ~~~
-      7 │ 
-      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+      7 │
+      8 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase,
         │ html-tag-name-lowercase %>
 
 
@@ -1206,7 +1206,7 @@ test/fixtures/disabled-1.html.erb:6:36
 test/fixtures/disabled-1.html.erb:14:19
 
      12 │   <div>hello</div> <% # herb:disable %>
-     13 │ 
+     13 │
   →  14 │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
         │                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      15 │ </div>
@@ -1226,7 +1226,7 @@ test/fixtures/disabled-1.html.erb:14:19
   Checked      1 file
   Offenses     2 errors | 6 warnings | 8 ignored (8 offenses across 1 file)
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1238,11 +1238,11 @@ exports[`CLI Output Formatting > herb:disable rules 2`] = `
 test/fixtures/disabled-2.html.erb:6:30
 
       4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
-      5 │ 
+      5 │
   →   6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
         │                               ~~~
-      7 │ 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      7 │
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
 
 
@@ -1253,10 +1253,10 @@ test/fixtures/disabled-2.html.erb:6:30
 test/fixtures/disabled-2.html.erb:4:30
 
       2 │   <% %> <%# herb:disable erb-no-empty-tags, html-tag-name-lowercase %>
-      3 │ 
+      3 │
   →   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
         │                               ~~~~~~~~~~~~~~~~~~~~~~
-      5 │ 
+      5 │
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
 
@@ -1267,11 +1267,11 @@ test/fixtures/disabled-2.html.erb:4:30
 test/fixtures/disabled-2.html.erb:6:35
 
       4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
-      5 │ 
+      5 │
   →   6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
         │                                    ~~~~~~~~~~~~~~~~~~~~~~
-      7 │ 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      7 │
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
 
 
@@ -1282,11 +1282,11 @@ test/fixtures/disabled-2.html.erb:6:35
 test/fixtures/disabled-2.html.erb:8:55
 
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
-      7 │ 
-  →   8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      7 │
+  →   8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
         │                                                        ~~~~~~~~~~~~~~~~~~~~~~
-      9 │ 
+      9 │
      10 │   <DIV></DIV><%# herb:disable herb %>
 
 
@@ -1296,12 +1296,12 @@ test/fixtures/disabled-2.html.erb:8:55
 
 test/fixtures/disabled-2.html.erb:10:30
 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
-      9 │ 
+      9 │
   →  10 │   <DIV></DIV><%# herb:disable herb %>
         │                               ~~~~
-     11 │ 
+     11 │
      12 │   <DIV></DIV><%# herb:disable disable %>
 
 
@@ -1312,7 +1312,7 @@ test/fixtures/disabled-2.html.erb:10:30
 test/fixtures/disabled-2.html.erb:12:30
 
      10 │   <DIV></DIV><%# herb:disable herb %>
-     11 │ 
+     11 │
   →  12 │   <DIV></DIV><%# herb:disable disable %>
         │                               ~~~~~~~
      13 │ </div>
@@ -1326,10 +1326,10 @@ test/fixtures/disabled-2.html.erb:12:30
 test/fixtures/disabled-2.html.erb:4:3
 
       2 │   <% %> <%# herb:disable erb-no-empty-tags, html-tag-name-lowercase %>
-      3 │ 
+      3 │
   →   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
         │    ~~~
-      5 │ 
+      5 │
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
 
@@ -1340,10 +1340,10 @@ test/fixtures/disabled-2.html.erb:4:3
 test/fixtures/disabled-2.html.erb:4:9
 
       2 │   <% %> <%# herb:disable erb-no-empty-tags, html-tag-name-lowercase %>
-      3 │ 
+      3 │
   →   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
         │          ~~~
-      5 │ 
+      5 │
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
 
@@ -1353,12 +1353,12 @@ test/fixtures/disabled-2.html.erb:4:9
 
 test/fixtures/disabled-2.html.erb:10:3
 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
-      9 │ 
+      9 │
   →  10 │   <DIV></DIV><%# herb:disable herb %>
         │    ~~~
-     11 │ 
+     11 │
      12 │   <DIV></DIV><%# herb:disable disable %>
 
 
@@ -1368,12 +1368,12 @@ test/fixtures/disabled-2.html.erb:10:3
 
 test/fixtures/disabled-2.html.erb:10:9
 
-      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+      8 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase,
         │ this-rule-doesnt-exist %>
-      9 │ 
+      9 │
   →  10 │   <DIV></DIV><%# herb:disable herb %>
         │          ~~~
-     11 │ 
+     11 │
      12 │   <DIV></DIV><%# herb:disable disable %>
 
 
@@ -1384,7 +1384,7 @@ test/fixtures/disabled-2.html.erb:10:9
 test/fixtures/disabled-2.html.erb:12:3
 
      10 │   <DIV></DIV><%# herb:disable herb %>
-     11 │ 
+     11 │
   →  12 │   <DIV></DIV><%# herb:disable disable %>
         │    ~~~
      13 │ </div>
@@ -1398,7 +1398,7 @@ test/fixtures/disabled-2.html.erb:12:3
 test/fixtures/disabled-2.html.erb:12:9
 
      10 │   <DIV></DIV><%# herb:disable herb %>
-     11 │ 
+     11 │
   →  12 │   <DIV></DIV><%# herb:disable disable %>
         │          ~~~
      13 │ </div>
@@ -1414,7 +1414,7 @@ test/fixtures/disabled-2.html.erb:2:44
       1 │ <div>
   →   2 │   <% %> <%# herb:disable erb-no-empty-tags, html-tag-name-lowercase %>
         │                                             ~~~~~~~~~~~~~~~~~~~~~~~
-      3 │ 
+      3 │
       4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
 
 
@@ -1430,7 +1430,7 @@ test/fixtures/disabled-2.html.erb:2:44
   Checked      1 file
   Offenses     6 errors | 7 warnings | 5 ignored (13 offenses across 1 file)
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        83 enabled | 12 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1491,5 +1491,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        83 enabled | 12 not enabled"
 `;
