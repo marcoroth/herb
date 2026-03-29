@@ -4,8 +4,8 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
-import { Config } from "../src/config.js"
-import type { HerbConfigOptions } from "../src/config.js"
+import { Config, resolveSeverity } from "../src/config.js"
+import type { HerbConfigOptions, SeverityConfig } from "../src/config.js"
 
 function createTestFile(dir: string, relativePath: string, content: string = "") {
   const fullPath = join(dir, relativePath)
@@ -327,6 +327,92 @@ describe("@herb-tools/config", () => {
       expect(updated[0].severity).toBe("error")
       expect(updated[1].severity).toBe("hint")
       expect(updated[2].severity).toBe("warning")
+    })
+
+    test("resolveSeverity returns the string directly for plain severity", () => {
+      expect(resolveSeverity("error", "cli")).toBe("error")
+      expect(resolveSeverity("warning", "editor")).toBe("warning")
+      expect(resolveSeverity("hint", "cli")).toBe("hint")
+      expect(resolveSeverity("info", "editor")).toBe("info")
+    })
+
+    test("resolveSeverity returns the mode-specific severity for object severity", () => {
+      const severity: SeverityConfig = { editor: "hint", cli: "error" }
+
+      expect(resolveSeverity(severity, "cli")).toBe("error")
+      expect(resolveSeverity(severity, "editor")).toBe("hint")
+    })
+
+    test("getConfiguredSeverity resolves object severity with mode", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "debug-rule": {
+              severity: { editor: "hint", cli: "error" }
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.getConfiguredSeverity("debug-rule", "warning", "cli")).toBe("error")
+      expect(config.getConfiguredSeverity("debug-rule", "warning", "editor")).toBe("hint")
+    })
+
+    test("getConfiguredSeverity falls back to default severity when rule has no severity config", () => {
+      const config = Config.fromObject({}, { projectPath: testDir })
+
+      expect(config.getConfiguredSeverity("some-rule", "warning", "cli")).toBe("warning")
+      expect(config.getConfiguredSeverity("some-rule", "warning", "editor")).toBe("warning")
+    })
+
+    test("applySeverityOverrides resolves object severity with mode", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "debug-rule": { severity: { editor: "hint", cli: "error" } },
+            "plain-rule": { severity: "warning" }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      const offenses = [
+        { rule: "debug-rule", severity: "info" as const, message: "test" },
+        { rule: "plain-rule", severity: "info" as const, message: "test" },
+        { rule: "unconfigured-rule", severity: "info" as const, message: "test" }
+      ]
+
+      const updatedForCli = config.applySeverityOverrides(offenses, "cli")
+
+      expect(updatedForCli[0].severity).toBe("error")
+      expect(updatedForCli[1].severity).toBe("warning")
+      expect(updatedForCli[2].severity).toBe("info")
+
+      const updatedForEditor = config.applySeverityOverrides(offenses, "editor")
+
+      expect(updatedForEditor[0].severity).toBe("hint")
+      expect(updatedForEditor[1].severity).toBe("warning")
+      expect(updatedForEditor[2].severity).toBe("info")
+    })
+
+    test("Config.fromObject accepts object severity in rule config", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "some-rule": {
+              enabled: true,
+              severity: { editor: "hint", cli: "error" }
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.linter?.rules?.["some-rule"]?.severity).toEqual({ editor: "hint", cli: "error" })
     })
 
     test("isLinterEnabled returns true when linter is enabled", () => {

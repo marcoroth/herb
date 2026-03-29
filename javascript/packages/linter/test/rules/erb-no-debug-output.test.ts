@@ -217,5 +217,25 @@ describe("ERBNoDebugOutputRule", () => {
         <% end %>
       `)
     })
+
+    test("fails for binding.irb used as a condition", () => {
+      expectError("Avoid using `binding.irb` in ERB templates. Remove the debug output or use `<%= ... %>` to display content.")
+
+      assertOffenses(dedent`
+        <% if binding.irb %>
+          1
+        <% end %>
+      `)
+    })
+
+    test("fails for binding.pry used as a condition", () => {
+      expectError("Avoid using `binding.pry` in ERB templates. Remove the debug output or use `<%= ... %>` to display content.")
+
+      assertOffenses(dedent`
+        <% if binding.pry %>
+          1
+        <% end %>
+      `)
+    })
   })
 })

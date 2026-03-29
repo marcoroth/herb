@@ -166,6 +166,7 @@ export class LinterService {
       const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, configVersion)
 
       this.linter = new Linter(Herb, filteredRules, config, this.allRules)
+      this.linter.mode = "editor"
     }
 
     const content = textDocument.getText()
