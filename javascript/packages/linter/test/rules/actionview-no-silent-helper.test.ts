@@ -82,6 +82,32 @@ describe("ActionViewNoSilentHelperRule", () => {
     `)
   })
 
+  test("escaped ERB output tag with tag.div is allowed", () => {
+    expectNoOffenses(dedent`
+      <%%= tag.div(content) %>
+    `)
+  })
+
+  test("escaped ERB tag with link_to is allowed", () => {
+    expectNoOffenses(dedent`
+      <%%= link_to "Home", root_path %>
+    `)
+  })
+
+  test("escaped ERB output tag with tag.div and content is allowed", () => {
+    expectNoOffenses(dedent`
+      <%%= tag.div("Hello", class: "greeting") %>
+    `)
+  })
+
+  test.fails("escaped ERB output tag with tag.div block is allowed", () => {
+    expectNoOffenses(dedent`
+      <%%= tag.div do %>
+        <p>Hello</p>
+      <% end %>
+    `)
+  })
+
   test("silent tag with tag.div is not allowed", () => {
     expectError("Avoid using `<% %>` with `tag`. Use `<%= %>` to ensure the helper's output is rendered.")
 
