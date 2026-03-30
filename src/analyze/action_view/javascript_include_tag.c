@@ -1,4 +1,5 @@
 #include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/lib/hb_buffer.h"
 
 #include <prism.h>
 #include <stdbool.h>
@@ -62,18 +63,27 @@ bool javascript_include_tag_source_is_url(const char* source, size_t length) {
   return false;
 }
 
-char* wrap_in_javascript_path(const char* source, size_t source_length, hb_allocator_T* allocator) {
-  const char* prefix = "javascript_path(";
-  const char* suffix = ")";
-  size_t prefix_length = strlen(prefix);
-  size_t suffix_length = strlen(suffix);
-  size_t total_length = prefix_length + source_length + suffix_length;
-  char* result = hb_allocator_alloc(allocator, total_length + 1);
+char* wrap_in_javascript_path(
+  const char* source,
+  size_t source_length,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, source_length + 32, allocator);
 
-  memcpy(result, prefix, prefix_length);
-  memcpy(result + prefix_length, source, source_length);
-  memcpy(result + prefix_length + source_length, suffix, suffix_length);
-  result[total_length] = '\0';
+  hb_buffer_append(&buffer, "javascript_path(");
+  hb_buffer_append_with_length(&buffer, source, source_length);
+
+  if (path_options && strlen(path_options) > 0) {
+    hb_buffer_append(&buffer, ", ");
+    hb_buffer_append(&buffer, path_options);
+  }
+
+  hb_buffer_append(&buffer, ")");
+
+  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
+  hb_buffer_free(&buffer);
 
   return result;
 }
