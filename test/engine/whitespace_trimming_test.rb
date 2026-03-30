@@ -245,5 +245,33 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "output tag with -%> same-line with control tag preserves space" do
+      template = "A<%= -%> <% if true %>B<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by else branch" do
+      template = "<% if false %>\nX\n<%= -%>\n<% else %>\nY\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by CRLF and control tag" do
+      template = "A<%= -%>\r\n <% if true %>\r\nB\r\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by another expression tag" do
+      template = "A<%= -%>\n<%= \"B\" %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end
