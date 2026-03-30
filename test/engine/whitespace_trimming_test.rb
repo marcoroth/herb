@@ -280,5 +280,33 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "leading whitespace before statement tag followed by newline is not preserved" do
+      template = "<p>\n  <% if true %>\n    text\n  <% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "leading whitespace before nested statement tags with inline content is preserved" do
+      template = "<p>\n  <% if true %><% if true %>text<% end %><% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "leading tabs before statement tag with inline content is preserved" do
+      template = "<p>\n\t\t<% if true %>text<% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "leading whitespace before statement tag with inline expression is preserved" do
+      template = "<p>\n  <% if true %><%= \"text\" %><% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

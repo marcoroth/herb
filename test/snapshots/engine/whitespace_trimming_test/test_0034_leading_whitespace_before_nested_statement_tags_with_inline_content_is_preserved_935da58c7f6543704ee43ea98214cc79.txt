@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0034_leading whitespace before nested statement tags with inline content is preserved"
+input: "{source: \"<p>\\n  <% if true %><% if true %>text<% end %><% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  text</p>

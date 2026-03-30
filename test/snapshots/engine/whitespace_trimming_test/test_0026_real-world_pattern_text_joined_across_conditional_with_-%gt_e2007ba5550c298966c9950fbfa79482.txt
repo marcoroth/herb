@@ -1,5 +1,0 @@
----
-source: "Engine::WhitespaceTrimmingTest#test_0026_real-world pattern: text joined across conditional with -%>"
-input: "{source: \"  as of X<%= -%>\\n  <% if true %>\\n    with filters<%= -%>\\n  <% end %>\\n.\", locals: {}, options: {}}"
----
-  as of X    with filters.

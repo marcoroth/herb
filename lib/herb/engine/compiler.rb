@@ -15,7 +15,7 @@ module Herb
         @context_stack = [:html_content]
         @trim_next_whitespace = false
         @trim_consumed_newline = false
-        @pending_lspace = nil
+        @pending_leading_whitespace = nil
       end
 
       def generate_output
@@ -344,7 +344,7 @@ module Herb
           if at_line_start?
             lspace = extract_and_remove_lspace!
             @trim_next_whitespace = true
-            @pending_lspace = lspace unless lspace.empty?
+            @pending_leading_whitespace = lspace unless lspace.empty?
           end
           return
         end
@@ -367,12 +367,13 @@ module Herb
           text = text.sub(/\A[ \t]*\r?\n/, "")
           @trim_next_whitespace = false
 
-          if !@trim_consumed_newline && @pending_lspace
-            text = @pending_lspace + text
+          if !@trim_consumed_newline && @pending_leading_whitespace
+            text = @pending_leading_whitespace + text
           end
-          @pending_lspace = nil
+          @pending_leading_whitespace = nil
         else
           @trim_consumed_newline = false
+          @pending_leading_whitespace = nil
         end
 
         return if text.empty?
@@ -563,7 +564,7 @@ module Herb
 
           @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
           @trim_next_whitespace = true
-          @pending_lspace = lspace unless lspace.empty?
+          @pending_leading_whitespace = lspace unless lspace.empty?
         else
           @tokens << [:code, code, current_context]
         end

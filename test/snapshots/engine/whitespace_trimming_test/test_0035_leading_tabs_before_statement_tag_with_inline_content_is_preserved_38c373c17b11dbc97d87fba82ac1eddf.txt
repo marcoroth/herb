@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0035_leading tabs before statement tag with inline content is preserved"
+input: "{source: \"<p>\\n\\t\\t<% if true %>text<% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+		text
+</p>
