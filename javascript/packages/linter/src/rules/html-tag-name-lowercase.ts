@@ -1,9 +1,9 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, findParent } from "./rule-utils.js"
-import { isNode, getTagName, getTagLocalName, HTMLOpenTagNode, isHTMLElementNode, isHTMLCloseTagNode, getOpenTag } from "@herb-tools/core"
+import { BaseRuleVisitor, ElementStackVisitor, findParent } from "./rule-utils.js"
+import { getTagName, getOpenTag, isHTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
 
 interface TagNameAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode | HTMLCloseTagNode>
@@ -24,38 +24,32 @@ class XMLDeclarationChecker extends BaseRuleVisitor {
   }
 }
 
-class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagLocalName(node) === "svg") {
-      this.checkTagName(getOpenTag(node))
-
-      if (node.close_tag && isHTMLCloseTagNode(node.close_tag)) {
-        this.checkTagName(node.close_tag)
-      }
-    } else {
-      super.visitHTMLElementNode(node)
-    }
-  }
-
+class TagNameLowercaseVisitor extends ElementStackVisitor<TagNameAutofixContext> {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
-    this.checkTagName(node)
+    if (!this.isInsideElement("svg") || this.currentTagName === "svg") {
+      this.checkTagName(node)
+    }
+
+    super.visitHTMLOpenTagNode(node)
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
-    this.checkTagName(node)
+    if (!this.isInsideElement("svg") || this.currentTagName === "svg") {
+      this.checkTagName(node)
+    }
+
+    super.visitHTMLCloseTagNode(node)
   }
 
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | null): void {
-    if (!node) return
-
+  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {
     const tagName = getTagName(node)
 
     if (!tagName) return
 
     const lowercaseTagName = tagName.toLowerCase()
 
-    const type = isNode(node, HTMLOpenTagNode) ? "Opening" : "Closing"
-    const open = isNode(node, HTMLOpenTagNode) ? "<" : "</"
+    const type = isHTMLOpenTagNode(node) ? "Opening" : "Closing"
+    const open = isHTMLOpenTagNode(node) ? "<" : "</"
 
     if (tagName !== lowercaseTagName) {
       this.addOffense(

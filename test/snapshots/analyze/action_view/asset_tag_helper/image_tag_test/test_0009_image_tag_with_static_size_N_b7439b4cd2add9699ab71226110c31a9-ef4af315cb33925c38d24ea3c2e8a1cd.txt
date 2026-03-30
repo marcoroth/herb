@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0008_image_tag with static size N"
+source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0009_image_tag with static size N"
 input: |2-
 <%= image_tag "icon.png", size: "32" %>
 options: {action_view_helpers: true}

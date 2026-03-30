@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0023_whitespace between consecutive end tags after expression block is trimmed"
+input: "{source: \"<% 1.times do %>\\n  <%= form_tag(\\\"/t\\\") do %>\\n    <%= tag.p do %>\\n      text\\n    <% end %>\\n  <% end %>\\n<% end %>\\n\", locals: {}, options: {}}"
+---
+  <form action="/t" accept-charset="UTF-8" method="post"><input type="hidden" name="utf8" value="&#x2713;" autocomplete="off" />
+    <p>
+      text
+</p></form>

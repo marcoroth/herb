@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0030_output tag with -%> followed by CRLF and control tag"
+input: "{source: \"A<%= -%>\\r\\n <% if true %>\\r\\nB\\r\\n<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << 'A'.freeze; _buf << ().to_s;  if true 
+ _buf << 'B
+'.freeze; end 
+_buf.to_s

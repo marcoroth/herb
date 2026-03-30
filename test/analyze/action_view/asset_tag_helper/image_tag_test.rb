@@ -36,6 +36,12 @@ module Analyze::ActionView::AssetTagHelper
       HTML
     end
 
+    test "image_tag with string source and attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "logo.png", alt: "Logo", class: "brand" %>
+      HTML
+    end
+
     test "image_tag with skip_pipeline" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= image_tag "icon.png", skip_pipeline: true %>

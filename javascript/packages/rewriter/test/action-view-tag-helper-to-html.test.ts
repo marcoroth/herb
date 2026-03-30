@@ -822,6 +822,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         '<img src="<%= image_path("icon.png") %>" width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" />'
       )
     })
+
+    test("image_tag with string source does not segfault with path_options signature", () => {
+      expect(transform('<%= image_tag "logo.png", alt: "Logo", class: "brand" %>')).toBe(
+        '<img src="<%= image_path("logo.png") %>" alt="Logo" class="brand" />'
+      )
+    })
   })
 
   describe("class attribute handling", () => {

@@ -13,6 +13,12 @@ module Herb
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void
 
+    # : (Herb::AST::Node) -> void
+    def visit_node: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_erb_node: (Herb::AST::Node) -> void
+
     # : (Herb::AST::DocumentNode) -> void
     def visit_document_node: (Herb::AST::DocumentNode) -> void
 

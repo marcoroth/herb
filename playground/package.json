@@ -24,7 +24,7 @@
     "@herb-tools/linter": "0.9.2",
     "@herb-tools/rewriter": "0.9.2",
     "@hotwired/stimulus": "^3.2.2",
-    "dedent": "^1.7.0",
+    "dedent": "^1.7.2",
     "express": "^5.2.1",
     "lz-string": "^1.5.0",
     "monaco-editor": "^0.55.1",

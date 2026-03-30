@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0010_image_tag with size and other attributes"
+source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0011_image_tag with size and other attributes"
 input: |2-
 <%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>
 options: {action_view_helpers: true}

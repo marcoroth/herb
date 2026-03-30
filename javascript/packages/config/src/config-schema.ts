@@ -2,6 +2,11 @@ import { z } from "zod"
 
 export const SeveritySchema = z.enum(["error", "warning", "info", "hint"])
 
+export const SeverityConfigSchema = z.union([
+  SeveritySchema,
+  z.object({ editor: SeveritySchema, cli: SeveritySchema }).strict()
+])
+
 export const FilesConfigSchema = z.object({
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
@@ -9,7 +14,7 @@ export const FilesConfigSchema = z.object({
 
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
-  severity: SeveritySchema.optional().describe("Severity level for the rule"),
+  severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),

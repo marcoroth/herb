@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0006_image_tag with skip_pipeline"
+source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0007_image_tag with skip_pipeline"
 input: |2-
 <%= image_tag "icon.png", skip_pipeline: true %>
 options: {action_view_helpers: true}
