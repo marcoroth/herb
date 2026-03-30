@@ -479,7 +479,9 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 
       if (equals_token && equals_token->type == TOKEN_EQUALS) {
         token_T* after_equals = lexer_next_token(parser->lexer);
-        looks_like_new_attribute = (after_equals && after_equals->type == TOKEN_QUOTE);
+        looks_like_new_attribute =
+          (after_equals && after_equals->type == TOKEN_QUOTE && opening_quote != NULL
+           && hb_string_equals(after_equals->value, opening_quote->value));
 
         if (after_equals) { token_free(after_equals, parser->allocator); }
       }

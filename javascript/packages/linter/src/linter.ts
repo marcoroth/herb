@@ -13,8 +13,9 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 import { semverGreaterThan } from "./semver.js"
+import { resolveSeverity } from "@herb-tools/config"
 
-import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion } from "./types.js"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
@@ -65,6 +66,7 @@ export class Linter {
   public rulesSkippedByVersion: VersionSkippedRule[] = []
   public rulesDisabledByConfig: number = 0
   public rulesNotEnabledByDefault: number = 0
+  public mode: LinterMode = "cli"
 
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
@@ -514,10 +516,11 @@ export class Linter {
     }
 
     const ruleInstance = new ruleClass()
-    const defaultSeverity = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
+    const defaultSeverityConfig = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]
-    const severity = userRuleConfig?.severity ?? defaultSeverity
+    const severityConfig = userRuleConfig?.severity ?? defaultSeverityConfig
+    const severity = resolveSeverity(severityConfig, this.mode)
 
     return unboundOffenses.map(offense => ({
       ...offense,

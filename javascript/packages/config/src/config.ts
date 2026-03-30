@@ -32,9 +32,21 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
+export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+
+export type LinterMode = "editor" | "cli"
+
+export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
+  if (typeof severity === "string") {
+    return severity
+  }
+
+  return severity[mode]
+}
+
 export type RuleConfig = {
   enabled?: boolean
-  severity?: DiagnosticSeverity
+  severity?: SeverityConfig
   autoCorrect?: boolean
   include?: string[]
   only?: string[]
@@ -392,11 +404,11 @@ export class Config {
    * Apply configured severity overrides to a lint offense.
    * Returns the configured severity if set, otherwise returns the original severity.
    */
-  public getConfiguredSeverity(ruleName: string, defaultSeverity: DiagnosticSeverity): DiagnosticSeverity {
+  public getConfiguredSeverity(ruleName: string, defaultSeverity: DiagnosticSeverity, mode: LinterMode = "cli"): DiagnosticSeverity {
     const ruleConfig = this.config.linter?.rules?.[ruleName]
 
     if (ruleConfig && ruleConfig.severity) {
-      return ruleConfig.severity
+      return resolveSeverity(ruleConfig.severity, mode)
     }
 
     return defaultSeverity
@@ -406,7 +418,7 @@ export class Config {
    * Apply severity overrides from config to an array of offenses.
    * Each offense must have a `rule` and `severity` property.
    */
-  public applySeverityOverrides<T extends { rule: string; severity: DiagnosticSeverity }>(offenses: T[]): T[] {
+  public applySeverityOverrides<T extends { rule: string; severity: DiagnosticSeverity }>(offenses: T[], mode: LinterMode = "cli"): T[] {
     if (!this.config.linter?.rules) {
       return offenses
     }
@@ -414,7 +426,7 @@ export class Config {
     return offenses.map(offense => {
       const ruleConfig = this.config.linter?.rules?.[offense.rule]
       if (ruleConfig && ruleConfig.severity) {
-        return { ...offense, severity: ruleConfig.severity }
+        return { ...offense, severity: resolveSeverity(ruleConfig.severity, mode) }
       }
       return offense
     })

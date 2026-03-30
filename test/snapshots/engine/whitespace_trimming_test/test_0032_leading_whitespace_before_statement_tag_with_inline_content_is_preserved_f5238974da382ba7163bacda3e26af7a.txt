@@ -1,5 +1,5 @@
 ---
-source: "Engine::WhitespaceTrimmingTest#test_0020_leading whitespace before statement tag with inline content is preserved"
+source: "Engine::WhitespaceTrimmingTest#test_0032_leading whitespace before statement tag with inline content is preserved"
 input: "{source: \"<p>\\n  <% if true %>text<% end %>\\n</p>\", options: {}}"
 ---
 _buf = ::String.new; _buf << '<p>

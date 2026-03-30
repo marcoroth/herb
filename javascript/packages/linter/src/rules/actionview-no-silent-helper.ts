@@ -19,6 +19,7 @@ class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
     const tagOpening = node.open_tag.tag_opening?.value
 
     if (!tagOpening) return
+    if (tagOpening.startsWith("<%%")) return
 
     const helperName = node.element_source.includes("#")
       ? node.element_source.split("#").pop()

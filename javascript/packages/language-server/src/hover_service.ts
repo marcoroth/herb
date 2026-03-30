@@ -4,12 +4,12 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLElementNode, getNamedCharacterReference, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { lspPosition, isPositionInRange, rangeSize } from "./range_utils"
 import { ACTION_VIEW_HELPERS } from "./action_view_helpers"
 
-import type { HTMLElementNode, ERBOpenTagNode } from "@herb-tools/core"
+import type { HTMLElementNode, ERBOpenTagNode, HTMLCharacterReference } from "@herb-tools/core"
 
 class ActionViewElementCollector extends Visitor {
   public elements: { node: HTMLElementNode; openTag: ERBOpenTagNode; range: Range }[] = []
@@ -84,7 +84,7 @@ export class HoverService {
     }
 
     if (!bestElement) {
-      return null
+      return this.getEntityHover(textDocument, position)
     }
 
     const elementSource = bestElement.node.element_source
@@ -153,4 +153,121 @@ export class HoverService {
 
     return IdentityPrinter.print(rewrittenNode)
   }
+
+  private getEntityHover(textDocument: TextDocument, position: Position): Hover | null {
+    const lineText = textDocument.getText(Range.create(position.line, 0, position.line + 1, 0))
+    const match = findCharacterReferenceAtPosition(lineText, position.character)
+
+    if (!match) return null
+
+    const range = Range.create(
+      position.line, match.start,
+      position.line, match.end,
+    )
+
+    return {
+      contents: {
+        kind: MarkupKind.Markdown,
+        value: formatCharacterReferenceHover(match),
+      },
+      range,
+    }
+  }
+}
+
+interface CharacterReferenceMatch {
+  reference: string
+  start: number
+  end: number
+  characters: string
+  codepoints: number[]
+  type: "named" | "decimal" | "hexadecimal"
+  name?: string
+}
+
+function findCharacterReferenceAtPosition(lineText: string, character: number): CharacterReferenceMatch | null {
+  const pattern = new RegExp(CHARACTER_REFERENCE_PATTERN.source, "g")
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(lineText)) !== null) {
+    const start = match.index
+    const end = start + match[0].length
+
+    if (character < start || character >= end) continue
+
+    const reference = match[0]
+
+    if (match[1]) {
+      const codepoint = parseInt(match[1], 16)
+      return {
+        reference,
+        start,
+        end,
+        characters: String.fromCodePoint(codepoint),
+        codepoints: [codepoint],
+        type: "hexadecimal",
+      }
+    }
+
+    if (match[2]) {
+      const codepoint = parseInt(match[2], 10)
+      return {
+        reference,
+        start,
+        end,
+        characters: String.fromCodePoint(codepoint),
+        codepoints: [codepoint],
+        type: "decimal",
+      }
+    }
+
+    if (match[3]) {
+      const entity = getNamedCharacterReference(match[3])
+
+      if (entity) {
+        return {
+          reference,
+          start,
+          end,
+          characters: entity.characters,
+          codepoints: entity.codepoints,
+          type: "named",
+          name: match[3],
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+function formatCodepoints(codepoints: number[]): string {
+  return codepoints.map(codepoint => `U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`).join(", ")
+}
+
+function formatCharacterReferenceHover(match: CharacterReferenceMatch): string {
+  const parts: string[] = []
+
+  parts.push(`## \`${match.characters}\``)
+
+  const typeLabel = match.type === "named" ? "Named character reference"
+    : match.type === "decimal" ? "Decimal numeric character reference"
+    : "Hexadecimal numeric character reference"
+
+  parts.push(`**${typeLabel}**`)
+
+  const details: string[] = []
+  details.push(`| Character | \`${match.characters}\` |`)
+  details.push(`| Codepoint${match.codepoints.length > 1 ? "s" : ""} | ${formatCodepoints(match.codepoints)} |`)
+  details.push(`| Reference | \`${match.reference}\` |`)
+
+  if (match.name) {
+    details.push(`| Name | \`${match.name}\` |`)
+  }
+
+  parts.push(`| | |\n|---|---|\n${details.join("\n")}`)
+
+  parts.push(`[HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)`)
+
+  return parts.join("\n\n")
 }

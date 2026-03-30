@@ -1,7 +1,0 @@
----
-source: "Engine::WhitespaceTrimmingTest#test_0020_leading whitespace before statement tag with inline content is preserved"
-input: "{source: \"<p>\\n  <% if true %>text<% end %>\\n</p>\", locals: {}, options: {}}"
----
-<p>
-  text
-</p>

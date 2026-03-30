@@ -100,6 +100,7 @@ java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
 java/org/herb/ast/Visitor.java
 javascript/packages/core/src/errors.ts
+javascript/packages/core/src/html-entities.json
 javascript/packages/core/src/node-type-guards.ts
 javascript/packages/core/src/nodes.ts
 javascript/packages/core/src/visitor.ts

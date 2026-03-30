@@ -177,13 +177,6 @@ module Engine
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
 
-    test "leading whitespace before statement tag with inline content is preserved" do
-      template = "<p>\n  <% if true %>text<% end %>\n</p>"
-
-      assert_compiled_snapshot(template)
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
     test "whitespace between expression and code tag on same line is preserved" do
       template = "<%= value %> <% if true %>extra<% end %>"
 
@@ -202,28 +195,10 @@ module Engine
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
 
-    test "output tag with -%> followed by indented control tag trims whitespace" do
-      template = "A<%= -%>\n <% if true %>\nB\n<% end %>"
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
-    test "output tag with -%> followed by non-indented control tag (baseline)" do
-      template = "A<%= -%>\n<% if true %>\nB\n<% end %>"
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
-    test "real-world pattern: text joined across conditional with -%>" do
-      template = "  as of X<%= -%>\n  <% if true %>\n    with filters<%= -%>\n  <% end %>\n."
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
     test "whitespace between consecutive end tags after expression block is trimmed" do
       template = <<~ERB
-        <% outer do %>
-          <% form_tag("/t") do %>
+        <% 1.times do %>
+          <%= form_tag("/t") do %>
             <%= tag.p do %>
               text
             <% end %>
@@ -232,6 +207,78 @@ module Engine
       ERB
 
       assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "whitespace between nested end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% 1.times do %>
+          <% 1.times do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "output tag with -%> followed by indented control tag trims whitespace" do
+      template = "A<%= -%>\n <% if true %>\nB\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by non-indented control tag (baseline)" do
+      template = "A<%= -%>\n<% if true %>\nB\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "real-world pattern: text joined across conditional with -%>" do
+      template = "  as of X<%= -%>\n  <% if true %>\n    with filters<%= -%>\n  <% end %>\n."
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> same-line with control tag preserves space" do
+      template = "A<%= -%> <% if true %>B<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by else branch" do
+      template = "<% if false %>\nX\n<%= -%>\n<% else %>\nY\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by CRLF and control tag" do
+      template = "A<%= -%>\r\n <% if true %>\r\nB\r\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by another expression tag" do
+      template = "A<%= -%>\n<%= \"B\" %>\n"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "leading whitespace before statement tag with inline content is preserved" do
+      template = "<p>\n  <% if true %>text<% end %>\n</p>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
   end
 end

@@ -14,7 +14,7 @@ module Herb
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
-        @trimmed_newline = false
+        @trim_consumed_newline = false
         @pending_lspace = nil
       end
 
@@ -363,17 +363,16 @@ module Herb
         return if text.empty?
 
         if @trim_next_whitespace
-          original = text
+          @trim_consumed_newline = text.match?(/\A[ \t]*\r?\n/)
           text = text.sub(/\A[ \t]*\r?\n/, "")
           @trim_next_whitespace = false
-          @trimmed_newline = (text != original)
 
-          if !@trimmed_newline && @pending_lspace
+          if !@trim_consumed_newline && @pending_lspace
             text = @pending_lspace + text
           end
           @pending_lspace = nil
         else
-          @trimmed_newline = false
+          @trim_consumed_newline = false
         end
 
         return if text.empty?
@@ -517,9 +516,10 @@ module Herb
       end
 
       def preceding_token_ends_with_newline?
-        preceding = @tokens.length >= 2 ? @tokens[-2] : nil
-        return true unless preceding
-        return @trimmed_newline if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
+        return true unless @tokens.length >= 2
+
+        preceding = @tokens[-2]
+        return @trim_consumed_newline if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
         return preceding[1].end_with?("\n") if preceding[0] == :expr_block_end
         return true unless preceding[0] == :text
 

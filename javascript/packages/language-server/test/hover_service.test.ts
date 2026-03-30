@@ -433,4 +433,181 @@ describe("HoverService", () => {
       expect(getHover("<%= some_method %>", 0, 5)).toBeNull()
     })
   })
+
+  describe("character references", () => {
+    describe("named character references", () => {
+      it("shows hover for &lt;", () => {
+        const hover = getHover("<div>&lt;</div>", 0, 6)
+
+        expect(hover).not.toBeNull()
+        expect(hover!.contents).toHaveProperty("kind", MarkupKind.Markdown)
+        expect(hoverValue("<div>&lt;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&lt;\` |
+          | Name | \`lt\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&lt;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 9)
+        )
+      })
+
+      it("shows hover for &amp;", () => {
+        expect(hoverValue("<div>&amp;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`&\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`&\` |
+          | Codepoint | U+0026 |
+          | Reference | \`&amp;\` |
+          | Name | \`amp\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("shows hover for &copy;", () => {
+        expect(hoverValue("<div>&copy;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`©\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`©\` |
+          | Codepoint | U+00A9 |
+          | Reference | \`&copy;\` |
+          | Name | \`copy\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("shows hover for &nbsp;", () => {
+        expect(hoverValue("<div>&nbsp;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \` \`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \` \` |
+          | Codepoint | U+00A0 |
+          | Reference | \`&nbsp;\` |
+          | Name | \`nbsp\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("triggers on any character within the entity", () => {
+        // &lt; spans positions 5-8
+        expect(getHover("<div>&lt;</div>", 0, 5)).not.toBeNull()
+        expect(getHover("<div>&lt;</div>", 0, 8)).not.toBeNull()
+        expect(getHover("<div>&lt;</div>", 0, 9)).toBeNull()
+      })
+    })
+
+    describe("decimal numeric character references", () => {
+      it("shows hover for &#60;", () => {
+        expect(hoverValue("<div>&#60;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Decimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&#60;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&#60;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 10)
+        )
+      })
+
+      it("shows hover for &#169; (copyright)", () => {
+        expect(hoverValue("<div>&#169;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`©\`
+
+          **Decimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`©\` |
+          | Codepoint | U+00A9 |
+          | Reference | \`&#169;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+    })
+
+    describe("hexadecimal numeric character references", () => {
+      it("shows hover for &#x3C;", () => {
+        expect(hoverValue("<div>&#x3C;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Hexadecimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&#x3C;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&#x3C;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 11)
+        )
+      })
+    })
+
+    describe("in attribute values", () => {
+      it("shows hover for entities in attribute values", () => {
+        const hover = getHover('<div data-html="&lt;">test</div>', 0, 18)
+
+        expect(hover).not.toBeNull()
+        expect(hoverValue('<div data-html="&lt;">test</div>', 0, 18)).toContain("`<`")
+        expect(hoverRange('<div data-html="&lt;">test</div>', 0, 18)).toEqual(
+          Range.create(0, 16, 0, 20)
+        )
+      })
+    })
+
+    describe("multiple entities on same line", () => {
+      it("shows correct hover for each entity", () => {
+        expect(hoverValue("<div>&lt;&gt;</div>", 0, 6)).toContain("`<`")
+        expect(hoverValue("<div>&lt;&gt;</div>", 0, 10)).toContain("`>`")
+      })
+    })
+
+    describe("no hover for non-entities", () => {
+      it("returns null for bare ampersand", () => {
+        expect(getHover("<div>Tom & Jerry</div>", 0, 10)).toBeNull()
+      })
+
+      it("returns null for plain text", () => {
+        expect(getHover("<div>hello</div>", 0, 7)).toBeNull()
+      })
+
+      it("returns null for invalid named reference", () => {
+        expect(getHover("<div>&notarealentity;</div>", 0, 10)).toBeNull()
+      })
+    })
+  })
 })

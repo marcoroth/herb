@@ -1,5 +1,6 @@
 export * from "./ast-utils.js"
 export * from "./html-constants.js"
+export * from "./html-character-references.js"
 export * from "./backend.js"
 export * from "./diagnostic.js"
 export * from "./didyoumean.js"
