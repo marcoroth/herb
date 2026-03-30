@@ -1,12 +1,12 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 
-import { ERBDisallowInlineStylesRule } from "../../src/rules/erb-disallow-inline-styles.js"
+import { HTMLNoStyleElementsRule } from "../../src/rules/html-no-style-elements.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBDisallowInlineStylesRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoStyleElementsRule)
 
-describe("erb-disallow-inline-styles", () => {
+describe("html-no-style-elements", () => {
   describe("inline style tags", () => {
     test("fails with empty style tag", () => {
       expectWarning("Avoid inline `<style>` tags. Use `stylesheet_link_tag` to include external stylesheets instead.")
@@ -20,6 +20,16 @@ describe("erb-disallow-inline-styles", () => {
       assertOffenses(dedent`
         <style>
           .danger { color: red; }
+        </style>
+      `)
+    })
+
+    test("fails with style tag containing ERB comment", () => {
+      expectWarning("Avoid inline `<style>` tags. Use `stylesheet_link_tag` to include external stylesheets instead.")
+
+      assertOffenses(dedent`
+        <style>
+          <%# preflight %>
         </style>
       `)
     })
@@ -49,36 +59,6 @@ describe("erb-disallow-inline-styles", () => {
         <%= tag.style do %>
           .danger { color: red; }
         <% end %>
-      `)
-    })
-  })
-
-  describe("style attributes", () => {
-    test("passes with class attribute", () => {
-      expectNoOffenses(dedent`
-        <button class="btn btn-primary">Submit</button>
-      `)
-    })
-
-    test("passes with data attributes", () => {
-      expectNoOffenses(dedent`
-        <div data-controller="hello" data-action="click->hello#greet">Content</div>
-      `)
-    })
-
-    test("fails with inline style attribute", () => {
-      expectWarning("Avoid inline `style` attribute. Use an external stylesheet or CSS classes instead.")
-
-      assertOffenses(dedent`
-        <button style="color: red;">Submit</button>
-      `)
-    })
-
-    test("fails with ERB tag in style attribute", () => {
-      expectWarning("Avoid inline `style` attribute. Use an external stylesheet or CSS classes instead.")
-
-      assertOffenses(dedent`
-        <div style="<%= custom_styles %>">Content</div>
       `)
     })
   })
