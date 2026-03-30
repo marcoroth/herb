@@ -12,10 +12,11 @@ import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-l
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
+import { ERBDisallowInlineStylesRule } from "./rules/erb-disallow-inline-styles.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
-import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
+import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
@@ -115,6 +116,7 @@ export const rules: RuleClass[] = [
   ActionViewStrictLocalsPartialOnlyRule,
 
   ERBCommentSyntax,
+  ERBDisallowInlineStylesRule,
   ERBNoCaseNodeChildrenRule,
   ERBNoDebugOutputRule,
   ERBNoEmptyControlFlowRule,
