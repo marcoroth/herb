@@ -131,6 +131,8 @@ module Herb
 
       def extract_lspace: () -> untyped
 
+      def lspace_follows_newline?: () -> untyped
+
       def extract_and_remove_lspace!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped

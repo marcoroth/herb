@@ -4,6 +4,6 @@ input: "{source: \"<p>\\n  <% if true %><%= \\\"text\\\" %><% end %>\\n</p>\", o
 ---
 _buf = ::String.new; _buf << '<p>
 '.freeze;   if true 
- _buf << ("text").to_s; end 
- _buf << '</p>'.freeze;
+ _buf << '  '.freeze; _buf << ("text").to_s; end; _buf << '
+</p>'.freeze;
 _buf.to_s

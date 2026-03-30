@@ -272,6 +272,7 @@ module Herb
                      else
                        [:expr_block, code, current_context]
                      end
+          @trim_consumed_newline = false
 
           visit_all(node.body)
           visit_erb_block_end_node(node.end_node, escaped: should_escape)
@@ -342,9 +343,10 @@ module Herb
           remove_trailing_whitespace_from_last_token! if has_left_trim
 
           if at_line_start?
+            follows_newline = lspace_follows_newline?
             lspace = extract_and_remove_lspace!
             @trim_next_whitespace = true
-            @pending_leading_whitespace = lspace unless lspace.empty?
+            @pending_leading_whitespace = lspace if !lspace.empty? && follows_newline
           end
           return
         end
@@ -391,10 +393,12 @@ module Herb
 
       def add_expression(code)
         @tokens << [:expr, code, current_context]
+        @trim_consumed_newline = false
       end
 
       def add_expression_escaped(code)
         @tokens << [:expr_escaped, code, current_context]
+        @trim_consumed_newline = false
       end
 
       def optimize_tokens(tokens)
@@ -478,6 +482,13 @@ module Herb
       end
 
       def process_erb_output(node, opening, code)
+        if @trim_next_whitespace && @pending_leading_whitespace
+          @tokens << [:text, @pending_leading_whitespace, current_context]
+          @pending_leading_whitespace = nil
+          @trim_next_whitespace = false
+          @trim_consumed_newline = false
+        end
+
         has_right_trim = node.tag_closing&.value == "-%>"
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
@@ -508,12 +519,21 @@ module Herb
       end
 
       def at_line_start?
-        @tokens.empty? ||
-          @tokens.last[0] != :text ||
-          @tokens.last[1].empty? ||
-          @tokens.last[1].end_with?("\n") ||
-          (@tokens.last[1] =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) ||
-          @tokens.last[1] =~ /\n[ \t]+\z/
+        return true if @tokens.empty?
+
+        last_type = @tokens.last[0]
+        last_value = @tokens.last[1]
+
+        if last_type == :text
+          last_value.empty? ||
+            last_value.end_with?("\n") ||
+            (last_value =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) ||
+            last_value =~ /\n[ \t]+\z/
+        elsif [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(last_type)
+          @trim_consumed_newline
+        else
+          last_value.end_with?("\n")
+        end
       end
 
       def preceding_token_ends_with_newline?
@@ -535,6 +555,12 @@ module Herb
         return Regexp.last_match(1) if text =~ /\n([ \t]+)\z/ || text =~ /\A([ \t]+)\z/
 
         ""
+      end
+
+      def lspace_follows_newline?
+        return false unless @tokens.last && @tokens.last[0] == :text
+
+        @tokens.last[1].match?(/\n[ \t]+\z/)
       end
 
       def extract_and_remove_lspace!
@@ -559,12 +585,13 @@ module Herb
         remove_trailing_whitespace_from_last_token! if has_left_trim
 
         if at_line_start?
+          follows_newline = lspace_follows_newline?
           lspace = extract_and_remove_lspace!
           rspace = Herb::Engine.heredoc?(code) ? "\n" : " \n"
 
           @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
           @trim_next_whitespace = true
-          @pending_leading_whitespace = lspace unless lspace.empty?
+          @pending_leading_whitespace = lspace if !lspace.empty? && follows_newline
         else
           @tokens << [:code, code, current_context]
         end
