@@ -1,10 +1,10 @@
-# Linter Rule: Disallow inline script tags and event handler attributes
+# Linter Rule: Disallow inline event handler attributes
 
-**Rule:** `html-disallow-inline-scripts`
+**Rule:** `html-no-event-handlers`
 
 ## Description
 
-Disallow the use of inline `<script>` tags and inline JavaScript event handler attributes (e.g. `onclick`, `onload`) in HTML templates.
+Disallow the use of inline JavaScript event handler attributes (e.g. `onclick`, `onload`) in HTML templates.
 
 ## Rationale
 
@@ -14,16 +14,12 @@ All JavaScript should be included via external assets to support strong CSP poli
 
 This rule enforces:
 
-- No `<script>` tags embedded directly in templates.
-- No event handler attributes (`onclick`, `onmouseover`, etc.).
+- No event handler attributes (`onclick`, `onmouseover`, etc.) on HTML elements.
+- No event handler attributes on ActionView tag helpers (e.g. `<%= tag.button onclick: "..." %>`).
 
 ## Examples
 
 ### ✅ Good
-
-```erb
-<%= javascript_include_tag "application" %>
-```
 
 ```erb
 <button type="submit" class="btn">Submit</button>
@@ -36,30 +32,10 @@ This rule enforces:
 ```
 
 ```erb
-<script type="application/json">
-  {"key": "value"}
-</script>
-```
-
-```erb
-<script type="application/ld+json">
-  {"@context": "https://schema.org"}
-</script>
+<%= tag.button "Submit", class: "btn" %>
 ```
 
 ### 🚫 Bad
-
-```erb
-<script>
-  alert("Hello, world!")
-</script>
-```
-
-```erb
-<script type="text/javascript">
-  console.log("Hello")
-</script>
-```
 
 ```erb
 <button onclick="doSomething()">Click</button>
@@ -77,9 +53,12 @@ This rule enforces:
 <form onsubmit="validate()"></form>
 ```
 
+```erb
+<%= tag.button "Submit", onclick: "doSomething()" %>
+```
+
 ## References
 
 - Inspired by [@pushcx](https://bsky.app/profile/push.cx/post/3lsfddauapk2o)
 - [MDN: Content Security Policy (CSP)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
 - [wooorm/html-event-attributes](https://github.com/wooorm/html-event-attributes)
-- [GeeksforGeeks: HTML Event Attributes](https://www.geeksforgeeks.org/html/html-event-attributes/)

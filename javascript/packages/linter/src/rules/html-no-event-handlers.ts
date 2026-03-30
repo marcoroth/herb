@@ -1,9 +1,9 @@
-import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isJavaScriptTagElement } from "./rule-utils.js"
-import { getTagLocalName, getAttributeName } from "@herb-tools/core"
+import { getAttributeName } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLAttributeNode } from "@herb-tools/core"
 
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
 const HTML_EVENT_ATTRIBUTES = new Set([
   // Window Event Attributes
@@ -112,40 +112,23 @@ const HTML_EVENT_ATTRIBUTES = new Set([
   "ontoggle",
 ])
 
-class HTMLDisallowInlineScriptsVisitor extends BaseRuleVisitor {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagLocalName(node) === "script") {
-      this.checkInlineScript(node)
-    }
-
-    super.visitHTMLElementNode(node)
-  }
-
+class HTMLNoEventHandlersVisitor extends BaseRuleVisitor {
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     const attributeName = getAttributeName(node)
 
     if (attributeName && HTML_EVENT_ATTRIBUTES.has(attributeName.toLowerCase())) {
       this.addOffense(
-        `Avoid inline event handler \`${attributeName}\`. Use external JavaScript with \`addEventListener\` instead.`,
+        `Avoid inline event handler \`${attributeName}\`. Use external JavaScript with \`addEventListener\` instead or an external library like Stimulus.`,
         node.location,
       )
     }
 
     super.visitHTMLAttributeNode(node)
   }
-
-  private checkInlineScript(node: HTMLElementNode): void {
-    if (!isJavaScriptTagElement(node)) return
-
-    this.addOffense(
-      "Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.",
-      node.open_tag!.location,
-    )
-  }
 }
 
-export class HTMLDisallowInlineScriptsRule extends ParserRule {
-  static ruleName = "html-disallow-inline-scripts"
+export class HTMLNoEventHandlersRule extends ParserRule {
+  static ruleName = "html-no-event-handlers"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
@@ -155,8 +138,14 @@ export class HTMLDisallowInlineScriptsRule extends ParserRule {
     }
   }
 
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
+    }
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLDisallowInlineScriptsVisitor(this.ruleName, context)
+    const visitor = new HTMLNoEventHandlersVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
