@@ -90,6 +90,9 @@ export default class extends Controller {
     "formatTooltip",
     "autofixButton",
     "autofixTooltip",
+    "autofixUnsafeWrapper",
+    "autofixUnsafeButton",
+    "autofixUnsafeTooltip",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -204,6 +207,7 @@ export default class extends Controller {
     this.setupThemeListener()
     this.setupTooltip()
     this.setupAutofixTooltip()
+    this.setupAutofixUnsafeTooltip()
     this.setupShareTooltip()
     this.setupGitHubTooltip()
     this.setupCopyTooltip()
@@ -265,6 +269,7 @@ export default class extends Controller {
     window.removeEventListener("popstate", this.handlePopState)
     this.removeTooltip()
     this.removeAutofixTooltip()
+    this.removeAutofixUnsafeTooltip()
     this.removeShareTooltip()
     this.removeGitHubTooltip()
     this.removeCopyTooltip()
@@ -785,6 +790,60 @@ export default class extends Controller {
     }
   }
 
+  async autofixUnsafeEditor(event) {
+    if (this.isRubyMode) return
+
+    const button = this.getClosestButton(event.target)
+
+    if (button.disabled) {
+      return
+    }
+
+    const warningIcon = button.querySelector(".fa-triangle-exclamation")
+    const checkIcon = button.querySelector(".fa-circle-check")
+
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const linter = new Linter(Herb)
+      const result = linter.autofix(value, undefined, undefined, { includeUnsafe: true })
+
+      if (result && typeof result === "object" && "source" in result) {
+        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+
+        if (fixedCount > 0 && typeof result.source === "string") {
+          if (this.editor) {
+            this.editor.setValue(result.source)
+          } else {
+            this.inputTarget.value = result.source
+          }
+
+          if (warningIcon && checkIcon) {
+            warningIcon.classList.add("hidden")
+            checkIcon.classList.remove("hidden")
+            checkIcon.style.display = ""
+
+            setTimeout(() => {
+              this.resetAutofixUnsafeButtonIcons()
+            }, 1000)
+          }
+
+          const offensesLabel = fixedCount === 1 ? "offense" : "offenses"
+          this.showTemporaryMessage(`Autofixed ${fixedCount} unsafe linter ${offensesLabel}`, "success")
+
+          await this.analyze()
+          this.resetAutofixUnsafeButtonIcons()
+        } else {
+          this.showTemporaryMessage("No unsafe autocorrectable linter offenses found", "info")
+        }
+      } else {
+        this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+      }
+    } catch (error) {
+      console.error("Autofix unsafe error:", error)
+      this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+    }
+  }
+
   async analyze() {
     this.updateURL()
 
@@ -1033,6 +1092,20 @@ export default class extends Controller {
       } else {
         this.enableAutofixButton()
         this.updateAutofixTooltipText('Autocorrect autocorrectable Herb Linter offenses')
+      }
+    }
+
+    if (this.hasAutofixUnsafeWrapperTarget) {
+      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+      const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
+        result.lintResult.offenses.some(offense => offense.autofixContext && offense.autofixContext.unsafe === true))
+
+      if (hasParserErrors || !hasUnsafeOffenses) {
+        this.autofixUnsafeWrapperTarget.classList.add('hidden')
+      } else {
+        this.autofixUnsafeWrapperTarget.classList.remove('hidden')
+        this.enableAutofixUnsafeButton()
+        this.updateAutofixUnsafeTooltipText('Autocorrect unsafe Herb Linter offenses')
       }
     }
 
@@ -1709,6 +1782,72 @@ export default class extends Controller {
 
     if (wandIcon) {
       wandIcon.classList.remove("hidden")
+    }
+
+    if (checkIcon) {
+      checkIcon.classList.add("hidden")
+      checkIcon.style.display = ""
+    }
+  }
+
+  setupAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.addEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.addEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+    }
+  }
+
+  removeAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+
+      this.hideAutofixUnsafeTooltip()
+    }
+  }
+
+  showAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  updateAutofixUnsafeTooltipText(text) {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      const textNode = this.autofixUnsafeTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  enableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = false
+    this.autofixUnsafeButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+  }
+
+  disableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = true
+    this.autofixUnsafeButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+    this.resetAutofixUnsafeButtonIcons()
+  }
+
+  resetAutofixUnsafeButtonIcons() {
+    if (!this.hasAutofixUnsafeButtonTarget) return
+
+    const warningIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-triangle-exclamation")
+    const checkIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-circle-check")
+
+    if (warningIcon) {
+      warningIcon.classList.remove("hidden")
     }
 
     if (checkIcon) {

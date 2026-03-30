@@ -3,12 +3,13 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
-import type { RuleConfig } from "@herb-tools/config"
+import type { RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "./semver.js"
 
 export type { Mutable } from "@herb-tools/rewriter"
 export type { RuleVersion } from "./semver.js"
+export type { SeverityConfig, LinterMode } from "@herb-tools/config"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
 

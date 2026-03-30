@@ -150,6 +150,7 @@ export class LinterService {
       this.showCustomRuleWarnings()
 
       const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
+      const hasConfigFile = projectConfig ? Config.exists(projectConfig.projectPath) : false
 
       const config = Config.fromObject({
         linter: {
@@ -161,9 +162,11 @@ export class LinterService {
         }
       }, { projectPath: projectConfig?.projectPath || process.cwd() })
 
-      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, config.configVersion)
+      const configVersion = hasConfigFile ? config.configVersion : undefined
+      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, configVersion)
 
       this.linter = new Linter(Herb, filteredRules, config, this.allRules)
+      this.linter.mode = "editor"
     }
 
     const content = textDocument.getText()

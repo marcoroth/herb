@@ -693,9 +693,14 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         }
       }
 
+      pm_call_node_t* void_call = parse_context->info->call_node;
+      bool content_from_block = void_call && void_call->block && void_call->block->type == PM_BLOCK_NODE;
+      hb_string_T content_type = content_from_block ? hb_string("a block") : hb_string("a positional argument");
+
       append_void_element_content_error(
         tag_name_token,
         helper_name,
+        content_type,
         content_start,
         content_end,
         allocator,
@@ -1067,8 +1072,41 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
   );
 
   hb_array_T* body = block_node->body ? block_node->body : hb_array_init(0, allocator);
+  hb_array_T* element_errors = hb_array_init(0, allocator);
   AST_NODE_T* close_tag = (AST_NODE_T*) block_node->end_node;
   position_T element_end = block_node->base.location.end;
+
+  bool is_void = tag_name && is_void_element(hb_string_from_c_string(tag_name)) && parse_context->matched_handler
+              && parse_context->matched_handler->name
+              && (string_equals(parse_context->matched_handler->name, "tag")
+                  || string_equals(parse_context->matched_handler->name, "content_tag")
+                  || string_equals(parse_context->matched_handler->name, "image_tag"));
+
+  if (is_void) {
+    hb_buffer_T helper_name_buffer;
+    hb_buffer_init(&helper_name_buffer, 64, allocator);
+
+    if (string_equals(parse_context->matched_handler->name, "tag")) {
+      hb_buffer_append(&helper_name_buffer, "tag.");
+      hb_buffer_append(&helper_name_buffer, tag_name);
+    } else {
+      hb_buffer_append(&helper_name_buffer, parse_context->matched_handler->name);
+      hb_buffer_append(&helper_name_buffer, " :");
+      hb_buffer_append(&helper_name_buffer, tag_name);
+    }
+
+    hb_string_T helper_name = hb_string_from_c_string(hb_buffer_value(&helper_name_buffer));
+
+    append_void_element_content_error(
+      tag_name_token,
+      helper_name,
+      hb_string("a block"),
+      block_node->base.location.start,
+      block_node->base.location.end,
+      allocator,
+      element_errors
+    );
+  }
 
   if (tag_name && parser_is_foreign_content_tag(hb_string_from_c_string(tag_name)) && context->source
       && block_node->body && hb_array_size(block_node->body) > 0) {
@@ -1120,12 +1158,12 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
     (AST_NODE_T*) open_tag_node,
     tag_name_token,
     body,
-    close_tag,
-    false,
+    is_void ? NULL : close_tag,
+    is_void,
     parse_context->matched_handler->source,
     block_node->base.location.start,
     element_end,
-    hb_array_init(0, allocator),
+    element_errors,
     allocator
   );
 
