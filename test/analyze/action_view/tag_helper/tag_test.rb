@@ -573,5 +573,35 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "tag.img with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img alt: "hello" do %>
+          a
+        <% end %>
+      HTML
+    end
+
+    test "tag.br with inline block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.br { "content" } %>
+      HTML
+    end
+
+    test "tag.input with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.input do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "tag.hr with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.hr class: "divider" do %>
+          content
+        <% end %>
+      HTML
+    end
   end
 end

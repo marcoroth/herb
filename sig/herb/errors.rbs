@@ -662,8 +662,10 @@ module Herb
 
       attr_reader helper_name: String?
 
-      # : (String, Location?, String, Herb::Token, String) -> void
-      def initialize: (String, Location?, String, Herb::Token, String) -> void
+      attr_reader content_type: String?
+
+      # : (String, Location?, String, Herb::Token, String, String) -> void
+      def initialize: (String, Location?, String, Herb::Token, String, String) -> void
 
       # : () -> String
       def inspect: () -> String

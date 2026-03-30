@@ -195,28 +195,10 @@ module Engine
       assert_evaluated_snapshot(template, { value: "hello." }, enforce_erubi_equality: true)
     end
 
-    test "output tag with -%> followed by indented control tag trims whitespace" do
-      template = "A<%= -%>\n <% if true %>\nB\n<% end %>"
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
-    test "output tag with -%> followed by non-indented control tag (baseline)" do
-      template = "A<%= -%>\n<% if true %>\nB\n<% end %>"
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
-    test "real-world pattern: text joined across conditional with -%>" do
-      template = "  as of X<%= -%>\n  <% if true %>\n    with filters<%= -%>\n  <% end %>\n."
-
-      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
-    end
-
     test "whitespace between consecutive end tags after expression block is trimmed" do
       template = <<~ERB
-        <% outer do %>
-          <% form_tag("/t") do %>
+        <% 1.times do %>
+          <%= form_tag("/t") do %>
             <%= tag.p do %>
               text
             <% end %>
@@ -225,6 +207,43 @@ module Engine
       ERB
 
       assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "whitespace between nested end tags after expression block is trimmed" do
+      template = <<~ERB
+        <% 1.times do %>
+          <% 1.times do %>
+            <%= tag.p do %>
+              text
+            <% end %>
+          <% end %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "output tag with -%> followed by indented control tag trims whitespace" do
+      template = "A<%= -%>\n <% if true %>\nB\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "output tag with -%> followed by non-indented control tag (baseline)" do
+      template = "A<%= -%>\n<% if true %>\nB\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "real-world pattern: text joined across conditional with -%>" do
+      template = "  as of X<%= -%>\n  <% if true %>\n    with filters<%= -%>\n  <% end %>\n."
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
   end
 end

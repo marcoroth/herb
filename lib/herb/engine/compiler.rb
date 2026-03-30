@@ -511,6 +511,7 @@ module Herb
 
       def preceding_token_ends_with_newline?
         preceding = @tokens.length >= 2 ? @tokens[-2] : nil
+
         return true unless preceding
         return @trimmed_newline if [:expr, :expr_escaped, :expr_block, :expr_block_escaped].include?(preceding[0])
         return preceding[1].end_with?("\n") if preceding[0] == :expr_block_end

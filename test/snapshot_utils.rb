@@ -71,6 +71,7 @@ module SnapshotUtils
     require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
+    enforce_actionview_erubi_equality = kwargs.key?(:enforce_actionview_erubi_equality) ? kwargs.delete(:enforce_actionview_erubi_equality) : enforce_erubi_equality
     engine_options = options.merge(kwargs)
 
     engine = Herb::Engine.new(source, engine_options)
@@ -87,19 +88,52 @@ module SnapshotUtils
       #{engine.src}
     MESSAGE
 
-    binding_context = Object.new
+    result = evaluate_herb_source(engine.src, locals)
 
-    locals.each do |key, value|
-      name = key.to_s
+    if result
+      snapshot_key = {
+        source: source,
+        locals: locals,
+        options: engine_options,
+      }.to_s
 
-      if name.start_with?("@")
-        binding_context.instance_variable_set(name, value)
-      else
-        binding_context.define_singleton_method(name) { value }
-      end
+      assert_snapshot_matches(result, snapshot_key)
     end
 
-    result = binding_context.instance_eval(engine.src)
+    if should_compare_with_erubi? || enforce_erubi_equality
+      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_erubi_equality)
+    end
+
+    if should_compare_with_actionview_erubi? || enforce_actionview_erubi_equality
+      compare_with_actionview_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_actionview_erubi_equality)
+    end
+
+    { engine: engine, result: result }
+  end
+
+  def assert_evaluated_actionview_snapshot(source, locals = {}, options = {}, **kwargs)
+    require_relative "../lib/herb/engine"
+    require "action_view"
+    require "prism"
+
+    enforce_erubi_equality = kwargs.key?(:enforce_erubi_equality) ? kwargs.delete(:enforce_erubi_equality) : true
+    engine_options = options.merge(kwargs)
+
+    engine = Herb::Engine.new(source, engine_options)
+
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
+    result = evaluate_actionview_source(source, locals)
 
     snapshot_key = {
       source: source,
@@ -109,8 +143,8 @@ module SnapshotUtils
 
     assert_snapshot_matches(result, snapshot_key)
 
-    if should_compare_with_erubi? || enforce_erubi_equality
-      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_erubi_equality)
+    if should_compare_with_actionview_erubi? || enforce_erubi_equality
+      compare_with_actionview_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_erubi_equality)
     end
 
     { engine: engine, result: result }
@@ -246,6 +280,12 @@ module SnapshotUtils
     !ENV["COMPARE_WITH_ERUBI"].nil?
   end
 
+  def should_compare_with_actionview_erubi?
+    return false if class_name.include?("DebugMode")
+
+    !ENV["COMPARE_WITH_ACTIONVIEW_ERUBI"].nil?
+  end
+
   def compare_with_erubi_compiled(source, herb_src, options, enforce_equality: false)
     require_erubi_silently
 
@@ -313,6 +353,102 @@ module SnapshotUtils
     end
   end
 
+  def compare_with_actionview_erubi_evaluated(source, herb_result, locals, _options, enforce_equality: false)
+    require "action_view"
+
+    begin
+      erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
+
+      view = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
+      view.instance_variable_set(:@output_buffer, ActionView::OutputBuffer.new)
+
+      locals.each do |key, value|
+        name = key.to_s
+
+        if name.start_with?("@")
+          view.instance_variable_set(name, value)
+        else
+          view.define_singleton_method(name) { value }
+        end
+      end
+
+      actionview_result = view.instance_eval(erubi_engine.src).to_s
+
+      if herb_result.nil?
+        snapshot_key = {
+          source: source,
+          locals: locals,
+          engine: "actionview_erubi",
+        }.to_s
+
+        assert_snapshot_matches(actionview_result, snapshot_key)
+        return
+      end
+
+      diff_output = diff_rendered_outputs_actionview(actionview_result, herb_result)
+      return unless diff_output
+
+      message = "\n#{"=" * 80}\n"
+      message += "WARNING: Herb evaluated output differs from ActionView Erubi\n"
+      message += "#{"=" * 80}\n"
+      message += "Test: #{class_name} #{name}\n"
+      message += "\nTemplate:\n#{source.inspect}\n"
+      message += "\nLocals: #{locals.inspect}\n"
+      message += "\n"
+      message += diff_output
+      message += "\n"
+      message += "#{"=" * 80}\n"
+
+      if ENV["FAIL_ON_ACTIONVIEW_ERUBI_MISMATCH"] || enforce_equality
+        flunk(message)
+      else
+        puts message
+      end
+    rescue StandardError
+      nil
+    end
+  end
+
+  def diff_rendered_outputs_actionview(actionview_output, herb_output)
+    return nil if actionview_output == herb_output
+
+    output = ""
+    output += "String Comparison:\n"
+    output += "#{"─" * 80}\n"
+
+    string_diff = Difftastic::Differ.new(
+      color: :always,
+      left_label: "ActionView Erubi output",
+      right_label: "Herb::Engine output"
+    ).diff_strings(actionview_output, herb_output)
+
+    output += string_diff
+
+    if !string_diff.strip.empty? && !string_diff.include?("No changes.")
+      output += "\n\n"
+      output += "HTML Semantic Comparison:\n"
+      output += "#{"─" * 80}\n"
+
+      begin
+        html_diff = Difftastic::Differ.new(
+          color: :always,
+          left_label: "ActionView Erubi output",
+          right_label: "Herb::Engine output"
+        ).diff_html(actionview_output, herb_output)
+
+        output += if html_diff.strip.empty? || html_diff.include?("No changes.")
+                    "✓ HTML semantics are identical (only formatting/whitespace differs)"
+                  else
+                    html_diff
+                  end
+      rescue StandardError => e
+        output += "Could not parse as HTML: #{e.message}"
+      end
+    end
+
+    output
+  end
+
   def format_snapshot_with_metadata(content, source, options = {})
     metadata = build_snapshot_metadata(source, options)
 
@@ -350,6 +486,43 @@ module SnapshotUtils
   end
 
   private
+
+  def evaluate_actionview_source(source, locals)
+    require "action_view"
+
+    erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
+
+    view = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
+    view.instance_variable_set(:@output_buffer, ActionView::OutputBuffer.new)
+
+    locals.each do |key, value|
+      name = key.to_s
+
+      if name.start_with?("@")
+        view.instance_variable_set(name, value)
+      else
+        view.define_singleton_method(name) { value }
+      end
+    end
+
+    view.instance_eval(erubi_engine.src).to_s
+  end
+
+  def evaluate_herb_source(source, locals)
+    binding_context = Object.new
+
+    locals.each do |key, value|
+      name = key.to_s
+
+      if name.start_with?("@")
+        binding_context.instance_variable_set(name, value)
+      else
+        binding_context.define_singleton_method(name) { value }
+      end
+    end
+
+    binding_context.instance_eval(source)
+  end
 
   def sanitize_name_for_filesystem(name)
     [
