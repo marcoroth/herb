@@ -1302,6 +1302,12 @@ static AST_NODE_T* transform_link_to_helper(
       char* content = hb_allocator_strndup(allocator, (const char*) second_arg->location.start, source_length);
 
       if (content) {
+        hb_buffer_T wrapped;
+        hb_buffer_init(&wrapped, source_length + 32, allocator);
+        hb_buffer_append(&wrapped, "tag.attributes(**");
+        hb_buffer_append(&wrapped, content);
+        hb_buffer_append(&wrapped, ")");
+
         position_T position = prism_location_to_position_with_offset(
           &second_arg->location,
           parse_context->original_source,
@@ -1310,7 +1316,7 @@ static AST_NODE_T* transform_link_to_helper(
         );
 
         AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
-          hb_string_from_c_string(content),
+          hb_string_from_c_string(hb_buffer_value(&wrapped)),
           HB_STRING_EMPTY,
           position,
           position,
@@ -1320,6 +1326,7 @@ static AST_NODE_T* transform_link_to_helper(
 
         if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
 
+        hb_buffer_free(&wrapped);
         hb_allocator_dealloc(allocator, content);
       }
     }

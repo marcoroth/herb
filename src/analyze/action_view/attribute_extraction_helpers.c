@@ -476,25 +476,35 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
 
     if (element->type == PM_ASSOC_SPLAT_NODE) {
       pm_assoc_splat_node_t* splat = (pm_assoc_splat_node_t*) element;
-      size_t splat_length = splat->base.location.end - splat->base.location.start;
-      char* splat_content = hb_allocator_strndup(allocator, (const char*) splat->base.location.start, splat_length);
 
-      if (splat_content) {
-        position_T splat_start =
-          prism_location_to_position_with_offset(&splat->base.location, original_source, erb_content_offset, source);
+      if (splat->value) {
+        size_t value_length = splat->value->location.end - splat->value->location.start;
+        char* value_source = hb_allocator_strndup(allocator, (const char*) splat->value->location.start, value_length);
 
-        AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
-          hb_string_from_c_string(splat_content),
-          HB_STRING_EMPTY,
-          splat_start,
-          splat_start,
-          hb_array_init(0, allocator),
-          allocator
-        );
+        if (value_source) {
+          hb_buffer_T wrapped;
+          hb_buffer_init(&wrapped, value_length + 32, allocator);
+          hb_buffer_append(&wrapped, "tag.attributes(**");
+          hb_buffer_append(&wrapped, value_source);
+          hb_buffer_append(&wrapped, ")");
 
-        if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
+          position_T splat_start =
+            prism_location_to_position_with_offset(&splat->base.location, original_source, erb_content_offset, source);
 
-        hb_allocator_dealloc(allocator, splat_content);
+          AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
+            hb_string_from_c_string(hb_buffer_value(&wrapped)),
+            HB_STRING_EMPTY,
+            splat_start,
+            splat_start,
+            hb_array_init(0, allocator),
+            allocator
+          );
+
+          if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
+
+          hb_buffer_free(&wrapped);
+          hb_allocator_dealloc(allocator, value_source);
+        }
       }
     } else if (element->type == PM_ASSOC_NODE) {
       pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
@@ -510,30 +520,42 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
 
           if (hash_element->type == PM_ASSOC_SPLAT_NODE) {
             pm_assoc_splat_node_t* splat = (pm_assoc_splat_node_t*) hash_element;
-            size_t splat_length = splat->base.location.end - splat->base.location.start;
-            char* splat_content =
-              hb_allocator_strndup(allocator, (const char*) splat->base.location.start, splat_length);
 
-            if (splat_content) {
-              position_T splat_start = prism_location_to_position_with_offset(
-                &splat->base.location,
-                original_source,
-                erb_content_offset,
-                source
-              );
+            if (splat->value) {
+              size_t value_length = splat->value->location.end - splat->value->location.start;
+              char* value_source =
+                hb_allocator_strndup(allocator, (const char*) splat->value->location.start, value_length);
 
-              AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
-                hb_string_from_c_string(splat_content),
-                hb_string_from_c_string(key_string),
-                splat_start,
-                splat_start,
-                hb_array_init(0, allocator),
-                allocator
-              );
+              if (value_source) {
+                hb_buffer_T wrapped;
+                hb_buffer_init(&wrapped, value_length + 48, allocator);
+                hb_buffer_append(&wrapped, "tag.attributes(");
+                hb_buffer_append(&wrapped, key_string);
+                hb_buffer_append(&wrapped, ": ");
+                hb_buffer_append(&wrapped, value_source);
+                hb_buffer_append(&wrapped, ")");
 
-              if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
+                position_T splat_start = prism_location_to_position_with_offset(
+                  &splat->base.location,
+                  original_source,
+                  erb_content_offset,
+                  source
+                );
 
-              hb_allocator_dealloc(allocator, splat_content);
+                AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE_T* splat_node = ast_ruby_html_attributes_splat_node_init(
+                  hb_string_from_c_string(hb_buffer_value(&wrapped)),
+                  hb_string_from_c_string(key_string),
+                  splat_start,
+                  splat_start,
+                  hb_array_init(0, allocator),
+                  allocator
+                );
+
+                if (splat_node) { hb_array_append(attributes, (AST_NODE_T*) splat_node); }
+
+                hb_buffer_free(&wrapped);
+                hb_allocator_dealloc(allocator, value_source);
+              }
             }
 
             continue;
