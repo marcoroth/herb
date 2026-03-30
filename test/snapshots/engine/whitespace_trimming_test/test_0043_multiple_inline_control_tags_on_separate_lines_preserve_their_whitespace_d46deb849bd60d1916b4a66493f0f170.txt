@@ -3,9 +3,9 @@ source: "Engine::WhitespaceTrimmingTest#test_0043_multiple inline control tags o
 input: "{source: \"<ul>\\n  <% if true %>A<% end %>\\n  <% if true %>B<% end %>\\n</ul>\", options: {}}"
 ---
 _buf = ::String.new; _buf << '<ul>
-'.freeze;   if true 
- _buf << '  A'.freeze; end; _buf << '
-'.freeze;   if true 
- _buf << '  B'.freeze; end; _buf << '
+  '.freeze;   if true 
+ _buf << 'A'.freeze; end; _buf << '
+  '.freeze;   if true 
+ _buf << 'B'.freeze; end; _buf << '
 </ul>'.freeze;
 _buf.to_s

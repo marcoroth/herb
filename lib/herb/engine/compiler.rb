@@ -16,6 +16,7 @@ module Herb
         @trim_next_whitespace = false
         @trim_consumed_newline = false
         @pending_leading_whitespace = nil
+        @pending_leading_whitespace_insert_index = 0
       end
 
       def generate_output
@@ -295,10 +296,10 @@ module Herb
         code = node.content.value.strip
 
         if at_line_start?
-          lspace = extract_and_remove_lspace!
-          rspace = " \n"
+          leading_space = extract_and_remove_leading_space!
+          right_space = " \n"
 
-          @tokens << [:expr_block_end, "#{lspace}#{code}#{rspace}", current_context, escaped]
+          @tokens << [:expr_block_end, "#{leading_space}#{code}#{right_space}", current_context, escaped]
           @trim_next_whitespace = true
         else
           @tokens << [:expr_block_end, code, current_context, escaped]
@@ -340,13 +341,13 @@ module Herb
 
         if !skip_comment_check && erb_comment?(opening)
           has_left_trim = opening.start_with?("<%-")
+          follows_newline = leading_space_follows_newline?
           remove_trailing_whitespace_from_last_token! if has_left_trim
 
           if at_line_start?
-            follows_newline = lspace_follows_newline?
-            lspace = extract_and_remove_lspace!
+            leading_space = extract_and_remove_leading_space!
             @trim_next_whitespace = true
-            @pending_leading_whitespace = lspace if !lspace.empty? && follows_newline
+            @pending_leading_whitespace = leading_space if !leading_space.empty? && follows_newline
           end
           return
         end
@@ -370,13 +371,12 @@ module Herb
           @trim_next_whitespace = false
 
           if !@trim_consumed_newline && @pending_leading_whitespace
-            text = @pending_leading_whitespace + text
+            @tokens.insert(@pending_leading_whitespace_insert_index, [:text, @pending_leading_whitespace, current_context])
           end
-          @pending_leading_whitespace = nil
         else
           @trim_consumed_newline = false
-          @pending_leading_whitespace = nil
         end
+        @pending_leading_whitespace = nil
 
         return if text.empty?
 
@@ -483,7 +483,7 @@ module Herb
 
       def process_erb_output(node, opening, code)
         if @trim_next_whitespace && @pending_leading_whitespace
-          @tokens << [:text, @pending_leading_whitespace, current_context]
+          @tokens.insert(@pending_leading_whitespace_insert_index, [:text, @pending_leading_whitespace, current_context])
           @pending_leading_whitespace = nil
           @trim_next_whitespace = false
           @trim_consumed_newline = false
@@ -547,7 +547,7 @@ module Herb
         preceding[1].end_with?("\n")
       end
 
-      def extract_lspace
+      def extract_leading_space
         return "" unless @tokens.last && @tokens.last[0] == :text
 
         text = @tokens.last[1]
@@ -557,15 +557,15 @@ module Herb
         ""
       end
 
-      def lspace_follows_newline?
+      def leading_space_follows_newline?
         return false unless @tokens.last && @tokens.last[0] == :text
 
         @tokens.last[1].match?(/\n[ \t]+\z/)
       end
 
-      def extract_and_remove_lspace!
-        lspace = extract_lspace
-        return lspace if lspace.empty?
+      def extract_and_remove_leading_space!
+        leading_space = extract_leading_space
+        return leading_space if leading_space.empty?
 
         text = @tokens.last[1]
         if text =~ /\n[ \t]+\z/
@@ -575,32 +575,35 @@ module Herb
         end
         @tokens.last[1] = text
 
-        lspace
+        leading_space
       end
 
       def apply_trim(node, code)
         has_left_trim = node.tag_opening.value.start_with?("<%-")
         node.tag_closing&.value
 
-        remove_trailing_whitespace_from_last_token! if has_left_trim
+        follows_newline = leading_space_follows_newline?
+        removed_whitespace = has_left_trim ? remove_trailing_whitespace_from_last_token! : ""
 
         if at_line_start?
-          follows_newline = lspace_follows_newline?
-          lspace = extract_and_remove_lspace!
-          rspace = Herb::Engine.heredoc?(code) ? "\n" : " \n"
+          leading_space = extract_and_remove_leading_space!
+          effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
+          right_space = Herb::Engine.heredoc?(code) ? "\n" : " \n"
 
-          @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
+          @pending_leading_whitespace_insert_index = @tokens.length
+          @tokens << [:code, "#{effective_leading_space}#{code}#{right_space}", current_context]
           @trim_next_whitespace = true
-          @pending_leading_whitespace = lspace if !lspace.empty? && follows_newline
+          @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
         else
           @tokens << [:code, code, current_context]
         end
       end
 
       def remove_trailing_whitespace_from_last_token!
-        return unless @tokens.last && @tokens.last[0] == :text
+        return "" unless @tokens.last && @tokens.last[0] == :text
 
         text = @tokens.last[1]
+        removed = text[/[ \t]+\z/] || ""
 
         if text =~ /\n[ \t]+\z/
           text.sub!(/[ \t]+\z/, "")
@@ -609,6 +612,8 @@ module Herb
           text.replace("")
           @tokens.last[1] = text
         end
+
+        removed
       end
     end
   end

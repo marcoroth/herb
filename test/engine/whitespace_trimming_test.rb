@@ -316,24 +316,14 @@ module Engine
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
 
-    # TODO: @pending_leading_whitespace is consumed by the first branch's content,
-    # so else/elsif branches don't get it. Fixing requires emitting the whitespace
-    # before the conditional code token (like Erubi does).
     test "leading whitespace with else branch and inline content" do
-      skip
-
       template = "<p>\n  <% if false %>nope<% else %>text<% end %>\n</p>"
 
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
 
-    # TODO: @pending_leading_whitespace is consumed by the first branch's content,
-    # so else/elsif branches don't get it. Fixing requires emitting the whitespace
-    # before the conditional code token (like Erubi does).
     test "leading whitespace with elsif and inline content" do
-      skip
-
       template = "<p>\n  <% if false %>nope<% elsif true %>text<% end %>\n</p>"
 
       assert_compiled_snapshot(template)
@@ -354,11 +344,7 @@ module Engine
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
 
-    # TODO: left trim (<%-)  removes trailing whitespace from the preceding text token
-    # before @pending_leading_whitespace can capture it.
     test "control tag with left trim and inline content" do
-      skip
-
       template = "<p>\n  <%- if true %>text<% end %>\n</p>"
 
       assert_compiled_snapshot(template)

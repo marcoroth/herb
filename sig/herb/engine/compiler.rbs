@@ -129,11 +129,11 @@ module Herb
 
       def preceding_token_ends_with_newline?: () -> untyped
 
-      def extract_lspace: () -> untyped
+      def extract_leading_space: () -> untyped
 
-      def lspace_follows_newline?: () -> untyped
+      def leading_space_follows_newline?: () -> untyped
 
-      def extract_and_remove_lspace!: () -> untyped
+      def extract_and_remove_leading_space!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped
 
