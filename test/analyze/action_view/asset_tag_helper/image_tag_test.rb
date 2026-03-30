@@ -41,5 +41,35 @@ module Analyze::ActionView::AssetTagHelper
         <%= image_tag "logo.png", alt: "Logo", class: "brand" %>
       HTML
     end
+
+    test "image_tag with skip_pipeline" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "icon.png", skip_pipeline: true %>
+      HTML
+    end
+
+    test "image_tag with static size WxH" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "icon.png", size: "32x32" %>
+      HTML
+    end
+
+    test "image_tag with static size N" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "icon.png", size: "32" %>
+      HTML
+    end
+
+    test "image_tag with dynamic size" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "icon.png", size: some_var %>
+      HTML
+    end
+
+    test "image_tag with size and other attributes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>
+      HTML
+    end
   end
 end
