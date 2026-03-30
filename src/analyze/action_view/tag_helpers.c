@@ -1304,7 +1304,7 @@ static AST_NODE_T* transform_link_to_helper(
       if (content) {
         hb_buffer_T wrapped;
         hb_buffer_init(&wrapped, source_length + 32, allocator);
-        hb_buffer_append(&wrapped, "tag.attributes(");
+        hb_buffer_append(&wrapped, "tag.attributes(**");
         hb_buffer_append(&wrapped, content);
         hb_buffer_append(&wrapped, ")");
 

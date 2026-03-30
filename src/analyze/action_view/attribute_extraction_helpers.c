@@ -484,7 +484,7 @@ hb_array_T* extract_html_attributes_from_keyword_hash(
         if (value_source) {
           hb_buffer_T wrapped;
           hb_buffer_init(&wrapped, value_length + 32, allocator);
-          hb_buffer_append(&wrapped, "tag.attributes(");
+          hb_buffer_append(&wrapped, "tag.attributes(**");
           hb_buffer_append(&wrapped, value_source);
           hb_buffer_append(&wrapped, ")");
 

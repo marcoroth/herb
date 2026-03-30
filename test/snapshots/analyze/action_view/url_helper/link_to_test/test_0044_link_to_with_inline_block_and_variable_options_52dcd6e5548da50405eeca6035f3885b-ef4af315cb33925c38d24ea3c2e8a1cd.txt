@@ -35,7 +35,7 @@ options: {action_view_helpers: true}
     │   │           │
     │   │           │
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:22)-(1:22))
-    │   │               ├── content: "html_opts"
+    │   │               ├── content: "tag.attributes(**html_opts)"
     │   │               └── prefix: ""
     │   │
     │   │

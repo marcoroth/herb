@@ -211,7 +211,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div class="content" <%= tag.attributes(attributes) %>>
+        <div class="content" <%= tag.attributes(**attributes) %>>
           Content
         </div>
       `
@@ -363,7 +363,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div <%= tag.attributes(attributes) %>>
+        <div <%= tag.attributes(**attributes) %>>
           Content
         </div>
       `
@@ -563,7 +563,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" <%= tag.attributes(attributes) %>>
+        <turbo-frame id="tray" <%= tag.attributes(**attributes) %>>
           Content
         </turbo-frame>
       `
@@ -843,7 +843,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with splat attributes", () => {
       expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(attributes) %> />'
+        '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(**attributes) %> />'
       )
     })
 
