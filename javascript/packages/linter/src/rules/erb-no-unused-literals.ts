@@ -111,7 +111,7 @@ class ERBNoUnusedLiteralsVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnusedLiteralsRule extends ParserRule {
   static ruleName = "erb-no-unused-literals"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

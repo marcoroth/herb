@@ -100,7 +100,7 @@ class ActionViewNoUnnecessaryTagAttributesVisitor extends BaseRuleVisitor<Unnece
 export class ActionViewNoUnnecessaryTagAttributesRule extends ParserRule<UnnecessaryTagAttributesAutofixContext> {
   static autocorrectable = true
   static ruleName = "actionview-no-unnecessary-tag-attributes"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

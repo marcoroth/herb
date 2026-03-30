@@ -33,7 +33,7 @@ bun add @herb-tools/config
 The configuration is stored in a `.herb.yml` file in the project root:
 
 ```yaml [.herb.yml]
-version: 0.9.2
+version: 0.9.3
 
 linter:
   enabled: true

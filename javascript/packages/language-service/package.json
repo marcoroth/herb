@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/language-service",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "HTML+ERB language service built on the Herb parser, providing a compatible API with vscode-html-languageservice",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -35,7 +35,7 @@
     "vscode-languageserver-textdocument": "^1.0.0"
   },
   "peerDependencies": {
-    "@herb-tools/core": "0.9.2",
+    "@herb-tools/core": "0.9.3",
     "vscode-html-languageservice": "^5.1.0",
     "vscode-languageserver-textdocument": "^1.0.0"
   },
