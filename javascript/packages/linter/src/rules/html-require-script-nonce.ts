@@ -85,7 +85,7 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
 
 export class HTMLRequireScriptNonceRule extends ParserRule {
   static ruleName = "html-require-script-nonce"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

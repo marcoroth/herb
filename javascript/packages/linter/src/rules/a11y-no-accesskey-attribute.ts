@@ -19,7 +19,7 @@ class NoAccesskeyAttributeVisitor extends BaseRuleVisitor {
 
 export class A11yNoAccesskeyAttributeRule extends ParserRule {
   static ruleName = "a11y-no-accesskey-attribute"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

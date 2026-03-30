@@ -32,7 +32,7 @@ class NoAriaUnsupportedElementsVisitor extends ElementStackVisitor {
 
 export class A11yNoAriaUnsupportedElementsRule extends ParserRule {
   static ruleName = "a11y-no-aria-unsupported-elements"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {
