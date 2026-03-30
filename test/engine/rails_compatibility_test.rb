@@ -186,5 +186,50 @@ module Engine
       expected = "<p>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</p>"
       assert_equal expected, result.to_s
     end
+
+    test "Herb should not strip ERB comment lines from compiled output" do
+      template = "<%# comment 1 %>\n<%# comment 2 %>\n<% code %>"
+
+      erubi_src = ActionView::Template::Handlers::ERB::Erubi.new(template).src
+      herb_src  = RailsHerb.new(template).src
+
+      erubi_line_count = erubi_src.lines.count
+      herb_line_count  = herb_src.lines.count
+
+      assert_equal erubi_line_count, herb_line_count,
+        "Herb should preserve the same number of lines as Erubi for templates " \
+        "with ERB comment tags (<%# ... %>). Stripping comment lines changes " \
+        "the compiled method's line count, which can affect error propagation " \
+        "through Template#render boundaries.\n" \
+        "  Template: #{template.inspect}\n" \
+        "  Erubi (#{erubi_line_count} lines): #{erubi_src.inspect}\n" \
+        "  Herb  (#{herb_line_count} lines): #{herb_src.inspect}"
+    end
+
+    test "Herb preserves blank lines for single comment" do
+      template = "<%# comment %>\n<% code %>"
+
+      erubi_src = ActionView::Template::Handlers::ERB::Erubi.new(template).src
+      herb_src  = RailsHerb.new(template).src
+
+      # Erubi produces a blank line for the comment, then the code
+      # Herb should do the same
+      assert_equal erubi_src.lines.count, herb_src.lines.count,
+        "Herb should emit a blank line for <%# comment %> to maintain line parity.\n" \
+        "  Erubi: #{erubi_src.inspect}\n" \
+        "  Herb:  #{herb_src.inspect}"
+    end
+
+    test "without comments, line counts match (baseline)" do
+      template = "<% code1 %>\n<% code2 %>"
+
+      erubi_src = ActionView::Template::Handlers::ERB::Erubi.new(template).src
+      herb_src  = RailsHerb.new(template).src
+
+      assert_equal erubi_src.lines.count, herb_src.lines.count,
+        "Baseline: without comments, both engines should produce the same line count.\n" \
+        "  Erubi: #{erubi_src.inspect}\n" \
+        "  Herb:  #{herb_src.inspect}"
+    end
   end
 end
