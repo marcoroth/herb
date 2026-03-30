@@ -872,3 +872,31 @@ export function createWhitespaceNode(): WhitespaceNode {
     value: createSyntheticToken(" "),
   })
 }
+
+export function createERBOutputNode(expression: string, tagOpening = "<%=", tagClosing = "%>"): ERBContentNode {
+  return new ERBContentNode({
+    type: "AST_ERB_CONTENT_NODE",
+    tag_opening: createSyntheticToken(tagOpening),
+    content: createSyntheticToken(expression),
+    tag_closing: createSyntheticToken(tagClosing),
+    parsed: false,
+    valid: true,
+    prism_node: null,
+    location: Location.zero,
+    errors: [],
+  })
+}
+
+export function createERBSilentNode(expression: string, tagOpening = "<%", tagClosing = "%>"): ERBContentNode {
+  return new ERBContentNode({
+    type: "AST_ERB_CONTENT_NODE",
+    tag_opening: createSyntheticToken(tagOpening),
+    content: createSyntheticToken(expression),
+    tag_closing: createSyntheticToken(tagClosing),
+    parsed: false,
+    valid: true,
+    prism_node: null,
+    location: Location.zero,
+    errors: [],
+  })
+}
