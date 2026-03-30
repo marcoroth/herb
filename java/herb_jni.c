@@ -1,8 +1,10 @@
 #include "herb_jni.h"
 #include "extension_helpers.h"
+#include "nodes.h"
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
+#include "../../src/include/diff/herb_diff.h"
 #include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_buffer.h"
 
@@ -242,6 +244,83 @@ Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
   pm_buffer_free(&buffer);
   herb_free_ruby_parse_result(parse_result);
   (*env)->ReleaseStringUTFChars(env, source, src);
+
+  return result;
+}
+
+JNIEXPORT jobject JNICALL
+Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source) {
+  const char* old_src = (*env)->GetStringUTFChars(env, old_source, 0);
+  const char* new_src = (*env)->GetStringUTFChars(env, new_source, 0);
+
+  hb_allocator_T old_allocator;
+  hb_allocator_T new_allocator;
+  hb_allocator_T diff_allocator;
+
+  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)
+      || !hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)
+      || !hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, old_source, old_src);
+    (*env)->ReleaseStringUTFChars(env, new_source, new_src);
+    return NULL;
+  }
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  AST_DOCUMENT_NODE_T* old_root = herb_parse(old_src, &parser_options, &old_allocator);
+  AST_DOCUMENT_NODE_T* new_root = herb_parse(new_src, &parser_options, &new_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+
+  jclass diff_result_class = (*env)->FindClass(env, "org/herb/DiffResult");
+  jclass diff_operation_class = (*env)->FindClass(env, "org/herb/DiffOperation");
+  jclass array_list_class = (*env)->FindClass(env, "java/util/ArrayList");
+
+  jmethodID diff_result_constructor = (*env)->GetMethodID(env, diff_result_class, "<init>", "(ZLjava/util/List;)V");
+  jmethodID diff_operation_constructor = (*env)->GetMethodID(env, diff_operation_class, "<init>", "(Ljava/lang/String;[ILjava/lang/Object;Ljava/lang/Object;II)V");
+  jmethodID array_list_constructor = (*env)->GetMethodID(env, array_list_class, "<init>", "()V");
+  jmethodID array_list_add = (*env)->GetMethodID(env, array_list_class, "add", "(Ljava/lang/Object;)Z");
+
+  jobject operations_list = (*env)->NewObject(env, array_list_class, array_list_constructor);
+
+  size_t operation_count = herb_diff_operation_count(diff_result);
+
+  for (size_t index = 0; index < operation_count; index++) {
+    const herb_diff_operation_T* operation = herb_diff_operation_at(diff_result, index);
+
+    jstring type_string = (*env)->NewStringUTF(env, herb_diff_operation_type_to_string(operation->type));
+    jintArray path_array = (*env)->NewIntArray(env, operation->path.depth);
+    jint* path_elements = (*env)->GetIntArrayElements(env, path_array, NULL);
+
+    for (uint16_t path_index = 0; path_index < operation->path.depth; path_index++) {
+      path_elements[path_index] = (jint) operation->path.indices[path_index];
+    }
+    
+    (*env)->ReleaseIntArrayElements(env, path_array, path_elements, 0);
+
+    jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node) : NULL;
+    jobject new_node = operation->new_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->new_node) : NULL;
+
+    jobject diff_operation = (*env)->NewObject(
+      env, diff_operation_class, diff_operation_constructor,
+      type_string, path_array, old_node, new_node,
+      (jint) operation->old_index, (jint) operation->new_index
+    );
+
+    (*env)->CallBooleanMethod(env, operations_list, array_list_add, diff_operation);
+  }
+
+  jboolean identical = herb_diff_trees_identical(diff_result) ? JNI_TRUE : JNI_FALSE;
+  jobject result = (*env)->NewObject(env, diff_result_class, diff_result_constructor, identical, operations_list);
+
+  ast_node_free((AST_NODE_T*) old_root, &old_allocator);
+  ast_node_free((AST_NODE_T*) new_root, &new_allocator);
+
+  hb_allocator_destroy(&diff_allocator);
+  hb_allocator_destroy(&old_allocator);
+  hb_allocator_destroy(&new_allocator);
+
+  (*env)->ReleaseStringUTFChars(env, old_source, old_src);
+  (*env)->ReleaseStringUTFChars(env, new_source, new_src);
 
   return result;
 }

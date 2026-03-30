@@ -1,0 +1,26 @@
+# Generated from lib/herb/diff_operation.rb with RBS::Inline
+
+module Herb
+  class DiffOperation
+    attr_reader type: Symbol
+
+    attr_reader path: Array[Integer]
+
+    attr_reader old_node: Herb::AST::Node?
+
+    attr_reader new_node: Herb::AST::Node?
+
+    attr_reader old_index: Integer
+
+    attr_reader new_index: Integer
+
+    # : (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
+    def initialize: (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
+
+    # : () -> Hash[Symbol, untyped]
+    def to_hash: () -> Hash[Symbol, untyped]
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

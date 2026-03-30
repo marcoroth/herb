@@ -128,6 +128,14 @@ export default class extends Controller {
     "commitHash",
     "prismNodesDeepLabel",
     "switchLink",
+    "diffViewer",
+    "diffOutput",
+    "diffStatus",
+    "diffLiveButton",
+    "diffCheckpointButton",
+    "diffSnapshotButton",
+    "diffCheckButton",
+    "diffParseError",
   ]
 
   get isRubyMode() {
@@ -149,6 +157,11 @@ export default class extends Controller {
     document.querySelectorAll('.fa-circle-check').forEach(icon => {
       icon.style.display = 'none'
     })
+
+    this.diffMode = "live"
+    this.diffSnapshotSource = null
+    this.previousSource = null
+    this.diffFeedEntries = []
 
     this.restoreInput()
     this.restoreActiveTab()
@@ -534,7 +547,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
     return validTabs.includes(tab)
   }
 
@@ -668,6 +681,423 @@ export default class extends Controller {
   collapseAllNodes() {
     if (this.hasParseOutputTarget) {
       collapseAll(this.parseOutputTarget)
+    }
+  }
+
+  setDiffModeLive() {
+    this.diffMode = "live"
+    this.diffSnapshotSource = null
+
+    if (this.hasDiffLiveButtonTarget) {
+      this.diffLiveButtonTarget.style.color = "#e5c07b"
+      this.diffLiveButtonTarget.style.background = "rgba(229, 192, 123, 0.2)"
+    }
+
+    if (this.hasDiffCheckpointButtonTarget) {
+      this.diffCheckpointButtonTarget.style.color = "#abb2bf"
+      this.diffCheckpointButtonTarget.style.background = "rgba(171, 178, 191, 0.1)"
+    }
+
+    if (this.hasDiffSnapshotButtonTarget) {
+      this.diffSnapshotButtonTarget.classList.add("hidden")
+    }
+
+    if (this.hasDiffCheckButtonTarget) {
+      this.diffCheckButtonTarget.classList.add("hidden")
+    }
+
+    this.updateDiff()
+  }
+
+  setDiffModeCheckpoint() {
+    this.diffMode = "checkpoint"
+
+    if (this.hasDiffCheckpointButtonTarget) {
+      this.diffCheckpointButtonTarget.style.color = "#e5c07b"
+      this.diffCheckpointButtonTarget.style.background = "rgba(229, 192, 123, 0.2)"
+    }
+
+    if (this.hasDiffLiveButtonTarget) {
+      this.diffLiveButtonTarget.style.color = "#abb2bf"
+      this.diffLiveButtonTarget.style.background = "rgba(171, 178, 191, 0.1)"
+    }
+
+    if (this.hasDiffSnapshotButtonTarget) {
+      this.diffSnapshotButtonTarget.classList.remove("hidden")
+    }
+
+    if (this.hasDiffCheckButtonTarget) {
+      this.diffCheckButtonTarget.classList.remove("hidden")
+    }
+
+    if (!this.diffSnapshotSource) {
+      this.diffTakeSnapshot()
+    }
+
+    this.updateDiffStatus("Checkpoint mode - click Snapshot then edit and Diff")
+  }
+
+  diffTakeSnapshot() {
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+    this.diffSnapshotSource = value
+    this.updateDiffStatus("Snapshot taken - edit the code then click Diff")
+
+    if (this.hasDiffOutputTarget) {
+      this.diffOutputTarget.innerHTML = '<span class="text-gray-400">Snapshot captured. Edit the code and click "Diff" to compare.</span>'
+    }
+  }
+
+  diffCheckpoint() {
+    if (!this.diffSnapshotSource) {
+      this.updateDiffStatus("No snapshot - click Snapshot first")
+      return
+    }
+
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    try {
+      const result = Herb.diff(this.diffSnapshotSource, value)
+      this.renderDiffResult(result)
+    } catch (error) {
+      console.error("Diff error:", error)
+      this.updateDiffStatus("Error computing diff")
+    }
+  }
+
+  // alias for data-action naming
+  diffSnapshot() {
+    this.diffTakeSnapshot()
+  }
+
+  diffCheck() {
+    this.diffCheckpoint()
+  }
+
+  clearDiffFeed() {
+    this.diffFeedEntries = []
+    this.previousSource = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.hasDiffOutputTarget) {
+      this.diffOutputTarget.innerHTML = '<span class="diff-empty">Feed cleared. Start typing to see live differences...</span>'
+    }
+
+    this.hideDiffParseError()
+    this.updateDiffStatus("Cleared")
+  }
+
+  updateDiff(parseSuccess = true) {
+    if (!this.hasDiffViewerTarget) return
+    if (this.diffMode !== "live") return
+
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.previousSource === null) {
+      this.previousSource = value
+      this.diffFeedEntries = []
+
+      if (this.hasDiffOutputTarget) {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">Start typing to see live differences...</span>'
+      }
+
+      return
+    }
+
+    if (this.previousSource === value) return
+
+    if (!parseSuccess) {
+      this.showDiffParseError()
+      this.updateDiffStatus("Paused")
+      return
+    }
+
+    this.hideDiffParseError()
+
+    try {
+      const result = Herb.diff(this.previousSource, value)
+
+      if (!result.identical) {
+        if (!this.diffFeedEntries) { this.diffFeedEntries = [] }
+
+        this.diffFeedEntries.unshift({
+          timestamp: new Date(),
+          operations: result.operations,
+          source: value,
+          previousSource: this.previousSource,
+        })
+
+        if (this.diffFeedEntries.length > 50) {
+          this.diffFeedEntries = this.diffFeedEntries.slice(0, 50)
+        }
+      }
+
+      this.renderDiffFeed(result)
+      this.previousSource = value
+    } catch (error) {
+      console.error("Diff error:", error)
+    }
+  }
+
+  renderDiffFeed(latestResult) {
+    if (!this.hasDiffOutputTarget) return
+
+    if (!this.diffFeedEntries || this.diffFeedEntries.length === 0) {
+      if (latestResult && latestResult.identical) {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">No changes detected.</span>'
+        this.updateDiffStatus("Identical")
+      }
+
+      return
+    }
+
+    const totalOperations = this.diffFeedEntries.reduce((sum, entry) => sum + entry.operations.length, 0)
+    this.updateDiffStatus(`${totalOperations} change${totalOperations === 1 ? "" : "s"} in ${this.diffFeedEntries.length} edit${this.diffFeedEntries.length === 1 ? "" : "s"}`)
+
+    let html = ""
+
+    this.diffFeedEntries.forEach((entry, entryIndex) => {
+      const time = entry.timestamp.toLocaleTimeString()
+      const isCurrent = entryIndex === 0
+
+      html += `<div class="${isCurrent ? "diff-feed-current" : "diff-feed-past"} mb-4">`
+      html += `<div class="diff-feed-header flex items-center gap-2 text-xs font-mono">`
+      html += `<span>${isCurrent ? "Latest" : time}</span>`
+      html += `<span class="diff-location">${entry.operations.length} operation${entry.operations.length === 1 ? "" : "s"}</span>`
+
+      if (!isCurrent && entry.source) {
+        html += `<button class="diff-rollback-button ml-auto" data-diff-rollback-index="${entryIndex}" title="Restore editor to this point">`
+        html += `<i class="fas fa-rotate-left"></i> Rollback to this`
+        html += `</button>`
+      } else if (isCurrent && entry.previousSource) {
+        html += `<button class="diff-rollback-button ml-auto" data-diff-undo-index="${entryIndex}" title="Undo this change">`
+        html += `<i class="fas fa-rotate-left"></i> Undo`
+        html += `</button>`
+      }
+
+      html += `</div>`
+      html += this.renderOperations(entry.operations)
+      html += `</div>`
+    })
+
+    this.diffOutputTarget.innerHTML = html
+    this.bindDiffRollbackButtons()
+  }
+
+  bindDiffRollbackButtons() {
+    if (!this.hasDiffOutputTarget) return
+
+    this.diffOutputTarget.querySelectorAll("[data-diff-rollback-index]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault()
+        const entryIndex = parseInt(button.dataset.diffRollbackIndex)
+        this.diffRollbackTo(entryIndex)
+      })
+    })
+
+    this.diffOutputTarget.querySelectorAll("[data-diff-undo-index]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault()
+        const entryIndex = parseInt(button.dataset.diffUndoIndex)
+        this.diffUndo(entryIndex)
+      })
+    })
+  }
+
+  diffRollbackTo(entryIndex) {
+    const entry = this.diffFeedEntries[entryIndex]
+    if (!entry || !entry.source) return
+
+    this.diffFeedEntries = this.diffFeedEntries.slice(entryIndex)
+    this.previousSource = entry.source
+
+    if (this.editor) {
+      this.editor.setValue(entry.source)
+    } else {
+      this.inputTarget.value = entry.source
+    }
+
+    this.analyze()
+  }
+
+  diffUndo(entryIndex) {
+    const entry = this.diffFeedEntries[entryIndex]
+    if (!entry || !entry.previousSource) return
+
+    this.diffFeedEntries.shift()
+    this.previousSource = entry.previousSource
+
+    if (this.editor) {
+      this.editor.setValue(entry.previousSource)
+    } else {
+      this.inputTarget.value = entry.previousSource
+    }
+
+    this.analyze()
+  }
+
+  renderDiffResult(result) {
+    if (!this.hasDiffOutputTarget) return
+
+    if (result.identical) {
+      this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
+      this.updateDiffStatus("Identical")
+      return
+    }
+
+    const operations = result.operations
+    this.updateDiffStatus(`${operations.length} difference${operations.length === 1 ? "" : "s"}`)
+    this.diffOutputTarget.innerHTML = this.renderOperations(operations)
+  }
+
+  renderOperations(operations) {
+    const typeStyles = {
+      node_inserted:          { css: "inserted",  icon: "fa-plus" },
+      node_removed:           { css: "removed",   icon: "fa-minus" },
+      node_replaced:          { css: "replaced",  icon: "fa-right-left" },
+      text_changed:           { css: "changed",   icon: "fa-pen" },
+      erb_content_changed:    { css: "erb",       icon: "fa-code" },
+      attribute_added:        { css: "attribute",  icon: "fa-plus" },
+      attribute_removed:      { css: "removed",   icon: "fa-minus" },
+      attribute_value_changed:{ css: "attribute",  icon: "fa-pen" },
+      tag_name_changed:       { css: "tag",       icon: "fa-tag" },
+      node_moved:             { css: "moved",     icon: "fa-arrows-alt" },
+    }
+
+    let html = ""
+
+    operations.forEach((operation, index) => {
+      const style = typeStyles[operation.type] || { css: "changed", icon: "fa-circle" }
+      const typeLabel = operation.type.replace(/_/g, " ")
+
+      html += `<div class="diff-operation diff-op-${style.css}">`
+      html += `<div class="flex items-center gap-2">`
+      html += `<span class="diff-index text-xs font-mono">#${index + 1}</span>`
+      html += `<i class="fas ${style.icon} diff-label-${style.css} text-xs"></i>`
+      html += `<span class="diff-label-${style.css} font-semibold text-sm">${typeLabel}</span>`
+      html += `<span class="diff-path text-xs font-mono ml-auto">[${operation.path.join(", ")}]</span>`
+      html += `</div>`
+
+      const oldNode = operation.oldNode || operation.old_node
+      const newNode = operation.newNode || operation.new_node
+
+      if (oldNode) {
+        html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-removed">-</span> <span class="diff-node-type">${oldNode.type}</span>`
+
+        if (oldNode.location) {
+          html += ` <span class="diff-location">(${oldNode.location.start.line}:${oldNode.location.start.column})</span>`
+        }
+
+        html += `</div>`
+
+        const oldValue = this.extractNodeValue(oldNode, operation.type)
+        if (oldValue !== null) {
+          html += `<div class="text-xs font-mono diff-value-old">${this.escapeHtml(oldValue)}</div>`
+        }
+      }
+
+      if (newNode) {
+        html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-inserted">+</span> <span class="diff-node-type">${newNode.type}</span>`
+
+        if (newNode.location) {
+          html += ` <span class="diff-location">(${newNode.location.start.line}:${newNode.location.start.column})</span>`
+        }
+
+        html += `</div>`
+
+        const newValue = this.extractNodeValue(newNode, operation.type)
+
+        if (newValue !== null) {
+          html += `<div class="text-xs font-mono diff-value-new">${this.escapeHtml(newValue)}</div>`
+        }
+      }
+
+      html += `</div>`
+    })
+
+    return html
+  }
+
+  extractNodeValue(node, operationType) {
+    if (!node) return null
+
+    if (operationType === "text_changed" || node.type === "AST_HTML_TEXT_NODE") {
+      return node.content || null
+    }
+
+    if (operationType === "erb_content_changed" || node.type === "AST_ERB_CONTENT_NODE") {
+      if (node.content && node.content.value) {
+        return node.content.value
+      }
+
+      return null
+    }
+
+    if (operationType === "attribute_value_changed" || operationType === "attribute_added" || operationType === "attribute_removed") {
+      if (node.type === "AST_HTML_ATTRIBUTE_NODE") {
+        let result = ""
+
+        if (node.name && node.name.children) {
+          const nameParts = node.name.children.map(child => child.content || child.value || "").join("")
+          result += nameParts
+        }
+
+        if (node.value && node.value.children) {
+          const valueParts = node.value.children.map(child => child.content || child.value || "").join("")
+          result += `="${valueParts}"`
+        }
+
+        return result || null
+      }
+    }
+
+    if (node.type === "AST_HTML_ELEMENT_NODE" || node.type === "AST_HTML_CONDITIONAL_ELEMENT_NODE") {
+      if (node.tag_name && node.tag_name.value) {
+        return `<${node.tag_name.value}>`
+      }
+
+      return null
+    }
+
+    if (node.type === "AST_LITERAL_NODE" || node.type === "AST_RUBY_LITERAL_NODE") {
+      return node.content || null
+    }
+
+    return null
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div")
+    div.textContent = text
+    return div.innerHTML
+  }
+
+  updateDiffStatus(text) {
+    if (this.hasDiffStatusTarget) {
+      this.diffStatusTarget.className = "px-2 py-1 text-xs rounded font-mono font-medium"
+
+      if (text.includes("Identical") || text.includes("Cleared")) {
+        this.diffStatusTarget.style.color = "#90b874"
+        this.diffStatusTarget.style.background = "rgba(144, 184, 116, 0.15)"
+      } else if (text.includes("change") || text.includes("difference")) {
+        this.diffStatusTarget.style.color = "#e5c07b"
+        this.diffStatusTarget.style.background = "rgba(229, 192, 123, 0.15)"
+      } else {
+        this.diffStatusTarget.style.color = "#abb2bf"
+        this.diffStatusTarget.style.background = "rgba(171, 178, 191, 0.1)"
+      }
+
+      this.diffStatusTarget.textContent = text
+    }
+  }
+
+  showDiffParseError() {
+    if (this.hasDiffParseErrorTarget) {
+      this.diffParseErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  hideDiffParseError() {
+    if (this.hasDiffParseErrorTarget) {
+      this.diffParseErrorTarget.classList.add("hidden")
     }
   }
 
@@ -1175,6 +1605,8 @@ export default class extends Controller {
       this.updateDiagnosticsFilterButtons(this.currentDiagnosticsFilter)
       this.updateDiagnosticsViewer(this.getFilteredDiagnostics())
     }
+
+    this.updateDiff(!hasParserErrors)
   }
 
   async analyzeRuby(value) {
