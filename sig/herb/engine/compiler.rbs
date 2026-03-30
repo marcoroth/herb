@@ -3,6 +3,8 @@
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
+      EXPRESSION_TOKEN_TYPES: untyped
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
@@ -89,6 +91,9 @@ module Herb
 
       def pop_context: () -> untyped
 
+      # : (untyped node) { () -> untyped } -> untyped
+      def with_element_context: (untyped node) { () -> untyped } -> untyped
+
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
@@ -129,11 +134,19 @@ module Herb
 
       def preceding_token_ends_with_newline?: () -> untyped
 
-      def extract_lspace: () -> untyped
+      def last_text_token: () -> untyped
 
-      def extract_and_remove_lspace!: () -> untyped
+      def extract_leading_space: () -> untyped
+
+      def leading_space_follows_newline?: () -> untyped
+
+      def extract_and_remove_leading_space!: () -> untyped
 
       def apply_trim: (untyped node, untyped code) -> untyped
+
+      def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
+
+      def restore_pending_leading_whitespace!: () -> untyped
 
       def remove_trailing_whitespace_from_last_token!: () -> untyped
     end

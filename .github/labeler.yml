@@ -129,6 +129,12 @@ linter-autofix:
     - any-glob-to-any-file:
       - '**/javascript/packages/linter/test/autofix/**/*'
 
+a11y:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/src/rules/**/a11y-*'
+      - '**/javascript/packages/linter/docs/rules/**/a11y-*'
+
 language-server:
   - changed-files:
     - any-glob-to-any-file:

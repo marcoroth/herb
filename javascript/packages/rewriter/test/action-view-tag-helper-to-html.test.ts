@@ -728,15 +728,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("javascript_include_tag with extname false", () => {
+    test("javascript_include_tag with extname false forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "template.jst", extname: false %>`)).toBe(
-        `<script src="<%= javascript_path("template.jst") %>" extname="false"></script>`
+        `<script src="<%= javascript_path("template.jst", extname: false) %>"></script>`
       )
     })
 
-    test("javascript_include_tag with host and protocol", () => {
+    test("javascript_include_tag with host and protocol forwards to javascript_path", () => {
       expect(transform(`<%= javascript_include_tag "xmlhr", host: "localhost", protocol: "https" %>`)).toBe(
-        `<script src="<%= javascript_path("xmlhr") %>" host="localhost" protocol="https"></script>`
+        `<script src="<%= javascript_path("xmlhr", host: "localhost", protocol: "https") %>"></script>`
       )
     })
 
@@ -752,6 +752,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("javascript_include_tag with asset_path", () => {
       expect(transform(`<%= javascript_include_tag asset_path("application.js") %>`)).toBe(
         `<script src="<%= asset_path("application.js") %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with skip_pipeline forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", skip_pipeline: true %>`)).toBe(
+        `<script src="<%= javascript_path("application", skip_pipeline: true) %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with protocol forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", protocol: "https" %>`)).toBe(
+        `<script src="<%= javascript_path("application", protocol: "https") %>"></script>`
       )
     })
   })
@@ -832,6 +844,42 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("image_tag with splat attributes", () => {
       expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
         '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(attributes) %> />'
+      )
+    })
+
+    test("image_tag with skip_pipeline forwards to image_path", () => {
+      expect(transform('<%= image_tag "icon.png", skip_pipeline: true %>')).toBe(
+        '<img src="<%= image_path("icon.png", skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("image_tag with size WxH creates width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with size N creates square width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with size and other attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" alt="Icon" class="avatar" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with dynamic size expands to width and height", () => {
+      expect(transform('<%= image_tag "icon.png", size: some_var %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" />'
+      )
+    })
+
+    test("image_tag with string source does not segfault with path_options signature", () => {
+      expect(transform('<%= image_tag "logo.png", alt: "Logo", class: "brand" %>')).toBe(
+        '<img src="<%= image_path("logo.png") %>" alt="Logo" class="brand" />'
       )
     })
   })

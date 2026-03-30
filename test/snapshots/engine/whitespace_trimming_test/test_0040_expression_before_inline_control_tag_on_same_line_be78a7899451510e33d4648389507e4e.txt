@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0040_expression before inline control tag on same line"
+input: "{source: \"<%= \\\"A\\\" %><% if true %>B<% end %>\\n\", locals: {}, options: {}}"
+---
+AB
