@@ -253,6 +253,9 @@ module Herb
                      end
           @last_trim_consumed_newline = false
 
+          has_right_trim = node.tag_closing&.value == "-%>"
+          @trim_next_whitespace = true if has_right_trim
+
           visit_all(node.body)
           visit_erb_block_end_node(node.end_node, escaped: should_escape)
         else
