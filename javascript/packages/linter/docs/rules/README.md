@@ -35,6 +35,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-instance-variables-in-partials`](./erb-no-instance-variables-in-partials.md) - Disallow instance variables in partials
 - [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
 - [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
+- [`erb-no-multiple-statements`](./erb-no-multiple-statements.md) - Disallow multiple Ruby statements in a single-line ERB tag
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
