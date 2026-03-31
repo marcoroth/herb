@@ -124,12 +124,12 @@ export class Config {
 
   public readonly path: string
   public config: HerbConfig
-  public readonly configVersion: string
+  public readonly configVersion: string | undefined
 
   constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
     this.path = Config.configPathFromProjectPath(projectPath)
     this.config = config
-    this.configVersion = configVersion ?? config.version
+    this.configVersion = configVersion
   }
 
   get projectPath(): string {
@@ -1139,6 +1139,8 @@ export class Config {
       parsed = {}
     }
 
+    const hasExplicitVersion = !!parsed.version
+
     if (!parsed.version) {
       parsed.version = version
     }
@@ -1163,7 +1165,7 @@ export class Config {
       throw error
     }
 
-    const userConfigVersion: string = parsed.version || version
+    const userConfigVersion = hasExplicitVersion ? parsed.version : undefined
 
     const defaults = this.getDefaultConfig(version)
     const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
