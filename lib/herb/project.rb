@@ -558,7 +558,7 @@ module Herb
 
       log_summary(results, log, total, duration)
 
-      parsed = total - results.failed.count - results.timeout.count - results.skipped.count
+      parsed = total - results.failed.count - results.timeout.count
 
       puts "\n"
       puts " #{bold("Summary:")}"
