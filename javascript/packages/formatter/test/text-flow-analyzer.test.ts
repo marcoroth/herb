@@ -64,13 +64,13 @@ describe("TextFlowAnalyzer", () => {
 
       expect(units).toHaveLength(3)
       expect(units[0].unit).toEqual({
-        type: "erb", content: "<%= a %>", isAtomic: true, breaksFlow: false, isHerbDisable: false,
+        type: "erb", content: "<%= a %>", isAtomic: true, breaksFlow: false,
       })
       expect(units[1].unit).toEqual({
         type: "text", content: " ", isAtomic: true, breaksFlow: false,
       })
       expect(units[2].unit).toEqual({
-        type: "erb", content: "<%= b %>", isAtomic: true, breaksFlow: false, isHerbDisable: false,
+        type: "erb", content: "<%= b %>", isAtomic: true, breaksFlow: false,
       })
     })
 
@@ -180,11 +180,11 @@ describe("TextFlowAnalyzer", () => {
 
       expect(units).toHaveLength(1)
       expect(units[0].unit).toEqual({
-        type: "erb", content: "<%= name %>", isAtomic: true, breaksFlow: false, isHerbDisable: false,
+        type: "erb", content: "<%= name %>", isAtomic: true, breaksFlow: false,
       })
     })
 
-    test("marks herb:disable ERB comments with isHerbDisable", () => {
+    test("herb:disable comments are treated as regular ERB content units", () => {
       const analyzer = new TextFlowAnalyzer(createMockAnalyzerDelegate())
       const body = parseBody("<p>text <%# herb:disable SomeRule %></p>")
       const units = analyzer.buildContentUnits(body)
@@ -192,7 +192,6 @@ describe("TextFlowAnalyzer", () => {
       expect(units).toHaveLength(2)
       expect(units[0].unit.type).toBe("text")
       expect(units[1].unit.type).toBe("erb")
-      expect(units[1].unit.isHerbDisable).toBe(true)
     })
 
     test("merges ERB with preceding text when no whitespace", () => {
@@ -219,7 +218,7 @@ describe("TextFlowAnalyzer", () => {
         type: "text", content: " ", isAtomic: true, breaksFlow: false,
       })
       expect(units[2].unit).toEqual({
-        type: "erb", content: "<%= x %>", isAtomic: true, breaksFlow: false, isHerbDisable: false,
+        type: "erb", content: "<%= x %>", isAtomic: true, breaksFlow: false,
       })
     })
 
@@ -325,7 +324,7 @@ describe("TextFlowAnalyzer", () => {
         type: "text", content: "before ", isAtomic: false, breaksFlow: false,
       })
       expect(units[1].unit).toEqual({
-        type: "erb", content: "<%= x %>", isAtomic: true, breaksFlow: false, isHerbDisable: false,
+        type: "erb", content: "<%= x %>", isAtomic: true, breaksFlow: false,
       })
       expect(units[2].unit).toEqual({
         type: "text", content: " after", isAtomic: false, breaksFlow: false,
