@@ -292,7 +292,13 @@ export class TextFlowEngine {
       }
 
       if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength > wrapWidth) {
-        lines.push(this.delegate.indent + currentLine.trim())
+        const trimmedLine = currentLine.trim()
+
+        if (trimmedLine) {
+          lines.push(this.delegate.indent + trimmedLine)
+        } else {
+          lines.push("")
+        }
 
         currentLine = word
         effectiveLength = isHerbDisable ? 0 : word.length
@@ -303,7 +309,11 @@ export class TextFlowEngine {
     }
 
     if (currentLine) {
-      lines.push(this.delegate.indent + currentLine.trim())
+      const trimmedLine = currentLine.trim()
+
+      if (trimmedLine) {
+        lines.push(this.delegate.indent + trimmedLine)
+      }
     }
 
     lines.forEach(line => this.delegate.push(line))

@@ -2,9 +2,8 @@ import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { PrismVisitor, PrismNodes } from "@herb-tools/core"
 
-import { isERBOutputNode} from "@herb-tools/core"
+import { isERBOutputNode } from "@herb-tools/core"
 import { locationFromOffset } from "./rule-utils.js"
-import { isAssignmentNode } from "./prism-rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -14,14 +13,47 @@ class LiteralCollector extends PrismVisitor {
 
   override visit(node: PrismNode): void {
     if (!node) return
-    if (isAssignmentNode(node)) return
 
     super.visit(node)
   }
 
   visitCallNode(node: PrismNode): void {
-    this.visit(node.receiver)
+    this.visit(node.receiver) // Only visit the receiver of a call, not its arguments.
   }
+
+  // Stop traversal into all assignment node types.
+  visitLocalVariableWriteNode(): void {}
+  visitLocalVariableAndWriteNode(): void {}
+  visitLocalVariableOperatorWriteNode(): void {}
+  visitLocalVariableOrWriteNode(): void {}
+  visitInstanceVariableWriteNode(): void {}
+  visitInstanceVariableAndWriteNode(): void {}
+  visitInstanceVariableOperatorWriteNode(): void {}
+  visitInstanceVariableOrWriteNode(): void {}
+  visitClassVariableWriteNode(): void {}
+  visitClassVariableAndWriteNode(): void {}
+  visitClassVariableOperatorWriteNode(): void {}
+  visitClassVariableOrWriteNode(): void {}
+  visitGlobalVariableWriteNode(): void {}
+  visitGlobalVariableAndWriteNode(): void {}
+  visitGlobalVariableOperatorWriteNode(): void {}
+  visitGlobalVariableOrWriteNode(): void {}
+  visitConstantWriteNode(): void {}
+  visitConstantAndWriteNode(): void {}
+  visitConstantOperatorWriteNode(): void {}
+  visitConstantOrWriteNode(): void {}
+  visitConstantPathWriteNode(): void {}
+  visitConstantPathAndWriteNode(): void {}
+  visitConstantPathOperatorWriteNode(): void {}
+  visitConstantPathOrWriteNode(): void {}
+  visitIndexAndWriteNode(): void {}
+  visitIndexOperatorWriteNode(): void {}
+  visitIndexOrWriteNode(): void {}
+  visitCallAndWriteNode(): void {}
+  visitCallOperatorWriteNode(): void {}
+  visitCallOrWriteNode(): void {}
+  visitMultiWriteNode(): void {}
+  visitMatchWriteNode(): void {}
 
   visitArrayNode(node: PrismNodes.ArrayNode): void {
     this.literals.push(node)
