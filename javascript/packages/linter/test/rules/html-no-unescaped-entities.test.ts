@@ -69,124 +69,53 @@ describe("html-no-unescaped-entities", () => {
     })
   })
 
-  describe("attribute values - unescaped < character", () => {
-    it("flags unescaped < and > in attribute value", () => {
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-html="<br>"></div>')
+  describe("attribute values - no offenses for unescaped characters", () => {
+    it("allows < in double-quoted attribute value", () => {
+      expectNoOffenses('<div data-html="<br>"></div>')
     })
 
-    it("flags unescaped < without >", () => {
-      expectWarning("Attribute `data-expr` contains an unescaped `<` character. Use `&lt;` instead.")
-
-      assertOffenses('<div data-expr="a < b"></div>')
-    })
-  })
-
-  describe("attribute values - unescaped > character", () => {
-    it("flags unescaped > in attribute value", () => {
-      expectWarning("Attribute `data-expr` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-expr="a > b"></div>')
-    })
-  })
-
-  describe("attribute values - unescaped & character", () => {
-    it("flags bare & not part of a character reference", () => {
-      expectWarning("Attribute `href` contains an unescaped `&` character. Use `&amp;` instead.")
-
-      assertOffenses('<a href="/path?a=1&b=2">Link</a>')
+    it("allows < in single-quoted attribute value", () => {
+      expectNoOffenses("<div data-html='<br>'></div>")
     })
 
-    it("does not flag & that is part of a named reference", () => {
-      expectNoOffenses('<a href="/path?a=1&amp;b=2">Link</a>')
+    it("allows > in double-quoted attribute value", () => {
+      expectNoOffenses('<div data-expr="a > b"></div>')
     })
 
-    it("does not flag & that is part of a numeric reference", () => {
-      expectNoOffenses('<div data-char="&#60;"></div>')
+    it("allows > in single-quoted attribute value", () => {
+      expectNoOffenses("<div data-expr='a > b'></div>")
     })
 
-    it("does not flag & that is part of a hex reference", () => {
-      expectNoOffenses('<div data-char="&#x3C;"></div>')
-    })
-  })
-
-  describe("attribute values - multiple unescaped characters", () => {
-    it("flags each occurrence of unescaped characters in one attribute", () => {
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-html="<b>bold</b>"></div>')
+    it("allows & in double-quoted attribute value", () => {
+      expectNoOffenses('<a href="/path?a=1&b=2">Link</a>')
     })
 
-    it("flags each occurrence of <, > and & together", () => {
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `&` character. Use `&amp;` instead.")
-
-      assertOffenses('<div data-html="<b>bold & italic</b>"></div>')
-    })
-  })
-
-  describe("dynamic attribute name with static value", () => {
-    it("flags unescaped characters in static value with dynamic attribute name", () => {
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-<%= key %>="<br>"></div>')
+    it("allows & in single-quoted attribute value", () => {
+      expectNoOffenses("<a href='/path?a=1&b=2'>Link</a>")
     })
 
-    it("allows properly escaped value with dynamic attribute name", () => {
-      expectNoOffenses('<div data-<%= key %>="&lt;br&gt;"></div>')
-    })
-  })
-
-  describe("static attribute name with mixed value", () => {
-    it("flags each occurrence in the static portions of a mixed value", () => {
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-html` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-html="<b><%= content %></b>"></div>')
+    it("allows multiple unescaped characters in attribute value", () => {
+      expectNoOffenses('<div data-html="<b>bold & italic</b>"></div>')
     })
 
-    it("flags bare & in static portion of mixed value", () => {
-      expectWarning("Attribute `href` contains an unescaped `&` character. Use `&amp;` instead.")
-
-      assertOffenses('<a href="/path?a=1&b=<%= value %>">Link</a>')
+    it("allows Stimulus data-action syntax", () => {
+      expectNoOffenses('<div data-action="click->controller#method"></div>')
     })
 
-    it("does not flag when static portions are clean", () => {
-      expectNoOffenses('<div data-value="prefix-<%= value %>-suffix"></div>')
+    it("allows Tailwind arbitrary value syntax", () => {
+      expectNoOffenses('<div class="[&>p:not(:first-of-type)]:pt-4"></div>')
     })
 
-    it("does not flag fully dynamic attribute value", () => {
-      expectNoOffenses('<div class="<%= value %>"></div>')
-    })
-  })
-
-  describe("dynamic attribute name with mixed value", () => {
-    it("flags each occurrence in static portions with dynamic name", () => {
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `>` character. Use `&gt;` instead.")
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `<` character. Use `&lt;` instead.")
-      expectWarning("Attribute `data-<%= key %>` contains an unescaped `>` character. Use `&gt;` instead.")
-
-      assertOffenses('<div data-<%= key %>="<b><%= content %></b>"></div>')
+    it("allows unescaped characters with dynamic attribute name", () => {
+      expectNoOffenses('<div data-<%= key %>="<br>"></div>')
     })
 
-    it("does not flag when static portions are clean with dynamic name", () => {
-      expectNoOffenses('<div data-<%= key %>="prefix-<%= value %>-suffix"></div>')
+    it("allows unescaped characters in mixed attribute value", () => {
+      expectNoOffenses('<div data-html="<b><%= content %></b>"></div>')
     })
 
-    it("does not flag fully dynamic value with dynamic name", () => {
-      expectNoOffenses('<div data-<%= key %>="<%= value %>"></div>')
+    it("allows bare & in mixed attribute value", () => {
+      expectNoOffenses('<a href="/path?a=1&b=<%= value %>">Link</a>')
     })
   })
 
@@ -248,16 +177,12 @@ describe("html-no-unescaped-entities", () => {
       expectNoOffenses('<style>.foo { content: "a & b"; }</style>')
     })
 
-    it("still flags unescaped characters in script attribute values", () => {
-      expectWarning("Attribute `data-config` contains an unescaped `&` character. Use `&amp;` instead.")
-
-      assertOffenses('<script data-config="a=1&b=2"></script>')
+    it("allows unescaped characters in script attribute values", () => {
+      expectNoOffenses('<script data-config="a=1&b=2"></script>')
     })
 
-    it("still flags unescaped characters in style attribute values", () => {
-      expectWarning("Attribute `data-config` contains an unescaped `&` character. Use `&amp;` instead.")
-
-      assertOffenses('<style data-config="a=1&b=2"></style>')
+    it("allows unescaped characters in style attribute values", () => {
+      expectNoOffenses('<style data-config="a=1&b=2"></style>')
     })
   })
 
