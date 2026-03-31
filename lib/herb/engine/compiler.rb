@@ -561,7 +561,7 @@ module Herb
         token = last_text_token
         return false unless token
 
-        token[1].match?(/\n[ \t]+\z/)
+        token[1].match?(/\n[ \t]+\z/) || (@last_trim_consumed_newline && token[1].match?(/\A[ \t]+\z/))
       end
 
       def extract_and_remove_leading_space!

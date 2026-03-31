@@ -364,5 +364,11 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "leading whitespace preserved when control tag with inline output follows a trimmed code-only line" do
+      template = "<a>\n  <% if true %>\n    <strong>Title</strong>\n  <% end %>\n  <% unless false %><%= \"content\" %>#L<%= 1 %><% end %>\n</a>"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end
