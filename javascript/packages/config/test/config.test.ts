@@ -1315,10 +1315,10 @@ describe("@herb-tools/config", () => {
   })
 
   describe("Config.configVersion", () => {
-    test("defaults to config.version when not provided", () => {
+    test("is undefined when not provided", () => {
       const config = new Config(testDir, { version: "0.9.3" })
 
-      expect(config.configVersion).toBe("0.9.3")
+      expect(config.configVersion).toBeUndefined()
     })
 
     test("preserves explicit configVersion", () => {
@@ -1334,10 +1334,10 @@ describe("@herb-tools/config", () => {
       expect(config.configVersion).toBe("0.7.0")
     })
 
-    test("fromObject defaults configVersion to tool version when not specified", () => {
+    test("fromObject defaults configVersion to undefined when not specified", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 
-      expect(config.configVersion).toBe(config.version)
+      expect(config.configVersion).toBeUndefined()
     })
 
     test("load preserves user config version from .herb.yml", async () => {
@@ -1349,12 +1349,20 @@ describe("@herb-tools/config", () => {
       expect(config.configVersion).toBe("0.8.0")
     })
 
-    test("load defaults configVersion to tool version when .herb.yml has no version", async () => {
+    test("load defaults configVersion to undefined when .herb.yml has no version", async () => {
       createTestFile(testDir, ".herb.yml", "linter:\n  enabled: true\n")
 
       const config = await Config.load(testDir, { version: "0.9.3", silent: true })
 
-      expect(config.configVersion).toBe("0.9.3")
+      expect(config.configVersion).toBeUndefined()
+    })
+
+    test("load defaults configVersion to undefined when no .herb.yml exists", async () => {
+      createTestFile(testDir, ".git/HEAD", "ref: refs/heads/main\n")
+
+      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+
+      expect(config.configVersion).toBeUndefined()
     })
   })
 
