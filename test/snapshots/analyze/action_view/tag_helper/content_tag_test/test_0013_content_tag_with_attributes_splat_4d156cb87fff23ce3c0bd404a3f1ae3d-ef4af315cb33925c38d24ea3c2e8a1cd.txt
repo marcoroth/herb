@@ -37,7 +37,7 @@ options: {action_view_helpers: true}
     │   │           │
     │   │           │
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:40)-(1:40))
-    │   │               ├── content: "tag.attributes(**attributes)"
+    │   │               ├── content: "**attributes"
     │   │               └── prefix: ""
     │   │
     │   │

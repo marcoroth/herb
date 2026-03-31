@@ -9,10 +9,9 @@ options: {action_view_helpers: true}
     ├── @ HTMLElementNode (location: (1:0)-(1:37))
     │   ├── errors: (1 error)
     │   │   └── @ VoidElementContentError (location: (1:0)-(1:37))
-    │   │       ├── message: "Void element `br` cannot have content. `content_tag :br` does not accept a block for content."
+    │   │       ├── message: "Void element `br` cannot have content. `content_tag :br` does not accept a positional argument for content."
     │   │       ├── tag_name: "br" (location: (1:4)-(1:15))
-    │   │       ├── helper_name: "content_tag :br"
-    │   │       └── content_type: "a block"
+    │   │       └── helper_name: "content_tag :br"
     │   │
     │   ├── open_tag:
     │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:37))

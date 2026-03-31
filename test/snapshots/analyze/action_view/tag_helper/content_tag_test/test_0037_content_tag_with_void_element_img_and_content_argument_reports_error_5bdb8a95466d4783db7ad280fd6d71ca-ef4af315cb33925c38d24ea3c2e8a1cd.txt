@@ -11,8 +11,7 @@ options: {action_view_helpers: true}
     │   │   └── @ VoidElementContentError (location: (1:22)-(1:29))
     │   │       ├── message: "Void element `img` cannot have content. `content_tag :img` does not accept a positional argument for content."
     │   │       ├── tag_name: "img" (location: (1:4)-(1:15))
-    │   │       ├── helper_name: "content_tag :img"
-    │   │       └── content_type: "a positional argument"
+    │   │       └── helper_name: "content_tag :img"
     │   │
     │   ├── open_tag:
     │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:32))

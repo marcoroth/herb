@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0045_multi-line code block preserves line count parity with erubi"
+input: "{source: \"<%\\n  x = 1\\n  y = 2\\n%>\\n<%= x %>\", options: {}}"
+---
+_buf = ::String.new; 
+x = 1
+  y = 2
+
+ _buf << (x).to_s;
+_buf.to_s
