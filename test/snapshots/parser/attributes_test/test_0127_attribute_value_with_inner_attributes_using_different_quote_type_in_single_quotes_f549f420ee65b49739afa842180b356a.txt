@@ -6,35 +6,77 @@ input: "<div data-html='<span class=\"highlight\">text</span>'></div>"
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:59))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:53))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:40))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
-        │       ├── tag_closing: ">" (location: (1:52)-(1:53))
-        │       ├── children: (1 item)
-        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:52))
+        │       ├── tag_closing: ">" (location: (1:39)-(1:40))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:22))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:14))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:14))
+        │       │   │   │               └── content: "data-html"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:14)-(1:15))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:15)-(1:22))
+        │       │   │           ├── errors: (1 error)
+        │       │   │           │   └── @ UnclosedQuoteError (location: (1:15)-(1:22))
+        │       │   │           │       ├── message: "Attribute value opened with ' at (1:15) was never closed."
+        │       │   │           │       └── opening_quote: "'" (location: (1:15)-(1:16))
+        │       │   │           │
+        │       │   │           ├── open_quote: "'" (location: (1:15)-(1:16))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:16)-(1:22))
+        │       │   │           │       └── content: "<span "
+        │       │   │           │
+        │       │   │           ├── close_quote: ∅
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:22)-(1:39))
         │       │       ├── name:
-        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:14))
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:27))
         │       │       │       └── children: (1 item)
-        │       │       │           └── @ LiteralNode (location: (1:5)-(1:14))
-        │       │       │               └── content: "data-html"
+        │       │       │           └── @ LiteralNode (location: (1:22)-(1:27))
+        │       │       │               └── content: "class"
         │       │       │
         │       │       │
-        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       ├── equals: "=" (location: (1:27)-(1:28))
         │       │       └── value:
-        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:52))
-        │       │               ├── open_quote: "'" (location: (1:15)-(1:16))
+        │       │           └── @ HTMLAttributeValueNode (location: (1:28)-(1:39))
+        │       │               ├── open_quote: """ (location: (1:28)-(1:29))
         │       │               ├── children: (1 item)
-        │       │               │   └── @ LiteralNode (location: (1:16)-(1:51))
-        │       │               │       └── content: "<span class=\"highlight\">text</span>"
+        │       │               │   └── @ LiteralNode (location: (1:29)-(1:38))
+        │       │               │       └── content: "highlight"
         │       │               │
-        │       │               ├── close_quote: "'" (location: (1:51)-(1:52))
+        │       │               ├── close_quote: """ (location: (1:38)-(1:39))
         │       │               └── quoted: true
         │       │
         │       │
         │       └── is_void: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
-        ├── body: []
+        ├── body: (3 items)
+        │   ├── @ HTMLTextNode (location: (1:40)-(1:44))
+        │   │   └── content: "text"
+        │   │
+        │   ├── @ HTMLCloseTagNode (location: (1:44)-(1:51))
+        │   │   ├── errors: (1 error)
+        │   │   │   └── @ MissingOpeningTagError (location: (1:44)-(1:51))
+        │   │   │       ├── message: "Found closing tag `</span>` at (1:46) without a matching opening tag in the same scope."
+        │   │   │       └── closing_tag: "span" (location: (1:46)-(1:50))
+        │   │   │
+        │   │   ├── tag_opening: "</" (location: (1:44)-(1:46))
+        │   │   ├── tag_name: "span" (location: (1:46)-(1:50))
+        │   │   ├── children: []
+        │   │   └── tag_closing: ">" (location: (1:50)-(1:51))
+        │   │
+        │   └── @ HTMLTextNode (location: (1:51)-(1:53))
+        │       └── content: "'>"
+        │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:53)-(1:59))
         │       ├── tag_opening: "</" (location: (1:53)-(1:55))

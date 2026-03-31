@@ -37,7 +37,7 @@ options: {action_view_helpers: true}
     │   │           │
     │   │           │
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:36)-(1:36))
-    │   │               ├── content: "tag.attributes(aria: aria_attrs)"
+    │   │               ├── content: "**aria_attrs"
     │   │               └── prefix: "aria"
     │   │
     │   │

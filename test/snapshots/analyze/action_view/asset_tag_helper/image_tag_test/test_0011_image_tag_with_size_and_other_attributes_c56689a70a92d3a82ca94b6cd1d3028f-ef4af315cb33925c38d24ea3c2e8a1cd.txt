@@ -13,7 +13,7 @@ options: {action_view_helpers: true}
     │   │       ├── content: " image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" " (location: (1:3)-(1:70))
     │   │       ├── tag_closing: "%>" (location: (1:70)-(1:72))
     │   │       ├── tag_name: "img" (location: (1:4)-(1:13))
-    │   │       └── children: (5 items)
+    │   │       └── children: (4 items)
     │   │           ├── @ HTMLAttributeNode (location: (1:14)-(1:24))
     │   │           │   ├── name:
     │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:24))
@@ -32,6 +32,26 @@ options: {action_view_helpers: true}
     │   │           │           │
     │   │           │           ├── close_quote: ∅
     │   │           │           └── quoted: false
+    │   │           │
+    │   │           │
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:39))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:30))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:30))
+    │   │           │   │               └── content: "size"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:30)-(1:32))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:32)-(1:39))
+    │   │           │           ├── open_quote: """ (location: (1:32)-(1:33))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:33)-(1:38))
+    │   │           │           │       └── content: "32x32"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:38)-(1:39))
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
     │   │           ├── @ HTMLAttributeNode (location: (1:41)-(1:52))
@@ -54,63 +74,23 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           ├── @ HTMLAttributeNode (location: (1:54)-(1:69))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:54)-(1:59))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:54)-(1:59))
-    │   │           │   │               └── content: "class"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: ": " (location: (1:59)-(1:61))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:61)-(1:69))
-    │   │           │           ├── open_quote: """ (location: (1:61)-(1:62))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:62)-(1:68))
-    │   │           │           │       └── content: "avatar"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:68)-(1:69))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
-    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:26))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │           │   │               └── content: "width"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:26)-(1:26))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
-    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │           │           │       └── content: "32"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:26)-(1:26))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:26)-(1:26))
+    │   │           └── @ HTMLAttributeNode (location: (1:54)-(1:69))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:54)-(1:59))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │               │               └── content: "height"
+    │   │               │           └── @ LiteralNode (location: (1:54)-(1:59))
+    │   │               │               └── content: "class"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:26)-(1:26))
+    │   │               ├── equals: ": " (location: (1:59)-(1:61))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
-    │   │                       ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:61)-(1:69))
+    │   │                       ├── open_quote: """ (location: (1:61)-(1:62))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │                       │       └── content: "32"
+    │   │                       │   └── @ LiteralNode (location: (1:62)-(1:68))
+    │   │                       │       └── content: "avatar"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:26)-(1:26))
+    │   │                       ├── close_quote: """ (location: (1:68)-(1:69))
     │   │                       └── quoted: true
     │   │
     │   │

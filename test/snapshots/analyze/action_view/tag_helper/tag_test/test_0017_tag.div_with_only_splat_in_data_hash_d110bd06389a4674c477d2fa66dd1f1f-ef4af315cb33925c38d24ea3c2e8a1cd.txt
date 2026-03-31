@@ -17,7 +17,7 @@ options: {action_view_helpers: true}
     │   │       ├── tag_name: "div" (location: (1:8)-(1:11))
     │   │       └── children: (1 item)
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:20)-(1:20))
-    │   │               ├── content: "tag.attributes(data: data_attrs)"
+    │   │               ├── content: "**data_attrs"
     │   │               └── prefix: "data"
     │   │
     │   │
