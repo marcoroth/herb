@@ -1,9 +1,9 @@
-import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue, findAttributeByName, isERBOpenTagNode } from "@herb-tools/core"
-
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import { getTagLocalName, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
+
+import { BaseRuleVisitor, findElementAttribute, isJavaScriptTagElement } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const HELPERS_WITH_CSP_NONCE_SUPPORT = [
   "ActionView::Helpers::AssetTagHelper#javascript_include_tag",
@@ -20,9 +20,9 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
   }
 
   private checkScriptNonce(node: HTMLElementNode): void {
-    if (!this.isJavaScriptTag(node)) return
+    if (!isJavaScriptTagElement(node)) return
 
-    const nonceAttribute = this.findAttribute(node, "nonce")
+    const nonceAttribute = findElementAttribute(node, "nonce")
 
     if (!nonceAttribute || !hasAttributeValue(nonceAttribute)) {
       this.addOffense(
@@ -62,24 +62,6 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
     }
 
     return node.element_source ?? "unknown"
-  }
-
-  private isJavaScriptTag(node: HTMLElementNode): boolean {
-    const typeAttribute = this.findAttribute(node, "type")
-    if (!typeAttribute) return true
-
-    const typeValue = getStaticAttributeValue(typeAttribute)
-    if (typeValue === null) return true
-
-    return typeValue === "text/javascript" || typeValue === "application/javascript"
-  }
-
-  private findAttribute(node: HTMLElementNode, name: string) {
-    if (isERBOpenTagNode(node.open_tag)) {
-      return findAttributeByName(node.open_tag.children, name)
-    }
-
-    return getAttribute(node, name)
   }
 }
 

@@ -13,6 +13,9 @@ import {
   getAttributeValue,
   getTagLocalName,
   forEachAttribute,
+  getAttribute,
+  findAttributeByName,
+  isERBOpenTagNode,
 } from "@herb-tools/core"
 
 import type {
@@ -1060,4 +1063,30 @@ export function findNodeAtPosition(root: Node, line: number, column: number, pre
   search(root)
 
   return bestMatch
+}
+
+export function findElementAttribute(node: HTMLElementNode, name: string): HTMLAttributeNode | null {
+  if (isERBOpenTagNode(node.open_tag)) {
+    return findAttributeByName(node.open_tag.children, name)
+  }
+
+  return getAttribute(node, name)
+}
+
+const NON_JS_SCRIPT_TYPES = new Set([
+  "application/json",
+  "application/ld+json",
+  "text/template",
+  "text/html",
+  "text/x-template",
+])
+
+export function isJavaScriptTagElement(node: HTMLElementNode): boolean {
+  const typeAttribute = findElementAttribute(node, "type")
+  if (!typeAttribute) return true
+
+  const typeValue = getStaticAttributeValue(typeAttribute)
+  if (typeValue === null) return true
+
+  return !NON_JS_SCRIPT_TYPES.has(typeValue.toLowerCase())
 }
