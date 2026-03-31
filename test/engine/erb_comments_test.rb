@@ -140,10 +140,12 @@ module Engine
       herb_engine = assert_compiled_snapshot(template)
       erubi_engine = Erubi::Engine.new(template)
 
-      assert_equal erubi_engine.src.lines.count, herb_engine.src.lines.count,
-        "Herb should emit a blank line for each ERB comment to preserve line numbering.\n" \
-        "  Erubi (#{erubi_engine.src.lines.count} lines): #{erubi_engine.src.inspect}\n" \
-        "  Herb  (#{herb_engine.src.lines.count} lines): #{herb_engine.src.inspect}"
+      assert_equal(
+        erubi_engine.src.lines.count, herb_engine.src.lines.count,
+        "Herb should emit a blank line for each ERB comment to preserve line numbering.\n  " \
+        "Erubi (#{erubi_engine.src.lines.count} lines): #{erubi_engine.src.inspect}\n  " \
+        "Herb  (#{herb_engine.src.lines.count} lines): #{herb_engine.src.inspect}"
+      )
     end
   end
 end
