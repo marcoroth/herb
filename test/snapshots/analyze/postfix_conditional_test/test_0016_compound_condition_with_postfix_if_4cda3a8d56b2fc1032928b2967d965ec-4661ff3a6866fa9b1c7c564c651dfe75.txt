@@ -1,0 +1,31 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0016_compound condition with postfix if"
+input: |2-
+<%= 'admin' if user.admin? && user.active? %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:45))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if user.admin? && user.active? " (location: (1:0)-(1:45))
+    │   ├── tag_closing: "%>" (location: (1:45)-(1:45))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:45))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:0))
+    │   │       ├── content: "'admin'" (location: (1:0)-(1:45))
+    │   │       ├── tag_closing: "%>" (location: (1:45)-(1:45))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:45)-(1:45))
+    │           ├── tag_opening: "<%" (location: (1:45)-(1:45))
+    │           ├── content: " end " (location: (1:45)-(1:45))
+    │           └── tag_closing: "%>" (location: (1:45)-(1:45))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:45)-(2:0))
+        └── content: "\n"

@@ -20,6 +20,7 @@
         "./extension/libherb/analyze/invalid_structures.c",
         "./extension/libherb/analyze/missing_end.c",
         "./extension/libherb/analyze/parse_errors.c",
+        "./extension/libherb/analyze/postfix_conditionals.c",
         "./extension/libherb/analyze/prism_annotate.c",
         "./extension/libherb/analyze/render_nodes.c",
         "./extension/libherb/analyze/strict_locals.c",

@@ -8,6 +8,7 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
+#include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
 #include "../include/ast/ast_node.h"
@@ -1008,6 +1009,10 @@ void herb_analyze_parse_tree(
     .allocator = allocator,
     .source = source,
   };
+
+  if (options && options->transform_conditionals) {
+    herb_visit_node((AST_NODE_T*) document, transform_conditional_nodes, &context);
+  }
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 

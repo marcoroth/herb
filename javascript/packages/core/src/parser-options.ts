@@ -3,6 +3,7 @@ export interface ParseOptions {
   analyze?: boolean
   strict?: boolean
   action_view_helpers?: boolean
+  transform_conditionals?: boolean
   render_nodes?: boolean
   strict_locals?: boolean
   prism_nodes?: boolean
@@ -19,6 +20,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   analyze: true,
   strict: true,
   action_view_helpers: false,
+  transform_conditionals: false,
   render_nodes: false,
   strict_locals: false,
   prism_nodes: false,
@@ -43,6 +45,9 @@ export class ParserOptions {
 
   /** Whether ActionView tag helper transformation was enabled during parsing. */
   readonly action_view_helpers: boolean
+
+  /** Whether postfix conditional transformation was enabled during parsing. */
+  readonly transform_conditionals: boolean
 
   /** Whether ActionView render call detection was enabled during parsing. */
   readonly render_nodes: boolean
@@ -74,6 +79,7 @@ export class ParserOptions {
     this.track_whitespace = options.track_whitespace ?? DEFAULT_PARSER_OPTIONS.track_whitespace
     this.analyze = options.analyze ?? DEFAULT_PARSER_OPTIONS.analyze
     this.action_view_helpers = options.action_view_helpers ?? DEFAULT_PARSER_OPTIONS.action_view_helpers
+    this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
     this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes

@@ -1,0 +1,52 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0018_postfix inside html element body"
+input: |2-
+<div><%= 'text' if visible? %></div>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:36))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ ERBIfNode (location: (1:5)-(1:30))
+    │   │       ├── tag_opening: "<%" (location: (1:5)-(1:5))
+    │   │       ├── content: " if visible? " (location: (1:5)-(1:30))
+    │   │       ├── tag_closing: "%>" (location: (1:30)-(1:30))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (1 item)
+    │   │       │   └── @ ERBContentNode (location: (1:5)-(1:30))
+    │   │       │       ├── tag_opening: "<%=" (location: (1:5)-(1:5))
+    │   │       │       ├── content: "'text'" (location: (1:5)-(1:30))
+    │   │       │       ├── tag_closing: "%>" (location: (1:30)-(1:30))
+    │   │       │       ├── parsed: false
+    │   │       │       └── valid: true
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (1:30)-(1:30))
+    │   │               ├── tag_opening: "<%" (location: (1:30)-(1:30))
+    │   │               ├── content: " end " (location: (1:30)-(1:30))
+    │   │               └── tag_closing: "%>" (location: (1:30)-(1:30))
+    │   │
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:30)-(1:36))
+    │   │       ├── tag_opening: "</" (location: (1:30)-(1:32))
+    │   │       ├── tag_name: "div" (location: (1:32)-(1:35))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:35)-(1:36))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:36)-(2:0))
+        └── content: "\n"

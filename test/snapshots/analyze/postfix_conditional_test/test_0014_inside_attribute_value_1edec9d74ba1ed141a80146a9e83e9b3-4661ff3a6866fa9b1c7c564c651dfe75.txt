@@ -1,0 +1,72 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0014_inside attribute value"
+input: |2-
+<div class="<%= 'active' if selected %>">content</div>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:54))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:41))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:40)-(1:41))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:40))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:40))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ ERBIfNode (location: (1:12)-(1:39))
+    │   │       │               │       ├── tag_opening: "<%" (location: (1:12)-(1:12))
+    │   │       │               │       ├── content: " if selected " (location: (1:12)-(1:39))
+    │   │       │               │       ├── tag_closing: "%>" (location: (1:39)-(1:39))
+    │   │       │               │       ├── then_keyword: ∅
+    │   │       │               │       ├── statements: (1 item)
+    │   │       │               │       │   └── @ ERBContentNode (location: (1:12)-(1:39))
+    │   │       │               │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:12))
+    │   │       │               │       │       ├── content: "'active'" (location: (1:12)-(1:39))
+    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:39)-(1:39))
+    │   │       │               │       │       ├── parsed: false
+    │   │       │               │       │       └── valid: true
+    │   │       │               │       │
+    │   │       │               │       ├── subsequent: ∅
+    │   │       │               │       └── end_node:
+    │   │       │               │           └── @ ERBEndNode (location: (1:39)-(1:39))
+    │   │       │               │               ├── tag_opening: "<%" (location: (1:39)-(1:39))
+    │   │       │               │               ├── content: " end " (location: (1:39)-(1:39))
+    │   │       │               │               └── tag_closing: "%>" (location: (1:39)-(1:39))
+    │   │       │               │
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:39)-(1:40))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:41)-(1:48))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:48)-(1:54))
+    │   │       ├── tag_opening: "</" (location: (1:48)-(1:50))
+    │   │       ├── tag_name: "div" (location: (1:50)-(1:53))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:53)-(1:54))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:54)-(2:0))
+        └── content: "\n"

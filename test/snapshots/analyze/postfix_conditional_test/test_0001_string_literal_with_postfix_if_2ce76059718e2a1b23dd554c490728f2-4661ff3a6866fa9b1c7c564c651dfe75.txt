@@ -1,0 +1,31 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0001_string literal with postfix if"
+input: |2-
+<%= 'aria-current=page' if selected %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:38))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if selected " (location: (1:0)-(1:38))
+    │   ├── tag_closing: "%>" (location: (1:38)-(1:38))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:38))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:0))
+    │   │       ├── content: "'aria-current=page'" (location: (1:0)-(1:38))
+    │   │       ├── tag_closing: "%>" (location: (1:38)-(1:38))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:38)-(1:38))
+    │           ├── tag_opening: "<%" (location: (1:38)-(1:38))
+    │           ├── content: " end " (location: (1:38)-(1:38))
+    │           └── tag_closing: "%>" (location: (1:38)-(1:38))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:38)-(2:0))
+        └── content: "\n"

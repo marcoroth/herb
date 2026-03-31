@@ -1,0 +1,31 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0003_symbol with postfix if"
+input: |2-
+<%= :active if selected %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:26))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if selected " (location: (1:0)-(1:26))
+    │   ├── tag_closing: "%>" (location: (1:26)-(1:26))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:26))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:0))
+    │   │       ├── content: ":active" (location: (1:0)-(1:26))
+    │   │       ├── tag_closing: "%>" (location: (1:26)-(1:26))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:26)-(1:26))
+    │           ├── tag_opening: "<%" (location: (1:26)-(1:26))
+    │           ├── content: " end " (location: (1:26)-(1:26))
+    │           └── tag_closing: "%>" (location: (1:26)-(1:26))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:26)-(2:0))
+        └── content: "\n"
