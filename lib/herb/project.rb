@@ -661,7 +661,7 @@ module Herb
 
         puts "\n"
         puts " #{bold("Skipped files:")}"
-        puts " #{dimmed("These files were skipped because their content indicates they are not regular ERB templates.")}"
+        puts " #{dimmed("These files were parsed successfully but skipped for compilation by the engine.")}"
 
         results.skipped.each do |file|
           relative = relative_path(file)
