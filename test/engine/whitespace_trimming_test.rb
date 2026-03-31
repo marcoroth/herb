@@ -364,5 +364,17 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "multi-line code block preserves line count parity with erubi" do
+      template = "<%\n  x = 1\n  y = 2\n%>\n<%= x %>"
+
+      herb_engine = assert_compiled_snapshot(template)
+      erubi_engine = Erubi::Engine.new(template)
+
+      assert_equal erubi_engine.src.lines.count, herb_engine.src.lines.count,
+        "Herb should preserve line count for multi-line code blocks.\n" \
+        "  Erubi (#{erubi_engine.src.lines.count} lines): #{erubi_engine.src.inspect}\n" \
+        "  Herb  (#{herb_engine.src.lines.count} lines): #{herb_engine.src.inspect}"
+    end
   end
 end

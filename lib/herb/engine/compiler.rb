@@ -350,11 +350,14 @@ module Herb
         end
         return if erb_graphql?(opening)
 
-        code = node.content.value.strip
+        raw_content = node.content.value
+        code = raw_content.strip
 
         if erb_output?(opening)
           process_erb_output(node, opening, code)
         else
+          code = "\n#{code}" if raw_content.start_with?("\n")
+          code = "#{code}\n" if raw_content.match?(/\n[ \t]*\z/)
           apply_trim(node, code)
         end
       end
@@ -590,7 +593,13 @@ module Herb
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
-          right_space = Herb::Engine.heredoc?(code) ? "\n" : " \n"
+          right_space = if code.end_with?("\n")
+                          "\n"
+                        elsif Herb::Engine.heredoc?(code)
+                          "\n"
+                        else
+                          " \n"
+                        end
 
           @pending_leading_whitespace_insert_index = @tokens.length
           @pending_leading_whitespace = effective_leading_space if !effective_leading_space.empty? && follows_newline
