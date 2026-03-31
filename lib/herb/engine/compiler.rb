@@ -593,9 +593,7 @@ module Herb
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
           effective_leading_space = leading_space.empty? ? removed_whitespace : leading_space
-          right_space = if code.end_with?("\n")
-                          "\n"
-                        elsif Herb::Engine.heredoc?(code)
+          right_space = if code.end_with?("\n") || Herb::Engine.heredoc?(code)
                           "\n"
                         else
                           " \n"

@@ -372,9 +372,9 @@ module Engine
       erubi_engine = Erubi::Engine.new(template)
 
       assert_equal erubi_engine.src.lines.count, herb_engine.src.lines.count,
-        "Herb should preserve line count for multi-line code blocks.\n" \
-        "  Erubi (#{erubi_engine.src.lines.count} lines): #{erubi_engine.src.inspect}\n" \
-        "  Herb  (#{herb_engine.src.lines.count} lines): #{herb_engine.src.inspect}"
+                   "Herb should preserve line count for multi-line code blocks.\n  " \
+                   "Erubi (#{erubi_engine.src.lines.count} lines): #{erubi_engine.src.inspect}\n  " \
+                   "Herb  (#{herb_engine.src.lines.count} lines): #{herb_engine.src.inspect}"
     end
   end
 end
