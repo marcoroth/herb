@@ -138,6 +138,7 @@ module Engine
       template = "<%# comment 1 %>\n<%# comment 2 %>\n<% code = 1 %>\n<%= code %>"
 
       herb_engine = assert_compiled_snapshot(template)
+      require "erubi"
       erubi_engine = Erubi::Engine.new(template)
 
       assert_equal(
