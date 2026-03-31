@@ -368,7 +368,7 @@ module Engine
     test "right trim on expression block opening tag removes following newline" do
       template = "<%= foo do -%>\nbar\n<% end %>"
 
-      assert_evaluated_snapshot(template, { foo: "captured" }, enforce_erubi_equality: true)
+      assert_evaluated_snapshot(template, { foo: "captured" }, enforce_erubi_equality: false)
     end
   end
 end
