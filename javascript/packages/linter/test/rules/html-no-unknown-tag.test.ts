@@ -326,6 +326,7 @@ describe("html-no-unknown-tag", () => {
         <desc>Description</desc>
         <metadata></metadata>
         <pattern></pattern>
+        <animate attributeName="opacity" values="0;1" dur="1s"></animate>
         <stop></stop>
         <switch></switch>
         <set></set>

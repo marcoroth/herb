@@ -345,7 +345,7 @@ export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
  */
 export const SVG_KNOWN_ELEMENTS = new Set([
   ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
-  "a", "circle", "defs", "desc", "ellipse", "g", "image", "line",
+  "a", "animate", "circle", "defs", "desc", "ellipse", "g", "image", "line",
   "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
   "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
   "filter", "set", "style",
