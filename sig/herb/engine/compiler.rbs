@@ -95,6 +95,8 @@ module Herb
 
       private
 
+      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
+
       def current_context: () -> untyped
 
       def push_context: (untyped context) -> untyped

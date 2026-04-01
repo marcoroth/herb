@@ -248,6 +248,8 @@ module Herb
       def visit_erb_block_node(node)
         opening = node.tag_opening.value
 
+        check_for_escaped_erb_tag!(opening)
+
         if opening.include?("=")
           should_escape = should_escape_output?(opening)
           code = node.content.value.strip
@@ -308,6 +310,15 @@ module Herb
 
       private
 
+      def check_for_escaped_erb_tag!(opening)
+        return unless opening.start_with?("<%%")
+
+        raise Herb::Engine::GeneratorTemplateError,
+              "This file appears to be a generator template (a template used to generate ERB files) " \
+              "rather than a standard ERB template. It contains escaped ERB tags like <%%= %> which " \
+              "produce literal ERB output in the generated file."
+      end
+
       def current_context
         @context_stack.last
       end
@@ -341,6 +352,8 @@ module Herb
 
       def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
+
+        check_for_escaped_erb_tag!(opening)
 
         if !skip_comment_check && erb_comment?(opening)
           has_left_trim = opening.start_with?("<%-")

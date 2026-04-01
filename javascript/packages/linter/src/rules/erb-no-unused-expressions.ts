@@ -25,6 +25,12 @@ const MUTATION_METHODS = new Set([
   "concat",
 ])
 
+const SIDE_EFFECT_METHODS = new Set([
+  "content_for",
+  "provide",
+  "flush",
+])
+
 class UnusedExpressionCollector extends PrismVisitor {
   public readonly expressions: PrismNode[] = []
 
@@ -51,10 +57,17 @@ class UnusedExpressionCollector extends PrismVisitor {
     return MUTATION_METHODS.has(node.name)
   }
 
+  private isSideEffectCall(node: PrismNode): boolean {
+    if (node.receiver) return false
+
+    return SIDE_EFFECT_METHODS.has(node.name)
+  }
+
   private isUnusedExpression(node: PrismNode, type: string): boolean {
     if (type === "CallNode") {
       if (node.block) return false
       if (this.isMutationCall(node)) return false
+      if (this.isSideEffectCall(node)) return false
       if (isDebugOutputCall(node)) return false
 
       return true
