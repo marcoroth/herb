@@ -343,6 +343,37 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for return with literal value", () => {
+    expectNoOffenses(dedent`
+      <% return "" unless versions.length > 1 %>
+      <% return nil %>
+      <% return 0 %>
+      <% return false %>
+      <% return [] %>
+      <% return "default" %>
+    `)
+  })
+
+  test("passes for break with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% break "" %>
+        <% break nil %>
+        <% break 0 %>
+      <% end %>
+    `)
+  })
+
+  test("passes for next with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% next "" %>
+        <% next nil %>
+        <% next 0 %>
+      <% end %>
+    `)
+  })
+
   test("passes for method calls without literal receiver", () => {
     expectNoOffenses(dedent`
       <% some_method.call %>
