@@ -340,6 +340,38 @@ export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
   Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
 )
 
+/**
+ * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
+ */
+export const SVG_KNOWN_ELEMENTS = new Set([
+  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
+  "a", "circle", "defs", "desc", "ellipse", "g", "image", "line",
+  "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
+  "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
+  "filter", "set", "style",
+])
+
+export function isKnownSVGElement(tagName: string): boolean {
+  return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * All known MathML elements
+ */
+export const MATHML_KNOWN_ELEMENTS = new Set([
+  "annotation", "annotation-xml",
+  "maction", "math", "menclose", "merror", "mfenced", "mfrac",
+  "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo",
+  "mover", "mpadded", "mphantom", "mprescripts", "mroot", "mrow",
+  "ms", "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup",
+  "mtable", "mtd", "mtext", "mtr", "munder", "munderover",
+  "none", "semantics",
+])
+
+export function isKnownMathMLElement(tagName: string): boolean {
+  return MATHML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
 export const VALID_ARIA_ROLES = new Set([
   "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
   "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",

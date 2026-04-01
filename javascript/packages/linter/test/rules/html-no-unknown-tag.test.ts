@@ -303,6 +303,78 @@ describe("html-no-unknown-tag", () => {
     })
   })
 
+  describe("SVG elements without svg wrapper are not flagged", () => {
+    test("lowercase SVG elements in partials", () => {
+      expectNoOffenses(`
+        <circle cx="12" cy="12" r="10"></circle>
+        <rect x="0" y="0" width="24" height="24"></rect>
+        <path d="M0 0h24v24H0z"></path>
+        <line x1="0" y1="0" x2="24" y2="24"></line>
+        <polygon points="0,0 24,0 12,24"></polygon>
+        <polyline points="0,0 24,0 12,24"></polyline>
+        <ellipse cx="12" cy="12" rx="10" ry="5"></ellipse>
+        <g></g>
+        <defs></defs>
+        <use href="#icon"></use>
+        <symbol id="icon"></symbol>
+        <marker></marker>
+        <mask></mask>
+        <filter></filter>
+        <image></image>
+        <text>Hello</text>
+        <tspan>World</tspan>
+        <desc>Description</desc>
+        <metadata></metadata>
+        <pattern></pattern>
+        <stop></stop>
+        <switch></switch>
+        <set></set>
+      `)
+    })
+
+    test("SVG filter elements in partials (camelCase as lowercase)", () => {
+      expectNoOffenses(`
+        <fedisplacementmap in="SourceGraphic" in2="noise"></fedisplacementmap>
+        <feturbulence type="turbulence" basefrequency="0.05"></feturbulence>
+        <fegaussianblur stddeviation="5"></fegaussianblur>
+        <feblend mode="multiply"></feblend>
+        <fecolormatrix type="saturate" values="0.5"></fecolormatrix>
+        <fecomposite operator="in"></fecomposite>
+        <feflood flood-color="red"></feflood>
+        <feimage href="image.png"></feimage>
+        <femerge></femerge>
+        <femergenode></femergenode>
+        <femorphology operator="dilate" radius="2"></femorphology>
+        <feoffset dx="5" dy="5"></feoffset>
+        <fedropshadow dx="2" dy="2"></fedropshadow>
+        <fediffuselighting></fediffuselighting>
+        <fespecularlighting></fespecularlighting>
+        <fepointlight></fepointlight>
+        <fedistantlight></fedistantlight>
+        <fespotlight></fespotlight>
+        <fetile></fetile>
+        <feconvolvematrix></feconvolvematrix>
+        <fecomponenttransfer></fecomponenttransfer>
+        <fefunca></fefunca>
+        <fefuncb></fefuncb>
+        <fefuncg></fefuncg>
+        <fefuncr></fefuncr>
+      `)
+    })
+
+    test("other camelCase SVG elements as lowercase", () => {
+      expectNoOffenses(`
+        <clippath></clippath>
+        <lineargradient></lineargradient>
+        <radialgradient></radialgradient>
+        <textpath></textpath>
+        <foreignobject></foreignobject>
+        <animatemotion></animatemotion>
+        <animatetransform></animatetransform>
+      `)
+    })
+  })
+
   describe("MathML context is skipped", () => {
     test("math element itself passes", () => {
       expectNoOffenses(`<math></math>`)
@@ -320,6 +392,38 @@ describe("html-no-unknown-tag", () => {
             </mfrac>
           </mrow>
         </math>
+      `)
+    })
+  })
+
+  describe("MathML elements without math wrapper are not flagged", () => {
+    test("MathML elements in partials", () => {
+      expectNoOffenses(`
+        <mrow></mrow>
+        <mi>x</mi>
+        <mn>2</mn>
+        <mo>=</mo>
+        <mfrac><mn>1</mn><mn>2</mn></mfrac>
+        <msqrt><mn>4</mn></msqrt>
+        <mroot><mn>8</mn><mn>3</mn></mroot>
+        <msub><mi>x</mi><mn>1</mn></msub>
+        <msup><mi>x</mi><mn>2</mn></msup>
+        <msubsup><mi>x</mi><mn>1</mn><mn>2</mn></msubsup>
+        <munder><mi>x</mi><mo>_</mo></munder>
+        <mover><mi>x</mi><mo>^</mo></mover>
+        <munderover><mi>x</mi><mo>_</mo><mo>^</mo></munderover>
+        <mtable><mtr><mtd></mtd></mtr></mtable>
+        <mtext>text</mtext>
+        <mspace></mspace>
+        <mpadded></mpadded>
+        <mphantom></mphantom>
+        <menclose></menclose>
+        <merror></merror>
+        <mstyle></mstyle>
+        <maction></maction>
+        <semantics></semantics>
+        <annotation>text</annotation>
+        <annotation-xml></annotation-xml>
       `)
     })
   })
