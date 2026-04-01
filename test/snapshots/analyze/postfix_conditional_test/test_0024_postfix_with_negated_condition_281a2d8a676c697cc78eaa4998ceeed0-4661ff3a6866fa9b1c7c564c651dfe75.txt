@@ -13,9 +13,9 @@ options: {transform_conditionals: true}
     │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
     │   │   └── @ ERBContentNode (location: (1:0)-(1:24))
-    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:0))
-    │   │       ├── content: "'text'" (location: (1:0)-(1:24))
-    │   │       ├── tag_closing: "%>" (location: (1:24)-(1:24))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " 'text' " (location: (1:3)-(1:11))
+    │   │       ├── tag_closing: "%>" (location: (1:22)-(1:24))
     │   │       ├── parsed: false
     │   │       └── valid: true
     │   │

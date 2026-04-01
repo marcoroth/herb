@@ -156,5 +156,29 @@ module Analyze
         <%= 'text' if condition %>
       HTML
     end
+
+    test "tag helper call with postfix if without action_view_helpers" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true, action_view_helpers: false)
+        <%= tag.div("hello", class: "container") if show? %>
+      HTML
+    end
+
+    test "tag helper call with postfix unless without action_view_helpers" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true, action_view_helpers: false)
+        <%= tag.p("content") unless hidden? %>
+      HTML
+    end
+
+    test "content_tag call with postfix if without action_view_helpers" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true, action_view_helpers: false)
+        <%= content_tag(:span, "text", class: "highlight") if visible? %>
+      HTML
+    end
+
+    test "link_to call with postfix if without action_view_helpers" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true, action_view_helpers: false)
+        <%= link_to("Home", root_path) if show_link? %>
+      HTML
+    end
   end
 end

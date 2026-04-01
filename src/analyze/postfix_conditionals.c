@@ -43,7 +43,19 @@ static pm_node_t* find_postfix_conditional_statement(analyzed_ruby_T* analyzed) 
   return NULL;
 }
 
-static char* extract_body_source(pm_node_t* conditional_node, analyzed_ruby_T* analyzed, hb_allocator_T* allocator) {
+typedef struct {
+  char* source;
+  size_t offset_in_content;
+  size_t length;
+} body_info_T;
+
+static body_info_T extract_body_info(
+  pm_node_t* conditional_node,
+  analyzed_ruby_T* analyzed,
+  hb_allocator_T* allocator
+) {
+  body_info_T info = { .source = NULL, .offset_in_content = 0, .length = 0 };
+
   pm_statements_node_t* statements = NULL;
 
   if (conditional_node->type == PM_IF_NODE) {
@@ -52,21 +64,28 @@ static char* extract_body_source(pm_node_t* conditional_node, analyzed_ruby_T* a
     statements = ((pm_unless_node_t*) conditional_node)->statements;
   }
 
-  if (!statements || statements->body.size == 0) { return NULL; }
+  if (!statements || statements->body.size == 0) { return info; }
 
   pm_node_t* first = statements->body.nodes[0];
   pm_node_t* last = statements->body.nodes[statements->body.size - 1];
 
   const uint8_t* start = first->location.start;
   const uint8_t* end = last->location.end;
-  size_t length = (size_t) (end - start);
 
   const uint8_t* parser_start = analyzed->parser.start;
   size_t source_length = (size_t) (analyzed->parser.end - parser_start);
 
-  if (start < parser_start || end > parser_start + source_length) { return NULL; }
+  if (start < parser_start || end > parser_start + source_length) { return info; }
 
-  return hb_allocator_strndup(allocator, (const char*) start, length);
+  const uint8_t* body_end = end;
+
+  if (body_end < parser_start + source_length && *body_end == ' ') { body_end++; }
+
+  info.length = (size_t) (body_end - parser_start);
+  info.offset_in_content = 0;
+  info.source = hb_allocator_strndup(allocator, (const char*) parser_start, info.length);
+
+  return info;
 }
 
 static char* extract_condition_source(pm_node_t* conditional_node, hb_allocator_T* allocator) {
@@ -97,8 +116,8 @@ static AST_NODE_T* transform_conditional(
   pm_node_t* conditional_node,
   hb_allocator_T* allocator
 ) {
-  char* body_source = extract_body_source(conditional_node, erb_node->analyzed_ruby, allocator);
-  if (!body_source) { return NULL; }
+  body_info_T body_info = extract_body_info(conditional_node, erb_node->analyzed_ruby, allocator);
+  if (!body_info.source) { return NULL; }
 
   char* condition_source = extract_condition_source(conditional_node, allocator);
   if (!condition_source) { return NULL; }
@@ -108,15 +127,22 @@ static AST_NODE_T* transform_conditional(
 
   position_T start = erb_node->base.location.start;
   position_T end = erb_node->base.location.end;
+  position_T content_start = erb_node->content->location.start;
 
-  token_T* body_opening = create_synthetic_token(allocator, "<%=", TOKEN_ERB_START, start, start);
-  token_T* body_content = create_synthetic_token(allocator, body_source, TOKEN_ERB_CONTENT, start, end);
-  token_T* body_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  position_T body_content_start = { .line = content_start.line,
+                                    .column = content_start.column + (uint32_t) body_info.offset_in_content };
+
+  position_T body_content_end = { .line = content_start.line,
+                                  .column = content_start.column
+                                          + (uint32_t) (body_info.offset_in_content + body_info.length) };
+
+  token_T* body_content =
+    create_synthetic_token(allocator, body_info.source, TOKEN_ERB_CONTENT, body_content_start, body_content_end);
 
   AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
-    body_opening,
+    erb_node->tag_opening,
     body_content,
-    body_closing,
+    erb_node->tag_closing,
     NULL,
     false,
     true,

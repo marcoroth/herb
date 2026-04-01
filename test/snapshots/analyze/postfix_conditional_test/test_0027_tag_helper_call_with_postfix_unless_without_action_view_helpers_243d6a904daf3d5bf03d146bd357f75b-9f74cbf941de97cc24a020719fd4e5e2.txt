@@ -1,25 +1,25 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0001_string literal with postfix if"
+source: "Analyze::PostfixConditionalTest#test_0027_tag helper call with postfix unless without action_view_helpers"
 input: |2-
-<%= 'aria-current=page' if selected %>
-options: {transform_conditionals: true}
+<%= tag.p("content") unless hidden? %>
+options: {transform_conditionals: true, action_view_helpers: false}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
-    ├── @ ERBIfNode (location: (1:0)-(1:38))
+    ├── @ ERBUnlessNode (location: (1:0)-(1:38))
     │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
-    │   ├── content: " if selected " (location: (1:0)-(1:38))
+    │   ├── content: " unless hidden? " (location: (1:0)-(1:38))
     │   ├── tag_closing: "%>" (location: (1:38)-(1:38))
     │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
     │   │   └── @ ERBContentNode (location: (1:0)-(1:38))
     │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   │       ├── content: " 'aria-current=page' " (location: (1:3)-(1:24))
+    │   │       ├── content: " tag.p("content") " (location: (1:3)-(1:21))
     │   │       ├── tag_closing: "%>" (location: (1:36)-(1:38))
     │   │       ├── parsed: false
     │   │       └── valid: true
     │   │
-    │   ├── subsequent: ∅
+    │   ├── else_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (1:38)-(1:38))
     │           ├── tag_opening: "<%" (location: (1:38)-(1:38))

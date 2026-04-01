@@ -1010,7 +1010,7 @@ void herb_analyze_parse_tree(
     .source = source,
   };
 
-  if (options && options->transform_conditionals) {
+  if (options && (options->transform_conditionals || options->action_view_helpers)) {
     herb_visit_node((AST_NODE_T*) document, transform_conditional_nodes, &context);
   }
 

@@ -40,9 +40,9 @@ options: {transform_conditionals: true}
     │   │       │       ├── then_keyword: ∅
     │   │       │       ├── statements: (1 item)
     │   │       │       │   └── @ ERBContentNode (location: (1:12)-(1:50))
-    │   │       │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:12))
-    │   │       │       │       ├── content: "'aria-current=page'" (location: (1:12)-(1:50))
-    │   │       │       │       ├── tag_closing: "%>" (location: (1:50)-(1:50))
+    │   │       │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
+    │   │       │       │       ├── content: " 'aria-current=page' " (location: (1:15)-(1:36))
+    │   │       │       │       ├── tag_closing: "%>" (location: (1:48)-(1:50))
     │   │       │       │       ├── parsed: false
     │   │       │       │       └── valid: true
     │   │       │       │
