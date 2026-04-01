@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0045_right trim on expression block opening tag removes following newline"
+input: "{source: \"<%= foo do -%>\\nbar\\n<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << (foo do; _buf << 'bar
+'.freeze; end )
+_buf.to_s
