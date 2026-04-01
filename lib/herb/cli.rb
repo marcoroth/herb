@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :precompile, :trim
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :precompile
 
   def initialize(args)
     @args = args
@@ -302,14 +302,13 @@ class Herb::CLI
         self.action_view_helpers = true
       end
 
-      parser.on("--precompile", "Precompile Action View helpers to HTML+ERB (for compile/render commands) (default: false)") do
-        self.precompile = true
-      end
-
       parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
         self.trim = true
       end
 
+      parser.on("--precompile", "Precompile Action View helpers to HTML+ERB (for compile/render commands) (default: false)") do
+        self.precompile = true
+      end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
