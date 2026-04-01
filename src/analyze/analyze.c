@@ -1031,7 +1031,7 @@ void herb_analyze_parse_tree(
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, &invalid_context);
 
-  herb_analyze_parse_errors(document, source, allocator);
+  herb_analyze_parse_errors(document, source, options, allocator);
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 
