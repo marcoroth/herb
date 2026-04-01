@@ -60,7 +60,7 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
 
 export class ERBPreferDirectOutputRule extends ParserRule<PreferDirectOutputAutofixContext> {
   static ruleName = "erb-prefer-direct-output"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.4")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
