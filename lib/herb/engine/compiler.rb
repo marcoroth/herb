@@ -381,6 +381,8 @@ module Herb
       #: (untyped node) { () -> untyped } -> untyped
       def with_element_context(node)
         tag_name = node.tag_name&.value&.downcase
+        previous_element_source = @current_element_source
+        @current_element_source = node.element_source
 
         @element_stack.push(tag_name) if tag_name
 
@@ -395,6 +397,7 @@ module Herb
         pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
+        @current_element_source = previous_element_source
       end
 
       def process_erb_tag(node, skip_comment_check: false)

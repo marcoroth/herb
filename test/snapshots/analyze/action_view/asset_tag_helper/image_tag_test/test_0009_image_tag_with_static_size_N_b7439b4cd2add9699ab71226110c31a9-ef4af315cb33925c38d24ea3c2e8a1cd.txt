@@ -14,26 +14,6 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:37)-(1:39))
     │   │       ├── tag_name: "img" (location: (1:4)-(1:13))
     │   │       └── children: (3 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:14)-(1:24))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:24))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:14)-(1:24))
-    │   │           │   │               └── content: "src"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: ":" (location: (1:14)-(1:24))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:14)-(1:24))
-    │   │           │           ├── open_quote: ∅
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ RubyLiteralNode (location: (1:14)-(1:24))
-    │   │           │           │       └── content: "image_path(\"icon.png\")"
-    │   │           │           │
-    │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
-    │   │           │
-    │   │           │
     │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:26))
     │   │           │   ├── name:
     │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
@@ -54,24 +34,44 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:26)-(1:26))
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:26))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │   │               └── content: "height"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:26)-(1:26))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
+    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │           │       └── content: "32"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:26)-(1:26))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:14)-(1:24))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:24))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │               │               └── content: "height"
+    │   │               │           └── @ LiteralNode (location: (1:14)-(1:24))
+    │   │               │               └── content: "src"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:26)-(1:26))
+    │   │               ├── equals: ":" (location: (1:14)-(1:24))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
-    │   │                       ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:14)-(1:24))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:26)-(1:26))
-    │   │                       │       └── content: "32"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:14)-(1:24))
+    │   │                       │       └── content: "image_path(\"icon.png\")"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:26)-(1:26))
-    │   │                       └── quoted: true
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
     │   │
     │   │
     │   │

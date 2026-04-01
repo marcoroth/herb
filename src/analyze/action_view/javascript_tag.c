@@ -75,19 +75,29 @@ bool wrap_javascript_tag_body_visitor(const AST_NODE_T* node, void* data) {
   }
 
   token_T* cdata_opening = create_synthetic_token(
-    allocator, "\n//<![CDATA[\n", TOKEN_CDATA_START,
-    element->base.location.start, element->base.location.end
+    allocator,
+    "\n//<![CDATA[\n",
+    TOKEN_CDATA_START,
+    element->base.location.start,
+    element->base.location.end
   );
 
   token_T* cdata_closing = create_synthetic_token(
-    allocator, "\n//]]>\n", TOKEN_CDATA_END,
-    element->base.location.start, element->base.location.end
+    allocator,
+    "\n//]]>\n",
+    TOKEN_CDATA_END,
+    element->base.location.start,
+    element->base.location.end
   );
 
   AST_CDATA_NODE_T* cdata_node = ast_cdata_node_init(
-    cdata_opening, cdata_children, cdata_closing,
-    element->base.location.start, element->base.location.end,
-    hb_array_init(0, allocator), allocator
+    cdata_opening,
+    cdata_children,
+    cdata_closing,
+    element->base.location.start,
+    element->base.location.end,
+    hb_array_init(0, allocator),
+    allocator
   );
 
   element->body->size = 0;
