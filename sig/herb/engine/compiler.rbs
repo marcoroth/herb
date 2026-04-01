@@ -146,6 +146,10 @@ module Herb
 
       def preceding_token_ends_with_newline?: () -> untyped
 
+      def left_trim?: (untyped node) -> untyped
+
+      def right_trim?: (untyped node) -> untyped
+
       def last_text_token: () -> untyped
 
       def extract_leading_space: () -> untyped
