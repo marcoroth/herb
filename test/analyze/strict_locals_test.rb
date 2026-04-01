@@ -304,5 +304,50 @@ module Analyze
         <%# locals: (user: = "default") %>
       HTML
     end
+
+    test "anonymous double-splat only" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (**) %>
+      HTML
+    end
+
+    test "required local with anonymous double-splat" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (message:, **) %>
+      HTML
+    end
+
+    test "anonymous double-splat with forwarding in expression" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (**) %>
+        <%= helper(**) %>
+      HTML
+    end
+
+    test "anonymous double-splat forwarding without strict_locals option suppresses error" do
+      assert_parsed_snapshot(<<~HTML)
+        <%# locals: (**) %>
+        <%= helper(**) %>
+      HTML
+    end
+
+    test "double-splat forwarding in expression without strict locals declaration keeps error" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%= helper(**) %>
+      HTML
+    end
+
+    test "double-splat forwarding in expression with strict locals disabled suppresses error" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: false)
+        <%= helper(**) %>
+      HTML
+    end
+
+    test "named double-splat does not suppress forwarding error" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (**attributes) %>
+        <%= helper(**) %>
+      HTML
+    end
   end
 end

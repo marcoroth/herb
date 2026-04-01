@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :precompile
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :precompile, :trim
 
   def initialize(args)
     @args = args
@@ -306,6 +306,11 @@ class Herb::CLI
         self.precompile = true
       end
 
+      parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
+        self.trim = true
+      end
+
+
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
       end
@@ -451,6 +456,7 @@ class Herb::CLI
       end
 
       options[:precompile] = true if precompile
+      options[:trim] = true if trim
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
@@ -539,6 +545,7 @@ class Herb::CLI
       end
 
       options[:precompile] = true if precompile
+      options[:trim] = true if trim
 
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src

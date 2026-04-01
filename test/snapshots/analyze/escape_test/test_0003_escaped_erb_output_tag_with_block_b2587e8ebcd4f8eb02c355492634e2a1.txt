@@ -1,0 +1,32 @@
+---
+source: "Analyze::EscapeTest#test_0003_escaped erb output tag with block"
+input: |2-
+<%%= tag.div do %>
+  Hello
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(3:9))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (3:3)-(3:6))
+│       ├── message: "unexpected_token_ignore: unexpected 'end', ignoring it"
+│       ├── error_message: "unexpected 'end', ignoring it"
+│       ├── diagnostic_id: "unexpected_token_ignore"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBBlockNode (location: (1:0)-(3:9))
+        ├── tag_opening: "<%%=" (location: (1:0)-(1:4))
+        ├── content: " tag.div do " (location: (1:4)-(1:16))
+        ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:18)-(3:0))
+        │       └── content: "\n  Hello\n"
+        │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (3:0)-(3:9))
+                ├── tag_opening: "<%" (location: (3:0)-(3:2))
+                ├── content: " end " (location: (3:2)-(3:7))
+                └── tag_closing: "%>" (location: (3:7)-(3:9))

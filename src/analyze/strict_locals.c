@@ -440,6 +440,20 @@ static hb_array_T* extract_strict_locals(
 
       hb_array_append(locals, local);
       hb_allocator_dealloc(allocator, name);
+    } else {
+      size_t params_in_content = (size_t) (params_open - content_bytes);
+      size_t operator_prism_start = (size_t) (keyword_rest_param->operator_loc.start - synthetic_start);
+      size_t operator_prism_end = (size_t) (keyword_rest_param->operator_loc.end - synthetic_start);
+      size_t content_start = params_in_content + (operator_prism_start - strlen(SYNTHETIC_PREFIX));
+      size_t content_end = params_in_content + (operator_prism_end - strlen(SYNTHETIC_PREFIX));
+
+      position_T start = byte_offset_to_position(source, erb_content_byte_offset + content_start);
+      position_T end = byte_offset_to_position(source, erb_content_byte_offset + content_end);
+
+      AST_RUBY_STRICT_LOCAL_NODE_T* local =
+        ast_ruby_strict_local_node_init(NULL, NULL, false, true, start, end, hb_array_init(0, allocator), allocator);
+
+      hb_array_append(locals, local);
     }
   }
 

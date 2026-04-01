@@ -552,4 +552,67 @@ describe("ERB whitespace formatting", () => {
       expect(formatter.format('<%end%>')).toBe('<%end%>')
     })
   })
+
+  describe("no trailing whitespace on blank lines", () => {
+    test("blank lines between ERB expressions inside elements have no trailing whitespace", () => {
+      const source = dedent`
+        <button
+          id="my-button"
+          class="
+            px-2 py-3 flex items-center gap-1
+            font-mono text-xs font-semibold text-primary tracking-wider uppercase
+          "
+        >
+          Learn <%= org.capitalize %>
+          <%= render "svgs/icons/caret_down", width: 16, height: 16, class_name: "fill-current -mt-0.5 [.active_&]:hidden" %>
+
+          <%= render "svgs/icons/x", width: 16, height: 16, class_name: "fill-current -mt-0.5 hidden [.active_&]:block" %>
+        </button>
+      `
+
+      const result = formatter.format(source)
+      const lines = result.split("\n")
+
+      for (const line of lines) {
+        if (line.trim() === "") {
+          expect(line).toBe("")
+        }
+      }
+    })
+
+    test("formatted output contains no lines with only whitespace", () => {
+      const source = dedent`
+        <div>
+          Text content here
+          <%= render "component_a", width: 16, height: 16, class_name: "fill-current -mt-0.5 [.active_&]:hidden" %>
+
+          <%= render "component_b", width: 16, height: 16, class_name: "fill-current -mt-0.5 hidden [.active_&]:block" %>
+        </div>
+      `
+
+      const result = formatter.format(source)
+      const lines = result.split("\n")
+
+      for (const line of lines) {
+        if (line.trim() === "") {
+          expect(line).toBe("")
+        }
+      }
+    })
+
+    test("blank separator lines are truly empty after formatting", () => {
+      const source = dedent`
+        <button>
+          Learn <%= org.capitalize %>
+          <%= render "svgs/icons/caret_down" %>
+
+          <%= render "svgs/icons/x" %>
+        </button>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).not.toMatch(/^[ \t]+$/m)
+    })
+  })
 })

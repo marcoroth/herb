@@ -5,7 +5,6 @@ import type { ContentUnitWithNode } from "./format-helpers.js"
 
 import {
   hasWhitespaceBetween,
-  isHerbDisableComment,
   isInlineElement,
   isLineBreakingElement,
 } from "./format-helpers.js"
@@ -162,7 +161,6 @@ export class TextFlowAnalyzer {
 
   private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode, index: number, lastProcessedIndex: number): boolean {
     const erbContent = this.delegate.renderERBAsString(child)
-    const herbDisable = isHerbDisableComment(child)
 
     if (lastProcessedIndex >= 0) {
       const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || lastUnitEndsWithWhitespaceHelper(result)
@@ -185,11 +183,11 @@ export class TextFlowAnalyzer {
     }
 
     result.push({
-      unit: { content: erbContent, type: 'erb', isAtomic: true, breaksFlow: false, isHerbDisable: herbDisable },
+      unit: { content: erbContent, type: 'erb', isAtomic: true, breaksFlow: false },
       node: child
     })
 
-    if (isERBCommentNode(child) && !herbDisable) {
+    if (isERBCommentNode(child)) {
       for (let j = index + 1; j < children.length; j++) {
         const nextChild = children[j]
         if (isNode(nextChild, WhitespaceNode)) continue

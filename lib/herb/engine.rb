@@ -31,6 +31,9 @@ module Herb
     class CompilationError < StandardError
     end
 
+    class GeneratorTemplateError < CompilationError
+    end
+
     class InvalidRubyError < CompilationError
       attr_reader :compiled_source
 

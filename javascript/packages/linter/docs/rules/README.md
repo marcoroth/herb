@@ -4,6 +4,13 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+#### Accessibility
+
+- [`a11y-no-accesskey-attribute`](./a11y-no-accesskey-attribute.md) - Prevent usage of the `accesskey` attribute
+- [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
+- [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
+
+
 #### Action View
 
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
@@ -17,6 +24,7 @@ This page contains documentation for all Herb Linter rules.
 
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
+- [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
 - [`erb-no-empty-control-flow`](./erb-no-empty-control-flow.md) - Disallow empty ERB control flow blocks
@@ -39,6 +47,9 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
 - [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
+- [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
+- [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
+- [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
@@ -89,6 +100,8 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
+- [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
+- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names

@@ -63,7 +63,12 @@ bool javascript_include_tag_source_is_url(const char* source, size_t length) {
   return false;
 }
 
-char* wrap_in_javascript_path(const char* source, size_t source_length, const char* path_options, hb_allocator_T* allocator) {
+char* wrap_in_javascript_path(
+  const char* source,
+  size_t source_length,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
   hb_buffer_T buffer;
   hb_buffer_init(&buffer, source_length + 32, allocator);
 

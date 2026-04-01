@@ -75,8 +75,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     hb_string_T opening = erb_content_node->tag_opening->value;
 
-    if (!hb_string_equals(opening, hb_string("<%%")) && !hb_string_equals(opening, hb_string("<%%="))
-        && !hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
+    if (!hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       erb_content_node->parsed = true;
@@ -1032,7 +1031,7 @@ void herb_analyze_parse_tree(
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, &invalid_context);
 
-  herb_analyze_parse_errors(document, source, allocator);
+  herb_analyze_parse_errors(document, source, options, allocator);
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 

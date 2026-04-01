@@ -859,6 +859,46 @@ describe("@herb-tools/linter", () => {
       expect(releasedSkipped).toHaveLength(0)
     })
 
+    test("includes unreleased rules when configVersion is undefined (no .herb.yml)", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        undefined
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("includes unreleased rules when .herb.yml has no explicit version", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      expect(config.configVersion).toBeUndefined()
+
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        config.linter?.rules,
+        config.configVersion
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("Linter.from() enables unreleased rules when configVersion is undefined", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      expect(config.configVersion).toBeUndefined()
+
+      const linter = Linter.from(Herb, config)
+
+      expect(linter.rulesSkippedByVersion).toHaveLength(0)
+    })
+
     test("version-gated rules do not produce offenses", () => {
       const config = Config.fromObject({
         linter: { enabled: true }

@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0039_leading whitespace with elsif and inline content"
+input: "{source: \"<p>\\n  <% if false %>nope<% elsif true %>text<% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  text
+</p>

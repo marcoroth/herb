@@ -253,7 +253,7 @@ export class CLI {
       content = content.replace(/^version:\s*.+$/m, `version: ${version}`)
       await fs.writeFile(config.path, content, "utf-8")
 
-      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion, "cyan")} to ${colorize(version, "cyan")}`)
+      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion ?? "unversioned", "cyan")} to ${colorize(version, "cyan")}`)
 
       if (rulesToEnable.length > 0) {
         console.log(`\n${colorize("✓", "brightGreen")} Enabled ${colorize(String(rulesToEnable.length), "bold")} new ${rulesToEnable.length === 1 ? "rule" : "rules"} (no offenses found):\n`)

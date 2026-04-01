@@ -211,7 +211,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <div class="content" <%= **attributes %>>
+        <div class="content" <%= tag.attributes(**attributes) %>>
           Content
         </div>
       `
@@ -353,6 +353,54 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       expect(transform('<%= content_tag(:script, "alert(1)", nonce: false) %>')).toBe(
         '<script nonce="false">alert(1)</script>'
       )
+    })
+
+    test("content_tag with splat attributes", () => {
+      const input = dedent`
+        <%= content_tag(:div, **attributes) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div <%= tag.attributes(**attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in data", () => {
+      const input = dedent`
+        <%= content_tag(:div, data: { controller: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div data-controller="one" <%= tag.attributes(data: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
+    })
+
+    test("content_tag with splat attributes in aria", () => {
+      const input = dedent`
+        <%= content_tag(:div, aria: { label: "one", **attributes }) do %>
+          Content
+        <% end %>
+      `
+
+      const expected = dedent`
+        <div aria-label="one" <%= tag.attributes(aria: attributes) %>>
+          Content
+        </div>
+      `
+
+      expect(transform(input)).toBe(expected)
     })
   })
 
@@ -515,7 +563,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame <%= **attributes %> id="tray">
+        <turbo-frame id="tray" <%= tag.attributes(**attributes) %>>
           Content
         </turbo-frame>
       `
@@ -718,6 +766,18 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
         `<script src="<%= asset_path("application.js") %>"></script>`
       )
     })
+
+    test("javascript_include_tag with skip_pipeline forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", skip_pipeline: true %>`)).toBe(
+        `<script src="<%= javascript_path("application", skip_pipeline: true) %>"></script>`
+      )
+    })
+
+    test("javascript_include_tag with protocol forwards to javascript_path", () => {
+      expect(transform(`<%= javascript_include_tag "application", protocol: "https" %>`)).toBe(
+        `<script src="<%= javascript_path("application", protocol: "https") %>"></script>`
+      )
+    })
   })
 
   describe("image_tag helpers", () => {
@@ -790,6 +850,48 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("image_tag with data attributes", () => {
       expect(transform('<%= image_tag "icon.png", data: { controller: "image" } %>')).toBe(
         '<img data-controller="image" src="<%= image_path("icon.png") %>" />'
+      )
+    })
+
+    test("image_tag with splat attributes", () => {
+      expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(**attributes) %> />'
+      )
+    })
+
+    test("image_tag with skip_pipeline forwards to image_path", () => {
+      expect(transform('<%= image_tag "icon.png", skip_pipeline: true %>')).toBe(
+        '<img src="<%= image_path("icon.png", skip_pipeline: true) %>" />'
+      )
+    })
+
+    test("image_tag with size WxH creates width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with size N creates square width and height attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with size and other attributes", () => {
+      expect(transform('<%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" alt="Icon" class="avatar" width="32" height="32" />'
+      )
+    })
+
+    test("image_tag with dynamic size expands to width and height", () => {
+      expect(transform('<%= image_tag "icon.png", size: some_var %>')).toBe(
+        '<img src="<%= image_path("icon.png") %>" width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" />'
+      )
+    })
+
+    test("image_tag with string source does not segfault with path_options signature", () => {
+      expect(transform('<%= image_tag "logo.png", alt: "Logo", class: "brand" %>')).toBe(
+        '<img src="<%= image_path("logo.png") %>" alt="Logo" class="brand" />'
       )
     })
   })
