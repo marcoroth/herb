@@ -1,5 +1,0 @@
----
-source: "Engine::WhitespaceTrimmingTest#test_0045_right trim on expression block opening tag removes following newline"
-input: "{source: \"<%= foo do -%>\\nbar\\n<% end %>\", locals: {foo: \"captured\"}, options: {}}"
----
-captured

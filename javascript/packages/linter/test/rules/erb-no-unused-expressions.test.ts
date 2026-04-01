@@ -88,6 +88,40 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for content_for with arguments", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title, "Status" %>
+        <% content_for :description, page_description %>
+      `)
+    })
+
+    test("passes for content_for with single argument", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title %>
+      `)
+    })
+
+    test("passes for content_for with curly brace block", () => {
+      expectNoOffenses(dedent`
+        <% content_for(:head) { %>
+          <title>Page Title</title>
+        <% } %>
+      `)
+    })
+
+    test("passes for provide with arguments", () => {
+      expectNoOffenses(dedent`
+        <% provide :title, "Status" %>
+        <% provide :description, page_description %>
+      `)
+    })
+
+    test("passes for flush", () => {
+      expectNoOffenses(dedent`
+        <% flush %>
+      `)
+    })
+
     test("passes for ERB comments", () => {
       expectNoOffenses(dedent`
         <%# This is a comment %>
