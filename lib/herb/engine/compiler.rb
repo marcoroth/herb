@@ -5,6 +5,12 @@ module Herb
     class Compiler < ::Herb::Visitor
       EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze
 
+      TRAILING_WHITESPACE = /[ \t]+\z/
+      TRAILING_INDENTATION = /\n[ \t]+\z/
+      TRAILING_INDENTATION_CAPTURE = /\n([ \t]+)\z/
+      WHITESPACE_ONLY = /\A[ \t]+\z/
+      WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
+
       attr_reader :tokens
 
       def initialize(engine, options = {})
@@ -521,7 +527,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) || last_value =~ /\n[ \t]+\z/
+          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -552,7 +558,7 @@ module Herb
 
         text = token[1]
 
-        return Regexp.last_match(1) if text =~ /\n([ \t]+)\z/ || text =~ /\A([ \t]+)\z/
+        return Regexp.last_match(1) if text =~ TRAILING_INDENTATION_CAPTURE || text =~ WHITESPACE_ONLY_CAPTURE
 
         ""
       end
@@ -561,7 +567,12 @@ module Herb
         token = last_text_token
         return false unless token
 
-        token[1].match?(/\n[ \t]+\z/) || (@last_trim_consumed_newline && token[1].match?(/\A[ \t]+\z/))
+        text = token[1]
+
+        return true if text.match?(TRAILING_INDENTATION)
+        return true if @last_trim_consumed_newline && text.match?(WHITESPACE_ONLY)
+
+        false
       end
 
       def extract_and_remove_leading_space!
@@ -570,9 +581,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ /\n[ \t]+\z/
-          text.sub!(/[ \t]+\z/, "")
-        elsif text =~ /\A[ \t]+\z/
+        if text =~ TRAILING_INDENTATION
+          text.sub!(TRAILING_WHITESPACE, "")
+        elsif text =~ WHITESPACE_ONLY
           text.replace("")
         end
 
@@ -617,12 +628,12 @@ module Herb
         return "" unless token
 
         text = token[1]
-        removed = text[/[ \t]+\z/] || ""
+        removed = text[TRAILING_WHITESPACE] || ""
 
-        if text =~ /\n[ \t]+\z/
-          text.sub!(/[ \t]+\z/, "")
+        if text =~ TRAILING_INDENTATION
+          text.sub!(TRAILING_WHITESPACE, "")
           token[1] = text
-        elsif text =~ /\A[ \t]+\z/
+        elsif text =~ WHITESPACE_ONLY
           text.replace("")
           token[1] = text
         end

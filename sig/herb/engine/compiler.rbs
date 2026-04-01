@@ -5,6 +5,16 @@ module Herb
     class Compiler < ::Herb::Visitor
       EXPRESSION_TOKEN_TYPES: untyped
 
+      TRAILING_WHITESPACE: ::Regexp
+
+      TRAILING_INDENTATION: ::Regexp
+
+      TRAILING_INDENTATION_CAPTURE: ::Regexp
+
+      WHITESPACE_ONLY: ::Regexp
+
+      WHITESPACE_ONLY_CAPTURE: ::Regexp
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
