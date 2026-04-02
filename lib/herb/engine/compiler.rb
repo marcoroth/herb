@@ -156,9 +156,9 @@ module Herb
       end
 
       def visit_cdata_node(node)
-        add_text(node.cdata_opening.value)
+        add_text(node.tag_opening.value)
         visit_all(node.children)
-        add_text(node.cdata_closing.value)
+        add_text(node.tag_closing.value)
       end
 
       def visit_erb_content_node(node)

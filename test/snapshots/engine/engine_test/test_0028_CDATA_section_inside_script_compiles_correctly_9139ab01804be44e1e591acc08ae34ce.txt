@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0028_CDATA section inside script compiles correctly"
+input: "{source: \"<script><![CDATA[ alert(1) ]]></script>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<script><![CDATA[ alert(1) ]]></script>'.freeze;
+_buf.to_s
