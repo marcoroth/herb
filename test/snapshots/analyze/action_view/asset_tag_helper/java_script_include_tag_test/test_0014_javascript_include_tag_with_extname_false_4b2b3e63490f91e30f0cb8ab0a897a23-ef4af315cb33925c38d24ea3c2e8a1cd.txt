@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "javascript_path(\"template.jst\", extname: false)"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
