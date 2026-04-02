@@ -575,7 +575,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
   describe("javascript_tag helpers", () => {
     test("javascript_tag with content as argument", () => {
       expect(transform(`<%= javascript_tag "alert('Hello')" %>`)).toBe(
-        `<script>alert('Hello')</script>`
+        `<script>\n//<![CDATA[\nalert('Hello')\n//]]>\n</script>`
       )
     })
 
@@ -588,7 +588,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script>
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
@@ -597,7 +601,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_tag with type attribute", () => {
       expect(transform(`<%= javascript_tag "alert('Hello')", type: "application/javascript" %>`)).toBe(
-        `<script type="application/javascript">alert('Hello')</script>`
+        `<script type="application/javascript">\n//<![CDATA[\nalert('Hello')\n//]]>\n</script>`
       )
     })
 
@@ -610,7 +614,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script nonce="<%= content_security_policy_nonce %>">
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
@@ -626,7 +634,11 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
       const expected = dedent`
         <script>
+        //<![CDATA[
+
           alert('Hello')
+
+        //]]>
         </script>
       `
 
