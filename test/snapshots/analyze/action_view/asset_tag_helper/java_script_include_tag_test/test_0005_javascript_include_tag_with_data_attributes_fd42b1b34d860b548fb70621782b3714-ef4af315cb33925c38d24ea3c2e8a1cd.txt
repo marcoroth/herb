@@ -14,44 +14,44 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:74)-(1:76))
     │   │       ├── tag_name: "script" (location: (1:4)-(1:26))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:27)-(1:40))
+    │   │           ├── @ HTMLAttributeNode (location: (1:50)-(1:71))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:40))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:50)-(1:61))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:27)-(1:40))
-    │   │           │   │               └── content: "src"
+    │   │           │   │           └── @ LiteralNode (location: (1:50)-(1:61))
+    │   │           │   │               └── content: "data-turbo-track"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: ":" (location: (1:27)-(1:40))
+    │   │           │   ├── equals: ": " (location: (1:61)-(1:63))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:27)-(1:40))
-    │   │           │           ├── open_quote: ∅
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:63)-(1:71))
+    │   │           │           ├── open_quote: """ (location: (1:63)-(1:64))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ RubyLiteralNode (location: (1:27)-(1:40))
-    │   │           │           │       └── content: "javascript_path(\"application\")"
+    │   │           │           │   └── @ LiteralNode (location: (1:64)-(1:70))
+    │   │           │           │       └── content: "reload"
     │   │           │           │
-    │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           ├── close_quote: """ (location: (1:70)-(1:71))
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:50)-(1:71))
+    │   │           └── @ HTMLAttributeNode (location: (1:27)-(1:40))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:50)-(1:61))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:40))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:50)-(1:61))
-    │   │               │               └── content: "data-turbo-track"
+    │   │               │           └── @ LiteralNode (location: (1:27)-(1:40))
+    │   │               │               └── content: "src"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:61)-(1:63))
+    │   │               ├── equals: ":" (location: (1:27)-(1:40))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:63)-(1:71))
-    │   │                       ├── open_quote: """ (location: (1:63)-(1:64))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:27)-(1:40))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:64)-(1:70))
-    │   │                       │       └── content: "reload"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:27)-(1:40))
+    │   │                       │       └── content: "javascript_path(\"application\")"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:70)-(1:71))
-    │   │                       └── quoted: true
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
     │   │
     │   │
     │   │

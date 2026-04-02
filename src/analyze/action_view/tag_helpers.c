@@ -639,7 +639,15 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
                               : create_html_attribute_node("id", id_value, id_start, id_end, allocator);
 
-      if (id_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) id_attribute, allocator); }
+      if (id_attribute) {
+        AST_NODE_T* src_node = remove_attribute_by_name(attributes, "src");
+        AST_NODE_T* target_node = remove_attribute_by_name(attributes, "target");
+
+        hb_array_append(attributes, (AST_NODE_T*) id_attribute);
+
+        if (src_node) { hb_array_append(attributes, src_node); }
+        if (target_node) { hb_array_append(attributes, target_node); }
+      }
 
       hb_allocator_dealloc(allocator, id_value);
     }
@@ -679,7 +687,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
           ? create_html_attribute_node("src", source_attribute_value, source_start, source_end, allocator)
           : create_html_attribute_with_ruby_literal("src", source_attribute_value, source_start, source_end, allocator);
 
-      if (source_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) source_attribute, allocator); }
+      if (source_attribute) { hb_array_append(attributes, (AST_NODE_T*) source_attribute); }
 
       if (source_attribute_value != source_value) { hb_allocator_dealloc(allocator, source_attribute_value); }
       hb_allocator_dealloc(allocator, source_value);
@@ -723,7 +731,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
           ? create_html_attribute_node("src", source_attribute_value, source_start, source_end, allocator)
           : create_html_attribute_with_ruby_literal("src", source_attribute_value, source_start, source_end, allocator);
 
-      if (source_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) source_attribute, allocator); }
+      if (source_attribute) { hb_array_append(attributes, (AST_NODE_T*) source_attribute); }
       if (source_attribute_value != source_value) { hb_allocator_dealloc(allocator, source_attribute_value); }
 
       hb_allocator_dealloc(allocator, source_value);
@@ -1140,7 +1148,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       AST_HTML_ATTRIBUTE_NODE_T* href_attribute =
         create_href_attribute(href, href_is_ruby_expression, href_start, href_end, allocator);
 
-      if (href_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) href_attribute, allocator); }
+      if (href_attribute) { hb_array_append(attributes, (AST_NODE_T*) href_attribute); }
 
       hb_allocator_dealloc(allocator, href);
     }
@@ -1161,7 +1169,15 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
         id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
                               : create_html_attribute_node("id", id_value, id_start, id_end, allocator);
 
-      if (id_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) id_attribute, allocator); }
+      if (id_attribute) {
+        AST_NODE_T* src_node = remove_attribute_by_name(attributes, "src");
+        AST_NODE_T* target_node = remove_attribute_by_name(attributes, "target");
+
+        hb_array_append(attributes, (AST_NODE_T*) id_attribute);
+
+        if (src_node) { hb_array_append(attributes, src_node); }
+        if (target_node) { hb_array_append(attributes, target_node); }
+      }
 
       hb_allocator_dealloc(allocator, id_value);
     }
@@ -1418,7 +1434,7 @@ static AST_NODE_T* transform_link_to_helper(
     AST_HTML_ATTRIBUTE_NODE_T* href_attribute =
       create_href_attribute(href, href_is_ruby_expression, href_start, href_end, allocator);
 
-    if (href_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) href_attribute, allocator); }
+    if (href_attribute) { hb_array_append(attributes, (AST_NODE_T*) href_attribute); }
     if (!info->content) {
       href_for_body = hb_allocator_strdup(allocator, href);
       href_for_body_is_ruby_expression = href_is_ruby_expression;
