@@ -1,3 +1,4 @@
+import { isPrismNodeType } from "@herb-tools/core"
 import type { PrismNode } from "@herb-tools/core"
 
 export const DEBUG_OUTPUT_METHODS = new Set(["p", "pp", "puts", "print", "warn", "debug", "byebug"])
@@ -16,7 +17,7 @@ export function isDebugOutputCall(node: PrismNode): boolean {
   if (BINDING_DEBUGGER_METHODS.has(node.name)) {
     const receiver = node.receiver
 
-    if (receiver?.constructor?.name === "CallNode") {
+    if (isPrismNodeType(receiver, "CallNode")) {
       return receiver.name === "binding" && !receiver.receiver
     }
   }

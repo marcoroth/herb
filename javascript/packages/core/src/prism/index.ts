@@ -1,6 +1,8 @@
 import { deserialize } from "@ruby/prism/src/deserialize.js"
 import type { ParseResult as PrismParseResult } from "@ruby/prism/src/deserialize.js"
 
+import type * as PrismNodeTypes from "@ruby/prism/src/nodes.js"
+
 export * as PrismNodes from "@ruby/prism/src/nodes.js"
 
 export { Visitor as PrismVisitor, BasicVisitor as PrismBasicVisitor } from "@ruby/prism/src/visitor.js"
@@ -10,6 +12,24 @@ export type PrismLocation = { startOffset: number; length: number }
 export type { PrismParseResult }
 
 export { inspectPrismNode, inspectPrismSerialized } from "./inspect.js"
+
+type PrismNodeConstructors = typeof PrismNodeTypes
+
+type PrismNodeInstanceMap = {
+  [K in keyof PrismNodeConstructors]: PrismNodeConstructors[K] extends new (...args: any[]) => infer R ? R : never
+}
+
+/**
+ * Checks if a Prism node is of a specific type by comparing constructor names.
+ *
+ * This is preferred over `instanceof` because `@ruby/prism` classes may be
+ * duplicated across bundled packages, causing `instanceof` checks to fail.
+ */
+export function isPrismNodeType<T extends keyof PrismNodeInstanceMap>(node: PrismNode | null | undefined, type: T): node is PrismNodeInstanceMap[T] {
+  if (!node) return false
+
+  return node.constructor?.name === type
+}
 
 /**
  * Deserialize a Prism parse result from the raw bytes produced by pm_serialize().

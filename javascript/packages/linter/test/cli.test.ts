@@ -61,6 +61,14 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(0)
   })
 
+  test("allows tag.attributes in attribute position", () => {
+    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(output).not.toContain("erb-no-output-in-attribute-position")
+    expect(exitCode).toBe(0)
+  })
+
   test("formats success output correctly", () => {
     const { output, exitCode } = runLinter("clean-file.html.erb", "--no-wrap-lines")
 

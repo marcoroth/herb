@@ -303,6 +303,46 @@ test/fixtures/ignored.html.erb:6:14
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
+exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
+"[warning] Avoid using \`tag.attributes\` to set all attributes on \`<div>\`. Use \`tag.div\` or add the attributes directly to the \`<div>\` tag instead. (actionview-no-unnecessary-tag-attributes) [Correctable]
+
+test/fixtures/tag-attributes.html.erb:1:0
+
+  →   1 │ <div <%= tag.attributes(class: ["one", "two", "three"]) %>>
+        │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      2 │   Content
+      3 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[warning] Avoid using \`tag.attributes\` to set all attributes on \`<input>\`. Use \`tag.input\` or add the attributes directly to the \`<input>\` tag instead. (actionview-no-unnecessary-tag-attributes) [Correctable]
+
+test/fixtures/tag-attributes.html.erb:5:0
+
+      3 │ </div>
+      4 │ 
+  →   5 │ <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+        │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      6 │ 
+      7 │ <button class="primary" <%= tag.attributes(id: "cta", aria: { expanded: false }) %>>Click</button>
+
+
+
+ Rule offenses:
+  actionview-no-unnecessary-tag-attributes (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        83 enabled | 10 not enabled
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
+`;
+
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
 "[error] Unexpected Token. Expected: an identifier, \`@\`, \`<%\`, whitespace, or a newline, found: a character. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
 
