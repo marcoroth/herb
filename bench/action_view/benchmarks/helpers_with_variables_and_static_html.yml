@@ -6,10 +6,7 @@ locals:
   about_url: '"/about"'
   user_name: '"Alice"'
   profile_url: '"/profiles/1"'
-  avatar_url: '"http://example.com/avatar.jpg"'
   signup_url: '"/signup"'
-  demo_url: '"/demo"'
-  trial_url: '"/trial"'
   sidebar_url: '"/sidebar"'
   page_title: '"Welcome"'
   page_description: '"The best platform."'
@@ -31,13 +28,6 @@ locals:
   terms_url: '"/terms"'
   contact_email: '"hello@myapp.com"'
   current_year: "2024"
-  testimonial_author_1: '"Jane Smith"'
-  testimonial_author_2: '"Bob Johnson"'
-  starter_price: "9"
-  pro_price: "29"
-  user_count: '"10,000+"'
-  twitter_url: '"https://twitter.com/myapp"'
-  github_url: '"https://github.com/myapp"'
 ---
 <div class="page">
   <header>

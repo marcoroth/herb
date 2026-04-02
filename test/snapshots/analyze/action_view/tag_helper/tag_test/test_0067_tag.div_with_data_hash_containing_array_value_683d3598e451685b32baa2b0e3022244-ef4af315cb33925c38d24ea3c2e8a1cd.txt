@@ -28,7 +28,7 @@ options: {action_view_helpers: true}
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ RubyLiteralNode (location: (1:32)-(1:49))
-    │   │                       │       └── content: "[\"Chicago\", \"IL\"].to_json"
+    │   │                       │       └── content: "([\"Chicago\", \"IL\"]).is_a?(String) || ([\"Chicago\", \"IL\"]).is_a?(Symbol) ? ([\"Chicago\", \"IL\"]) : ([\"Chicago\", \"IL\"]).to_json"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true

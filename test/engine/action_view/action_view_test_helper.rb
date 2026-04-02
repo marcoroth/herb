@@ -12,12 +12,15 @@ module Engine
     private
 
     def assert_precompiled_snapshot(template, locals = {}, evaluate: true)
-      assert_compiled_snapshot(template, precompile: true)
+      options = { precompile: true }
+      options[:locals] = locals unless locals.empty?
+
+      assert_compiled_snapshot(template, options)
 
       return unless evaluate
 
       assert_precompiled_evaluated_snapshot(template, locals)
-      assert_precompiled_match(template, locals)
+      assert_precompiled_output_match(template, locals)
     end
 
     def assert_precompiled_mismatch_snapshot(template, locals = {}, evaluate: true)
@@ -43,23 +46,24 @@ module Engine
       MESSAGE
     end
 
-    def assert_precompiled_match(template, locals = {})
-      engine = Herb::Engine.new(template, escape: false, precompile: true)
-      herb_result = action_view_eval(engine.src, locals).strip
-      rails_result = render_with_action_view(template, locals).strip
+    def assert_precompiled_output_match(template, locals = {})
+      precompiled_engine = Herb::Engine.new(template, escape: false, precompile: true)
 
-      assert_equal rails_result, herb_result, <<~MESSAGE
-        Herb output does not match Rails output for template:
+      erubi_result = render_with_action_view(template, locals).strip
+      herb_precompiled_result = action_view_eval(precompiled_engine.src, locals).strip
+
+      assert_equal erubi_result, herb_precompiled_result, <<~MESSAGE
+        Herb (precompiled) output does not match Rails output for template:
         #{template.strip}
 
-        Rails:
-          #{rails_result}
+        Rails (Erubi via ActionView):
+          #{erubi_result}
 
-        Herb:
-          #{herb_result}
+        Herb (precompiled via ActionView):
+          #{herb_precompiled_result}
 
         Compiled Ruby:
-          #{engine.src}
+          #{precompiled_engine.src}
       MESSAGE
     end
 

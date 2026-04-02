@@ -1,6 +1,6 @@
 ---
 source: "Engine::ActionView::TurboFrameTagTest#test_0007_turbo_frame_tag with variable id"
-input: "{source: \"<%= turbo_frame_tag dom_id do %>Content<% end %>\", options: {precompile: true}}"
+input: "{source: \"<%= turbo_frame_tag dom_id do %>Content<% end %>\", options: {precompile: true, locals: {dom_id: \"post_1\"}}}"
 ---
 _buf = ::String.new; _buf << '<turbo-frame id="'.freeze; _buf << ::Herb::Engine.attr((dom_id)); _buf << '">Content</turbo-frame>'.freeze;
 _buf.to_s

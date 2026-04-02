@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0031_tag.div with dynamic hash data attribute value"
+input: "{source: \"<%= tag.div data: { config: options } %>\", options: {precompile: true, locals: {options: {nested: true, count: 3}}}}"
+---
+_buf = ::String.new; _buf << '<div data-config="'.freeze; _buf << ::Herb::Engine.attr(((options).is_a?(String) || (options).is_a?(Symbol) ? (options) : (options).to_json)); _buf << '"></div>'.freeze;
+_buf.to_s

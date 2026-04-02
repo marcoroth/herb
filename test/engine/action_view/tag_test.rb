@@ -133,6 +133,46 @@ module Engine
       test "tag.hr void element with attributes" do
         assert_precompiled_snapshot('<%= tag.hr class: "divider" %>')
       end
+
+      test "tag.div with dynamic string data attribute value" do
+        assert_precompiled_snapshot(
+          "<%= tag.div data: { controller: controller_name } %>",
+          { controller_name: "navigation" }
+        )
+      end
+
+      test "tag.div with dynamic symbol data attribute value" do
+        assert_precompiled_snapshot(
+          "<%= tag.div data: { controller: controller_name } %>",
+          { controller_name: :navigation }
+        )
+      end
+
+      test "tag.div with dynamic integer data attribute value" do
+        assert_precompiled_snapshot(
+          "<%= tag.div data: { count: item_count } %>",
+          { item_count: 42 }
+        )
+      end
+
+      test "tag.div with dynamic boolean data attribute value" do
+        assert_precompiled_snapshot(
+          "<%= tag.div data: { loading: is_loading } %>",
+          { is_loading: true }
+        )
+      end
+
+      test "tag.div with dynamic hash data attribute value" do
+        assert_precompiled_snapshot(
+          "<%= tag.div data: { config: options } %>",
+          { options: { nested: true, count: 3 } }
+        )
+      end
+
+      # TODO: Rails escapes string content arguments (e.g. & → &amp;), but precompile inlines them as raw HTML.
+      test "tag.p with HTML entity in content" do
+        assert_precompiled_mismatch_snapshot('<%= tag.p "&copy; 2024 Example Corp" %>')
+      end
     end
   end
 end

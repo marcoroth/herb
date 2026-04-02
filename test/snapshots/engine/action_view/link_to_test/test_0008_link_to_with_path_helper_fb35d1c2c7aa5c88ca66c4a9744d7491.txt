@@ -1,6 +1,6 @@
 ---
 source: "Engine::ActionView::LinkToTest#test_0008_link_to with path helper"
-input: "{source: \"<%= link_to \\\"Click me\\\", root_path %>\", options: {precompile: true}}"
+input: "{source: \"<%= link_to \\\"Click me\\\", root_path %>\", options: {precompile: true, locals: {root_path: \"/home\"}}}"
 ---
 _buf = ::String.new; _buf << '<a href="'.freeze; _buf << ::Herb::Engine.attr((root_path)); _buf << '">Click me</a>'.freeze;
 _buf.to_s
