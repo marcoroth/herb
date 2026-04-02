@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "token_list([\"kitties\", variable])"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

@@ -99,11 +99,9 @@ module Herb
       def visit_html_attribute_value_node(node)
         push_context(:attribute_value)
 
-        add_text(node.open_quote&.value) if node.quoted
-
+        add_text(node.open_quote&.value || '"') if node.quoted
         visit_all(node.children)
-
-        add_text(node.close_quote&.value) if node.quoted
+        add_text(node.close_quote&.value || '"') if node.quoted
 
         pop_context
       end

@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "[\"Chicago\", \"IL\"].to_json"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
