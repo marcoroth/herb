@@ -122,6 +122,15 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for Turbo helpers", () => {
+      expectNoOffenses(dedent`
+        <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+        <% turbo_exempts_page_from_cache %>
+        <% turbo_exempts_page_from_preview %>
+        <% turbo_page_requires_reload %>
+      `)
+    })
+
     test("passes for ERB comments", () => {
       expectNoOffenses(dedent`
         <%# This is a comment %>
