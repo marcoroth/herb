@@ -1,0 +1,51 @@
+---
+source: "Analyze::RenderBlockTest#test_0006_render with inline brace block and multiple arguments"
+input: |2-
+<%= render ListComponent.new { |item, index| item.with_content(index) } %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:74))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render ListComponent.new { |item, index| item.with_content(index) } " (location: (1:3)-(1:72))
+    │   ├── tag_closing: "%>" (location: (1:72)-(1:74))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:74))
+    │   │       ├── partial: ∅
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: "ListComponent.new { |item, index| item.with_content(index) }" (location: (1:11)-(1:71))
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: (1 item)
+    │   │   └── @ RubyLiteralNode (location: (1:45)-(1:69))
+    │   │       └── content: "item.with_content(index)"
+    │   │
+    │   ├── block_arguments: (2 items)
+    │   │   ├── @ RubyBlockParameterNode (location: (1:32)-(1:36))
+    │   │   │   └── name: "item" (location: (1:32)-(1:36))
+    │   │   │
+    │   │   └── @ RubyBlockParameterNode (location: (1:38)-(1:43))
+    │   │       └── name: "index" (location: (1:38)-(1:43))
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
+    │
+    └── @ HTMLTextNode (location: (1:74)-(2:0))
+        └── content: "\n"

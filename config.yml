@@ -1184,23 +1184,13 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-    - name: ERBRenderNode
+    - name: RubyBlockParameterNode
       fields:
-        - name: tag_opening
+        - name: name
           type: token
 
-        - name: content
-          type: token
-
-        - name: tag_closing
-          type: token
-
-        - name: analyzed_ruby
-          type: analyzed_ruby
-
-        - name: prism_node
-          type: prism_node
-
+    - name: RubyRenderKeywordsNode
+      fields:
         - name: partial
           type: token
 
@@ -1256,6 +1246,52 @@ nodes:
           type: array
           kind:
             - RubyRenderLocalNode
+
+    - name: ERBRenderNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: keywords
+          type: node
+          kind: RubyRenderKeywordsNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyBlockParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: RubyStrictLocalNode
       fields:

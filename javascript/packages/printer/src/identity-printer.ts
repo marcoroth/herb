@@ -400,6 +400,34 @@ export class IdentityPrinter extends Printer {
 
   visitERBRenderNode(node: Nodes.ERBRenderNode): void {
     this.printERBNode(node)
+
+    if (node.end_node) {
+      if (node.body) {
+        node.body.forEach(child => this.visit(child))
+      }
+
+      if (node.rescue_clause) {
+        this.visit(node.rescue_clause)
+      }
+
+      if (node.else_clause) {
+        this.visit(node.else_clause)
+      }
+
+      if (node.ensure_clause) {
+        this.visit(node.ensure_clause)
+      }
+
+      this.visit(node.end_node)
+    }
+  }
+
+  visitRubyRenderKeywordsNode(_node: Nodes.RubyRenderKeywordsNode): void {
+    // no-op: extracted metadata, nothing to print
+  }
+
+  visitRubyBlockParameterNode(_node: Nodes.RubyBlockParameterNode): void {
+    // no-op: extracted metadata, nothing to print
   }
 
   visitRubyRenderLocalNode(_node: Nodes.RubyRenderLocalNode): void {
