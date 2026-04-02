@@ -29,6 +29,7 @@ require_relative "herb/configuration"
 
 require_relative "herb/version"
 
+require_relative "herb/html/util"
 require_relative "herb/visitor"
 require_relative "herb/engine"
 

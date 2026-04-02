@@ -125,7 +125,7 @@ module Herb
         tag_name = node.tag_name&.value
 
         if tag_name
-          is_void = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].include?(tag_name.downcase)
+          is_void = Herb::HTML::Util.void_element?(tag_name)
           uses_self_closing = is_void && @current_element_source != "ActionView::Helpers::TagHelper#tag"
 
           add_text("<")

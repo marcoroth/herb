@@ -82,7 +82,14 @@ module Herb
 
     def terminate_expression: () -> untyped
 
+    # TODO: migrate to new Action View helper registry
+    ACTION_VIEW_HELPER_NAMES: untyped
+
+    ACTION_VIEW_HELPER_PATTERN: untyped
+
     private
+
+    def source_may_contain_action_view_helpers?: (untyped source) -> untyped
 
     def run_validation: (untyped ast) -> untyped
 

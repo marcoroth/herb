@@ -4,7 +4,7 @@
 require "optparse"
 require "json"
 
-require_relative "../lib/herb/action_view_renderer"
+require_relative "../test/action_view_renderer"
 
 class ActionViewRenderCLI
   def initialize

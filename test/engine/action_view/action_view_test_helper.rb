@@ -3,7 +3,7 @@
 require_relative "../../test_helper"
 require_relative "../../snapshot_utils"
 require_relative "../../../lib/herb/engine"
-require_relative "../../../lib/herb/action_view_renderer"
+require_relative "../../action_view_renderer"
 
 module Engine
   module ActionViewTestHelper

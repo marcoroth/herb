@@ -5,7 +5,7 @@ require "reactionview/template/handlers/herb/herb"
 
 require_relative "../test_helper"
 require_relative "../../lib/herb/engine"
-require_relative "../../lib/herb/action_view_renderer"
+require_relative "../action_view_renderer"
 
 module Engine
   class RailsCompatibilityTest < Minitest::Spec
