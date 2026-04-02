@@ -267,5 +267,15 @@ module Engine
 
       engine.send(:ensure_valid_ruby!, "def foo; end")
     end
+
+    test "CDATA section compiles correctly" do
+      assert_compiled_snapshot("<![CDATA[ content ]]>", enforce_erubi_equality: true)
+      assert_evaluated_snapshot("<![CDATA[ content ]]>")
+    end
+
+    test "CDATA section inside script compiles correctly" do
+      assert_compiled_snapshot("<script><![CDATA[ alert(1) ]]></script>", enforce_erubi_equality: true)
+      assert_evaluated_snapshot("<script><![CDATA[ alert(1) ]]></script>")
+    end
   end
 end

@@ -818,29 +818,10 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         allocator
       );
 
-      token_T* cdata_opening = create_synthetic_token(
-        allocator,
-        "\n//<![CDATA[\n",
-        TOKEN_CDATA_START,
-        erb_node->base.location.start,
-        erb_node->base.location.end
-      );
-
-      token_T* cdata_closing = create_synthetic_token(
-        allocator,
-        "\n//]]>\n",
-        TOKEN_CDATA_END,
-        erb_node->base.location.start,
-        erb_node->base.location.end
-      );
-
-      AST_CDATA_NODE_T* cdata_node = ast_cdata_node_init(
-        cdata_opening,
+      AST_CDATA_NODE_T* cdata_node = create_javascript_cdata_node(
         cdata_children,
-        cdata_closing,
         erb_node->base.location.start,
         erb_node->base.location.end,
-        hb_array_init(0, allocator),
         allocator
       );
 
@@ -1188,7 +1169,15 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
         id_is_ruby_expression ? create_html_attribute_with_ruby_literal("id", id_value, id_start, id_end, allocator)
                               : create_html_attribute_node("id", id_value, id_start, id_end, allocator);
 
-      if (id_attribute) { hb_array_append(attributes, (AST_NODE_T*) id_attribute); }
+      if (id_attribute) {
+        AST_NODE_T* src_node = remove_attribute_by_name(attributes, "src");
+        AST_NODE_T* target_node = remove_attribute_by_name(attributes, "target");
+
+        hb_array_append(attributes, (AST_NODE_T*) id_attribute);
+
+        if (src_node) { hb_array_append(attributes, src_node); }
+        if (target_node) { hb_array_append(attributes, target_node); }
+      }
 
       hb_allocator_dealloc(allocator, id_value);
     }

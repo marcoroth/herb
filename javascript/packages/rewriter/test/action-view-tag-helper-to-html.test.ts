@@ -563,7 +563,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       `
 
       const expected = dedent`
-        <turbo-frame id="tray" <%= tag.attributes(**attributes) %>>
+        <turbo-frame <%= tag.attributes(**attributes) %> id="tray">
           Content
         </turbo-frame>
       `
@@ -855,7 +855,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with splat attributes", () => {
       expect(transform('<%= image_tag "icon.png", **attributes %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" <%= tag.attributes(**attributes) %> />'
+        '<img <%= tag.attributes(**attributes) %> src="<%= image_path("icon.png") %>" />'
       )
     })
 
@@ -867,31 +867,31 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("image_tag with size WxH creates width and height attributes", () => {
       expect(transform('<%= image_tag "icon.png", size: "32x32" %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+        '<img width="32" height="32" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with size N creates square width and height attributes", () => {
       expect(transform('<%= image_tag "icon.png", size: "32" %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" width="32" height="32" />'
+        '<img width="32" height="32" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with size and other attributes", () => {
       expect(transform('<%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" alt="Icon" class="avatar" width="32" height="32" />'
+        '<img alt="Icon" class="avatar" width="32" height="32" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with dynamic size expands to width and height", () => {
       expect(transform('<%= image_tag "icon.png", size: some_var %>')).toBe(
-        '<img src="<%= image_path("icon.png") %>" width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" />'
+        '<img width="<%= some_var.to_s.split("x", 2)[0] %>" height="<%= some_var.to_s.split("x", 2)[-1] %>" src="<%= image_path("icon.png") %>" />'
       )
     })
 
     test("image_tag with string source does not segfault with path_options signature", () => {
       expect(transform('<%= image_tag "logo.png", alt: "Logo", class: "brand" %>')).toBe(
-        '<img src="<%= image_path("logo.png") %>" alt="Logo" class="brand" />'
+        '<img alt="Logo" class="brand" src="<%= image_path("logo.png") %>" />'
       )
     })
   })

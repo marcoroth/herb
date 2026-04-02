@@ -143,5 +143,21 @@ module Analyze::ActionView::JavaScriptHelper
         <% end %>
       HTML
     end
+
+    test "javascript_tag inline CDATA matches ActionView output" do
+      assert_evaluated_actionview_snapshot('<%= javascript_tag "alert(1)" %>')
+    end
+
+    test "javascript_tag block CDATA matches ActionView output" do
+      assert_evaluated_actionview_snapshot(<<~ERB)
+        <%= javascript_tag do %>
+          alert(1)
+        <% end %>
+      ERB
+    end
+
+    test "javascript_tag with type attribute CDATA matches ActionView output" do
+      assert_evaluated_actionview_snapshot('<%= javascript_tag "alert(1)", type: "application/javascript" %>')
+    end
   end
 end
