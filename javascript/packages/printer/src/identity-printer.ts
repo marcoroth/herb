@@ -147,14 +147,14 @@ export class IdentityPrinter extends Printer {
   }
 
   visitHTMLAttributeValueNode(node: Nodes.HTMLAttributeValueNode): void {
-    if (node.quoted && node.open_quote) {
-      this.write(node.open_quote.value)
+    if (node.quoted) {
+      this.write(node.open_quote?.value ?? '"')
     }
 
     this.visitChildNodes(node)
 
-    if (node.quoted && node.close_quote) {
-      this.write(node.close_quote.value)
+    if (node.quoted) {
+      this.write(node.close_quote?.value ?? '"')
     }
   }
 
