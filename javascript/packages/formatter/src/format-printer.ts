@@ -88,6 +88,8 @@ import {
   ERBYieldNode,
   ERBInNode,
   ERBRenderNode,
+  RubyRenderKeywordsNode,
+  RubyBlockParameterNode,
   RubyRenderLocalNode,
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
@@ -988,7 +990,37 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBRenderNode(node: ERBRenderNode) {
-    this.printERBNode(node)
+    if (node.end_node) {
+      this.trackBoundary(node, () => {
+        this.printERBNode(node)
+
+        this.withIndent(() => {
+          const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
+
+          if (hasTextFlow) {
+            this.textFlow.visitTextFlowChildren(node.body)
+          } else {
+            this.visitElementChildren(node.body, null)
+          }
+        })
+
+        if (node.rescue_clause) this.visit(node.rescue_clause)
+        if (node.else_clause) this.visit(node.else_clause)
+        if (node.ensure_clause) this.visit(node.ensure_clause)
+
+        this.visit(node.end_node)
+      })
+    } else {
+      this.printERBNode(node)
+    }
+  }
+
+  visitRubyRenderKeywordsNode(_node: RubyRenderKeywordsNode) {
+    // no-op: extracted metadata, nothing to print
+  }
+
+  visitRubyBlockParameterNode(_node: RubyBlockParameterNode) {
+    // no-op: extracted metadata, nothing to print
   }
 
   visitRubyRenderLocalNode(_node: RubyRenderLocalNode) {

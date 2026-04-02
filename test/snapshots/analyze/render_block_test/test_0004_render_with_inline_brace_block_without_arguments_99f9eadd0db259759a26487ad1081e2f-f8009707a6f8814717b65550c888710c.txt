@@ -1,18 +1,18 @@
 ---
-source: "Analyze::RenderTest#test_0005_render with collection"
+source: "Analyze::RenderBlockTest#test_0004_render with inline brace block without arguments"
 input: |2-
-<%= render partial: "product", collection: @products %>
+<%= render AbcComponent.new { "something" } %>
 options: {render_nodes: true}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
-    ├── @ ERBRenderNode (location: (1:0)-(1:55))
+    ├── @ ERBRenderNode (location: (1:0)-(1:46))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render partial: "product", collection: @products " (location: (1:3)-(1:53))
-    │   ├── tag_closing: "%>" (location: (1:53)-(1:55))
+    │   ├── content: " render AbcComponent.new { "something" } " (location: (1:3)-(1:44))
+    │   ├── tag_closing: "%>" (location: (1:44)-(1:46))
     │   ├── keywords:
-    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:55))
-    │   │       ├── partial: "product" (location: (1:20)-(1:29))
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:46))
+    │   │       ├── partial: ∅
     │   │       ├── template_path: ∅
     │   │       ├── layout: ∅
     │   │       ├── file: ∅
@@ -21,8 +21,8 @@ options: {render_nodes: true}
     │   │       ├── plain: ∅
     │   │       ├── html: ∅
     │   │       ├── renderable: ∅
-    │   │       ├── collection: "@products" (location: (1:43)-(1:52))
-    │   │       ├── object: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: "AbcComponent.new { "something" }" (location: (1:11)-(1:43))
     │   │       ├── as_name: ∅
     │   │       ├── spacer_template: ∅
     │   │       ├── formats: ∅
@@ -31,12 +31,15 @@ options: {render_nodes: true}
     │   │       ├── content_type: ∅
     │   │       └── locals: []
     │   │
-    │   ├── body: []
+    │   ├── body: (1 item)
+    │   │   └── @ RubyLiteralNode (location: (1:30)-(1:41))
+    │   │       └── content: "\"something\""
+    │   │
     │   ├── block_arguments: []
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅
     │   └── end_node: ∅
     │
-    └── @ HTMLTextNode (location: (1:55)-(2:0))
+    └── @ HTMLTextNode (location: (1:46)-(2:0))
         └── content: "\n"

@@ -1,28 +1,28 @@
 ---
-source: "Analyze::RenderTest#test_0010_render with file"
+source: "Analyze::RenderBlockTest#test_0003_render with inline brace block and arguments"
 input: |2-
-<%= render file: "/path/to/file" %>
+<%= render AbcComponent.new { |component| component.with_header } %>
 options: {render_nodes: true}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
-    ├── @ ERBRenderNode (location: (1:0)-(1:35))
+    ├── @ ERBRenderNode (location: (1:0)-(1:68))
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   ├── content: " render file: "/path/to/file" " (location: (1:3)-(1:33))
-    │   ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   ├── content: " render AbcComponent.new { |component| component.with_header } " (location: (1:3)-(1:66))
+    │   ├── tag_closing: "%>" (location: (1:66)-(1:68))
     │   ├── keywords:
-    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:35))
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:68))
     │   │       ├── partial: ∅
     │   │       ├── template_path: ∅
     │   │       ├── layout: ∅
-    │   │       ├── file: "/path/to/file" (location: (1:17)-(1:32))
+    │   │       ├── file: ∅
     │   │       ├── inline_template: ∅
     │   │       ├── body: ∅
     │   │       ├── plain: ∅
     │   │       ├── html: ∅
     │   │       ├── renderable: ∅
     │   │       ├── collection: ∅
-    │   │       ├── object: ∅
+    │   │       ├── object: "AbcComponent.new { |component| component.with_header }" (location: (1:11)-(1:65))
     │   │       ├── as_name: ∅
     │   │       ├── spacer_template: ∅
     │   │       ├── formats: ∅
@@ -31,12 +31,18 @@ options: {render_nodes: true}
     │   │       ├── content_type: ∅
     │   │       └── locals: []
     │   │
-    │   ├── body: []
-    │   ├── block_arguments: []
+    │   ├── body: (1 item)
+    │   │   └── @ RubyLiteralNode (location: (1:42)-(1:63))
+    │   │       └── content: "component.with_header"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyBlockParameterNode (location: (1:31)-(1:40))
+    │   │       └── name: "component" (location: (1:31)-(1:40))
+    │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅
     │   └── end_node: ∅
     │
-    └── @ HTMLTextNode (location: (1:35)-(2:0))
+    └── @ HTMLTextNode (location: (1:68)-(2:0))
         └── content: "\n"
