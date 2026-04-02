@@ -29,6 +29,10 @@ const SIDE_EFFECT_METHODS = new Set([
   "content_for",
   "provide",
   "flush",
+  "turbo_refreshes_with",
+  "turbo_exempts_page_from_cache",
+  "turbo_exempts_page_from_preview",
+  "turbo_page_requires_reload",
 ])
 
 class UnusedExpressionCollector extends PrismVisitor {
