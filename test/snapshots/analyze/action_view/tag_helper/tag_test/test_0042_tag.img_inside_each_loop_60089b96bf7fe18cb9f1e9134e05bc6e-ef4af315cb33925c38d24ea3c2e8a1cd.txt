@@ -41,7 +41,7 @@ options: {action_view_helpers: true}
     │   │   │   │           │           │       └── content: "item.image_url"
     │   │   │   │           │           │
     │   │   │   │           │           ├── close_quote: ∅
-    │   │   │   │           │           └── quoted: false
+    │   │   │   │           │           └── quoted: true
     │   │   │   │           │
     │   │   │   │           │
     │   │   │   │           └── @ HTMLAttributeNode (location: (2:35)-(2:49))
@@ -61,7 +61,7 @@ options: {action_view_helpers: true}
     │   │   │   │                       │       └── content: "item.name"
     │   │   │   │                       │
     │   │   │   │                       ├── close_quote: ∅
-    │   │   │   │                       └── quoted: false
+    │   │   │   │                       └── quoted: true
     │   │   │   │
     │   │   │   │
     │   │   │   │

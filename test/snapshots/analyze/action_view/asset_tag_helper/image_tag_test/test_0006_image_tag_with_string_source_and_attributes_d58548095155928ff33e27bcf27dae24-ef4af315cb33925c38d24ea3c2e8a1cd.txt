@@ -71,7 +71,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "image_path(\"logo.png\")"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

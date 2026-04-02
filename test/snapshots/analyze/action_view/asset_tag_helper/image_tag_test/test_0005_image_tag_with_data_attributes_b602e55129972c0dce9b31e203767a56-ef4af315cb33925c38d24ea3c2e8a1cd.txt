@@ -51,7 +51,7 @@ options: {action_view_helpers: true}
     │   │           │           │       └── content: "123"
     │   │           │           │
     │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
     │   │           └── @ HTMLAttributeNode (location: (1:14)-(1:27))
@@ -71,7 +71,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "image_path(\"example.jpg\")"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
