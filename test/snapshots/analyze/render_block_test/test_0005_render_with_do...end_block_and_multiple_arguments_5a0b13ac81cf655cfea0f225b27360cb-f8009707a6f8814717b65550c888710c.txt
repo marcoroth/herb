@@ -90,11 +90,17 @@ options: {render_nodes: true}
     │   │       └── content: "\n"
     │   │
     │   ├── block_arguments: (2 items)
-    │   │   ├── @ RubyBlockParameterNode (location: (1:34)-(1:39))
-    │   │   │   └── name: "table" (location: (1:34)-(1:39))
+    │   │   ├── @ RubyParameterNode (location: (1:34)-(1:39))
+    │   │   │   ├── name: "table" (location: (1:34)-(1:39))
+    │   │   │   ├── default_value: ∅
+    │   │   │   ├── kind: "positional"
+    │   │   │   └── required: true
     │   │   │
-    │   │   └── @ RubyBlockParameterNode (location: (1:41)-(1:46))
-    │   │       └── name: "index" (location: (1:41)-(1:46))
+    │   │   └── @ RubyParameterNode (location: (1:41)-(1:46))
+    │   │       ├── name: "index" (location: (1:41)-(1:46))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
     │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅

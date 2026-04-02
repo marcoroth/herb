@@ -36,11 +36,17 @@ options: {render_nodes: true}
     │   │       └── content: "item.with_content(index)"
     │   │
     │   ├── block_arguments: (2 items)
-    │   │   ├── @ RubyBlockParameterNode (location: (1:32)-(1:36))
-    │   │   │   └── name: "item" (location: (1:32)-(1:36))
+    │   │   ├── @ RubyParameterNode (location: (1:32)-(1:36))
+    │   │   │   ├── name: "item" (location: (1:32)-(1:36))
+    │   │   │   ├── default_value: ∅
+    │   │   │   ├── kind: "positional"
+    │   │   │   └── required: true
     │   │   │
-    │   │   └── @ RubyBlockParameterNode (location: (1:38)-(1:43))
-    │   │       └── name: "index" (location: (1:38)-(1:43))
+    │   │   └── @ RubyParameterNode (location: (1:38)-(1:43))
+    │   │       ├── name: "index" (location: (1:38)-(1:43))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
     │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅

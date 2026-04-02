@@ -108,5 +108,69 @@ module Analyze
         <%= render AbcComponent.new(some_args: :here, that_are_being: "passed") { |component| component.with_header } %>
       HTML
     end
+
+    test "render with optional block argument" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render FormComponent.new do |form = nil| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with rest block argument" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render ListComponent.new do |*items| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with keyword rest block argument" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render ConfigComponent.new do |**options| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with block parameter argument" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render WrapperComponent.new do |&callback| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with mixed block arguments" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render ComplexComponent.new do |item, *rest, **opts, &blk| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with required keyword block argument" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render FormComponent.new do |name:| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with optional keyword block argument with default" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render FormComponent.new do |title: "hello"| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
+
+    test "render with mixed positional and keyword block arguments" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render FormComponent.new do |component, name:, title: "default"| %>
+          <p>content</p>
+        <% end %>
+      HTML
+    end
   end
 end

@@ -886,6 +886,11 @@ nodes:
           type: array
           kind: Node
 
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
         - name: rescue_clause
           type: node
           kind: ERBRescueNode
@@ -1184,11 +1189,6 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-    - name: RubyBlockParameterNode
-      fields:
-        - name: name
-          type: token
-
     - name: RubyRenderKeywordsNode
       fields:
         - name: partial
@@ -1275,7 +1275,7 @@ nodes:
         - name: block_arguments
           type: array
           kind:
-            - RubyBlockParameterNode
+            - RubyParameterNode
 
         - name: rescue_clause
           type: node
@@ -1293,7 +1293,7 @@ nodes:
           type: node
           kind: ERBEndNode
 
-    - name: RubyStrictLocalNode
+    - name: RubyParameterNode
       fields:
         - name: name
           type: token
@@ -1302,10 +1302,10 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-        - name: required
-          type: boolean
+        - name: kind
+          type: string
 
-        - name: double_splat
+        - name: required
           type: boolean
 
     - name: ERBStrictLocalsNode
@@ -1328,7 +1328,7 @@ nodes:
         - name: locals
           type: array
           kind:
-            - RubyStrictLocalNode
+            - RubyParameterNode
 
     - name: ERBYieldNode
       fields:

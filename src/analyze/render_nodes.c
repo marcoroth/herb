@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/lib/hb_allocator.h"
@@ -91,62 +92,6 @@ static pm_block_node_t* find_block_on_render_call(pm_call_node_t* render_call) {
   }
 
   return NULL;
-}
-
-static hb_array_T* extract_block_arguments(
-  pm_block_node_t* block_node,
-  pm_parser_t* parser,
-  const char* source,
-  size_t erb_content_offset,
-  const uint8_t* erb_content_source,
-  hb_allocator_T* allocator
-) {
-  if (!block_node || !block_node->parameters) { return hb_array_init(0, allocator); }
-  if (block_node->parameters->type != PM_BLOCK_PARAMETERS_NODE) { return hb_array_init(0, allocator); }
-
-  pm_block_parameters_node_t* block_parameters = (pm_block_parameters_node_t*) block_node->parameters;
-  pm_parameters_node_t* parameters = block_parameters->parameters;
-
-  if (!parameters) { return hb_array_init(0, allocator); }
-
-  size_t count = parameters->requireds.size + parameters->optionals.size + parameters->keywords.size;
-  if (parameters->rest) { count++; }
-  if (parameters->keyword_rest) { count++; }
-  if (parameters->block) { count++; }
-
-  hb_array_T* result = hb_array_init(count, allocator);
-
-  for (size_t index = 0; index < parameters->requireds.size; index++) {
-    pm_node_t* parameter = parameters->requireds.nodes[index];
-    if (parameter->type != PM_REQUIRED_PARAMETER_NODE) { continue; }
-
-    pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) parameter;
-    pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
-    if (!constant) { continue; }
-
-    char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
-
-    token_T* name_token = create_token_from_prism_node(
-      parameter,
-      name,
-      TOKEN_IDENTIFIER,
-      source,
-      erb_content_offset,
-      erb_content_source,
-      allocator
-    );
-
-    position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-    position_T end = name_token ? name_token->location.end : (position_T) { .line = 1, .column = 1 };
-
-    AST_RUBY_BLOCK_PARAMETER_NODE_T* parameter_node =
-      ast_ruby_block_parameter_node_init(name_token, start, end, hb_array_init(0, allocator), allocator);
-
-    hb_array_append(result, parameter_node);
-    hb_allocator_dealloc(allocator, name);
-  }
-
-  return result;
 }
 
 static char* extract_string_value(pm_node_t* node, hb_allocator_T* allocator) {
@@ -739,8 +684,18 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     if (inline_block) {
       const uint8_t* content_source = erb_content_source ? erb_content_source : (const uint8_t*) parser->start;
 
-      render_block_arguments =
-        extract_block_arguments(inline_block, parser, source, erb_content_offset, content_source, allocator);
+      if (inline_block->parameters && inline_block->parameters->type == PM_BLOCK_PARAMETERS_NODE) {
+        pm_block_parameters_node_t* block_parameters = (pm_block_parameters_node_t*) inline_block->parameters;
+
+        render_block_arguments = extract_parameters_from_prism(
+          block_parameters->parameters,
+          parser,
+          source,
+          erb_content_offset,
+          content_source,
+          allocator
+        );
+      }
 
       if (inline_block->body) {
         size_t body_length = (size_t) (inline_block->body->location.end - inline_block->body->location.start);
@@ -884,17 +839,6 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   AST_ERB_BLOCK_NODE_T* block_node,
   analyze_ruby_context_T* context
 ) {
-  AST_ERB_CONTENT_NODE_T content_view = {
-    .base = block_node->base,
-    .tag_opening = block_node->tag_opening,
-    .content = block_node->content,
-    .tag_closing = block_node->tag_closing,
-    .analyzed_ruby = NULL,
-    .parsed = true,
-    .valid = true,
-    .prism_node = block_node->prism_node,
-  };
-
   if (!block_node->content || hb_string_is_empty(block_node->content->value)) { return NULL; }
 
   const char* ruby_source = block_node->content->value.data;
@@ -912,6 +856,17 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
     return NULL;
   }
 
+  AST_ERB_CONTENT_NODE_T content_view = {
+    .base = block_node->base,
+    .tag_opening = block_node->tag_opening,
+    .content = block_node->content,
+    .tag_closing = block_node->tag_closing,
+    .analyzed_ruby = NULL,
+    .parsed = true,
+    .valid = true,
+    .prism_node = block_node->prism_node,
+  };
+
   size_t erb_content_offset = 0;
 
   if (context->source && block_node->content) {
@@ -920,19 +875,9 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
 
   const uint8_t* erb_content_source = (const uint8_t*) parser.start;
 
-  pm_block_node_t* prism_block = find_block_on_render_call(render_call);
-  hb_array_T* block_arguments = extract_block_arguments(
-    prism_block,
-    &parser,
-    context->source,
-    erb_content_offset,
-    erb_content_source,
-    context->allocator
-  );
-
   render_block_fields_T block_fields = {
     .block_body = block_node->body,
-    .block_arguments = block_arguments,
+    .block_arguments = block_node->block_arguments,
     .rescue_clause = block_node->rescue_clause,
     .else_clause = block_node->else_clause,
     .ensure_clause = block_node->ensure_clause,

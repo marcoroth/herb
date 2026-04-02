@@ -89,7 +89,7 @@ import {
   ERBInNode,
   ERBRenderNode,
   RubyRenderKeywordsNode,
-  RubyBlockParameterNode,
+  RubyParameterNode,
   RubyRenderLocalNode,
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
@@ -1019,7 +1019,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     // no-op: extracted metadata, nothing to print
   }
 
-  visitRubyBlockParameterNode(_node: RubyBlockParameterNode) {
+  visitRubyParameterNode(_node: RubyParameterNode) {
     // no-op: extracted metadata, nothing to print
   }
 

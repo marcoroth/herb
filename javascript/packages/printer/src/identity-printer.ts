@@ -426,10 +426,6 @@ export class IdentityPrinter extends Printer {
     // no-op: extracted metadata, nothing to print
   }
 
-  visitRubyBlockParameterNode(_node: Nodes.RubyBlockParameterNode): void {
-    // no-op: extracted metadata, nothing to print
-  }
-
   visitRubyRenderLocalNode(_node: Nodes.RubyRenderLocalNode): void {
     // extracted metadata, nothing to print
   }
@@ -438,7 +434,7 @@ export class IdentityPrinter extends Printer {
     this.printERBNode(node)
   }
 
-  visitRubyStrictLocalNode(_node: Nodes.RubyStrictLocalNode): void {
+  visitRubyParameterNode(_node: Nodes.RubyParameterNode): void {
     // extracted metadata, nothing to print
   }
 
