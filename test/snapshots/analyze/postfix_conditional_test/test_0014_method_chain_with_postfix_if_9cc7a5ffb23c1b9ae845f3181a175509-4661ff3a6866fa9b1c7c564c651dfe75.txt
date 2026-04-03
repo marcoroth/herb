@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0015_method chain with postfix if"
+source: "Analyze::PostfixConditionalTest#test_0014_method chain with postfix if"
 input: |2-
 <%= user.name.upcase if user.present? %>
 options: {transform_conditionals: true}

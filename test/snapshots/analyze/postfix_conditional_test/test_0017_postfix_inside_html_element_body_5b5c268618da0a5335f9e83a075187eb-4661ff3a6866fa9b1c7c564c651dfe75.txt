@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0018_postfix inside html element body"
+source: "Analyze::PostfixConditionalTest#test_0017_postfix inside html element body"
 input: |2-
 <div><%= 'text' if visible? %></div>
 options: {transform_conditionals: true}

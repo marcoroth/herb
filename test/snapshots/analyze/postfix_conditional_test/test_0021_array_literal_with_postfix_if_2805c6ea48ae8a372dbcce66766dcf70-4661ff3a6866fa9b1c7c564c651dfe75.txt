@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0022_array literal with postfix if"
+source: "Analyze::PostfixConditionalTest#test_0021_array literal with postfix if"
 input: |2-
 <%= [1, 2, 3] if show_list? %>
 options: {transform_conditionals: true}

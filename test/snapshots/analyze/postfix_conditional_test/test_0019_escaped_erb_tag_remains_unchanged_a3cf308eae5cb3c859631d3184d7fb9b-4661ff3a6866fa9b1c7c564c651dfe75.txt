@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0020_escaped erb tag remains unchanged"
+source: "Analyze::PostfixConditionalTest#test_0019_escaped erb tag remains unchanged"
 input: |2-
 <%%= 'text' if condition %>
 options: {transform_conditionals: true}

@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0023_hash literal with postfix unless"
+source: "Analyze::PostfixConditionalTest#test_0022_hash literal with postfix unless"
 input: |2-
 <%= { key: 'value' } unless empty? %>
 options: {transform_conditionals: true}

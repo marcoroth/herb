@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0016_compound condition with postfix if"
+source: "Analyze::PostfixConditionalTest#test_0015_compound condition with postfix if"
 input: |2-
 <%= 'admin' if user.admin? && user.active? %>
 options: {transform_conditionals: true}

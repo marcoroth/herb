@@ -11,6 +11,7 @@
 #include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
+#include "../include/analyze/ternary_conditionals.h"
 #include "../include/ast/ast_node.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
@@ -1032,6 +1033,7 @@ void herb_analyze_parse_tree(
 
   if (options && (options->transform_conditionals || options->action_view_helpers)) {
     herb_visit_node((AST_NODE_T*) document, transform_conditional_nodes, &context);
+    herb_visit_node((AST_NODE_T*) document, transform_ternary_conditional_nodes, &context);
   }
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);

@@ -60,12 +60,6 @@ module Analyze
       HTML
     end
 
-    test "ternary remains unchanged" do
-      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
-        <%= condition ? 'yes' : 'no' %>
-      HTML
-    end
-
     test "multiple statements remains unchanged" do
       assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
         <%= x = 1; x if condition %>
@@ -178,6 +172,12 @@ module Analyze
     test "link_to call with postfix if without action_view_helpers" do
       assert_parsed_snapshot(<<~HTML, transform_conditionals: true, action_view_helpers: false)
         <%= link_to("Home", root_path) if show_link? %>
+      HTML
+    end
+
+    test "ternary with postfix if" do
+      assert_parsed_snapshot(<<~HTML, transform_conditionals: true)
+        <%= (condition? ? "true" : "false") if another_condition? %>
       HTML
     end
   end

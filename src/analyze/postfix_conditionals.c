@@ -2,6 +2,7 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
+#include "../include/analyze/ternary_conditionals.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
@@ -49,20 +50,12 @@ typedef struct {
   size_t length;
 } body_info_T;
 
-static body_info_T extract_body_info(
-  pm_node_t* conditional_node,
+static body_info_T extract_statements_body_info(
+  pm_statements_node_t* statements,
   analyzed_ruby_T* analyzed,
   hb_allocator_T* allocator
 ) {
   body_info_T info = { .source = NULL, .offset_in_content = 0, .length = 0 };
-
-  pm_statements_node_t* statements = NULL;
-
-  if (conditional_node->type == PM_IF_NODE) {
-    statements = ((pm_if_node_t*) conditional_node)->statements;
-  } else if (conditional_node->type == PM_UNLESS_NODE) {
-    statements = ((pm_unless_node_t*) conditional_node)->statements;
-  }
 
   if (!statements || statements->body.size == 0) { return info; }
 
@@ -77,13 +70,39 @@ static body_info_T extract_body_info(
 
   if (start < parser_start || end > parser_start + source_length) { return info; }
 
+  const uint8_t* body_start = start;
   const uint8_t* body_end = end;
 
+  if (body_start > parser_start && *(body_start - 1) == ' ') { body_start--; }
   if (body_end < parser_start + source_length && *body_end == ' ') { body_end++; }
 
-  info.length = (size_t) (body_end - parser_start);
-  info.offset_in_content = 0;
-  info.source = hb_allocator_strndup(allocator, (const char*) parser_start, info.length);
+  info.offset_in_content = (size_t) (body_start - parser_start);
+  info.length = (size_t) (body_end - body_start);
+  info.source = hb_allocator_strndup(allocator, (const char*) body_start, info.length);
+
+  return info;
+}
+
+static body_info_T extract_body_info(
+  pm_node_t* conditional_node,
+  analyzed_ruby_T* analyzed,
+  hb_allocator_T* allocator
+) {
+  pm_statements_node_t* statements = NULL;
+
+  if (conditional_node->type == PM_IF_NODE) {
+    statements = ((pm_if_node_t*) conditional_node)->statements;
+  } else if (conditional_node->type == PM_UNLESS_NODE) {
+    statements = ((pm_unless_node_t*) conditional_node)->statements;
+  }
+
+  body_info_T info = extract_statements_body_info(statements, analyzed, allocator);
+
+  if (info.source) {
+    info.length = info.offset_in_content + info.length;
+    info.offset_in_content = 0;
+    info.source = hb_allocator_strndup(allocator, (const char*) analyzed->parser.start, info.length);
+  }
 
   return info;
 }
@@ -107,6 +126,40 @@ static char* extract_condition_source(pm_node_t* conditional_node, hb_allocator_
 static const char* condition_keyword(pm_node_t* conditional_node) {
   if (conditional_node->type == PM_IF_NODE) { return "if"; }
   if (conditional_node->type == PM_UNLESS_NODE) { return "unless"; }
+
+  return NULL;
+}
+
+static pm_if_node_t* find_nested_ternary(pm_node_t* conditional_node) {
+  pm_statements_node_t* statements = NULL;
+
+  if (conditional_node->type == PM_IF_NODE) {
+    statements = ((pm_if_node_t*) conditional_node)->statements;
+  } else if (conditional_node->type == PM_UNLESS_NODE) {
+    statements = ((pm_unless_node_t*) conditional_node)->statements;
+  }
+
+  if (!statements || statements->body.size != 1) { return NULL; }
+
+  pm_node_t* body_node = statements->body.nodes[0];
+
+  if (body_node->type == PM_PARENTHESES_NODE) {
+    pm_parentheses_node_t* parens = (pm_parentheses_node_t*) body_node;
+
+    if (!parens->body || parens->body->type != PM_STATEMENTS_NODE) { return NULL; }
+
+    pm_statements_node_t* inner_statements = (pm_statements_node_t*) parens->body;
+
+    if (inner_statements->body.size != 1) { return NULL; }
+
+    body_node = inner_statements->body.nodes[0];
+  }
+
+  if (body_node->type != PM_IF_NODE) { return NULL; }
+
+  pm_if_node_t* if_node = (pm_if_node_t*) body_node;
+
+  if (if_node->if_keyword_loc.start == NULL && if_node->subsequent != NULL) { return if_node; }
 
   return NULL;
 }
@@ -157,6 +210,14 @@ static AST_NODE_T* transform_conditional(
 
   hb_array_T* statements = hb_array_init(1, allocator);
   hb_array_append(statements, (AST_NODE_T*) body_erb_node);
+
+  pm_if_node_t* nested_ternary = find_nested_ternary(conditional_node);
+
+  if (nested_ternary) {
+    AST_NODE_T* ternary_replacement = transform_ternary_expression(erb_node, nested_ternary, allocator);
+
+    if (ternary_replacement) { hb_array_set(statements, 0, ternary_replacement); }
+  }
 
   hb_buffer_T condition_buffer;
   hb_buffer_init(&condition_buffer, 64, allocator);
