@@ -216,7 +216,7 @@ export class CLI {
         const upgradeContext: ProcessingContext = {
           projectPath: this.projectPath,
           config: upgradeConfig,
-          jobs,
+          jobs: 1,
         }
 
         await Herb.load()
