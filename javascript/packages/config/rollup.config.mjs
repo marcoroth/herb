@@ -10,6 +10,7 @@ export default [
       file: "dist/herb-config.esm.js",
       format: "esm",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
@@ -31,6 +32,7 @@ export default [
       file: "dist/herb-config.cjs",
       format: "cjs",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
