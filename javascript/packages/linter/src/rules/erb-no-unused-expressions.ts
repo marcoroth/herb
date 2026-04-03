@@ -2,12 +2,12 @@ import { ParserRule } from "../types.js"
 import { PrismVisitor } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { isERBOutputNode } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall } from "./prism-rule-utils.js"
+import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
+import { isAssignmentNode, isDebugOutputCall, isCallOnLocal } from "./prism-rule-utils.js"
 import { locationFromOffset } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ERBRenderNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 const MUTATION_METHODS = new Set([
   "<<",
@@ -23,6 +23,7 @@ const MUTATION_METHODS = new Set([
   "replace",
   "insert",
   "concat",
+  "assert_valid_keys",
 ])
 
 const SIDE_EFFECT_METHODS = new Set([
@@ -37,20 +38,25 @@ const SIDE_EFFECT_METHODS = new Set([
 
 class UnusedExpressionCollector extends PrismVisitor {
   public readonly expressions: PrismNode[] = []
+  private readonly blockLocalNames: Set<string>
+
+  constructor(blockLocalNames: Set<string> = new Set()) {
+    super()
+
+    this.blockLocalNames = blockLocalNames
+  }
 
   override visit(node: PrismNode): void {
     if (!node) return
 
-    const type: string = node.constructor?.name ?? ""
-
-    if (type === "ProgramNode" || type === "StatementsNode") {
+    if (isPrismNodeType(node, "ProgramNode") || isPrismNodeType(node, "StatementsNode")) {
       super.visit(node)
       return
     }
 
     if (isAssignmentNode(node)) return
 
-    if (this.isUnusedExpression(node, type)) {
+    if (this.isUnusedExpression(node)) {
       this.expressions.push(node)
     }
   }
@@ -67,28 +73,50 @@ class UnusedExpressionCollector extends PrismVisitor {
     return SIDE_EFFECT_METHODS.has(node.name)
   }
 
-  private isUnusedExpression(node: PrismNode, type: string): boolean {
-    if (type === "CallNode") {
+  private isUnusedExpression(node: PrismNode): boolean {
+    if (isPrismNodeType(node, "CallNode")) {
       if (node.block) return false
       if (this.isMutationCall(node)) return false
       if (this.isSideEffectCall(node)) return false
       if (isDebugOutputCall(node)) return false
+      if (this.blockLocalNames.size > 0 && isCallOnLocal(node, this.blockLocalNames)) return false
 
       return true
     }
 
     return (
-      type === "InstanceVariableReadNode" ||
-      type === "ClassVariableReadNode" ||
-      type === "GlobalVariableReadNode" ||
-      type === "LocalVariableReadNode" ||
-      type === "ConstantReadNode" ||
-      type === "ConstantPathNode"
+      isPrismNodeType(node, "InstanceVariableReadNode") ||
+      isPrismNodeType(node, "ClassVariableReadNode") ||
+      isPrismNodeType(node, "GlobalVariableReadNode") ||
+      isPrismNodeType(node, "LocalVariableReadNode") ||
+      isPrismNodeType(node, "ConstantReadNode") ||
+      isPrismNodeType(node, "ConstantPathNode")
     )
   }
 }
 
 class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
+  private renderBlockLocalNames: Set<string> = new Set()
+
+  visitERBRenderNode(node: ERBRenderNode): void {
+    const previousLocalNames = this.renderBlockLocalNames
+    const localNames = new Set(previousLocalNames)
+
+    for (const argument of node.block_arguments) {
+      if (isRubyParameterNode(argument)) {
+        const name = argument.name?.value
+
+        if (name) {
+          localNames.add(name)
+        }
+      }
+    }
+
+    this.renderBlockLocalNames = localNames
+    this.visitChildNodes(node)
+    this.renderBlockLocalNames = previousLocalNames
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     if (isERBOutputNode(node)) return
 
@@ -98,7 +126,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const source = node.source
     if (!source) return
 
-    const collector = new UnusedExpressionCollector()
+    const collector = new UnusedExpressionCollector(this.renderBlockLocalNames)
     collector.visit(prismNode)
 
     for (const expression of collector.expressions) {

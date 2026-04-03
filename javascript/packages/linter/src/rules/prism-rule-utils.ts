@@ -24,3 +24,28 @@ export function isDebugOutputCall(node: PrismNode): boolean {
 
   return false
 }
+
+export function rootReceiver(node: PrismNode): PrismNode {
+  let current = node
+
+  while (current.receiver) {
+    current = current.receiver
+  }
+
+  return current
+}
+
+export function isCallOnLocal(node: PrismNode, localNames: Set<string>): boolean {
+  const root = rootReceiver(node)
+
+  if (isPrismNodeType(root, "LocalVariableReadNode")) {
+    return localNames.has(root.name)
+  }
+
+  if (isPrismNodeType(root, "CallNode") && !root.receiver) {
+    return localNames.has(root.name)
+  }
+
+  return false
+}
+
