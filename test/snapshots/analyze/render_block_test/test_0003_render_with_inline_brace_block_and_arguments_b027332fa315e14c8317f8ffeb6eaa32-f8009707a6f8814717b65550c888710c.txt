@@ -36,8 +36,11 @@ options: {render_nodes: true}
     │   │       └── content: "component.with_header"
     │   │
     │   ├── block_arguments: (1 item)
-    │   │   └── @ RubyBlockParameterNode (location: (1:31)-(1:40))
-    │   │       └── name: "component" (location: (1:31)-(1:40))
+    │   │   └── @ RubyParameterNode (location: (1:31)-(1:40))
+    │   │       ├── name: "component" (location: (1:31)-(1:40))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
     │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅

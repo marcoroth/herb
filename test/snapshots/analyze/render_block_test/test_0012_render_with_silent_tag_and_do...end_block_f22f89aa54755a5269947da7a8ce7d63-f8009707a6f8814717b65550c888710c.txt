@@ -48,8 +48,11 @@ options: {render_nodes: true}
     │   │       └── content: "\n"
     │   │
     │   ├── block_arguments: (1 item)
-    │   │   └── @ RubyBlockParameterNode (location: (1:32)-(1:41))
-    │   │       └── name: "component" (location: (1:32)-(1:41))
+    │   │   └── @ RubyParameterNode (location: (1:32)-(1:41))
+    │   │       ├── name: "component" (location: (1:32)-(1:41))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
     │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
