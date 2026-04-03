@@ -1,0 +1,51 @@
+---
+source: "Analyze::RenderBlockTest#test_0003_render with inline brace block and arguments"
+input: |2-
+<%= render AbcComponent.new { |component| component.with_header } %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(1:68))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render AbcComponent.new { |component| component.with_header } " (location: (1:3)-(1:66))
+    │   ├── tag_closing: "%>" (location: (1:66)-(1:68))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:68))
+    │   │       ├── partial: ∅
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: "AbcComponent.new { |component| component.with_header }" (location: (1:11)-(1:65))
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: (1 item)
+    │   │   └── @ RubyLiteralNode (location: (1:42)-(1:63))
+    │   │       └── content: "component.with_header"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:31)-(1:40))
+    │   │       ├── name: "component" (location: (1:31)-(1:40))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
+    │
+    └── @ HTMLTextNode (location: (1:68)-(2:0))
+        └── content: "\n"

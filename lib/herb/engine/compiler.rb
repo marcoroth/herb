@@ -5,6 +5,12 @@ module Herb
     class Compiler < ::Herb::Visitor
       EXPRESSION_TOKEN_TYPES = [:expr, :expr_escaped, :expr_block, :expr_block_escaped].freeze
 
+      TRAILING_WHITESPACE = /[ \t]+\z/
+      TRAILING_INDENTATION = /\n[ \t]+\z/
+      TRAILING_INDENTATION_CAPTURE = /\n([ \t]+)\z/
+      WHITESPACE_ONLY = /\A[ \t]+\z/
+      WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
+
       attr_reader :tokens
 
       def initialize(engine, options = {})
@@ -93,11 +99,9 @@ module Herb
       def visit_html_attribute_value_node(node)
         push_context(:attribute_value)
 
-        add_text(node.open_quote&.value) if node.quoted
-
+        add_text(node.open_quote&.value || '"') if node.quoted
         visit_all(node.children)
-
-        add_text(node.close_quote&.value) if node.quoted
+        add_text(node.close_quote&.value || '"') if node.quoted
 
         pop_context
       end
@@ -150,9 +154,9 @@ module Herb
       end
 
       def visit_cdata_node(node)
-        add_text(node.cdata_opening.value)
+        add_text(node.tag_opening.value)
         visit_all(node.children)
-        add_text(node.cdata_closing.value)
+        add_text(node.tag_closing.value)
       end
 
       def visit_erb_content_node(node)
@@ -253,7 +257,9 @@ module Herb
                      else
                        [:expr_block, code, current_context]
                      end
+
           @last_trim_consumed_newline = false
+          @trim_next_whitespace = true if right_trim?(node)
 
           visit_all(node.body)
           visit_erb_block_end_node(node.end_node, escaped: should_escape)
@@ -269,9 +275,7 @@ module Herb
       end
 
       def visit_erb_block_end_node(node, escaped: false)
-        has_left_trim = node.tag_opening.value.start_with?("<%-")
-
-        remove_trailing_whitespace_from_last_token! if has_left_trim
+        remove_trailing_whitespace_from_last_token! if left_trim?(node)
 
         code = node.content.value.strip
 
@@ -350,9 +354,8 @@ module Herb
         check_for_escaped_erb_tag!(opening)
 
         if !skip_comment_check && erb_comment?(opening)
-          has_left_trim = opening.start_with?("<%-")
           follows_newline = leading_space_follows_newline?
-          remove_trailing_whitespace_from_last_token! if has_left_trim
+          remove_trailing_whitespace_from_last_token! if left_trim?(node)
 
           if at_line_start?
             leading_space = extract_and_remove_leading_space!
@@ -498,10 +501,9 @@ module Herb
           @last_trim_consumed_newline = false
         end
 
-        has_right_trim = node.tag_closing&.value == "-%>"
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
-        @trim_next_whitespace = true if has_right_trim
+        @trim_next_whitespace = true if right_trim?(node)
       end
 
       def indicator_for(type)
@@ -534,7 +536,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ /\A[ \t]+\z/ && preceding_token_ends_with_newline?) || last_value =~ /\n[ \t]+\z/
+          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -553,6 +555,14 @@ module Herb
         preceding[1].end_with?("\n")
       end
 
+      def left_trim?(node)
+        node.tag_opening.value == "<%-"
+      end
+
+      def right_trim?(node)
+        node.tag_closing&.value == "-%>"
+      end
+
       def last_text_token
         return unless @tokens.last && @tokens.last[0] == :text
 
@@ -565,7 +575,7 @@ module Herb
 
         text = token[1]
 
-        return Regexp.last_match(1) if text =~ /\n([ \t]+)\z/ || text =~ /\A([ \t]+)\z/
+        return Regexp.last_match(1) if text =~ TRAILING_INDENTATION_CAPTURE || text =~ WHITESPACE_ONLY_CAPTURE
 
         ""
       end
@@ -574,7 +584,12 @@ module Herb
         token = last_text_token
         return false unless token
 
-        token[1].match?(/\n[ \t]+\z/)
+        text = token[1]
+
+        return true if text.match?(TRAILING_INDENTATION)
+        return true if @last_trim_consumed_newline && text.match?(WHITESPACE_ONLY)
+
+        false
       end
 
       def extract_and_remove_leading_space!
@@ -583,9 +598,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ /\n[ \t]+\z/
-          text.sub!(/[ \t]+\z/, "")
-        elsif text =~ /\A[ \t]+\z/
+        if text =~ TRAILING_INDENTATION
+          text.sub!(TRAILING_WHITESPACE, "")
+        elsif text =~ WHITESPACE_ONLY
           text.replace("")
         end
 
@@ -595,10 +610,8 @@ module Herb
       end
 
       def apply_trim(node, code)
-        has_left_trim = node.tag_opening.value.start_with?("<%-")
-
         follows_newline = leading_space_follows_newline?
-        removed_whitespace = has_left_trim ? remove_trailing_whitespace_from_last_token! : ""
+        removed_whitespace = left_trim?(node) ? remove_trailing_whitespace_from_last_token! : ""
 
         if at_line_start?
           leading_space = extract_and_remove_leading_space!
@@ -630,12 +643,12 @@ module Herb
         return "" unless token
 
         text = token[1]
-        removed = text[/[ \t]+\z/] || ""
+        removed = text[TRAILING_WHITESPACE] || ""
 
-        if text =~ /\n[ \t]+\z/
-          text.sub!(/[ \t]+\z/, "")
+        if text =~ TRAILING_INDENTATION
+          text.sub!(TRAILING_WHITESPACE, "")
           token[1] = text
-        elsif text =~ /\A[ \t]+\z/
+        elsif text =~ WHITESPACE_ONLY
           text.replace("")
           token[1] = text
         end

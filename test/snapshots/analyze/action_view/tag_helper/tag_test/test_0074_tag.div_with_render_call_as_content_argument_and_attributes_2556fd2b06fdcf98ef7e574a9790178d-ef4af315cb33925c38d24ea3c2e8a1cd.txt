@@ -37,7 +37,7 @@ options: {action_view_helpers: true}
     │   │       │                       │       └── content: "icon_classes"
     │   │       │                       │
     │   │       │                       ├── close_quote: ∅
-    │   │       │                       └── quoted: false
+    │   │       │                       └── quoted: true
     │   │       │
     │   │       │
     │   │       │

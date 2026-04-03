@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0046_leading whitespace preserved after multiple consecutive trimmed code-only lines"
+input: "{source: \"<div>\\n  <% if true %>\\n    <% if true %>\\n      <strong>inner</strong>\\n    <% end %>\\n  <% end %>\\n  <% if true %><%= \\\"output\\\" %><% end %>\\n</div>\", locals: {}, options: {}}"
+---
+<div>
+      <strong>inner</strong>
+  output
+</div>

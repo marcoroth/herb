@@ -38,7 +38,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "wrapper_classes"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
@@ -78,7 +78,7 @@ options: {action_view_helpers: true}
     │   │   │   │       │                       │       └── content: "icon_classes"
     │   │   │   │       │                       │
     │   │   │   │       │                       ├── close_quote: ∅
-    │   │   │   │       │                       └── quoted: false
+    │   │   │   │       │                       └── quoted: true
     │   │   │   │       │
     │   │   │   │       │
     │   │   │   │       │
@@ -150,7 +150,7 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │       │                       │       └── content: "title_classes"
     │   │   │   │   │   │       │                       │
     │   │   │   │   │   │       │                       ├── close_quote: ∅
-    │   │   │   │   │   │       │                       └── quoted: false
+    │   │   │   │   │   │       │                       └── quoted: true
     │   │   │   │   │   │       │
     │   │   │   │   │   │       │
     │   │   │   │   │   │       │
@@ -202,7 +202,7 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │                       │       └── content: "message_classes"
     │   │   │   │   │   │                       │
     │   │   │   │   │   │                       ├── close_quote: ∅
-    │   │   │   │   │   │                       └── quoted: false
+    │   │   │   │   │   │                       └── quoted: true
     │   │   │   │   │   │
     │   │   │   │   │   │
     │   │   │   │   │   │

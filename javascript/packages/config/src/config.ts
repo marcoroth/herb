@@ -5,8 +5,6 @@ import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { glob } from "tinyglobby"
-
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
 import { deepMerge } from "./merge.js"
@@ -254,6 +252,8 @@ export class Config {
     if (patterns.length === 0) {
       return []
     }
+
+    const { glob } = await import("tinyglobby")
 
     return await glob(patterns, {
       cwd: searchDir,

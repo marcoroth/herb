@@ -886,6 +886,11 @@ nodes:
           type: array
           kind: Node
 
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
         - name: rescue_clause
           type: node
           kind: ERBRescueNode
@@ -1184,23 +1189,8 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-    - name: ERBRenderNode
+    - name: RubyRenderKeywordsNode
       fields:
-        - name: tag_opening
-          type: token
-
-        - name: content
-          type: token
-
-        - name: tag_closing
-          type: token
-
-        - name: analyzed_ruby
-          type: analyzed_ruby
-
-        - name: prism_node
-          type: prism_node
-
         - name: partial
           type: token
 
@@ -1257,7 +1247,53 @@ nodes:
           kind:
             - RubyRenderLocalNode
 
-    - name: RubyStrictLocalNode
+    - name: ERBRenderNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: keywords
+          type: node
+          kind: RubyRenderKeywordsNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
+    - name: RubyParameterNode
       fields:
         - name: name
           type: token
@@ -1266,10 +1302,10 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-        - name: required
-          type: boolean
+        - name: kind
+          type: string
 
-        - name: double_splat
+        - name: required
           type: boolean
 
     - name: ERBStrictLocalsNode
@@ -1292,7 +1328,7 @@ nodes:
         - name: locals
           type: array
           kind:
-            - RubyStrictLocalNode
+            - RubyParameterNode
 
     - name: ERBYieldNode
       fields:

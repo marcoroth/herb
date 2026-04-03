@@ -55,6 +55,11 @@ class LiteralCollector extends PrismVisitor {
   visitMultiWriteNode(): void {}
   visitMatchWriteNode(): void {}
 
+  // Stop traversal into control flow nodes where literals are used as return/flow values.
+  visitReturnNode(): void {}
+  visitBreakNode(): void {}
+  visitNextNode(): void {}
+
   visitArrayNode(node: PrismNodes.ArrayNode): void {
     this.literals.push(node)
   }
