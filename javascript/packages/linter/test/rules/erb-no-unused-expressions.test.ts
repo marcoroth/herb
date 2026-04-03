@@ -187,7 +187,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
-    test.skip("passes for method calls on outer block local inside nested render block", () => {
+    test("passes for method calls on outer block local inside nested render block", () => {
       expectNoOffenses(dedent`
         <%= render LayoutComponent.new do |layout| %>
           <%= render CardComponent.new do |card| %>

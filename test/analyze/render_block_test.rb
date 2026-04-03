@@ -172,5 +172,16 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "nested render blocks" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render LayoutComponent.new do |layout| %>
+          <%= render CardComponent.new do |card| %>
+            <% layout.with_sidebar %>
+            <% card.with_header %>
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end

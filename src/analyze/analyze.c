@@ -962,6 +962,7 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
     case AST_ERB_ENSURE_NODE: return ((AST_ERB_ENSURE_NODE_T*) node)->statements;
     case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->children;
     case AST_ERB_WHEN_NODE: return ((AST_ERB_WHEN_NODE_T*) node)->statements;
+    case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->body;
     default: return NULL;
   }
 }
