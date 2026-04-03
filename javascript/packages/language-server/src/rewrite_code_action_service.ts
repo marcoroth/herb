@@ -12,7 +12,8 @@ import type { Node, HTMLElementNode } from "@herb-tools/core"
 
 interface CollectedElement {
   node: HTMLElementNode
-  range: Range
+  elementRange: Range
+  openTagRange: Range
 }
 
 class ElementCollector extends Visitor {
@@ -23,12 +24,14 @@ class ElementCollector extends Visitor {
     if (node.element_source && node.element_source !== "HTML" && isERBOpenTagNode(node.open_tag)) {
       this.actionViewElements.push({
         node,
-        range: nodeToRange(node),
+        elementRange: nodeToRange(node),
+        openTagRange: nodeToRange(node.open_tag),
       })
     } else if (isHTMLOpenTagNode(node.open_tag) && node.open_tag.tag_name) {
       this.htmlElements.push({
         node,
-        range: nodeToRange(node),
+        elementRange: nodeToRange(node),
+        openTagRange: nodeToRange(node.open_tag),
       })
     }
 
@@ -55,7 +58,7 @@ export class RewriteCodeActionService {
     const actions: CodeAction[] = []
 
     for (const element of collector.actionViewElements) {
-      if (!this.rangesOverlap(element.range, requestedRange)) continue
+      if (!this.rangesOverlap(element.openTagRange, requestedRange)) continue
 
       const action = this.createActionViewToHTMLAction(document, element)
 
@@ -65,7 +68,7 @@ export class RewriteCodeActionService {
     }
 
     for (const element of collector.htmlElements) {
-      if (!this.rangesOverlap(element.range, requestedRange)) continue
+      if (!this.rangesOverlap(element.openTagRange, requestedRange)) continue
 
       const action = this.createHTMLToActionViewAction(document, element)
 
@@ -78,7 +81,7 @@ export class RewriteCodeActionService {
   }
 
   private createActionViewToHTMLAction(document: TextDocument, element: CollectedElement): CodeAction | null {
-    const originalText = document.getText(element.range)
+    const originalText = document.getText(element.elementRange)
 
     const parseResult = this.parserService.parseContent(originalText, {
       action_view_helpers: true,
@@ -96,7 +99,7 @@ export class RewriteCodeActionService {
 
     const edit: WorkspaceEdit = {
       changes: {
-        [document.uri]: [TextEdit.replace(element.range, rewrittenText)]
+        [document.uri]: [TextEdit.replace(element.elementRange, rewrittenText)]
       }
     }
 
@@ -113,7 +116,7 @@ export class RewriteCodeActionService {
   }
 
   private createHTMLToActionViewAction(document: TextDocument, element: CollectedElement): CodeAction | null {
-    const originalText = document.getText(element.range)
+    const originalText = document.getText(element.elementRange)
 
     const parseResult = this.parserService.parseContent(originalText, {
       track_whitespace: true,
@@ -130,7 +133,7 @@ export class RewriteCodeActionService {
 
     const edit: WorkspaceEdit = {
       changes: {
-        [document.uri]: [TextEdit.replace(element.range, rewrittenText)]
+        [document.uri]: [TextEdit.replace(element.elementRange, rewrittenText)]
       }
     }
 
