@@ -36,6 +36,7 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (3:27)-(5:2))
     │   │           │   │       └── content: "\n    Yep\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
     │   │           │   ├── rescue_clause: ∅
     │   │           │   ├── else_clause: ∅
     │   │           │   ├── ensure_clause: ∅

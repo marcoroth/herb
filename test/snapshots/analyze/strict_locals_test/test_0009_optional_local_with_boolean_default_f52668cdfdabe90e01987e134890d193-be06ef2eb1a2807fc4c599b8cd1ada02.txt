@@ -11,14 +11,14 @@ options: {strict_locals: true}
     │   ├── content: " locals: (admin: false) " (location: (1:3)-(1:27))
     │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
     │   └── locals: (1 item)
-    │       └── @ RubyStrictLocalNode (location: (1:13)-(1:25))
+    │       └── @ RubyParameterNode (location: (1:13)-(1:25))
     │           ├── name: "admin" (location: (1:13)-(1:19))
     │           ├── default_value:
     │           │   └── @ RubyLiteralNode (location: (1:20)-(1:25))
     │           │       └── content: "false"
     │           │
-    │           ├── required: false
-    │           └── double_splat: false
+    │           ├── kind: "keyword"
+    │           └── required: false
     │
     │
     └── @ HTMLTextNode (location: (1:29)-(2:0))

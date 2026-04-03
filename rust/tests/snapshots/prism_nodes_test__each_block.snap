@@ -64,6 +64,12 @@ expression: result.inspect()
         │           └── @ LocalVariableReadNode (location: (0,30)-(0,34))
         │               ├── name: :item
         │               └── depth: 0
+        ├── block_arguments: (1 item)
+        │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+        │       ├── name: "item" (location: (1:18)-(1:22))
+        │       ├── default_value: ∅
+        │       ├── kind: "positional"
+        │       └── required: true
         ├── rescue_clause: ∅
         ├── else_clause: ∅
         ├── ensure_clause: ∅

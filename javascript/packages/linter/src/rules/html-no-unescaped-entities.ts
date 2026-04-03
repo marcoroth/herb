@@ -1,12 +1,12 @@
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, DynamicAttributeStaticValueParams, DynamicAttributeDynamicValueParams, locationFromContentOffset } from "./rule-utils.js"
-import { hasAttributeValue, isLiteralNode, getTagLocalName, Location, isValidCharacterReference } from "@herb-tools/core"
+import { BaseRuleVisitor, locationFromContentOffset } from "./rule-utils.js"
+import { getTagLocalName, isValidCharacterReference } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode, LiteralNode, Node, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
 
 interface UnescapedEntitiesAutofixContext extends BaseAutofixContext {
-  node: Mutable<HTMLTextNode> | Mutable<LiteralNode>
+  node: Mutable<HTMLTextNode>
   character: string
   entity: string
 }
@@ -73,7 +73,9 @@ function findUnescapedOccurrences(value: string): UnescapedOccurrence[] {
 
 const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
 
-class HTMLNoUnescapedEntitiesVisitor extends AttributeVisitorMixin<UnescapedEntitiesAutofixContext> {
+// Per the HTML5 spec (§13.2.5.36, §13.2.5.37), no characters are parse errors
+// in quoted attribute values. Entity checks only apply to text content.
+class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAutofixContext> {
   private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -118,69 +120,6 @@ class HTMLNoUnescapedEntitiesVisitor extends AttributeVisitorMixin<UnescapedEnti
     }
 
     super.visitHTMLTextNode(node)
-  }
-
-  private checkAttributeValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode): void {
-    if (!hasAttributeValue(attributeNode)) return
-    if (!attributeValue) return
-
-    const literalNode = attributeNode.value!.children.find((child) => isLiteralNode(child))
-    if (!literalNode || !isLiteralNode(literalNode)) return
-
-    const occurrences = findUnescapedOccurrences(attributeValue)
-    const startLine = attributeNode.value!.location.start.line
-    const startColumn = attributeNode.value!.location.start.column
-
-    for (const { character, entity, offset } of occurrences) {
-      const location = locationFromContentOffset(startLine, startColumn, attributeValue, offset)
-
-      this.addOffense(
-        `Attribute \`${attributeName}\` contains an unescaped \`${character}\` character. Use \`${entity}\` instead.`,
-        location,
-        { node: literalNode, character, entity, unsafe: true },
-      )
-    }
-  }
-
-  private checkLiteralValueNodes(attributeName: string, valueNodes: Node[], attributeNode: HTMLAttributeNode): void {
-    if (!hasAttributeValue(attributeNode)) return
-
-    for (const node of valueNodes) {
-      if (!isLiteralNode(node)) continue
-      if (!node.content) continue
-
-      const occurrences = findUnescapedOccurrences(node.content)
-      const startLine = node.location.start.line
-      const startColumn = node.location.start.column
-
-      for (const { character, entity, offset } of occurrences) {
-        const location = locationFromContentOffset(startLine, startColumn, node.content, offset)
-
-        this.addOffense(
-          `Attribute \`${attributeName}\` contains an unescaped \`${character}\` character. Use \`${entity}\` instead.`,
-          location,
-          { node, character, entity, unsafe: true },
-        )
-      }
-    }
-  }
-
-  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
-    this.checkAttributeValue(attributeName, attributeValue, attributeNode)
-  }
-
-  protected checkStaticAttributeDynamicValue({ attributeName, valueNodes, attributeNode }: StaticAttributeDynamicValueParams): void {
-    this.checkLiteralValueNodes(attributeName, valueNodes, attributeNode)
-  }
-
-  protected checkDynamicAttributeStaticValue({ combinedName, attributeValue, attributeNode }: DynamicAttributeStaticValueParams): void {
-    const attributeName = combinedName || "unknown"
-    this.checkAttributeValue(attributeName, attributeValue, attributeNode)
-  }
-
-  protected checkDynamicAttributeDynamicValue({ combinedName, valueNodes, attributeNode }: DynamicAttributeDynamicValueParams): void {
-    const attributeName = combinedName || "unknown"
-    this.checkLiteralValueNodes(attributeName, valueNodes, attributeNode)
   }
 }
 

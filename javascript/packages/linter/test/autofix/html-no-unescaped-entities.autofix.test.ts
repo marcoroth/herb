@@ -20,37 +20,24 @@ describe("html-no-unescaped-entities autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test("replaces < and > in attribute value", () => {
+  test("does not modify attribute values", () => {
     const input = '<div data-html="<br>"></div>'
-    const expected = '<div data-html="&lt;br&gt;"></div>'
 
     const linter = new Linter(Herb, [HTMLNoUnescapedEntitiesRule])
     const result = linter.autofix(input, undefined, undefined, { includeUnsafe: true })
 
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(2)
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
   })
 
-  test("replaces bare & in attribute value", () => {
+  test("does not modify bare & in attribute value", () => {
     const input = '<a href="/path?a=1&b=2">Link</a>'
-    const expected = '<a href="/path?a=1&amp;b=2">Link</a>'
 
     const linter = new Linter(Herb, [HTMLNoUnescapedEntitiesRule])
     const result = linter.autofix(input, undefined, undefined, { includeUnsafe: true })
 
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
-  })
-
-  test("replaces multiple unescaped characters in one attribute", () => {
-    const input = '<div data-html="<b>bold & italic</b>"></div>'
-    const expected = '<div data-html="&lt;b&gt;bold &amp; italic&lt;/b&gt;"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoUnescapedEntitiesRule])
-    const result = linter.autofix(input, undefined, undefined, { includeUnsafe: true })
-
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(5)
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
   })
 
   test("replaces multiple bare & in text content", () => {

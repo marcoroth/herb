@@ -88,6 +88,61 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for content_for with arguments", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title, "Status" %>
+        <% content_for :description, page_description %>
+      `)
+    })
+
+    test("passes for content_for with single argument", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title %>
+      `)
+    })
+
+    test("passes for content_for with curly brace block", () => {
+      expectNoOffenses(dedent`
+        <% content_for(:head) { %>
+          <title>Page Title</title>
+        <% } %>
+      `)
+    })
+
+    test("passes for provide with arguments", () => {
+      expectNoOffenses(dedent`
+        <% provide :title, "Status" %>
+        <% provide :description, page_description %>
+      `)
+    })
+
+    test("passes for flush", () => {
+      expectNoOffenses(dedent`
+        <% flush %>
+      `)
+    })
+
+    test("passes for Turbo helpers", () => {
+      expectNoOffenses(dedent`
+        <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+        <% turbo_exempts_page_from_cache %>
+        <% turbo_exempts_page_from_preview %>
+        <% turbo_page_requires_reload %>
+      `)
+    })
+
+    test("passes for assert_valid_keys", () => {
+      expectNoOffenses(dedent`
+        <%
+          link.assert_valid_keys(:href, :name, :leading_icon, :target)
+          href = link.fetch(:href)
+          name = link.fetch(:name)
+          icon = link[:leading_icon]
+          target = link[:target]
+        %>
+      `)
+    })
+
     test("passes for ERB comments", () => {
       expectNoOffenses(dedent`
         <%# This is a comment %>
@@ -104,6 +159,42 @@ describe("ERBNoUnusedExpressionsRule", () => {
       expectNoOffenses(dedent`
         <% render partial: "header" %>
         <% render "footer" %>
+      `)
+    })
+
+    test("passes for method calls on render block locals", () => {
+      expectNoOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component.with_header(classes: "title").with_content("My blog") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for simple method call on render block local", () => {
+      expectNoOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component.with_header %>
+        <% end %>
+      `)
+    })
+
+    test("passes for multiple block locals in render", () => {
+      expectNoOffenses(dedent`
+        <%= render TableComponent.new do |table, index| %>
+          <% table.with_header %>
+          <% index.to_s %>
+        <% end %>
+      `)
+    })
+
+    test("passes for method calls on outer block local inside nested render block", () => {
+      expectNoOffenses(dedent`
+        <%= render LayoutComponent.new do |layout| %>
+          <%= render CardComponent.new do |card| %>
+            <% layout.with_sidebar %>
+            <% card.with_header %>
+          <% end %>
+        <% end %>
       `)
     })
 
@@ -268,6 +359,30 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
       assertOffenses(dedent`
         <% User.count %>
+      `)
+    })
+
+    test("still fails for non-block-local calls inside render block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% @user.name %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for bare block local read inside render block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `component` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component %>
+        <% end %>
       `)
     })
   })

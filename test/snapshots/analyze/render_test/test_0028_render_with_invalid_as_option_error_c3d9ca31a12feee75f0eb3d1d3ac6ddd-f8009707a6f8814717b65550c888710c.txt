@@ -15,24 +15,33 @@ options: {render_nodes: true}
     │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
     │   ├── content: " render partial: "product", collection: @products, as: "Invalid-Name" " (location: (1:3)-(1:73))
     │   ├── tag_closing: "%>" (location: (1:73)-(1:75))
-    │   ├── partial: "product" (location: (1:20)-(1:29))
-    │   ├── template_path: ∅
-    │   ├── layout: ∅
-    │   ├── file: ∅
-    │   ├── inline_template: ∅
-    │   ├── body: ∅
-    │   ├── plain: ∅
-    │   ├── html: ∅
-    │   ├── renderable: ∅
-    │   ├── collection: "@products" (location: (1:43)-(1:52))
-    │   ├── object: ∅
-    │   ├── as_name: "Invalid-Name" (location: (1:58)-(1:72))
-    │   ├── spacer_template: ∅
-    │   ├── formats: ∅
-    │   ├── variants: ∅
-    │   ├── handlers: ∅
-    │   ├── content_type: ∅
-    │   └── locals: []
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(1:75))
+    │   │       ├── partial: "product" (location: (1:20)-(1:29))
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: "@products" (location: (1:43)-(1:52))
+    │   │       ├── object: ∅
+    │   │       ├── as_name: "Invalid-Name" (location: (1:58)-(1:72))
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: []
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node: ∅
     │
     └── @ HTMLTextNode (location: (1:75)-(2:0))
         └── content: "\n"
