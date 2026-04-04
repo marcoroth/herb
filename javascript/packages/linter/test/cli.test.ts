@@ -287,6 +287,31 @@ describe("CLI Output Formatting", () => {
         try { unlinkSync(configPath) } catch {}
       }
     })
+
+    test("skips excluded file in subdirectory with README.md project indicator", () => {
+      const { mkdirSync, rmSync } = require("fs")
+      const subdir = "test/fixtures/subdir"
+
+      try {
+        mkdirSync(subdir, { recursive: true })
+        writeFileSync(`${subdir}/README.md`, "# Subdir\n")
+        writeFileSync(`${subdir}/excluded.html.erb`, '<img>\n')
+
+        writeFileSync(configPath, dedent`
+          linter:
+            exclude:
+              - "subdir/**/*.html.erb"
+        `)
+
+        const { output, exitCode } = runLinter("subdir/excluded.html.erb")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { rmSync(subdir, { recursive: true, force: true }) } catch {}
+      }
+    })
   })
 
   describe("Multiple File Arguments", () => {
