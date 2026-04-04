@@ -115,6 +115,12 @@ test/fixtures/ignored.html.erb:8:8
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
 `;
 
+exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.
+   Use --force to lint it anyway."
+`;
+
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
 "::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.9.4::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
