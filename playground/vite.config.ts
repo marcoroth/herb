@@ -66,14 +66,22 @@ export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
   },
-  esbuild: {
-    keepNames: true,
+  resolve: {
+    dedupe: ['@ruby/prism'],
   },
   build: {
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
         prism: resolve(__dirname, 'prism/index.html'),
+      },
+      output: {
+        minify: {
+          compress: true,
+          mangle: {
+            keepNames: true,
+          },
+        },
       },
     },
   },
