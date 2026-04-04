@@ -867,7 +867,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const analysis = this.currentElement && this.elementFormattingAnalysis.get(this.currentElement)
     const closeTagInline = analysis?.closeTagInline
 
-    if (this.currentElement && closeTagInline) {
+    if (this.inContentPreservingContext || (this.currentElement && closeTagInline)) {
       this.pushToLastLine(closingTag)
     } else {
       this.pushWithIndent(closingTag)
