@@ -109,7 +109,7 @@ test/fixtures/ignored.html.erb:8:8
   Offenses     5 errors | 2 warnings (7 offenses across 1 file)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -170,7 +170,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -193,7 +193,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
@@ -255,7 +255,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
   Checked      1 file
   Offenses     4 errors | 0 warnings (4 offenses across 1 file)
   Fixable      4 offenses | 3 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -297,7 +297,7 @@ test/fixtures/ignored.html.erb:6:14
   Checked      1 file
   Offenses     2 errors | 0 warnings | 3 ignored (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -364,7 +364,7 @@ test/fixtures/parser-errors.html.erb:2:16
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -580,7 +580,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -678,7 +678,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Checked      1 file
   Offenses     4 errors | 2 warnings (6 offenses across 1 file)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -718,7 +718,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -729,7 +729,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -787,7 +787,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -824,7 +824,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -874,7 +874,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 83,
+    "ruleCount": 84,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -895,7 +895,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 83,
+    "ruleCount": 84,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -968,7 +968,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 83,
+    "ruleCount": 84,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1029,7 +1029,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1049,7 +1049,7 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1069,7 +1069,7 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1083,7 +1083,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1097,7 +1097,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1133,7 +1133,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1266,7 +1266,7 @@ test/fixtures/disabled-1.html.erb:14:19
   Checked      1 file
   Offenses     2 errors | 6 warnings | 8 ignored (8 offenses across 1 file)
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1470,7 +1470,7 @@ test/fixtures/disabled-2.html.erb:2:44
   Checked      1 file
   Offenses     6 errors | 7 warnings | 5 ignored (13 offenses across 1 file)
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled
+  Rules        84 enabled | 10 not enabled
 
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
@@ -1531,5 +1531,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Checked      1 file
   Offenses     2 errors | 1 warning (3 offenses across 1 file)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        83 enabled | 10 not enabled"
+  Rules        84 enabled | 10 not enabled"
 `;

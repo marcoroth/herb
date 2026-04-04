@@ -25,6 +25,7 @@ import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-condit
 import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
 import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoMultipleStatementsRule } from "./rules/erb-no-multiple-statements.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
@@ -128,6 +129,7 @@ export const rules: RuleClass[] = [
   ERBNoInstanceVariablesInPartialsRule,
   ERBNoInterpolatedClassNamesRule,
   ERBNoJavascriptTagHelperRule,
+  ERBNoMultipleStatementsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
