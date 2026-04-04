@@ -21,7 +21,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: [],
+    external: [/@ruby\/prism/],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -41,7 +41,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: [],
+    external: [/@ruby\/prism/],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),

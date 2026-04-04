@@ -17,6 +17,7 @@ export default {
       sourcemap: true,
     },
   ],
+  external: [/@ruby\/prism/],
   plugins: [
     nodeResolve(),
     json(),
