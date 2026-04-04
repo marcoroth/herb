@@ -66,6 +66,9 @@ export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
   },
+  esbuild: {
+    keepNames: true,
+  },
   build: {
     rollupOptions: {
       input: {
