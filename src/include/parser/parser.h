@@ -23,6 +23,7 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool analyze;
   bool strict;
   bool action_view_helpers;
+  bool transform_conditionals;
   bool render_nodes;
   bool strict_locals;
   bool prism_program;
