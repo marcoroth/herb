@@ -10,7 +10,7 @@ options: {transform_conditionals: true}
     │   ├── tag_opening: "<%%=" (location: (1:0)-(1:4))
     │   ├── content: " 'text' if condition " (location: (1:4)-(1:25))
     │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
-    │   ├── parsed: false
+    │   ├── parsed: true
     │   └── valid: true
     │
     └── @ HTMLTextNode (location: (1:27)-(2:0))
