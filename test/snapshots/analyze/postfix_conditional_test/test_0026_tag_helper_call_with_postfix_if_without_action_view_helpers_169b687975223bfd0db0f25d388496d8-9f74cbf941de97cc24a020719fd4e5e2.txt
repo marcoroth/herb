@@ -1,0 +1,31 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0026_tag helper call with postfix if without action_view_helpers"
+input: |2-
+<%= tag.div("hello", class: "container") if show? %>
+options: {transform_conditionals: true, action_view_helpers: false}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:52))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if show? " (location: (1:0)-(1:52))
+    │   ├── tag_closing: "%>" (location: (1:52)-(1:52))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:52))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.div("hello", class: "container") " (location: (1:3)-(1:41))
+    │   │       ├── tag_closing: "%>" (location: (1:50)-(1:52))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:52)-(1:52))
+    │           ├── tag_opening: "<%" (location: (1:52)-(1:52))
+    │           ├── content: " end " (location: (1:52)-(1:52))
+    │           └── tag_closing: "%>" (location: (1:52)-(1:52))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:52)-(2:0))
+        └── content: "\n"
