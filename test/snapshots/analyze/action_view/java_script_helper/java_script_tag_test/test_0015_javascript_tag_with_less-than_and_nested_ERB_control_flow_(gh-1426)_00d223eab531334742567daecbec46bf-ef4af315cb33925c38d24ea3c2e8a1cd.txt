@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0014_javascript_tag with less-than and nested ERB control flow (gh-1426)"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0015_javascript_tag with less-than and nested ERB control flow (gh-1426)"
 input: |2-
 <%= javascript_tag do %>
   if (n<o.length) {

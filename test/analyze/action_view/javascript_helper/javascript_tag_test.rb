@@ -48,9 +48,17 @@ module Analyze::ActionView::JavaScriptHelper
       HTML
     end
 
-    test "javascript_tag with URL in comment (gh-991)" do
+    test "javascript_tag with URL in comment using non-output tag (gh-991)" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <% javascript_tag do %>
+          // <http://example.com>
+        <% end %>
+      HTML
+    end
+
+    test "javascript_tag with URL in comment using output tag (gh-991)" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_tag do %>
           // <http://example.com>
         <% end %>
       HTML

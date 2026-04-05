@@ -1,34 +1,50 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { isERBOpenTagNode, isERBOutputNode } from "@herb-tools/core"
+import { isERBOutputNode, PrismVisitor } from "@herb-tools/core"
+import { isActionViewHelperCall } from "./action-view-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLElementNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, ERBNode, ParserOptions, PrismNode } from "@herb-tools/core"
+
+class ActionViewHelperCallCollector extends PrismVisitor {
+  public readonly matches: { helperName: string }[] = []
+
+  visitCallNode(node: PrismNode): void {
+    const match = isActionViewHelperCall(node)
+
+    if (match) {
+      this.matches.push(match)
+    }
+
+    this.visitChildNodes(node)
+  }
+}
 
 class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    this.checkActionViewHelper(node)
-    super.visitHTMLElementNode(node)
+  visitERBNode(node: ERBNode): void {
+    this.checkSilentHelper(node)
+    super.visitERBNode(node)
   }
 
-  private checkActionViewHelper(node: HTMLElementNode): void {
-    if (!node.element_source || node.element_source === "HTML") return
-    if (!isERBOpenTagNode(node.open_tag)) return
-    if (isERBOutputNode(node.open_tag)) return
+  private checkSilentHelper(node: ERBNode): void {
+    if (isERBOutputNode(node)) return
 
-    const tagOpening = node.open_tag.tag_opening?.value
-
+    const tagOpening = node.tag_opening?.value
     if (!tagOpening) return
     if (tagOpening.startsWith("<%%")) return
 
-    const helperName = node.element_source.includes("#")
-      ? node.element_source.split("#").pop()
-      : node.element_source
+    const prismNode = (node as any).prismNode
+    if (!prismNode) return
 
-    this.addOffense(
-      `Avoid using \`${tagOpening} %>\` with \`${helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
-      node.open_tag.location,
-    )
+    const collector = new ActionViewHelperCallCollector()
+    collector.visit(prismNode)
+
+    for (const match of collector.matches) {
+      this.addOffense(
+        `Avoid using \`${tagOpening} %>\` with \`${match.helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
+        node.location,
+      )
+    }
   }
 }
 
@@ -45,8 +61,8 @@ export class ActionViewNoSilentHelperRule extends ParserRule {
 
   get parserOptions(): Partial<ParserOptions> {
     return {
-      track_whitespace: true,
       action_view_helpers: true,
+      prism_nodes: true,
     }
   }
 

@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0017_javascript_tag block CDATA matches ActionView output"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0018_javascript_tag block CDATA matches ActionView output"
 input: "{source: \"<%= javascript_tag do %>\\n  alert(1)\\n<% end %>\\n\", locals: {}, options: {}}"
 ---
 <script>

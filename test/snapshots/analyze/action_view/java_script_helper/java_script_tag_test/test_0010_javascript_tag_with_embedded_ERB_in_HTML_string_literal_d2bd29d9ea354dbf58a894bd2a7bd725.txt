@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0009_javascript_tag with embedded ERB in HTML string literal"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0010_javascript_tag with embedded ERB in HTML string literal"
 input: |2-
 <%= javascript_tag do %>
   const html = "<code><%= content %></code>";

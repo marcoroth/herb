@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0008_javascript_tag with HTML-like content in block (gh-1426)"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0009_javascript_tag with HTML-like content in block (gh-1426)"
 input: |2-
 <%= javascript_tag do %>
   n <o.length
