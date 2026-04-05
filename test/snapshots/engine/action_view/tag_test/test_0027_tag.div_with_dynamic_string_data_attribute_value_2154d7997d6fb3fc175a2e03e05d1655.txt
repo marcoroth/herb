@@ -2,5 +2,5 @@
 source: "Engine::ActionView::TagTest#test_0027_tag.div with dynamic string data attribute value"
 input: "{source: \"<%= tag.div data: { controller: controller_name } %>\", options: {precompile: true, locals: {controller_name: \"navigation\"}}}"
 ---
-_buf = ::String.new; _buf << '<div data-controller="'.freeze; _buf << ::Herb::Engine.attr(((controller_name).is_a?(String) || (controller_name).is_a?(Symbol) ? (controller_name) : (controller_name).to_json)); _buf << '"></div>'.freeze;
+_buf = ::String.new; _buf << '<div data-controller="'.freeze; _buf << ::Herb::Engine.attr((::Herb::Engine.nested_attribute_value(controller_name))); _buf << '"></div>'.freeze;
 _buf.to_s

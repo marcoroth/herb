@@ -2,5 +2,5 @@
 source: "Engine::ActionView::TagTest#test_0030_tag.div with dynamic boolean data attribute value"
 input: "{source: \"<%= tag.div data: { loading: is_loading } %>\", options: {precompile: true, locals: {is_loading: true}}}"
 ---
-_buf = ::String.new; _buf << '<div data-loading="'.freeze; _buf << ::Herb::Engine.attr(((is_loading).is_a?(String) || (is_loading).is_a?(Symbol) ? (is_loading) : (is_loading).to_json)); _buf << '"></div>'.freeze;
+_buf = ::String.new; _buf << '<div data-loading="'.freeze; _buf << ::Herb::Engine.attr((::Herb::Engine.nested_attribute_value(is_loading))); _buf << '"></div>'.freeze;
 _buf.to_s

@@ -318,15 +318,9 @@ static AST_HTML_ATTRIBUTE_NODE_T* create_attribute_from_value(
       if (is_nested) {
         hb_buffer_T json_buffer;
         hb_buffer_init(&json_buffer, value_length + 64, allocator);
-        hb_buffer_append(&json_buffer, "(");
+        hb_buffer_append(&json_buffer, "::Herb::Engine.nested_attribute_value(");
         hb_buffer_append(&json_buffer, raw_content);
-        hb_buffer_append(&json_buffer, ").is_a?(String) || (");
-        hb_buffer_append(&json_buffer, raw_content);
-        hb_buffer_append(&json_buffer, ").is_a?(Symbol) ? (");
-        hb_buffer_append(&json_buffer, raw_content);
-        hb_buffer_append(&json_buffer, ") : (");
-        hb_buffer_append(&json_buffer, raw_content);
-        hb_buffer_append(&json_buffer, ").to_json");
+        hb_buffer_append(&json_buffer, ")");
 
         ruby_content = hb_buffer_value(&json_buffer);
       }

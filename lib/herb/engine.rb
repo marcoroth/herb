@@ -200,6 +200,10 @@ module Herb
       end
     end
 
+    def self.nested_attribute_value(value)
+      value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
+    end
+
     def self.comment?(code)
       code.include?("#")
     end
