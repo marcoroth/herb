@@ -558,6 +558,8 @@ module Herb
 
       attr_reader output: Symbol
 
+      attr_reader visibility: String
+
       attr_reader tag_name: String?
 
       attr_reader detect_style: Symbol
@@ -578,8 +580,8 @@ module Herb
 
       attr_reader aliases: Array[String]
 
-      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
-      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
 
       # : () -> bool
       def void?: () -> bool

@@ -38,6 +38,7 @@ export interface HelperEntry {
   readonly source: string
   readonly gem: string
   readonly output: HelperOutput
+  readonly visibility: "public" | "internal"
   readonly tagName: string | null
   readonly isVoid: boolean
   readonly supportsBlock: boolean
@@ -61,6 +62,7 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   source: "<%= helper.source %>",
   gem: "<%= helper.gem %>",
   output: "<%= helper.output %>",
+  visibility: "<%= helper.visibility %>",
   tagName: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
   isVoid: <%= helper.void? %>,
   supportsBlock: <%= helper.supports_block %>,
