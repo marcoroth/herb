@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0002_double percent escapes erb tag"
+input: "{source: \"<%%= 'literal' %>\", locals: {}, options: {}}"
+---
+literal
