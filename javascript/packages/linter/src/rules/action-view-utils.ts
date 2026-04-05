@@ -1,19 +1,11 @@
-import { isPrismNodeType } from "@herb-tools/core"
+import { isPrismNodeType, getHelperEntries } from "@herb-tools/core"
 import type { PrismNode } from "@herb-tools/core"
 
-// TODO: use Action View Helper Registry
-export const ACTION_VIEW_HELPER_NAMES = new Set([
-  "content_tag",
-  "link_to",
-  "turbo_frame_tag",
-  "javascript_tag",
-  "javascript_include_tag",
-  "image_tag",
-  "button_to",
-  "form_with",
-  "form_for",
-  "form_tag",
-])
+const ACTION_VIEW_HELPER_NAMES = new Set(
+  getHelperEntries()
+    .filter(helper => helper.output === "html" && helper.visibility === "public" && helper.name !== "tag")
+    .flatMap(helper => [helper.name, ...helper.aliases])
+)
 
 export function isTagBuilderCall(prismNode: PrismNode): boolean {
   if (!isPrismNodeType(prismNode, "CallNode")) return false
