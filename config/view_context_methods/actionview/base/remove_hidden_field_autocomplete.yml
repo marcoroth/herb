@@ -1,0 +1,8 @@
+---
+name: remove_hidden_field_autocomplete
+source: "ActionView::Base#remove_hidden_field_autocomplete"
+gem: actionview
+category: base
+output: boolean
+description: |-
+  Returns whether hidden fields include `autocomplete="off"` to prevent browser autofill.

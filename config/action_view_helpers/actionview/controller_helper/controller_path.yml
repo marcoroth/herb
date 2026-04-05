@@ -1,0 +1,16 @@
+---
+name: controller_path
+source: "ActionView::Helpers::ControllerHelper#controller_path"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the full path of the current controller including namespace. Delegated to the controller.
+signature: "controller_path"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

@@ -1,0 +1,169 @@
+export enum HelperType {
+<%- helpers.each do |helper| -%>
+  <%= helper.camel_case_name %> = "<%= helper.name %>",
+<%- end -%>
+}
+
+export type HelperDetectStyle = "call_name" | "receiver_call"
+export type HelperOutput = "html" | "text" | "url" | "boolean" | "void" | "object"
+
+export interface HelperArgument {
+  readonly name: string
+  readonly position: number
+  readonly type: string
+  readonly optional: boolean
+  readonly default: string | null
+  readonly splat: boolean
+  readonly description: string
+}
+
+export interface HelperOption {
+  readonly name: string
+  readonly type: string
+  readonly mapsTo: string | null
+  readonly description: string
+}
+
+export interface HelperImplicitAttribute {
+  readonly name: string
+  readonly source: string
+  readonly sourceWithBlock: string | null
+  readonly wrapper: string
+  readonly skipWrappingFor: string[]
+}
+
+export interface HelperEntry {
+  readonly name: string
+  readonly type: HelperType
+  readonly source: string
+  readonly gem: string
+  readonly output: HelperOutput
+  readonly tagName: string | null
+  readonly isVoid: boolean
+  readonly supportsBlock: boolean
+  readonly preferredForTag: boolean
+  readonly supported: boolean
+  readonly detectStyle: HelperDetectStyle
+  readonly description: string
+  readonly signature: string
+  readonly documentationURL: string
+  readonly implicitAttribute: HelperImplicitAttribute | null
+  readonly arguments: HelperArgument[]
+  readonly options: HelperOption[]
+  readonly specialBehaviors: string[]
+  readonly aliases: string[]
+}
+
+<%- helpers.each do |helper| -%>
+const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
+  name: "<%= helper.name %>",
+  type: HelperType.<%= helper.camel_case_name %>,
+  source: "<%= helper.source %>",
+  gem: "<%= helper.gem %>",
+  output: "<%= helper.output %>",
+  tagName: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
+  isVoid: <%= helper.void? %>,
+  supportsBlock: <%= helper.supports_block %>,
+  preferredForTag: <%= helper.preferred_for_tag %>,
+  supported: <%= helper.supported %>,
+  detectStyle: "<%= helper.detect_style || "call_name" %>",
+  description: "<%= helper.escaped_description %>",
+  signature: "<%= helper.escaped_signature %>",
+  documentationURL: "<%= helper.documentation_url %>",
+  <%- if helper.implicit_attribute? -%>
+  implicitAttribute: {
+    name: "<%= helper.implicit_attribute.name %>",
+    source: "<%= helper.implicit_attribute.source %>",
+    sourceWithBlock: <%= helper.implicit_attribute.source_with_block ? "\"#{helper.implicit_attribute.source_with_block}\"" : "null" %>,
+    wrapper: "<%= helper.implicit_attribute.wrapper %>",
+    skipWrappingFor: [<%= helper.implicit_attribute.skip_wrapping_for.map { |s| "\"#{s}\"" }.join(", ") %>],
+  },
+  <%- else -%>
+  implicitAttribute: null,
+  <%- end -%>
+  arguments: [
+  <%- helper.arguments.each do |arg| -%>
+    { name: "<%= arg.name %>", position: <%= arg.position %>, type: "<%= arg.type_display %>", optional: <%= arg.optional %>, default: <%= arg.default ? "\"#{arg.escaped_default}\"" : "null" %>, splat: <%= arg.splat %>, description: "<%= arg.escaped_description %>" },
+  <%- end -%>
+  ],
+  options: [
+  <%- helper.options.each do |opt| -%>
+    { name: "<%= opt.name %>", type: "<%= opt.type_display %>", mapsTo: <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "null" %>, description: "<%= opt.escaped_description %>" },
+  <%- end -%>
+  ],
+  specialBehaviors: [<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],
+  aliases: [<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>],
+}
+
+<%- end -%>
+export const HELPER_REGISTRY: Record<string, HelperEntry> = {
+<%- helpers.each do |helper| -%>
+  "<%= helper.name %>": <%= helper.lower_camel_case_name %>Entry,
+<%- helper.aliases.each do |alias_name| -%>
+  "<%= alias_name %>": <%= helper.lower_camel_case_name %>Entry,
+<%- end -%>
+<%- end -%>
+}
+
+export const HELPER_BY_SOURCE: Record<string, HelperEntry> = {
+<%- helpers.each do |helper| -%>
+  "<%= helper.source %>": <%= helper.lower_camel_case_name %>Entry,
+<%- end -%>
+}
+
+<%- helpers_by_tag = helpers.select(&:static_tag_name?).group_by(&:tag_name) -%>
+export const HELPERS_BY_TAG_NAME: Record<string, HelperEntry[]> = {
+<%- helpers_by_tag.each do |tag_name, helpers| -%>
+  "<%= tag_name %>": [<%= helpers.map { |h| "#{h.lower_camel_case_name}Entry" }.join(", ") %>],
+<%- end -%>
+}
+
+export function getHelper(name: string): HelperEntry | undefined {
+  return HELPER_REGISTRY[name]
+}
+
+export function getHelperBySource(source: string): HelperEntry | undefined {
+  return HELPER_BY_SOURCE[source]
+}
+
+export function getHelperEntries(): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY)
+}
+
+export function isHelperSupported(name: string): boolean {
+  return HELPER_REGISTRY[name]?.supported ?? false
+}
+
+export function helperExists(name: string): boolean {
+  return name in HELPER_REGISTRY
+}
+
+export function getHelpersForTag(tagName: string): HelperEntry[] {
+  return HELPERS_BY_TAG_NAME[tagName] ?? []
+}
+
+export function findPreferredHelperForTag(tagName: string): HelperEntry | undefined {
+  const helpers = HELPERS_BY_TAG_NAME[tagName]
+  if (!helpers) return undefined
+
+  return helpers.find(entry => entry.preferredForTag) ?? helpers[0]
+}
+
+export function getSupportedHelpers(): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => entry.supported)
+}
+
+export function getHelpersByGem(gem: string): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => entry.gem === gem)
+}
+
+export function getHelpersByOutput(output: HelperOutput): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => entry.output === output)
+}
+
+export function getHelpersByModule(moduleName: string): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => {
+    const parts = entry.source.split("#")[0].split("::")
+    return parts[parts.length - 1] === moduleName
+  })
+}

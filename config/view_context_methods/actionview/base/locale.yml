@@ -1,0 +1,8 @@
+---
+name: locale
+source: "ActionView::Base#locale"
+gem: actionview
+category: base
+output: text
+description: |-
+  Returns the current locale for the view.

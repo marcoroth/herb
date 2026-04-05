@@ -1,0 +1,24 @@
+---
+name: number_to_human_size
+source: "ActionView::Helpers::NumberHelper#number_to_human_size"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Formats the bytes in number into a more human-friendly representation (e.g. 1.2 MB).
+signature: "number_to_human_size(number, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/NumberHelper.html#method-i-number_to_human_size"
+tag: null
+arguments:
+  - name: number
+    position: 1
+    type: integer
+    optional: false
+    description: "The byte count to format."
+options:
+  - name: precision
+    type: integer
+    description: "Number of significant digits. Defaults to 3."
+special_behaviors: []

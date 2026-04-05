@@ -1,0 +1,31 @@
+---
+name: fields
+source: "ActionView::Helpers::FormHelper#fields"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Scopes input fields to a model object. This is the model-bound version used inside `form_with`/`form_for` blocks to create a nested scope for form fields.
+signature: "fields(scope = nil, model: nil, **options, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-fields"
+tag: null
+arguments:
+  - name: scope
+    position: 1
+    type: [string, symbol]
+    optional: true
+    default: "nil"
+    description: "The scope for the fields (used as the parameter key prefix)."
+options:
+  - name: model
+    type: object
+    description: "The model object to scope fields to."
+  - name: index
+    type: [string, integer]
+    description: "Index for nested attributes."
+  - name: builder
+    type: class
+    description: "Custom form builder class."
+special_behaviors: []

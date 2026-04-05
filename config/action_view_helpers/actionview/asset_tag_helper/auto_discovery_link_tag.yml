@@ -1,0 +1,44 @@
+---
+name: auto_discovery_link_tag
+source: "ActionView::Helpers::AssetTagHelper#auto_discovery_link_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<link>` tag that browsers and feed readers can use to auto-detect an RSS, Atom, or JSON feed. The type can be `:rss` (default), `:atom`, or `:json`.
+signature: "auto_discovery_link_tag(type = :rss, url_options = {}, tag_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-auto_discovery_link_tag"
+tag:
+  name: link
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: type
+    position: 1
+    type: symbol
+    optional: true
+    default: ":rss"
+    description: "Feed type (`:rss`, `:atom`, or `:json`)."
+  - name: url_options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "URL options hash passed to `url_for`."
+  - name: tag_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<link>` tag."
+options:
+  - name: title
+    type: string
+    description: "Title of the feed."
+  - name: type
+    type: string
+    description: "MIME type override."
+special_behaviors: []

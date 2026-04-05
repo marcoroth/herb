@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor, Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLOpenTagNode } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLOpenTagNode, HELPER_BY_SOURCE, findPreferredHelperForTag } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange } from "./range_utils"
 
@@ -103,7 +103,9 @@ export class RewriteCodeActionService {
       }
     }
 
-    const tagName = element.node.tag_name?.value
+    const elementSource = element.node.element_source
+    const helper = elementSource ? HELPER_BY_SOURCE[elementSource] : undefined
+    const tagName = helper?.tagName ?? element.node.tag_name?.value
     const title = tagName
       ? `Herb: Convert to \`<${tagName}>\``
       : "Herb: Convert to HTML"
@@ -138,19 +140,13 @@ export class RewriteCodeActionService {
     }
 
     const tagName = element.node.tag_name?.value
-    const isAnchor = tagName === "a"
-    const isTurboFrame = tagName === "turbo-frame"
-    const isImg = tagName === "img"
+    const helper = tagName ? findPreferredHelperForTag(tagName) : undefined
     const methodName = tagName?.replace(/-/g, "_")
-    const title = isAnchor
-      ? "Herb: Convert to `link_to`"
-      : isTurboFrame
-        ? "Herb: Convert to `turbo_frame_tag`"
-        : isImg
-          ? "Herb: Convert to `image_tag`"
-          : methodName
-            ? `Herb: Convert to \`tag.${methodName}\``
-            : "Herb: Convert to tag helper"
+    const title = helper
+      ? `Herb: Convert to \`${helper.name}\``
+      : methodName
+        ? `Herb: Convert to \`tag.${methodName}\``
+        : "Herb: Convert to tag helper"
 
     return {
       title,

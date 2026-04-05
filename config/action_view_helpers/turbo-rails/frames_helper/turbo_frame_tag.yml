@@ -1,0 +1,50 @@
+---
+name: turbo_frame_tag
+source: "Turbo::FramesHelper#turbo_frame_tag"
+gem: turbo-rails
+output: html
+visibility: public
+supported: true
+supports_block: true
+description: |-
+  Returns a `<turbo-frame>` element. The first argument becomes the id attribute. Non-string and non-symbol values are automatically wrapped in `dom_id()`.
+signature: "turbo_frame_tag(*ids, src: nil, target: nil, **attributes, &block)"
+documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/FramesHelper:turbo_frame_tag"
+tag:
+  name: turbo-frame
+  is_void: false
+  preferred: true
+  detect_style: call_name
+  implicit_attribute:
+    name: id
+    source: first_arg
+    wrapper: dom_id
+    skip_wrapping_for:
+      - string
+      - symbol
+      - dom_id_call
+content: null
+attributes_arg: keywords
+transform_style: generic
+arguments:
+  - name: ids
+    position: 1
+    type: [string, symbol, object]
+    optional: false
+    splat: true
+    description: "Frame ID or object(s) passed to `dom_id`."
+options:
+  - name: src
+    type: string
+    description: "URL to lazy-load the frame content from."
+  - name: target
+    type: string
+    description: "Target frame for navigation (_top or a frame id)."
+  - name: loading
+    type: symbol
+    description: "Loading strategy (`:eager` or `:lazy`)."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

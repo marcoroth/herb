@@ -1,0 +1,35 @@
+---
+name: highlight
+source: "ActionView::Helpers::TextHelper#highlight"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Highlights occurrences of phrases in text by inserting a highlight tag around them.
+signature: "highlight(text, phrases, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-highlight"
+tag: null
+arguments:
+  - name: text
+    position: 1
+    type: string
+    optional: false
+    description: "The text to search."
+  - name: phrases
+    position: 2
+    type: [string, array]
+    optional: false
+    description: "Phrase(s) to highlight."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash."
+options:
+  - name: highlighter
+    type: string
+    description: "HTML tag to wrap highlights in. Defaults to `<mark>`."
+special_behaviors: []

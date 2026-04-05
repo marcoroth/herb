@@ -1,0 +1,1142 @@
+# Generated from lib/herb/action_view/helper_registry.rb with RBS::Inline
+
+module Herb
+  module ActionView
+    module HelperType
+      ACTION_CABLE_META_TAG: ::Symbol
+
+      CONTENT_SECURITY_POLICY_P: ::Symbol
+
+      CONTENT_SECURITY_POLICY_NONCE: ::Symbol
+
+      POLYMORPHIC_PATH: ::Symbol
+
+      POLYMORPHIC_URL: ::Symbol
+
+      FORM_AUTHENTICITY_TOKEN: ::Symbol
+
+      PROTECT_AGAINST_FORGERY_P: ::Symbol
+
+      RENDER_ACTION_TEXT_CONTENT: ::Symbol
+
+      SANITIZE_ACTION_TEXT_CONTENT: ::Symbol
+
+      RICH_TEXTAREA_TAG: ::Symbol
+
+      ERROR_MESSAGE: ::Symbol
+
+      ERROR_WRAPPING: ::Symbol
+
+      OBJECT: ::Symbol
+
+      APPLY_STYLESHEET_MEDIA_DEFAULT: ::Symbol
+
+      AUDIO_TAG: ::Symbol
+
+      AUTO_DISCOVERY_LINK_TAG: ::Symbol
+
+      AUTO_INCLUDE_NONCE: ::Symbol
+
+      AUTO_INCLUDE_NONCE_FOR_SCRIPTS: ::Symbol
+
+      AUTO_INCLUDE_NONCE_FOR_STYLES: ::Symbol
+
+      FAVICON_LINK_TAG: ::Symbol
+
+      IMAGE_DECODING: ::Symbol
+
+      IMAGE_LOADING: ::Symbol
+
+      IMAGE_TAG: ::Symbol
+
+      JAVASCRIPT_INCLUDE_TAG: ::Symbol
+
+      PICTURE_TAG: ::Symbol
+
+      PRELOAD_LINK_TAG: ::Symbol
+
+      PRELOAD_LINKS_HEADER: ::Symbol
+
+      STYLESHEET_LINK_TAG: ::Symbol
+
+      VIDEO_TAG: ::Symbol
+
+      ASSET_PATH: ::Symbol
+
+      ASSET_URL: ::Symbol
+
+      AUDIO_PATH: ::Symbol
+
+      AUDIO_URL: ::Symbol
+
+      COMPUTE_ASSET_EXTNAME: ::Symbol
+
+      COMPUTE_ASSET_HOST: ::Symbol
+
+      COMPUTE_ASSET_PATH: ::Symbol
+
+      FONT_PATH: ::Symbol
+
+      FONT_URL: ::Symbol
+
+      IMAGE_PATH: ::Symbol
+
+      IMAGE_URL: ::Symbol
+
+      JAVASCRIPT_PATH: ::Symbol
+
+      JAVASCRIPT_URL: ::Symbol
+
+      PUBLIC_COMPUTE_ASSET_PATH: ::Symbol
+
+      STYLESHEET_PATH: ::Symbol
+
+      STYLESHEET_URL: ::Symbol
+
+      VIDEO_PATH: ::Symbol
+
+      VIDEO_URL: ::Symbol
+
+      ATOM_FEED: ::Symbol
+
+      CACHE: ::Symbol
+
+      CACHE_FRAGMENT_NAME: ::Symbol
+
+      CACHE_IF: ::Symbol
+
+      CACHE_UNLESS: ::Symbol
+
+      CACHING_P: ::Symbol
+
+      DIGEST_PATH_FROM_TEMPLATE: ::Symbol
+
+      FRAGMENT_FOR: ::Symbol
+
+      FRAGMENT_NAME_WITH_DIGEST: ::Symbol
+
+      READ_FRAGMENT_FOR: ::Symbol
+
+      UNCACHEABLE_BANG: ::Symbol
+
+      WRITE_FRAGMENT_FOR: ::Symbol
+
+      CAPTURE: ::Symbol
+
+      CONTENT_FOR: ::Symbol
+
+      CONTENT_FOR_P: ::Symbol
+
+      PROVIDE: ::Symbol
+
+      WITH_OUTPUT_BUFFER: ::Symbol
+
+      PREPEND_CONTENT_EXFILTRATION_PREVENTION: ::Symbol
+
+      PREVENT_CONTENT_EXFILTRATION: ::Symbol
+
+      ACTION_NAME: ::Symbol
+
+      ASSIGN_CONTROLLER: ::Symbol
+
+      CONTROLLER: ::Symbol
+
+      CONTROLLER_NAME: ::Symbol
+
+      CONTROLLER_PATH: ::Symbol
+
+      COOKIES: ::Symbol
+
+      FLASH: ::Symbol
+
+      HEADERS: ::Symbol
+
+      LOGGER: ::Symbol
+
+      PARAMS: ::Symbol
+
+      REQUEST: ::Symbol
+
+      REQUEST_FORGERY_PROTECTION_TOKEN: ::Symbol
+
+      RESPONSE: ::Symbol
+
+      SESSION: ::Symbol
+
+      CSP_META_TAG: ::Symbol
+
+      CSRF_META_TAGS: ::Symbol
+
+      DATE_SELECT: ::Symbol
+
+      DATETIME_SELECT: ::Symbol
+
+      DISTANCE_OF_TIME_IN_WORDS: ::Symbol
+
+      RELATIVE_TIME_IN_WORDS: ::Symbol
+
+      SELECT_DATE: ::Symbol
+
+      SELECT_DATETIME: ::Symbol
+
+      SELECT_DAY: ::Symbol
+
+      SELECT_HOUR: ::Symbol
+
+      SELECT_MINUTE: ::Symbol
+
+      SELECT_MONTH: ::Symbol
+
+      SELECT_SECOND: ::Symbol
+
+      SELECT_TIME: ::Symbol
+
+      SELECT_YEAR: ::Symbol
+
+      TIME_AGO_IN_WORDS: ::Symbol
+
+      TIME_SELECT: ::Symbol
+
+      TIME_TAG: ::Symbol
+
+      DEBUG: ::Symbol
+
+      APPLY_FORM_FOR_OPTIONS_BANG: ::Symbol
+
+      BUTTON: ::Symbol
+
+      CHECKBOX: ::Symbol
+
+      COLOR_FIELD: ::Symbol
+
+      DATE_FIELD: ::Symbol
+
+      DATETIME_FIELD: ::Symbol
+
+      EMAIL_FIELD: ::Symbol
+
+      EMITTED_HIDDEN_ID_P: ::Symbol
+
+      FIELDS: ::Symbol
+
+      FIELDS_FOR: ::Symbol
+
+      FILE_FIELD: ::Symbol
+
+      FORM_FOR: ::Symbol
+
+      FORM_WITH: ::Symbol
+
+      FORM_WITH_GENERATES_IDS: ::Symbol
+
+      FORM_WITH_GENERATES_REMOTE_FORMS: ::Symbol
+
+      HIDDEN_FIELD: ::Symbol
+
+      LABEL: ::Symbol
+
+      MONTH_FIELD: ::Symbol
+
+      MULTIPART: ::Symbol
+
+      MULTIPLE_FILE_FIELD_INCLUDE_HIDDEN: ::Symbol
+
+      NUMBER_FIELD: ::Symbol
+
+      PASSWORD_FIELD: ::Symbol
+
+      RADIO_BUTTON: ::Symbol
+
+      RANGE_FIELD: ::Symbol
+
+      SEARCH_FIELD: ::Symbol
+
+      SUBMIT: ::Symbol
+
+      TELEPHONE_FIELD: ::Symbol
+
+      TEXT_FIELD: ::Symbol
+
+      TEXTAREA: ::Symbol
+
+      TIME_FIELD: ::Symbol
+
+      URL_FIELD: ::Symbol
+
+      WEEK_FIELD: ::Symbol
+
+      COLLECTION_CHECKBOXES: ::Symbol
+
+      COLLECTION_RADIO_BUTTONS: ::Symbol
+
+      COLLECTION_SELECT: ::Symbol
+
+      GROUPED_COLLECTION_SELECT: ::Symbol
+
+      GROUPED_OPTIONS_FOR_SELECT: ::Symbol
+
+      OPTION_GROUPS_FROM_COLLECTION_FOR_SELECT: ::Symbol
+
+      OPTIONS_FOR_SELECT: ::Symbol
+
+      OPTIONS_FROM_COLLECTION_FOR_SELECT: ::Symbol
+
+      SELECT: ::Symbol
+
+      TIME_ZONE_OPTIONS_FOR_SELECT: ::Symbol
+
+      TIME_ZONE_SELECT: ::Symbol
+
+      WEEKDAY_OPTIONS_FOR_SELECT: ::Symbol
+
+      WEEKDAY_SELECT: ::Symbol
+
+      BUTTON_TAG: ::Symbol
+
+      CHECKBOX_TAG: ::Symbol
+
+      COLOR_FIELD_TAG: ::Symbol
+
+      DATE_FIELD_TAG: ::Symbol
+
+      DATETIME_FIELD_TAG: ::Symbol
+
+      DEFAULT_ENFORCE_UTF8: ::Symbol
+
+      EMAIL_FIELD_TAG: ::Symbol
+
+      EMBED_AUTHENTICITY_TOKEN_IN_REMOTE_FORMS: ::Symbol
+
+      FIELD_ID: ::Symbol
+
+      FIELD_NAME: ::Symbol
+
+      FIELD_SET_TAG: ::Symbol
+
+      FILE_FIELD_TAG: ::Symbol
+
+      FORM_TAG: ::Symbol
+
+      HIDDEN_FIELD_TAG: ::Symbol
+
+      IMAGE_SUBMIT_TAG: ::Symbol
+
+      LABEL_TAG: ::Symbol
+
+      MONTH_FIELD_TAG: ::Symbol
+
+      NUMBER_FIELD_TAG: ::Symbol
+
+      PASSWORD_FIELD_TAG: ::Symbol
+
+      RADIO_BUTTON_TAG: ::Symbol
+
+      RANGE_FIELD_TAG: ::Symbol
+
+      SEARCH_FIELD_TAG: ::Symbol
+
+      SELECT_TAG: ::Symbol
+
+      SUBMIT_TAG: ::Symbol
+
+      TELEPHONE_FIELD_TAG: ::Symbol
+
+      TEXT_FIELD_TAG: ::Symbol
+
+      TEXTAREA_TAG: ::Symbol
+
+      TIME_FIELD_TAG: ::Symbol
+
+      URL_FIELD_TAG: ::Symbol
+
+      UTF8_ENFORCER_TAG: ::Symbol
+
+      WEEK_FIELD_TAG: ::Symbol
+
+      ESCAPE_JAVASCRIPT: ::Symbol
+
+      JAVASCRIPT_CDATA_SECTION: ::Symbol
+
+      JAVASCRIPT_TAG: ::Symbol
+
+      NUMBER_TO_CURRENCY: ::Symbol
+
+      NUMBER_TO_HUMAN: ::Symbol
+
+      NUMBER_TO_HUMAN_SIZE: ::Symbol
+
+      NUMBER_TO_PERCENTAGE: ::Symbol
+
+      NUMBER_TO_PHONE: ::Symbol
+
+      NUMBER_WITH_DELIMITER: ::Symbol
+
+      NUMBER_WITH_PRECISION: ::Symbol
+
+      RAW: ::Symbol
+
+      SAFE_JOIN: ::Symbol
+
+      TO_SENTENCE: ::Symbol
+
+      DOM_CLASS: ::Symbol
+
+      DOM_ID: ::Symbol
+
+      DOM_TARGET: ::Symbol
+
+      MODEL_NAME_FROM_RECORD_OR_CLASS: ::Symbol
+
+      RENDER: ::Symbol
+
+      SANITIZE: ::Symbol
+
+      SANITIZE_CSS: ::Symbol
+
+      SANITIZER_VENDOR: ::Symbol
+
+      STRIP_LINKS: ::Symbol
+
+      STRIP_TAGS: ::Symbol
+
+      CDATA_SECTION: ::Symbol
+
+      CONTENT_TAG: ::Symbol
+
+      ESCAPE_ONCE: ::Symbol
+
+      TAG: ::Symbol
+
+      TOKEN_LIST: ::Symbol
+
+      CONCAT: ::Symbol
+
+      CURRENT_CYCLE: ::Symbol
+
+      CYCLE: ::Symbol
+
+      EXCERPT: ::Symbol
+
+      HIGHLIGHT: ::Symbol
+
+      PLURALIZE: ::Symbol
+
+      RESET_CYCLE: ::Symbol
+
+      SAFE_CONCAT: ::Symbol
+
+      SIMPLE_FORMAT: ::Symbol
+
+      TRUNCATE: ::Symbol
+
+      WORD_WRAP: ::Symbol
+
+      DEBUG_MISSING_TRANSLATION: ::Symbol
+
+      LOCALIZE: ::Symbol
+
+      TRANSLATE: ::Symbol
+
+      BUTTON_TO: ::Symbol
+
+      BUTTON_TO_GENERATES_BUTTON_TAG: ::Symbol
+
+      CURRENT_PAGE_P: ::Symbol
+
+      LINK_TO: ::Symbol
+
+      LINK_TO_IF: ::Symbol
+
+      LINK_TO_UNLESS: ::Symbol
+
+      LINK_TO_UNLESS_CURRENT: ::Symbol
+
+      MAIL_TO: ::Symbol
+
+      PHONE_TO: ::Symbol
+
+      SMS_TO: ::Symbol
+
+      URL_FOR: ::Symbol
+
+      TURBO_EXEMPTS_PAGE_FROM_CACHE: ::Symbol
+
+      TURBO_EXEMPTS_PAGE_FROM_CACHE_TAG: ::Symbol
+
+      TURBO_EXEMPTS_PAGE_FROM_PREVIEW: ::Symbol
+
+      TURBO_EXEMPTS_PAGE_FROM_PREVIEW_TAG: ::Symbol
+
+      TURBO_PAGE_REQUIRES_RELOAD: ::Symbol
+
+      TURBO_PAGE_REQUIRES_RELOAD_TAG: ::Symbol
+
+      TURBO_REFRESH_METHOD_TAG: ::Symbol
+
+      TURBO_REFRESH_SCROLL_TAG: ::Symbol
+
+      TURBO_REFRESHES_WITH: ::Symbol
+
+      TURBO_FRAME_TAG: ::Symbol
+
+      TURBO_INCLUDE_TAGS: ::Symbol
+
+      TURBO_STREAM_ACTION_TAG: ::Symbol
+
+      TURBO_STREAM_REFRESH_TAG: ::Symbol
+
+      TURBO_STREAM: ::Symbol
+
+      TURBO_STREAM_FROM: ::Symbol
+
+      ALL: Array[Symbol]
+    end
+
+    class HelperArgument
+      attr_reader name: String
+
+      attr_reader position: Integer
+
+      attr_reader type: String
+
+      attr_reader default: String?
+
+      attr_reader description: String
+
+      # : (String, Integer, String, bool, String?, bool, String) -> void
+      def initialize: (String, Integer, String, bool, String?, bool, String) -> void
+
+      # : () -> bool
+      def optional?: () -> bool
+
+      # : () -> bool
+      def splat?: () -> bool
+    end
+
+    class HelperOption
+      attr_reader name: String
+
+      attr_reader type: String
+
+      attr_reader maps_to: String?
+
+      attr_reader description: String
+
+      # : (String, String, String?, String) -> void
+      def initialize: (String, String, String?, String) -> void
+
+      # : () -> bool
+      def maps_to_data_attribute?: () -> bool
+
+      # : () -> bool
+      def maps_to_aria_attribute?: () -> bool
+    end
+
+    class HelperImplicitAttribute
+      attr_reader name: String
+
+      attr_reader source: String
+
+      attr_reader source_with_block: String?
+
+      attr_reader wrapper: String
+
+      attr_reader skip_wrapping_for: Array[String]
+
+      # : (String, String, String?, String, Array[String]) -> void
+      def initialize: (String, String, String?, String, Array[String]) -> void
+    end
+
+    class HelperEntry
+      attr_reader name: String
+
+      attr_reader type: Symbol
+
+      attr_reader source: String
+
+      attr_reader gem: String
+
+      attr_reader output: Symbol
+
+      attr_reader tag_name: String?
+
+      attr_reader detect_style: Symbol
+
+      attr_reader description: String
+
+      attr_reader signature: String
+
+      attr_reader documentation_url: String
+
+      attr_reader implicit_attribute: HelperImplicitAttribute?
+
+      attr_reader arguments: Array[HelperArgument]
+
+      attr_reader options: Array[HelperOption]
+
+      attr_reader special_behaviors: Array[Symbol]
+
+      attr_reader aliases: Array[String]
+
+      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+
+      # : () -> bool
+      def void?: () -> bool
+
+      # : () -> bool
+      def supports_block?: () -> bool
+
+      # : () -> bool
+      def preferred_for_tag?: () -> bool
+
+      # : () -> bool
+      def supported?: () -> bool
+
+      # : () -> bool
+      def static_tag_name?: () -> bool
+
+      # : () -> bool
+      def implicit_attribute?: () -> bool
+
+      # : () -> bool
+      def call_name_detect?: () -> bool
+
+      # : () -> bool
+      def receiver_call_detect?: () -> bool
+    end
+
+    module HelperRegistry
+      ACTION_CABLE_META_TAG: HelperEntry
+
+      CONTENT_SECURITY_POLICY_P: HelperEntry
+
+      CONTENT_SECURITY_POLICY_NONCE: HelperEntry
+
+      POLYMORPHIC_PATH: HelperEntry
+
+      POLYMORPHIC_URL: HelperEntry
+
+      FORM_AUTHENTICITY_TOKEN: HelperEntry
+
+      PROTECT_AGAINST_FORGERY_P: HelperEntry
+
+      RENDER_ACTION_TEXT_CONTENT: HelperEntry
+
+      SANITIZE_ACTION_TEXT_CONTENT: HelperEntry
+
+      RICH_TEXTAREA_TAG: HelperEntry
+
+      ERROR_MESSAGE: HelperEntry
+
+      ERROR_WRAPPING: HelperEntry
+
+      OBJECT: HelperEntry
+
+      APPLY_STYLESHEET_MEDIA_DEFAULT: HelperEntry
+
+      AUDIO_TAG: HelperEntry
+
+      AUTO_DISCOVERY_LINK_TAG: HelperEntry
+
+      AUTO_INCLUDE_NONCE: HelperEntry
+
+      AUTO_INCLUDE_NONCE_FOR_SCRIPTS: HelperEntry
+
+      AUTO_INCLUDE_NONCE_FOR_STYLES: HelperEntry
+
+      FAVICON_LINK_TAG: HelperEntry
+
+      IMAGE_DECODING: HelperEntry
+
+      IMAGE_LOADING: HelperEntry
+
+      IMAGE_TAG: HelperEntry
+
+      JAVASCRIPT_INCLUDE_TAG: HelperEntry
+
+      PICTURE_TAG: HelperEntry
+
+      PRELOAD_LINK_TAG: HelperEntry
+
+      PRELOAD_LINKS_HEADER: HelperEntry
+
+      STYLESHEET_LINK_TAG: HelperEntry
+
+      VIDEO_TAG: HelperEntry
+
+      ASSET_PATH: HelperEntry
+
+      ASSET_URL: HelperEntry
+
+      AUDIO_PATH: HelperEntry
+
+      AUDIO_URL: HelperEntry
+
+      COMPUTE_ASSET_EXTNAME: HelperEntry
+
+      COMPUTE_ASSET_HOST: HelperEntry
+
+      COMPUTE_ASSET_PATH: HelperEntry
+
+      FONT_PATH: HelperEntry
+
+      FONT_URL: HelperEntry
+
+      IMAGE_PATH: HelperEntry
+
+      IMAGE_URL: HelperEntry
+
+      JAVASCRIPT_PATH: HelperEntry
+
+      JAVASCRIPT_URL: HelperEntry
+
+      PUBLIC_COMPUTE_ASSET_PATH: HelperEntry
+
+      STYLESHEET_PATH: HelperEntry
+
+      STYLESHEET_URL: HelperEntry
+
+      VIDEO_PATH: HelperEntry
+
+      VIDEO_URL: HelperEntry
+
+      ATOM_FEED: HelperEntry
+
+      CACHE: HelperEntry
+
+      CACHE_FRAGMENT_NAME: HelperEntry
+
+      CACHE_IF: HelperEntry
+
+      CACHE_UNLESS: HelperEntry
+
+      CACHING_P: HelperEntry
+
+      DIGEST_PATH_FROM_TEMPLATE: HelperEntry
+
+      FRAGMENT_FOR: HelperEntry
+
+      FRAGMENT_NAME_WITH_DIGEST: HelperEntry
+
+      READ_FRAGMENT_FOR: HelperEntry
+
+      UNCACHEABLE_BANG: HelperEntry
+
+      WRITE_FRAGMENT_FOR: HelperEntry
+
+      CAPTURE: HelperEntry
+
+      CONTENT_FOR: HelperEntry
+
+      CONTENT_FOR_P: HelperEntry
+
+      PROVIDE: HelperEntry
+
+      WITH_OUTPUT_BUFFER: HelperEntry
+
+      PREPEND_CONTENT_EXFILTRATION_PREVENTION: HelperEntry
+
+      PREVENT_CONTENT_EXFILTRATION: HelperEntry
+
+      ACTION_NAME: HelperEntry
+
+      ASSIGN_CONTROLLER: HelperEntry
+
+      CONTROLLER: HelperEntry
+
+      CONTROLLER_NAME: HelperEntry
+
+      CONTROLLER_PATH: HelperEntry
+
+      COOKIES: HelperEntry
+
+      FLASH: HelperEntry
+
+      HEADERS: HelperEntry
+
+      LOGGER: HelperEntry
+
+      PARAMS: HelperEntry
+
+      REQUEST: HelperEntry
+
+      REQUEST_FORGERY_PROTECTION_TOKEN: HelperEntry
+
+      RESPONSE: HelperEntry
+
+      SESSION: HelperEntry
+
+      CSP_META_TAG: HelperEntry
+
+      CSRF_META_TAGS: HelperEntry
+
+      DATE_SELECT: HelperEntry
+
+      DATETIME_SELECT: HelperEntry
+
+      DISTANCE_OF_TIME_IN_WORDS: HelperEntry
+
+      RELATIVE_TIME_IN_WORDS: HelperEntry
+
+      SELECT_DATE: HelperEntry
+
+      SELECT_DATETIME: HelperEntry
+
+      SELECT_DAY: HelperEntry
+
+      SELECT_HOUR: HelperEntry
+
+      SELECT_MINUTE: HelperEntry
+
+      SELECT_MONTH: HelperEntry
+
+      SELECT_SECOND: HelperEntry
+
+      SELECT_TIME: HelperEntry
+
+      SELECT_YEAR: HelperEntry
+
+      TIME_AGO_IN_WORDS: HelperEntry
+
+      TIME_SELECT: HelperEntry
+
+      TIME_TAG: HelperEntry
+
+      DEBUG: HelperEntry
+
+      APPLY_FORM_FOR_OPTIONS_BANG: HelperEntry
+
+      BUTTON: HelperEntry
+
+      CHECKBOX: HelperEntry
+
+      COLOR_FIELD: HelperEntry
+
+      DATE_FIELD: HelperEntry
+
+      DATETIME_FIELD: HelperEntry
+
+      EMAIL_FIELD: HelperEntry
+
+      EMITTED_HIDDEN_ID_P: HelperEntry
+
+      FIELDS: HelperEntry
+
+      FIELDS_FOR: HelperEntry
+
+      FILE_FIELD: HelperEntry
+
+      FORM_FOR: HelperEntry
+
+      FORM_WITH: HelperEntry
+
+      FORM_WITH_GENERATES_IDS: HelperEntry
+
+      FORM_WITH_GENERATES_REMOTE_FORMS: HelperEntry
+
+      HIDDEN_FIELD: HelperEntry
+
+      LABEL: HelperEntry
+
+      MONTH_FIELD: HelperEntry
+
+      MULTIPART: HelperEntry
+
+      MULTIPLE_FILE_FIELD_INCLUDE_HIDDEN: HelperEntry
+
+      NUMBER_FIELD: HelperEntry
+
+      PASSWORD_FIELD: HelperEntry
+
+      RADIO_BUTTON: HelperEntry
+
+      RANGE_FIELD: HelperEntry
+
+      SEARCH_FIELD: HelperEntry
+
+      SUBMIT: HelperEntry
+
+      TELEPHONE_FIELD: HelperEntry
+
+      TEXT_FIELD: HelperEntry
+
+      TEXTAREA: HelperEntry
+
+      TIME_FIELD: HelperEntry
+
+      URL_FIELD: HelperEntry
+
+      WEEK_FIELD: HelperEntry
+
+      COLLECTION_CHECKBOXES: HelperEntry
+
+      COLLECTION_RADIO_BUTTONS: HelperEntry
+
+      COLLECTION_SELECT: HelperEntry
+
+      GROUPED_COLLECTION_SELECT: HelperEntry
+
+      GROUPED_OPTIONS_FOR_SELECT: HelperEntry
+
+      OPTION_GROUPS_FROM_COLLECTION_FOR_SELECT: HelperEntry
+
+      OPTIONS_FOR_SELECT: HelperEntry
+
+      OPTIONS_FROM_COLLECTION_FOR_SELECT: HelperEntry
+
+      SELECT: HelperEntry
+
+      TIME_ZONE_OPTIONS_FOR_SELECT: HelperEntry
+
+      TIME_ZONE_SELECT: HelperEntry
+
+      WEEKDAY_OPTIONS_FOR_SELECT: HelperEntry
+
+      WEEKDAY_SELECT: HelperEntry
+
+      BUTTON_TAG: HelperEntry
+
+      CHECKBOX_TAG: HelperEntry
+
+      COLOR_FIELD_TAG: HelperEntry
+
+      DATE_FIELD_TAG: HelperEntry
+
+      DATETIME_FIELD_TAG: HelperEntry
+
+      DEFAULT_ENFORCE_UTF8: HelperEntry
+
+      EMAIL_FIELD_TAG: HelperEntry
+
+      EMBED_AUTHENTICITY_TOKEN_IN_REMOTE_FORMS: HelperEntry
+
+      FIELD_ID: HelperEntry
+
+      FIELD_NAME: HelperEntry
+
+      FIELD_SET_TAG: HelperEntry
+
+      FILE_FIELD_TAG: HelperEntry
+
+      FORM_TAG: HelperEntry
+
+      HIDDEN_FIELD_TAG: HelperEntry
+
+      IMAGE_SUBMIT_TAG: HelperEntry
+
+      LABEL_TAG: HelperEntry
+
+      MONTH_FIELD_TAG: HelperEntry
+
+      NUMBER_FIELD_TAG: HelperEntry
+
+      PASSWORD_FIELD_TAG: HelperEntry
+
+      RADIO_BUTTON_TAG: HelperEntry
+
+      RANGE_FIELD_TAG: HelperEntry
+
+      SEARCH_FIELD_TAG: HelperEntry
+
+      SELECT_TAG: HelperEntry
+
+      SUBMIT_TAG: HelperEntry
+
+      TELEPHONE_FIELD_TAG: HelperEntry
+
+      TEXT_FIELD_TAG: HelperEntry
+
+      TEXTAREA_TAG: HelperEntry
+
+      TIME_FIELD_TAG: HelperEntry
+
+      URL_FIELD_TAG: HelperEntry
+
+      UTF8_ENFORCER_TAG: HelperEntry
+
+      WEEK_FIELD_TAG: HelperEntry
+
+      ESCAPE_JAVASCRIPT: HelperEntry
+
+      JAVASCRIPT_CDATA_SECTION: HelperEntry
+
+      JAVASCRIPT_TAG: HelperEntry
+
+      NUMBER_TO_CURRENCY: HelperEntry
+
+      NUMBER_TO_HUMAN: HelperEntry
+
+      NUMBER_TO_HUMAN_SIZE: HelperEntry
+
+      NUMBER_TO_PERCENTAGE: HelperEntry
+
+      NUMBER_TO_PHONE: HelperEntry
+
+      NUMBER_WITH_DELIMITER: HelperEntry
+
+      NUMBER_WITH_PRECISION: HelperEntry
+
+      RAW: HelperEntry
+
+      SAFE_JOIN: HelperEntry
+
+      TO_SENTENCE: HelperEntry
+
+      DOM_CLASS: HelperEntry
+
+      DOM_ID: HelperEntry
+
+      DOM_TARGET: HelperEntry
+
+      MODEL_NAME_FROM_RECORD_OR_CLASS: HelperEntry
+
+      RENDER: HelperEntry
+
+      SANITIZE: HelperEntry
+
+      SANITIZE_CSS: HelperEntry
+
+      SANITIZER_VENDOR: HelperEntry
+
+      STRIP_LINKS: HelperEntry
+
+      STRIP_TAGS: HelperEntry
+
+      CDATA_SECTION: HelperEntry
+
+      CONTENT_TAG: HelperEntry
+
+      ESCAPE_ONCE: HelperEntry
+
+      TAG: HelperEntry
+
+      TOKEN_LIST: HelperEntry
+
+      CONCAT: HelperEntry
+
+      CURRENT_CYCLE: HelperEntry
+
+      CYCLE: HelperEntry
+
+      EXCERPT: HelperEntry
+
+      HIGHLIGHT: HelperEntry
+
+      PLURALIZE: HelperEntry
+
+      RESET_CYCLE: HelperEntry
+
+      SAFE_CONCAT: HelperEntry
+
+      SIMPLE_FORMAT: HelperEntry
+
+      TRUNCATE: HelperEntry
+
+      WORD_WRAP: HelperEntry
+
+      DEBUG_MISSING_TRANSLATION: HelperEntry
+
+      LOCALIZE: HelperEntry
+
+      TRANSLATE: HelperEntry
+
+      BUTTON_TO: HelperEntry
+
+      BUTTON_TO_GENERATES_BUTTON_TAG: HelperEntry
+
+      CURRENT_PAGE_P: HelperEntry
+
+      LINK_TO: HelperEntry
+
+      LINK_TO_IF: HelperEntry
+
+      LINK_TO_UNLESS: HelperEntry
+
+      LINK_TO_UNLESS_CURRENT: HelperEntry
+
+      MAIL_TO: HelperEntry
+
+      PHONE_TO: HelperEntry
+
+      SMS_TO: HelperEntry
+
+      URL_FOR: HelperEntry
+
+      TURBO_EXEMPTS_PAGE_FROM_CACHE: HelperEntry
+
+      TURBO_EXEMPTS_PAGE_FROM_CACHE_TAG: HelperEntry
+
+      TURBO_EXEMPTS_PAGE_FROM_PREVIEW: HelperEntry
+
+      TURBO_EXEMPTS_PAGE_FROM_PREVIEW_TAG: HelperEntry
+
+      TURBO_PAGE_REQUIRES_RELOAD: HelperEntry
+
+      TURBO_PAGE_REQUIRES_RELOAD_TAG: HelperEntry
+
+      TURBO_REFRESH_METHOD_TAG: HelperEntry
+
+      TURBO_REFRESH_SCROLL_TAG: HelperEntry
+
+      TURBO_REFRESHES_WITH: HelperEntry
+
+      TURBO_FRAME_TAG: HelperEntry
+
+      TURBO_INCLUDE_TAGS: HelperEntry
+
+      TURBO_STREAM_ACTION_TAG: HelperEntry
+
+      TURBO_STREAM_REFRESH_TAG: HelperEntry
+
+      TURBO_STREAM: HelperEntry
+
+      TURBO_STREAM_FROM: HelperEntry
+
+      ENTRIES: Hash[String, HelperEntry]
+
+      BY_SOURCE: Hash[String, HelperEntry]
+
+      BY_TAG_NAME: Hash[String, Array[HelperEntry]]
+
+      # : (String) -> HelperEntry?
+      def self.get: (String) -> HelperEntry?
+
+      # : (String) -> HelperEntry?
+      def self.find_by_source: (String) -> HelperEntry?
+
+      # : () -> Array[HelperEntry]
+      def self.entries: () -> Array[HelperEntry]
+
+      # : () { (HelperEntry) -> void } -> void
+      def self.each: () { (HelperEntry) -> void } -> void
+
+      # : (String) -> Array[HelperEntry]
+      def self.helpers_for_tag: (String) -> Array[HelperEntry]
+
+      # : (String) -> HelperEntry?
+      def self.find_preferred_for_tag: (String) -> HelperEntry?
+
+      # : () -> Integer
+      def self.count: () -> Integer
+
+      # : (String) -> bool
+      def self.supported?: (String) -> bool
+
+      # : (String) -> bool
+      def self.exists?: (String) -> bool
+
+      # : () -> Array[HelperEntry]
+      def self.supported: () -> Array[HelperEntry]
+
+      # : (String) -> Array[HelperEntry]
+      def self.by_gem: (String) -> Array[HelperEntry]
+
+      # : (Symbol) -> Array[HelperEntry]
+      def self.by_output: (Symbol) -> Array[HelperEntry]
+
+      # : (String) -> Array[HelperEntry]
+      def self.by_module: (String) -> Array[HelperEntry]
+    end
+  end
+end

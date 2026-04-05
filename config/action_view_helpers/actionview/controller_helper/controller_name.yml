@@ -1,0 +1,16 @@
+---
+name: controller_name
+source: "ActionView::Helpers::ControllerHelper#controller_name"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the name of the current controller without the namespace. Delegated to the controller.
+signature: "controller_name"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

@@ -1,0 +1,40 @@
+---
+name: simple_format
+source: "ActionView::Helpers::TextHelper#simple_format"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Converts text to HTML using simple formatting rules. Returns text wrapped in paragraph tags with line breaks converted to `<br>` tags.
+signature: "simple_format(text, html_options = {}, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-simple_format"
+tag: null
+arguments:
+  - name: text
+    position: 1
+    type: string
+    optional: false
+    description: "The text to format."
+  - name: html_options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the wrapper paragraph tags."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash. Supports `:sanitize` and `:wrapper_tag`."
+options:
+  - name: sanitize
+    type: boolean
+    description: "Whether to sanitize the text. Defaults to `true`."
+  - name: wrapper_tag
+    type: string
+    description: |-
+      HTML tag to wrap paragraphs in. Defaults to `"p"`.
+special_behaviors: []

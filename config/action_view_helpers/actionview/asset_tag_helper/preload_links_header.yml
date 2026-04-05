@@ -1,0 +1,16 @@
+---
+name: preload_links_header
+source: "ActionView::Helpers::AssetTagHelper#preload_links_header"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether asset tags send HTTP Early Hints preload link headers.
+signature: "preload_links_header"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

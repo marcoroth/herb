@@ -1,0 +1,16 @@
+---
+name: protect_against_forgery?
+source: "ActionController::RequestForgeryProtection#protect_against_forgery?"
+gem: actionpack
+output: boolean
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Checks if the controller allows forgery protection. Returns `true` if forgery protection is enabled and the session is active.
+signature: "protect_against_forgery?"
+documentation_url: "https://api.rubyonrails.org/classes/ActionController/RequestForgeryProtection.html#method-i-protect_against_forgery-3F"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

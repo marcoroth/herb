@@ -1,0 +1,31 @@
+---
+name: weekday_options_for_select
+source: "ActionView::Helpers::FormOptionsHelper#weekday_options_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a string of `<option>` tags for the days of the week.
+signature: "weekday_options_for_select(selected = nil, index_as_value: false, day_format: :day_names, beginning_of_week: Date.beginning_of_week)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-weekday_options_for_select"
+tag: null
+arguments:
+  - name: selected
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "The weekday to be selected."
+options:
+  - name: index_as_value
+    type: boolean
+    description: "If `true`, uses the indexes from `I18n.translate(\"date.day_names\")` as the values."
+  - name: day_format
+    type: symbol
+    description: "The I18n key of the array to use for the weekday options. Defaults to `:day_names`."
+  - name: beginning_of_week
+    type: symbol
+    description: "Defaults to `Date.beginning_of_week`."
+special_behaviors: []

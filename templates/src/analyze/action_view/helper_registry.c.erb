@@ -1,0 +1,113 @@
+#include "../../include/analyze/action_view/helper_registry.h"
+#include "../../include/lib/hb_string.h"
+
+#include <string.h>
+
+<%- helpers.each do |helper| -%>
+<%- if helper.implicit_attribute? -%>
+static const helper_implicit_attribute_T <%= helper.safe_name %>_implicit_attribute = {
+  .name = "<%= helper.implicit_attribute.name %>",
+  .source = "<%= helper.implicit_attribute.source %>",
+<%- if helper.implicit_attribute.source_with_block -%>
+  .source_with_block = "<%= helper.implicit_attribute.source_with_block %>",
+<%- else -%>
+  .source_with_block = NULL,
+<%- end -%>
+  .wrapper = "<%= helper.implicit_attribute.wrapper %>",
+};
+
+<%- end -%>
+<%- if helper.arguments.any? -%>
+static const helper_argument_T <%= helper.safe_name %>_arguments[] = {
+<%- helper.arguments.each do |arg| -%>
+  { .name = "<%= arg.name %>", .type = "<%= arg.type_display %>", .description = "<%= arg.escaped_description %>" },
+<%- end -%>
+};
+
+<%- end -%>
+<%- if helper.options.any? -%>
+static const helper_option_T <%= helper.safe_name %>_options[] = {
+<%- helper.options.each do |opt| -%>
+  { .name = "<%= opt.name %>", .type = "<%= opt.type_display %>", .maps_to = <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "NULL" %>, .description = "<%= opt.escaped_description %>" },
+<%- end -%>
+};
+
+<%- end -%>
+<%- end -%>
+static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
+<%- helpers.each do |helper| -%>
+  {
+    .type = HELPER_<%= helper.constant_name %>,
+    .name = "<%= helper.name %>",
+    .name_length = <%= helper.name.length %>,
+    .source = HB_STRING_LITERAL("<%= helper.source %>"),
+    .gem = "<%= helper.gem %>",
+    .output = HELPER_OUTPUT_<%= helper.output.upcase %>,
+    .tag_name = <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "NULL" %>,
+    .is_void = <%= helper.void? %>,
+    .supports_block = <%= helper.supports_block %>,
+    .preferred_for_tag = <%= helper.preferred_for_tag %>,
+    .supported = <%= helper.supported %>,
+    .detect_style = <%= helper.call_name_detect? ? "HELPER_DETECT_CALL_NAME" : "HELPER_DETECT_RECEIVER_CALL" %>,
+    .description = "<%= helper.escaped_description %>",
+    .signature = "<%= helper.escaped_signature %>",
+    .documentation_url = "<%= helper.documentation_url %>",
+    .implicit_attribute = <%= helper.implicit_attribute? ? "&#{helper.safe_name}_implicit_attribute" : "NULL" %>,
+    .arguments = <%= helper.arguments.any? ? "#{helper.safe_name}_arguments" : "NULL" %>,
+    .arguments_count = <%= helper.arguments.size %>,
+    .options = <%= helper.options.any? ? "#{helper.safe_name}_options" : "NULL" %>,
+    .options_count = <%= helper.options.size %>,
+  },
+<%- end -%>
+};
+
+const helper_registry_entry_T* helper_registry_get(helper_type_T type) {
+  if (type < 0 || type >= HELPER_COUNT) { return NULL; }
+
+  return &registry_entries[type];
+}
+
+const helper_registry_entry_T* helper_registry_find_by_name(const char* name, size_t length) {
+  for (size_t i = 0; i < HELPER_COUNT; i++) {
+    if (registry_entries[i].name_length == length && strncmp(registry_entries[i].name, name, length) == 0) {
+      return &registry_entries[i];
+    }
+  }
+
+  return NULL;
+}
+
+const helper_registry_entry_T* helper_registry_find_by_source(const char* source) {
+  if (!source) { return NULL; }
+
+  size_t source_length = strlen(source);
+
+  for (size_t i = 0; i < HELPER_COUNT; i++) {
+    if (registry_entries[i].source.length == source_length && strncmp(registry_entries[i].source.data, source, source_length) == 0) {
+      return &registry_entries[i];
+    }
+  }
+
+  return NULL;
+}
+
+const helper_registry_entry_T* helper_registry_find_preferred_for_tag(const char* tag_name) {
+  if (!tag_name) { return NULL; }
+
+  for (size_t i = 0; i < HELPER_COUNT; i++) {
+    if (registry_entries[i].tag_name && registry_entries[i].preferred_for_tag
+        && strcmp(registry_entries[i].tag_name, tag_name) == 0) {
+      return &registry_entries[i];
+    }
+  }
+
+  return NULL;
+}
+
+const helper_registry_entry_T* helper_registry_entries(void) {
+  return registry_entries;
+}
+
+size_t helper_registry_count(void) {
+  return HELPER_COUNT;
+}

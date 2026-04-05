@@ -1,0 +1,23 @@
+---
+name: csp_meta_tag
+source: "ActionView::Helpers::CspHelper#csp_meta_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<meta>` tag `"csp-nonce"` with the per-session nonce value for allowing inline `<script>` tags. Used by the Rails UJS helper to create dynamically loaded inline `<script>` elements.
+signature: "csp_meta_tag(**options)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CspHelper.html#method-i-csp_meta_tag"
+tag:
+  name: meta
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments: []
+options:
+  - name: nonce
+    type: string
+    description: "CSP nonce value."
+special_behaviors: []
