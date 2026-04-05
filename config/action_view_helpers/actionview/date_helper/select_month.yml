@@ -1,0 +1,54 @@
+---
+name: select_month
+source: "ActionView::Helpers::DateHelper#select_month"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the months January through December with the current month selected. The month names are presented as keys and the month numbers (1-12) are used as values. Override the field name using the `:field_name` option, `"month"` by default.
+signature: "select_month(date, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_month"
+tag: null
+arguments:
+  - name: date
+    position: 1
+    type: [date, time, integer]
+    optional: false
+    description: "The date, time, or month number to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the month select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"month\"`."
+  - name: use_month_numbers
+    type: boolean
+    description: "If `true`, uses month numbers rather than month names."
+  - name: use_two_digit_numbers
+    type: boolean
+    description: "If `true`, displays months with a leading zero."
+  - name: add_month_numbers
+    type: boolean
+    description: "If `true`, uses both month numbers and month names."
+  - name: use_short_month
+    type: boolean
+    description: "If `true`, uses abbreviated month names."
+  - name: use_month_names
+    type: array
+    description: "An array of 12 custom month names."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

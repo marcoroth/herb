@@ -1,0 +1,16 @@
+---
+name: cache_fragment_name
+source: "ActionView::Helpers::CacheHelper#cache_fragment_name"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns the cache key name for a fragment cache entry, applying the template digest if applicable.
+signature: "cache_fragment_name(name = {}, skip_digest: nil, digest_path: nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CacheHelper.html#method-i-cache_fragment_name"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

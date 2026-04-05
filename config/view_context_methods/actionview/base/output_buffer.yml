@@ -1,0 +1,8 @@
+---
+name: output_buffer
+source: "ActionView::Base#output_buffer"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the current output buffer used during template rendering.

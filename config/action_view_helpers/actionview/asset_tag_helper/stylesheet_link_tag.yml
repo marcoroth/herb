@@ -1,0 +1,50 @@
+---
+name: stylesheet_link_tag
+source: "ActionView::Helpers::AssetTagHelper#stylesheet_link_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a stylesheet `<link>` tag for the sources specified as arguments. The .css extension is optional. If the server supports HTTP Early Hints, Rails will push a 103 Early Hints response that links to the assets.
+signature: "stylesheet_link_tag(*sources)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-stylesheet_link_tag"
+tag:
+  name: link
+  is_void: true
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: href
+    source: first_arg
+    wrapper: stylesheet_path
+    skip_wrapping_for:
+      - url
+arguments:
+  - name: sources
+    position: 1
+    type: string
+    optional: false
+    splat: true
+    description: "One or more stylesheet file paths or URLs."
+options:
+  - name: media
+    type: string
+    description: |-
+      Media type for the stylesheet (e.g. `"screen"`, `"print"`).
+  - name: nonce
+    type: [boolean, string]
+    description: "CSP nonce value."
+  - name: extname
+    type: [string, false]
+    description: |-
+      File extension to append. Defaults to `".css"`.
+  - name: skip_pipeline
+    type: boolean
+    description: "Bypass the asset pipeline when set to `true`."
+  - name: nopush
+    type: boolean
+    description: "Specify if the use of server push is not desired. Defaults to `true`."
+special_behaviors:
+  - multiple_sources_multiple_elements

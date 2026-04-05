@@ -1,0 +1,50 @@
+---
+name: preload_link_tag
+source: "ActionView::Helpers::AssetTagHelper#preload_link_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<link>` tag that browsers can use to preload the source. The source can be the path of a resource managed by asset pipeline, a full path, or a URI. Automatically sets the `as` and `type` attributes based on the file extension.
+signature: "preload_link_tag(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-preload_link_tag"
+tag:
+  name: link
+  is_void: true
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: href
+    source: first_arg
+    wrapper: asset_path
+    skip_wrapping_for:
+      - url
+arguments:
+  - name: source
+    position: 1
+    type: string
+    optional: false
+    description: "Asset source path or URL to preload."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: as
+    type: string
+    description: |-
+      Resource type (e.g. `"script"`, `"style"`, `"font"`).
+  - name: type
+    type: string
+    description: "MIME type of the resource."
+  - name: crossorigin
+    type: [string, boolean]
+    description: "CORS setting for the preload request."
+  - name: nonce
+    type: [boolean, string]
+    description: "CSP nonce value."
+special_behaviors: []

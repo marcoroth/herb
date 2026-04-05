@@ -115,4 +115,18 @@ describe("ActionViewNoSilentHelperRule", () => {
       <% tag.div "Hello" %>
     `)
   })
+
+  test("silent tag with postfix conditional is not allowed", () => {
+    expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
+
+    assertOffenses(dedent`
+      <% link_to "Home", root_path if show_link %>
+    `)
+  })
+
+  test("output tag with postfix conditional is allowed", () => {
+    expectNoOffenses(dedent`
+      <%= link_to "Home", root_path if show_link %>
+    `)
+  })
 })

@@ -1,0 +1,59 @@
+---
+name: select
+source: "ActionView::Helpers::FormOptionsHelper#select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a `<select>` tag and a series of contained `<option>` tags for the provided object and method. The option currently held by the object will be selected, provided that the object is available.
+signature: "select(object, method, choices = nil, options = {}, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-select"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The object name for the select tag."
+  - name: method
+    position: 2
+    type: [string, symbol]
+    optional: false
+    description: "The attribute of the object corresponding to the select tag."
+  - name: choices
+    position: 3
+    type: [array, hash]
+    optional: true
+    default: "nil"
+    description: "A flat collection or nested collection for the option tags."
+  - name: options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash for customizing the select behavior."
+  - name: html_options
+    position: 5
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: include_blank
+    type: [boolean, string]
+    description: "Include a blank option at the top of the select."
+  - name: prompt
+    type: [boolean, string]
+    description: "Prepend an option with a generic prompt or the given prompt string."
+  - name: selected
+    type: [string, array]
+    description: "Value to use for the selected option."
+  - name: disabled
+    type: [string, array]
+    description: "Value or values to be disabled in the option tags."
+  - name: include_hidden
+    type: boolean
+    description: "If `false`, prevents the hidden field from being generated for multiple selects."
+special_behaviors: []

@@ -1,0 +1,34 @@
+---
+name: time_zone_options_for_select
+source: "ActionView::Helpers::FormOptionsHelper#time_zone_options_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a string of `<option>` tags for pretty much any time zone in the world. Supply an `ActiveSupport::TimeZone` name as `selected` to have it marked as the selected option tag. You can also supply an array of `ActiveSupport::TimeZone` objects as `priority_zones` so that they will be listed above the rest of the list.
+signature: "time_zone_options_for_select(selected = nil, priority_zones = nil, model = ::ActiveSupport::TimeZone)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-time_zone_options_for_select"
+tag: null
+arguments:
+  - name: selected
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "The time zone name to be selected."
+  - name: priority_zones
+    position: 2
+    type: [array, regexp]
+    optional: true
+    default: "nil"
+    description: "An array of `ActiveSupport::TimeZone` objects or a Regexp to list above the rest."
+  - name: model
+    position: 3
+    type: class
+    optional: true
+    default: "::ActiveSupport::TimeZone"
+    description: "The time zone model object. Must respond to `all` and return objects that respond to `name`."
+options: []
+special_behaviors: []

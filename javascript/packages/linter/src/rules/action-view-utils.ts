@@ -1,5 +1,32 @@
-import { isPrismNodeType } from "@herb-tools/core"
+import { isPrismNodeType, getHelperEntries } from "@herb-tools/core"
 import type { PrismNode } from "@herb-tools/core"
+
+const ACTION_VIEW_HELPER_NAMES = new Set(
+  getHelperEntries()
+    .filter(helper => helper.output === "html" && helper.visibility === "public" && helper.name !== "tag")
+    .flatMap(helper => [helper.name, ...helper.aliases])
+)
+
+export function isTagBuilderCall(prismNode: PrismNode): boolean {
+  if (!isPrismNodeType(prismNode, "CallNode")) return false
+  if (!isPrismNodeType(prismNode.receiver, "CallNode")) return false
+
+  return prismNode.receiver.name === "tag" && !prismNode.receiver.receiver
+}
+
+export function isActionViewHelperCall(prismNode: PrismNode): { helperName: string } | null {
+  if (!isPrismNodeType(prismNode, "CallNode")) return null
+
+  if (isTagBuilderCall(prismNode)) {
+    return { helperName: "tag" }
+  }
+
+  if (!prismNode.receiver && ACTION_VIEW_HELPER_NAMES.has(prismNode.name)) {
+    return { helperName: prismNode.name }
+  }
+
+  return null
+}
 
 /**
  * Checks if a Prism node represents a `tag.attributes(...)` call.

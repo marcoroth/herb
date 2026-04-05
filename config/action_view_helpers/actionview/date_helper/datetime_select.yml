@@ -1,0 +1,59 @@
+---
+name: datetime_select
+source: "ActionView::Helpers::DateHelper#datetime_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a set of `<select>` tags (one for year, month, day, hour, and minute) pre-selected for accessing a specified datetime-based attribute (identified by `method`) on an object assigned to the template (identified by `object`).
+signature: "datetime_select(object_name, method, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-datetime_select"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: string
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: string
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the datetime select behavior."
+  - name: html_options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes applied to every `<select>` tag in the set."
+options:
+  - name: start_year
+    type: integer
+    description: "The start year for the year select."
+  - name: end_year
+    type: integer
+    description: "The end year for the year select."
+  - name: ampm
+    type: boolean
+    description: "If `true`, shows hours in AM/PM format."
+  - name: discard_type
+    type: boolean
+    description: "If `true`, discards the type part of the select name."
+  - name: prompt
+    type: [boolean, string, hash]
+    description: "Set to `true` for generic prompts, a string for a custom prompt, or a hash for per-field prompts."
+  - name: default
+    type: [datetime, hash]
+    description: "Set a default datetime if the affected datetime is not set or is `nil`."
+  - name: disabled
+    type: boolean
+    description: "If `true`, the select fields are disabled."
+special_behaviors: []

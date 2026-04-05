@@ -1,0 +1,34 @@
+---
+name: render
+source: "ActionView::Helpers::RenderingHelper#render"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns the result of a `render`. Renders partials, templates, layouts, text, files, or inline templates.
+signature: "render(options = {}, locals = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/RenderingHelper.html#method-i-render"
+tag: null
+arguments:
+  - name: options
+    position: 1
+    type: [string, hash, object]
+    optional: true
+    default: "{}"
+    description: "Partial name, options hash, or renderable object."
+options:
+  - name: partial
+    type: string
+    description: "Partial template to render."
+  - name: locals
+    type: hash
+    description: "Local variables to pass to the partial."
+  - name: collection
+    type: array
+    description: "Collection to render a partial for each item."
+  - name: layout
+    type: string
+    description: "Layout to wrap the rendered content."
+special_behaviors: []

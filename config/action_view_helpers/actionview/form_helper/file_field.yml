@@ -1,0 +1,44 @@
+---
+name: file_field
+source: "ActionView::Helpers::FormHelper#file_field"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates an `<input type="file">` for a specified attribute on a model object. Sets the enclosing form's encoding to `multipart/form-data`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "file_field(object_name, method, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-file_field"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: multiple
+    type: boolean
+    description: "If `true`, allows selecting multiple files."
+  - name: include_hidden
+    type: boolean
+    description: "When `multiple: true`, prefixes with a hidden field for empty submissions."
+  - name: accept
+    type: string
+    description: "Mime type(s) to filter the file chooser."
+  - name: direct_upload
+    type: boolean
+    description: "If `true`, enables Active Storage direct upload."
+special_behaviors: []

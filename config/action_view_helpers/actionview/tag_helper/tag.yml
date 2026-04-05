@@ -1,0 +1,47 @@
+---
+name: tag
+source: "ActionView::Helpers::TagHelper#tag"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: true
+description: |-
+  Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with `tag.<tag name>(optional content, options)`. Supports `data-*` and `aria-*` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
+signature: "tag.<tag_name>(content = nil, **options, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag"
+tag:
+  name: null
+  is_void: false
+  preferred: false
+  detect_style: receiver_call
+content:
+  source: block_or_arg
+  arg_position: 1
+  skip_if_hash: true
+attributes_arg: keywords
+transform_style: generic
+arguments:
+  - name: content
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "Tag content string."
+options:
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+  - name: id
+    type: string
+    description: "HTML id attribute."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+  - name: aria
+    type: hash
+    maps_to: aria-*
+    description: "Hash of `aria-*` attributes."
+special_behaviors:
+  - type: method_name_underscores_to_dashes

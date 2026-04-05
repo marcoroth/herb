@@ -1,0 +1,65 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0007_javascript_tag with URL in comment using non-output tag (gh-991)"
+input: |2-
+<% javascript_tag do %>
+  // <http://example.com>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " javascript_tag do " (location: (1:2)-(1:21))
+    │   ├── tag_closing: "%>" (location: (1:21)-(1:23))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:23)-(2:5))
+    │   │   │   └── content: "\n  // "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:5)-(2:25))
+    │   │   │   ├── errors: (2 errors)
+    │   │   │   │   ├── @ UnexpectedError (location: (2:11)-(2:12))
+    │   │   │   │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: `/`."
+    │   │   │   │   │   ├── description: "Unexpected Token"
+    │   │   │   │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+    │   │   │   │   │   └── found: "`/`"
+    │   │   │   │   │
+    │   │   │   │   └── @ UnexpectedError (location: (2:12)-(2:13))
+    │   │   │   │       ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: `/`."
+    │   │   │   │       ├── description: "Unexpected Token"
+    │   │   │   │       ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+    │   │   │   │       └── found: "`/`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:5)-(2:6))
+    │   │   │   ├── tag_name: "http:" (location: (2:6)-(2:11))
+    │   │   │   ├── tag_closing: ">" (location: (2:24)-(2:25))
+    │   │   │   ├── children: (1 item)
+    │   │   │   │   └── @ HTMLAttributeNode (location: (2:13)-(2:24))
+    │   │   │   │       ├── name:
+    │   │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:13)-(2:24))
+    │   │   │   │       │       └── children: (1 item)
+    │   │   │   │       │           └── @ LiteralNode (location: (2:13)-(2:24))
+    │   │   │   │       │               └── content: "example.com"
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       ├── equals: ∅
+    │   │   │   │       └── value: ∅
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:25)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

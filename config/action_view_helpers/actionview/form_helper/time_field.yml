@@ -1,0 +1,41 @@
+---
+name: time_field
+source: "ActionView::Helpers::FormHelper#time_field"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates an `<input type="time">` for a specified attribute on a model object. The default value is formatted with `strftime("%T.%L")`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "time_field(object_name, method, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-time_field"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: include_seconds
+    type: boolean
+    description: "If `false`, formats value as `\"%H:%M\"` without seconds."
+  - name: min
+    type: [string, time]
+    description: "Minimum time value (ISO8601 string or Time object)."
+  - name: max
+    type: [string, time]
+    description: "Maximum time value (ISO8601 string or Time object)."
+special_behaviors: []

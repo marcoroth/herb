@@ -1,0 +1,49 @@
+---
+name: number_field_tag
+source: "ActionView::Helpers::FormTagHelper#number_field_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a number field.
+signature: "number_field_tag(name, value = nil, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-number_field_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the input."
+  - name: value
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Default numeric value."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: min
+    type: [string, integer]
+    description: "Minimum allowed value."
+  - name: max
+    type: [string, integer]
+    description: "Maximum allowed value."
+  - name: step
+    type: [string, integer]
+    description: "Step increment."
+  - name: in
+    type: range
+    description: "Range of allowed values (sets min, max, and step)."
+special_behaviors: []
