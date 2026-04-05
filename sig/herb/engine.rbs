@@ -46,6 +46,8 @@ module Herb
 
     def self.css: (untyped value) -> untyped
 
+    def self.nested_attribute_value: (untyped value) -> untyped
+
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
