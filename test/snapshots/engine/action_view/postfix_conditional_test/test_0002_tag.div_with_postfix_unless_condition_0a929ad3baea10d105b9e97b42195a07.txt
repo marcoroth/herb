@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0002_tag.div with postfix unless condition"
+input: "{source: \"<%= tag.div(\\\"hidden\\\", class: \\\"warning\\\") unless condition %>\", options: {precompile: true, locals: {condition: false}}}"
+---
+_buf = ::String.new; unless condition 
+ _buf << '<div class="warning">hidden</div>'.freeze; end;
+_buf.to_s

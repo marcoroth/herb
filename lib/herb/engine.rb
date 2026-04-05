@@ -112,7 +112,8 @@ module Herb
       @src << preamble
 
       action_view_helpers = @precompile && source_may_contain_action_view_helpers?(input)
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers)
+      transform_conditionals = @precompile && action_view_helpers
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors
 

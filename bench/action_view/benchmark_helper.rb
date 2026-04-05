@@ -384,7 +384,7 @@ module Bench
       normal_style = Lipgloss::Style.new.padding(0, 1)
 
       table = Lipgloss::Table.new
-                             .headers(["Template", "Lines", "Helpers", "Compile (Erubi / Herb)", "Compile cost", "Compiled size", "Render (Erubi / Herb)", "Render gain", "Break-even"])
+                             .headers(["Template", "Lines", "Helpers", "Compile (Erubi/Herb)", "Compile cost", "Compiled size", "Render (Erubi/Herb)", "Render gain", "Break-even"])
                              .border(Lipgloss::ROUNDED_BORDER)
                              .border_style(Lipgloss::Style.new.foreground("#555555"))
                              .style_func(rows: sorted.size, columns: 9) { |_row, column|

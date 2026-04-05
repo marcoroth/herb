@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0003_link_to with postfix if condition"
+input: "{source: \"<%= link_to \\\"Settings\\\", \\\"/settings\\\" if condition %>\", options: {precompile: true, locals: {condition: true}}}"
+---
+_buf = ::String.new; if condition 
+ _buf << '<a href="/settings">Settings</a>'.freeze; end;
+_buf.to_s
