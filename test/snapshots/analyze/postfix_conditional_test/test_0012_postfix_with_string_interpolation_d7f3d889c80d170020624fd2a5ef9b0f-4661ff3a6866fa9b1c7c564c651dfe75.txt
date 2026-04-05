@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0013_postfix with string interpolation"
+source: "Analyze::PostfixConditionalTest#test_0012_postfix with string interpolation"
 input: |2-
 <%= "hello #{name}" if greeting? %>
 options: {transform_conditionals: true}

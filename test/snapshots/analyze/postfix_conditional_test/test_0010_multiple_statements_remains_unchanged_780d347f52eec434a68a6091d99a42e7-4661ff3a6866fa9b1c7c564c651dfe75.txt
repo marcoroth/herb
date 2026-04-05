@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0011_multiple statements remains unchanged"
+source: "Analyze::PostfixConditionalTest#test_0010_multiple statements remains unchanged"
 input: |2-
 <%= x = 1; x if condition %>
 options: {transform_conditionals: true}

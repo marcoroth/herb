@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0017_multiple postfix tags in document"
+source: "Analyze::PostfixConditionalTest#test_0016_multiple postfix tags in document"
 input: |2-
 <%= 'first' if show_first? %>
 <%= 'second' unless hide_second? %>

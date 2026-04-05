@@ -10,13 +10,13 @@
         "./extension/nodes.cpp",
 
         # Herb main source files
+        "./extension/libherb/analyze/analyze_helpers.c",
         "./extension/libherb/analyze/analyze.c",
         "./extension/libherb/analyze/analyzed_ruby.c",
         "./extension/libherb/analyze/builders.c",
         "./extension/libherb/analyze/conditional_elements.c",
         "./extension/libherb/analyze/conditional_open_tags.c",
         "./extension/libherb/analyze/control_type.c",
-        "./extension/libherb/analyze/analyze_helpers.c",
         "./extension/libherb/analyze/invalid_structures.c",
         "./extension/libherb/analyze/missing_end.c",
         "./extension/libherb/analyze/parse_errors.c",
@@ -24,6 +24,7 @@
         "./extension/libherb/analyze/prism_annotate.c",
         "./extension/libherb/analyze/render_nodes.c",
         "./extension/libherb/analyze/strict_locals.c",
+        "./extension/libherb/analyze/ternary_conditionals.c",
         "./extension/libherb/analyze/transform.c",
         "./extension/libherb/analyze/action_view/attribute_extraction_helpers.c",
         "./extension/libherb/analyze/action_view/content_tag.c",

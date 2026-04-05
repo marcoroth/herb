@@ -1,8 +1,8 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0010_ternary remains unchanged"
+source: "Analyze::TernaryConditionalTest#test_0015_ternary with transform_conditionals disabled"
 input: |2-
 <%= condition ? 'yes' : 'no' %>
-options: {transform_conditionals: true}
+options: {transform_conditionals: false}
 ---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)

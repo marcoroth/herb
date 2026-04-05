@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0028_content_tag call with postfix if without action_view_helpers"
+source: "Analyze::PostfixConditionalTest#test_0027_content_tag call with postfix if without action_view_helpers"
 input: |2-
 <%= content_tag(:span, "text", class: "highlight") if visible? %>
 options: {transform_conditionals: true, action_view_helpers: false}

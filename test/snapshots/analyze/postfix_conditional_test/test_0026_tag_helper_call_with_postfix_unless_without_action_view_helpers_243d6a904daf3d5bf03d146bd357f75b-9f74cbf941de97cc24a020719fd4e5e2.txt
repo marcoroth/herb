@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0027_tag helper call with postfix unless without action_view_helpers"
+source: "Analyze::PostfixConditionalTest#test_0026_tag helper call with postfix unless without action_view_helpers"
 input: |2-
 <%= tag.p("content") unless hidden? %>
 options: {transform_conditionals: true, action_view_helpers: false}

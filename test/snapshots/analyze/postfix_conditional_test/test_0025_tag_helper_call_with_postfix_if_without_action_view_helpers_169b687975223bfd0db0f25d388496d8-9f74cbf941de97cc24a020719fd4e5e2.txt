@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0026_tag helper call with postfix if without action_view_helpers"
+source: "Analyze::PostfixConditionalTest#test_0025_tag helper call with postfix if without action_view_helpers"
 input: |2-
 <%= tag.div("hello", class: "container") if show? %>
 options: {transform_conditionals: true, action_view_helpers: false}

@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0012_postfix with complex body expression"
+source: "Analyze::PostfixConditionalTest#test_0011_postfix with complex body expression"
 input: |2-
 <%= render(partial: 'header') if show_header? %>
 options: {transform_conditionals: true}

@@ -1,5 +1,5 @@
 ---
-source: "Analyze::PostfixConditionalTest#test_0014_inside attribute value"
+source: "Analyze::PostfixConditionalTest#test_0013_inside attribute value"
 input: |2-
 <div class="<%= 'active' if selected %>">content</div>
 options: {transform_conditionals: true}
