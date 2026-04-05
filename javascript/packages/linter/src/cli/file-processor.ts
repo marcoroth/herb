@@ -11,6 +11,9 @@ import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 
+import { computeDiff, formatDiff } from "./diff.js"
+
+import type { DiffHunk } from "./diff.js"
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
@@ -22,6 +25,7 @@ export interface ProcessedFile {
   offense: Diagnostic
   content: string
   autocorrectable?: boolean
+  autofixDiff?: DiffHunk[]
 }
 
 export interface ProcessingContext {
@@ -208,11 +212,26 @@ export class FileProcessor {
         }
       } else {
         for (const offense of lintResult.offenses) {
+          const autocorrectable = this.isRuleAutocorrectable(offense.rule)
+          let autofixDiff: DiffHunk[] | undefined
+
+          if (autocorrectable && formatOption !== "json") {
+            const previewResult = this.linter.previewAutofix(content, {
+              fileName: filename,
+              ignoreDisableComments: context?.ignoreDisableComments
+            }, [offense], { includeUnsafe: true })
+
+            if (previewResult.fixed.length > 0) {
+              autofixDiff = computeDiff(content, previewResult.source)
+            }
+          }
+
           allOffenses.push({
             filename,
             offense: offense,
             content,
-            autocorrectable: this.isRuleAutocorrectable(offense.rule)
+            autocorrectable,
+            autofixDiff,
           })
 
           const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
