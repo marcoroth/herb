@@ -74,7 +74,7 @@ module Herb
       lex(File.read(path), **options)
     end
 
-    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
     def parse_file(path, **options)
       parse(File.read(path), **options)
     end
