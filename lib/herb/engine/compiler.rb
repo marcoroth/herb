@@ -361,6 +361,7 @@ module Herb
             leading_space = extract_and_remove_leading_space!
             @trim_next_whitespace = true
             save_pending_leading_whitespace!(leading_space) if !leading_space.empty? && follows_newline
+            @tokens << [:code, "\n", current_context]
           end
           return
         end
