@@ -154,11 +154,11 @@ module Bench
       locals = {}
 
       (frontmatter["locals"] || {}).each do |key, value|
-        locals[key.to_sym] = eval(value, binding_context || binding) # rubocop:disable Security/Eval
+        locals[key.to_sym] = eval(value, binding_context || binding)
       end
 
       (frontmatter["instance_variables"] || {}).each do |key, value|
-        locals[:"@#{key}"] = eval(value, binding_context || binding) # rubocop:disable Security/Eval
+        locals[:"@#{key}"] = eval(value, binding_context || binding)
       end
 
       {
@@ -258,9 +258,9 @@ module Bench
       compile_overhead = (compile_times[:herb_precompiled].real - compile_times[:erubi].real) / COMPILE_ITERATIONS
       render_savings = (render_times[:erubi].real - render_times[:herb_precompiled].real) / RENDER_ITERATIONS
 
-      break_even_renders = if render_savings > 0 && herb_precompiled_render_ratio > BASELINE_THRESHOLD
-        (compile_overhead / render_savings).ceil
-      end
+      break_even_renders = if render_savings.positive? && herb_precompiled_render_ratio > BASELINE_THRESHOLD
+                             (compile_overhead / render_savings).ceil
+                           end
 
       puts ""
       puts bold("  Herb Engine Benchmark: #{title}")
@@ -403,12 +403,12 @@ module Bench
         break_even_label = format_break_even(result[:break_even_renders])
 
         title_label = if result[:outputs_match]
-          result[:title]
-        elsif result[:whitespace_only_mismatch]
-          "#{result[:title]} ~"
-        else
-          "#{result[:title]} *"
-        end
+                        result[:title]
+                      elsif result[:whitespace_only_mismatch]
+                        "#{result[:title]} ~"
+                      else
+                        "#{result[:title]} *"
+                      end
 
         compile_times_label = "#{format_time(result[:erubi_compile_avg])} / #{format_time(result[:herb_precompiled_compile_avg])}"
         render_times_label = "#{format_time(result[:erubi_render_avg])} / #{format_time(result[:herb_precompiled_render_avg])}"
