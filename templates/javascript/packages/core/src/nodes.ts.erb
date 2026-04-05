@@ -318,7 +318,11 @@ export class <%= node.name %> extends Node {
   }
 
   accept(visitor: Visitor): void {
-    visitor.visit<%= node.name %>(this)
+    const visitMethod = visitor.visit<%= node.name %> as ((node: <%= node.name %>) => void) | undefined
+
+    if (typeof visitMethod === "function") {
+      visitMethod.call(visitor, this)
+    }
   }
 
   childNodes(): (Node | null | undefined)[] {

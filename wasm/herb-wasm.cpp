@@ -66,6 +66,10 @@ val Herb_parse(const std::string& source, val options) {
       parser_options.action_view_helpers = options["action_view_helpers"].as<bool>();
     }
 
+    if (options.hasOwnProperty("transform_conditionals")) {
+      parser_options.transform_conditionals = options["transform_conditionals"].as<bool>();
+    }
+
     if (options.hasOwnProperty("render_nodes")) {
       parser_options.render_nodes = options["render_nodes"].as<bool>();
     }

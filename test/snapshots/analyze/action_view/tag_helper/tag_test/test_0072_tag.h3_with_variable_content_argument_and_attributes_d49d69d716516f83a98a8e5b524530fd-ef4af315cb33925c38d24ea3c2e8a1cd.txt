@@ -16,7 +16,7 @@ options: {action_view_helpers: true}
     │   │       ├── open_tag:
     │   │       │   └── @ ERBOpenTagNode (location: (1:0)-(1:60))
     │   │       │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   │       │       ├── content: " tag.h3(title, class: title_classes) if title.present? " (location: (1:3)-(1:58))
+    │   │       │       ├── content: " tag.h3(title, class: title_classes) " (location: (1:3)-(1:40))
     │   │       │       ├── tag_closing: "%>" (location: (1:58)-(1:60))
     │   │       │       ├── tag_name: "h3" (location: (1:8)-(1:10))
     │   │       │       └── children: (1 item)

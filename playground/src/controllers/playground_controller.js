@@ -1396,6 +1396,7 @@ export default class extends Controller {
       analyze: true,
       strict: true,
       action_view_helpers: false,
+      transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
       prism_program: false,

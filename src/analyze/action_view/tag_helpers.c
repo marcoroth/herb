@@ -45,8 +45,6 @@ typedef struct {
   const tag_helper_handler_T* matched_handler;
   const char* original_source;
   size_t erb_content_offset;
-  char* condition_source;
-  char* condition_type;
 } tag_helper_parse_context_T;
 
 static tag_helper_parse_context_T* parse_tag_helper_content(
@@ -76,15 +74,12 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
   }
 
   parse_context->info = tag_helper_info_init(allocator);
-  parse_context->condition_source = NULL;
-  parse_context->condition_type = NULL;
 
   tag_helper_search_data_T search = { .tag_helper_node = NULL,
                                       .source = parse_context->prism_source,
                                       .parser = &parse_context->parser,
                                       .info = parse_context->info,
-                                      .found = false,
-                                      .postfix_conditional_node = NULL };
+                                      .found = false };
   pm_visit_node(parse_context->root, search_tag_helper_node, &search);
 
   if (!search.found) {
@@ -94,22 +89,6 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
     hb_allocator_dealloc(allocator, parse_context->content_string);
     hb_allocator_dealloc(allocator, parse_context);
     return NULL;
-  }
-
-  if (search.postfix_conditional_node) {
-    if (search.postfix_conditional_node->type == PM_IF_NODE) {
-      pm_if_node_t* if_node = (pm_if_node_t*) search.postfix_conditional_node;
-      size_t predicate_length = if_node->predicate->location.end - if_node->predicate->location.start;
-      parse_context->condition_source =
-        hb_allocator_strndup(allocator, (const char*) if_node->predicate->location.start, predicate_length);
-      parse_context->condition_type = hb_allocator_strdup(allocator, "if");
-    } else if (search.postfix_conditional_node->type == PM_UNLESS_NODE) {
-      pm_unless_node_t* unless_node = (pm_unless_node_t*) search.postfix_conditional_node;
-      size_t predicate_length = unless_node->predicate->location.end - unless_node->predicate->location.start;
-      parse_context->condition_source =
-        hb_allocator_strndup(allocator, (const char*) unless_node->predicate->location.start, predicate_length);
-      parse_context->condition_type = hb_allocator_strdup(allocator, "unless");
-    }
   }
 
   parse_context->matched_handler = search.matched_handler;
@@ -129,92 +108,6 @@ static void free_tag_helper_parse_context(tag_helper_parse_context_T* parse_cont
     hb_allocator_dealloc(allocator, parse_context->content_string);
     hb_allocator_dealloc(allocator, parse_context);
   }
-}
-
-static AST_NODE_T* wrap_in_conditional_if_needed(
-  AST_NODE_T* element,
-  tag_helper_parse_context_T* parse_context,
-  hb_allocator_T* allocator
-) {
-  if (!element || !parse_context || !parse_context->condition_source || !parse_context->condition_type) {
-    return element;
-  }
-
-  position_T start = element->location.start;
-  position_T end = element->location.end;
-
-  hb_buffer_T content_buffer;
-  hb_buffer_init(&content_buffer, 64, allocator);
-  hb_buffer_append(&content_buffer, " ");
-  hb_buffer_append(&content_buffer, parse_context->condition_type);
-  hb_buffer_append(&content_buffer, " ");
-  hb_buffer_append(&content_buffer, parse_context->condition_source);
-  hb_buffer_append(&content_buffer, " ");
-  const char* content_string = hb_buffer_value(&content_buffer);
-
-  token_T* tag_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
-  token_T* content_token = create_synthetic_token(allocator, content_string, TOKEN_ERB_CONTENT, start, end);
-  token_T* tag_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
-
-  hb_array_T* statements = hb_array_init(1, allocator);
-  hb_array_append(statements, element);
-
-  token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
-  token_T* end_content = create_synthetic_token(allocator, " end ", TOKEN_ERB_CONTENT, end, end);
-  token_T* end_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
-
-  AST_ERB_END_NODE_T* end_node =
-    ast_erb_end_node_init(end_opening, end_content, end_closing, end, end, hb_array_init(0, allocator), allocator);
-
-  herb_prism_node_T empty_prism_node = HERB_PRISM_NODE_EMPTY;
-
-  if (strcmp(parse_context->condition_type, "if") == 0) {
-    AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
-      tag_opening,
-      content_token,
-      tag_closing,
-      NULL,
-      empty_prism_node,
-      statements,
-      NULL,
-      end_node,
-      start,
-      end,
-      hb_array_init(0, allocator),
-      allocator
-    );
-
-    return (AST_NODE_T*) if_node;
-  } else {
-    AST_ERB_UNLESS_NODE_T* unless_node = ast_erb_unless_node_init(
-      tag_opening,
-      content_token,
-      tag_closing,
-      NULL,
-      empty_prism_node,
-      statements,
-      NULL,
-      end_node,
-      start,
-      end,
-      hb_array_init(0, allocator),
-      allocator
-    );
-
-    return (AST_NODE_T*) unless_node;
-  }
-}
-
-static bool is_postfix_if_node(const pm_node_t* node) {
-  if (node->type != PM_IF_NODE) { return false; }
-  pm_if_node_t* if_node = (pm_if_node_t*) node;
-  return if_node->if_keyword_loc.start != NULL && if_node->end_keyword_loc.start == NULL;
-}
-
-static bool is_postfix_unless_node(const pm_node_t* node) {
-  if (node->type != PM_UNLESS_NODE) { return false; }
-  pm_unless_node_t* unless_node = (pm_unless_node_t*) node;
-  return unless_node->keyword_loc.start != NULL && unless_node->end_keyword_loc.start == NULL;
 }
 
 bool search_tag_helper_node(const pm_node_t* node, void* data) {
@@ -245,16 +138,6 @@ bool search_tag_helper_node(const pm_node_t* node, void* data) {
     }
 
     return false;
-  }
-
-  if (is_postfix_if_node(node) || is_postfix_unless_node(node)) {
-    const pm_node_t* saved = search_data->postfix_conditional_node;
-    search_data->postfix_conditional_node = node;
-    pm_visit_child_nodes(node, search_tag_helper_node, search_data);
-
-    if (!search_data->found) { search_data->postfix_conditional_node = saved; }
-
-    return search_data->found;
   }
 
   pm_visit_child_nodes(node, search_tag_helper_node, search_data);
@@ -1557,7 +1440,6 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
 
         if (parse_context) {
           replacement = transform_erb_block_to_tag_helper(block_node, context, parse_context);
-          replacement = wrap_in_conditional_if_needed(replacement, parse_context, context->allocator);
           free_tag_helper_parse_context(parse_context);
         }
 
@@ -1654,7 +1536,6 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
             replacement = transform_tag_helper_with_attributes(erb_node, context, parse_context);
           }
 
-          replacement = wrap_in_conditional_if_needed(replacement, parse_context, context->allocator);
           free_tag_helper_parse_context(parse_context);
         }
 

@@ -74,6 +74,13 @@ options: {action_view_helpers: true}
     │   │   └── @ HTMLTextNode (location: (2:52)-(3:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:19)-(1:23))
+    │   │       ├── name: "item" (location: (1:19)-(1:23))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

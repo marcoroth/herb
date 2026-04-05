@@ -5,6 +5,7 @@
 #include "../include/extract.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_string.h"
+#include "../include/lib/string.h"
 #include "../include/prism/prism_helpers.h"
 
 #include <prism.h>
@@ -22,8 +23,8 @@ static bool document_has_anonymous_keyword_rest(AST_DOCUMENT_NODE_T* document) {
     if (!strict_locals_node->locals) { continue; }
 
     for (size_t local_index = 0; local_index < hb_array_size(strict_locals_node->locals); local_index++) {
-      AST_RUBY_STRICT_LOCAL_NODE_T* local = hb_array_get(strict_locals_node->locals, local_index);
-      if (local && local->double_splat && local->name == NULL) { return true; }
+      AST_RUBY_PARAMETER_NODE_T* local = hb_array_get(strict_locals_node->locals, local_index);
+      if (local && string_equals(local->kind.data, "keyword_rest") && local->name == NULL) { return true; }
     }
   }
 

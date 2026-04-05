@@ -1,0 +1,44 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0013_ternary with compound condition"
+input: |2-
+<%= user.admin? && user.active? ? 'admin' : 'user' %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:53))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if user.admin? && user.active? " (location: (1:0)-(1:53))
+    │   ├── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:53))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " 'admin' " (location: (1:33)-(1:42))
+    │   │       ├── tag_closing: "%>" (location: (1:51)-(1:53))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (1:53)-(1:53))
+    │   │       ├── tag_opening: "<%" (location: (1:53)-(1:53))
+    │   │       ├── content: " else " (location: (1:53)-(1:53))
+    │   │       ├── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   │       └── statements: (1 item)
+    │   │           └── @ ERBContentNode (location: (1:0)-(1:53))
+    │   │               ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │               ├── content: " 'user' " (location: (1:43)-(1:51))
+    │   │               ├── tag_closing: "%>" (location: (1:51)-(1:53))
+    │   │               ├── parsed: false
+    │   │               └── valid: true
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:53)-(1:53))
+    │           ├── tag_opening: "<%" (location: (1:53)-(1:53))
+    │           ├── content: " end " (location: (1:53)-(1:53))
+    │           └── tag_closing: "%>" (location: (1:53)-(1:53))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:53)-(2:0))
+        └── content: "\n"

@@ -349,5 +349,29 @@ module Analyze
         <%= helper(**) %>
       HTML
     end
+
+    test "splat argument produces error" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (*items) %>
+      HTML
+    end
+
+    test "block argument produces error" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (&callback) %>
+      HTML
+    end
+
+    test "splat with keyword produces error for splat only" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (*items, title:) %>
+      HTML
+    end
+
+    test "block with keyword produces error for block only" do
+      assert_parsed_snapshot(<<~HTML, strict_locals: true)
+        <%# locals: (title:, &callback) %>
+      HTML
+    end
   end
 end

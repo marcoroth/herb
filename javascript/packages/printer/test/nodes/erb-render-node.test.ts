@@ -1,7 +1,8 @@
 import { describe, test, beforeAll } from "vitest"
+import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { ERBRenderNode } from "@herb-tools/core"
+import { ERBRenderNode, RubyRenderKeywordsNode } from "@herb-tools/core"
 
 import { expectNodeToPrint, expectPrintRoundTrip, createLocation, createToken } from "../helpers/printer-test-helpers.js"
 
@@ -11,13 +12,10 @@ describe("ERBRenderNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBRenderNode.from({
-      type: "AST_ERB_RENDER_NODE",
+    const keywords = RubyRenderKeywordsNode.from({
+      type: "AST_RUBY_RENDER_KEYWORDS_NODE",
       location: createLocation(),
       errors: [],
-      tag_opening: createToken("TOKEN_ERB_START", "<%="),
-      content: createToken("TOKEN_ERB_CONTENT", ' render "card" '),
-      tag_closing: createToken("TOKEN_ERB_END", "%>"),
       partial: null,
       template_path: null,
       layout: null,
@@ -36,6 +34,22 @@ describe("ERBRenderNode Printing", () => {
       handlers: null,
       content_type: null,
       locals: []
+    })
+
+    const node = ERBRenderNode.from({
+      type: "AST_ERB_RENDER_NODE",
+      location: createLocation(),
+      errors: [],
+      tag_opening: createToken("TOKEN_ERB_START", "<%="),
+      content: createToken("TOKEN_ERB_CONTENT", ' render "card" '),
+      tag_closing: createToken("TOKEN_ERB_END", "%>"),
+      keywords: keywords,
+      body: [],
+      block_arguments: [],
+      rescue_clause: null,
+      else_clause: null,
+      ensure_clause: null,
+      end_node: null
     })
 
     expectNodeToPrint(node, '<%= render "card" %>')
@@ -79,5 +93,41 @@ describe("ERBRenderNode Printing", () => {
 
   test("render inside HTML", () => {
     expectPrintRoundTrip(`<div><%= render "card" %></div>`, true, { render_nodes: true })
+  })
+
+  test("render with do...end block and arguments", () => {
+    expectPrintRoundTrip(dedent`
+      <%= render BlogComponent.new do |component| %>
+        <% component.with_header %>
+      <% end %>
+    `, true, { render_nodes: true })
+  })
+
+  test("render with do...end block without arguments", () => {
+    expectPrintRoundTrip(dedent`
+      <%= render LayoutComponent.new do %>
+        <p>content</p>
+      <% end %>
+    `, true, { render_nodes: true })
+  })
+
+  test("render with inline brace block and arguments", () => {
+    expectPrintRoundTrip(`<%= render AbcComponent.new { |component| component.with_header } %>`, true, { render_nodes: true })
+  })
+
+  test("render with inline brace block without arguments", () => {
+    expectPrintRoundTrip(`<%= render AbcComponent.new { "something" } %>`, true, { render_nodes: true })
+  })
+
+  test("render with constructor arguments and inline brace block", () => {
+    expectPrintRoundTrip(`<%= render AbcComponent.new(some_args: :here) { |component| component.with_header } %>`, true, { render_nodes: true })
+  })
+
+  test("render with partial string and do...end block", () => {
+    expectPrintRoundTrip(dedent`
+      <%= render "shared/card" do %>
+        <p>card content</p>
+      <% end %>
+    `, true, { render_nodes: true })
   })
 })

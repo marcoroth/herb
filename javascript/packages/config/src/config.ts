@@ -5,8 +5,6 @@ import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { glob } from "tinyglobby"
-
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
 import { deepMerge } from "./merge.js"
@@ -254,6 +252,8 @@ export class Config {
     if (patterns.length === 0) {
       return []
     }
+
+    const { glob } = await import("tinyglobby")
 
     return await glob(patterns, {
       cwd: searchDir,
@@ -503,6 +503,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -514,20 +516,23 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      for (const indicator of this.PROJECT_INDICATORS) {
-        try {
-          fsSync.accessSync(path.join(currentPath, indicator))
+      if (!firstIndicatorMatch) {
+        for (const indicator of this.PROJECT_INDICATORS) {
+          try {
+            fsSync.accessSync(path.join(currentPath, indicator))
 
-          return currentPath
-        } catch {
-          // Indicator not found, continue checking
+            firstIndicatorMatch = currentPath
+            break
+          } catch {
+            // Indicator not found, continue checking
+          }
         }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return process.cwd()
+        return firstIndicatorMatch || process.cwd()
       }
 
       currentPath = parentPath
@@ -864,6 +869,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -875,16 +882,18 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      const isProjectRoot = await this.isProjectRoot(currentPath)
+      if (!firstIndicatorMatch) {
+        const isProjectRoot = await this.isProjectRoot(currentPath)
 
-      if (isProjectRoot) {
-        return { configPath: null, projectRoot: currentPath }
+        if (isProjectRoot) {
+          firstIndicatorMatch = currentPath
+        }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return { configPath: null, projectRoot: process.cwd() }
+        return { configPath: null, projectRoot: firstIndicatorMatch || process.cwd() }
       }
 
       currentPath = parentPath
