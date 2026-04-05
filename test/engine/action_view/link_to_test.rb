@@ -68,7 +68,6 @@ module Engine
           <% end %>
         ERB
       end
-
     end
   end
 end

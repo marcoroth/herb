@@ -208,6 +208,26 @@ module Herb
       code.match?(/<<[~-]?\s*['"`]?\w/)
     end
 
+    def source_may_contain_action_view_helpers?(source)
+      self.class.action_view_helper_pattern.match?(source)
+    end
+
+    def self.action_view_helper_pattern
+      @action_view_helper_pattern ||= begin
+        require_relative "action_view/helper_registry"
+
+        names = ::Herb::ActionView::HelperRegistry.supported.flat_map { |entry|
+          if entry.receiver_call_detect?
+            "#{entry.name}."
+          else
+            [entry.name, *entry.aliases]
+          end
+        }
+
+        Regexp.new("\\b(?:#{names.map { |name| Regexp.escape(name) }.join("|")})")
+      end
+    end
+
     protected
 
     def add_text(text)
@@ -356,26 +376,7 @@ module Herb
       @src << "; " if @chain_appends && @buffer_on_stack
     end
 
-    # TODO: migrate to new Action View helper registry
-    ACTION_VIEW_HELPER_NAMES = [
-      "tag.",
-      "content_tag",
-      "link_to",
-      "turbo_frame_tag",
-      "javascript_tag",
-      "javascript_include_tag",
-      "image_tag"
-    ].freeze
-
-    ACTION_VIEW_HELPER_PATTERN = Regexp.new(
-      "\\b(?:#{ACTION_VIEW_HELPER_NAMES.map { |name| Regexp.escape(name) }.join("|")})"
-    )
-
     private
-
-    def source_may_contain_action_view_helpers?(source)
-      ACTION_VIEW_HELPER_PATTERN.match?(source)
-    end
 
     def run_validation(ast)
       validators = [
