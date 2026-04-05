@@ -60,7 +60,14 @@ module Herb
         with_element_context(node) do
           visit(node.open_tag)
           visit_all(node.body)
-          visit(node.close_tag)
+
+          tag_name = node.tag_name&.value&.downcase
+
+          if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
+            add_text("</#{tag_name}>")
+          else
+            visit(node.close_tag)
+          end
         end
       end
 
@@ -88,7 +95,9 @@ module Herb
 
         return unless node.value
 
-        add_text(node.equals.value)
+        has_equals = node.equals.value&.include?("=")
+        add_text(has_equals ? node.equals.value : "=")
+
         visit(node.value)
       end
 
@@ -104,6 +113,40 @@ module Herb
         add_text(node.close_quote&.value || '"') if node.quoted
 
         pop_context
+      end
+
+      def visit_erb_open_tag_node(node)
+        tag_name = node.tag_name&.value
+
+        if tag_name
+          is_void = Herb::HTML::Util.void_element?(tag_name)
+          uses_self_closing = is_void && @current_element_source != "ActionView::Helpers::TagHelper#tag"
+
+          add_text("<")
+          add_text(tag_name)
+
+          node.children.each do |child|
+            visit(child)
+          end
+
+          add_text(uses_self_closing ? " />" : ">")
+        else
+          process_erb_tag(node)
+        end
+      end
+
+      def visit_html_virtual_close_tag_node(node)
+        tag_name = node.tag_name&.value
+
+        return unless tag_name
+
+        add_text("</")
+        add_text(tag_name)
+        add_text(">")
+      end
+
+      def visit_ruby_literal_node(node)
+        add_expression(node.content)
       end
 
       def visit_html_close_tag_node(node)
@@ -332,6 +375,8 @@ module Herb
       #: (untyped node) { () -> untyped } -> untyped
       def with_element_context(node)
         tag_name = node.tag_name&.value&.downcase
+        previous_element_source = @current_element_source
+        @current_element_source = node.element_source
 
         @element_stack.push(tag_name) if tag_name
 
@@ -346,6 +391,7 @@ module Herb
         pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
+        @current_element_source = previous_element_source
       end
 
       def process_erb_tag(node, skip_comment_check: false)

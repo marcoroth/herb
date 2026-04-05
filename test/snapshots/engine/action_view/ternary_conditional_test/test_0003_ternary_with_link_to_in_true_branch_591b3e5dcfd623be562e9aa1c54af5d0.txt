@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0003_ternary with link_to in true branch"
+input: "{source: \"<%= admin ? link_to(\\\"Dashboard\\\", \\\"/admin\\\") : link_to(\\\"Home\\\", \\\"/\\\") %>\", options: {precompile: true, locals: {admin: true}}}"
+---
+_buf = ::String.new; if admin 
+ _buf << '<a href="/admin">Dashboard</a>'.freeze; else; _buf << '<a href="/">Home</a>'.freeze; end;
+_buf.to_s

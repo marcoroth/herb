@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0024_tag.div with variable attribute value"
+input: "{source: \"<%= tag.div class: class_name do %>Content<% end %>\", options: {precompile: true, locals: {class_name: \"dynamic-class\"}}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((class_name)); _buf << '">Content</div>'.freeze;
+_buf.to_s

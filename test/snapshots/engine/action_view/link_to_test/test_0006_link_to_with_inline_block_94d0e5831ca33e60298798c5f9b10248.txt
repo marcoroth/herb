@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0006_link_to with inline block"
+input: "{source: \"<%= link_to(\\\"#\\\") { \\\"Click me\\\" } %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<a href="#">Click me</a>'.freeze;
+_buf.to_s

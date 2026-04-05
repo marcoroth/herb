@@ -70,6 +70,7 @@ module Herb
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @strict = properties.fetch(:strict, true)
+      @precompile = properties.fetch(:precompile, false)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -110,7 +111,9 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
+      action_view_helpers = @precompile && source_may_contain_action_view_helpers?(input)
+      transform_conditionals = @precompile && action_view_helpers
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -197,12 +200,36 @@ module Herb
       end
     end
 
+    def self.nested_attribute_value(value)
+      value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
+    end
+
     def self.comment?(code)
       code.include?("#")
     end
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
+    def source_may_contain_action_view_helpers?(source)
+      self.class.action_view_helper_pattern.match?(source)
+    end
+
+    def self.action_view_helper_pattern
+      @action_view_helper_pattern ||= begin
+        require_relative "action_view/helper_registry"
+
+        names = ::Herb::ActionView::HelperRegistry.supported.flat_map { |entry|
+          if entry.receiver_call_detect?
+            "#{entry.name}."
+          else
+            [entry.name, *entry.aliases]
+          end
+        }
+
+        Regexp.new("\\b(?:#{names.map { |name| Regexp.escape(name) }.join("|")})")
+      end
     end
 
     protected

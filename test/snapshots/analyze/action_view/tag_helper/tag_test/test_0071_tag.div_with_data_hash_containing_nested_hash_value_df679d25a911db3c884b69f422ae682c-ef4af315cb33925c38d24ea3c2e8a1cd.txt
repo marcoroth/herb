@@ -28,7 +28,7 @@ options: {action_view_helpers: true}
     │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ RubyLiteralNode (location: (1:28)-(1:46))
-    │   │                       │       └── content: "{ nested: \"hash\" }.to_json"
+    │   │                       │       └── content: "::Herb::Engine.nested_attribute_value({ nested: \"hash\" })"
     │   │                       │
     │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true

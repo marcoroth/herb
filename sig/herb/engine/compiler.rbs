@@ -35,6 +35,12 @@ module Herb
 
       def visit_html_attribute_value_node: (untyped node) -> untyped
 
+      def visit_erb_open_tag_node: (untyped node) -> untyped
+
+      def visit_html_virtual_close_tag_node: (untyped node) -> untyped
+
+      def visit_ruby_literal_node: (untyped node) -> untyped
+
       def visit_html_close_tag_node: (untyped node) -> untyped
 
       def visit_html_omitted_close_tag_node: (untyped node) -> untyped

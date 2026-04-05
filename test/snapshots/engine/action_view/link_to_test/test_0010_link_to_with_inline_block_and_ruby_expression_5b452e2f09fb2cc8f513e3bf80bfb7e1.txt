@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0010_link_to with inline block and ruby expression"
+input: "{source: \"<%= link_to(\\\"#\\\") { @user_name } %>\", options: {precompile: true, locals: {\"@user_name\": \"Alice\"}}}"
+---
+_buf = ::String.new; _buf << '<a href="#">'.freeze; _buf << (@user_name).to_s; _buf << '</a>'.freeze;
+_buf.to_s

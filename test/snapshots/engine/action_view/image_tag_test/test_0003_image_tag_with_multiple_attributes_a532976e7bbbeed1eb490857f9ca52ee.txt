@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0003_image_tag with multiple attributes"
+input: "{source: \"<%= image_tag \\\"photo.jpg\\\", alt: \\\"Photo\\\", class: \\\"avatar\\\" %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<img alt="Photo" class="avatar" src="'.freeze; _buf << ::Herb::Engine.attr((image_path("photo.jpg"))); _buf << '" />'.freeze;
+_buf.to_s

@@ -1,0 +1,10 @@
+---
+source: "Engine::ActionView::JavascriptTagTest#test_0001_javascript_tag with content"
+input: "{source: \"<%= javascript_tag \\\"alert('Hello')\\\" %>\", options: {precompile: true}}"
+---
+_buf = ::String.new; _buf << '<script>
+//<![CDATA[
+alert(\'Hello\')
+//]]>
+</script>'.freeze;
+_buf.to_s
