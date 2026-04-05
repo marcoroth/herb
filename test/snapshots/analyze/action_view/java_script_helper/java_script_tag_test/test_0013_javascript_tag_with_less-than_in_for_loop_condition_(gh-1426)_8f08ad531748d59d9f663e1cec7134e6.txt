@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0012_javascript_tag with less-than in for loop condition (gh-1426)"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0013_javascript_tag with less-than in for loop condition (gh-1426)"
 input: |2-
 <%= javascript_tag do %>
   for (let i = 0; i<items.length; i++) { console.log(items[i]) }

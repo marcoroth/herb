@@ -1,5 +1,5 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0010_javascript_tag with less-than operator and space (gh-1426)"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0011_javascript_tag with less-than operator and space (gh-1426)"
 input: |2-
 <%= javascript_tag do %>
   n < o.length

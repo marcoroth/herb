@@ -1,8 +1,8 @@
 ---
-source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0011_javascript_tag with less-than in condition (gh-1426)"
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0013_javascript_tag with less-than in for loop condition (gh-1426)"
 input: |2-
 <%= javascript_tag do %>
-  if (n<o) console.log("hello")
+  for (let i = 0; i<items.length; i++) { console.log(items[i]) }
 <% end %>
 options: {action_view_helpers: true}
 ---
@@ -25,7 +25,7 @@ options: {action_view_helpers: true}
     │   │       " (location: (1:0)-(3:9))
     │   │       ├── children: (1 item)
     │   │       │   └── @ LiteralNode (location: (1:24)-(3:0))
-    │   │       │       └── content: "\n  if (n<o) console.log(\"hello\")\n"
+    │   │       │       └── content: "\n  for (let i = 0; i<items.length; i++) { console.log(items[i]) }\n"
     │   │       │
     │   │       └── tag_closing: "
     │   │       //]]>
