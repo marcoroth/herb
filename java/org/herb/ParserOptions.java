@@ -5,6 +5,7 @@ public class ParserOptions {
   private boolean analyze = true;
   private boolean strict = true;
   private boolean actionViewHelpers = false;
+  private boolean transformConditionals = false;
   private boolean renderNodes = false;
   private boolean strictLocals = false;
   private boolean prismNodes = false;
@@ -49,6 +50,15 @@ public class ParserOptions {
 
   public boolean isActionViewHelpers() {
     return actionViewHelpers;
+  }
+
+  public ParserOptions transformConditionals(boolean value) {
+    this.transformConditionals = value;
+    return this;
+  }
+
+  public boolean isTransformConditionals() {
+    return transformConditionals;
   }
 
   public ParserOptions renderNodes(boolean value) {

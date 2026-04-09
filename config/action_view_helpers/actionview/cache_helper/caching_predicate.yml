@@ -1,0 +1,16 @@
+---
+name: caching?
+source: "ActionView::Helpers::CacheHelper#caching?"
+gem: actionview
+output: boolean
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns whether the current view is inside a `cache` block.
+signature: "caching?"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CacheHelper.html#method-i-caching-3F"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

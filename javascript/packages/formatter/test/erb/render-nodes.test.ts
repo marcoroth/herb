@@ -53,4 +53,60 @@ describe("@herb-tools/formatter - Render Nodes", () => {
       </div>
     `)
   })
+
+  test("render with do...end block and arguments", () => {
+    expectFormattedToMatch(dedent`
+      <%= render BlogComponent.new do |component| %>
+        <% component.with_header %>
+      <% end %>
+    `)
+  })
+
+  test("render with do...end block without arguments", () => {
+    expectFormattedToMatch(dedent`
+      <%= render LayoutComponent.new do %>
+        <p>content</p>
+      <% end %>
+    `)
+  })
+
+  test("render with do...end block containing nested HTML", () => {
+    expectFormattedToMatch(dedent`
+      <%= render CardComponent.new do |card| %>
+        <div class="header">
+          <h1>Title</h1>
+        </div>
+      <% end %>
+    `)
+  })
+
+  test("render with inline brace block and arguments", () => {
+    expectFormattedToMatch(`<%= render AbcComponent.new { |component| component.with_header } %>`)
+  })
+
+  test("render with inline brace block without arguments", () => {
+    expectFormattedToMatch(`<%= render AbcComponent.new { "something" } %>`)
+  })
+
+  test("render with constructor arguments and inline brace block", () => {
+    expectFormattedToMatch(`<%= render AbcComponent.new(some_args: :here, that_are_being: "passed") { |component| component.with_header } %>`)
+  })
+
+  test("render with partial string and do...end block", () => {
+    expectFormattedToMatch(dedent`
+      <%= render "shared/card" do %>
+        <p>card content</p>
+      <% end %>
+    `)
+  })
+
+  test("render with do...end block inside HTML element", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <%= render BlogComponent.new do |component| %>
+          <% component.with_header %>
+        <% end %>
+      </div>
+    `)
+  })
 })

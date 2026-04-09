@@ -35,12 +35,12 @@ describe("@herb-tools/config", () => {
     })
 
     test("can be instantiated", () => {
-      const config = new Config(testDir, { version: "0.9.3" })
+      const config = new Config(testDir, { version: "0.9.5" })
       expect(config).toBeInstanceOf(Config)
     })
 
     test("sets correct config path", () => {
-      const config = new Config(testDir, { version: "0.9.3" })
+      const config = new Config(testDir, { version: "0.9.5" })
       expect(config.path).toBe(join(testDir, ".herb.yml"))
     })
   })
@@ -66,14 +66,14 @@ describe("@herb-tools/config", () => {
 
     test("returns true when config file exists", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.9.3\n")
+      writeFileSync(configPath, "version: 0.9.5\n")
 
       expect(Config.exists(testDir)).toBe(true)
     })
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.9.3\n")
+      writeFileSync(configPath, "version: 0.9.5\n")
 
       expect(Config.exists(configPath)).toBe(true)
     })
@@ -83,7 +83,7 @@ describe("@herb-tools/config", () => {
     test("reads raw YAML content from config file", () => {
       const configPath = join(testDir, ".herb.yml")
       const yamlContent = dedent`
-        version: 0.9.3
+        version: 0.9.5
         linter:
           enabled: true
           rules:
@@ -98,7 +98,7 @@ describe("@herb-tools/config", () => {
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      const yamlContent = "version: 0.9.3\n"
+      const yamlContent = "version: 0.9.5\n"
       writeFileSync(configPath, yamlContent)
 
       const rawYaml = Config.readRawYaml(configPath)
@@ -191,7 +191,7 @@ describe("@herb-tools/config", () => {
   describe("Config.applyMutationToYamlString", () => {
     test("applies mutation to existing YAML", () => {
       const existingYaml = dedent`
-        version: 0.9.3
+        version: 0.9.5
         linter:
           enabled: true
       `
@@ -206,7 +206,7 @@ describe("@herb-tools/config", () => {
 
       const updatedYaml = Config.applyMutationToYamlString(existingYaml, mutation)
 
-      expect(updatedYaml).toContain("version: 0.9.3")
+      expect(updatedYaml).toContain("version: 0.9.5")
       expect(updatedYaml).toContain("enabled: true")
       expect(updatedYaml).toContain("html-tag-name-lowercase:")
       expect(updatedYaml).toContain("enabled: false")
@@ -214,7 +214,7 @@ describe("@herb-tools/config", () => {
 
     test("merges rules without overwriting existing rules", () => {
       const existingYaml = dedent`
-        version: 0.9.3
+        version: 0.9.5
         linter:
           rules:
             html-img-require-alt:
@@ -237,7 +237,7 @@ describe("@herb-tools/config", () => {
 
     test("updates existing rule configuration", () => {
       const existingYaml = dedent`
-        version: 0.9.3
+        version: 0.9.5
         linter:
           rules:
             html-tag-name-lowercase:
@@ -1315,16 +1315,16 @@ describe("@herb-tools/config", () => {
   })
 
   describe("Config.configVersion", () => {
-    test("defaults to config.version when not provided", () => {
-      const config = new Config(testDir, { version: "0.9.3" })
+    test("is undefined when not provided", () => {
+      const config = new Config(testDir, { version: "0.9.5" })
 
-      expect(config.configVersion).toBe("0.9.3")
+      expect(config.configVersion).toBeUndefined()
     })
 
     test("preserves explicit configVersion", () => {
-      const config = new Config(testDir, { version: "0.9.3" }, "0.8.0")
+      const config = new Config(testDir, { version: "0.9.5" }, "0.8.0")
 
-      expect(config.version).toBe("0.9.3")
+      expect(config.version).toBe("0.9.5")
       expect(config.configVersion).toBe("0.8.0")
     })
 
@@ -1334,27 +1334,35 @@ describe("@herb-tools/config", () => {
       expect(config.configVersion).toBe("0.7.0")
     })
 
-    test("fromObject defaults configVersion to tool version when not specified", () => {
+    test("fromObject defaults configVersion to undefined when not specified", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 
-      expect(config.configVersion).toBe(config.version)
+      expect(config.configVersion).toBeUndefined()
     })
 
     test("load preserves user config version from .herb.yml", async () => {
       createTestFile(testDir, ".herb.yml", "version: 0.8.0\n\nlinter:\n  enabled: true\n")
 
-      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
 
-      expect(config.version).toBe("0.9.3")
+      expect(config.version).toBe("0.9.5")
       expect(config.configVersion).toBe("0.8.0")
     })
 
-    test("load defaults configVersion to tool version when .herb.yml has no version", async () => {
+    test("load defaults configVersion to undefined when .herb.yml has no version", async () => {
       createTestFile(testDir, ".herb.yml", "linter:\n  enabled: true\n")
 
-      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
 
-      expect(config.configVersion).toBe("0.9.3")
+      expect(config.configVersion).toBeUndefined()
+    })
+
+    test("load defaults configVersion to undefined when no .herb.yml exists", async () => {
+      createTestFile(testDir, ".git/HEAD", "ref: refs/heads/main\n")
+
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
+
+      expect(config.configVersion).toBeUndefined()
     })
   })
 
@@ -1378,7 +1386,7 @@ describe("@herb-tools/config", () => {
         }
       })
 
-      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
 
       expect(config.linter?.rules?.["new-rule-a"]?.enabled).toBe(false)
       expect(config.linter?.rules?.["new-rule-b"]?.enabled).toBe(false)
@@ -1405,7 +1413,7 @@ describe("@herb-tools/config", () => {
         }
       })
 
-      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
 
       expect(config.linter?.rules?.["existing-rule"]?.enabled).toBe(false)
       expect(config.linter?.rules?.["new-rule"]?.enabled).toBe(false)
@@ -1423,12 +1431,12 @@ describe("@herb-tools/config", () => {
 
       const { readFileSync, writeFileSync } = await import("fs")
       let content = readFileSync(configPath, "utf-8")
-      content = content.replace(/^version:\s*.+$/m, "version: 0.9.3")
+      content = content.replace(/^version:\s*.+$/m, "version: 0.9.5")
       writeFileSync(configPath, content, "utf-8")
 
-      const config = await Config.load(testDir, { version: "0.9.3", silent: true })
+      const config = await Config.load(testDir, { version: "0.9.5", silent: true })
 
-      expect(config.configVersion).toBe("0.9.3")
+      expect(config.configVersion).toBe("0.9.5")
     })
   })
 })

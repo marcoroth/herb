@@ -17,8 +17,17 @@ options: {action_view_helpers: true}
     │   │
     │   ├── tag_name: "script" (location: (1:4)-(1:18))
     │   ├── body: (1 item)
-    │   │   └── @ RubyLiteralNode (location: (1:0)-(1:32))
-    │   │       └── content: "js_content"
+    │   │   └── @ CDATANode (location: (1:0)-(1:32))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(1:32))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ RubyLiteralNode (location: (1:0)-(1:32))
+    │   │       │       └── content: "js_content"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(1:32))
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLVirtualCloseTagNode (location: (1:32)-(1:32))

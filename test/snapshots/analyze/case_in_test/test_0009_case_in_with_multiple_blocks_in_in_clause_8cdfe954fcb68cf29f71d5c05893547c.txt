@@ -39,6 +39,7 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │           │   │       └── content: "\n    Alert\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
     │   │           │   ├── rescue_clause: ∅
     │   │           │   ├── else_clause: ∅
     │   │           │   ├── ensure_clause: ∅
@@ -60,6 +61,7 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (6:30)-(8:2))
     │   │           │   │       └── content: "\n    Icon\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
     │   │           │   ├── rescue_clause: ∅
     │   │           │   ├── else_clause: ∅
     │   │           │   ├── ensure_clause: ∅

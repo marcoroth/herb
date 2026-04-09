@@ -40,6 +40,13 @@ input: |2-
     │   │   │       │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │   │       │   │       └── content: "\n    Form A\n  "
     │   │   │       │   │
+    │   │   │       │   ├── block_arguments: (1 item)
+    │   │   │       │   │   └── @ RubyParameterNode (location: (3:24)-(3:25))
+    │   │   │       │   │       ├── name: "f" (location: (3:24)-(3:25))
+    │   │   │       │   │       ├── default_value: ∅
+    │   │   │       │   │       ├── kind: "positional"
+    │   │   │       │   │       └── required: true
+    │   │   │       │   │
     │   │   │       │   ├── rescue_clause: ∅
     │   │   │       │   ├── else_clause: ∅
     │   │   │       │   ├── ensure_clause: ∅
@@ -70,6 +77,13 @@ input: |2-
     │   │           │   ├── body: (1 item)
     │   │           │   │   └── @ HTMLTextNode (location: (7:29)-(9:2))
     │   │           │   │       └── content: "\n    Form B\n  "
+    │   │           │   │
+    │   │           │   ├── block_arguments: (1 item)
+    │   │           │   │   └── @ RubyParameterNode (location: (7:24)-(7:25))
+    │   │           │   │       ├── name: "f" (location: (7:24)-(7:25))
+    │   │           │   │       ├── default_value: ∅
+    │   │           │   │       ├── kind: "positional"
+    │   │           │   │       └── required: true
     │   │           │   │
     │   │           │   ├── rescue_clause: ∅
     │   │           │   ├── else_clause: ∅

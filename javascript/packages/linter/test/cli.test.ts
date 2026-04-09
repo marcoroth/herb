@@ -61,6 +61,14 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(0)
   })
 
+  test("allows tag.attributes in attribute position", () => {
+    const { output, exitCode } = runLinter("tag-attributes.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(output).not.toContain("erb-no-output-in-attribute-position")
+    expect(exitCode).toBe(0)
+  })
+
   test("formats success output correctly", () => {
     const { output, exitCode } = runLinter("clean-file.html.erb", "--no-wrap-lines")
 
@@ -277,6 +285,31 @@ describe("CLI Output Formatting", () => {
         expect(exitCode).toBe(1)
       } finally {
         try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("skips excluded file in subdirectory with README.md project indicator", () => {
+      const { mkdirSync, rmSync } = require("fs")
+      const subdir = "test/fixtures/subdir"
+
+      try {
+        mkdirSync(subdir, { recursive: true })
+        writeFileSync(`${subdir}/README.md`, "# Subdir\n")
+        writeFileSync(`${subdir}/excluded.html.erb`, '<img>\n')
+
+        writeFileSync(configPath, dedent`
+          linter:
+            exclude:
+              - "subdir/**/*.html.erb"
+        `)
+
+        const { output, exitCode } = runLinter("subdir/excluded.html.erb")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { rmSync(subdir, { recursive: true, force: true }) } catch {}
       }
     })
   })
@@ -566,7 +599,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.9.3
+          version: 0.9.5
           linter:
             enabled: true
         `)
@@ -592,7 +625,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.9.3
+          version: 0.9.5
           linter:
             enabled: true
         `)
@@ -642,7 +675,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.9.3
+          version: 0.9.5
           linter:
             enabled: true
         `)
@@ -692,7 +725,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.9.3
+          version: 0.9.5
           linter:
             enabled: true
         `)
@@ -714,6 +747,145 @@ describe("CLI Output Formatting", () => {
         expect(output).toContain("sets 'name' as an instance property")
         expect(output).toContain("static ruleName = \"deprecated-rule\"")
         expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+  })
+
+  describe("--upgrade", () => {
+    const { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/upgrade-test"
+
+    function runUpgrade(projectPath: string): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${projectPath} --upgrade 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("disables new rules that have offenses", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.9.2
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<unknowntag>content</unknowntag>\n`)
+
+        const { output, exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+        expect(output).toContain("html-no-unknown-tag")
+        expect(output).toContain("Disabled")
+
+        const configContent = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+        expect(configContent).toContain("html-no-unknown-tag")
+        expect(configContent).toMatch(/html-no-unknown-tag[\s\S]*enabled:\s*false/)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("enables new rules that have no offenses", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.9.2
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<div>clean content</div>\n`)
+
+        const { output, exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+        expect(output).toContain("Enabled")
+        expect(output).toContain("no offenses found")
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("correctly splits rules when some have offenses and others do not", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.9.2
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<unknowntag>content</unknowntag>\n`)
+
+        const { output, exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+
+        expect(output).toContain("Enabled")
+        expect(output).toContain("no offenses found")
+        expect(output).toContain("Disabled")
+
+        const configContent = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+        expect(configContent).toContain("html-no-unknown-tag")
+        expect(configContent).toMatch(/html-no-unknown-tag[\s\S]*enabled:\s*false/)
+        expect(configContent).not.toContain("a11y-no-accesskey-attribute")
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("detects offenses from new rules with many files", () => {
+      try {
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.9.2
+          linter:
+            enabled: true
+        `)
+
+        for (let index = 0; index < 11; index++) {
+          writeFileSync(join(tempDir, `app/views/clean_${index}.html.erb`), `<div>clean</div>\n`)
+        }
+
+        writeFileSync(join(tempDir, "app/views/bad.html.erb"), `<unknowntag>content</unknowntag>\n`)
+
+        const { output, exitCode } = runUpgrade(tempDir)
+
+        expect(exitCode).toBe(0)
+        expect(output).toContain("html-no-unknown-tag")
+        expect(output).toContain("Disabled")
+
+        const configContent = readFileSync(join(tempDir, ".herb.yml"), "utf-8")
+        expect(configContent).toMatch(/html-no-unknown-tag[\s\S]*enabled:\s*false/)
       } finally {
         if (existsSync(tempDir)) {
           rmSync(tempDir, { recursive: true, force: true })

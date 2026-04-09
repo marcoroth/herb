@@ -98,7 +98,9 @@ java/nodes.h
 java/org/herb/ast/Errors.java
 java/org/herb/ast/Nodes.java
 java/org/herb/ast/NodeVisitor.java
+java/org/herb/ast/HelperRegistry.java
 java/org/herb/ast/Visitor.java
+javascript/packages/core/src/action-view-helpers.ts
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/html-entities.json
 javascript/packages/core/src/node-type-guards.ts
@@ -108,9 +110,11 @@ javascript/packages/node/extension/error_helpers.cpp
 javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
+lib/herb/action_view/helper_registry.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 lib/herb/visitor.rb
+rust/src/action_view_helpers.rs
 rust/src/ast/nodes.rs
 rust/src/errors.rs
 rust/src/nodes.rs
@@ -118,11 +122,15 @@ rust/src/union_types.rs
 rust/src/visitor.rs
 sig/serialized_ast_errors.rbs
 sig/serialized_ast_nodes.rbs
+src/analyze/action_view/helper_registry.c
+src/analyze/action_view/generated_handlers.c
+src/analyze/action_view/generated_handlers.h
 src/analyze/missing_end.c
 src/analyze/transform.c
 src/ast/ast_nodes.c
 src/ast/ast_pretty_print.c
 src/errors.c
+src/include/analyze/action_view/helper_registry.h
 src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h

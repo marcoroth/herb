@@ -1,0 +1,16 @@
+---
+name: object
+source: "ActionView::Helpers::ActiveModelHelper#object"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the model object associated with the form builder.
+signature: "object"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

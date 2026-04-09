@@ -1,0 +1,27 @@
+---
+name: options_for_select
+source: "ActionView::Helpers::FormOptionsHelper#options_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Accepts a container (hash, array, enumerable, your type) and returns a string of `<option>` tags. Given a container where the elements respond to `first` and `last` (such as a two-element array), the "lasts" serve as option values and the "firsts" as option text. Hashes are turned into this form automatically, so the keys become "firsts" and values become lasts.
+signature: "options_for_select(container, selected = nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-options_for_select"
+tag: null
+arguments:
+  - name: container
+    position: 1
+    type: [array, hash]
+    optional: false
+    description: "The collection of options. Arrays, hashes, and enumerables are accepted."
+  - name: selected
+    position: 2
+    type: [string, array, hash]
+    optional: true
+    default: "nil"
+    description: "The value(s) to be selected, or a hash with `:selected` and `:disabled` keys."
+options: []
+special_behaviors: []

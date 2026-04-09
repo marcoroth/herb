@@ -28,6 +28,7 @@ describe("ERBNoUnusedLiteralsRule", () => {
     expectNoOffenses(dedent`
       <% some_method %>
       <% helper_call(arg) %>
+      <% helper_call("arg") %>
     `)
   })
 
@@ -38,6 +39,59 @@ describe("ERBNoUnusedLiteralsRule", () => {
       <% @title = "Hello" %>
       <% names = ["Alice", "Bob"] %>
       <% config = { key: "value" } %>
+    `)
+  })
+
+  test("passes for assignments with ternary operator", () => {
+    expectNoOffenses(dedent`
+      <% dynamic_link = post.published? ? post_path(post) : "/" %>
+    `)
+  })
+
+  test("passes for operator assignments", () => {
+    expectNoOffenses(dedent`
+      <% count += 1 %>
+      <% name ||= "default" %>
+      <% value &&= "updated" %>
+    `)
+  })
+
+  test("passes for instance variable or-assign", () => {
+    expectNoOffenses(dedent`
+      <% @config ||= { key: "value" } %>
+      <% @title ||= "Default Title" %>
+      <% @items ||= [] %>
+    `)
+  })
+
+  test("passes for class variable operator assignments", () => {
+    expectNoOffenses(dedent`
+      <% @@count += 1 %>
+    `)
+  })
+
+  test("passes for global variable assignments", () => {
+    expectNoOffenses(dedent`
+      <% $debug = true %>
+      <% $locale = "en" %>
+    `)
+  })
+
+  test("passes for multi-write assignments", () => {
+    expectNoOffenses(dedent`
+      <% a, b = 1, 2 %>
+    `)
+  })
+
+  test("passes for constant assignments", () => {
+    expectNoOffenses(dedent`
+      <% MAX_RETRIES = 3 %>
+    `)
+  })
+
+  test("passes for constant path assignments", () => {
+    expectNoOffenses(dedent`
+      <% Config::MAX = 100 %>
     `)
   })
 
@@ -271,6 +325,55 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("fails for string literals in ternary without assignment", () => {
+    expectError('Avoid using silent ERB tags for literals. `"true"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"false"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% condition? ? "true" : "false" %>
+    `)
+  })
+
+  test("fails for boolean literals in ternary without assignment", () => {
+    expectError('Avoid using silent ERB tags for literals. `true` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `false` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% condition? ? true : false %>
+    `)
+  })
+
+  test("passes for return with literal value", () => {
+    expectNoOffenses(dedent`
+      <% return "" unless versions.length > 1 %>
+      <% return nil %>
+      <% return 0 %>
+      <% return false %>
+      <% return [] %>
+      <% return "default" %>
+    `)
+  })
+
+  test("passes for break with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% break "" %>
+        <% break nil %>
+        <% break 0 %>
+      <% end %>
+    `)
+  })
+
+  test("passes for next with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% next "" %>
+        <% next nil %>
+        <% next 0 %>
+      <% end %>
+    `)
+  })
+
   test("passes for method calls without literal receiver", () => {
     expectNoOffenses(dedent`
       <% some_method.call %>
@@ -291,6 +394,31 @@ describe("ERBNoUnusedLiteralsRule", () => {
 
     assertOffenses(dedent`
       <% valid? && "success" %>
+    `)
+  })
+
+  test("fails for literal in logical OR", () => {
+    expectError('Avoid using silent ERB tags for literals. `"fallback"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% valid? || "fallback" %>
+    `)
+  })
+
+  test("fails for literals in ternary without assignment", () => {
+    expectError('Avoid using silent ERB tags for literals. `"yes"` is evaluated but never used or output.')
+    expectError('Avoid using silent ERB tags for literals. `"no"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% post.published? ? "yes" : "no" %>
+    `)
+  })
+
+  test("fails for frozen string literal", () => {
+    expectError('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
+
+    assertOffenses(dedent`
+      <% "hello".freeze %>
     `)
   })
 })

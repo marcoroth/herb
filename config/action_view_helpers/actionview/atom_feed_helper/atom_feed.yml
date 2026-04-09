@@ -1,0 +1,40 @@
+---
+name: atom_feed
+source: "ActionView::Helpers::AtomFeedHelper#atom_feed"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates an Atom feed using the Builder template engine. Yields an `AtomFeedBuilder` instance to the block. This helper is designed for use in `.atom.builder` templates, not ERB.
+signature: "atom_feed(options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AtomFeedHelper.html#method-i-atom_feed"
+tag: null
+arguments:
+  - name: options
+    position: 1
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Feed options hash."
+options:
+  - name: language
+    type: string
+    description: "Feed language. Defaults to `\"en-US\"`."
+  - name: root_url
+    type: string
+    description: "The HTML alternative URL for the feed."
+  - name: url
+    type: string
+    description: "The URL for this feed. Defaults to the current URL."
+  - name: id
+    type: string
+    description: "The id for this feed."
+  - name: schema_date
+    type: string
+    description: "The date at which the tag scheme for the feed was first used. Defaults to `\"2005\"`."
+  - name: instruct
+    type: hash
+    description: "Hash of XML processing instructions."
+special_behaviors: []

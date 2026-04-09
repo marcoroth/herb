@@ -74,6 +74,18 @@ rbs:
       - 'sig/**/*.rbs'
       - 'templates/sig/**/*'
 
+action-view-helpers:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'config/action_view_helpers/**/*'
+      - 'config/view_context_methods/**/*'
+      - 'templates/src/analyze/action_view/**/*'
+      - 'templates/javascript/packages/core/src/action-view-helpers.ts.erb'
+      - 'templates/lib/herb/action_view/**/*'
+      - 'templates/java/org/herb/ast/HelperRegistry.java.erb'
+      - 'templates/rust/src/action_view_helpers.rs.erb'
+      - 'src/analyze/action_view/**/*'
+
 parser:
   - changed-files:
     - any-glob-to-any-file:

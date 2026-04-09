@@ -8,5 +8,5 @@ input: "<%%= 'Test' %%>"
         ├── tag_opening: "<%%=" (location: (1:0)-(1:4))
         ├── content: " 'Test' " (location: (1:4)-(1:12))
         ├── tag_closing: "%%>" (location: (1:12)-(1:15))
-        ├── parsed: false
+        ├── parsed: true
         └── valid: true
