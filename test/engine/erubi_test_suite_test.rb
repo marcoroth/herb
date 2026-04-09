@@ -15,7 +15,7 @@ module Engine
     ERUBI_OPTS = { enforce_erubi_equality: true, enforce_actionview_erubi_equality: false }.freeze
 
     test "handles literal erb escape with double percent" do
-      template = <<~'ERB'.chomp
+      template = <<~ERB.chomp
         <table>
         <%% for item in @items %>
           <tr>
@@ -66,7 +66,7 @@ module Engine
     end
 
     test "literal percent with different prefix and postfix" do
-      template = <<~'ERB'.chomp
+      template = <<~ERB.chomp
         <table>
           <%% for item in @items %>
           <tr>
