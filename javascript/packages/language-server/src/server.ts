@@ -45,7 +45,7 @@ export class Server {
 
       const result: InitializeResult = {
         serverInfo: {
-          name: "Herb LSP",
+          name: "Herb Language Server",
           version,
         },
         capabilities: {
