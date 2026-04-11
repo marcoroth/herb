@@ -46,7 +46,7 @@
     "postcss-import": "^16.1.1"
   },
   "devDependencies": {
-    "@types/node": "^25.2.2",
+    "@types/node": "^25.6.0",
     "tailwindcss": "^3.4.17"
   },
   "peerDependencies": {
