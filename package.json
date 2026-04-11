@@ -22,7 +22,6 @@
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "22.6.5",
     "oxlint": "^1.58.0",
-    "picomatch": "^4.0.4",
     "playwright": "^1.59.1",
     "prettier": "^3.8.1",
     "rimraf": "^6.1.3",

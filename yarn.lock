@@ -638,7 +638,6 @@
 
 "@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.4.2":
   version "2.4.2"
-  uid d52eafe3e9303399fda15661f3d7bb8fe3d7eabc
   resolved "https://github.com/jothepro/doxygen-awesome-css#d52eafe3e9303399fda15661f3d7bb8fe3d7eabc"
 
 "@jridgewell/gen-mapping@^0.3.2":
@@ -9515,13 +9514,21 @@ tinyexec@^1.0.2:
   resolved "https://registry.yarnpkg.com/tinyexec/-/tinyexec-1.0.2.tgz#bdd2737fe2ba40bd6f918ae26642f264b99ca251"
   integrity sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==
 
-tinyglobby@^0.2.11, tinyglobby@^0.2.15:
+tinyglobby@^0.2.11:
   version "0.2.15"
   resolved "https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.15.tgz"
   integrity sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==
   dependencies:
     fdir "^6.5.0"
     picomatch "^4.0.3"
+
+tinyglobby@^0.2.15, tinyglobby@^0.2.16:
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/tinyglobby/-/tinyglobby-0.2.16.tgz#1c3b7eb953fce42b226bc5a1ee06428281aff3d6"
+  integrity sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==
+  dependencies:
+    fdir "^6.5.0"
+    picomatch "^4.0.4"
 
 tinyrainbow@^3.0.3:
   version "3.0.3"
