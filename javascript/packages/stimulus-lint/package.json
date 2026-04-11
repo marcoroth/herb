@@ -38,7 +38,7 @@
     "@herb-tools/highlighter": "0.9.5",
     "@herb-tools/linter": "0.9.5",
     "@herb-tools/node-wasm": "0.9.5",
-    "stimulus-parser": "^0.3.1"
+    "stimulus-parser": "^0.3.2"
   },
   "files": [
     "package.json",
