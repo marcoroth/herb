@@ -41,6 +41,24 @@ class ConfigurationTest < Minitest::Spec
     assert_includes config.file_include_patterns, "**/*.custom.erb"
   end
 
+  test "loads configuration using YAML anchors and aliases" do
+    write_config(<<~YAML)
+      version: "0.9.6"
+      files:
+        include: &patterns
+          - "**/*.custom.erb"
+          - "**/*.other.erb"
+        exclude: *patterns
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_includes config.file_include_patterns, "**/*.other.erb"
+    assert_includes config.file_exclude_patterns, "**/*.custom.erb"
+    assert_includes config.file_exclude_patterns, "**/*.other.erb"
+  end
+
   test "searches parent directories for config file" do
     subdir = File.join(@temp_dir, "app", "views")
     FileUtils.mkdir_p(subdir)
