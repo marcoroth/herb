@@ -214,4 +214,63 @@ describe("ActionViewNoSilentHelperRule", () => {
       <% end %>
     `)
   })
+
+  test("output tag with link_to in conditional is allowed", () => {
+    expectNoOffenses(dedent`
+      <% if admin? %>
+        <%= link_to "Admin", admin_path %>
+      <% end %>
+    `)
+  })
+
+  test("output tag with link_to in loop is allowed", () => {
+    expectNoOffenses(dedent`
+      <% ["Herb", "Home"].each do %>
+        <%= link_to it, home_path %>
+      <% end %>
+    `)
+  })
+
+  test("output tag with link_to inside times loop is allowed", () => {
+    expectNoOffenses(dedent`
+      <% 3.times do %>
+        <%= link_to("Foo", foo_path) %>
+      <% end %>
+    `)
+  })
+
+  test("output tag with link_to inside each loop in list is allowed", () => {
+    expectNoOffenses(dedent`
+      <ul>
+        <% @stickers.each do |sticker| %>
+          <li>
+            <%= link_to sticker %>
+          </li>
+        <% end %>
+      </ul>
+    `)
+  })
+
+  test("output tag with helpers inside each_with_index loop with nested blocks and conditional is allowed", () => {
+    expectNoOffenses(dedent`
+      <div class="w-full max-w-2xl mx-auto px-5">
+        <% @page.records.each_with_index do |byte, index| %>
+          <%= link_to byte_path(byte), class: "block group py-3" do %>
+            <div class="flex gap-3">
+              <%= image_tag byte.episode.podcast.artwork_url, alt: "", class: "size-11 rounded-lg" %>
+              <div class="flex-1 min-w-0">
+                <p class="text-base text-neutral-500 truncate"><%= byte.episode.podcast.name %></p>
+                <h2 class="mt-0.5 font-semibold"><%= byte.title %></h2>
+                <p class="mt-1 text-base text-neutral-600"><%= byte.subtitle %></p>
+              </div>
+            </div>
+          <% end %>
+
+          <% unless index == @page.records.size - 1 %>
+            <hr class="border-neutral-950/5">
+          <% end %>
+        <% end %>
+      </div>
+    `)
+  })
 })
