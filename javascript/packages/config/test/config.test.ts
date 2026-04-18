@@ -862,6 +862,59 @@ describe("@herb-tools/config", () => {
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/index.html.erb")).toBe(false)
     })
 
+    test("isRuleEnabledForPath normalizes absolute file paths against projectPath", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              exclude: ["app/views/layouts/jasmine.*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/layouts/jasmine.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/layouts/jasmine.html.erb`)).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(true)
+    })
+
+    test("isRuleEnabledForPath normalizes absolute file paths for include patterns", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              include: ["app/components/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/components/button.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/components/button.html.erb`)).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(false)
+    })
+
+    test("isRuleEnabledForPath normalizes absolute file paths for only patterns", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              only: ["app/views/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/components/button.html.erb`)).toBe(false)
+    })
+
     test("linter.exclude combines with files.exclude for file discovery", () => {
       const configOptions: HerbConfigOptions = {
         files: {
