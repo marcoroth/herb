@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +10,26 @@ use crate::{RuleConfig, Severity};
 pub struct LinterConfig {
   #[serde(default)]
   pub rules: HashMap<String, RuleConfig>,
+}
+
+fn normalize_file_path(file_path: &str, project_path: Option<&str>) -> String {
+  if let Some(project) = project_path {
+    let path = Path::new(file_path);
+
+    if path.is_absolute() {
+      let project_prefix = if project.ends_with(std::path::MAIN_SEPARATOR) {
+        project.to_string()
+      } else {
+        format!("{}{}", project, std::path::MAIN_SEPARATOR)
+      };
+
+      if file_path.starts_with(&project_prefix) {
+        return file_path[project_prefix.len()..].to_string();
+      }
+    }
+  }
+
+  file_path.to_string()
 }
 
 impl LinterConfig {
@@ -35,6 +56,13 @@ impl LinterConfig {
   }
 
   pub fn is_rule_enabled_for_path(&self, rule_name: &str, file_path: &str, default_exclude: &[&str]) -> bool {
+    self.is_rule_enabled_for_path_with_project(rule_name, file_path, default_exclude, None)
+  }
+
+  pub fn is_rule_enabled_for_path_with_project(&self, rule_name: &str, file_path: &str, default_exclude: &[&str], project_path: Option<&str>) -> bool {
+    let normalized = normalize_file_path(file_path, project_path);
+    let file_path = normalized.as_str();
+
     if let Some(config) = self.rules.get(rule_name) {
       if !config.only.is_empty() {
         if !is_path_matching(file_path, &config.only) {
