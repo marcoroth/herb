@@ -1,5 +1,4 @@
 import dedent from "dedent"
-
 import { describe, test } from "vitest"
 
 import { ActionViewNoSilentHelperRule } from "../../src/rules/actionview-no-silent-helper.js"
@@ -11,6 +10,22 @@ describe("ActionViewNoSilentHelperRule", () => {
   test("output tag with link_to is allowed", () => {
     expectNoOffenses(dedent`
       <%= link_to "Home", root_path %>
+    `)
+  })
+
+  test("output tag with link_to in conditional is allowed", () => {
+    expectNoOffenses(dedent`
+      <% if admin? %>
+        <%= link_to "Admin", admin_path %>
+      <% end %>
+    `)
+  })
+
+  test("output tag with link_to in loop is allowed", () => {
+    expectNoOffenses(dedent`
+      <% ["Herb", "Home"].each do %>
+        <%= link_to it, home_path %>
+      <% end %>
     `)
   })
 
