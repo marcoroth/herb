@@ -1,10 +1,10 @@
-import { isERBOutputNode, PrismVisitor } from "@herb-tools/core"
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
-
-import { isActionViewHelperCall } from "./action-view-utils.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { isERBOutputNode, PrismVisitor } from "@herb-tools/core"
+import { isActionViewHelperCall } from "./action-view-utils.js"
+
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 class ActionViewHelperCallCollector extends PrismVisitor {
   public readonly matches: { helperName: string }[] = []
