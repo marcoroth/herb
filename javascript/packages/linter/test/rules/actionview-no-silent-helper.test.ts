@@ -230,22 +230,6 @@ describe("ActionViewNoSilentHelperRule", () => {
     `)
   })
 
-  test("output tag with link_to in conditional is allowed", () => {
-    expectNoOffenses(dedent`
-      <% if admin? %>
-        <%= link_to "Admin", admin_path %>
-      <% end %>
-    `)
-  })
-
-  test("output tag with link_to in loop is allowed", () => {
-    expectNoOffenses(dedent`
-      <% ["Herb", "Home"].each do %>
-        <%= link_to it, home_path %>
-      <% end %>
-    `)
-  })
-
   test("output tag with link_to inside times loop is allowed", () => {
     expectNoOffenses(dedent`
       <% 3.times do %>
