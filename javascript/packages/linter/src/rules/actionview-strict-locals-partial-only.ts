@@ -19,7 +19,7 @@ class ActionViewStrictLocalsPartialOnlyVisitor extends BaseRuleVisitor {
 export class ActionViewStrictLocalsPartialOnlyRule extends ParserRule {
   static unsafeAutocorrectable = true
   static ruleName = "actionview-strict-locals-partial-only"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get parserOptions() {
     return { strict_locals: true }

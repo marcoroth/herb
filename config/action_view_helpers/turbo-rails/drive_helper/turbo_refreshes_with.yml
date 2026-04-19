@@ -1,0 +1,22 @@
+---
+name: turbo_refreshes_with
+source: "Turbo::DriveHelper#turbo_refreshes_with"
+gem: turbo-rails
+output: void
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Configure how to handle page refreshes. Calls `turbo_refresh_method_tag` and `turbo_refresh_scroll_tag` and provides them to the `:head` content block.
+signature: "turbo_refreshes_with(method: :replace, scroll: :reset)"
+documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/DriveHelper#turbo_refreshes_with-instance_method"
+tag: null
+arguments: []
+options:
+  - name: method
+    type: symbol
+    description: "Method to update the body during a page refresh. Can be `:replace` (default) or `:morph`."
+  - name: scroll
+    type: symbol
+    description: "Scroll behavior during a page refresh. Can be `:reset` (default) or `:preserve`."
+special_behaviors: []

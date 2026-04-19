@@ -1,0 +1,56 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0010_javascript_tag with embedded ERB in HTML string literal"
+input: |2-
+<%= javascript_tag do %>
+  const html = "<code><%= content %></code>";
+
+  console.log(html)
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:9))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:24))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " javascript_tag do " (location: (1:3)-(1:22))
+    │   │       ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   │       ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "script" (location: (1:4)-(1:18))
+    │   ├── body: (1 item)
+    │   │   └── @ CDATANode (location: (1:0)-(5:9))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(5:9))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ LiteralNode (location: (1:24)-(2:22))
+    │   │       │   │   └── content: "\n  const html = \"<code>"
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (2:22)-(2:36))
+    │   │       │   │   ├── tag_opening: "<%=" (location: (2:22)-(2:25))
+    │   │       │   │   ├── content: " content " (location: (2:25)-(2:34))
+    │   │       │   │   ├── tag_closing: "%>" (location: (2:34)-(2:36))
+    │   │       │   │   ├── parsed: false
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   └── @ LiteralNode (location: (2:36)-(5:0))
+    │   │       │       └── content: "</code>\";\n\n  console.log(html)\n"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(5:9))
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ ERBEndNode (location: (5:0)-(5:9))
+    │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       ├── content: " end " (location: (5:2)-(5:7))
+    │   │       └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

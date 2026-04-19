@@ -11,12 +11,14 @@ import {
   getCombinedAttributeNameString,
   getAttributeValueNodes,
   getAttributeValue,
+  getTagLocalName,
   forEachAttribute,
 } from "@herb-tools/core"
 
 import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
+  HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
   Token,
@@ -166,6 +168,73 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
 
 
 /**
+ * Mixin that tracks the current HTML element stack during AST traversal.
+ * Provides convenient access to the current element, tag name, parent element,
+ * and ancestry checks.
+ *
+ * Useful for rules that need element context when visiting child nodes
+ * (e.g., checking attributes in the context of their parent element).
+ *
+ * @template TAutofixContext - Type for autofix context (node + custom data)
+ */
+export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
+  private elementStack: HTMLElementNode[] = []
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    this.elementStack.push(node)
+    super.visitHTMLElementNode(node)
+    this.elementStack.pop()
+  }
+
+  /**
+   * The current HTML element being visited, or null if not inside an element.
+   */
+  protected get currentElement(): HTMLElementNode | null {
+    return this.elementStack.at(-1) ?? null
+  }
+
+  /**
+   * The tag name of the current HTML element, or null if not inside an element.
+   */
+  protected get currentTagName(): string | null {
+    const element = this.currentElement
+    return element ? getTagLocalName(element) : null
+  }
+
+  /**
+   * The parent HTML element (one level up), or null if at the top level.
+   */
+  protected get parentElement(): HTMLElementNode | null {
+    return this.elementStack.at(-2) ?? null
+  }
+
+  /**
+   * The tag name of the parent HTML element, or null if at the top level.
+   */
+  protected get parentTagName(): string | null {
+    const element = this.parentElement
+    return element ? getTagLocalName(element) : null
+  }
+
+  /**
+   * Checks if the current traversal position is inside an element with any of the given tag names.
+   */
+  protected isInsideElement(...tagNames: string[]): boolean {
+    return this.elementStack.some(element => {
+      const name = getTagLocalName(element)
+      return name !== null && tagNames.includes(name)
+    })
+  }
+
+  /**
+   * The current nesting depth (number of ancestor HTML elements).
+   */
+  protected get elementDepth(): number {
+    return this.elementStack.length
+  }
+}
+
+/**
  * Common HTML element categorization
  */
 export const HTML_INLINE_ELEMENTS = new Set([
@@ -270,6 +339,38 @@ export const SVG_CAMEL_CASE_ELEMENTS = new Set([
 export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
   Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
 )
+
+/**
+ * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
+ */
+export const SVG_KNOWN_ELEMENTS = new Set([
+  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
+  "a", "animate", "circle", "defs", "desc", "ellipse", "g", "image", "line",
+  "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
+  "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
+  "filter", "set", "style",
+])
+
+export function isKnownSVGElement(tagName: string): boolean {
+  return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * All known MathML elements
+ */
+export const MATHML_KNOWN_ELEMENTS = new Set([
+  "annotation", "annotation-xml",
+  "maction", "math", "menclose", "merror", "mfenced", "mfrac",
+  "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo",
+  "mover", "mpadded", "mphantom", "mprescripts", "mroot", "mrow",
+  "ms", "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup",
+  "mtable", "mtd", "mtext", "mtr", "munder", "munderover",
+  "none", "semantics",
+])
+
+export function isKnownMathMLElement(tagName: string): boolean {
+  return MATHML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
 
 export const VALID_ARIA_ROLES = new Set([
   "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",

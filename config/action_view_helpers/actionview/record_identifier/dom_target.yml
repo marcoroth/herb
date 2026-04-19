@@ -1,0 +1,22 @@
+---
+name: dom_target
+source: "ActionView::RecordIdentifier#dom_target"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Concatenates any number of parameters into a DOM target string. Records are passed through `dom_id`, while strings and symbols are retained.
+signature: "dom_target(*objects)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html#method-i-dom_target"
+tag: null
+arguments:
+  - name: objects
+    position: 1
+    type: object
+    optional: false
+    splat: true
+    description: "Records, strings, or symbols to concatenate."
+options: []
+special_behaviors: []

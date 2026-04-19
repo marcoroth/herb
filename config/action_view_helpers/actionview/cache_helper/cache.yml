@@ -1,0 +1,28 @@
+---
+name: cache
+source: "ActionView::Helpers::CacheHelper#cache"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Caches fragments of a view rather than an entire action or page.
+signature: "cache(name = {}, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CacheHelper.html#method-i-cache"
+tag: null
+arguments:
+  - name: name
+    position: 1
+    type: [string, hash, object]
+    optional: true
+    default: "{}"
+    description: "Cache key."
+options:
+  - name: skip_digest
+    type: boolean
+    description: "If `true`, skips template digest in cache key."
+  - name: expires_in
+    type: integer
+    description: "Cache expiration time."
+special_behaviors: []

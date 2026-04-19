@@ -1,4 +1,4 @@
-import { hasAttribute, PrismVisitor } from "@herb-tools/core"
+import { hasAttribute, PrismVisitor, getHelpersByModule, helperExists } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
@@ -6,12 +6,11 @@ import { ParserRule } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
-// TODO: migrate to `action_view_helpers: true` once we support them all
-const FORM_TAG_HELPERS = new Set([
-  "text_area_tag",
-  "text_field_tag",
-  "textarea_tag",
-])
+const FORM_TAG_HELPERS = new Set(
+  getHelpersByModule("FormTagHelper")
+    .filter(h => h.tagName === "input" || h.tagName === "textarea" || h.tagName === "select")
+    .flatMap(h => [h.name, ...h.aliases])
+)
 
 const FORM_BUILDER_METHODS = new Set([
   "text_area",
@@ -83,7 +82,7 @@ class NoAutofocusAttributeVisitor extends BaseRuleVisitor {
 
 export class A11yNoAutofocusAttributeRule extends ParserRule {
   static ruleName = "a11y-no-autofocus-attribute"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

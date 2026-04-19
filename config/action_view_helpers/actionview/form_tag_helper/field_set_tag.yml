@@ -1,0 +1,34 @@
+---
+name: field_set_tag
+source: "ActionView::Helpers::FormTagHelper#field_set_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a field set for grouping HTML form elements.
+signature: "field_set_tag(legend = nil, options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-field_set_tag"
+tag:
+  name: fieldset
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: legend
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "Legend text displayed at the top of the fieldset."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []
+aliases:
+  - fieldset_tag

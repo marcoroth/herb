@@ -1,0 +1,46 @@
+---
+name: rich_textarea_tag
+source: "ActionText::TagHelper#rich_textarea_tag"
+gem: actiontext
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns a `<trix-editor>` tag that instantiates the Trix JavaScript editor as well as a hidden field that Trix will write to on changes, so the content will be sent on form submissions.
+signature: "rich_textarea_tag(name, value = nil, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionText/TagHelper.html#method-i-rich_textarea_tag"
+tag:
+  name: trix-editor
+  is_void: false
+  preferred: true
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the hidden field and editor."
+  - name: value
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Initial content for the editor."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: class
+    type: string
+    description: |-
+      CSS class. Defaults to `"trix-content"` for default styles.
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: |-
+      Hash of `data-*` attributes. Includes direct_upload_url and blob_url_template by default.
+special_behaviors: []

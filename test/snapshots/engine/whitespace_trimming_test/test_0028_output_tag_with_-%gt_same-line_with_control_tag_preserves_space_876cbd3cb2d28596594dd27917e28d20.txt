@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0028_output tag with -%> same-line with control tag preserves space"
+input: "{source: \"A<%= -%> <% if true %>B<% end %>\", locals: {}, options: {}}"
+---
+A B

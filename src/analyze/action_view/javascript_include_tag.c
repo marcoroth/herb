@@ -1,36 +1,9 @@
-#include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_buffer.h"
 
 #include <prism.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-
-bool detect_javascript_include_tag(pm_call_node_t* call_node, pm_parser_t* parser) {
-  if (!call_node || !call_node->name) { return false; }
-
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
-  return constant && constant->length == 22
-      && strncmp((const char*) constant->start, "javascript_include_tag", 22) == 0;
-}
-
-char* extract_javascript_include_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) call_node;
-  (void) parser;
-
-  return hb_allocator_strdup(allocator, "script");
-}
-
-char* extract_javascript_include_tag_content(
-  pm_call_node_t* call_node,
-  pm_parser_t* parser,
-  hb_allocator_T* allocator
-) {
-  (void) call_node;
-  (void) parser;
-  (void) allocator;
-
-  return NULL;
-}
 
 char* extract_javascript_include_tag_src(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   (void) parser;
@@ -62,31 +35,27 @@ bool javascript_include_tag_source_is_url(const char* source, size_t length) {
   return false;
 }
 
-char* wrap_in_javascript_path(const char* source, size_t source_length, hb_allocator_T* allocator) {
-  const char* prefix = "javascript_path(";
-  const char* suffix = ")";
-  size_t prefix_length = strlen(prefix);
-  size_t suffix_length = strlen(suffix);
-  size_t total_length = prefix_length + source_length + suffix_length;
-  char* result = hb_allocator_alloc(allocator, total_length + 1);
+char* wrap_in_javascript_path(
+  const char* source,
+  size_t source_length,
+  const char* path_options,
+  hb_allocator_T* allocator
+) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, source_length + 32, allocator);
 
-  memcpy(result, prefix, prefix_length);
-  memcpy(result + prefix_length, source, source_length);
-  memcpy(result + prefix_length + source_length, suffix, suffix_length);
-  result[total_length] = '\0';
+  hb_buffer_append(&buffer, "javascript_path(");
+  hb_buffer_append_with_length(&buffer, source, source_length);
+
+  if (path_options && strlen(path_options) > 0) {
+    hb_buffer_append(&buffer, ", ");
+    hb_buffer_append(&buffer, path_options);
+  }
+
+  hb_buffer_append(&buffer, ")");
+
+  char* result = hb_allocator_strdup(allocator, hb_buffer_value(&buffer));
+  hb_buffer_free(&buffer);
 
   return result;
 }
-
-bool javascript_include_tag_supports_block(void) {
-  return false;
-}
-
-const tag_helper_handler_T javascript_include_tag_handler = {
-  .name = "javascript_include_tag",
-  .source = HB_STRING_LITERAL("ActionView::Helpers::AssetTagHelper#javascript_include_tag"),
-  .detect = detect_javascript_include_tag,
-  .extract_tag_name = extract_javascript_include_tag_name,
-  .extract_content = extract_javascript_include_tag_content,
-  .supports_block = javascript_include_tag_supports_block
-};

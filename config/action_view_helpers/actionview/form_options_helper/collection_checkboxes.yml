@@ -1,0 +1,58 @@
+---
+name: collection_checkboxes
+source: "ActionView::Helpers::FormOptionsHelper#collection_checkboxes"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns check box tags for the collection of existing return values of `method` for `object`'s class. The value returned from calling `method` on the instance `object` will be selected. If calling `method` returns `nil`, no selection is made.
+signature: "collection_checkboxes(object, method, collection, value_method, text_method, options = {}, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-collection_checkboxes"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The object name."
+  - name: method
+    position: 2
+    type: [string, symbol]
+    optional: false
+    description: "The attribute of the object."
+  - name: collection
+    position: 3
+    type: array
+    optional: false
+    description: "The collection of objects to build checkboxes from."
+  - name: value_method
+    position: 4
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on each member of `collection` to get the checkbox value."
+  - name: text_method
+    position: 5
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on each member of `collection` to get the label text."
+  - name: options
+    position: 6
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash."
+  - name: html_options
+    position: 7
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for each checkbox tag."
+options:
+  - name: include_hidden
+    type: boolean
+    description: "If `false`, prevents the hidden field from being generated."
+special_behaviors: []
+aliases:
+  - collection_check_boxes

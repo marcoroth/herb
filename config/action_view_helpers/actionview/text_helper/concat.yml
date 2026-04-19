@@ -1,0 +1,21 @@
+---
+name: concat
+source: "ActionView::Helpers::TextHelper#concat"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Appends text to the output buffer. Used inside non-output code blocks (`<% %>`) as an alternative to the output syntax (`<%= %>`).
+signature: "concat(string)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-concat"
+tag: null
+arguments:
+  - name: string
+    position: 1
+    type: string
+    optional: false
+    description: "The text to append to the output buffer."
+options: []
+special_behaviors: []

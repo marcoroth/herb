@@ -1,0 +1,9 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0019_javascript_tag with type attribute CDATA matches ActionView output"
+input: "{source: \"<%= javascript_tag \\\"alert(1)\\\", type: \\\"application/javascript\\\" %>\", locals: {}, options: {}}"
+---
+<script type="application/javascript">
+//<![CDATA[
+alert(1)
+//]]>
+</script>

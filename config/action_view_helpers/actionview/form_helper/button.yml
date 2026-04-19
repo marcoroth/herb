@@ -1,0 +1,38 @@
+---
+name: button
+source: "ActionView::Helpers::FormHelper#button"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a `<button type="submit">` for the form. When no value is given, it generates a label based on whether the object is a new or persisted record. Accepts a block for custom button content. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "button(value = nil, options = {}, &block)"
+documentation_url: ""
+tag: null
+arguments:
+  - name: value
+    position: 1
+    type: [string, symbol]
+    optional: true
+    default: "nil"
+    description: "Button text or a Symbol mapped to `field_name`/`field_id`. Auto-generated from the model if omitted."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the button is disabled."
+  - name: formmethod
+    type: string
+    description: "HTTP method for the button's form submission."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

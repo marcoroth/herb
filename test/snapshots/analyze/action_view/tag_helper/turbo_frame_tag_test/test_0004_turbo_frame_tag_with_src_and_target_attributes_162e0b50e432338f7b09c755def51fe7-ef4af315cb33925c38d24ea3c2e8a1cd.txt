@@ -51,7 +51,7 @@ options: {action_view_helpers: true}
     │   │           │           │       └── content: "tray_path(tray)"
     │   │           │           │
     │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
     │   │           └── @ HTMLAttributeNode (location: (1:50)-(1:64))

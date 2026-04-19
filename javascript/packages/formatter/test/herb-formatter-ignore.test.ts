@@ -85,6 +85,69 @@ describe("herb:formatter ignore directive", () => {
     const result = formatter.format(source)
     expect(result).toBe(dedent`
       <%# herb:disable all %>
+
+      <DIV>
+        <SPAN>content</SPAN>
+      </DIV>
+    `)
+  })
+
+  test("multiple on the top-level", () => {
+    const source = dedent`
+      <%# herb:disable all %>
+      <DIV>
+            <SPAN>content</SPAN>
+      </DIV>
+
+      <%# herb:disable all %>
+      <DIV>
+            <SPAN>content</SPAN>
+      </DIV>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(dedent`
+      <%# herb:disable all %>
+      <%# herb:disable all %>
+
+      <DIV>
+        <SPAN>content</SPAN>
+      </DIV>
+
+      <DIV>
+        <SPAN>content</SPAN>
+      </DIV>
+    `)
+  })
+
+  test("multiple on the top-level", () => {
+    const source = dedent`
+      <%# herb:disable all %>
+      <DIV>
+            <SPAN>content</SPAN>
+      </DIV>
+
+      <%# herb:disable all %>
+      <%# herb:disable all %>
+      <DIV>
+            <SPAN>content</SPAN>
+      </DIV>
+      <%# herb:disable all %>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(dedent`
+      <%# herb:disable all %>
+      <%# herb:disable all %>
+      <%# herb:disable all %>
+      <%# herb:disable all %>
+
+      <DIV>
+        <SPAN>content</SPAN>
+      </DIV>
+
       <DIV>
         <SPAN>content</SPAN>
       </DIV>

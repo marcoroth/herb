@@ -74,6 +74,18 @@ rbs:
       - 'sig/**/*.rbs'
       - 'templates/sig/**/*'
 
+action-view-helpers:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'config/action_view_helpers/**/*'
+      - 'config/view_context_methods/**/*'
+      - 'templates/src/analyze/action_view/**/*'
+      - 'templates/javascript/packages/core/src/action-view-helpers.ts.erb'
+      - 'templates/lib/herb/action_view/**/*'
+      - 'templates/java/org/herb/ast/HelperRegistry.java.erb'
+      - 'templates/rust/src/action_view_helpers.rs.erb'
+      - 'src/analyze/action_view/**/*'
+
 parser:
   - changed-files:
     - any-glob-to-any-file:
@@ -128,6 +140,12 @@ linter-autofix:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/linter/test/autofix/**/*'
+
+a11y:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/src/rules/**/a11y-*'
+      - '**/javascript/packages/linter/docs/rules/**/a11y-*'
 
 language-server:
   - changed-files:

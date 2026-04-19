@@ -5,8 +5,6 @@ import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { glob } from "tinyglobby"
-
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
 import { deepMerge } from "./merge.js"
@@ -32,9 +30,21 @@ export type FilesConfig = {
   exclude?: string[]
 }
 
+export type SeverityConfig = DiagnosticSeverity | { editor: DiagnosticSeverity; cli: DiagnosticSeverity }
+
+export type LinterMode = "editor" | "cli"
+
+export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): DiagnosticSeverity {
+  if (typeof severity === "string") {
+    return severity
+  }
+
+  return severity[mode]
+}
+
 export type RuleConfig = {
   enabled?: boolean
-  severity?: DiagnosticSeverity
+  severity?: SeverityConfig
   autoCorrect?: boolean
   include?: string[]
   only?: string[]
@@ -112,12 +122,12 @@ export class Config {
 
   public readonly path: string
   public config: HerbConfig
-  public readonly configVersion: string
+  public readonly configVersion: string | undefined
 
   constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
     this.path = Config.configPathFromProjectPath(projectPath)
     this.config = config
-    this.configVersion = configVersion ?? config.version
+    this.configVersion = configVersion
   }
 
   get projectPath(): string {
@@ -243,6 +253,8 @@ export class Config {
       return []
     }
 
+    const { glob } = await import("tinyglobby")
+
     return await glob(patterns, {
       cwd: searchDir,
       absolute: true,
@@ -274,12 +286,25 @@ export class Config {
    * @param excludePatterns - Array of glob patterns to check against
    * @returns true if the path matches any exclude pattern
    */
+  private normalizeFilePath(filePath: string): string {
+    if (path.isAbsolute(filePath)) {
+      const projectDir = this.projectPath + path.sep
+
+      if (filePath.startsWith(projectDir)) {
+        return filePath.slice(projectDir.length)
+      }
+    }
+
+    return filePath
+  }
+
   private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
     if (!excludePatterns || excludePatterns.length === 0) {
       return false
     }
 
-    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**
@@ -293,7 +318,8 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**
@@ -392,11 +418,11 @@ export class Config {
    * Apply configured severity overrides to a lint offense.
    * Returns the configured severity if set, otherwise returns the original severity.
    */
-  public getConfiguredSeverity(ruleName: string, defaultSeverity: DiagnosticSeverity): DiagnosticSeverity {
+  public getConfiguredSeverity(ruleName: string, defaultSeverity: DiagnosticSeverity, mode: LinterMode = "cli"): DiagnosticSeverity {
     const ruleConfig = this.config.linter?.rules?.[ruleName]
 
     if (ruleConfig && ruleConfig.severity) {
-      return ruleConfig.severity
+      return resolveSeverity(ruleConfig.severity, mode)
     }
 
     return defaultSeverity
@@ -406,7 +432,7 @@ export class Config {
    * Apply severity overrides from config to an array of offenses.
    * Each offense must have a `rule` and `severity` property.
    */
-  public applySeverityOverrides<T extends { rule: string; severity: DiagnosticSeverity }>(offenses: T[]): T[] {
+  public applySeverityOverrides<T extends { rule: string; severity: DiagnosticSeverity }>(offenses: T[], mode: LinterMode = "cli"): T[] {
     if (!this.config.linter?.rules) {
       return offenses
     }
@@ -414,7 +440,7 @@ export class Config {
     return offenses.map(offense => {
       const ruleConfig = this.config.linter?.rules?.[offense.rule]
       if (ruleConfig && ruleConfig.severity) {
-        return { ...offense, severity: ruleConfig.severity }
+        return { ...offense, severity: resolveSeverity(ruleConfig.severity, mode) }
       }
       return offense
     })
@@ -491,6 +517,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -502,20 +530,23 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      for (const indicator of this.PROJECT_INDICATORS) {
-        try {
-          fsSync.accessSync(path.join(currentPath, indicator))
+      if (!firstIndicatorMatch) {
+        for (const indicator of this.PROJECT_INDICATORS) {
+          try {
+            fsSync.accessSync(path.join(currentPath, indicator))
 
-          return currentPath
-        } catch {
-          // Indicator not found, continue checking
+            firstIndicatorMatch = currentPath
+            break
+          } catch {
+            // Indicator not found, continue checking
+          }
         }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return process.cwd()
+        return firstIndicatorMatch || process.cwd()
       }
 
       currentPath = parentPath
@@ -852,6 +883,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -863,16 +896,18 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      const isProjectRoot = await this.isProjectRoot(currentPath)
+      if (!firstIndicatorMatch) {
+        const isProjectRoot = await this.isProjectRoot(currentPath)
 
-      if (isProjectRoot) {
-        return { configPath: null, projectRoot: currentPath }
+        if (isProjectRoot) {
+          firstIndicatorMatch = currentPath
+        }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return { configPath: null, projectRoot: process.cwd() }
+        return { configPath: null, projectRoot: firstIndicatorMatch || process.cwd() }
       }
 
       currentPath = parentPath
@@ -1127,6 +1162,8 @@ export class Config {
       parsed = {}
     }
 
+    const hasExplicitVersion = !!parsed.version
+
     if (!parsed.version) {
       parsed.version = version
     }
@@ -1151,7 +1188,7 @@ export class Config {
       throw error
     }
 
-    const userConfigVersion: string = parsed.version || version
+    const userConfigVersion = hasExplicitVersion ? parsed.version : undefined
 
     const defaults = this.getDefaultConfig(version)
     const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)

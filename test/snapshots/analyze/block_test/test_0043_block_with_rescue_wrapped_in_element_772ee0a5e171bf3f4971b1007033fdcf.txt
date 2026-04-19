@@ -43,6 +43,13 @@ input: |2-
     │   │   │   │   └── @ HTMLTextNode (location: (3:15)-(4:2))
     │   │   │   │       └── content: "\n  "
     │   │   │   │
+    │   │   │   ├── block_arguments: (1 item)
+    │   │   │   │   └── @ RubyParameterNode (location: (2:20)-(2:24))
+    │   │   │   │       ├── name: "item" (location: (2:20)-(2:24))
+    │   │   │   │       ├── default_value: ∅
+    │   │   │   │       ├── kind: "positional"
+    │   │   │   │       └── required: true
+    │   │   │   │
     │   │   │   ├── rescue_clause:
     │   │   │   │   └── @ ERBRescueNode (location: (4:2)-(6:2))
     │   │   │   │       ├── tag_opening: "<%" (location: (4:2)-(4:4))

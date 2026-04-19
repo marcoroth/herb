@@ -147,14 +147,14 @@ export class IdentityPrinter extends Printer {
   }
 
   visitHTMLAttributeValueNode(node: Nodes.HTMLAttributeValueNode): void {
-    if (node.quoted && node.open_quote) {
-      this.write(node.open_quote.value)
+    if (node.quoted) {
+      this.write(node.open_quote?.value ?? '"')
     }
 
     this.visitChildNodes(node)
 
-    if (node.quoted && node.close_quote) {
-      this.write(node.close_quote.value)
+    if (node.quoted) {
+      this.write(node.close_quote?.value ?? '"')
     }
   }
 
@@ -400,6 +400,30 @@ export class IdentityPrinter extends Printer {
 
   visitERBRenderNode(node: Nodes.ERBRenderNode): void {
     this.printERBNode(node)
+
+    if (node.end_node) {
+      if (node.body) {
+        node.body.forEach(child => this.visit(child))
+      }
+
+      if (node.rescue_clause) {
+        this.visit(node.rescue_clause)
+      }
+
+      if (node.else_clause) {
+        this.visit(node.else_clause)
+      }
+
+      if (node.ensure_clause) {
+        this.visit(node.ensure_clause)
+      }
+
+      this.visit(node.end_node)
+    }
+  }
+
+  visitRubyRenderKeywordsNode(_node: Nodes.RubyRenderKeywordsNode): void {
+    // no-op: extracted metadata, nothing to print
   }
 
   visitRubyRenderLocalNode(_node: Nodes.RubyRenderLocalNode): void {
@@ -410,7 +434,7 @@ export class IdentityPrinter extends Printer {
     this.printERBNode(node)
   }
 
-  visitRubyStrictLocalNode(_node: Nodes.RubyStrictLocalNode): void {
+  visitRubyParameterNode(_node: Nodes.RubyParameterNode): void {
     // extracted metadata, nothing to print
   }
 

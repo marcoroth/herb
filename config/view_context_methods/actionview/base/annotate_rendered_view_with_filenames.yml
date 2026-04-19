@@ -1,0 +1,8 @@
+---
+name: annotate_rendered_view_with_filenames
+source: "ActionView::Base#annotate_rendered_view_with_filenames"
+gem: actionview
+category: base
+output: boolean
+description: |-
+  Returns whether rendered views are annotated with HTML comments showing their template filenames.

@@ -484,6 +484,16 @@
                     <span class="select-none">Action View helpers</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Transform inline conditionals (postfix if/unless, ternaries) into ERBIfNode/ERBUnlessNode wrapping the expression">
+                    <input
+                      type="checkbox"
+                      data-option="transform_conditionals"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Transform conditionals</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Detect ActionView render calls and represent them as ERBRenderNode with extracted partial, collection, layout, object, as, and locals fields">
                     <input
                       type="checkbox"

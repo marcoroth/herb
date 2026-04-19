@@ -2,12 +2,14 @@
 #include "../include/analyze/action_view/tag_helper_node_builders.h"
 #include "../include/analyze/action_view/tag_helpers.h"
 #include "../include/analyze/analyze.h"
+#include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/lib/string.h"
 #include "../include/util/util.h"
 #include "../include/visitor.h"
 
@@ -101,40 +103,9 @@ static pm_parameters_node_t* find_parameters_node(pm_node_t* root) {
   return def_node->parameters;
 }
 
-static token_T* create_strict_local_token(
-  const uint8_t* prism_node_start,
-  const uint8_t* prism_node_end,
-  const char* name,
-  token_type_T type,
-  const char* source,
-  size_t erb_content_byte_offset,
-  const char* content_bytes,
-  const char* params_open,
-  const uint8_t* synthetic_start,
-  hb_allocator_T* allocator
-) {
-  size_t params_in_content = (size_t) (params_open - content_bytes);
-  size_t prism_start_in_synthetic = (size_t) (prism_node_start - synthetic_start);
-  size_t prism_end_in_synthetic = (size_t) (prism_node_end - synthetic_start);
-  size_t content_start = params_in_content + (prism_start_in_synthetic - strlen(SYNTHETIC_PREFIX));
-  size_t content_end = params_in_content + (prism_end_in_synthetic - strlen(SYNTHETIC_PREFIX));
-
-  position_T start = byte_offset_to_position(source, erb_content_byte_offset + content_start);
-  position_T end = byte_offset_to_position(source, erb_content_byte_offset + content_end);
-
-  return create_synthetic_token(allocator, name, type, start, end);
-}
-
-static char* extract_name_from_location(pm_location_t name_location, hb_allocator_T* allocator) {
-  size_t length = (size_t) (name_location.end - name_location.start);
-
-  if (length > 0 && name_location.start[length - 1] == ':') { length--; }
-
-  return hb_allocator_strndup(allocator, (const char*) name_location.start, length);
-}
-
 static hb_array_T* extract_strict_locals(
   pm_parameters_node_t* params,
+  pm_parser_t* parser,
   const char* source,
   size_t erb_content_byte_offset,
   const char* content_bytes,
@@ -143,303 +114,29 @@ static hb_array_T* extract_strict_locals(
   hb_array_T* errors,
   hb_allocator_T* allocator
 ) {
-  hb_array_T* locals = hb_array_init(4, allocator);
+  if (!params) { return hb_array_init(0, allocator); }
 
-  if (!params) { return locals; }
+  size_t params_in_content = (size_t) (params_open - content_bytes);
+  size_t prefix_length = strlen(SYNTHETIC_PREFIX);
+  size_t source_base_offset = erb_content_byte_offset + params_in_content - prefix_length;
 
-  for (size_t index = 0; index < params->optionals.size; index++) {
-    pm_node_t* optional = params->optionals.nodes[index];
-    if (!optional || optional->type != PM_OPTIONAL_PARAMETER_NODE) { continue; }
+  hb_array_T* locals =
+    extract_parameters_from_prism(params, parser, source, source_base_offset, synthetic_start, allocator);
 
-    pm_optional_parameter_node_t* optional_param = (pm_optional_parameter_node_t*) optional;
-    pm_location_t location = optional_param->name_loc;
-    size_t length = (size_t) (location.end - location.start);
-    char* name = hb_allocator_strndup(allocator, (const char*) location.start, length);
+  for (size_t index = 0; index < hb_array_size(locals); index++) {
+    AST_RUBY_PARAMETER_NODE_T* local = hb_array_get(locals, index);
+    if (!local) { continue; }
 
-    token_T* name_token = create_strict_local_token(
-      location.start,
-      location.end,
-      name,
-      TOKEN_IDENTIFIER,
-      source,
-      erb_content_byte_offset,
-      content_bytes,
-      params_open,
-      synthetic_start,
-      allocator
-    );
+    position_T start = local->base.location.start;
+    position_T end = local->base.location.end;
+    hb_string_T name = local->name ? local->name->value : hb_string("");
 
-    position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-    position_T end = name_token ? name_token->location.end : start;
-
-    size_t value_prism_start = (size_t) (optional_param->value->location.start - synthetic_start);
-    size_t value_prism_end = (size_t) (optional_param->value->location.end - synthetic_start);
-    size_t params_in_content = (size_t) (params_open - content_bytes);
-    size_t value_content_start = params_in_content + (value_prism_start - strlen(SYNTHETIC_PREFIX));
-    size_t value_content_end = params_in_content + (value_prism_end - strlen(SYNTHETIC_PREFIX));
-
-    size_t value_length = value_prism_end - value_prism_start;
-    char* value_string =
-      hb_allocator_strndup(allocator, (const char*) optional_param->value->location.start, value_length);
-
-    position_T value_start = byte_offset_to_position(source, erb_content_byte_offset + value_content_start);
-    position_T value_end = byte_offset_to_position(source, erb_content_byte_offset + value_content_end);
-
-    AST_RUBY_LITERAL_NODE_T* value_node = ast_ruby_literal_node_init(
-      hb_string_from_c_string(value_string),
-      value_start,
-      value_end,
-      hb_array_init(0, allocator),
-      allocator
-    );
-
-    hb_array_T* node_errors = hb_array_init(1, allocator);
-    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
-
-    AST_RUBY_STRICT_LOCAL_NODE_T* local =
-      ast_ruby_strict_local_node_init(name_token, value_node, false, false, start, value_end, node_errors, allocator);
-
-    hb_array_append(locals, local);
-    hb_allocator_dealloc(allocator, name);
-    hb_allocator_dealloc(allocator, value_string);
-  }
-
-  for (size_t index = 0; index < params->requireds.size; index++) {
-    pm_node_t* required = params->requireds.nodes[index];
-    if (!required) { continue; }
-
-    pm_location_t location = required->location;
-    size_t length = (size_t) (location.end - location.start);
-    char* name = hb_allocator_strndup(allocator, (const char*) location.start, length);
-
-    token_T* name_token = create_strict_local_token(
-      location.start,
-      location.end,
-      name,
-      TOKEN_IDENTIFIER,
-      source,
-      erb_content_byte_offset,
-      content_bytes,
-      params_open,
-      synthetic_start,
-      allocator
-    );
-
-    position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-    position_T end = name_token ? name_token->location.end : start;
-
-    hb_array_T* node_errors = hb_array_init(1, allocator);
-    append_strict_locals_positional_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
-
-    AST_RUBY_STRICT_LOCAL_NODE_T* local =
-      ast_ruby_strict_local_node_init(name_token, NULL, true, false, start, end, node_errors, allocator);
-
-    hb_array_append(locals, local);
-    hb_allocator_dealloc(allocator, name);
-  }
-
-  if (params->block) {
-    pm_block_parameter_node_t* block_param = params->block;
-
-    if (block_param->name) {
-      size_t length = (size_t) (block_param->name_loc.end - block_param->name_loc.start);
-      char* name = hb_allocator_strndup(allocator, (const char*) block_param->name_loc.start, length);
-
-      token_T* name_token = create_strict_local_token(
-        block_param->name_loc.start,
-        block_param->name_loc.end,
-        name,
-        TOKEN_IDENTIFIER,
-        source,
-        erb_content_byte_offset,
-        content_bytes,
-        params_open,
-        synthetic_start,
-        allocator
-      );
-
-      position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-      position_T end = name_token ? name_token->location.end : start;
-
-      hb_array_T* node_errors = hb_array_init(1, allocator);
-      append_strict_locals_block_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
-
-      AST_RUBY_STRICT_LOCAL_NODE_T* local =
-        ast_ruby_strict_local_node_init(name_token, NULL, false, false, start, end, node_errors, allocator);
-
-      hb_array_append(locals, local);
-      hb_allocator_dealloc(allocator, name);
-    }
-  }
-
-  if (params->rest && params->rest->type == PM_REST_PARAMETER_NODE) {
-    pm_rest_parameter_node_t* splat_param = (pm_rest_parameter_node_t*) params->rest;
-
-    if (splat_param->name) {
-      size_t length = (size_t) (splat_param->name_loc.end - splat_param->name_loc.start);
-      char* name = hb_allocator_strndup(allocator, (const char*) splat_param->name_loc.start, length);
-
-      token_T* name_token = create_strict_local_token(
-        splat_param->name_loc.start,
-        splat_param->name_loc.end,
-        name,
-        TOKEN_IDENTIFIER,
-        source,
-        erb_content_byte_offset,
-        content_bytes,
-        params_open,
-        synthetic_start,
-        allocator
-      );
-
-      position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-      position_T end = name_token ? name_token->location.end : start;
-
-      hb_array_T* node_errors = hb_array_init(1, allocator);
-      append_strict_locals_splat_argument_error(hb_string_from_c_string(name), start, end, allocator, node_errors);
-
-      AST_RUBY_STRICT_LOCAL_NODE_T* local =
-        ast_ruby_strict_local_node_init(name_token, NULL, false, false, start, end, node_errors, allocator);
-
-      hb_array_append(locals, local);
-      hb_allocator_dealloc(allocator, name);
-    }
-  }
-
-  for (size_t index = 0; index < params->keywords.size; index++) {
-    pm_node_t* keyword_node = params->keywords.nodes[index];
-
-    if (keyword_node->type == PM_REQUIRED_KEYWORD_PARAMETER_NODE) {
-      pm_required_keyword_parameter_node_t* keyword_param = (pm_required_keyword_parameter_node_t*) keyword_node;
-
-      char* name = extract_name_from_location(keyword_param->name_loc, allocator);
-      if (!name) { continue; }
-
-      token_T* name_token = create_strict_local_token(
-        keyword_param->name_loc.start,
-        keyword_param->name_loc.end,
-        name,
-        TOKEN_IDENTIFIER,
-        source,
-        erb_content_byte_offset,
-        content_bytes,
-        params_open,
-        synthetic_start,
-        allocator
-      );
-
-      position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-      position_T end = name_token ? name_token->location.end : start;
-
-      AST_RUBY_STRICT_LOCAL_NODE_T* local = ast_ruby_strict_local_node_init(
-        name_token,
-        NULL,
-        true,
-        false,
-        start,
-        end,
-        hb_array_init(0, allocator),
-        allocator
-      );
-
-      hb_array_append(locals, local);
-      hb_allocator_dealloc(allocator, name);
-
-    } else if (keyword_node->type == PM_OPTIONAL_KEYWORD_PARAMETER_NODE) {
-      pm_optional_keyword_parameter_node_t* keyword_param = (pm_optional_keyword_parameter_node_t*) keyword_node;
-
-      char* name = extract_name_from_location(keyword_param->name_loc, allocator);
-      if (!name) { continue; }
-
-      size_t value_prism_start = (size_t) (keyword_param->value->location.start - synthetic_start);
-      size_t value_prism_end = (size_t) (keyword_param->value->location.end - synthetic_start);
-      size_t params_in_content = (size_t) (params_open - content_bytes);
-      size_t value_content_start = params_in_content + (value_prism_start - strlen(SYNTHETIC_PREFIX));
-      size_t value_content_end = params_in_content + (value_prism_end - strlen(SYNTHETIC_PREFIX));
-
-      size_t value_length = value_prism_end - value_prism_start;
-      char* value_string =
-        hb_allocator_strndup(allocator, (const char*) keyword_param->value->location.start, value_length);
-
-      position_T value_start = byte_offset_to_position(source, erb_content_byte_offset + value_content_start);
-      position_T value_end = byte_offset_to_position(source, erb_content_byte_offset + value_content_end);
-
-      AST_RUBY_LITERAL_NODE_T* value_node = ast_ruby_literal_node_init(
-        hb_string_from_c_string(value_string),
-        value_start,
-        value_end,
-        hb_array_init(0, allocator),
-        allocator
-      );
-
-      token_T* name_token = create_strict_local_token(
-        keyword_param->name_loc.start,
-        keyword_param->name_loc.end,
-        name,
-        TOKEN_IDENTIFIER,
-        source,
-        erb_content_byte_offset,
-        content_bytes,
-        params_open,
-        synthetic_start,
-        allocator
-      );
-
-      position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-
-      AST_RUBY_STRICT_LOCAL_NODE_T* local = ast_ruby_strict_local_node_init(
-        name_token,
-        value_node,
-        false,
-        false,
-        start,
-        value_end,
-        hb_array_init(0, allocator),
-        allocator
-      );
-
-      hb_array_append(locals, local);
-      hb_allocator_dealloc(allocator, name);
-      hb_allocator_dealloc(allocator, value_string);
-    }
-  }
-
-  if (params->keyword_rest && params->keyword_rest->type == PM_KEYWORD_REST_PARAMETER_NODE) {
-    pm_keyword_rest_parameter_node_t* keyword_rest_param = (pm_keyword_rest_parameter_node_t*) params->keyword_rest;
-
-    if (keyword_rest_param->name) {
-      char* name = extract_name_from_location(keyword_rest_param->name_loc, allocator);
-      if (!name) { return locals; }
-
-      token_T* name_token = create_strict_local_token(
-        keyword_rest_param->name_loc.start,
-        keyword_rest_param->name_loc.end,
-        name,
-        TOKEN_IDENTIFIER,
-        source,
-        erb_content_byte_offset,
-        content_bytes,
-        params_open,
-        synthetic_start,
-        allocator
-      );
-
-      position_T start = name_token ? name_token->location.start : (position_T) { .line = 1, .column = 1 };
-      position_T end = name_token ? name_token->location.end : start;
-
-      AST_RUBY_STRICT_LOCAL_NODE_T* local = ast_ruby_strict_local_node_init(
-        name_token,
-        NULL,
-        false,
-        true,
-        start,
-        end,
-        hb_array_init(0, allocator),
-        allocator
-      );
-
-      hb_array_append(locals, local);
-      hb_allocator_dealloc(allocator, name);
+    if (string_equals(local->kind.data, "positional")) {
+      append_strict_locals_positional_argument_error(name, start, end, allocator, local->base.errors);
+    } else if (string_equals(local->kind.data, "rest")) {
+      append_strict_locals_splat_argument_error(name, start, end, allocator, local->base.errors);
+    } else if (string_equals(local->kind.data, "block")) {
+      append_strict_locals_block_argument_error(name, start, end, allocator, local->base.errors);
     }
   }
 
@@ -561,6 +258,7 @@ static AST_ERB_STRICT_LOCALS_NODE_T* create_strict_locals_node(
   } else {
     locals = extract_strict_locals(
       params_node,
+      &parser,
       source,
       erb_content_byte_offset,
       content_bytes,

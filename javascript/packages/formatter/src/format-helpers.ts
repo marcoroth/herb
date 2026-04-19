@@ -21,7 +21,6 @@ export interface ContentUnit {
   type: 'text' | 'inline' | 'erb' | 'block'
   isAtomic: boolean
   breaksFlow: boolean
-  isHerbDisable?: boolean
 }
 
 /**
@@ -130,33 +129,6 @@ export function filterSignificantChildren(body: Node[]): Node[] {
 
     return true
   })
-}
-
-/**
- * Smart filter that preserves exactly ONE whitespace before herb:disable comments
- */
-export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
-  const result: Node[] = []
-  let pendingWhitespace: Node | null = null
-
-  for (const node of nodes) {
-    const isHerbDisable = isNode(node, ERBContentNode) && isHerbDisableComment(node)
-
-    if (isPureWhitespaceNode(node)) {
-      if (!pendingWhitespace) {
-        pendingWhitespace = node
-      }
-    } else {
-      if (isHerbDisable && pendingWhitespace) {
-        result.push(pendingWhitespace)
-      }
-
-      pendingWhitespace = null
-      result.push(node)
-    }
-  }
-
-  return result
 }
 
 // --- Punctuation and Word Spacing Functions ---
@@ -506,7 +478,7 @@ export function endsWithWhitespace(text: string): boolean {
 /**
  * Check if an ERB content node is a herb:disable comment
  */
-export function isHerbDisableComment(node: Node): boolean {
+export function isHerbDisableComment(node: Node): node is ERBContentNode & { tag_opening: { value: "<%#" } } {
   if (!isNode(node, ERBContentNode)) return false
   if (node.tag_opening?.value !== "<%#") return false
 
@@ -514,21 +486,6 @@ export function isHerbDisableComment(node: Node): boolean {
   const trimmed = content.trim()
 
   return trimmed.startsWith("herb:disable")
-}
-
-/**
- * Check if children contain a leading herb:disable comment (after optional whitespace)
- */
-export function hasLeadingHerbDisable(children: Node[]): boolean {
-  for (const child of children) {
-    if (isNode(child, WhitespaceNode) || (isNode(child, HTMLTextNode) && child.content.trim() === "")) {
-      continue
-    }
-
-    return isNode(child, ERBContentNode) && isHerbDisableComment(child)
-  }
-
-  return false
 }
 
 /**

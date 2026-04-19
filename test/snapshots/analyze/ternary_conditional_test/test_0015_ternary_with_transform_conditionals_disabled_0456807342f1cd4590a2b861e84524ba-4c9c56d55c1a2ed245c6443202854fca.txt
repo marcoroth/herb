@@ -1,0 +1,17 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0015_ternary with transform_conditionals disabled"
+input: |2-
+<%= condition ? 'yes' : 'no' %>
+options: {transform_conditionals: false}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " condition ? 'yes' : 'no' " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

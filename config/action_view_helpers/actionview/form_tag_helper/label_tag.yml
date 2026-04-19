@@ -1,0 +1,38 @@
+---
+name: label_tag
+source: "ActionView::Helpers::FormTagHelper#label_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a label element. Accepts a block.
+signature: "label_tag(name = nil, content_or_options = nil, options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-label_tag"
+tag:
+  name: label
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "The for attribute, linking to an input by name."
+  - name: content_or_options
+    position: 2
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "Label text, or options hash when block is given."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []

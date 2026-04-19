@@ -124,7 +124,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node_precise(
       open_quote,
       value_children,
       close_quote,
-      positions->quoted,
+      true,
       positions->value_start,
       positions->value_end,
       hb_array_init(0, allocator),
@@ -179,7 +179,7 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_ruby_literal_precise(
     NULL,
     value_children,
     NULL,
-    false,
+    true,
     positions->content_start,
     positions->content_end,
     hb_array_init(0, allocator),
@@ -384,4 +384,25 @@ void append_body_content_node(
 
     if (text_node) { hb_array_append(body, (AST_NODE_T*) text_node); }
   }
+}
+
+AST_CDATA_NODE_T* create_javascript_cdata_node(
+  hb_array_T* children,
+  position_T start,
+  position_T end,
+  hb_allocator_T* allocator
+) {
+  token_T* cdata_opening = create_synthetic_token(allocator, "\n//<![CDATA[\n", TOKEN_CDATA_START, start, end);
+
+  token_T* cdata_closing = create_synthetic_token(allocator, "\n//]]>\n", TOKEN_CDATA_END, start, end);
+
+  return ast_cdata_node_init(
+    cdata_opening,
+    children,
+    cdata_closing,
+    start,
+    end,
+    hb_array_init(0, allocator),
+    allocator
+  );
 }

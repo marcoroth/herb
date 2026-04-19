@@ -54,7 +54,7 @@ class ActionViewStrictLocalsFirstLineVisitor extends BaseRuleVisitor {
 export class ActionViewStrictLocalsFirstLineRule extends ParserRule {
   static autocorrectable = true
   static ruleName = "actionview-strict-locals-first-line"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get parserOptions() {
     return { strict_locals: true }

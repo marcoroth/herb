@@ -1,0 +1,76 @@
+---
+name: link_to
+source: "ActionView::Helpers::UrlHelper#link_to"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: true
+description: |-
+  Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If `nil` is passed as the name the value of the link itself will become the name.
+signature: "link_to(name = nil, options = nil, html_options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to"
+tag:
+  name: a
+  is_void: false
+  preferred: true
+  detect_style: call_name
+  implicit_attribute:
+    name: href
+    source: second_arg
+    source_with_block: first_arg
+    wrapper: url_for
+    skip_wrapping_for:
+      - string
+      - route_helper
+content:
+  source: block_or_arg
+  arg_position: 1
+  to_s_suffix_when_single: true
+attributes_arg: 3
+attributes_arg_with_block: 2
+transform_style: custom
+custom_transform: link_to
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "Link text. When a block is given, this becomes the URL instead."
+  - name: options
+    position: 2
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "URL string, route helper, or `url_for` options hash."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options:
+  - name: method
+    type: symbol
+    maps_to: data-method
+    description: "HTTP verb for the link (e.g. `:delete`, `:patch`). Rendered as a `data-method` attribute."
+  - name: remote
+    type: boolean
+    maps_to: data-remote
+    description: "If `true`, link submits via Ajax. Rendered as a `data-remote` attribute."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+  - name: id
+    type: string
+    description: "HTML id attribute."
+special_behaviors:
+  - type: implied_attribute
+    when_attribute: data-method
+    add_attribute: rel
+    add_value: nofollow

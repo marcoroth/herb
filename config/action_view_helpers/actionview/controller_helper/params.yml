@@ -1,0 +1,16 @@
+---
+name: params
+source: "ActionView::Helpers::ControllerHelper#params"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the request parameters as an `ActionController::Parameters` object. Delegated to the controller.
+signature: "params"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

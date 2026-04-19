@@ -322,6 +322,7 @@ static AST_NODE_T* build_block_node(control_builder_context_T* context) {
     context->tag_closing,
     HERB_PRISM_NODE_EMPTY,
     context->children,
+    hb_array_init(0, context->allocator),
     NULL,
     NULL,
     NULL,
