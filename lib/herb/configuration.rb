@@ -225,7 +225,7 @@ module Herb
       return deep_merge(DEFAULTS, {}) unless @config_path&.exist?
 
       begin
-        user_config = YAML.safe_load_file(@config_path, permitted_classes: [Symbol]) || {}
+        user_config = YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}
         deep_merge(DEFAULTS, user_config)
       rescue Psych::SyntaxError => e
         warn "Warning: Invalid YAML in #{@config_path}: #{e.message}"
