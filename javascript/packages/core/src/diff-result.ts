@@ -1,4 +1,4 @@
-import type { SerializedNode } from "./nodes/index.js"
+import type { SerializedNode } from "./nodes.js"
 
 export type DiffOperationType =
   | "attribute_added"
