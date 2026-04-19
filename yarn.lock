@@ -9955,10 +9955,10 @@ vite@^8.0.6:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vitepress-plugin-group-icons@^1.7.3:
-  version "1.7.3"
-  resolved "https://registry.yarnpkg.com/vitepress-plugin-group-icons/-/vitepress-plugin-group-icons-1.7.3.tgz#fcf0855cbe43b76f2cac3f6907004085743702c5"
-  integrity sha512-Nj2znOveQC7KH1CQ1k2WlVvEDAuymhumcUvD51ognVUv2yjrfAhOzL1VEESPzoJN0kWoRxXK+iu+OKNLe7unGQ==
+vitepress-plugin-group-icons@^1.7.5:
+  version "1.7.5"
+  resolved "https://registry.yarnpkg.com/vitepress-plugin-group-icons/-/vitepress-plugin-group-icons-1.7.5.tgz#daf8aad224ca930499165322c3c9a566d49dbd67"
+  integrity sha512-QzcroUuIiVKyXpmEiiHVbfRTQIy9Zbwxpk5JC/zavO8mavitwumz2RZWlwTchMCCHducYyPptkYvXvdnNUWkog==
   dependencies:
     "@iconify-json/logos" "^1.2.10"
     "@iconify-json/vscode-icons" "^1.2.45"
