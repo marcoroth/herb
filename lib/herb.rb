@@ -13,6 +13,8 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
+require_relative "herb/diff_operation"
+require_relative "herb/diff_result"
 
 require_relative "herb/ast"
 require_relative "herb/ast/node"
@@ -70,13 +72,13 @@ end
 module Herb
   class << self
     #: (String path, ?arena_stats: bool) -> LexResult
-    def lex_file(path, **options)
-      lex(File.read(path), **options)
+    def lex_file(path, **)
+      lex(File.read(path), **)
     end
 
     #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
-    def parse_file(path, **options)
-      parse(File.read(path), **options)
+    def parse_file(path, **)
+      parse(File.read(path), **)
     end
 
     #: (String source) -> Prism::ParseResult

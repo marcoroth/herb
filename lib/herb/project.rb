@@ -211,14 +211,11 @@ module Herb
           puts dimmed("Analyzing #{files.count} #{pluralize(files.count, "file")}...")
         end
 
-        total_width = files.count.to_s.length
-
-        finish_hook = lambda do |item, index, _file_result|
+        finish_hook = lambda do |item, _index, _file_result|
           next if silent
 
           if verbose
-            relative_path = relative_path(item)
-            puts "  #{dimmed("[#{(index + 1).to_s.rjust(total_width)}/#{files.count}]")} #{relative_path}"
+            puts "  #{relative_path(item)}"
           else
             print "."
           end

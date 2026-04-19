@@ -66,9 +66,9 @@ module Herb
     end
 
     class ArrayField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def ruby_type
@@ -107,9 +107,9 @@ module Herb
     end
 
     class NodeField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def c_type

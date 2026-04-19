@@ -99,6 +99,7 @@ class Herb::CLI
         bundle exec herb config [path]        Show configuration and file patterns for a project
         bundle exec herb ruby [file]          Extract Ruby from a file.
         bundle exec herb html [file]          Extract HTML from a file.
+        bundle exec herb diff [old] [new]     Diff two files and show the minimal set of AST differences.
         bundle exec herb playground [file]    Open the content of the source file in the playground
         bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
 
@@ -197,6 +198,8 @@ class Herb::CLI
                     system(%(open "#{url}##{hash}"))
                     exit(0)
                   end
+                when "diff"
+                  diff_files
                 when "lint"
                   run_node_tool("herb-lint", "@herb-tools/linter")
                 when "format"
@@ -437,6 +440,57 @@ class Herb::CLI
     end
 
     project.print_file_report(@file)
+  end
+
+  def diff_files
+    old_file = @args[1]
+    new_file = @args[2]
+
+    if old_file.nil? || new_file.nil?
+      puts "Usage: herb diff <old_file> <new_file> [options]"
+      exit(1)
+    end
+
+    unless File.exist?(old_file)
+      puts "File doesn't exist: #{old_file}"
+      exit(1)
+    end
+
+    unless File.exist?(new_file)
+      puts "File doesn't exist: #{new_file}"
+      exit(1)
+    end
+
+    old_content = File.read(old_file)
+    new_content = File.read(new_file)
+
+    diff_result = Herb.diff(old_content, new_content)
+
+    if json
+      require "json"
+      puts JSON.pretty_generate(diff_result.to_hash)
+    elsif diff_result.identical?
+      puts "Trees are identical."
+    else
+      operations = diff_result.operations
+      puts "#{operations.size} difference#{"s" unless operations.size == 1} found:\n\n"
+
+      operations.each_with_index do |operation, index|
+        puts "  #{index + 1}. #{operation.type} at path [#{operation.path.join(", ")}]"
+
+        if operation.old_node
+          puts "     old: #{operation.old_node.type}"
+        end
+
+        if operation.new_node
+          puts "     new: #{operation.new_node.type}"
+        end
+
+        puts
+      end
+    end
+
+    exit(0)
   end
 
   def compile_template
