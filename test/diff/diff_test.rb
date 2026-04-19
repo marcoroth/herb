@@ -474,5 +474,81 @@ module Diff
       move_ops = result.select { |op| op.type == :node_moved }
       assert_operator move_ops.size, :>=, 1
     end
+
+    test "wrap in ERB block" do
+      result = Herb.diff(
+        "<p>Content</p>",
+        "<% items.each do |item| %><p>Content</p><% end %>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_wrapped, result.first.type
+      assert_kind_of Herb::AST::HTMLElementNode, result.first.old_node
+      assert_kind_of Herb::AST::ERBBlockNode, result.first.new_node
+    end
+
+    test "unwrap from ERB block" do
+      result = Herb.diff(
+        "<% items.each do |item| %><p>Content</p><% end %>",
+        "<p>Content</p>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_unwrapped, result.first.type
+      assert_kind_of Herb::AST::ERBBlockNode, result.first.old_node
+      assert_kind_of Herb::AST::HTMLElementNode, result.first.new_node
+    end
+
+    test "wrap in ERB unless" do
+      result = Herb.diff(
+        "<div>Content</div>",
+        "<% unless hidden? %><div>Content</div><% end %>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_wrapped, result.first.type
+      assert_kind_of Herb::AST::ERBUnlessNode, result.first.new_node
+    end
+
+    test "unwrap from ERB unless" do
+      result = Herb.diff(
+        "<% unless hidden? %><div>Content</div><% end %>",
+        "<div>Content</div>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_unwrapped, result.first.type
+      assert_kind_of Herb::AST::ERBUnlessNode, result.first.old_node
+    end
+
+    test "wrap text in HTML element" do
+      result = Herb.diff(
+        "<div>hello</div>",
+        "<div><div>hello</div></div>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_wrapped, result.first.type
+      assert_kind_of Herb::AST::HTMLTextNode, result.first.old_node
+      assert_kind_of Herb::AST::HTMLElementNode, result.first.new_node
+    end
+
+    test "unwrap text from HTML element" do
+      result = Herb.diff(
+        "<div><span>hello</span></div>",
+        "<div>hello</div>"
+      )
+
+      refute result.identical?
+      assert_equal 1, result.operation_count
+      assert_equal :node_unwrapped, result.first.type
+      assert_kind_of Herb::AST::HTMLElementNode, result.first.old_node
+      assert_kind_of Herb::AST::HTMLTextNode, result.first.new_node
+    end
   end
 end

@@ -950,16 +950,18 @@ export default class extends Controller {
 
   renderOperations(operations) {
     const typeStyles = {
-      node_inserted:          { css: "inserted",  icon: "fa-plus" },
-      node_removed:           { css: "removed",   icon: "fa-minus" },
-      node_replaced:          { css: "replaced",  icon: "fa-right-left" },
-      text_changed:           { css: "changed",   icon: "fa-pen" },
-      erb_content_changed:    { css: "erb",       icon: "fa-code" },
+      node_inserted:          { css: "inserted",   icon: "fa-plus" },
+      node_removed:           { css: "removed",    icon: "fa-minus" },
+      node_replaced:          { css: "replaced",   icon: "fa-right-left" },
+      text_changed:           { css: "changed",    icon: "fa-pen" },
+      erb_content_changed:    { css: "erb",        icon: "fa-code" },
       attribute_added:        { css: "attribute",  icon: "fa-plus" },
-      attribute_removed:      { css: "removed",   icon: "fa-minus" },
+      attribute_removed:      { css: "removed",    icon: "fa-minus" },
       attribute_value_changed:{ css: "attribute",  icon: "fa-pen" },
-      tag_name_changed:       { css: "tag",       icon: "fa-tag" },
-      node_moved:             { css: "moved",     icon: "fa-arrows-alt" },
+      tag_name_changed:       { css: "tag",        icon: "fa-tag" },
+      node_moved:             { css: "moved",      icon: "fa-arrows-alt" },
+      node_wrapped:           { css: "wrapped",    icon: "fa-compress" },
+      node_unwrapped:         { css: "unwrapped",  icon: "fa-expand" },
     }
 
     let html = ""
@@ -979,34 +981,54 @@ export default class extends Controller {
       const oldNode = operation.oldNode || operation.old_node
       const newNode = operation.newNode || operation.new_node
 
-      if (oldNode) {
-        html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-removed">-</span> <span class="diff-node-type">${oldNode.type}</span>`
+      if (operation.type === "node_wrapped" && oldNode && newNode) {
+        const oldLabel = this.describeNode(oldNode, operation.type)
+        const newLabel = this.describeNode(newNode, operation.type)
 
-        if (oldNode.location) {
-          html += ` <span class="diff-location">(${oldNode.location.start.line}:${oldNode.location.start.column})</span>`
-        }
-
+        html += `<div class="text-xs mt-1 font-mono">`
+        html += `<span class="diff-value-old">${this.escapeHtml(oldLabel)}</span>`
+        html += ` wrapped in `
+        html += `<span class="diff-value-new">${this.escapeHtml(newLabel)}</span>`
         html += `</div>`
+      } else if (operation.type === "node_unwrapped" && oldNode && newNode) {
+        const oldLabel = this.describeNode(oldNode, operation.type)
+        const newLabel = this.describeNode(newNode, operation.type)
 
-        const oldValue = this.extractNodeValue(oldNode, operation.type)
-        if (oldValue !== null) {
-          html += `<div class="text-xs font-mono diff-value-old">${this.escapeHtml(oldValue)}</div>`
-        }
-      }
-
-      if (newNode) {
-        html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-inserted">+</span> <span class="diff-node-type">${newNode.type}</span>`
-
-        if (newNode.location) {
-          html += ` <span class="diff-location">(${newNode.location.start.line}:${newNode.location.start.column})</span>`
-        }
-
+        html += `<div class="text-xs mt-1 font-mono">`
+        html += `<span class="diff-value-new">${this.escapeHtml(newLabel)}</span>`
+        html += ` unwrapped from `
+        html += `<span class="diff-value-old">${this.escapeHtml(oldLabel)}</span>`
         html += `</div>`
+      } else {
+        if (oldNode) {
+          html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-removed">-</span> <span class="diff-node-type">${oldNode.type}</span>`
 
-        const newValue = this.extractNodeValue(newNode, operation.type)
+          if (oldNode.location) {
+            html += ` <span class="diff-location">(${oldNode.location.start.line}:${oldNode.location.start.column})</span>`
+          }
 
-        if (newValue !== null) {
-          html += `<div class="text-xs font-mono diff-value-new">${this.escapeHtml(newValue)}</div>`
+          html += `</div>`
+
+          const oldValue = this.extractNodeValue(oldNode, operation.type)
+          if (oldValue !== null) {
+            html += `<div class="text-xs font-mono diff-value-old">${this.escapeHtml(oldValue)}</div>`
+          }
+        }
+
+        if (newNode) {
+          html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-inserted">+</span> <span class="diff-node-type">${newNode.type}</span>`
+
+          if (newNode.location) {
+            html += ` <span class="diff-location">(${newNode.location.start.line}:${newNode.location.start.column})</span>`
+          }
+
+          html += `</div>`
+
+          const newValue = this.extractNodeValue(newNode, operation.type)
+
+          if (newValue !== null) {
+            html += `<div class="text-xs font-mono diff-value-new">${this.escapeHtml(newValue)}</div>`
+          }
         }
       }
 
@@ -1062,6 +1084,46 @@ export default class extends Controller {
     }
 
     return null
+  }
+
+  describeNode(node, operationType) {
+    if (!node) return "unknown"
+
+    if (node.type === "AST_HTML_ELEMENT_NODE" || node.type === "AST_HTML_CONDITIONAL_ELEMENT_NODE") {
+      if (node.tag_name && node.tag_name.value) {
+        return `<${node.tag_name.value}>`
+      }
+    }
+
+    if (node.type === "AST_HTML_TEXT_NODE") {
+      const text = node.content || ""
+      const trimmed = text.trim()
+
+      return trimmed.length > 30 ? `"${trimmed.slice(0, 30)}..."` : `"${trimmed}"`
+    }
+
+    if (node.type === "AST_ERB_CONTENT_NODE" && node.content && node.content.value) {
+      return `<%= ${node.content.value.trim()} %>`
+    }
+
+    if (node.type === "AST_ERB_IF_NODE" || node.type === "AST_ERB_UNLESS_NODE") {
+      const keyword = node.type === "AST_ERB_IF_NODE" ? "if" : "unless"
+      const condition = node.content && node.content.value ? node.content.value.trim().replace(/^(if|unless)\s+/, "") : ""
+
+      return condition ? `<% ${keyword} ${condition} %>` : `<% ${keyword} %>`
+    }
+
+    if (node.type && node.type.startsWith("AST_ERB_")) {
+      const keyword = node.type.replace("AST_ERB_", "").replace("_NODE", "").toLowerCase().replace(/_/g, " ")
+      const condition = node.content && node.content.value ? node.content.value.trim() : ""
+
+      return condition ? `<% ${condition} %>` : `<% ${keyword} %>`
+    }
+
+    const value = this.extractNodeValue(node, operationType)
+    if (value) return value
+
+    return node.type.replace("AST_", "").replace("_NODE", "").toLowerCase().replace(/_/g, " ")
   }
 
   escapeHtml(text) {
