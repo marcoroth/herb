@@ -165,7 +165,7 @@ module Herb
         process_erb_tag(node)
       end
 
-      def visit_erb_control_node(node, &_block)
+      def visit_erb_control_node(node, &)
         if node.content
           apply_trim(node, node.content.value.strip)
         end

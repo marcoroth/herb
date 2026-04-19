@@ -337,7 +337,7 @@ module Herb
       @src << postamble
     end
 
-    def with_buffer(&_block)
+    def with_buffer(&)
       if @chain_appends
         @src << "; " << @bufvar unless @buffer_on_stack
         yield
