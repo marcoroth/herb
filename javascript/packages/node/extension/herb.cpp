@@ -386,6 +386,23 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
 
   AST_DOCUMENT_NODE_T* old_root = herb_parse(old_string, &parser_options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_root = herb_parse(new_string, &parser_options, &new_allocator);
+
+  if (old_root == nullptr || new_root == nullptr) {
+    if (old_root != nullptr) { ast_node_free((AST_NODE_T*) old_root, &old_allocator); }
+    if (new_root != nullptr) { ast_node_free((AST_NODE_T*) new_root, &new_allocator); }
+
+    hb_allocator_destroy(&diff_allocator);
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    free(old_string);
+    free(new_string);
+
+    napi_throw_error(env, nullptr, "Failed to parse source");
+
+    return nullptr;
+  }
+
   herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
 
   napi_value result;

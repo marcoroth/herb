@@ -128,6 +128,7 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/diff_operation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb
     - lib/herb/parser_options.rb

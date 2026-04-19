@@ -283,5 +283,76 @@ module Diff
       changed_result = Herb.diff("<div>Hello</div>", "<div>World</div>")
       assert_match(/1 operation/, changed_result.inspect)
     end
+
+    test "DiffResult is Enumerable" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      assert_kind_of Enumerable, result
+
+      types = result.map(&:type)
+      assert_includes types, :text_changed
+    end
+
+    test "DiffResult#each yields operations" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      operations = []
+      result.each { |op| operations << op }
+
+      assert_equal result.operations.size, operations.size
+      assert_equal result.operations[0], operations[0]
+    end
+
+    test "DiffResult#each returns enumerator without block" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      enumerator = result.each
+      assert_kind_of Enumerator, enumerator
+    end
+
+    test "DiffOperation equality" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      op = result.operations[0]
+
+      assert_equal op.type, :text_changed
+      assert_kind_of Array, op.path
+      assert_equal op, op
+    end
+
+    test "DiffOperation is frozen" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      assert_predicate result.operations[0], :frozen?
+    end
+
+    test "DiffResult is frozen" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      assert_predicate result, :frozen?
+    end
+
+    test "DiffOperation is a Data class" do
+      result = Herb.diff("<div>Hello</div>", "<div>World</div>")
+
+      assert_kind_of Data, result.operations[0]
+    end
+
+    test "empty documents are identical" do
+      result = Herb.diff("", "")
+
+      assert_predicate result, :identical?
+      assert_equal 0, result.operation_count
+    end
+
+    test "different top-level elements are removed and inserted" do
+      result = Herb.diff("<div>Hello</div>", "<span>Hello</span>")
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      assert_includes types, :node_removed
+      assert_includes types, :node_inserted
+    end
   end
 end

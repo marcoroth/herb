@@ -336,6 +336,7 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       prism_nodes: false,
       prism_nodes_deep: false,
       dot_notation_tags: false,
+      transform_conditionals: false,
       html: true,
       start_line: 0,
       start_column: 0,
@@ -343,6 +344,17 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);
     let new_root = crate::ffi::herb_parse(new_c_source.as_ptr(), &parser_options, &mut new_allocator);
+
+    if old_root.is_null() || new_root.is_null() {
+      if !old_root.is_null() { crate::ffi::ast_node_free(old_root as *mut AST_NODE_T, &mut old_allocator); }
+      if !new_root.is_null() { crate::ffi::ast_node_free(new_root as *mut AST_NODE_T, &mut new_allocator); }
+
+      crate::ffi::hb_allocator_destroy(&mut diff_allocator);
+      crate::ffi::hb_allocator_destroy(&mut old_allocator);
+      crate::ffi::hb_allocator_destroy(&mut new_allocator);
+
+      return Err("Failed to parse source".to_string());
+    }
 
     let diff_result = crate::ffi::herb_diff(old_root, new_root, &mut diff_allocator);
 

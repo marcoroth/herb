@@ -1,24 +1,32 @@
 # Generated from lib/herb/diff_operation.rb with RBS::Inline
 
 module Herb
+  class DiffOperation < Data
+    attr_reader type(): Symbol
+
+    attr_reader path(): Array[Integer]
+
+    attr_reader old_node(): Herb::AST::Node?
+
+    attr_reader new_node(): Herb::AST::Node?
+
+    attr_reader old_index(): Integer
+
+    attr_reader new_index(): Integer
+
+    def self.new: (Symbol type, Array[Integer] path, Herb::AST::Node? old_node, Herb::AST::Node? new_node, Integer old_index, Integer new_index) -> instance
+                | (type: Symbol, path: Array[Integer], old_node: Herb::AST::Node?, new_node: Herb::AST::Node?, old_index: Integer, new_index: Integer) -> instance
+
+    def self.members: () -> [ :type, :path, :old_node, :new_node, :old_index, :new_index ]
+
+    def members: () -> [ :type, :path, :old_node, :new_node, :old_index, :new_index ]
+  end
+
   class DiffOperation
-    attr_reader type: Symbol
-
-    attr_reader path: Array[Integer]
-
-    attr_reader old_node: Herb::AST::Node?
-
-    attr_reader new_node: Herb::AST::Node?
-
-    attr_reader old_index: Integer
-
-    attr_reader new_index: Integer
-
-    # : (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
-    def initialize: (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
-
     # : () -> Hash[Symbol, untyped]
     def to_hash: () -> Hash[Symbol, untyped]
+
+    alias to_h to_hash
 
     # : () -> String
     def inspect: () -> String

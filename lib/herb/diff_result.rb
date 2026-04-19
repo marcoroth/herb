@@ -3,12 +3,23 @@
 
 module Herb
   class DiffResult
+    include Enumerable #[Herb::DiffOperation]
+
     attr_reader :operations #: Array[Herb::DiffOperation]
 
     #: (bool, Array[Herb::DiffOperation]) -> void
     def initialize(identical, operations)
       @identical = identical
-      @operations = operations
+      @operations = operations.freeze
+      freeze
+    end
+
+    #: () { (Herb::DiffOperation) -> void } -> void
+    #: () -> Enumerator[Herb::DiffOperation, void]
+    def each(&block)
+      return operations.each unless block
+
+      operations.each(&block)
     end
 
     #: () -> bool

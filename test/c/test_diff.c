@@ -204,6 +204,110 @@ TEST(test_diff_multiple_changes_with_unchanged_subtree)
   hb_allocator_destroy(&allocator);
 END
 
+TEST(test_diff_node_wrapped)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Content</div>", "<% if condition? %><div>Content</div><% end %>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_NODE_WRAPPED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_node_unwrapped)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<% if condition? %><div>Content</div><% end %>", "<div>Content</div>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_NODE_UNWRAPPED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_node_wrapped_html)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Hello</div>", "<h1><div>Hello</div></h1>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_NODE_WRAPPED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_operation_path)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Hello</div>", "<div>World</div>", &allocator);
+
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+
+  const herb_diff_operation_T* operation = herb_diff_operation_at(result, 0);
+  ck_assert_uint_gt(operation->path.depth, 0);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_operation_nodes)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Hello</div>", "<div>World</div>", &allocator);
+
+  const herb_diff_operation_T* operation = herb_diff_operation_at(result, 0);
+  ck_assert_ptr_nonnull(operation->old_node);
+  ck_assert_ptr_nonnull(operation->new_node);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_inserted_has_null_old_node)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div></div>", "<div><span>New</span></div>", &allocator);
+
+  const herb_diff_operation_T* operation = herb_diff_operation_at(result, 0);
+  ck_assert_ptr_null(operation->old_node);
+  ck_assert_ptr_nonnull(operation->new_node);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_removed_has_null_new_node)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div><span>Old</span></div>", "<div></div>", &allocator);
+
+  const herb_diff_operation_T* operation = herb_diff_operation_at(result, 0);
+  ck_assert_ptr_nonnull(operation->old_node);
+  ck_assert_ptr_null(operation->new_node);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_empty_documents)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("", "", &allocator);
+
+  ck_assert(herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 0);
+
+  hb_allocator_destroy(&allocator);
+END
+
 TEST(test_diff_operation_type_to_string)
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_INSERTED), "node_inserted");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_REMOVED), "node_removed");
@@ -232,6 +336,14 @@ TCase *diff_tests(void) {
   tcase_add_test(diff, test_diff_plain_reorder_no_move);
   tcase_add_test(diff, test_diff_move_with_attribute_change);
   tcase_add_test(diff, test_diff_multiple_changes_with_unchanged_subtree);
+  tcase_add_test(diff, test_diff_node_wrapped);
+  tcase_add_test(diff, test_diff_node_unwrapped);
+  tcase_add_test(diff, test_diff_node_wrapped_html);
+  tcase_add_test(diff, test_diff_operation_path);
+  tcase_add_test(diff, test_diff_operation_nodes);
+  tcase_add_test(diff, test_diff_inserted_has_null_old_node);
+  tcase_add_test(diff, test_diff_removed_has_null_new_node);
+  tcase_add_test(diff, test_diff_empty_documents);
   tcase_add_test(diff, test_diff_operation_type_to_string);
 
   return diff;

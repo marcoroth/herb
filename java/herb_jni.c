@@ -265,11 +265,28 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
   hb_allocator_T new_allocator;
   hb_allocator_T diff_allocator;
 
-  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)
-      || !hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)
-      || !hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) {
+  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)) {
     (*env)->ReleaseStringUTFChars(env, old_source, old_src);
     (*env)->ReleaseStringUTFChars(env, new_source, new_src);
+
+    return NULL;
+  }
+
+  if (!hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&old_allocator);
+    (*env)->ReleaseStringUTFChars(env, old_source, old_src);
+    (*env)->ReleaseStringUTFChars(env, new_source, new_src);
+
+    return NULL;
+  }
+
+  if (!hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    (*env)->ReleaseStringUTFChars(env, old_source, old_src);
+    (*env)->ReleaseStringUTFChars(env, new_source, new_src);
+
     return NULL;
   }
 
@@ -277,6 +294,21 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
 
   AST_DOCUMENT_NODE_T* old_root = herb_parse(old_src, &parser_options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_root = herb_parse(new_src, &parser_options, &new_allocator);
+
+  if (old_root == NULL || new_root == NULL) {
+    if (old_root != NULL) { ast_node_free((AST_NODE_T*) old_root, &old_allocator); }
+    if (new_root != NULL) { ast_node_free((AST_NODE_T*) new_root, &new_allocator); }
+
+    hb_allocator_destroy(&diff_allocator);
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    (*env)->ReleaseStringUTFChars(env, old_source, old_src);
+    (*env)->ReleaseStringUTFChars(env, new_source, new_src);
+
+    return NULL;
+  }
+
   herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
 
   jclass diff_result_class = (*env)->FindClass(env, "org/herb/DiffResult");
@@ -302,7 +334,7 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
     for (uint16_t path_index = 0; path_index < operation->path.depth; path_index++) {
       path_elements[path_index] = (jint) operation->path.indices[path_index];
     }
-    
+
     (*env)->ReleaseIntArrayElements(env, path_array, path_elements, 0);
 
     jobject old_node = operation->old_node != NULL ? CreateASTNode(env, (AST_NODE_T*) operation->old_node) : NULL;

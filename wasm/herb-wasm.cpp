@@ -188,14 +188,38 @@ val Herb_diff(const std::string& old_source, const std::string& new_source) {
   hb_allocator_T new_allocator;
   hb_allocator_T diff_allocator;
 
-  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)) { return val::null(); }
-  if (!hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)) { return val::null(); }
-  if (!hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) { return val::null(); }
+  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)) {
+    return val::null();
+  }
+
+  if (!hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&old_allocator);
+
+    return val::null();
+  }
+
+  if (!hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    return val::null();
+  }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   AST_DOCUMENT_NODE_T* old_root = herb_parse(old_source.c_str(), &parser_options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_root = herb_parse(new_source.c_str(), &parser_options, &new_allocator);
+
+  if (old_root == nullptr || new_root == nullptr) {
+    if (old_root != nullptr) { ast_node_free((AST_NODE_T*) old_root, &old_allocator); }
+    if (new_root != nullptr) { ast_node_free((AST_NODE_T*) new_root, &new_allocator); }
+
+    hb_allocator_destroy(&diff_allocator);
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    return val::null();
+  }
 
   herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
 

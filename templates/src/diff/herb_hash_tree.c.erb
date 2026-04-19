@@ -67,10 +67,10 @@ herb_hash_T herb_hash_tree(const AST_NODE_T* node, herb_hash_map_T* hash_map) {
 }
 
 static herb_hash_T identity_hash_attributes(const hb_array_T* attributes, const herb_hash_map_T* hash_map) {
-  if (attributes == NULL) { return 0; }
+  if (attributes == NULL) { return HERB_HASH_INIT; }
 
   const size_t count = hb_array_size(attributes);
-  herb_hash_T combined = 0;
+  herb_hash_T combined = HERB_HASH_INIT;
 
   for (size_t index = 0; index < count; index++) {
     const AST_NODE_T* attribute = (const AST_NODE_T*) hb_array_get(attributes, index);

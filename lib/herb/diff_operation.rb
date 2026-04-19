@@ -2,24 +2,16 @@
 # typed: true
 
 module Herb
+  DiffOperation = Data.define(
+    :type, #: Symbol
+    :path, #: Array[Integer]
+    :old_node, #: Herb::AST::Node?
+    :new_node, #: Herb::AST::Node?
+    :old_index, #: Integer
+    :new_index #: Integer
+  )
+
   class DiffOperation
-    attr_reader :type #: Symbol
-    attr_reader :path #: Array[Integer]
-    attr_reader :old_node #: Herb::AST::Node?
-    attr_reader :new_node #: Herb::AST::Node?
-    attr_reader :old_index #: Integer
-    attr_reader :new_index #: Integer
-
-    #: (Symbol, Array[Integer], Herb::AST::Node?, Herb::AST::Node?, Integer, Integer) -> void
-    def initialize(type, path, old_node, new_node, old_index, new_index)
-      @type = type
-      @path = path
-      @old_node = old_node
-      @new_node = new_node
-      @old_index = old_index
-      @new_index = new_index
-    end
-
     #: () -> Hash[Symbol, untyped]
     def to_hash
       {

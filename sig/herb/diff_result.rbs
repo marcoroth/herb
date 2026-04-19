@@ -2,10 +2,17 @@
 
 module Herb
   class DiffResult
+    include Enumerable[Herb::DiffOperation]
+
     attr_reader operations: Array[Herb::DiffOperation]
 
     # : (bool, Array[Herb::DiffOperation]) -> void
     def initialize: (bool, Array[Herb::DiffOperation]) -> void
+
+    # : () { (Herb::DiffOperation) -> void } -> void
+    # : () -> Enumerator[Herb::DiffOperation, void]
+    def each: () { (Herb::DiffOperation) -> void } -> void
+            | () -> Enumerator[Herb::DiffOperation, void]
 
     # : () -> bool
     def identical?: () -> bool
@@ -18,6 +25,8 @@ module Herb
 
     # : () -> Hash[Symbol, untyped]
     def to_hash: () -> Hash[Symbol, untyped]
+
+    alias to_h to_hash
 
     # : () -> String
     def inspect: () -> String

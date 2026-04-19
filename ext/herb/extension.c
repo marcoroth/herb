@@ -485,11 +485,29 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!hb_allocator_init(&args.old_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
-  if (!hb_allocator_init(&args.new_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
-  if (!hb_allocator_init(&args.diff_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  if (!hb_allocator_init(&args.new_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&args.old_allocator);
+
+    return Qnil;
+  }
+
+  if (!hb_allocator_init(&args.diff_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&args.old_allocator);
+    hb_allocator_destroy(&args.new_allocator);
+
+    return Qnil;
+  }
 
   args.old_root = herb_parse(old_string, &parser_options, &args.old_allocator);
   args.new_root = herb_parse(new_string, &parser_options, &args.new_allocator);
+
+  if (args.old_root == NULL || args.new_root == NULL) {
+    diff_cleanup((VALUE) &args);
+
+    return Qnil;
+  }
+
   args.diff_result = herb_diff(args.old_root, args.new_root, &args.diff_allocator);
 
   return rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);

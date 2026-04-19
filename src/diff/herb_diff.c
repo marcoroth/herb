@@ -1,8 +1,12 @@
 #include "../include/diff/herb_diff.h"
 
+#include <stdio.h>
+
 herb_diff_path_T herb_diff_path_empty(void) {
   herb_diff_path_T path;
+
   path.depth = 0;
+
   return path;
 }
 
@@ -12,6 +16,8 @@ herb_diff_path_T herb_diff_path_append(const herb_diff_path_T path, const uint32
   if (result.depth < HERB_DIFF_PATH_MAX_DEPTH) {
     result.indices[result.depth] = index;
     result.depth++;
+  } else {
+    fprintf(stderr, "herb: diff path depth exceeded maximum of %d\n", HERB_DIFF_PATH_MAX_DEPTH);
   }
 
   return result;
@@ -51,6 +57,7 @@ herb_diff_result_T* herb_diff(
 
   herb_hash_map_T old_hashes;
   herb_hash_map_T new_hashes;
+
   herb_hash_map_init(&old_hashes, 256, allocator);
   herb_hash_map_init(&new_hashes, 256, allocator);
 
@@ -96,18 +103,18 @@ bool herb_diff_trees_identical(const herb_diff_result_T* result) {
 
 const char* herb_diff_operation_type_to_string(const herb_diff_operation_type_T type) {
   switch (type) {
-    case HERB_DIFF_NODE_INSERTED: return "node_inserted";
-    case HERB_DIFF_NODE_REMOVED: return "node_removed";
-    case HERB_DIFF_NODE_REPLACED: return "node_replaced";
-    case HERB_DIFF_NODE_MOVED: return "node_moved";
-    case HERB_DIFF_TEXT_CHANGED: return "text_changed";
-    case HERB_DIFF_ERB_CONTENT_CHANGED: return "erb_content_changed";
     case HERB_DIFF_ATTRIBUTE_ADDED: return "attribute_added";
     case HERB_DIFF_ATTRIBUTE_REMOVED: return "attribute_removed";
     case HERB_DIFF_ATTRIBUTE_VALUE_CHANGED: return "attribute_value_changed";
-    case HERB_DIFF_TAG_NAME_CHANGED: return "tag_name_changed";
-    case HERB_DIFF_NODE_WRAPPED: return "node_wrapped";
+    case HERB_DIFF_ERB_CONTENT_CHANGED: return "erb_content_changed";
+    case HERB_DIFF_NODE_INSERTED: return "node_inserted";
+    case HERB_DIFF_NODE_MOVED: return "node_moved";
+    case HERB_DIFF_NODE_REMOVED: return "node_removed";
+    case HERB_DIFF_NODE_REPLACED: return "node_replaced";
     case HERB_DIFF_NODE_UNWRAPPED: return "node_unwrapped";
+    case HERB_DIFF_NODE_WRAPPED: return "node_wrapped";
+    case HERB_DIFF_TAG_NAME_CHANGED: return "tag_name_changed";
+    case HERB_DIFF_TEXT_CHANGED: return "text_changed";
   }
 
   return "unknown";
