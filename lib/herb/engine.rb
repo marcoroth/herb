@@ -20,8 +20,12 @@ module Herb
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors, :enabled_validators
 
+    # @rbs!
+    #   def self.optimize_warning_issued: () -> bool
+    #   def self.optimize_warning_issued=: (bool) -> bool
+
     class << self
-      attr_accessor :optimize_warning_issued
+      attr_accessor :optimize_warning_issued #: bool
     end
 
     self.optimize_warning_issued = false

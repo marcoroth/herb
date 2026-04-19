@@ -22,6 +22,12 @@ module Herb
 
     attr_reader enabled_validators: untyped
 
+    def self.optimize_warning_issued: () -> bool
+
+    def self.optimize_warning_issued=: (bool) -> bool
+
+    attr_accessor optimize_warning_issued: bool
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError

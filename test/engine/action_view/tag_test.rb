@@ -176,21 +176,21 @@ module Engine
 
       test "tag.div with script tag in attribute value" do
         assert_optimized_snapshot(
-          '<%= tag.div data: { value: user_input } %>',
+          "<%= tag.div data: { value: user_input } %>",
           { user_input: '<script>alert("xss")</script>' }
         )
       end
 
       test "tag.div with quotes in attribute value" do
         assert_optimized_snapshot(
-          '<%= tag.div title: user_input %>',
+          "<%= tag.div title: user_input %>",
           { user_input: 'He said "hello" & goodbye' }
         )
       end
 
       test "tag.div with angle brackets in attribute value" do
         assert_optimized_snapshot(
-          '<%= tag.div title: user_input %>',
+          "<%= tag.div title: user_input %>",
           { user_input: "<b>bold</b>" }
         )
       end
@@ -205,14 +205,14 @@ module Engine
       end
 
       test "tag.div with false boolean attribute" do
-        assert_optimized_snapshot('<%= tag.div disabled: false %>')
+        assert_optimized_snapshot("<%= tag.div disabled: false %>")
       end
 
       test "optimized block trims trailing whitespace" do
         template = "<%= tag.div do %>\n  Content\n<% end %>\n"
 
         engine = Herb::Engine.new(template, escape: false, optimize: true)
-        result = eval(engine.src) # rubocop:disable Security/Eval
+        result = eval(engine.src)
 
         assert_equal "<div>\n  Content\n</div>", result
         refute result.end_with?("\n"), "Optimized output should not have trailing newline"
