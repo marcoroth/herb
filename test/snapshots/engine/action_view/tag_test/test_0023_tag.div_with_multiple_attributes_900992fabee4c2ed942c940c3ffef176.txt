@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0023_tag.div with multiple attributes"
-input: "{source: \"<%= tag.div class: \\\"content\\\", id: \\\"main\\\" do %>\\n  Content\\n<% end %>\\n\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<div class="content" id="main">
-  Content
-</div>
-'.freeze;
-_buf.to_s

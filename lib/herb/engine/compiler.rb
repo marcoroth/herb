@@ -25,6 +25,7 @@ module Herb
         @last_trim_consumed_newline = false
         @pending_leading_whitespace = nil
         @pending_leading_whitespace_insert_index = 0
+        @current_element_source = nil
       end
 
       def generate_output
@@ -64,7 +65,13 @@ module Herb
           tag_name = node.tag_name&.value&.downcase
 
           if node.open_tag.is_a?(Herb::AST::ERBOpenTagNode) && tag_name && node.close_tag
-            add_text("</#{tag_name}>")
+            if node.close_tag.is_a?(Herb::AST::ERBEndNode)
+              remove_trailing_whitespace_from_last_token! if left_trim?(node.close_tag)
+              add_text("</#{tag_name}>")
+              @trim_next_whitespace = true
+            else
+              add_text("</#{tag_name}>")
+            end
           else
             visit(node.close_tag)
           end

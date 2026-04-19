@@ -1,7 +1,0 @@
----
-source: "Engine::ActionView::TernaryConditionalTest#test_0001_ternary with tag helpers in both branches"
-input: "{source: \"<%= active ? tag.div(\\\"On\\\") : tag.span(\\\"Off\\\") %>\", options: {precompile: true, locals: {active: true}}}"
----
-_buf = ::String.new; if active 
- _buf << '<div>On</div>'.freeze; else; _buf << '<span>Off</span>'.freeze; end;
-_buf.to_s

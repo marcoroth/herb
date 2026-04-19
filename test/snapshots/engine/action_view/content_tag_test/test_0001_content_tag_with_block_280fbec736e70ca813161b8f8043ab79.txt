@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::ContentTagTest#test_0001_content_tag with block"
-input: "{source: \"<%= content_tag :div do %>\\n  Content\\n<% end %>\\n\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<div>
-  Content
-</div>
-'.freeze;
-_buf.to_s

@@ -1,7 +1,0 @@
----
-source: "Engine::ActionView::PostfixConditionalTest#test_0001_tag.div with postfix if condition"
-input: "{source: \"<%= tag.div(\\\"visible\\\", class: \\\"notice\\\") if condition %>\", options: {precompile: true, locals: {condition: true}}}"
----
-_buf = ::String.new; if condition 
- _buf << '<div class="notice">visible</div>'.freeze; end;
-_buf.to_s

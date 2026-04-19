@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0026_tag.hr void element with attributes"
-input: "{source: \"<%= tag.hr class: \\\"divider\\\" %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<hr class="divider">'.freeze;
-_buf.to_s

@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::ImageTagTest#test_0001_image_tag with string source"
-input: "{source: \"<%= image_tag \\\"icon.png\\\" %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<img src="'.freeze; _buf << ::Herb::Engine.attr((image_path("icon.png"))); _buf << '" />'.freeze;
-_buf.to_s

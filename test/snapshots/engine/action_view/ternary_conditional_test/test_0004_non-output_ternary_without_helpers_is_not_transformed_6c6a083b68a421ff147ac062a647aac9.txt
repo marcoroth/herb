@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TernaryConditionalTest#test_0004_non-output ternary without helpers is not transformed"
-input: "{source: \"<% admin ? \\\"Admin\\\" : \\\"User\\\" %>\", options: {precompile: true, locals: {admin: true}}}"
----
-_buf = ::String.new; admin ? "Admin" : "User" 
-_buf.to_s

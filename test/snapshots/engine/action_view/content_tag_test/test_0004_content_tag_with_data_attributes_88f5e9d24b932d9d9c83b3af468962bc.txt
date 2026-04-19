@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::ContentTagTest#test_0004_content_tag with data attributes"
-input: "{source: \"<%= content_tag :div, data: { controller: \\\"example\\\" } do %>Content<% end %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<div data-controller="example">Content</div>'.freeze;
-_buf.to_s

@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0019_tag.p with inline block and ruby expression"
-input: "{source: \"<%= tag.p { @user_name } %>\", options: {precompile: true, locals: {\"@user_name\": \"Alice\"}}}"
----
-_buf = ::String.new; _buf << '<p>'.freeze; _buf << (@user_name).to_s; _buf << '</p>'.freeze;
-_buf.to_s

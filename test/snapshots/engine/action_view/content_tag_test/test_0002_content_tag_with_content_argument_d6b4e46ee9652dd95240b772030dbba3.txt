@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::ContentTagTest#test_0002_content_tag with content argument"
-input: "{source: \"<%= content_tag :div, \\\"Content\\\" %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<div>Content</div>'.freeze;
-_buf.to_s

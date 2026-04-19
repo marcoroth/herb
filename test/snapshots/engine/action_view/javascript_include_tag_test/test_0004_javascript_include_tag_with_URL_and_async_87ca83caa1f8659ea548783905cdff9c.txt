@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::JavascriptIncludeTagTest#test_0004_javascript_include_tag with URL and async"
-input: "{source: \"<%= javascript_include_tag \\\"http://www.example.com/xmlhr.js\\\", async: true %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<script async src="http://www.example.com/xmlhr.js"></script>'.freeze;
-_buf.to_s

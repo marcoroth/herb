@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0005_javascript_include_tag with data attributes"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", data: { turbo_track: \\\"reload\\\" } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script data-turbo-track="reload" src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '"></script>'.freeze;
+_buf.to_s

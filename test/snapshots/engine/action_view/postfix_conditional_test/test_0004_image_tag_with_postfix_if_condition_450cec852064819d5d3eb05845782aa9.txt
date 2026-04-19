@@ -1,7 +1,0 @@
----
-source: "Engine::ActionView::PostfixConditionalTest#test_0004_image_tag with postfix if condition"
-input: "{source: \"<%= image_tag \\\"icon.png\\\", alt: \\\"Icon\\\" if condition %>\", options: {precompile: true, locals: {condition: true}}}"
----
-_buf = ::String.new; if condition 
- _buf << '<img alt="Icon" src="'.freeze; _buf << ::Herb::Engine.attr((image_path("icon.png"))); _buf << '" />'.freeze; end;
-_buf.to_s

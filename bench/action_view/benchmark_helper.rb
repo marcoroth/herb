@@ -175,8 +175,8 @@ module Bench
       helper_count = count_action_view_helpers(parse_result.value)
 
       WARMUP_ITERATIONS.times { ::ActionView::Template::Handlers::ERB::Erubi.new(template) }
-      WARMUP_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: false) }
-      WARMUP_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: true) }
+      WARMUP_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: false) }
+      WARMUP_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: true) }
 
       compile_times = {}
 
@@ -184,13 +184,13 @@ module Bench
       GC.disable
 
       compile_times[:erubi] = Benchmark.measure { COMPILE_ITERATIONS.times { ::ActionView::Template::Handlers::ERB::Erubi.new(template) } }
-      compile_times[:herb] = Benchmark.measure { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: false) } }
-      compile_times[:herb_precompiled] = Benchmark.measure { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: true) } }
+      compile_times[:herb] = Benchmark.measure { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: false) } }
+      compile_times[:herb_precompiled] = Benchmark.measure { COMPILE_ITERATIONS.times { ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: true) } }
 
       GC.enable
 
-      reactionview_with = ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: true).src
-      reactionview_without = ReActionView::Template::Handlers::Herb::Herb.new(template, precompile: false).src
+      reactionview_with = ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: true).src
+      reactionview_without = ReActionView::Template::Handlers::Herb::Herb.new(template, optimize: false).src
       erubi_compiled = ::ActionView::Template::Handlers::ERB::Erubi.new(template).src
 
       local_assigns_code = locals.map { |key, _| "#{key} = local_assigns[:#{key}]" }.join("; ")

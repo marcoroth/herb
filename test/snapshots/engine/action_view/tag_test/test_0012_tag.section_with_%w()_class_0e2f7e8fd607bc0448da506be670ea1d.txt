@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0012_tag.section with %w() class"
-input: "{source: \"<%= tag.section class: %w( kitties puppies ) %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<section class="kitties puppies"></section>'.freeze;
-_buf.to_s

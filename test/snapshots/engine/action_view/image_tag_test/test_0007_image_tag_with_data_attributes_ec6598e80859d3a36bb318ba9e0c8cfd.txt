@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::ImageTagTest#test_0007_image_tag with data attributes"
-input: "{source: \"<%= image_tag \\\"icon.png\\\", data: { controller: \\\"image\\\" } %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<img data-controller="image" src="'.freeze; _buf << ::Herb::Engine.attr((image_path("icon.png"))); _buf << '" />'.freeze;
-_buf.to_s

@@ -1,5 +1,5 @@
 title: "Ternary with helpers in both branches"
-subtitle: "Ternary choosing between two link_to calls — both branches precompiled"
+subtitle: "Ternary choosing between two link_to calls — both branches optimized"
 locals:
   admin: "true"
 ---

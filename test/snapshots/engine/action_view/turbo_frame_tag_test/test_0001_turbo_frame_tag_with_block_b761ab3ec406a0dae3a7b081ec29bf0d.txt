@@ -1,9 +1,0 @@
----
-source: "Engine::ActionView::TurboFrameTagTest#test_0001_turbo_frame_tag with block"
-input: "{source: \"<%= turbo_frame_tag \\\"tray\\\" do %>\\n  Content\\n<% end %>\\n\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<turbo-frame id="tray">
-  Content
-</turbo-frame>
-'.freeze;
-_buf.to_s

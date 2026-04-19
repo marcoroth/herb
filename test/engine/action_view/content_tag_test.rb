@@ -8,7 +8,7 @@ module Engine
       include ActionViewTestHelper
 
       test "content_tag with block" do
-        assert_precompiled_snapshot(<<~ERB)
+        assert_optimized_snapshot(<<~ERB)
           <%= content_tag :div do %>
             Content
           <% end %>
@@ -16,44 +16,44 @@ module Engine
       end
 
       test "content_tag with content argument" do
-        assert_precompiled_snapshot('<%= content_tag :div, "Content" %>')
+        assert_optimized_snapshot('<%= content_tag :div, "Content" %>')
       end
 
       test "content_tag with content and attributes" do
-        assert_precompiled_snapshot('<%= content_tag :div, "Content", class: "example" %>')
+        assert_optimized_snapshot('<%= content_tag :div, "Content", class: "example" %>')
       end
 
       test "content_tag with data attributes" do
-        assert_precompiled_snapshot('<%= content_tag :div, data: { controller: "example" } do %>Content<% end %>')
+        assert_optimized_snapshot('<%= content_tag :div, data: { controller: "example" } do %>Content<% end %>')
       end
 
       # TODO: Rails renders `<br></br>` (content_tag doesn't know about void elements).
       # We render `<br>` because we set is_void: true. Our output is more correct HTML.
       test "content_tag br void element" do
-        assert_precompiled_mismatch_snapshot("<%= content_tag :br %>")
+        assert_optimized_mismatch_snapshot("<%= content_tag :br %>")
       end
 
       test "content_tag with inline block" do
-        assert_precompiled_snapshot('<%= content_tag(:details) { "Some content" } %>')
+        assert_optimized_snapshot('<%= content_tag(:details) { "Some content" } %>')
       end
 
       test "content_tag with inline block and attributes" do
-        assert_precompiled_snapshot('<%= content_tag(:div, class: "container") { "Hello" } %>')
+        assert_optimized_snapshot('<%= content_tag(:div, class: "container") { "Hello" } %>')
       end
 
       test "content_tag with inline block and ruby expression" do
-        assert_precompiled_snapshot(
+        assert_optimized_snapshot(
           "<%= content_tag(:p) { @user_name } %>",
           { "@user_name": "Alice" }
         )
       end
 
       test "content_tag :script with nonce true" do
-        assert_precompiled_snapshot('<%= content_tag(:script, "alert(1)", nonce: true) %>')
+        assert_optimized_snapshot('<%= content_tag(:script, "alert(1)", nonce: true) %>')
       end
 
       test "content_tag :script with nonce false" do
-        assert_precompiled_snapshot('<%= content_tag(:script, "alert(1)", nonce: false) %>')
+        assert_optimized_snapshot('<%= content_tag(:script, "alert(1)", nonce: false) %>')
       end
     end
   end

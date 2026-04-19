@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0004_tag.div with content and attributes"
-input: "{source: \"<%= tag.div \\\"Content\\\", class: \\\"content\\\" %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<div class="content">Content</div>'.freeze;
-_buf.to_s

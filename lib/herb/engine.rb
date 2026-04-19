@@ -20,6 +20,12 @@ module Herb
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors, :enabled_validators
 
+    class << self
+      attr_accessor :optimize_warning_issued
+    end
+
+    self.optimize_warning_issued = false
+
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",
@@ -70,7 +76,14 @@ module Herb
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @strict = properties.fetch(:strict, true)
-      @precompile = properties.fetch(:precompile, false)
+      @optimize = properties.fetch(:optimize, false)
+
+      if @optimize && !self.class.optimize_warning_issued
+        self.class.optimize_warning_issued = true
+
+        warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
+      end
+
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -111,8 +124,8 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      action_view_helpers = @precompile && source_may_contain_action_view_helpers?(input)
-      transform_conditionals = @precompile && action_view_helpers
+      action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
+      transform_conditionals = @optimize && action_view_helpers
       parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors

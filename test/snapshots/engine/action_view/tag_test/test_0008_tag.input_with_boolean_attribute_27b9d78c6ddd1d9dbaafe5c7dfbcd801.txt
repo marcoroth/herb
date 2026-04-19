@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0008_tag.input with boolean attribute"
-input: "{source: \"<%= tag.input type: \\\"text\\\", disabled: true %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<input type="text" disabled>'.freeze;
-_buf.to_s

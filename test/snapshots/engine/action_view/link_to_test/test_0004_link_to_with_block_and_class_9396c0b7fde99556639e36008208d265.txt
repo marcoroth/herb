@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::LinkToTest#test_0004_link_to with block and class"
-input: "{source: \"<%= link_to \\\"#\\\", class: \\\"btn\\\" do %>Click me<% end %>\", options: {precompile: true}}"
----
-_buf = ::String.new; _buf << '<a class="btn" href="#">Click me</a>'.freeze;
-_buf.to_s
