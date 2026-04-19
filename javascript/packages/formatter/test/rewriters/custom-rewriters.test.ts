@@ -39,13 +39,15 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("combines custom rewriter with built-in Tailwind sorter", async () => {
-      const { preRewriters, postRewriters, preCount, warnings } = await loadRewritersHelper({
+      const { preRewriters, postRewriters, preCount, postCount, warnings } = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
-        pre: ["tailwind-class-sorter", "uppercase-tags"]
+        pre: ["uppercase-tags"],
+        post: ["tailwind-class-sorter"]
       })
 
-      expect(preCount).toBe(2)
+      expect(preCount).toBe(1)
+      expect(postCount).toBe(1)
       expect(warnings).toEqual([])
 
       const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
