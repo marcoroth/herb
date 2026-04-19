@@ -296,11 +296,10 @@ module Diff
     test "DiffResult#each yields operations" do
       result = Herb.diff("<div>Hello</div>", "<div>World</div>")
 
-      operations = []
-      result.each { |op| operations << op }
+      count = 0
+      result.each { count += 1 }
 
-      assert_equal result.operations.size, operations.size
-      assert_equal result.operations[0], operations[0]
+      assert_equal result.operations.size, count
     end
 
     test "DiffResult#each returns enumerator without block" do

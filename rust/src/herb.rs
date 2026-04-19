@@ -346,8 +346,13 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
     let new_root = crate::ffi::herb_parse(new_c_source.as_ptr(), &parser_options, &mut new_allocator);
 
     if old_root.is_null() || new_root.is_null() {
-      if !old_root.is_null() { crate::ffi::ast_node_free(old_root as *mut AST_NODE_T, &mut old_allocator); }
-      if !new_root.is_null() { crate::ffi::ast_node_free(new_root as *mut AST_NODE_T, &mut new_allocator); }
+      if !old_root.is_null() {
+        crate::ffi::ast_node_free(old_root as *mut AST_NODE_T, &mut old_allocator);
+      }
+
+      if !new_root.is_null() {
+        crate::ffi::ast_node_free(new_root as *mut AST_NODE_T, &mut new_allocator);
+      }
 
       crate::ffi::hb_allocator_destroy(&mut diff_allocator);
       crate::ffi::hb_allocator_destroy(&mut old_allocator);

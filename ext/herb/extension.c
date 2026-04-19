@@ -434,11 +434,17 @@ static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
   VALUE old_node = operation->old_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node) : Qnil;
   VALUE new_node = operation->new_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node) : Qnil;
 
-  VALUE args[] = {
-    type, path_array, old_node, new_node, UINT2NUM(operation->old_index), UINT2NUM(operation->new_index)
-  };
-
-  return rb_class_new_instance(6, args, cDiffOperation);
+  return rb_funcall(
+    cDiffOperation,
+    rb_intern("new"),
+    6,
+    type,
+    path_array,
+    old_node,
+    new_node,
+    UINT2NUM(operation->old_index),
+    UINT2NUM(operation->new_index)
+  );
 }
 
 static VALUE diff_convert_body(VALUE arg) {
