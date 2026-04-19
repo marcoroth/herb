@@ -308,6 +308,119 @@ TEST(test_diff_empty_documents)
   hb_allocator_destroy(&allocator);
 END
 
+TEST(test_diff_multiple_moves)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources(
+    "<ul><li id=\"a\">A</li><li id=\"b\">B</li><li id=\"c\">C</li><li id=\"d\">D</li></ul>",
+    "<ul><li id=\"d\">D</li><li id=\"c\">C</li><li id=\"b\">B</li><li id=\"a\">A</li></ul>",
+    &allocator
+  );
+
+  ck_assert(!herb_diff_trees_identical(result));
+
+  size_t move_count = 0;
+  for (size_t index = 0; index < herb_diff_operation_count(result); index++) {
+    if (herb_diff_operation_at(result, index)->type == HERB_DIFF_NODE_MOVED) { move_count++; }
+  }
+  ck_assert_uint_ge(move_count, 2);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_move_preserves_indices)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources(
+    "<ul><li id=\"first\">1</li><li id=\"second\">2</li></ul>",
+    "<ul><li id=\"second\">2</li><li id=\"first\">1</li></ul>",
+    &allocator
+  );
+
+  ck_assert(!herb_diff_trees_identical(result));
+
+  for (size_t index = 0; index < herb_diff_operation_count(result); index++) {
+    const herb_diff_operation_T* op = herb_diff_operation_at(result, index);
+    if (op->type == HERB_DIFF_NODE_MOVED) {
+      ck_assert_uint_ne(op->old_index, op->new_index);
+    }
+  }
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_move_among_insertions_and_removals)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources(
+    "<div id=\"keep\">Keep</div><div id=\"remove\">Remove</div>",
+    "<div>New</div><div id=\"keep\">Keep</div>",
+    &allocator
+  );
+
+  ck_assert(!herb_diff_trees_identical(result));
+
+  bool has_move = false;
+  bool has_remove = false;
+  bool has_insert = false;
+
+  for (size_t index = 0; index < herb_diff_operation_count(result); index++) {
+    herb_diff_operation_type_T type = herb_diff_operation_at(result, index)->type;
+    if (type == HERB_DIFF_NODE_MOVED) { has_move = true; }
+    if (type == HERB_DIFF_NODE_REMOVED) { has_remove = true; }
+    if (type == HERB_DIFF_NODE_INSERTED) { has_insert = true; }
+  }
+
+  ck_assert(has_move);
+  ck_assert(has_remove);
+  ck_assert(has_insert);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_no_move_without_attributes)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources(
+    "<ul><li>A</li><li>B</li><li>C</li></ul>",
+    "<ul><li>C</li><li>A</li><li>B</li></ul>",
+    &allocator
+  );
+
+  ck_assert(!herb_diff_trees_identical(result));
+
+  for (size_t index = 0; index < herb_diff_operation_count(result); index++) {
+    ck_assert_uint_ne(herb_diff_operation_at(result, index)->type, HERB_DIFF_NODE_MOVED);
+  }
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_move_with_unchanged_middle)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources(
+    "<div id=\"a\">A</div><div id=\"static\">S</div><div id=\"b\">B</div>",
+    "<div id=\"b\">B</div><div id=\"static\">S</div><div id=\"a\">A</div>",
+    &allocator
+  );
+
+  ck_assert(!herb_diff_trees_identical(result));
+
+  size_t move_count = 0;
+  for (size_t index = 0; index < herb_diff_operation_count(result); index++) {
+    if (herb_diff_operation_at(result, index)->type == HERB_DIFF_NODE_MOVED) { move_count++; }
+  }
+  ck_assert_uint_ge(move_count, 1);
+
+  hb_allocator_destroy(&allocator);
+END
+
 TEST(test_diff_operation_type_to_string)
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_INSERTED), "node_inserted");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_REMOVED), "node_removed");
@@ -344,6 +457,11 @@ TCase *diff_tests(void) {
   tcase_add_test(diff, test_diff_inserted_has_null_old_node);
   tcase_add_test(diff, test_diff_removed_has_null_new_node);
   tcase_add_test(diff, test_diff_empty_documents);
+  tcase_add_test(diff, test_diff_multiple_moves);
+  tcase_add_test(diff, test_diff_move_preserves_indices);
+  tcase_add_test(diff, test_diff_move_among_insertions_and_removals);
+  tcase_add_test(diff, test_diff_no_move_without_attributes);
+  tcase_add_test(diff, test_diff_move_with_unchanged_middle);
   tcase_add_test(diff, test_diff_operation_type_to_string);
 
   return diff;

@@ -1,4 +1,5 @@
 #include "../include/diff/herb_diff.h"
+#include "../include/diff/herb_hash_index_map.h"
 #include "../include/macros.h"
 
 #include <string.h>
@@ -304,6 +305,17 @@ void herb_diff_children(
       }
     }
 
+    herb_hash_index_map_T move_identity_map;
+    herb_hash_index_map_init(&move_identity_map, insert_count, result->allocator);
+
+    for (size_t insert_index = 0; insert_index < insert_count; insert_index++) {
+      const edit_entry_T* insert_entry = &edit_script[insert_indices[insert_index]];
+      const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, insert_entry->new_index);
+
+      herb_hash_T new_identity = herb_hash_node_move_identity(new_child, new_hashes);
+      herb_hash_index_map_insert(&move_identity_map, new_identity, insert_index);
+    }
+
     for (size_t remove_index = 0; remove_index < remove_count; remove_index++) {
       if (remove_matched[remove_index]) { continue; }
 
@@ -311,24 +323,31 @@ void herb_diff_children(
       const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, remove_entry->old_index);
       herb_hash_T old_identity = herb_hash_node_move_identity(old_child, old_hashes);
 
-      for (size_t insert_index = 0; insert_index < insert_count; insert_index++) {
-        if (insert_matched[insert_index]) { continue; }
+      size_t matched_insert;
 
-        const edit_entry_T* insert_entry = &edit_script[insert_indices[insert_index]];
-        const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, insert_entry->new_index);
-        herb_hash_T new_identity = herb_hash_node_move_identity(new_child, new_hashes);
+      if (herb_hash_index_map_find_unmatched(&move_identity_map, old_identity, insert_matched, &matched_insert)) {
+        const edit_entry_T* insert_entry = &edit_script[insert_indices[matched_insert]];
 
-        if (old_identity == new_identity) {
-          remove_matched[remove_index] = true;
-          insert_matched[insert_index] = true;
+        remove_matched[remove_index] = true;
+        insert_matched[matched_insert] = true;
 
-          edit_script[remove_indices[remove_index]].type = EDIT_MOVE;
-          edit_script[remove_indices[remove_index]].new_index = insert_entry->new_index;
-          edit_script[insert_indices[insert_index]].type = EDIT_CONSUMED;
-
-          break;
-        }
+        edit_script[remove_indices[remove_index]].type = EDIT_MOVE;
+        edit_script[remove_indices[remove_index]].new_index = insert_entry->new_index;
+        edit_script[insert_indices[matched_insert]].type = EDIT_CONSUMED;
       }
+    }
+
+    herb_hash_index_map_T tag_identity_map;
+    herb_hash_index_map_init(&tag_identity_map, insert_count, result->allocator);
+
+    for (size_t insert_index = 0; insert_index < insert_count; insert_index++) {
+      if (insert_matched[insert_index]) { continue; }
+
+      const edit_entry_T* insert_entry = &edit_script[insert_indices[insert_index]];
+      const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, insert_entry->new_index);
+
+      herb_hash_T new_tag_identity = herb_hash_node_identity(new_child, new_hashes);
+      herb_hash_index_map_insert(&tag_identity_map, new_tag_identity, insert_index);
     }
 
     for (size_t remove_index = 0; remove_index < remove_count; remove_index++) {
@@ -336,26 +355,19 @@ void herb_diff_children(
 
       const edit_entry_T* remove_entry = &edit_script[remove_indices[remove_index]];
       const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, remove_entry->old_index);
+
       herb_hash_T old_tag_identity = herb_hash_node_identity(old_child, old_hashes);
+      size_t matched_insert;
 
-      for (size_t insert_index = 0; insert_index < insert_count; insert_index++) {
-        if (insert_matched[insert_index]) { continue; }
+      if (herb_hash_index_map_find_unmatched(&tag_identity_map, old_tag_identity, insert_matched, &matched_insert)) {
+        const edit_entry_T* insert_entry = &edit_script[insert_indices[matched_insert]];
 
-        const edit_entry_T* insert_entry = &edit_script[insert_indices[insert_index]];
-        const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, insert_entry->new_index);
+        remove_matched[remove_index] = true;
+        insert_matched[matched_insert] = true;
 
-        herb_hash_T new_tag_identity = herb_hash_node_identity(new_child, new_hashes);
-
-        if (old_tag_identity == new_tag_identity) {
-          remove_matched[remove_index] = true;
-          insert_matched[insert_index] = true;
-
-          edit_script[remove_indices[remove_index]].type = EDIT_COALESCED_KEEP;
-          edit_script[remove_indices[remove_index]].new_index = insert_entry->new_index;
-          edit_script[insert_indices[insert_index]].type = EDIT_CONSUMED;
-
-          break;
-        }
+        edit_script[remove_indices[remove_index]].type = EDIT_COALESCED_KEEP;
+        edit_script[remove_indices[remove_index]].new_index = insert_entry->new_index;
+        edit_script[insert_indices[matched_insert]].type = EDIT_CONSUMED;
       }
     }
 
@@ -364,6 +376,7 @@ void herb_diff_children(
 
       const edit_entry_T* remove_entry = &edit_script[remove_indices[remove_index]];
       const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, remove_entry->old_index);
+
       herb_hash_T old_hash = herb_hash_map_get(old_hashes, old_child);
 
       for (size_t insert_index = 0; insert_index < insert_count; insert_index++) {

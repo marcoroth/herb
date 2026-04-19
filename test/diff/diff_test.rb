@@ -353,5 +353,126 @@ module Diff
       assert_includes types, :node_removed
       assert_includes types, :node_inserted
     end
+
+    test "multiple moves with distinguishing attributes" do
+      result = Herb.diff(
+        '<ul><li id="a">A</li><li id="b">B</li><li id="c">C</li><li id="d">D</li></ul>',
+        '<ul><li id="d">D</li><li id="c">C</li><li id="b">B</li><li id="a">A</li></ul>'
+      )
+
+      refute result.identical?
+
+      move_ops = result.select { |op| op.type == :node_moved }
+      assert_operator move_ops.size, :>=, 2
+    end
+
+    test "move preserves correct indices" do
+      result = Herb.diff(
+        '<ul><li id="first">1</li><li id="second">2</li></ul>',
+        '<ul><li id="second">2</li><li id="first">1</li></ul>'
+      )
+
+      refute result.identical?
+
+      move_ops = result.select { |op| op.type == :node_moved }
+      assert_equal 1, move_ops.size
+
+      move = move_ops[0]
+      refute_equal move.old_index, move.new_index
+    end
+
+    test "move among other changes" do
+      result = Herb.diff(
+        '<div id="keep">Keep</div><div id="remove">Remove</div>',
+        '<div>New</div><div id="keep">Keep</div>'
+      )
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      assert_includes types, :node_moved
+      assert_operator result.operation_count, :>=, 2
+    end
+
+    test "many siblings with single move" do
+      old_items = (1..10).map { |i| %(<li id="item#{i}">Item #{i}</li>) }.join
+      new_items = (1..10).map { |i|
+        index = if i == 1
+                  10
+                else
+                  (i == 10 ? 1 : i)
+                end
+
+        %(<li id="item#{index}">Item #{index}</li>)
+      }.join
+
+      result = Herb.diff("<ul>#{old_items}</ul>", "<ul>#{new_items}</ul>")
+
+      refute result.identical?
+
+      move_ops = result.select { |op| op.type == :node_moved }
+      assert_operator move_ops.size, :>=, 1
+    end
+
+    test "coalesced keep detects tag identity match with attribute changes" do
+      result = Herb.diff(
+        '<div id="x" class="old">Content</div><div id="y">Other</div>',
+        '<div id="y">Other</div><div id="x" class="new">Content</div>'
+      )
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      assert_includes types, :node_moved
+      assert_includes types, :attribute_value_changed
+    end
+
+    test "wrap detection with multiple candidates" do
+      result = Herb.diff(
+        "<p>A</p><p>B</p>",
+        "<div><p>A</p></div><p>B</p>"
+      )
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      assert_includes types, :node_wrapped
+    end
+
+    test "unwrap detection with multiple candidates" do
+      result = Herb.diff(
+        "<div><p>A</p></div><p>B</p>",
+        "<p>A</p><p>B</p>"
+      )
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      assert_includes types, :node_unwrapped
+    end
+
+    test "move does not match nodes without attributes" do
+      result = Herb.diff(
+        "<ul><li>A</li><li>B</li><li>C</li></ul>",
+        "<ul><li>C</li><li>A</li><li>B</li></ul>"
+      )
+
+      refute result.identical?
+
+      types = result.map(&:type)
+      refute_includes types, :node_moved
+    end
+
+    test "simultaneous moves and unchanged nodes" do
+      result = Herb.diff(
+        '<div id="a">A</div><div id="static">S</div><div id="b">B</div>',
+        '<div id="b">B</div><div id="static">S</div><div id="a">A</div>'
+      )
+
+      refute result.identical?
+
+      move_ops = result.select { |op| op.type == :node_moved }
+      assert_operator move_ops.size, :>=, 1
+    end
   end
 end
