@@ -4,6 +4,11 @@
 
 #include <string.h>
 
+// Longest Common Subsequence (LCS) algorithm using dynamic programming.
+// Based on the approach described in:
+//   Hunt, J. W. and Szymanski, T. G. "A Fast Algorithm for Computing
+//   Longest Common Subsequences" (1977), Communications of the ACM, 20(5).
+// https://en.wikipedia.org/wiki/Longest_common_subsequence
 #define LCS_MAX_SIZE 256
 
 typedef enum {

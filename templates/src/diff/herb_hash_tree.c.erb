@@ -1,3 +1,9 @@
+// Merkle tree hashing: each node's hash incorporates the hashes of its children,
+// enabling O(1) subtree equality checks during tree diffing.
+// Based on: Merkle, R. "A Digital Signature Based on a Conventional Encryption
+// Function" (1987), Advances in Cryptology - CRYPTO '87.
+// https://en.wikipedia.org/wiki/Merkle_tree
+
 #include "../include/diff/herb_diff.h"
 
 static herb_hash_T hash_token(herb_hash_T hash, const token_T* token) {

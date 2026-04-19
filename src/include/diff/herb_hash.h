@@ -8,6 +8,9 @@
 
 typedef uint64_t herb_hash_T;
 
+// FNV-1a 64-bit hash constants
+// Fowler-Noll-Vo hash function: http://www.isthe.com/chongo/tech/comp/fnv/
+// Created by Glenn Fowler, Landon Curt Noll, and Kiem-Phong Vo
 #define HERB_HASH_INIT ((herb_hash_T) 0xcbf29ce484222325ULL)
 #define HERB_HASH_FNV_PRIME ((herb_hash_T) 0x100000001b3ULL)
 

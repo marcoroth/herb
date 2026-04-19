@@ -1,3 +1,7 @@
+// Tree diffing algorithm inspired by React's Reconciliation approach:
+// comparing trees level-by-level and producing a minimal set of operations.
+// https://legacy.reactjs.org/docs/reconciliation.html
+
 #include "../include/diff/herb_diff.h"
 
 #include <stdio.h>
