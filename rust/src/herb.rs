@@ -1,7 +1,7 @@
-use crate::bindings::{hb_array_T, hb_buffer_T, token_T};
+use crate::bindings::{hb_array_T, hb_buffer_T, token_T, AST_NODE_T};
 use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
@@ -283,4 +283,136 @@ pub fn version() -> String {
     prism_version(),
     herb_version()
   )
+}
+
+#[derive(Debug, Clone)]
+pub struct DiffOperation {
+  pub operation_type: String,
+  pub path: Vec<u32>,
+  pub old_node: Option<crate::nodes::AnyNode>,
+  pub new_node: Option<crate::nodes::AnyNode>,
+  pub old_index: u32,
+  pub new_index: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct DiffResult {
+  pub identical: bool,
+  pub operations: Vec<DiffOperation>,
+}
+
+pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
+  unsafe {
+    let old_c_source = CString::new(old_source).map_err(|error| error.to_string())?;
+    let new_c_source = CString::new(new_source).map_err(|error| error.to_string())?;
+
+    let mut old_allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+    let mut new_allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+    let mut diff_allocator: crate::ffi::hb_allocator_T = std::mem::zeroed();
+
+    if !crate::ffi::hb_allocator_init(&mut old_allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
+      return Err("Failed to initialize old allocator".to_string());
+    }
+
+    if !crate::ffi::hb_allocator_init(&mut new_allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
+      crate::ffi::hb_allocator_destroy(&mut old_allocator);
+      return Err("Failed to initialize new allocator".to_string());
+    }
+
+    if !crate::ffi::hb_allocator_init(&mut diff_allocator, crate::ffi::HB_ALLOCATOR_ARENA) {
+      crate::ffi::hb_allocator_destroy(&mut old_allocator);
+      crate::ffi::hb_allocator_destroy(&mut new_allocator);
+      return Err("Failed to initialize diff allocator".to_string());
+    }
+
+    let parser_options = crate::bindings::parser_options_T {
+      track_whitespace: false,
+      analyze: true,
+      strict: true,
+      action_view_helpers: false,
+      render_nodes: false,
+      strict_locals: false,
+      prism_program: false,
+      prism_nodes: false,
+      prism_nodes_deep: false,
+      dot_notation_tags: false,
+      transform_conditionals: false,
+      html: true,
+      start_line: 0,
+      start_column: 0,
+    };
+
+    let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);
+    let new_root = crate::ffi::herb_parse(new_c_source.as_ptr(), &parser_options, &mut new_allocator);
+
+    if old_root.is_null() || new_root.is_null() {
+      if !old_root.is_null() {
+        crate::ffi::ast_node_free(old_root as *mut AST_NODE_T, &mut old_allocator);
+      }
+
+      if !new_root.is_null() {
+        crate::ffi::ast_node_free(new_root as *mut AST_NODE_T, &mut new_allocator);
+      }
+
+      crate::ffi::hb_allocator_destroy(&mut diff_allocator);
+      crate::ffi::hb_allocator_destroy(&mut old_allocator);
+      crate::ffi::hb_allocator_destroy(&mut new_allocator);
+
+      return Err("Failed to parse source".to_string());
+    }
+
+    let diff_result = crate::ffi::herb_diff(old_root, new_root, &mut diff_allocator);
+
+    let identical = crate::ffi::herb_diff_trees_identical(diff_result);
+    let operation_count = crate::ffi::herb_diff_operation_count(diff_result);
+
+    let mut operations = Vec::with_capacity(operation_count);
+
+    for index in 0..operation_count {
+      let operation = crate::ffi::herb_diff_operation_at(diff_result, index);
+
+      if operation.is_null() {
+        continue;
+      }
+
+      let operation_ref = &*operation;
+
+      let type_c_str = CStr::from_ptr(crate::ffi::herb_diff_operation_type_to_string(operation_ref.type_));
+      let operation_type = type_c_str.to_string_lossy().into_owned();
+
+      let mut path = Vec::with_capacity(operation_ref.path.depth as usize);
+      for path_index in 0..operation_ref.path.depth {
+        path.push(operation_ref.path.indices[path_index as usize]);
+      }
+
+      let old_node = if !operation_ref.old_node.is_null() {
+        crate::ast::nodes::convert_node(operation_ref.old_node as *const std::ffi::c_void)
+      } else {
+        None
+      };
+
+      let new_node = if !operation_ref.new_node.is_null() {
+        crate::ast::nodes::convert_node(operation_ref.new_node as *const std::ffi::c_void)
+      } else {
+        None
+      };
+
+      operations.push(DiffOperation {
+        operation_type,
+        path,
+        old_node,
+        new_node,
+        old_index: operation_ref.old_index,
+        new_index: operation_ref.new_index,
+      });
+    }
+
+    crate::ffi::ast_node_free(old_root as *mut AST_NODE_T, &mut old_allocator);
+    crate::ffi::ast_node_free(new_root as *mut AST_NODE_T, &mut new_allocator);
+    crate::ffi::hb_allocator_destroy(&mut diff_allocator);
+    crate::ffi::hb_allocator_destroy(&mut old_allocator);
+    crate::ffi::hb_allocator_destroy(&mut new_allocator);
+
+    Ok(DiffResult { identical, operations })
+  }
 }
