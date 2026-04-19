@@ -1,7 +1,7 @@
 AllCops:
   NewCops: enable
   SuggestExtensions: false
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.2
   Exclude:
     - 'pkg/**/*'
     - 'vendor/**/*'

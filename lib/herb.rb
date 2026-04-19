@@ -69,13 +69,13 @@ end
 module Herb
   class << self
     #: (String path, ?arena_stats: bool) -> LexResult
-    def lex_file(path, **options)
-      lex(File.read(path), **options)
+    def lex_file(path, **)
+      lex(File.read(path), **)
     end
 
     #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
-    def parse_file(path, **options)
-      parse(File.read(path), **options)
+    def parse_file(path, **)
+      parse(File.read(path), **)
     end
 
     #: (String source) -> Prism::ParseResult
