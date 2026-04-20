@@ -602,6 +602,34 @@ export class ErrorOverlay {
     return this.getTotalErrorCount();
   }
 
+  public showErrors(errors: ValidationError[], filename: string): void {
+    this.allValidationData = this.allValidationData.filter(data => data.filename !== filename);
+
+    this.allValidationData.push({
+      validationErrors: errors,
+      filename,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+
+    this.createOverlay();
+    this.show();
+  }
+
+  public clearErrors(): void {
+    this.allValidationData = [];
+
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+      this.isVisible = false;
+    }
+  }
+
   private displayParserErrorOverlay(htmlContent: string) {
     const existingOverlay = document.querySelector('.herb-parser-error-overlay');
     if (existingOverlay) {

@@ -1,0 +1,48 @@
+# Generated from lib/herb/dev/server.rb with RBS::Inline
+
+module Herb
+  module Dev
+    class Server
+      DEFAULT_PORT: ::Integer
+
+      HANDSHAKE_TIMEOUT: ::Integer
+
+      attr_reader port: untyped
+
+      attr_reader project_path: untyped
+
+      class Client < Data
+        attr_reader socket(): untyped
+
+        attr_reader version(): untyped
+
+        attr_reader mutex(): untyped
+
+        def self.new: (untyped socket, untyped version, untyped mutex) -> instance
+                    | (socket: untyped, version: untyped, mutex: untyped) -> instance
+
+        def self.members: () -> [ :socket, :version, :mutex ]
+
+        def members: () -> [ :socket, :version, :mutex ]
+      end
+
+      def initialize: (?port: untyped, ?project_path: untyped) -> untyped
+
+      def start: () -> untyped
+
+      def stop: () -> untyped
+
+      def broadcast: (untyped message) -> untyped
+
+      def client_count: () -> untyped
+
+      def self.port_available?: (untyped port) -> untyped
+
+      def self.find_available_port: (?untyped starting_port) -> untyped
+
+      private
+
+      def handle_connection: (untyped socket) -> untyped
+    end
+  end
+end
