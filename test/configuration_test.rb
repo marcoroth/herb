@@ -766,4 +766,65 @@ class ConfigurationTest < Minitest::Spec
       assert_equal engine, config.template_engine
     end
   end
+
+  test "user_config is empty when no config file exists" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({}, config.user_config)
+  end
+
+  test "user_config contains only user-specified values" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({ "framework" => "actionview" }, config.user_config)
+    refute config.user_config.key?("template_engine")
+    refute config.user_config.key?("files")
+  end
+
+  test "user_config does not include defaults" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.user_config.key?("framework")
+    refute config.user_config.key?("engine")
+
+    assert config.config.key?("engine")
+    assert config.config.key?("files")
+  end
+
+  test "user_config reflects nested values" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+        parser_options:
+          strict: false
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.user_config.dig("engine", "optimize")
+    assert_equal false, config.user_config.dig("engine", "parser_options", "strict")
+    assert_nil config.user_config.dig("engine", "validators")
+  end
+
+  test "user_config key? can distinguish explicit values from defaults" do
+    write_config(<<~YAML)
+      framework: ruby
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.user_config.key?("framework")
+    refute config.user_config.key?("template_engine")
+
+    assert_equal "ruby", config.framework
+    assert_equal "erubi", config.template_engine
+  end
 end
