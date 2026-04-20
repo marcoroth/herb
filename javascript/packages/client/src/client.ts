@@ -10,6 +10,7 @@ import type {
   HerbMessage,
   WelcomeMessage,
   PatchMessage,
+  RefreshMessage,
   ReloadMessage,
   ErrorMessage,
   FixedMessage,
@@ -112,6 +113,9 @@ export class HerbClient {
       case "patch":
         this.handlePatch(message)
         break
+      case "refresh":
+        this.handleRefresh(message)
+        break
       case "reload":
         this.handleReload(message)
         break
@@ -138,7 +142,7 @@ export class HerbClient {
     }
   }
 
-  private handlePatch(message: PatchMessage): void {
+  private async handlePatch(message: PatchMessage): Promise<void> {
     this.options.onPatch?.(message)
 
     const applied = applyPatch(message)
@@ -146,8 +150,15 @@ export class HerbClient {
     if (applied) {
       console.debug(`[herb-client] patched ${message.file} (${message.operations.length} operations)`)
     } else {
-      console.debug(`[herb-client] no matching elements for ${message.file}, skipping`)
+      console.debug(`[herb-client] patch failed for ${message.file}, falling back to reload`)
+      window.location.reload()
     }
+  }
+
+  private async handleRefresh(message: RefreshMessage): Promise<void> {
+    this.options.onRefresh?.(message)
+    console.debug(`[herb-client] refreshing for ${message.file}`)
+    window.location.reload()
   }
 
   private handleReload(message: ReloadMessage): void {

@@ -18,6 +18,11 @@ export interface ReloadMessage {
   file: string
 }
 
+export interface RefreshMessage {
+  type: "refresh"
+  file: string
+}
+
 export interface ParseError {
   name: string
   message: string
@@ -41,7 +46,7 @@ export interface WelcomeMessage {
   project: string
 }
 
-export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
+export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | RefreshMessage | ErrorMessage | FixedMessage
 
 export type ConnectionState = "connected" | "disconnected" | "gave-up"
 
@@ -62,6 +67,7 @@ export interface HerbClientOptions {
   port?: number
   host?: string
   onPatch?: (message: PatchMessage) => void
+  onRefresh?: (message: RefreshMessage) => void
   onReload?: (message: ReloadMessage) => void
   onError?: (message: ErrorMessage) => void
   onFixed?: (message: FixedMessage) => void

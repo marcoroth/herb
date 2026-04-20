@@ -546,6 +546,8 @@ class Herb::CLI
     puts
     puts fg_bg(" \u{1F33F} Herb Dev Server ", 255, 28)
     puts
+    puts "  #{fg("\u26A0\uFE0F Experimental:", 214)} #{fg("The dev server is experimental and may not work correctly in all cases.", 241)}"
+    puts
 
     include_patterns = config.file_include_patterns
     exclude_patterns = config.file_exclude_patterns
@@ -692,9 +694,18 @@ class Herb::CLI
 
         operations = diff_result.operations
 
-        html_only = operations.none? { |operation| operation.type.to_s.include?("erb") }
+        patchable_types = %w[text_changed attribute_value_changed attribute_added attribute_removed]
 
-        if html_only && websocket.client_count.positive?
+        can_patch = operations.all? { |operation|
+          next false unless patchable_types.include?(operation.type.to_s)
+
+          next false if operation.new_node&.type&.to_s&.include?("ERB")
+          next false if operation.old_node&.type&.to_s&.include?("ERB")
+
+          true
+        }
+
+        if can_patch && websocket.client_count.positive?
           patch_operations = operations.map do |operation|
             {
               type: operation.type.to_s,
@@ -711,14 +722,19 @@ class Herb::CLI
             file: relative_path,
             operations: patch_operations,
           })
-        elsif !html_only && websocket.client_count.positive?
+        elsif !can_patch && websocket.client_count.positive?
           websocket.broadcast({
-            type: "reload",
+            type: "refresh",
             file: relative_path,
           })
         end
 
-        badge = bold(fg("\u{21BB} reload ", 214))
+        badge = if can_patch
+                  bold(fg("\u{2713} patch ", 42))
+                else
+                  bold(fg("\u{21BB} refresh ", 214))
+                end
+
         clients_label = websocket.client_count.positive? ? " #{fg("[#{websocket.client_count} client#{"s" unless websocket.client_count == 1}]", 241)}" : ""
         puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{operations.size} operation#{"s" unless operations.size == 1})", 241)}#{clients_label}"
 
@@ -729,14 +745,13 @@ class Herb::CLI
           new_node = operation.new_node
 
           type_color = case type
-                       when "node_inserted" then 114                                        # #90b874
-                       when "node_removed", "attribute_removed" then 168                    # #e06c75
-                       when "node_replaced", "tag_name_changed" then 173                    # #d19a66
-                       when "node_wrapped", "node_unwrapped",
-                            "attribute_added", "attribute_value_changed" then 75 # #61afef
-                       when "node_moved" then 73                                            # #56b6c2
-                       when "text_changed" then 186                                         # #e5c07b
-                       when "erb_content_changed" then 176                                  # #c678dd
+                       when "node_inserted" then 114
+                       when "node_removed", "attribute_removed" then 168
+                       when "node_replaced", "tag_name_changed" then 173
+                       when "node_wrapped", "node_unwrapped", "attribute_added", "attribute_value_changed" then 75
+                       when "node_moved" then 73
+                       when "text_changed" then 186
+                       when "erb_content_changed" then 176
                        else 241
                        end
 

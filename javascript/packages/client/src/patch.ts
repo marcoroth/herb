@@ -2,106 +2,143 @@ import type { DiffOperation, PatchMessage } from "./types"
 
 export function applyPatch(message: PatchMessage): boolean {
   const selector = `[data-herb-debug-file-relative-path="${message.file}"]`
-  const elements = document.querySelectorAll(selector)
+  const roots = document.querySelectorAll(selector)
 
-  if (elements.length === 0) {
+  if (roots.length === 0) {
+    console.debug("[herb-client] no roots found for selector:", selector)
     return false
   }
 
+  console.debug(`[herb-client] found ${roots.length} root(s) for ${message.file}, applying ${message.operations.length} operation(s)`)
+
+  let applied = false
+
   for (const operation of message.operations) {
-    applyOperation(elements, operation)
-  }
+    let operationApplied = false
 
-  return true
-}
-
-function applyOperation(elements: NodeListOf<Element>, operation: DiffOperation): void {
-  switch (operation.type) {
-    case "text_changed":
-      applyTextChange(elements, operation)
-      break
-
-    case "attribute_value_changed":
-      applyAttributeChange(elements, operation)
-      break
-
-    case "attribute_added":
-      applyAttributeAdd(elements, operation)
-      break
-
-    case "attribute_removed":
-      applyAttributeRemove(elements, operation)
-      break
-
-    default:
-      console.debug(`[herb-client] unhandled operation type: ${operation.type}`)
-  }
-}
-
-function applyTextChange(elements: NodeListOf<Element>, operation: DiffOperation): void {
-  if (operation.old_value === null || operation.new_value === null) return
-
-  for (const element of elements) {
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
-    let node: Text | null
-
-    while ((node = walker.nextNode() as Text | null)) {
-      if (node.textContent?.trim() === operation.old_value!.trim()) {
-        node.textContent = operation.new_value!
-        return
+    for (let i = 0; i < roots.length; i++) {
+      if (applyOperation(roots[i], operation)) {
+        operationApplied = true
+      } else {
+        console.debug(`[herb-client] operation not applied to root ${i}:`, roots[i])
       }
     }
+
+    if (operationApplied) {
+      applied = true
+    } else {
+      console.debug("[herb-client] operation not applied:", operation)
+    }
+  }
+
+  return applied
+}
+
+function applyOperation(root: Element, operation: DiffOperation): boolean {
+  switch (operation.type) {
+    case "text_changed":
+      return applyTextChange(root, operation)
+    case "attribute_value_changed":
+      return applyAttributeChange(root, operation)
+    case "attribute_added":
+      return applyAttributeAdd(root, operation)
+    case "attribute_removed":
+      return applyAttributeRemove(root, operation)
+    default:
+      console.debug(`[herb-client] unhandled operation type: ${operation.type}`)
+      return false
   }
 }
 
-function applyAttributeChange(elements: NodeListOf<Element>, operation: DiffOperation): void {
-  if (operation.old_value === null || operation.new_value === null) return
+function findTarget(root: Element, operation: DiffOperation): Element | null {
+  if (!operation.old_value) return null
+
+  const match = operation.old_value.match(/^([^=]+)="(.*)"$/)
+  if (!match) return null
+
+  const [, attributeName, attributeValue] = match
+
+  if (root.getAttribute(attributeName) === attributeValue) return root
+
+  const target = root.querySelector(`[${attributeName}="${CSS.escape(attributeValue)}"]`)
+
+  return target as Element | null
+}
+
+function findTextTarget(root: Element, operation: DiffOperation): Text | null {
+  if (operation.old_value === null) return null
+
+  const trimmedOld = operation.old_value.trim()
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+
+  let node: Text | null
+
+  while ((node = walker.nextNode() as Text | null)) {
+    if (node.textContent?.trim() === trimmedOld) {
+      return node
+    }
+  }
+
+  return null
+}
+
+function applyTextChange(root: Element, operation: DiffOperation): boolean {
+  if (operation.new_value === null) return false
+
+  const textNode = findTextTarget(root, operation)
+
+  if (textNode) {
+    textNode.textContent = operation.new_value
+
+    return true
+  }
+
+  return false
+}
+
+function applyAttributeChange(root: Element, operation: DiffOperation): boolean {
+  if (operation.old_value === null || operation.new_value === null) return false
+
+  const node = findTarget(root, operation)
+  if (!node || !(node instanceof Element)) return false
 
   const oldMatch = operation.old_value.match(/^([^=]+)="(.*)"$/)
   const newMatch = operation.new_value.match(/^([^=]+)="(.*)"$/)
 
-  if (!oldMatch || !newMatch) return
+  if (!oldMatch || !newMatch) return false
 
   const attributeName = oldMatch[1]
-  const oldAttributeValue = oldMatch[2]
   const newAttributeValue = newMatch[2]
 
-  for (const element of elements) {
-    const targets = element.querySelectorAll(`[${attributeName}="${oldAttributeValue}"]`)
+  node.setAttribute(attributeName, newAttributeValue)
 
-    for (const target of targets) {
-      target.setAttribute(attributeName, newAttributeValue)
-    }
-
-    if (element.getAttribute(attributeName) === oldAttributeValue) {
-      element.setAttribute(attributeName, newAttributeValue)
-    }
-  }
+  return true
 }
 
-function applyAttributeAdd(elements: NodeListOf<Element>, operation: DiffOperation): void {
-  if (operation.new_value === null) return
+function applyAttributeAdd(root: Element, operation: DiffOperation): boolean {
+  if (operation.new_value === null) return false
+
+  const node = findTarget(root, operation)
+  if (!node || !(node instanceof Element)) return false
 
   const match = operation.new_value.match(/^([^=]+)="(.*)"$/)
-  if (!match) return
+  if (!match) return false
 
-  const attributeName = match[1]
-  const attributeValue = match[2]
+  node.setAttribute(match[1], match[2])
 
-  for (const element of elements) {
-    element.setAttribute(attributeName, attributeValue)
-  }
+  return true
 }
 
-function applyAttributeRemove(elements: NodeListOf<Element>, operation: DiffOperation): void {
-  if (operation.old_value === null) return
+function applyAttributeRemove(root: Element, operation: DiffOperation): boolean {
+  if (operation.old_value === null) return false
+
+  const node = findTarget(root, operation)
+  if (!node || !(node instanceof Element)) return false
 
   const match = operation.old_value.match(/^([^=]+)(?:=".*")?$/)
-  if (!match) return
+  if (!match) return false
 
-  const attributeName = match[1]
+  node.removeAttribute(match[1])
 
-  for (const element of elements) {
-    element.removeAttribute(attributeName)
-  }
+  return true
 }
