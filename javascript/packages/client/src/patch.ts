@@ -48,17 +48,22 @@ function applyOperation(root: Element, operation: DiffOperation): boolean {
   }
 }
 
+function parseAttribute(value: string): { name: string; value: string } | null {
+  const match = value.match(/^([^=]+)="(.*)"$/)
+  if (!match) return null
+
+  return { name: match[1], value: match[2] }
+}
+
 function findTarget(root: Element, operation: DiffOperation): Element | null {
   if (!operation.old_value) return null
 
-  const match = operation.old_value.match(/^([^=]+)="(.*)"$/)
-  if (!match) return null
+  const attribute = parseAttribute(operation.old_value)
+  if (!attribute) return null
 
-  const [, attributeName, attributeValue] = match
+  if (root.getAttribute(attribute.name) === attribute.value) return root
 
-  if (root.getAttribute(attributeName) === attributeValue) return root
-
-  const target = root.querySelector(`[${attributeName}="${CSS.escape(attributeValue)}"]`)
+  const target = root.querySelector(`[${attribute.name}="${CSS.escape(attribute.value)}"]`)
 
   return target as Element | null
 }
@@ -98,17 +103,12 @@ function applyAttributeChange(root: Element, operation: DiffOperation): boolean 
   if (operation.old_value === null || operation.new_value === null) return false
 
   const node = findTarget(root, operation)
-  if (!node || !(node instanceof Element)) return false
+  if (!node) return false
 
-  const oldMatch = operation.old_value.match(/^([^=]+)="(.*)"$/)
-  const newMatch = operation.new_value.match(/^([^=]+)="(.*)"$/)
+  const newAttr = parseAttribute(operation.new_value)
+  if (!newAttr) return false
 
-  if (!oldMatch || !newMatch) return false
-
-  const attributeName = oldMatch[1]
-  const newAttributeValue = newMatch[2]
-
-  node.setAttribute(attributeName, newAttributeValue)
+  node.setAttribute(newAttr.name, newAttr.value)
 
   return true
 }
@@ -117,12 +117,12 @@ function applyAttributeAdd(root: Element, operation: DiffOperation): boolean {
   if (operation.new_value === null) return false
 
   const node = findTarget(root, operation)
-  if (!node || !(node instanceof Element)) return false
+  if (!node) return false
 
-  const match = operation.new_value.match(/^([^=]+)="(.*)"$/)
-  if (!match) return false
+  const attribute = parseAttribute(operation.new_value)
+  if (!attribute) return false
 
-  node.setAttribute(match[1], match[2])
+  node.setAttribute(attribute.name, attribute.value)
 
   return true
 }
@@ -131,7 +131,7 @@ function applyAttributeRemove(root: Element, operation: DiffOperation): boolean 
   if (operation.old_value === null) return false
 
   const node = findTarget(root, operation)
-  if (!node || !(node instanceof Element)) return false
+  if (!node) return false
 
   const match = operation.old_value.match(/^([^=]+)(?:=".*")?$/)
   if (!match) return false

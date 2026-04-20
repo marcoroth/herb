@@ -1,5 +1,19 @@
+export type DiffOperationType =
+  | "text_changed"
+  | "attribute_value_changed"
+  | "attribute_added"
+  | "attribute_removed"
+  | "node_inserted"
+  | "node_removed"
+  | "node_replaced"
+  | "node_moved"
+  | "node_wrapped"
+  | "node_unwrapped"
+  | "erb_content_changed"
+  | "tag_name_changed"
+
 export interface DiffOperation {
-  type: string
+  type: DiffOperationType
   path: number[]
   old_value: string | null
   new_value: string | null
@@ -43,7 +57,7 @@ export interface WelcomeMessage {
 
 export type HerbMessage = WelcomeMessage | PatchMessage | ReloadMessage | ErrorMessage | FixedMessage
 
-export type ConnectionState = "connected" | "disconnected" | "gave-up"
+export type ConnectionState = "connected" | "disconnected" | "given-up"
 
 export type MessageHandler = (message: HerbMessage) => void
 
@@ -54,7 +68,7 @@ export interface ConnectionOptions {
   onMessage?: MessageHandler
   onConnect?: () => void
   onDisconnect?: () => void
-  onGiveUp?: () => void
+  onGivenUp?: () => void
   onReconnecting?: (attempt: number, maxAttempts: number, delay: number) => void
 }
 

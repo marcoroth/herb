@@ -1,3 +1,5 @@
+import { colors } from "./colors"
+
 const TOAST_DURATION = 3000
 const TOAST_FADE_DURATION = 300
 const TOAST_ID = "herbDevServerToast"
@@ -5,9 +7,9 @@ const TOAST_ID = "herbDevServerToast"
 type ToastType = "connected" | "disconnected" | "warning"
 
 const TOAST_STYLES: Record<ToastType, { background: string; border: string; text: string; icon: string }> = {
-  connected: { background: "#ecfdf5", border: "#10b981", text: "#065f46", icon: "\u{1F7E2}" },
-  disconnected: { background: "#fef2f2", border: "#ef4444", text: "#991b1b", icon: "\u{1F534}" },
-  warning: { background: "#fffbeb", border: "#f59e0b", text: "#92400e", icon: "\u{1F7E1}" },
+  connected: { background: colors.greenLight, border: colors.greenBorder, text: "#065f46", icon: "\u{1F7E2}" },
+  disconnected: { background: colors.redLight, border: colors.red, text: colors.redDark, icon: "\u{1F534}" },
+  warning: { background: colors.amberLight, border: colors.amber, text: colors.amberDark, icon: "\u{1F7E1}" },
 }
 
 export class Toast {

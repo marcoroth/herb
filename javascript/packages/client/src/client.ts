@@ -17,7 +17,7 @@ import type {
 
 const DEFAULT_PORT = 8592
 
-type ClientState = "connected" | "disconnected" | "gave-up"
+type ClientState = "connected" | "disconnected" | "given-up"
 
 export class HerbClient {
   private connection: Connection
@@ -42,7 +42,7 @@ export class HerbClient {
       onConnect: () => this.onConnect(),
       onDisconnect: () => this.onDisconnect(),
       onReconnecting: (attempt, maxAttempts, delay) => this.onReconnecting(attempt, maxAttempts, delay),
-      onGiveUp: () => this.onGaveUp(),
+      onGivenUp: () => this.onGivenUp(),
     })
   }
 
@@ -72,7 +72,7 @@ export class HerbClient {
   }
 
   private onConnect(): void {
-    const wasDisconnected = this.state === "disconnected" || this.state === "gave-up"
+    const wasDisconnected = this.state === "disconnected" || this.state === "given-up"
 
     if (this.hasConnectedBefore && wasDisconnected) {
       Toast.show("Herb Dev Server reconnected", "connected")
@@ -97,8 +97,8 @@ export class HerbClient {
     this.connectionDot.updateReconnectCountdown(attempt, maxAttempts, delay)
   }
 
-  private onGaveUp(): void {
-    this.updateState("gave-up")
+  private onGivenUp(): void {
+    this.updateState("given-up")
     Toast.show("Herb Dev Server not available — click the dot to retry", "warning")
   }
 
@@ -180,10 +180,10 @@ export class HerbClient {
     this.connectionDot.apply()
   }
 
-  private getErrorOverlay(): any {
-    return (window as any).HerbDevTools?._errorOverlay
-      ?? (window as any).HerbDevTools?._overlay?.errorOverlay
-      ?? null
+  private getErrorOverlay(): { showErrors: Function; clearErrors: Function } | null {
+    const devTools = (window as any).HerbDevTools
+
+    return devTools?._errorOverlay ?? devTools?._overlay?.errorOverlay ?? null
   }
 
   private detectPort(): number | null {

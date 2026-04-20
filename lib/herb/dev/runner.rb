@@ -102,6 +102,10 @@ module Herb
 
       private
 
+      def pluralize(count, word)
+        "#{count} #{word}#{"s" unless count == 1}"
+      end
+
       def require_cruise
         require "cruise"
       rescue LoadError
@@ -186,6 +190,8 @@ module Herb
         Thread.new do
           $stdin.gets(nil)
           Thread.main.raise(Interrupt)
+        rescue IOError, Errno::EBADF
+          Thread.main.raise(Interrupt)
         end
 
         Cruise.watch(expanded_path, only: ["created", "modified", "removed"]) do |event|
@@ -259,7 +265,7 @@ module Herb
         }
 
         badge = bold(fg("\u{2717} error  ", 196))
-        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{current_errors.size} error#{"s" unless current_errors.size == 1})", 241)}"
+        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{pluralize(current_errors.size, "error")})", 241)}"
 
         new_errors.each do |error|
           location = fg("#{relative_path}:#{error.location.start.line}:#{error.location.start.column}", 241)
@@ -322,8 +328,8 @@ module Herb
             {
               type: operation.type.to_s,
               path: operation.path,
-              old_value: extract_node_value(operation.old_node, operation.type.to_s),
-              new_value: extract_node_value(operation.new_node, operation.type.to_s),
+              old_value: extract_node_value(operation.old_node),
+              new_value: extract_node_value(operation.new_node),
               old_node_type: operation.old_node&.type,
               new_node_type: operation.new_node&.type,
             }
@@ -351,8 +357,8 @@ module Herb
                   bold(fg("\u{21BB} reload ", 214))
                 end
 
-        clients_label = websocket.client_count.positive? ? " #{fg("[#{websocket.client_count} client#{"s" unless websocket.client_count == 1}]", 241)}" : ""
-        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{operations.size} operation#{"s" unless operations.size == 1})", 241)}#{clients_label}"
+        clients_label = websocket.client_count.positive? ? " #{fg("[#{pluralize(websocket.client_count, "client")}]", 241)}" : ""
+        puts "    #{timestamp} #{badge} #{display_path} #{fg("(#{pluralize(operations.size, "operation")})", 241)}#{clients_label}"
 
         operations.each_with_index do |operation, index|
           type = operation.type.to_s
@@ -382,8 +388,8 @@ module Herb
         puts
       end
 
-      def print_diff_node(indent, sign, color, node, type)
-        value = extract_node_value(node, type)
+      def print_diff_node(indent, sign, color, node, _type)
+        value = extract_node_value(node)
 
         if value
           value.split("\n").each do |line|
@@ -396,7 +402,7 @@ module Herb
         end
       end
 
-      def extract_node_value(node, _operation_type)
+      def extract_node_value(node)
         return nil unless node
 
         if node.is_a?(Herb::AST::HTMLTextNode)

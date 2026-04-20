@@ -23,6 +23,8 @@ module Herb
 
       private
 
+      def pluralize: (untyped count, untyped word) -> untyped
+
       def require_cruise: () -> untyped
 
       def check_existing_server: (untyped expanded_path) -> untyped
@@ -45,9 +47,9 @@ module Herb
 
       def print_diff_summary: (untyped operations, untyped can_patch, untyped websocket, untyped timestamp, untyped display_path) -> untyped
 
-      def print_diff_node: (untyped indent, untyped sign, untyped color, untyped node, untyped type) -> untyped
+      def print_diff_node: (untyped indent, untyped sign, untyped color, untyped node, untyped _type) -> untyped
 
-      def extract_node_value: (untyped node, untyped _operation_type) -> untyped
+      def extract_node_value: (untyped node) -> untyped
     end
   end
 end

@@ -22,6 +22,12 @@ export type {
 import { HerbClient } from "./client"
 import type { HerbClientOptions } from "./types"
 
+declare global {
+  interface Window {
+    __herbClient?: HerbClient
+  }
+}
+
 let instance: HerbClient | null = null
 
 export function initHerbClient(options: HerbClientOptions = {}): HerbClient {
@@ -30,7 +36,7 @@ export function initHerbClient(options: HerbClientOptions = {}): HerbClient {
   }
 
   instance = new HerbClient(options)
-  ;(window as any).__herbClient = instance
+  window.__herbClient = instance
   instance.connect()
 
   return instance

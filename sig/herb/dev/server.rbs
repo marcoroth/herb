@@ -42,6 +42,8 @@ module Herb
 
       private
 
+      def safely_close: (untyped resource) -> untyped
+
       def handle_connection: (untyped socket) -> untyped
     end
   end

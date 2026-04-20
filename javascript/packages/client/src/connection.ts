@@ -111,7 +111,7 @@ export class Connection {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.debug("[herb-client] gave up reconnecting after %d attempts", this.reconnectAttempts)
       this.givenUp = true
-      this.options.onGiveUp?.()
+      this.options.onGivenUp?.()
       return
     }
 

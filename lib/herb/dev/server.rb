@@ -35,6 +35,7 @@ module Herb
         @clients = [] #: Array[Client]
         @mutex = Mutex.new
         @server = nil
+        @accept_thread = nil
         @entry = nil
       end
 
@@ -43,7 +44,7 @@ module Herb
         @entry.save
         @server = TCPServer.new("0.0.0.0", @port)
 
-        Thread.new do
+        @accept_thread = Thread.new do
           loop do
             socket = @server.accept
             Thread.new(socket) { |s| handle_connection(s) }
@@ -55,45 +56,39 @@ module Herb
 
       def stop
         @mutex.synchronize do
-          @clients.each do |client|
-            client.socket.close
-          rescue StandardError
-            nil
-          end
-
+          @clients.each { |client| safely_close(client.socket) }
           @clients.clear
         end
 
-        begin
-          @server&.close
-        rescue StandardError
-          nil
-        end
+        safely_close(@server)
 
+        @accept_thread&.kill
         @entry&.remove
       end
 
       def broadcast(message)
         data = message.is_a?(String) ? message : JSON.generate(message)
 
-        @mutex.synchronize do
-          @clients.reject! do |client|
-            frame = WebSocket::Frame::Outgoing::Server.new(version: client.version, data: data, type: :text)
+        failed_clients = []
+        clients_snapshot = @mutex.synchronize { @clients.dup }
 
-            client.mutex.synchronize do
-              client.socket.write(frame.to_s)
-              client.socket.flush
-            end
+        clients_snapshot.each do |client|
+          frame = WebSocket::Frame::Outgoing::Server.new(version: client.version, data: data, type: :text)
 
-            false
-          rescue StandardError
-            begin
-              client.socket.close
-            rescue StandardError
-              nil
-            end
-            true
+          client.mutex.synchronize do
+            client.socket.write(frame.to_s)
+            client.socket.flush
           end
+        rescue StandardError
+          safely_close(client.socket)
+
+          failed_clients << client
+        end
+
+        return unless failed_clients.any?
+
+        @mutex.synchronize do
+          failed_clients.each { |client| @clients.delete(client) }
         end
       end
 
@@ -124,6 +119,12 @@ module Herb
       end
 
       private
+
+      def safely_close(resource)
+        resource&.close
+      rescue StandardError
+        nil
+      end
 
       def handle_connection(socket)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
@@ -185,7 +186,10 @@ module Herb
               return
             when :ping
               pong = WebSocket::Frame::Outgoing::Server.new(version: handshake.version, data: frame.data, type: :pong)
+
               client.mutex.synchronize { socket.write(pong.to_s) }
+            when :text
+              nil
             end
           end
         end
@@ -194,13 +198,9 @@ module Herb
       rescue StandardError => e
         warn "[herb-dev-server] connection error: #{e.class}: #{e.message}"
       ensure
-        @mutex.synchronize { @clients.delete_if { |c| c.socket == socket } }
+        @mutex.synchronize { @clients.delete_if { |client| client.socket == socket } }
 
-        begin
-          socket.close
-        rescue StandardError
-          nil
-        end
+        safely_close(socket)
       end
     end
   end
