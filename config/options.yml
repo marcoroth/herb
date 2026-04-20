@@ -1,0 +1,14 @@
+framework:
+  default: ruby
+  values:
+    - ruby
+    - actionview
+    - hanami
+    - sinatra
+
+template_engine:
+  default: erubi
+  values:
+    - erubi
+    - erb
+    - herb

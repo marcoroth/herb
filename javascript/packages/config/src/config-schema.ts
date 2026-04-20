@@ -50,12 +50,29 @@ export const ValidatorsConfigSchema = z.object({
   accessibility: z.boolean().optional().describe("Enable or disable the accessibility validator (default: true)"),
 }).strict().optional()
 
+export const FrameworkSchema = z.enum(["ruby", "actionview", "hanami", "sinatra"]).optional()
+  .describe("Framework context (default: 'ruby')")
+
+export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
+  .describe("Template engine used for compilation (default: 'erubi')")
+
+export const ParserOptionsSchema = z.object({
+  strict: z.boolean().optional().describe("Enable strict parsing mode (default: true)"),
+  render_nodes: z.boolean().optional().describe("Enable render node detection"),
+  strict_locals: z.boolean().optional().describe("Enable strict locals detection"),
+}).strict().optional()
+
 export const EngineConfigSchema = z.object({
+  optimize: z.boolean().optional().describe("Enable compile-time optimizations (default: false)"),
+  debug: z.boolean().optional().describe("Enable debug mode (default: false)"),
+  parser_options: ParserOptionsSchema.describe("Parser options passed through to Herb.parse"),
   validators: ValidatorsConfigSchema.describe("Per-validator enable/disable configuration"),
 }).strict().optional()
 
 export const HerbConfigSchema = z.object({
   version: z.string().describe("Configuration file version"),
+  framework: FrameworkSchema,
+  template_engine: TemplateEngineSchema,
   files: FilesConfigSchema.describe("Top-level file configuration"),
   engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,

@@ -104,6 +104,7 @@ javascript/packages/core/src/action-view-helpers.ts
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/html-entities.json
 javascript/packages/core/src/node-type-guards.ts
+javascript/packages/core/src/config.ts
 javascript/packages/core/src/nodes.ts
 javascript/packages/core/src/visitor.ts
 javascript/packages/node/extension/error_helpers.cpp
@@ -116,6 +117,7 @@ lib/herb/errors.rb
 lib/herb/visitor.rb
 rust/src/action_view_helpers.rs
 rust/src/ast/nodes.rs
+rust/src/config.rs
 rust/src/errors.rs
 rust/src/nodes.rs
 rust/src/union_types.rs

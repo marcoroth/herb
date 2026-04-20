@@ -1,4 +1,5 @@
 export * from "./action-view-helpers.js"
+export * from "./config.js"
 export * from "./ast-utils.js"
 export * from "./html-constants.js"
 export * from "./html-character-references.js"

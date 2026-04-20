@@ -5,6 +5,12 @@ require "pathname"
 
 module Herb
   class Configuration
+    OPTIONS_PATH = File.expand_path("../../config/options.yml", __dir__ || __FILE__).freeze #: String
+    OPTIONS = YAML.safe_load_file(OPTIONS_PATH).freeze #: Hash[String, untyped]
+
+    VALID_FRAMEWORKS = OPTIONS["framework"]["values"].freeze #: Array[String]
+    VALID_TEMPLATE_ENGINES = OPTIONS["template_engine"]["values"].freeze #: Array[String]
+
     CONFIG_FILENAMES = [".herb.yml"].freeze
 
     PROJECT_INDICATORS = [
@@ -40,6 +46,30 @@ module Herb
 
     def version
       @config["version"]
+    end
+
+    #: () -> String
+    def framework
+      value = @config["framework"] || "ruby"
+
+      unless VALID_FRAMEWORKS.include?(value)
+        warn "[Herb] Unknown framework: #{value.inspect}. Valid values: #{VALID_FRAMEWORKS.join(", ")}. Defaulting to 'ruby'."
+        return "ruby"
+      end
+
+      value
+    end
+
+    #: () -> String
+    def template_engine
+      value = @config["template_engine"] || "erubi"
+
+      unless VALID_TEMPLATE_ENGINES.include?(value)
+        warn "[Herb] Unknown template_engine: #{value.inspect}. Valid values: #{VALID_TEMPLATE_ENGINES.join(", ")}. Defaulting to 'erubi'."
+        return "erubi"
+      end
+
+      value
     end
 
     def files
