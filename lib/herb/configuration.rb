@@ -62,6 +62,11 @@ module Herb
       @config["engine"] || {}
     end
 
+    #: (String, untyped) -> untyped
+    def engine_option(key, default = nil)
+      engine.fetch(key.to_s, default)
+    end
+
     def enabled_validators(overrides = {})
       config = dig("engine", "validators") || {}
 

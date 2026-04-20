@@ -74,13 +74,13 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @debug = properties.fetch(:debug, false)
+      @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
-      @strict = properties.fetch(:strict, true)
-      @optimize = properties.fetch(:optimize, false)
+      @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
+      @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
       if @optimize && !self.class.optimize_warning_issued
         self.class.optimize_warning_issued = true
@@ -130,7 +130,9 @@ module Herb
 
       action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
       transform_conditionals = @optimize && action_view_helpers
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict, action_view_helpers: action_view_helpers, transform_conditionals: transform_conditionals)
+      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true,
+                                                            action_view_helpers: action_view_helpers,
+                                                            transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -514,6 +516,13 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def default_parser_options
+      fallback = {} #: Hash[Symbol, untyped]
+
+      Herb.configuration.engine_option("parser_options", fallback)
     end
 
     def ensure_valid_ruby!(source)

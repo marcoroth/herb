@@ -34,6 +34,9 @@ module Herb
 
     def engine: () -> untyped
 
+    # : (String, untyped) -> untyped
+    def engine_option: (String, untyped) -> untyped
+
     def enabled_validators: (?untyped overrides) -> untyped
 
     def formatter: () -> untyped
