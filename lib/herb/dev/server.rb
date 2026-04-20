@@ -23,13 +23,16 @@ module Herb
   module Dev
     class Server
       DEFAULT_PORT = 8592
+      HANDSHAKE_TIMEOUT = 5
 
       attr_reader :port, :project_path
+
+      Client = Data.define(:socket, :version, :mutex)
 
       def initialize(port: DEFAULT_PORT, project_path: nil)
         @port = port
         @project_path = project_path
-        @clients = []
+        @clients = [] #: Array[Client]
         @mutex = Mutex.new
         @server = nil
         @entry = nil
@@ -42,8 +45,8 @@ module Herb
 
         Thread.new do
           loop do
-            client = @server.accept
-            Thread.new(client) { |socket| handle_connection(socket) }
+            socket = @server.accept
+            Thread.new(socket) { |s| handle_connection(s) }
           rescue IOError
             break
           end
@@ -52,13 +55,11 @@ module Herb
 
       def stop
         @mutex.synchronize do
-          @clients.each { |client|
-            begin
-              client.close
-            rescue StandardError
-              nil
-            end
-          }
+          @clients.each do |client|
+            client.socket.close
+          rescue StandardError
+            nil
+          end
 
           @clients.clear
         end
@@ -74,15 +75,20 @@ module Herb
 
       def broadcast(message)
         data = message.is_a?(String) ? message : JSON.generate(message)
-        frame = WebSocket::Frame::Outgoing::Server.new(version: 13, data: data, type: :text)
 
         @mutex.synchronize do
           @clients.reject! do |client|
-            client.write(frame.to_s)
+            frame = WebSocket::Frame::Outgoing::Server.new(version: client.version, data: data, type: :text)
+
+            client.mutex.synchronize do
+              client.socket.write(frame.to_s)
+              client.socket.flush
+            end
+
             false
           rescue StandardError
             begin
-              client.close
+              client.socket.close
             rescue StandardError
               nil
             end
@@ -123,14 +129,19 @@ module Herb
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
         handshake = WebSocket::Handshake::Server.new
-        data = +""
 
         until handshake.finished?
-          byte = socket.getc
-          break if byte.nil?
+          readable = IO.select([socket], nil, nil, HANDSHAKE_TIMEOUT)
 
-          data << byte
-          handshake << byte
+          unless readable
+            socket.close
+            return
+          end
+
+          data = socket.read_nonblock(4096, exception: false)
+          break if data.nil? || data == :wait_readable
+
+          data.each_byte { |byte| handshake << byte.chr }
         end
 
         unless handshake.valid?
@@ -148,8 +159,10 @@ module Herb
         )
 
         socket.write(welcome.to_s)
+        socket.flush
 
-        @mutex.synchronize { @clients << socket }
+        client = Client.new(socket: socket, version: handshake.version, mutex: Mutex.new)
+        @mutex.synchronize { @clients << client }
 
         frame_parser = WebSocket::Frame::Incoming::Server.new(version: handshake.version)
 
@@ -164,7 +177,7 @@ module Herb
               close_frame = WebSocket::Frame::Outgoing::Server.new(version: handshake.version, data: "", type: :close)
 
               begin
-                socket.write(close_frame.to_s)
+                client.mutex.synchronize { socket.write(close_frame.to_s) }
               rescue StandardError
                 nil
               end
@@ -172,7 +185,7 @@ module Herb
               return
             when :ping
               pong = WebSocket::Frame::Outgoing::Server.new(version: handshake.version, data: frame.data, type: :pong)
-              socket.write(pong.to_s)
+              client.mutex.synchronize { socket.write(pong.to_s) }
             end
           end
         end
@@ -181,7 +194,7 @@ module Herb
       rescue StandardError => e
         warn "[herb-dev-server] connection error: #{e.class}: #{e.message}"
       ensure
-        @mutex.synchronize { @clients.delete(socket) }
+        @mutex.synchronize { @clients.delete_if { |c| c.socket == socket } }
 
         begin
           socket.close

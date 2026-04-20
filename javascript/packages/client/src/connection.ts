@@ -97,7 +97,11 @@ export class Connection {
       }
 
       this.socket.onerror = () => {
-        this.socket?.close()
+        try {
+          this.socket?.close()
+        } catch {
+          this.scheduleReconnect()
+        }
       }
     } catch {
       this.scheduleReconnect()

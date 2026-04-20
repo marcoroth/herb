@@ -505,7 +505,9 @@ class Herb::CLI
       puts
       puts "Install it:"
       puts "  gem install cruise"
-      puts "  # or add to your Gemfile: gem 'cruise'"
+      puts ""
+      puts "or add to your Gemfile"
+      puts "  bundle add cruise"
       exit(1)
     end
 
@@ -548,20 +550,15 @@ class Herb::CLI
     include_patterns = config.file_include_patterns
     exclude_patterns = config.file_exclude_patterns
 
-    puts "  #{fg("Herb:", 245)}    #{fg(Herb::VERSION, 250)}"
-    puts "  #{fg("Project:", 245)} #{fg(expanded_path, 250)}"
-    puts "  #{fg("PID:", 245)}     #{fg(Process.pid, 250)} #{fg("(#{File.join(Herb::Dev::ServerEntry::SERVERS_DIR, "#{Process.pid}.json")})", 241)}"
+    puts "  #{fg("Herb:".ljust(11), 245)}#{fg(Herb::VERSION, 250)}"
+    puts "  #{fg("Project:".ljust(11), 245)}#{fg(expanded_path, 250)}"
+    puts "  #{fg("PID:".ljust(11), 245)}#{fg(Process.pid, 250)} #{fg("(#{File.join(Herb::Dev::ServerEntry::SERVERS_DIR, "#{Process.pid}.json")})", 241)}"
 
     if config.config_path
       relative_config = config.config_path.to_s.delete_prefix("#{expanded_path}/")
-      puts "  #{fg("Config:", 245)}  #{fg(relative_config, 250)}"
-      puts
-
-      File.readlines(config.config_path.to_s).each do |line|
-        puts "  #{fg(line.rstrip, 241)}"
-      end
+      puts "  #{fg("Config:".ljust(11), 245)}#{fg(relative_config, 250)}"
     else
-      puts "  #{fg("Config:", 245)}  #{fg("(defaults)", 241)}"
+      puts "  #{fg("Config:".ljust(11), 245)}#{fg("(defaults)", 241)}"
     end
 
     puts "  #{fg("Indexing files...", 241)}"
@@ -576,12 +573,12 @@ class Herb::CLI
     end
 
     print "\e[1A\e[2K"
-    puts "  #{fg("Files:", 245)}   #{fg("#{file_states.size} templates indexed", 250)}"
+    puts "  #{fg("Files:".ljust(11), 245)}#{fg("#{file_states.size} templates indexed", 250)}"
 
     websocket = Herb::Dev::Server.new(port: port, project_path: expanded_path)
     websocket.start
 
-    puts "  #{fg("WebSocket:", 245)} #{fg("ws://localhost:#{websocket.port}", 250)}"
+    puts "  #{fg("WebSocket:".ljust(11), 245)}#{fg("ws://localhost:#{websocket.port}", 250)}"
     puts
     puts "  #{fg("Ready!", 42)} #{fg("Watching for changes...", 241)}"
     puts
