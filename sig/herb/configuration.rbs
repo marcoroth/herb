@@ -20,6 +20,8 @@ module Herb
 
     attr_reader config: untyped
 
+    attr_reader user_config: untyped
+
     attr_reader config_path: untyped
 
     attr_reader project_root: untyped
@@ -99,7 +101,7 @@ module Herb
 
     def project_root?: (untyped path) -> untyped
 
-    def load_config: () -> untyped
+    def load_user_config: () -> untyped
 
     def deep_merge: (untyped base, untyped override, ?additive_keys: untyped) -> untyped
   end
