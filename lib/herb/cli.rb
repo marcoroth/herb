@@ -17,7 +17,7 @@ class Herb::CLI
 
   def call
     options
-    @file = @args[1]
+    @file = @args[1] unless @command == "dev"
 
     if silent
       if result.failed?
@@ -101,6 +101,7 @@ class Herb::CLI
         bundle exec herb html [file]                Extract HTML from a file.
         bundle exec herb diff [old] [new]           Diff two files and show the minimal set of AST differences.
         bundle exec herb playground [file]          Open the content of the source file in the playground.
+        bundle exec herb dev                        Start the dev server and watch for file changes.
         bundle exec herb version                    Prints the versions of the Herb gem and the libherb library.
 
         bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
@@ -202,6 +203,15 @@ class Herb::CLI
                   else
                     system(%(open "#{url}##{hash}"))
                     exit(0)
+                  end
+                when "dev"
+                  case @args[1]
+                  when "stop" then dev_stop
+                  when "restart" then dev_restart
+                  when "status" then dev_status
+                  else
+                    @file = @args[1]
+                    run_dev_server
                   end
                 when "actionview"
                   run_actionview_command
@@ -570,6 +580,26 @@ class Herb::CLI
     end
 
     project.print_file_report(@file)
+  end
+
+  def dev_stop
+    require_relative "dev/runner"
+    Herb::Dev::Runner.new.stop
+  end
+
+  def dev_restart
+    require_relative "dev/runner"
+    Herb::Dev::Runner.new(path: @file || ".").restart
+  end
+
+  def dev_status
+    require_relative "dev/runner"
+    Herb::Dev::Runner.new.status
+  end
+
+  def run_dev_server
+    require_relative "dev/runner"
+    Herb::Dev::Runner.new(path: @file || ".").run
   end
 
   def diff_files
