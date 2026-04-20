@@ -15,4 +15,6 @@ module Herb
   def self.configure: (?untyped project_path) -> untyped
 
   def self.reset_configuration!: () -> untyped
+
+  def self.dev_server_port: (?untyped project_path) -> untyped
 end
