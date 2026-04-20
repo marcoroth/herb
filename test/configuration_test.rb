@@ -690,4 +690,80 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal false, engine.debug
   end
+
+  test "framework defaults to ruby" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "ruby", config.framework
+  end
+
+  test "framework reads from config file" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "actionview", config.framework
+  end
+
+  test "framework warns on invalid value and defaults to ruby" do
+    write_config(<<~YAML)
+      framework: invalid
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_output(nil, /Unknown framework/) do
+      assert_equal "ruby", config.framework
+    end
+  end
+
+  test "framework accepts all valid values" do
+    Herb::Configuration::VALID_FRAMEWORKS.each do |framework|
+      write_config("framework: #{framework}")
+
+      config = Herb::Configuration.load(@temp_dir)
+
+      assert_equal framework, config.framework
+    end
+  end
+
+  test "template_engine defaults to erubi" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "erubi", config.template_engine
+  end
+
+  test "template_engine reads from config file" do
+    write_config(<<~YAML)
+      template_engine: herb
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "herb", config.template_engine
+  end
+
+  test "template_engine warns on invalid value and defaults to erubi" do
+    write_config(<<~YAML)
+      template_engine: invalid
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_output(nil, /Unknown template_engine/) do
+      assert_equal "erubi", config.template_engine
+    end
+  end
+
+  test "template_engine accepts all valid values" do
+    Herb::Configuration::VALID_TEMPLATE_ENGINES.each do |engine|
+      write_config("template_engine: #{engine}")
+
+      config = Herb::Configuration.load(@temp_dir)
+
+      assert_equal engine, config.template_engine
+    end
+  end
 end

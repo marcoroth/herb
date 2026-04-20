@@ -2,6 +2,14 @@
 
 module Herb
   class Configuration
+    OPTIONS_PATH: String
+
+    OPTIONS: Hash[String, untyped]
+
+    VALID_FRAMEWORKS: Array[String]
+
+    VALID_TEMPLATE_ENGINES: Array[String]
+
     CONFIG_FILENAMES: untyped
 
     PROJECT_INDICATORS: untyped
@@ -23,6 +31,12 @@ module Herb
     def dig: (*untyped keys) -> untyped
 
     def version: () -> untyped
+
+    # : () -> String
+    def framework: () -> String
+
+    # : () -> String
+    def template_engine: () -> String
 
     def files: () -> untyped
 
