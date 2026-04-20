@@ -22,6 +22,12 @@ module Herb
 
     attr_reader enabled_validators: untyped
 
+    def self.optimize_warning_issued: () -> bool
+
+    def self.optimize_warning_issued=: (bool) -> bool
+
+    attr_accessor optimize_warning_issued: bool
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError
@@ -46,9 +52,15 @@ module Herb
 
     def self.css: (untyped value) -> untyped
 
+    def self.nested_attribute_value: (untyped value) -> untyped
+
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
+
+    def source_may_contain_action_view_helpers?: (untyped source) -> untyped
+
+    def self.action_view_helper_pattern: () -> untyped
 
     def add_text: (untyped text) -> untyped
 

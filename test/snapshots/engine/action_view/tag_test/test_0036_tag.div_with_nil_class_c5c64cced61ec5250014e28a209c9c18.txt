@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0036_tag.div with nil class"
+input: "{source: \"<%= tag.div class: nil %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((nil)); _buf << '"></div>'.freeze;
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0014_tag.div with string style"
+input: "{source: \"<%= tag.div style: \\\"color: red\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div style="color: red"></div>'.freeze;
+_buf.to_s

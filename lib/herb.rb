@@ -31,6 +31,7 @@ require_relative "herb/configuration"
 
 require_relative "herb/version"
 
+require_relative "herb/html/util"
 require_relative "herb/visitor"
 require_relative "herb/engine"
 
@@ -75,7 +76,7 @@ module Herb
       lex(File.read(path), **)
     end
 
-    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
     def parse_file(path, **)
       parse(File.read(path), **)
     end

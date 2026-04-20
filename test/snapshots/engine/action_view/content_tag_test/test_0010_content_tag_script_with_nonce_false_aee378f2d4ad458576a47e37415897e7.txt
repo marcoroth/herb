@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0010_content_tag :script with nonce false"
+input: "{source: \"<%= content_tag(:script, \\\"alert(1)\\\", nonce: false) %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script nonce="false">alert(1)</script>'.freeze;
+_buf.to_s

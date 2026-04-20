@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize
 
   def initialize(args)
     @args = args
@@ -309,6 +309,10 @@ class Herb::CLI
         self.trim = true
       end
 
+      parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
+        self.optimize = true
+      end
+
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
       end
@@ -504,6 +508,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
@@ -592,7 +597,9 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:optimize] = true if optimize
       options[:trim] = true if trim
+
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src
 

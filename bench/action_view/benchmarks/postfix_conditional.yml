@@ -1,0 +1,6 @@
+title: "Helper with postfix conditional"
+subtitle: "Single link_to with postfix if — tests transform_conditionals integration"
+locals:
+  condition: "true"
+---
+<%= link_to "Settings", "/settings" if condition %>

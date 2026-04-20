@@ -1,0 +1,8 @@
+---
+source: "Engine::ActionView::TagTest#test_0003_tag.div with attributes"
+input: "{source: \"<%= tag.div class: \\\"content\\\" do %>\\n  Content\\n<% end %>\\n\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="content">
+  Content
+</div>'.freeze;
+_buf.to_s

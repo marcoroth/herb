@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0006_tag.br void element"
+input: "{source: \"<%= tag.br %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<br>
