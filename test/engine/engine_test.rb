@@ -267,5 +267,75 @@ module Engine
 
       engine.send(:ensure_valid_ruby!, "def foo; end")
     end
+
+    test "CDATA section compiles correctly" do
+      assert_compiled_snapshot("<![CDATA[ content ]]>", enforce_erubi_equality: true)
+      assert_evaluated_snapshot("<![CDATA[ content ]]>")
+    end
+
+    test "CDATA section inside script compiles correctly" do
+      assert_compiled_snapshot("<script><![CDATA[ alert(1) ]]></script>", enforce_erubi_equality: true)
+      assert_evaluated_snapshot("<script><![CDATA[ alert(1) ]]></script>")
+    end
+
+    test "compilation with optimize for tag helper" do
+      assert_compiled_snapshot('<%= tag.div class: "container" do %>Content<% end %>', optimize: true)
+    end
+
+    test "compilation with optimize for void element" do
+      assert_compiled_snapshot("<%= tag.br %>", optimize: true)
+    end
+
+    test "compilation with optimize for tag with data attributes" do
+      assert_compiled_snapshot('<%= tag.div data: { controller: "content", count: 42 } %>', optimize: true)
+    end
+
+    test "compilation with optimize for nested tag helpers" do
+      assert_compiled_snapshot(<<~ERB, optimize: true)
+        <%= tag.div class: "outer" do %>
+          <%= tag.span "Inner" %>
+        <% end %>
+      ERB
+    end
+
+    test "compilation with optimize for link_to" do
+      assert_compiled_snapshot('<%= link_to "Home", "/" %>', optimize: true)
+    end
+
+    test "compilation with optimize for image_tag" do
+      assert_compiled_snapshot('<%= image_tag "photo.jpg", alt: "Photo" %>', optimize: true)
+    end
+
+    test "compilation with optimize for content_tag" do
+      assert_compiled_snapshot('<%= content_tag :div, "Content", class: "box" %>', optimize: true)
+    end
+
+    test "compilation with optimize preserves non-helper ERB" do
+      assert_compiled_snapshot(<<~ERB, optimize: true)
+        <h1><%= title %></h1>
+        <%= tag.div class: "content" do %>
+          <p><%= body %></p>
+        <% end %>
+      ERB
+    end
+
+    test "compilation with optimize for tag with dynamic attribute" do
+      assert_compiled_snapshot("<%= tag.div class: css_class %>", optimize: true)
+    end
+
+    test "compilation without optimize leaves tag helpers as Ruby calls" do
+      template = '<%= tag.div class: "container" do %>Content<% end %>'
+
+      without_optimize = Herb::Engine.new(template).src
+      with_optimize = Herb::Engine.new(template, optimize: true).src
+
+      refute_equal without_optimize, with_optimize
+      assert_includes without_optimize, "tag.div"
+      refute_includes with_optimize, "tag.div"
+    end
+
+    test "compilation with parser_options strict false" do
+      assert_compiled_snapshot("<div>Hello</div>", parser_options: { strict: false })
+    end
   end
 end

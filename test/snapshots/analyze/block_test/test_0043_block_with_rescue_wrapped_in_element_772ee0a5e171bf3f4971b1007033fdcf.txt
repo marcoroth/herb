@@ -1,0 +1,114 @@
+---
+source: "Analyze::BlockTest#test_0043_block with rescue wrapped in element"
+input: |2-
+<div>
+  <% items.each do |item| %>
+    <%= item %>
+  <% rescue %>
+    <span>Error</span>
+  <% end %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBBlockNode (location: (2:2)-(6:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " items.each do |item| " (location: (2:4)-(2:26))
+    │   │   │   ├── tag_closing: "%>" (location: (2:26)-(2:28))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:28)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:4)-(3:15))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:4)-(3:7))
+    │   │   │   │   │   ├── content: " item " (location: (3:7)-(3:13))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:13)-(3:15))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:15)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── block_arguments: (1 item)
+    │   │   │   │   └── @ RubyParameterNode (location: (2:20)-(2:24))
+    │   │   │   │       ├── name: "item" (location: (2:20)-(2:24))
+    │   │   │   │       ├── default_value: ∅
+    │   │   │   │       ├── kind: "positional"
+    │   │   │   │       └── required: true
+    │   │   │   │
+    │   │   │   ├── rescue_clause:
+    │   │   │   │   └── @ ERBRescueNode (location: (4:2)-(6:2))
+    │   │   │   │       ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   │       ├── content: " rescue " (location: (4:4)-(4:12))
+    │   │   │   │       ├── tag_closing: "%>" (location: (4:12)-(4:14))
+    │   │   │   │       ├── statements: (3 items)
+    │   │   │   │       │   ├── @ HTMLTextNode (location: (4:14)-(5:4))
+    │   │   │   │       │   │   └── content: "\n    "
+    │   │   │   │       │   │
+    │   │   │   │       │   ├── @ HTMLElementNode (location: (5:4)-(5:22))
+    │   │   │   │       │   │   ├── open_tag:
+    │   │   │   │       │   │   │   └── @ HTMLOpenTagNode (location: (5:4)-(5:10))
+    │   │   │   │       │   │   │       ├── tag_opening: "<" (location: (5:4)-(5:5))
+    │   │   │   │       │   │   │       ├── tag_name: "span" (location: (5:5)-(5:9))
+    │   │   │   │       │   │   │       ├── tag_closing: ">" (location: (5:9)-(5:10))
+    │   │   │   │       │   │   │       ├── children: []
+    │   │   │   │       │   │   │       └── is_void: false
+    │   │   │   │       │   │   │
+    │   │   │   │       │   │   ├── tag_name: "span" (location: (5:5)-(5:9))
+    │   │   │   │       │   │   ├── body: (1 item)
+    │   │   │   │       │   │   │   └── @ HTMLTextNode (location: (5:10)-(5:15))
+    │   │   │   │       │   │   │       └── content: "Error"
+    │   │   │   │       │   │   │
+    │   │   │   │       │   │   ├── close_tag:
+    │   │   │   │       │   │   │   └── @ HTMLCloseTagNode (location: (5:15)-(5:22))
+    │   │   │   │       │   │   │       ├── tag_opening: "</" (location: (5:15)-(5:17))
+    │   │   │   │       │   │   │       ├── tag_name: "span" (location: (5:17)-(5:21))
+    │   │   │   │       │   │   │       ├── children: []
+    │   │   │   │       │   │   │       └── tag_closing: ">" (location: (5:21)-(5:22))
+    │   │   │   │       │   │   │
+    │   │   │   │       │   │   ├── is_void: false
+    │   │   │   │       │   │   └── element_source: "HTML"
+    │   │   │   │       │   │
+    │   │   │   │       │   └── @ HTMLTextNode (location: (5:22)-(6:2))
+    │   │   │   │       │       └── content: "\n  "
+    │   │   │   │       │
+    │   │   │   │       └── subsequent: ∅
+    │   │   │   │
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (6:2)-(6:11))
+    │   │   │           ├── tag_opening: "<%" (location: (6:2)-(6:4))
+    │   │   │           ├── content: " end " (location: (6:4)-(6:9))
+    │   │   │           └── tag_closing: "%>" (location: (6:9)-(6:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:11)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "div" (location: (7:2)-(7:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

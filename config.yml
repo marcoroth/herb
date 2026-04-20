@@ -410,6 +410,82 @@ errors:
         - name: layout
           type: string
 
+    - name: StrictLocalsPositionalArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Positional argument `%s` is not allowed. Use keyword argument format: `%s:`."
+        arguments:
+          - name
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsBlockArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Block argument `&%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsSplatArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Splat argument `*%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsMissingParenthesisError
+      message:
+        template: "Strict locals declaration requires parentheses. Expected `locals: (...)` but got `locals: %s`."
+        arguments:
+          - rest
+
+      fields:
+        - name: rest
+          type: string
+
+    - name: StrictLocalsDuplicateDeclarationError
+      message:
+        template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
+        arguments: []
+
+      fields: []
+
+    - name: VoidElementContentError
+      message:
+        template: "Void element `%s` cannot have content. `%s` does not accept %s for content."
+        arguments:
+          - tag_name->value
+          - helper_name
+          - content_type
+
+      fields:
+        - name: tag_name
+          type: token
+
+        - name: helper_name
+          type: string
+
+        - name: content_type
+          type: string
+
+    - name: DotNotationCasingError
+      message:
+        template: "Dot-notation component tags require the first segment to start with an uppercase letter. `%s` does not start with an uppercase letter."
+        arguments:
+          - segment->value
+
+      fields:
+        - name: segment
+          type: token
+
 warnings:
   fields: []
   types: []
@@ -810,6 +886,23 @@ nodes:
           type: array
           kind: Node
 
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
         - name: end_node
           type: node
           kind: ERBEndNode
@@ -1096,23 +1189,8 @@ nodes:
           type: node
           kind: RubyLiteralNode
 
-    - name: ERBRenderNode
+    - name: RubyRenderKeywordsNode
       fields:
-        - name: tag_opening
-          type: token
-
-        - name: content
-          type: token
-
-        - name: tag_closing
-          type: token
-
-        - name: analyzed_ruby
-          type: analyzed_ruby
-
-        - name: prism_node
-          type: prism_node
-
         - name: partial
           type: token
 
@@ -1168,6 +1246,89 @@ nodes:
           type: array
           kind:
             - RubyRenderLocalNode
+
+    - name: ERBRenderNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: keywords
+          type: node
+          kind: RubyRenderKeywordsNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
+    - name: RubyParameterNode
+      fields:
+        - name: name
+          type: token
+
+        - name: default_value
+          type: node
+          kind: RubyLiteralNode
+
+        - name: kind
+          type: string
+
+        - name: required
+          type: boolean
+
+    - name: ERBStrictLocalsNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: locals
+          type: array
+          kind:
+            - RubyParameterNode
 
     - name: ERBYieldNode
       fields:

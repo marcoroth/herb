@@ -1,7 +1,7 @@
 import dedent from "dedent"
 
 import { describe, it, expect, beforeAll } from "vitest"
-import { Position, MarkupKind } from "vscode-languageserver/node"
+import { Position, MarkupKind, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { HoverService } from "../src/hover_service"
@@ -24,7 +24,20 @@ describe("HoverService", () => {
 
   function getHover(content: string, line: number, character: number) {
     const document = createDocument(content)
+
     return service.getHover(document, Position.create(line, character))
+  }
+
+  function hoverValue(content: string, line: number, character: number): string {
+    const hover = getHover(content, line, character)
+
+    return (hover!.contents as { value: string }).value
+  }
+
+  function hoverRange(content: string, line: number, character: number): Range {
+    const hover = getHover(content, line, character)
+
+    return hover!.range!
   }
 
   describe("tag.* helpers", () => {
@@ -39,94 +52,160 @@ describe("HoverService", () => {
 
       expect(hover).not.toBeNull()
       expect(hover!.contents).toHaveProperty("kind", MarkupKind.Markdown)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag_name>(content = nil, **options, &block)
+        \`\`\`
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("```erb")
-      expect(value).toContain("<div>")
-      expect(value).toContain("HTML equivalent")
-    })
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
-    it("shows signature for tag helper", () => {
-      const content = "<%= tag.div do %><% end %>"
+        **HTML equivalent**
+        \`\`\`erb
+        <div>
+          Content
+        </div>
+        \`\`\`
 
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("```ruby")
-      expect(value).toContain("tag.<tag name>(optional content, options)")
-    })
-
-    it("shows documentation link for tag helper", () => {
-      const content = "<%= tag.div do %><% end %>"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::TagHelper#tag")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag")
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
     it("shows hover for tag.div with attributes", () => {
       const content = '<%= tag.div class: "container" do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag_name>(content = nil, **options, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<div")
-      expect(value).toContain("container")
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="container"></div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
-    it("shows hover for tag with content argument", () => {
+    it("shows hover for tag.p with content argument", () => {
       const content = '<%= tag.p "Hello" %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag_name>(content = nil, **options, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<p>")
+        **HTML equivalent**
+        \`\`\`erb
+        <p>Hello</p>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 9,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
   })
 
   describe("content_tag", () => {
-    it("shows hover for content_tag", () => {
+    it("shows hover for content_tag with block", () => {
       const content = '<%= content_tag :div do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<div>")
+        **HTML equivalent**
+        \`\`\`erb
+        <div></div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 15,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
 
-    it("shows signature for content_tag", () => {
-      const content = '<%= content_tag :div do %><% end %>'
+    it("shows hover for content_tag with content argument", () => {
+      const content = '<%= content_tag :div, "Hello" %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("content_tag(")
-    })
+        **HTML equivalent**
+        \`\`\`erb
+        <div>Hello</div>
+        \`\`\`
 
-    it("shows documentation link for content_tag", () => {
-      const content = '<%= content_tag :div do %><% end %>'
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::TagHelper#content_tag")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag")
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 15,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
   })
 
@@ -134,61 +213,461 @@ describe("HoverService", () => {
     it("shows hover for link_to", () => {
       const content = '<%= link_to "Home", root_path %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
 
-      expect(hover).not.toBeNull()
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("<a")
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="<%= root_path %>">Home</a>
+        \`\`\`
+
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
     })
+  })
 
-    it("shows signature for link_to", () => {
+  describe("hover range targets method name only", () => {
+    it("only triggers hover on the method name for link_to", () => {
       const content = '<%= link_to "Home", root_path %>'
 
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).not.toBeNull()
-
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("link_to(")
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 12)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 11)).not.toBeNull()
     })
 
-    it("shows documentation link for link_to", () => {
-      const content = '<%= link_to "Home", root_path %>'
+    it("only triggers hover on the method name for tag.div", () => {
+      const content = '<%= tag.div do %><% end %>'
 
-      const hover = getHover(content, 0, 5)
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 12)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 11)).not.toBeNull()
+    })
 
-      expect(hover).not.toBeNull()
+    it("only triggers hover on the method name for content_tag", () => {
+      const content = '<%= content_tag :div do %><% end %>'
 
-      const value = (hover!.contents as { value: string }).value
-      expect(value).toContain("ActionView::Helpers::UrlHelper#link_to")
-      expect(value).toContain("https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to")
+      expect(getHover(content, 0, 3)).toBeNull()
+      expect(getHover(content, 0, 16)).toBeNull()
+      expect(getHover(content, 0, 4)).not.toBeNull()
+      expect(getHover(content, 0, 15)).not.toBeNull()
+    })
+  })
+
+  describe("nested elements", () => {
+    it("shows hover for each nested method name independently", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          <%= tag.div class: "hello" %>
+        <% end %>
+      `
+
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
+
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
+
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="Devices">
+          ...
+        </a>
+        \`\`\`
+
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag_name>(content = nil, **options, &block)
+        \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="hello"></div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
+      `)
+      expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 13,
+            "line": 1,
+          },
+          "start": {
+            "character": 6,
+            "line": 1,
+          },
+        }
+      `)
+    })
+
+    it("does not show hover on body content between nested elements", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          some text
+        <% end %>
+      `
+
+      expect(getHover(content, 1, 5)).toBeNull()
+    })
+
+    it("shows shallow output with expandable details for deeply nested elements", () => {
+      const content = dedent`
+        <%= link_to "Devices", sessions_path do %>
+          <%= tag.div class: "hello" do %>
+            <%= content_tag :div, "Inner" %>
+          <% end %>
+        <% end %>
+      `
+
+      expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        link_to(name = nil, options = nil, html_options = nil, &block)
+        \`\`\`
+
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
+
+        **HTML equivalent**
+        \`\`\`erb
+        <a href="Devices">
+          ...
+        </a>
+        \`\`\`
+
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
+      `)
+      expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 11,
+            "line": 0,
+          },
+          "start": {
+            "character": 4,
+            "line": 0,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        tag.<tag_name>(content = nil, **options, &block)
+        \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div class="hello">
+          ...
+        </div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
+      `)
+      expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 13,
+            "line": 1,
+          },
+          "start": {
+            "character": 6,
+            "line": 1,
+          },
+        }
+      `)
+
+      expect(hoverValue(content, 2, 8)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
+        \`\`\`
+
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
+
+        **HTML equivalent**
+        \`\`\`erb
+        <div>Inner</div>
+        \`\`\`
+
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
+      `)
+      expect(hoverRange(content, 2, 8)).toMatchInlineSnapshot(`
+        {
+          "end": {
+            "character": 19,
+            "line": 2,
+          },
+          "start": {
+            "character": 8,
+            "line": 2,
+          },
+        }
+      `)
+    })
+  })
+
+  describe("ERB helper hover (unsupported helpers)", () => {
+    it("shows hover for csp_meta_tag", () => {
+      expect(hoverValue("<%= csp_meta_tag %>", 0, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        csp_meta_tag(**options)
+        \`\`\`
+
+        Returns a \`<meta>\` tag \`"csp-nonce"\` with the per-session nonce value for allowing inline \`<script>\` tags. Used by the Rails UJS helper to create dynamically loaded inline \`<script>\` elements.
+
+        [ActionView::Helpers::CspHelper#csp_meta_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/CspHelper.html#method-i-csp_meta_tag) · Action View"
+      `)
+    })
+
+    it("shows hover for helper without documentation URL", () => {
+      expect(hoverValue("<%= params %>", 0, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        params
+        \`\`\`
+
+        Returns the request parameters as an \`ActionController::Parameters\` object. Delegated to the controller.
+
+        ActionView::Helpers::ControllerHelper#params · Action View"
+      `)
+    })
+
+    it("shows hover for nested helper in transformed element", () => {
+      expect(hoverValue('<%= turbo_frame_tag dom_id(@user) do %><% end %>', 0, 21)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        dom_id(record_or_class, prefix = nil)
+        \`\`\`
+
+        Returns a unique DOM id for the record following the convention of the singular form with the id appended. If no id is found, prefixes with \`"new_"\` instead.
+
+        [ActionView::RecordIdentifier#dom_id](https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html#method-i-dom_id) · Action View"
+      `)
     })
   })
 
   describe("non-ActionView elements", () => {
     it("returns null for plain HTML elements", () => {
-      const content = "<div>hello</div>"
-
-      const hover = getHover(content, 0, 2)
-
-      expect(hover).toBeNull()
+      expect(getHover("<div>hello</div>", 0, 2)).toBeNull()
     })
 
     it("returns null for plain text", () => {
-      const content = "just some text"
-
-      const hover = getHover(content, 0, 5)
-
-      expect(hover).toBeNull()
+      expect(getHover("just some text", 0, 5)).toBeNull()
     })
 
     it("returns null for regular ERB expressions", () => {
-      const content = "<%= some_method %>"
+      expect(getHover("<%= some_method %>", 0, 5)).toBeNull()
+    })
+  })
 
-      const hover = getHover(content, 0, 5)
+  describe("character references", () => {
+    describe("named character references", () => {
+      it("shows hover for &lt;", () => {
+        const hover = getHover("<div>&lt;</div>", 0, 6)
 
-      expect(hover).toBeNull()
+        expect(hover).not.toBeNull()
+        expect(hover!.contents).toHaveProperty("kind", MarkupKind.Markdown)
+        expect(hoverValue("<div>&lt;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&lt;\` |
+          | Name | \`lt\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&lt;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 9)
+        )
+      })
+
+      it("shows hover for &amp;", () => {
+        expect(hoverValue("<div>&amp;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`&\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`&\` |
+          | Codepoint | U+0026 |
+          | Reference | \`&amp;\` |
+          | Name | \`amp\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("shows hover for &copy;", () => {
+        expect(hoverValue("<div>&copy;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`©\`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \`©\` |
+          | Codepoint | U+00A9 |
+          | Reference | \`&copy;\` |
+          | Name | \`copy\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("shows hover for &nbsp;", () => {
+        expect(hoverValue("<div>&nbsp;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \` \`
+
+          **Named character reference**
+
+          | | |
+          |---|---|
+          | Character | \` \` |
+          | Codepoint | U+00A0 |
+          | Reference | \`&nbsp;\` |
+          | Name | \`nbsp\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+
+      it("triggers on any character within the entity", () => {
+        // &lt; spans positions 5-8
+        expect(getHover("<div>&lt;</div>", 0, 5)).not.toBeNull()
+        expect(getHover("<div>&lt;</div>", 0, 8)).not.toBeNull()
+        expect(getHover("<div>&lt;</div>", 0, 9)).toBeNull()
+      })
+    })
+
+    describe("decimal numeric character references", () => {
+      it("shows hover for &#60;", () => {
+        expect(hoverValue("<div>&#60;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Decimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&#60;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&#60;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 10)
+        )
+      })
+
+      it("shows hover for &#169; (copyright)", () => {
+        expect(hoverValue("<div>&#169;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`©\`
+
+          **Decimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`©\` |
+          | Codepoint | U+00A9 |
+          | Reference | \`&#169;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+      })
+    })
+
+    describe("hexadecimal numeric character references", () => {
+      it("shows hover for &#x3C;", () => {
+        expect(hoverValue("<div>&#x3C;</div>", 0, 6)).toMatchInlineSnapshot(`
+          "## \`<\`
+
+          **Hexadecimal numeric character reference**
+
+          | | |
+          |---|---|
+          | Character | \`<\` |
+          | Codepoint | U+003C |
+          | Reference | \`&#x3C;\` |
+
+          [HTML spec: Character references](https://html.spec.whatwg.org/multipage/syntax.html#character-references)"
+        `)
+        expect(hoverRange("<div>&#x3C;</div>", 0, 6)).toEqual(
+          Range.create(0, 5, 0, 11)
+        )
+      })
+    })
+
+    describe("in attribute values", () => {
+      it("shows hover for entities in attribute values", () => {
+        const hover = getHover('<div data-html="&lt;">test</div>', 0, 18)
+
+        expect(hover).not.toBeNull()
+        expect(hoverValue('<div data-html="&lt;">test</div>', 0, 18)).toContain("`<`")
+        expect(hoverRange('<div data-html="&lt;">test</div>', 0, 18)).toEqual(
+          Range.create(0, 16, 0, 20)
+        )
+      })
+    })
+
+    describe("multiple entities on same line", () => {
+      it("shows correct hover for each entity", () => {
+        expect(hoverValue("<div>&lt;&gt;</div>", 0, 6)).toContain("`<`")
+        expect(hoverValue("<div>&lt;&gt;</div>", 0, 10)).toContain("`>`")
+      })
+    })
+
+    describe("no hover for non-entities", () => {
+      it("returns null for bare ampersand", () => {
+        expect(getHover("<div>Tom & Jerry</div>", 0, 10)).toBeNull()
+      })
+
+      it("returns null for plain text", () => {
+        expect(getHover("<div>hello</div>", 0, 7)).toBeNull()
+      })
+
+      it("returns null for invalid named reference", () => {
+        expect(getHover("<div>&notarealentity;</div>", 0, 10)).toBeNull()
+      })
     })
   })
 })

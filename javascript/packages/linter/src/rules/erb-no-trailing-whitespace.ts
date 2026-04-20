@@ -68,6 +68,7 @@ class SkipZoneCollector extends Visitor {
 export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitespaceAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-no-trailing-whitespace"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

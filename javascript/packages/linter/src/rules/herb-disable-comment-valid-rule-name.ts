@@ -35,6 +35,7 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
 
 export class HerbDisableCommentValidRuleNameRule extends ParserRule {
   static ruleName = "herb-disable-comment-valid-rule-name"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

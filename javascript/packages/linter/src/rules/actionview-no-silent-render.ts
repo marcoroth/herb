@@ -20,6 +20,7 @@ class ActionViewNoSilentRenderVisitor extends BaseRuleVisitor {
 
 export class ActionViewNoSilentRenderRule extends ParserRule {
   static ruleName = "actionview-no-silent-render"
+  static introducedIn = this.version("0.9.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

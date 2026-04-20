@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0008_tag.input with boolean attribute"
+input: "{source: \"<%= tag.input type: \\\"text\\\", disabled: true %>\", type: \"rails_output\", action_view_helpers: true}"
+---
+<input type="text" disabled="disabled">

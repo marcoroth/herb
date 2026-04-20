@@ -286,6 +286,7 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
 
 export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranchAutofixContext> {
   static ruleName = "erb-no-duplicate-branch-elements"
+  static introducedIn = this.version("0.9.0")
   static autocorrectable = true
   static reindentAfterAutofix = true
 

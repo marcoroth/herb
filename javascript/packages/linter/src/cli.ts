@@ -4,7 +4,10 @@ import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath }
 
 import { existsSync, statSync } from "fs"
 import { resolve, relative } from "path"
+import { colorize } from "@herb-tools/highlighter"
 
+import { Linter } from "./linter.js"
+import { rules } from "./rules.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
@@ -144,7 +147,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -171,6 +174,178 @@ export class CLI {
       process.exit(0)
     }
 
+    if (upgrade) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+      const configVersion = config.configVersion
+
+      if (configVersion === version) {
+        console.log(`\n✓ Your .herb.yml is already at version ${version}. Nothing to upgrade.\n`)
+        process.exit(0)
+      }
+
+      const { skippedByVersion } = Linter.filterRulesByConfig(rules, config.linter?.rules, configVersion)
+
+      let rulesToDisable: typeof skippedByVersion = []
+      let rulesToEnable: typeof skippedByVersion = []
+      const ruleOffenseCounts = new Map<string, number>()
+
+      if (skippedByVersion.length > 0) {
+        console.log(`\n${colorize("↻", "cyan")} Checking ${colorize(String(skippedByVersion.length), "bold")} new ${skippedByVersion.length === 1 ? "rule" : "rules"} against your codebase...`)
+
+        const skippedRulesConfig: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of skippedByVersion) {
+          skippedRulesConfig[rule.ruleName] = { enabled: true }
+        }
+
+        const upgradeConfig = Config.fromObject({
+          ...config.options,
+          linter: {
+            ...config.options.linter,
+            rules: { ...config.options.linter?.rules, ...skippedRulesConfig }
+          }
+        }, { projectPath: this.projectPath, configVersion: version })
+
+        const upgradeContext: ProcessingContext = {
+          projectPath: this.projectPath,
+          config: upgradeConfig,
+          jobs: 1,
+        }
+
+        await Herb.load()
+
+        const files = await config.findFilesForTool('linter', this.projectPath)
+        const upgradeProcessor = new FileProcessor()
+        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+
+        for (const { offense } of results.allOffenses) {
+          if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+          const ruleName = offense.code || ""
+          ruleOffenseCounts.set(ruleName, (ruleOffenseCounts.get(ruleName) || 0) + 1)
+        }
+
+        rulesToDisable = skippedByVersion.filter(rule => ruleOffenseCounts.has(rule.ruleName))
+        rulesToEnable = skippedByVersion.filter(rule => !ruleOffenseCounts.has(rule.ruleName))
+
+        const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of rulesToDisable) {
+          rulesMutation[rule.ruleName] = { enabled: false }
+        }
+
+        if (Object.keys(rulesMutation).length > 0) {
+          await Config.mutateConfigFile(config.path, {
+            linter: { rules: rulesMutation }
+          })
+        }
+      }
+
+      const { promises: fs } = await import("fs")
+      let content = await fs.readFile(config.path, "utf-8")
+      content = content.replace(/^version:\s*.+$/m, `version: ${version}`)
+      await fs.writeFile(config.path, content, "utf-8")
+
+      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion ?? "unversioned", "cyan")} to ${colorize(version, "cyan")}`)
+
+      if (rulesToEnable.length > 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} Enabled ${colorize(String(rulesToEnable.length), "bold")} new ${rulesToEnable.length === 1 ? "rule" : "rules"} (no offenses found):\n`)
+
+        for (const rule of rulesToEnable) {
+          console.log(`  ${colorize("✓", "brightGreen")} ${colorize(rule.ruleName, "white")}`)
+        }
+      }
+
+      if (rulesToDisable.length > 0) {
+        const totalOffenses = Array.from(ruleOffenseCounts.values()).reduce((sum, count) => sum + count, 0)
+
+        console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(rulesToDisable.length), "bold")} new ${rulesToDisable.length === 1 ? "rule" : "rules"}. Disabled to ease the upgrade:\n`)
+
+        for (const rule of rulesToDisable) {
+          const offenseCount = ruleOffenseCounts.get(rule.ruleName) || 0
+          console.log(`  ${colorize("✗", "red")} ${colorize(rule.ruleName, "white")} ${colorize(`(${offenseCount} ${offenseCount === 1 ? "offense" : "offenses"})`, "gray")}`)
+        }
+
+        console.log(`\n  When you're ready, review the disabled ${rulesToDisable.length === 1 ? "rule" : "rules"} in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.`)
+      }
+
+      if (skippedByVersion.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No new rules to configure.`)
+      }
+
+      console.log("")
+      process.exit(0)
+    }
+
+    if (disableFailing) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+
+      console.log(`\n${colorize("↻", "cyan")} Linting codebase to find rules with offenses...`)
+
+      await Herb.load()
+
+      const files = await config.findFilesForTool('linter', this.projectPath)
+
+      const disableFailingContext: ProcessingContext = {
+        projectPath: this.projectPath,
+        config,
+        jobs,
+      }
+
+      const processor = new FileProcessor()
+      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const failingRules = new Map<string, number>()
+      const PROTECTED_RULES = new Set(["parser-no-errors"])
+
+      for (const { offense } of results.allOffenses) {
+        if (PROTECTED_RULES.has(offense.code || "")) continue
+        if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+        failingRules.set(offense.code || "", (failingRules.get(offense.code || "") || 0) + 1)
+      }
+
+      if (failingRules.size === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No offenses found. All rules are passing!\n`)
+        process.exit(0)
+      }
+
+      const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+      for (const ruleName of failingRules.keys()) {
+        rulesMutation[ruleName] = { enabled: false }
+      }
+
+      await Config.mutateConfigFile(config.path, {
+        linter: { rules: rulesMutation }
+      })
+
+      const totalOffenses = Array.from(failingRules.values()).reduce((sum, count) => sum + count, 0)
+      const sortedRules = Array.from(failingRules.entries()).sort((a, b) => b[1] - a[1])
+
+      console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(failingRules.size), "bold")} ${failingRules.size === 1 ? "rule" : "rules"}. Disabled in ${colorize(".herb.yml", "cyan")}:\n`)
+
+      for (const [ruleName, count] of sortedRules) {
+        console.log(`  ${colorize("✗", "red")} ${colorize(ruleName, "white")} ${colorize(`(${count} ${count === 1 ? "offense" : "offenses"})`, "gray")}`)
+      }
+
+      console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
+      process.exit(0)
+    }
+
     const silent = formatOption === 'json'
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
@@ -183,7 +358,8 @@ export class CLI {
       showTiming,
       useGitHubActions,
       startTime,
-      startDate
+      startDate,
+      toolVersion: version
     }
 
     try {
@@ -244,6 +420,8 @@ export class CLI {
         processingConfig = modifiedConfig
       }
 
+      const hasConfigFile = Config.exists(configFile || this.projectPath)
+
       const context: ProcessingContext = {
         projectPath: this.projectPath,
         configPath: configFile,
@@ -253,6 +431,7 @@ export class CLI {
         ignoreDisableComments,
         linterConfig,
         config: processingConfig,
+        hasConfigFile,
         loadCustomRules,
         jobs
       }
@@ -260,6 +439,13 @@ export class CLI {
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
+
+      if (!Config.exists(this.projectPath) && formatOption !== 'json' && !useGitHubActions) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
+        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
+      }
+
       await this.afterProcess(results, outputOptions)
 
       const effectiveFailLevel = failLevel || linterConfig.failLevel

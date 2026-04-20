@@ -159,11 +159,15 @@ export class LinterService {
             'parser-no-errors': { enabled: false }
           }
         }
-      }, { projectPath: projectConfig?.projectPath || process.cwd() })
+      }, {
+        projectPath: projectConfig?.projectPath || process.cwd(),
+        configVersion: projectConfig?.configVersion
+      })
 
-      const filteredRules = Linter.filterRulesByConfig(this.allRules, config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, config.configVersion)
 
       this.linter = new Linter(Herb, filteredRules, config, this.allRules)
+      this.linter.mode = "editor"
     }
 
     const content = textDocument.getText()

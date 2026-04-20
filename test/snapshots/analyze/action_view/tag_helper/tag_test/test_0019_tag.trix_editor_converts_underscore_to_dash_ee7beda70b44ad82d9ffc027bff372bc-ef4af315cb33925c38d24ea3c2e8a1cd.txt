@@ -14,43 +14,43 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:54)-(1:56))
     │   │       ├── tag_name: "trix-editor" (location: (1:8)-(1:19))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:20)-(1:27))
+    │   │           ├── @ HTMLAttributeNode (location: (1:20)-(1:36))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:27))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:25))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:20)-(1:27))
+    │   │           │   │           └── @ LiteralNode (location: (1:20)-(1:25))
     │   │           │   │               └── content: "input"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:20)-(1:27))
+    │   │           │   ├── equals: ": " (location: (1:25)-(1:27))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:20)-(1:27))
-    │   │           │           ├── open_quote: """ (location: (1:20)-(1:27))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:27)-(1:36))
+    │   │           │           ├── open_quote: """ (location: (1:27)-(1:28))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:20)-(1:27))
+    │   │           │           │   └── @ LiteralNode (location: (1:28)-(1:35))
     │   │           │           │       └── content: "content"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:27)-(1:27))
+    │   │           │           ├── close_quote: """ (location: (1:35)-(1:36))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:38)-(1:45))
+    │   │           └── @ HTMLAttributeNode (location: (1:38)-(1:53))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:38)-(1:45))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:38)-(1:43))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:38)-(1:45))
+    │   │               │           └── @ LiteralNode (location: (1:38)-(1:43))
     │   │               │               └── content: "class"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:38)-(1:45))
+    │   │               ├── equals: ": " (location: (1:43)-(1:45))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:38)-(1:45))
-    │   │                       ├── open_quote: """ (location: (1:38)-(1:45))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:45)-(1:53))
+    │   │                       ├── open_quote: """ (location: (1:45)-(1:46))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:38)-(1:45))
+    │   │                       │   └── @ LiteralNode (location: (1:46)-(1:52))
     │   │                       │       └── content: "editor"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:45)-(1:45))
+    │   │                       ├── close_quote: """ (location: (1:52)-(1:53))
     │   │                       └── quoted: true
     │   │
     │   │

@@ -1,17 +1,18 @@
 #include "../../include/analyze/action_view/tag_helper_handler.h"
-#include "../../include/util/hb_allocator.h"
+#include "../../include/lib/hb_allocator.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 extern const tag_helper_handler_T content_tag_handler;
-extern const tag_helper_handler_T tag_dot_handler;
+extern const tag_helper_handler_T tag_handler;
 extern const tag_helper_handler_T link_to_handler;
 extern const tag_helper_handler_T turbo_frame_tag_handler;
 extern const tag_helper_handler_T javascript_tag_handler;
 extern const tag_helper_handler_T javascript_include_tag_handler;
+extern const tag_helper_handler_T image_tag_handler;
 
-static size_t handlers_count = 6;
+static size_t handlers_count = 7;
 
 tag_helper_info_T* tag_helper_info_init(hb_allocator_T* allocator) {
   tag_helper_info_T* info = hb_allocator_alloc(allocator, sizeof(tag_helper_info_T));
@@ -43,16 +44,18 @@ void tag_helper_info_free(tag_helper_info_T** info) {
 }
 
 tag_helper_handler_T* get_tag_helper_handlers(void) {
-  static tag_helper_handler_T static_handlers[6];
+  static tag_helper_handler_T static_handlers[7];
   static bool initialized = false;
 
   if (!initialized) {
     static_handlers[0] = content_tag_handler;
-    static_handlers[1] = tag_dot_handler;
+    static_handlers[1] = tag_handler;
     static_handlers[2] = link_to_handler;
     static_handlers[3] = turbo_frame_tag_handler;
     static_handlers[4] = javascript_tag_handler;
     static_handlers[5] = javascript_include_tag_handler;
+    static_handlers[6] = image_tag_handler;
+
     initialized = true;
   }
 

@@ -46,6 +46,7 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
 
 export class HTMLIframeHasTitleRule extends ParserRule {
   static ruleName = "html-iframe-has-title"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

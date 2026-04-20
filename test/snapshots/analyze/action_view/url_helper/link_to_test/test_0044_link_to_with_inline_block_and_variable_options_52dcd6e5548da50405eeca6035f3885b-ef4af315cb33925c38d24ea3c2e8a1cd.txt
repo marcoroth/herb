@@ -14,29 +14,29 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:45)-(1:47))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:12)-(1:20))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:20))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:12)-(1:20))
-    │   │           │   │               └── content: "href"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:12)-(1:20))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:20))
-    │   │           │           ├── open_quote: """ (location: (1:12)-(1:20))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:12)-(1:20))
-    │   │           │           │       └── content: "/about"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:20)-(1:20))
-    │   │           │           └── quoted: true
+    │   │           ├── @ RubyHTMLAttributesSplatNode (location: (1:22)-(1:22))
+    │   │           │   ├── content: "tag.attributes(**html_opts)"
+    │   │           │   └── prefix: ""
     │   │           │
-    │   │           │
-    │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:22)-(1:22))
-    │   │               ├── content: "html_opts"
-    │   │               └── prefix: ""
+    │   │           └── @ HTMLAttributeNode (location: (1:12)-(1:20))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:20))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:12)-(1:20))
+    │   │               │               └── content: "href"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:12)-(1:20))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:12)-(1:20))
+    │   │                       ├── open_quote: """ (location: (1:12)-(1:12))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:12)-(1:20))
+    │   │                       │       └── content: "/about"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:20)-(1:20))
+    │   │                       └── quoted: true
+    │   │
     │   │
     │   │
     │   ├── tag_name: "a" (location: (1:4)-(1:11))

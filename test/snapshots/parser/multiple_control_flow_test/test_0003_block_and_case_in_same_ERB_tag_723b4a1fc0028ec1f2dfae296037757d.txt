@@ -7,9 +7,21 @@ input: |2-
 @ DocumentNode (location: (1:0)-(3:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(2:44))
-    │   ├── errors: (1 error)
-    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:41))
-    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   ├── errors: (3 errors)
+    │   │   ├── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:41))
+    │   │   │   └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:24)-(1:28))
+    │   │   │   ├── message: "case_missing_conditions: expected a `when` or `in` clause after `case`"
+    │   │   │   ├── error_message: "expected a `when` or `in` clause after `case`"
+    │   │   │   ├── diagnostic_id: "case_missing_conditions"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   └── @ RubyParseError (location: (1:24)-(1:28))
+    │   │       ├── message: "case_term: expected an `end` to close the `case` statement"
+    │   │       ├── error_message: "expected an `end` to close the `case` statement"
+    │   │       ├── diagnostic_id: "case_term"
+    │   │       └── level: "syntax"
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " items.each do |item| case item.type " (location: (1:2)-(1:39))
@@ -48,6 +60,16 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (2:29)-(2:30))
     │   │       └── content: "b"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+    │   │       ├── name: "item" (location: (1:18)-(1:22))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (2:30)-(2:44))
     │           ├── tag_opening: "<%" (location: (2:30)-(2:32))

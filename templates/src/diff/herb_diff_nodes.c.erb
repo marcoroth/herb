@@ -1,0 +1,224 @@
+#include "../include/diff/herb_diff.h"
+#include "../include/lib/hb_string.h"
+
+static bool tokens_equal(const token_T* old_token, const token_T* new_token) {
+  if (old_token == NULL && new_token == NULL) { return true; }
+  if (old_token == NULL || new_token == NULL) { return false; }
+
+  return hb_string_equals(old_token->value, new_token->value);
+}
+
+static void diff_element_node(
+  const AST_HTML_ELEMENT_NODE_T* old_element,
+  const AST_HTML_ELEMENT_NODE_T* new_element,
+  const herb_diff_path_T path,
+  const herb_hash_map_T* old_hashes,
+  const herb_hash_map_T* new_hashes,
+  herb_diff_result_T* result
+) {
+  if (!tokens_equal(old_element->tag_name, new_element->tag_name)) {
+    herb_diff_emit_operation(result, HERB_DIFF_TAG_NAME_CHANGED, path, (const AST_NODE_T*) old_element, (const AST_NODE_T*) new_element, 0, 0);
+  }
+
+  if (old_element->open_tag != NULL && new_element->open_tag != NULL) {
+    herb_hash_T old_open_hash = herb_hash_map_get(old_hashes, old_element->open_tag);
+    herb_hash_T new_open_hash = herb_hash_map_get(new_hashes, new_element->open_tag);
+
+    if (old_open_hash != new_open_hash) {
+      const AST_HTML_OPEN_TAG_NODE_T* old_open_tag = (const AST_HTML_OPEN_TAG_NODE_T*) old_element->open_tag;
+      const AST_HTML_OPEN_TAG_NODE_T* new_open_tag = (const AST_HTML_OPEN_TAG_NODE_T*) new_element->open_tag;
+
+      herb_diff_attributes(old_open_tag->children, new_open_tag->children, path, old_hashes, new_hashes, result);
+    }
+  }
+
+  if (old_element->body != NULL && new_element->body != NULL) {
+    herb_diff_children(old_element->body, new_element->body, path, old_hashes, new_hashes, result);
+  } else if (old_element->body == NULL && new_element->body != NULL) {
+    for (size_t index = 0; index < hb_array_size(new_element->body); index++) {
+      const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_element->body, index);
+      herb_diff_emit_operation(result, HERB_DIFF_NODE_INSERTED, herb_diff_path_append(path, (uint32_t) index), NULL, new_child, 0, (uint32_t) index);
+    }
+  } else if (old_element->body != NULL && new_element->body == NULL) {
+    for (size_t index = 0; index < hb_array_size(old_element->body); index++) {
+      const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_element->body, index);
+      herb_diff_emit_operation(result, HERB_DIFF_NODE_REMOVED, herb_diff_path_append(path, (uint32_t) index), old_child, NULL, (uint32_t) index, 0);
+    }
+  }
+}
+
+static void diff_conditional_element_node(
+  const AST_HTML_CONDITIONAL_ELEMENT_NODE_T* old_element,
+  const AST_HTML_CONDITIONAL_ELEMENT_NODE_T* new_element,
+  const herb_diff_path_T path,
+  const herb_hash_map_T* old_hashes,
+  const herb_hash_map_T* new_hashes,
+  herb_diff_result_T* result
+) {
+  if (!tokens_equal(old_element->tag_name, new_element->tag_name)) {
+    herb_diff_emit_operation(result, HERB_DIFF_TAG_NAME_CHANGED, path, (const AST_NODE_T*) old_element, (const AST_NODE_T*) new_element, 0, 0);
+  }
+
+  if (old_element->open_tag != NULL && new_element->open_tag != NULL) {
+    herb_hash_T old_open_hash = herb_hash_map_get(old_hashes, (const AST_NODE_T*) old_element->open_tag);
+    herb_hash_T new_open_hash = herb_hash_map_get(new_hashes, (const AST_NODE_T*) new_element->open_tag);
+
+    if (old_open_hash != new_open_hash) {
+      herb_diff_attributes(old_element->open_tag->children, new_element->open_tag->children, path, old_hashes, new_hashes, result);
+    }
+  }
+
+  if (old_element->body != NULL && new_element->body != NULL) {
+    herb_diff_children(old_element->body, new_element->body, path, old_hashes, new_hashes, result);
+  }
+}
+
+static void diff_children_nullable(
+  const hb_array_T* old_children,
+  const hb_array_T* new_children,
+  const herb_diff_path_T path,
+  const herb_hash_map_T* old_hashes,
+  const herb_hash_map_T* new_hashes,
+  herb_diff_result_T* result
+) {
+  if (old_children != NULL && new_children != NULL) {
+    herb_diff_children(old_children, new_children, path, old_hashes, new_hashes, result);
+  } else if (old_children == NULL && new_children != NULL) {
+    for (size_t index = 0; index < hb_array_size(new_children); index++) {
+      const AST_NODE_T* new_child = (const AST_NODE_T*) hb_array_get(new_children, index);
+      herb_diff_emit_operation(result, HERB_DIFF_NODE_INSERTED, herb_diff_path_append(path, (uint32_t) index), NULL, new_child, 0, (uint32_t) index);
+    }
+  } else if (old_children != NULL && new_children == NULL) {
+    for (size_t index = 0; index < hb_array_size(old_children); index++) {
+      const AST_NODE_T* old_child = (const AST_NODE_T*) hb_array_get(old_children, index);
+      herb_diff_emit_operation(result, HERB_DIFF_NODE_REMOVED, herb_diff_path_append(path, (uint32_t) index), old_child, NULL, (uint32_t) index, 0);
+    }
+  }
+}
+
+void herb_diff_node(
+  const AST_NODE_T* old_node,
+  const AST_NODE_T* new_node,
+  const herb_diff_path_T path,
+  const herb_hash_map_T* old_hashes,
+  const herb_hash_map_T* new_hashes,
+  herb_diff_result_T* result
+) {
+  if (old_node == NULL && new_node == NULL) { return; }
+
+  if (old_node == NULL) {
+    herb_diff_emit_operation(result, HERB_DIFF_NODE_INSERTED, path, NULL, new_node, 0, 0);
+    return;
+  }
+
+  if (new_node == NULL) {
+    herb_diff_emit_operation(result, HERB_DIFF_NODE_REMOVED, path, old_node, NULL, 0, 0);
+    return;
+  }
+
+  herb_hash_T old_hash = herb_hash_map_get(old_hashes, old_node);
+  herb_hash_T new_hash = herb_hash_map_get(new_hashes, new_node);
+
+  if (old_hash == new_hash) { return; }
+
+  if (old_node->type != new_node->type) {
+    herb_diff_emit_operation(result, HERB_DIFF_NODE_REPLACED, path, old_node, new_node, 0, 0);
+    return;
+  }
+
+  switch (old_node->type) {
+  <%- nodes.each do |node| -%>
+  <%- # Skip nodes with custom handlers -%>
+  <%- if node.name == "HTMLElementNode" -%>
+    case <%= node.type %>: {
+      diff_element_node(
+        (const <%= node.struct_type %>*) old_node,
+        (const <%= node.struct_type %>*) new_node,
+        path, old_hashes, new_hashes, result
+      );
+    } break;
+
+  <%- elsif node.name == "HTMLConditionalElementNode" -%>
+    case <%= node.type %>: {
+      diff_conditional_element_node(
+        (const <%= node.struct_type %>*) old_node,
+        (const <%= node.struct_type %>*) new_node,
+        path, old_hashes, new_hashes, result
+      );
+    } break;
+
+  <%- elsif node.name == "HTMLAttributeNode" -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* old_attribute = (const <%= node.struct_type %>*) old_node;
+      const <%= node.struct_type %>* new_attribute = (const <%= node.struct_type %>*) new_node;
+
+      herb_hash_T old_name_hash = herb_hash_map_get(old_hashes, (const AST_NODE_T*) old_attribute->name);
+      herb_hash_T new_name_hash = herb_hash_map_get(new_hashes, (const AST_NODE_T*) new_attribute->name);
+
+      if (old_name_hash != new_name_hash) {
+        herb_diff_emit_operation(result, HERB_DIFF_NODE_REPLACED, path, old_node, new_node, 0, 0);
+      } else {
+        herb_hash_T old_value_hash = herb_hash_map_get(old_hashes, (const AST_NODE_T*) old_attribute->value);
+        herb_hash_T new_value_hash = herb_hash_map_get(new_hashes, (const AST_NODE_T*) new_attribute->value);
+
+        if (old_value_hash != new_value_hash) {
+          herb_diff_emit_operation(result, HERB_DIFF_ATTRIBUTE_VALUE_CHANGED, path, old_node, new_node, 0, 0);
+        }
+      }
+    } break;
+
+  <%- elsif node.name == "HTMLOpenTagNode" -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* old_open_tag = (const <%= node.struct_type %>*) old_node;
+      const <%= node.struct_type %>* new_open_tag = (const <%= node.struct_type %>*) new_node;
+
+      herb_diff_attributes(old_open_tag->children, new_open_tag->children, path, old_hashes, new_hashes, result);
+    } break;
+
+  <%- else -%>
+    <%- all_fields = node.fields.reject(&:always_invisible?).reject { |field| field.is_a?(Herb::Template::PrismNodeField) || field.is_a?(Herb::Template::LocationField) || field.is_a?(Herb::Template::BooleanField) || field.is_a?(Herb::Template::ElementSourceField) } -%>
+    <%- token_fields = all_fields.select { |field| field.is_a?(Herb::Template::TokenField) } -%>
+    <%- string_fields = all_fields.select { |field| field.is_a?(Herb::Template::StringField) } -%>
+    <%- array_fields = all_fields.select { |field| field.is_a?(Herb::Template::ArrayField) } -%>
+    <%- node_fields = all_fields.select { |field| field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) } -%>
+    <%- content_tokens = token_fields.select { |field| %w[content tag_opening].include?(field.name) } -%>
+    <%- has_comparisons = content_tokens.any? || string_fields.any? || array_fields.any? || node_fields.any? -%>
+    <%- is_erb_node = node.name.start_with?("ERB") || node.name.start_with?("Ruby") -%>
+    <%- if !has_comparisons -%>
+    case <%= node.type %>: {
+      herb_diff_emit_operation(result, HERB_DIFF_NODE_REPLACED, path, old_node, new_node, 0, 0);
+    } break;
+
+  <%- else -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* old_<%= node.human %> = (const <%= node.struct_type %>*) old_node;
+      const <%= node.struct_type %>* new_<%= node.human %> = (const <%= node.struct_type %>*) new_node;
+
+    <%- if content_tokens.any? -%>
+      if (<%= content_tokens.map { |field| "!tokens_equal(old_#{node.human}->#{field.name}, new_#{node.human}->#{field.name})" }.join("\n          || ") %>) {
+        herb_diff_emit_operation(result, <%= is_erb_node ? "HERB_DIFF_ERB_CONTENT_CHANGED" : "HERB_DIFF_TEXT_CHANGED" %>, path, old_node, new_node, 0, 0);
+      }
+
+    <%- end -%>
+
+    <%- if string_fields.any? -%>
+      if (<%= string_fields.map { |field| "!hb_string_equals(old_#{node.human}->#{field.name}, new_#{node.human}->#{field.name})" }.join("\n          || ") %>) {
+        herb_diff_emit_operation(result, HERB_DIFF_TEXT_CHANGED, path, old_node, new_node, 0, 0);
+      }
+
+    <%- end -%>
+
+    <%- array_fields.each do |field| -%>
+      diff_children_nullable(old_<%= node.human %>-><%= field.name %>, new_<%= node.human %>-><%= field.name %>, path, old_hashes, new_hashes, result);
+    <%- end -%>
+
+    <%- node_fields.each do |field| -%>
+      herb_diff_node((const AST_NODE_T*) old_<%= node.human %>-><%= field.name %>, (const AST_NODE_T*) new_<%= node.human %>-><%= field.name %>, path, old_hashes, new_hashes, result);
+    <%- end -%>
+    } break;
+
+  <%- end -%>
+<%- end -%>
+<%- end -%>
+  }
+}

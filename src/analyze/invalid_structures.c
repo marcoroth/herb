@@ -2,12 +2,12 @@
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>

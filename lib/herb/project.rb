@@ -71,9 +71,9 @@ module Herb
       attr_reader :successful, :failed, :timeout, :template_error, :unexpected_error,
                   :strict_parse_error, :analyze_parse_error,
                   :validation_error, :compilation_failed, :strict_compilation_failed,
-                  :invalid_ruby,
+                  :invalid_ruby, :skipped,
                   :error_outputs, :file_contents, :parse_errors, :compilation_errors,
-                  :file_diagnostics
+                  :file_diagnostics, :skip_reasons
 
       def initialize
         @successful = []
@@ -87,11 +87,13 @@ module Herb
         @compilation_failed = []
         @strict_compilation_failed = []
         @invalid_ruby = []
+        @skipped = []
         @error_outputs = {}
         @file_contents = {}
         @parse_errors = {}
         @compilation_errors = {}
         @file_diagnostics = {}
+        @skip_reasons = {}
       end
 
       def problem_files
@@ -209,14 +211,11 @@ module Herb
           puts dimmed("Analyzing #{files.count} #{pluralize(files.count, "file")}...")
         end
 
-        total_width = files.count.to_s.length
-
-        finish_hook = lambda do |item, index, _file_result|
+        finish_hook = lambda do |item, _index, _file_result|
           next if silent
 
           if verbose
-            relative_path = relative_path(item)
-            puts "  #{dimmed("[#{(index + 1).to_s.rjust(total_width)}/#{files.count}]")} #{relative_path}"
+            puts "  #{relative_path(item)}"
           else
             print "."
           end
@@ -432,8 +431,7 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :timeout, file_content: file_content,
-        log: "⏱️ Parsing #{file_path} timed out after 1 second" }
+      { file_path: file_path, status: :timeout, file_content: file_content, log: "⏱️ Parsing #{file_path} timed out after 1 second" }
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -441,8 +439,7 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :failed, file_content: file_content,
-        log: "⚠️ Error processing #{file_path}: #{e.message}" }
+      { file_path: file_path, status: :failed, file_content: file_content, log: "⚠️ Error processing #{file_path}: #{e.message}" }
     ensure
       [stdout_file, stderr_file].each do |tempfile|
         next unless tempfile
@@ -488,6 +485,9 @@ module Herb
       Herb::Engine.new(file_content, filename: file_path, escape: true, validate_ruby: validate_ruby)
 
       { status: :successful, log: "✅ Compiled #{file_path} successfully" }
+    rescue Herb::Engine::GeneratorTemplateError => e
+      { status: :skipped, skip_reason: e.message,
+        log: "⊘ Skipping #{file_path}: #{e.message}" }
     rescue Herb::Engine::InvalidRubyError => e
       { status: :invalid_ruby, file_content: file_content,
         compilation_error: { error: e.message, backtrace: e.backtrace&.first(10) || [] },
@@ -545,6 +545,7 @@ module Herb
       tracker.parse_errors[file_path] = result[:parse_error] if result[:parse_error]
       tracker.compilation_errors[file_path] = result[:compilation_error] if result[:compilation_error]
       tracker.file_diagnostics[file_path] = result[:diagnostics] if result[:diagnostics]&.any?
+      tracker.skip_reasons[file_path] = result[:skip_reason] if result[:skip_reason]
     end
 
     def print_summary(results, log, duration)
@@ -563,13 +564,18 @@ module Herb
       puts "  #{label("Checked")} #{cyan("#{total} #{pluralize(total, "file")}")}"
 
       if total > 1
-        files_line = if issues.positive?
-                       "#{bold(green("#{passed} clean"))} | #{bold(red("#{issues} with issues"))}"
-                     else
-                       bold(green("#{total} clean"))
-                     end
+        files_parts = []
 
-        puts "  #{label("Files")} #{files_line}"
+        if issues.positive?
+          files_parts << bold(green("#{passed} clean"))
+          files_parts << bold(red("#{issues} with issues"))
+        else
+          files_parts << bold(green("#{total - results.skipped.count} clean"))
+        end
+
+        files_parts << dimmed("#{results.skipped.count} skipped") if results.skipped.any?
+
+        puts "  #{label("Files")} #{files_parts.join(" | ")}"
       end
 
       parser_parts = []
@@ -581,8 +587,9 @@ module Herb
       parser_parts << stat(results.analyze_parse_error.count, "analyze", :yellow) if results.analyze_parse_error.any?
       puts "  #{label("Parser")} #{parser_parts.join(" | ")}"
 
-      skipped = total - passed - results.validation_error.count - results.compilation_failed.count -
-                results.strict_compilation_failed.count - results.invalid_ruby.count
+      not_compiled = total - passed - results.skipped.count - results.validation_error.count -
+                     results.compilation_failed.count - results.strict_compilation_failed.count -
+                     results.invalid_ruby.count
 
       engine_parts = []
       engine_parts << stat(passed, "compiled", :green)
@@ -590,11 +597,15 @@ module Herb
       engine_parts << stat(results.compilation_failed.count, "compilation", :red) if results.compilation_failed.any?
       engine_parts << stat(results.strict_compilation_failed.count, "strict", :yellow) if results.strict_compilation_failed.any?
       engine_parts << stat(results.invalid_ruby.count, "produced invalid Ruby", :red) if results.invalid_ruby.any?
-      engine_parts << dimmed("#{skipped} skipped") if skipped.positive?
+      engine_parts << dimmed("#{not_compiled} not compiled") if not_compiled.positive?
       puts "  #{label("Engine")} #{engine_parts.join(" | ")}"
 
       if results.timeout.any?
         puts "  #{label("Timeout")} #{stat(results.timeout.count, "timed out", :yellow)}"
+      end
+
+      if results.skipped.any?
+        puts "  #{label("Skipped")} #{dimmed("#{results.skipped.count} #{pluralize(results.skipped.count, "file")}")}"
       end
 
       if duration
@@ -630,6 +641,7 @@ module Herb
       log.puts ""
       log.puts "--- Other ---"
       log.puts "⏱️ Timed out: #{results.timeout.count} (#{percentage(results.timeout.count, total)}%)"
+      log.puts "⊘ Skipped: #{results.skipped.count} (#{percentage(results.skipped.count, total)}%)"
 
       return unless duration
 
@@ -639,9 +651,26 @@ module Herb
     def print_file_lists(results, log)
       log_file_lists(results, log)
 
-      return unless results.problem_files.any?
-
       printed_section = false
+
+      if results.skipped.any?
+        printed_section = true
+
+        puts "\n"
+        puts " #{bold("Skipped files:")}"
+        puts " #{dimmed("These files were parsed successfully but skipped for compilation by the engine.")}"
+
+        results.skipped.each do |file|
+          relative = relative_path(file)
+          reason = results.skip_reasons[file]
+
+          puts ""
+          puts " #{cyan(relative)}:"
+          puts "   #{dimmed("⊘")} #{dimmed(reason)}"
+        end
+      end
+
+      return unless results.problem_files.any?
 
       ISSUE_TYPES.each do |type|
         file_list = results.send(type[:key])
@@ -682,6 +711,15 @@ module Herb
     end
 
     def log_file_lists(results, log)
+      if results.skipped.any?
+        log.puts "\n#{heading("Files: Skipped")}"
+
+        results.skipped.each do |file|
+          reason = results.skip_reasons[file]
+          log.puts "#{file} - #{reason}"
+        end
+      end
+
       ISSUE_TYPES.each do |type|
         file_list = results.send(type[:key])
         next unless file_list.any?

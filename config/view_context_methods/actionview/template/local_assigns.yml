@@ -1,0 +1,8 @@
+---
+name: local_assigns
+source: "ActionView::Template#local_assigns"
+gem: actionview
+category: template
+output: object
+description: |-
+  Returns a hash of the local variables passed to the current partial template. Available in every template as a compiled method parameter. Useful for checking if an optional local was passed: `local_assigns.fetch(:title, "Default")`.

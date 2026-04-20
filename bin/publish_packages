@@ -4,6 +4,9 @@ set -euo pipefail
 
 npm login
 
+echo "Checking linter rule versions..."
+bin/check_rule_versions
+
 echo "Building all packages..."
 yarn nx run-many -t build --all
 

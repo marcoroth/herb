@@ -2,6 +2,11 @@ import { z } from "zod"
 
 export const SeveritySchema = z.enum(["error", "warning", "info", "hint"])
 
+export const SeverityConfigSchema = z.union([
+  SeveritySchema,
+  z.object({ editor: SeveritySchema, cli: SeveritySchema }).strict()
+])
+
 export const FilesConfigSchema = z.object({
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
@@ -9,7 +14,7 @@ export const FilesConfigSchema = z.object({
 
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
-  severity: SeveritySchema.optional().describe("Severity level for the rule"),
+  severity: SeverityConfigSchema.optional().describe("Severity level for the rule"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
   only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
   exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
@@ -45,12 +50,29 @@ export const ValidatorsConfigSchema = z.object({
   accessibility: z.boolean().optional().describe("Enable or disable the accessibility validator (default: true)"),
 }).strict().optional()
 
+export const FrameworkSchema = z.enum(["ruby", "actionview", "hanami", "sinatra"]).optional()
+  .describe("Framework context (default: 'ruby')")
+
+export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
+  .describe("Template engine used for compilation (default: 'erubi')")
+
+export const ParserOptionsSchema = z.object({
+  strict: z.boolean().optional().describe("Enable strict parsing mode (default: true)"),
+  render_nodes: z.boolean().optional().describe("Enable render node detection"),
+  strict_locals: z.boolean().optional().describe("Enable strict locals detection"),
+}).strict().optional()
+
 export const EngineConfigSchema = z.object({
+  optimize: z.boolean().optional().describe("Enable compile-time optimizations (default: false)"),
+  debug: z.boolean().optional().describe("Enable debug mode (default: false)"),
+  parser_options: ParserOptionsSchema.describe("Parser options passed through to Herb.parse"),
   validators: ValidatorsConfigSchema.describe("Per-validator enable/disable configuration"),
 }).strict().optional()
 
 export const HerbConfigSchema = z.object({
   version: z.string().describe("Configuration file version"),
+  framework: FrameworkSchema,
+  template_engine: TemplateEngineSchema,
   files: FilesConfigSchema.describe("Top-level file configuration"),
   engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,

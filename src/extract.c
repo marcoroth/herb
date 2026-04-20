@@ -1,9 +1,9 @@
 #include "include/herb.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_array.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/hb_string.h"
-#include "include/util/string.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_array.h"
+#include "include/lib/hb_buffer.h"
+#include "include/lib/hb_string.h"
+#include "include/lib/string.h"
 
 #include <assert.h>
 #include <stdlib.h>

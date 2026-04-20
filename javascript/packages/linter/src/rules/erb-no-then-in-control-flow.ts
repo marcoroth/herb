@@ -40,6 +40,7 @@ class ERBNoThenInControlFlowVisitor extends BaseRuleVisitor {
 
 export class ERBNoThenInControlFlowRule extends ParserRule {
   static ruleName = "erb-no-then-in-control-flow"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

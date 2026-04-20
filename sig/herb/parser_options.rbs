@@ -10,7 +10,11 @@ module Herb
 
     attr_reader action_view_helpers: bool
 
+    attr_reader transform_conditionals: bool
+
     attr_reader render_nodes: bool
+
+    attr_reader strict_locals: bool
 
     attr_reader prism_program: bool
 
@@ -26,7 +30,11 @@ module Herb
 
     DEFAULT_ACTION_VIEW_HELPERS: bool
 
+    DEFAULT_TRANSFORM_CONDITIONALS: bool
+
     DEFAULT_RENDER_NODES: bool
+
+    DEFAULT_STRICT_LOCALS: bool
 
     DEFAULT_PRISM_PROGRAM: bool
 
@@ -34,8 +42,8 @@ module Herb
 
     DEFAULT_PRISM_NODES_DEEP: bool
 
-    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
-    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
 
     # : () -> Hash[Symbol, bool]
     def to_h: () -> Hash[Symbol, bool]

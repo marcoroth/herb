@@ -212,7 +212,7 @@ export class TextFlowEngine {
 
   private buildAndWrapTextFlow(children: Node[]): void {
     const unitsWithNodes: ContentUnitWithNode[] = this.analyzer.buildContentUnits(children)
-    const words: Array<{ word: string, isHerbDisable: boolean }> = []
+    const words: string[] = []
 
     for (const { unit, node } of unitsWithNodes) {
       if (unit.breaksFlow) {
@@ -222,7 +222,7 @@ export class TextFlowEngine {
           this.delegate.visit(node)
         }
       } else if (unit.isAtomic) {
-        words.push({ word: unit.content, isHerbDisable: unit.isHerbDisable || false })
+        words.push(unit.content)
       } else {
         const text = unit.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = text.startsWith(' ')
@@ -231,71 +231,69 @@ export class TextFlowEngine {
 
         if (trimmedText) {
           if (hasLeadingSpace && words.length > 0) {
-            const lastWord = words[words.length - 1]
+            const lastIndex = words.length - 1
 
-            if (!lastWord.word.endsWith(' ')) {
-              lastWord.word += ' '
+            if (!words[lastIndex].endsWith(' ')) {
+              words[lastIndex] += ' '
             }
           }
 
-          const textWords = trimmedText.split(' ').map(w => ({ word: w, isHerbDisable: false }))
-          words.push(...textWords)
+          words.push(...trimmedText.split(' '))
 
           if (hasTrailingSpace && words.length > 0) {
-            const lastWord = words[words.length - 1]
+            const lastIndex = words.length - 1
 
-            if (!isClosingPunctuation(lastWord.word)) {
-              lastWord.word += ' '
+            if (!isClosingPunctuation(words[lastIndex])) {
+              words[lastIndex] += ' '
             }
           }
         } else if (text === ' ' && words.length > 0) {
-          const lastWord = words[words.length - 1]
+          const lastIndex = words.length - 1
 
-          if (!lastWord.word.endsWith(' ')) {
-            lastWord.word += ' '
+          if (!words[lastIndex].endsWith(' ')) {
+            words[lastIndex] += ' '
           }
         }
       }
     }
 
-    // Trim trailing space from last word before final flush - trailing spaces are
-    // informational for spacing with subsequent words but shouldn't inflate
-    // effective length when it's the final word (it gets trimmed from output anyway)
+    // Trim trailing space from last word before final flush
     if (words.length > 0) {
-      words[words.length - 1].word = words[words.length - 1].word.trimEnd()
+      words[words.length - 1] = words[words.length - 1].trimEnd()
     }
 
     this.flushWords(words)
   }
 
-  private flushWords(words: Array<{ word: string, isHerbDisable: boolean }>): void {
+  private flushWords(words: string[]): void {
     if (words.length > 0) {
       this.wrapAndPushWords(words)
       words.length = 0
     }
   }
 
-  private wrapAndPushWords(words: Array<{ word: string, isHerbDisable: boolean }>): void {
+  private wrapAndPushWords(words: string[]): void {
     const wrapWidth = this.delegate.maxLineLength - this.delegate.indent.length
     const lines: string[] = []
     let currentLine = ""
     let effectiveLength = 0
 
-    for (const { word, isHerbDisable } of words) {
+    for (const word of words) {
       const nextLine = buildLineWithWord(currentLine, word)
-
-      let nextEffectiveLength = effectiveLength
-
-      if (!isHerbDisable) {
-        const spaceBefore = currentLine && needsSpaceBetween(currentLine, word) ? 1 : 0
-        nextEffectiveLength = effectiveLength + spaceBefore + word.length
-      }
+      const spaceBefore = currentLine && needsSpaceBetween(currentLine, word) ? 1 : 0
+      const nextEffectiveLength = effectiveLength + spaceBefore + word.length
 
       if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength > wrapWidth) {
-        lines.push(this.delegate.indent + currentLine.trim())
+        const trimmedLine = currentLine.trim()
+
+        if (trimmedLine) {
+          lines.push(this.delegate.indent + trimmedLine)
+        } else {
+          lines.push("")
+        }
 
         currentLine = word
-        effectiveLength = isHerbDisable ? 0 : word.length
+        effectiveLength = word.length
       } else {
         currentLine = nextLine
         effectiveLength = nextEffectiveLength
@@ -303,7 +301,11 @@ export class TextFlowEngine {
     }
 
     if (currentLine) {
-      lines.push(this.delegate.indent + currentLine.trim())
+      const trimmedLine = currentLine.trim()
+
+      if (trimmedLine) {
+        lines.push(this.delegate.indent + trimmedLine)
+      }
     }
 
     lines.forEach(line => this.delegate.push(line))

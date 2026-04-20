@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_allocator.h"
+#include "../../src/include/lib/hb_allocator.h"
 
 #include <string.h>
 

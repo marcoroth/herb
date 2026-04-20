@@ -1,0 +1,48 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0071_tag.div with data hash containing nested hash value"
+input: |2-
+<%= tag.div data: { config: { nested: "hash" } } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:51))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:51))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.div data: { config: { nested: "hash" } } " (location: (1:3)-(1:49))
+    │   │       ├── tag_closing: "%>" (location: (1:49)-(1:51))
+    │   │       ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:20)-(1:46))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:26))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:20)-(1:26))
+    │   │               │               └── content: "data-config"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:26)-(1:28))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:28)-(1:46))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:28)-(1:46))
+    │   │                       │       └── content: "::Herb::Engine.nested_attribute_value({ nested: \"hash\" })"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:51)-(1:51))
+    │   │       └── tag_name: "div" (location: (1:8)-(1:11))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (1:51)-(2:0))
+        └── content: "\n"

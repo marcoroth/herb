@@ -4,10 +4,27 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+#### Accessibility
+
+- [`a11y-no-accesskey-attribute`](./a11y-no-accesskey-attribute.md) - Prevent usage of the `accesskey` attribute
+- [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
+- [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
+
+
+#### Action View
+
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
+- [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
+- [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
+- [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
+
+
+#### ERB
+
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
+- [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
 - [`erb-no-empty-control-flow`](./erb-no-empty-control-flow.md) - Disallow empty ERB control flow blocks
@@ -30,17 +47,29 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
 - [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
+- [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
+- [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
+- [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`erb-strict-locals-comment-syntax`](./erb-strict-locals-comment-syntax.md) - Enforce strict locals comment syntax.
+- [`erb-strict-locals-required`](./erb-strict-locals-required.md) - Require strict locals in Rails partials.
+
+
+#### Herb
+
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
 - [`herb-disable-comment-missing-rules`](./herb-disable-comment-missing-rules.md) - Require rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-duplicate-rules`](./herb-disable-comment-no-duplicate-rules.md) - Disallow duplicate rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+
+
+#### HTML
+
 - [`html-allowed-script-type`](./html-allowed-script-type.md) - Restrict allowed `type` attributes for `<script>` tags
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
@@ -53,8 +82,8 @@ This page contains documentation for all Herb Linter rules.
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-body-only-elements`](./html-body-only-elements.md) - Require content elements inside `<body>`.
-- [`html-details-has-summary`](./html-details-has-summary.md) - Require `<summary>` in `<details>` elements
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
+- [`html-details-has-summary`](./html-details-has-summary.md) - Require `<summary>` in `<details>` elements
 - [`html-head-only-elements`](./html-head-only-elements.md) - Require head-scoped elements inside `<head>`.
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
@@ -71,13 +100,34 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
+- [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
+- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
+- [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
+
+
+#### Parser
+
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
+
+
+#### Source
+
+- [`source-indentation`](./source-indentation.md) - Indent with spaces instead of tabs.
+
+
+#### SVG
+
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
+
+
+#### Turbo
+
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
+
 
 ## Contributing
 

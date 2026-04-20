@@ -1,0 +1,53 @@
+---
+source: "Parser::AttributesTest#test_0139_attribute value with angle brackets after ERB"
+input: "<div data-html=\"<%= prefix %><br>\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:41))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:41))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:35))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:34)-(1:35))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:34))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:14))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:14))
+        │       │       │               └── content: "data-html"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:34))
+        │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+        │       │               ├── children: (2 items)
+        │       │               │   ├── @ ERBContentNode (location: (1:16)-(1:29))
+        │       │               │   │   ├── tag_opening: "<%=" (location: (1:16)-(1:19))
+        │       │               │   │   ├── content: " prefix " (location: (1:19)-(1:27))
+        │       │               │   │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+        │       │               │   │   ├── parsed: true
+        │       │               │   │   └── valid: true
+        │       │               │   │
+        │       │               │   └── @ LiteralNode (location: (1:29)-(1:33))
+        │       │               │       └── content: "<br>"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:33)-(1:34))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:35)-(1:41))
+        │       ├── tag_opening: "</" (location: (1:35)-(1:37))
+        │       ├── tag_name: "div" (location: (1:37)-(1:40))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:40)-(1:41))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

@@ -81,4 +81,13 @@ describe("ERBStrictLocalsRequiredRule", () => {
       <p>Content</p>
     `, { fileName: "_partial.html.erb" })
   })
+
+  test("allows strict locals with whitespace trimming marker", () => {
+    expectNoOffenses(`<%# locals: (user:) -%>`, { fileName: "_partial.html.erb" })
+    expectNoOffenses(`<%# locals: () -%>`, { fileName: "_partial.html.erb" })
+  })
+
+  test("allows strict locals with no space after #", () => {
+    expectNoOffenses(`<%#locals: (user:) %>`, { fileName: "_partial.html.erb" })
+  })
 })

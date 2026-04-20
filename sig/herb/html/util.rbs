@@ -1,0 +1,13 @@
+# Generated from lib/herb/html/util.rb with RBS::Inline
+
+module Herb
+  module HTML
+    module Util
+      # TODO: extract to shared utility for all languages in .yml
+      VOID_ELEMENTS: Array[String]
+
+      # : (String) -> bool
+      def self.void_element?: (String) -> bool
+    end
+  end
+end

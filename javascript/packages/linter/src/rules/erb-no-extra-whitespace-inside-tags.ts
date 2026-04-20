@@ -125,6 +125,7 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
 export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAutofixContext> {
   static autocorrectable = true
   static ruleName = "erb-no-extra-whitespace-inside-tags"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

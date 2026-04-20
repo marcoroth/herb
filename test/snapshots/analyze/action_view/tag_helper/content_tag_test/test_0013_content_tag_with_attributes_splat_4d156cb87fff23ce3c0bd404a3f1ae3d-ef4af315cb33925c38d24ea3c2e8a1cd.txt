@@ -16,28 +16,28 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:56)-(1:58))
     │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:22)-(1:29))
+    │   │           ├── @ HTMLAttributeNode (location: (1:22)-(1:38))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:29))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:27))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:22)-(1:29))
+    │   │           │   │           └── @ LiteralNode (location: (1:22)-(1:27))
     │   │           │   │               └── content: "class"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:22)-(1:29))
+    │   │           │   ├── equals: ": " (location: (1:27)-(1:29))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:29))
-    │   │           │           ├── open_quote: """ (location: (1:22)-(1:29))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:29)-(1:38))
+    │   │           │           ├── open_quote: """ (location: (1:29)-(1:30))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:22)-(1:29))
+    │   │           │           │   └── @ LiteralNode (location: (1:30)-(1:37))
     │   │           │           │       └── content: "content"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:29)-(1:29))
+    │   │           │           ├── close_quote: """ (location: (1:37)-(1:38))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:40)-(1:40))
-    │   │               ├── content: "**attributes"
+    │   │               ├── content: "tag.attributes(**attributes)"
     │   │               └── prefix: ""
     │   │
     │   │

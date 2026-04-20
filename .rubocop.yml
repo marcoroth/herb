@@ -1,12 +1,13 @@
 AllCops:
   NewCops: enable
   SuggestExtensions: false
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.2
   Exclude:
     - 'pkg/**/*'
     - 'vendor/**/*'
     - 'tmp/**/*'
     - 'node_modules/**/*'
+    - 'lib/herb/action_view/**/*'
 
 Style/StringLiterals:
   Enabled: true
@@ -61,6 +62,7 @@ Metrics/CyclomaticComplexity:
     - lib/herb/prism_inspect.rb
     - lib/herb/engine/**/*.rb
     - templates/template.rb
+    - bench/**/*
 
 Metrics/MethodLength:
   Max: 20
@@ -75,6 +77,7 @@ Metrics/MethodLength:
     - test/fork_helper.rb
     - test/snapshot_utils.rb
     - bin/**/*
+    - bench/**/*
 
 Metrics/AbcSize:
   Exclude:
@@ -92,6 +95,8 @@ Metrics/AbcSize:
     - test/snapshot_utils.rb
     - test/engine/rails_compatibility_test.rb
     - bin/**/*
+    - bench/**/*
+    - test/engine/action_view/action_view_test_helper.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -104,12 +109,14 @@ Metrics/ClassLength:
     - lib/herb/visitor.rb
     - lib/herb/ast/nodes.rb
     - test/**/*_test.rb
+    - templates/template.rb
 
 Metrics/ModuleLength:
   Exclude:
     - test/**/*.rb
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
+    - bench/**/*
 
 Metrics/BlockLength:
   Max: 30
@@ -126,6 +133,7 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/diff_operation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb
     - lib/herb/parser_options.rb
@@ -142,6 +150,7 @@ Metrics/PerceivedComplexity:
     - templates/template.rb
     - test/**/*.rb
     - bin/**/*
+    - bench/**/*
 
 Layout/LineLength:
   Enabled: false
@@ -174,6 +183,7 @@ Security/Eval:
     - bin/erubi-render
     - bin/compare-render
     - bin/compare-render
+    - bench/action_view/benchmark_helper.rb
 
 Security/MarshalLoad:
   Exclude:
@@ -188,4 +198,7 @@ Lint/UnusedMethodArgument:
     - lib/herb/errors.rb
 
 Style/IfUnlessModifier:
+  Enabled: false
+
+Style/DocumentDynamicEvalDefinition:
   Enabled: false

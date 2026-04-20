@@ -28,7 +28,7 @@ class ConfigurationTest < Minitest::Spec
 
   test "loads configuration from .herb.yml" do
     write_config(<<~YAML)
-      version: "0.9.2"
+      version: "0.9.7"
       files:
         include:
           - "**/*.custom.erb"
@@ -37,7 +37,7 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(@temp_dir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_equal "0.9.2", config.version
+    assert_equal "0.9.7", config.version
     assert_includes config.file_include_patterns, "**/*.custom.erb"
   end
 
@@ -46,7 +46,7 @@ class ConfigurationTest < Minitest::Spec
     FileUtils.mkdir_p(subdir)
 
     write_config(<<~YAML)
-      version: "0.9.2"
+      version: "0.9.7"
       files:
         include:
           - "**/*.custom.erb"
@@ -566,5 +566,265 @@ class ConfigurationTest < Minitest::Spec
     assert_equal true, result[:security]
     assert_equal false, result[:nesting]
     assert_equal true, result[:accessibility]
+  end
+
+  test "engine_option returns default when no config" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal false, config.engine_option("optimize", false)
+    assert_equal true, config.engine_option("strict", true)
+  end
+
+  test "engine_option reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+        strict: false
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.engine_option("optimize", false)
+    assert_equal false, config.engine_option("strict", true)
+  end
+
+  test "engine_option returns default for missing keys" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.engine_option("optimize", false)
+    assert_equal true, config.engine_option("strict", true)
+  end
+
+  test "engine parser_options defaults to empty hash" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({}, config.engine_option("parser_options", {}))
+  end
+
+  test "engine parser_options reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: false
+          render_nodes: true
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    parser_options = config.engine_option("parser_options", {})
+    assert_equal false, parser_options["strict"]
+    assert_equal true, parser_options["render_nodes"]
+  end
+
+  test "engine parser_options are passed through to Herb.parse" do
+    engine = Herb::Engine.new("<div>Hello</div>", parser_options: { strict: false })
+    result = engine.src
+
+    assert_kind_of String, result
+    refute_empty result
+  end
+
+  test "engine parser_options from config are used" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: false
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>")
+    result = engine.src
+
+    assert_kind_of String, result
+    refute_empty result
+  end
+
+  test "engine parser_options from properties override config" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>", parser_options: { strict: false })
+
+    assert_kind_of String, engine.src
+  end
+
+  test "engine debug defaults to false" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal false, config.engine_option("debug", false)
+  end
+
+  test "engine debug reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        debug: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>")
+
+    assert_equal true, engine.debug
+  end
+
+  test "engine debug property overrides config" do
+    write_config(<<~YAML)
+      engine:
+        debug: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>", debug: false)
+
+    assert_equal false, engine.debug
+  end
+
+  test "framework defaults to ruby" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "ruby", config.framework
+  end
+
+  test "framework reads from config file" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "actionview", config.framework
+  end
+
+  test "framework warns on invalid value and defaults to ruby" do
+    write_config(<<~YAML)
+      framework: invalid
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_output(nil, /Unknown framework/) do
+      assert_equal "ruby", config.framework
+    end
+  end
+
+  test "framework accepts all valid values" do
+    Herb::Configuration::VALID_FRAMEWORKS.each do |framework|
+      write_config("framework: #{framework}")
+
+      config = Herb::Configuration.load(@temp_dir)
+
+      assert_equal framework, config.framework
+    end
+  end
+
+  test "template_engine defaults to erubi" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "erubi", config.template_engine
+  end
+
+  test "template_engine reads from config file" do
+    write_config(<<~YAML)
+      template_engine: herb
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal "herb", config.template_engine
+  end
+
+  test "template_engine warns on invalid value and defaults to erubi" do
+    write_config(<<~YAML)
+      template_engine: invalid
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_output(nil, /Unknown template_engine/) do
+      assert_equal "erubi", config.template_engine
+    end
+  end
+
+  test "template_engine accepts all valid values" do
+    Herb::Configuration::VALID_TEMPLATE_ENGINES.each do |engine|
+      write_config("template_engine: #{engine}")
+
+      config = Herb::Configuration.load(@temp_dir)
+
+      assert_equal engine, config.template_engine
+    end
+  end
+
+  test "user_config is empty when no config file exists" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({}, config.user_config)
+  end
+
+  test "user_config contains only user-specified values" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({ "framework" => "actionview" }, config.user_config)
+    refute config.user_config.key?("template_engine")
+    refute config.user_config.key?("files")
+  end
+
+  test "user_config does not include defaults" do
+    write_config(<<~YAML)
+      framework: actionview
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.user_config.key?("framework")
+    refute config.user_config.key?("engine")
+
+    assert config.config.key?("engine")
+    assert config.config.key?("files")
+  end
+
+  test "user_config reflects nested values" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+        parser_options:
+          strict: false
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.user_config.dig("engine", "optimize")
+    assert_equal false, config.user_config.dig("engine", "parser_options", "strict")
+    assert_nil config.user_config.dig("engine", "validators")
+  end
+
+  test "user_config key? can distinguish explicit values from defaults" do
+    write_config(<<~YAML)
+      framework: ruby
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert config.user_config.key?("framework")
+    refute config.user_config.key?("template_engine")
+
+    assert_equal "ruby", config.framework
+    assert_equal "erubi", config.template_engine
   end
 end

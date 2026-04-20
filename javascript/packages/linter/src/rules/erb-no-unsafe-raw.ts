@@ -1,9 +1,9 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { isERBOutputNode, getTagLocalName, isHTMLOpenTagNode } from "@herb-tools/core"
+import { ElementStackVisitor } from "./rule-utils.js"
+import { isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, HTMLElementNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
 const RAW_PATTERN = /\braw[\s(]/
 const HTML_SAFE_PATTERN = /\.html_safe\b/
@@ -21,30 +21,9 @@ const RAW_TEXT_ELEMENTS = new Set([
   "plaintext",
 ])
 
-class ERBNoUnsafeRawVisitor extends BaseRuleVisitor {
-  private insideRawTextElement = false
-
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    if (!isHTMLOpenTagNode(node.open_tag)) {
-      super.visitHTMLElementNode(node)
-      return
-    }
-
-    const tagName = getTagLocalName(node.open_tag)
-
-    if (tagName && RAW_TEXT_ELEMENTS.has(tagName)) {
-      const wasInside = this.insideRawTextElement
-      this.insideRawTextElement = true
-      super.visitHTMLElementNode(node)
-      this.insideRawTextElement = wasInside
-      return
-    }
-
-    super.visitHTMLElementNode(node)
-  }
-
+class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
   visitERBContentNode(node: ERBContentNode): void {
-    if (this.insideRawTextElement) return
+    if (this.isInsideElement(...RAW_TEXT_ELEMENTS)) return
     if (!isERBOutputNode(node)) return
 
     const content = node.content?.value || ""
@@ -67,6 +46,7 @@ class ERBNoUnsafeRawVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnsafeRawRule extends ParserRule {
   static ruleName = "erb-no-unsafe-raw"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

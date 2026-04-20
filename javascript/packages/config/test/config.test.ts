@@ -4,8 +4,8 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
-import { Config } from "../src/config.js"
-import type { HerbConfigOptions } from "../src/config.js"
+import { Config, resolveSeverity } from "../src/config.js"
+import type { HerbConfigOptions, SeverityConfig } from "../src/config.js"
 
 function createTestFile(dir: string, relativePath: string, content: string = "") {
   const fullPath = join(dir, relativePath)
@@ -35,12 +35,12 @@ describe("@herb-tools/config", () => {
     })
 
     test("can be instantiated", () => {
-      const config = new Config(testDir, { version: "0.9.2" })
+      const config = new Config(testDir, { version: "0.9.7" })
       expect(config).toBeInstanceOf(Config)
     })
 
     test("sets correct config path", () => {
-      const config = new Config(testDir, { version: "0.9.2" })
+      const config = new Config(testDir, { version: "0.9.7" })
       expect(config.path).toBe(join(testDir, ".herb.yml"))
     })
   })
@@ -66,14 +66,14 @@ describe("@herb-tools/config", () => {
 
     test("returns true when config file exists", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.9.2\n")
+      writeFileSync(configPath, "version: 0.9.7\n")
 
       expect(Config.exists(testDir)).toBe(true)
     })
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.9.2\n")
+      writeFileSync(configPath, "version: 0.9.7\n")
 
       expect(Config.exists(configPath)).toBe(true)
     })
@@ -83,7 +83,7 @@ describe("@herb-tools/config", () => {
     test("reads raw YAML content from config file", () => {
       const configPath = join(testDir, ".herb.yml")
       const yamlContent = dedent`
-        version: 0.9.2
+        version: 0.9.7
         linter:
           enabled: true
           rules:
@@ -98,7 +98,7 @@ describe("@herb-tools/config", () => {
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      const yamlContent = "version: 0.9.2\n"
+      const yamlContent = "version: 0.9.7\n"
       writeFileSync(configPath, yamlContent)
 
       const rawYaml = Config.readRawYaml(configPath)
@@ -191,7 +191,7 @@ describe("@herb-tools/config", () => {
   describe("Config.applyMutationToYamlString", () => {
     test("applies mutation to existing YAML", () => {
       const existingYaml = dedent`
-        version: 0.9.2
+        version: 0.9.7
         linter:
           enabled: true
       `
@@ -206,7 +206,7 @@ describe("@herb-tools/config", () => {
 
       const updatedYaml = Config.applyMutationToYamlString(existingYaml, mutation)
 
-      expect(updatedYaml).toContain("version: 0.9.2")
+      expect(updatedYaml).toContain("version: 0.9.7")
       expect(updatedYaml).toContain("enabled: true")
       expect(updatedYaml).toContain("html-tag-name-lowercase:")
       expect(updatedYaml).toContain("enabled: false")
@@ -214,7 +214,7 @@ describe("@herb-tools/config", () => {
 
     test("merges rules without overwriting existing rules", () => {
       const existingYaml = dedent`
-        version: 0.9.2
+        version: 0.9.7
         linter:
           rules:
             html-img-require-alt:
@@ -237,7 +237,7 @@ describe("@herb-tools/config", () => {
 
     test("updates existing rule configuration", () => {
       const existingYaml = dedent`
-        version: 0.9.2
+        version: 0.9.7
         linter:
           rules:
             html-tag-name-lowercase:
@@ -327,6 +327,92 @@ describe("@herb-tools/config", () => {
       expect(updated[0].severity).toBe("error")
       expect(updated[1].severity).toBe("hint")
       expect(updated[2].severity).toBe("warning")
+    })
+
+    test("resolveSeverity returns the string directly for plain severity", () => {
+      expect(resolveSeverity("error", "cli")).toBe("error")
+      expect(resolveSeverity("warning", "editor")).toBe("warning")
+      expect(resolveSeverity("hint", "cli")).toBe("hint")
+      expect(resolveSeverity("info", "editor")).toBe("info")
+    })
+
+    test("resolveSeverity returns the mode-specific severity for object severity", () => {
+      const severity: SeverityConfig = { editor: "hint", cli: "error" }
+
+      expect(resolveSeverity(severity, "cli")).toBe("error")
+      expect(resolveSeverity(severity, "editor")).toBe("hint")
+    })
+
+    test("getConfiguredSeverity resolves object severity with mode", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "debug-rule": {
+              severity: { editor: "hint", cli: "error" }
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.getConfiguredSeverity("debug-rule", "warning", "cli")).toBe("error")
+      expect(config.getConfiguredSeverity("debug-rule", "warning", "editor")).toBe("hint")
+    })
+
+    test("getConfiguredSeverity falls back to default severity when rule has no severity config", () => {
+      const config = Config.fromObject({}, { projectPath: testDir })
+
+      expect(config.getConfiguredSeverity("some-rule", "warning", "cli")).toBe("warning")
+      expect(config.getConfiguredSeverity("some-rule", "warning", "editor")).toBe("warning")
+    })
+
+    test("applySeverityOverrides resolves object severity with mode", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "debug-rule": { severity: { editor: "hint", cli: "error" } },
+            "plain-rule": { severity: "warning" }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      const offenses = [
+        { rule: "debug-rule", severity: "info" as const, message: "test" },
+        { rule: "plain-rule", severity: "info" as const, message: "test" },
+        { rule: "unconfigured-rule", severity: "info" as const, message: "test" }
+      ]
+
+      const updatedForCli = config.applySeverityOverrides(offenses, "cli")
+
+      expect(updatedForCli[0].severity).toBe("error")
+      expect(updatedForCli[1].severity).toBe("warning")
+      expect(updatedForCli[2].severity).toBe("info")
+
+      const updatedForEditor = config.applySeverityOverrides(offenses, "editor")
+
+      expect(updatedForEditor[0].severity).toBe("hint")
+      expect(updatedForEditor[1].severity).toBe("warning")
+      expect(updatedForEditor[2].severity).toBe("info")
+    })
+
+    test("Config.fromObject accepts object severity in rule config", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "some-rule": {
+              enabled: true,
+              severity: { editor: "hint", cli: "error" }
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.linter?.rules?.["some-rule"]?.severity).toEqual({ editor: "hint", cli: "error" })
     })
 
     test("isLinterEnabled returns true when linter is enabled", () => {
@@ -774,6 +860,59 @@ describe("@herb-tools/config", () => {
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "node_modules/pkg/file.html.erb")).toBe(true)
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "generated/output.html.erb")).toBe(false)
       expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/index.html.erb")).toBe(false)
+    })
+
+    test("isRuleEnabledForPath normalizes absolute file paths against projectPath", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              exclude: ["app/views/layouts/jasmine.*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/layouts/jasmine.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/layouts/jasmine.html.erb`)).toBe(false)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(true)
+    })
+
+    test("isRuleEnabledForPath normalizes absolute file paths for include patterns", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              include: ["app/components/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/components/button.html.erb")).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/components/button.html.erb`)).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(false)
+    })
+
+    test("isRuleEnabledForPath normalizes absolute file paths for only patterns", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              only: ["app/views/**/*"]
+            }
+          }
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/views/home/index.html.erb`)).toBe(true)
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", `${testDir}/app/components/button.html.erb`)).toBe(false)
     })
 
     test("linter.exclude combines with files.exclude for file discovery", () => {
@@ -1225,6 +1364,132 @@ describe("@herb-tools/config", () => {
       expect(defaultPatterns).toContain("**/*.html")
       expect(defaultPatterns).toContain("**/*.rhtml")
       expect(defaultPatterns).toContain("**/*.turbo_stream.erb")
+    })
+  })
+
+  describe("Config.configVersion", () => {
+    test("is undefined when not provided", () => {
+      const config = new Config(testDir, { version: "0.9.7" })
+
+      expect(config.configVersion).toBeUndefined()
+    })
+
+    test("preserves explicit configVersion", () => {
+      const config = new Config(testDir, { version: "0.9.7" }, "0.8.0")
+
+      expect(config.version).toBe("0.9.7")
+      expect(config.configVersion).toBe("0.8.0")
+    })
+
+    test("fromObject passes configVersion through", () => {
+      const config = Config.fromObject({}, { projectPath: testDir, configVersion: "0.7.0" })
+
+      expect(config.configVersion).toBe("0.7.0")
+    })
+
+    test("fromObject defaults configVersion to undefined when not specified", () => {
+      const config = Config.fromObject({}, { projectPath: testDir })
+
+      expect(config.configVersion).toBeUndefined()
+    })
+
+    test("load preserves user config version from .herb.yml", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.8.0\n\nlinter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.version).toBe("0.9.7")
+      expect(config.configVersion).toBe("0.8.0")
+    })
+
+    test("load defaults configVersion to undefined when .herb.yml has no version", async () => {
+      createTestFile(testDir, ".herb.yml", "linter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.configVersion).toBeUndefined()
+    })
+
+    test("load defaults configVersion to undefined when no .herb.yml exists", async () => {
+      createTestFile(testDir, ".git/HEAD", "ref: refs/heads/main\n")
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.configVersion).toBeUndefined()
+    })
+  })
+
+  describe("Config upgrade workflow", () => {
+    test("mutateConfigFile adds disabled rules", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+      `
+
+      createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      await Config.mutateConfigFile(join(testDir, ".herb.yml"), {
+        linter: {
+          rules: {
+            "new-rule-a": { enabled: false },
+            "new-rule-b": { enabled: false }
+          }
+        }
+      })
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.linter?.rules?.["new-rule-a"]?.enabled).toBe(false)
+      expect(config.linter?.rules?.["new-rule-b"]?.enabled).toBe(false)
+    })
+
+    test("mutateConfigFile preserves existing rules", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+          rules:
+            existing-rule:
+              enabled: false
+      `
+
+      createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      await Config.mutateConfigFile(join(testDir, ".herb.yml"), {
+        linter: {
+          rules: {
+            "new-rule": { enabled: false }
+          }
+        }
+      })
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.linter?.rules?.["existing-rule"]?.enabled).toBe(false)
+      expect(config.linter?.rules?.["new-rule"]?.enabled).toBe(false)
+    })
+
+    test("version can be updated via file content replacement", async () => {
+      const configContent = dedent`
+        version: 0.8.0
+
+        linter:
+          enabled: true
+      `
+
+      const configPath = createTestFile(testDir, ".herb.yml", configContent + "\n")
+
+      const { readFileSync, writeFileSync } = await import("fs")
+      let content = readFileSync(configPath, "utf-8")
+      content = content.replace(/^version:\s*.+$/m, "version: 0.9.7")
+      writeFileSync(configPath, content, "utf-8")
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.configVersion).toBe("0.9.7")
     })
   })
 })

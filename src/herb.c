@@ -1,11 +1,11 @@
 #include "include/herb.h"
 #include "include/analyze/analyze.h"
 #include "include/analyze/prism_annotate.h"
-#include "include/lexer.h"
-#include "include/parser.h"
-#include "include/token.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_array.h"
+#include "include/lexer/lexer.h"
+#include "include/lexer/token.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_array.h"
+#include "include/parser/parser.h"
 #include "include/version.h"
 
 #include <prism.h>
@@ -43,6 +43,16 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   if (options != NULL) { parser_options = *options; }
+
+  if (parser_options.start_line > 0) {
+    lexer.current_line = parser_options.start_line;
+    lexer.previous_line = parser_options.start_line;
+  }
+
+  if (parser_options.start_column > 0) {
+    lexer.current_column = parser_options.start_column;
+    lexer.previous_column = parser_options.start_column;
+  }
 
   herb_parser_init(&parser, &lexer, parser_options);
 

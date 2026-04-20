@@ -4,10 +4,10 @@
 #include <node_api.h>
 
 extern "C" {
-#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/util/hb_array.h"
-#include "../extension/libherb/include/util/hb_string.h"
+#include "../extension/libherb/include/lib/hb_array.h"
+#include "../extension/libherb/include/lib/hb_string.h"
 }
 
 char* CheckString(napi_env env, napi_value value);

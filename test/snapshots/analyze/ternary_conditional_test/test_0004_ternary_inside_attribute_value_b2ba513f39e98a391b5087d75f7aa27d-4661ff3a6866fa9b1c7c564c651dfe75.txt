@@ -1,0 +1,85 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0004_ternary inside attribute value"
+input: |2-
+<div class="<%= cond ? 'a' : 'b' %>">content</div>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:50))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:37))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:36)-(1:37))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:36))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:36))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ ERBIfNode (location: (1:12)-(1:35))
+    │   │       │               │       ├── tag_opening: "<%" (location: (1:12)-(1:12))
+    │   │       │               │       ├── content: " if cond " (location: (1:12)-(1:35))
+    │   │       │               │       ├── tag_closing: "%>" (location: (1:35)-(1:35))
+    │   │       │               │       ├── then_keyword: ∅
+    │   │       │               │       ├── statements: (1 item)
+    │   │       │               │       │   └── @ ERBContentNode (location: (1:12)-(1:35))
+    │   │       │               │       │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
+    │   │       │               │       │       ├── content: " 'a' " (location: (1:22)-(1:27))
+    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   │       │               │       │       ├── parsed: false
+    │   │       │               │       │       └── valid: true
+    │   │       │               │       │
+    │   │       │               │       ├── subsequent:
+    │   │       │               │       │   └── @ ERBElseNode (location: (1:35)-(1:35))
+    │   │       │               │       │       ├── tag_opening: "<%" (location: (1:35)-(1:35))
+    │   │       │               │       │       ├── content: " else " (location: (1:35)-(1:35))
+    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:35)-(1:35))
+    │   │       │               │       │       └── statements: (1 item)
+    │   │       │               │       │           └── @ ERBContentNode (location: (1:12)-(1:35))
+    │   │       │               │       │               ├── tag_opening: "<%=" (location: (1:12)-(1:15))
+    │   │       │               │       │               ├── content: " 'b' " (location: (1:28)-(1:33))
+    │   │       │               │       │               ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   │       │               │       │               ├── parsed: false
+    │   │       │               │       │               └── valid: true
+    │   │       │               │       │
+    │   │       │               │       │
+    │   │       │               │       └── end_node:
+    │   │       │               │           └── @ ERBEndNode (location: (1:35)-(1:35))
+    │   │       │               │               ├── tag_opening: "<%" (location: (1:35)-(1:35))
+    │   │       │               │               ├── content: " end " (location: (1:35)-(1:35))
+    │   │       │               │               └── tag_closing: "%>" (location: (1:35)-(1:35))
+    │   │       │               │
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:35)-(1:36))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:37)-(1:44))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:44)-(1:50))
+    │   │       ├── tag_opening: "</" (location: (1:44)-(1:46))
+    │   │       ├── tag_name: "div" (location: (1:46)-(1:49))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:49)-(1:50))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:50)-(2:0))
+        └── content: "\n"

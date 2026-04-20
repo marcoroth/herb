@@ -45,6 +45,10 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (12:14)-(13:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (13:0)-(13:9))
     │           ├── tag_opening: "<%" (location: (13:0)-(13:2))

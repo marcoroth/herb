@@ -22,6 +22,7 @@ import {
 import { Service } from "./service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
+import { version } from "../package.json"
 
 export class Server {
   private service!: Service
@@ -43,6 +44,10 @@ export class Server {
       })
 
       const result: InitializeResult = {
+        serverInfo: {
+          name: "Herb Language Server",
+          version,
+        },
         capabilities: {
           textDocumentSync: {
             openClose: true,

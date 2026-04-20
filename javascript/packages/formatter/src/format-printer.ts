@@ -2,12 +2,15 @@ import { Printer, IdentityPrinter } from "@herb-tools/printer"
 import { TextFlowEngine } from "./text-flow-engine.js"
 import { AttributeRenderer } from "./attribute-renderer.js"
 import { SpacingAnalyzer } from "./spacing-analyzer.js"
+import { HerbDisableCollector } from "./herb-disable-collector.js"
+
 import { isTextFlowNode } from "./text-flow-helpers.js"
 import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
 
 import type { ERBNode } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 import type { TextFlowDelegate } from "./text-flow-engine.js"
+import type { CollectedHerbDisable } from "./herb-disable-collector.js"
 import type { AttributeRendererDelegate } from "./attribute-renderer.js"
 import type { ElementFormattingAnalysis } from "./format-helpers.js"
 
@@ -34,15 +37,12 @@ import {
 
 import {
   areAllNestedElementsInline,
-  filterEmptyNodesForHerbDisable,
   filterSignificantChildren,
   hasComplexERBControlFlow,
   hasMixedTextAndInlineContent,
   hasMultilineTextContent,
   isContentPreserving,
   isFrontmatter,
-  hasLeadingHerbDisable,
-  isHerbDisableComment,
   isInlineElement,
   isNonWhitespaceNode,
   shouldAppendToLastLine,
@@ -88,6 +88,8 @@ import {
   ERBYieldNode,
   ERBInNode,
   ERBRenderNode,
+  RubyRenderKeywordsNode,
+  RubyParameterNode,
   RubyRenderLocalNode,
   ERBOpenTagNode,
   HTMLVirtualCloseTagNode,
@@ -142,6 +144,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private textFlow: TextFlowEngine
   private attributeRenderer: AttributeRenderer
   private spacingAnalyzer: SpacingAnalyzer
+  private collectedHerbDisable: CollectedHerbDisable[] = []
 
   public source: string
 
@@ -161,7 +164,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     const node: Node = isParseResult(input) ? input.value : input
 
-    // TODO: refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
+    const collector = new HerbDisableCollector()
+    collector.visit(node)
+    this.collectedHerbDisable = collector.collected
+
     this.lines = []
     this.indentLevel = 0
     this.stringLineCount = 0
@@ -170,7 +176,105 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     this.visit(node)
 
+    this.spliceHerbDisableComments()
+
     return this.lines.join("\n")
+  }
+
+  private spliceHerbDisableComments(): void {
+    const documentRootComments: string[] = []
+
+    for (const entry of this.collectedHerbDisable) {
+      if (!entry.anchor && isNode(entry.parentNode, DocumentNode)) {
+        documentRootComments.push(entry.commentText)
+        continue
+      }
+
+      const outputLine = this.findOutputLineForHerbDisable(entry)
+
+      if (outputLine >= 0 && outputLine < this.lines.length) {
+        const currentLine = this.lines[outputLine].trimEnd()
+        const separator = currentLine.endsWith(" ") ? "" : " "
+        this.lines[outputLine] = currentLine + separator + entry.commentText
+      }
+    }
+
+    if (documentRootComments.length > 0) {
+      this.lines.unshift(...documentRootComments, "")
+    }
+  }
+
+  private findOutputLineForHerbDisable(entry: CollectedHerbDisable): number {
+    if (isNode(entry.anchor, HTMLOpenTagNode) && isNode(entry.parentNode, HTMLElementNode)) {
+      const tagSearch = `<${getTagName(entry.anchor)}`
+
+      for (let index = 0; index < this.lines.length; index++) {
+        if (this.lines[index].includes(tagSearch)) {
+          if (this.lines[index].includes("\n")) {
+            const subLines = this.lines[index].split("\n")
+            const commentText = entry.commentText
+            const firstLine = subLines[0].trimEnd()
+            const separator = firstLine.endsWith(" ") ? "" : " "
+            subLines[0] = firstLine + separator + commentText
+            this.lines[index] = subLines.join("\n")
+
+            return -1
+          }
+
+          for (let forward = index + 1; forward < this.lines.length; forward++) {
+            if (this.lines[forward].trim() === ">") return forward
+          }
+
+          return index
+        }
+      }
+    }
+
+    const searchContent = this.getSearchableContentForNode(entry.anchor) ?? this.getSearchableContentForNode(entry.parentNode)
+
+    if (searchContent) {
+      for (let index = 0; index < this.lines.length; index++) {
+        if (this.lines[index].includes(searchContent)) return index
+      }
+    }
+
+    return this.lines.length > 0 ? this.lines.length - 1 : 0
+  }
+
+  private getSearchableContentForNode(node: Node | null): string | null {
+    if (!node) return null
+
+    if (isNode(node, HTMLOpenTagNode)) {
+      return `<${getTagName(node)}`
+    }
+
+    if (isNode(node, HTMLElementNode)) {
+      if (node.close_tag) {
+        return `</${getTagName(node)}`
+      }
+
+      return `<${getTagName(node)}`
+    }
+
+    if (isNode(node, HTMLCloseTagNode)) {
+      return `</${getTagName(node)}`
+    }
+
+    if (isNode(node, HTMLAttributeNode) && isNode(node.name, HTMLAttributeNameNode)) {
+      return getCombinedAttributeName(node.name)
+    }
+
+    if (isNode(node, HTMLTextNode)) {
+      const firstWord = node.content.trim().split(/\s+/)[0]
+
+      return firstWord || null
+    }
+
+    if (isNode(node, ERBContentNode)) {
+      return IdentityPrinter.print(node).trim()
+    }
+
+    return null
   }
 
   /**
@@ -357,26 +461,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
-    const herbDisableComments = allChildren.filter(child =>
-      isNode(child, ERBContentNode) && isHerbDisableComment(child)
-    )
-
-    let openingLine = `<${tagName}`
-
-    if (herbDisableComments.length > 0) {
-      const commentLines = this.capture(() => {
-        herbDisableComments.forEach(comment => {
-          this.withInlineMode(() => {
-            this.lines.push(" ")
-            this.visit(comment)
-          })
-        })
-      })
-
-      openingLine += commentLines.join("")
-    }
-
-    this.pushWithIndent(openingLine)
+    this.pushWithIndent(`<${tagName}`)
 
     this.withIndent(() => {
       this.attributeRenderer.indentLevel = this.indentLevel
@@ -384,10 +469,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         if (isNode(child, HTMLAttributeNode)) {
           this.pushWithIndent(this.attributeRenderer.renderAttribute(child, tagName))
         } else if (!isNode(child, WhitespaceNode)) {
-          if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
-            return
-          }
-
           this.visit(child)
         }
       })
@@ -561,20 +642,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     if (children.length === 0) return
 
-    const { comment, hasLeadingWhitespace, remainingChildren, remainingBody } = this.stripLeadingHerbDisable(children, body)
-
-    if (comment) {
-      const herbDisableString = this.captureHerbDisableInline(comment)
-      this.pushToLastLine((hasLeadingWhitespace ? ' ' : '') + herbDisableString)
-    }
-
-    if (remainingChildren.length === 0) return
-
     this.withIndent(() => {
       if (hasTextFlow) {
-        this.textFlow.visitTextFlowChildren(remainingBody)
+        this.textFlow.visitTextFlowChildren(body)
       } else {
-        this.visitElementChildren(comment ? remainingChildren : body, element)
+        this.visitElementChildren(body, element)
       }
     })
   }
@@ -647,60 +719,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     }
   }
 
-  private stripLeadingHerbDisable(children: Node[], body: Node[]): {
-    comment: Node | null
-    hasLeadingWhitespace: boolean
-    remainingChildren: Node[]
-    remainingBody: Node[]
-  } {
-    let leadingHerbDisableComment: Node | null = null
-    let leadingHerbDisableIndex = -1
-    let firstWhitespaceIndex = -1
-
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-
-      if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
-        if (firstWhitespaceIndex < 0) {
-          firstWhitespaceIndex = i
-        }
-
-        continue
-      }
-
-      if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
-        leadingHerbDisableComment = child
-        leadingHerbDisableIndex = i
-      }
-
-      break
-    }
-
-    if (!leadingHerbDisableComment || leadingHerbDisableIndex < 0) {
-      return { comment: null, hasLeadingWhitespace: false, remainingChildren: children, remainingBody: body }
-    }
-
-    const filterOut = (nodes: Node[]) => nodes.filter((_, index) => {
-      if (index === leadingHerbDisableIndex) return false
-
-      if (firstWhitespaceIndex >= 0 && index === leadingHerbDisableIndex - 1) {
-        const child = nodes[index]
-
-        if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
-          return false
-        }
-      }
-
-      return true
-    })
-
-    return {
-      comment: leadingHerbDisableComment,
-      hasLeadingWhitespace: firstWhitespaceIndex >= 0 && firstWhitespaceIndex < leadingHerbDisableIndex,
-      remainingChildren: filterOut(children),
-      remainingBody: filterOut(body),
-    }
-  }
 
   /**
    * Visit element children with intelligent spacing logic
@@ -737,18 +755,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         index = textFlowResult.newIndex
         lastMeaningfulNode = textFlowResult.lastMeaningfulNode
         hasHandledSpacing = textFlowResult.hasHandledSpacing
-        continue
-      }
-
-      const herbDisableResult: ChildVisitResult | null =
-        isNode(child, HTMLElementNode) && child.close_tag
-          ? this.visitChildWithTrailingHerbDisable(child, body, index, parentElement, lastMeaningfulNode, hasHandledSpacing)
-          : null
-
-      if (herbDisableResult) {
-        index = herbDisableResult.newIndex
-        lastMeaningfulNode = herbDisableResult.lastMeaningfulNode
-        hasHandledSpacing = herbDisableResult.hasHandledSpacing
         continue
       }
 
@@ -810,44 +816,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     }
   }
 
-  private visitChildWithTrailingHerbDisable(child: HTMLElementNode, body: Node[], index: number, parentElement: HTMLElementNode | null, lastMeaningfulNode: Node | null, hasHandledSpacing: boolean): ChildVisitResult | null {
-    for (let j = index + 1; j < body.length; j++) {
-      const nextChild = body[j]
-
-      if (isNode(nextChild, WhitespaceNode) || isPureWhitespaceNode(nextChild)) {
-        continue
-      }
-
-      if (isNode(nextChild, ERBContentNode) && isHerbDisableComment(nextChild)) {
-        const childStartLine = this.stringLineCount
-        this.visit(child)
-
-        if (lastMeaningfulNode && !hasHandledSpacing) {
-          const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
-
-          if (shouldAddSpacing) {
-            this.lines.splice(childStartLine, 0, "")
-            this.stringLineCount++
-          }
-        }
-
-        const herbDisableString = this.captureHerbDisableInline(nextChild)
-
-        this.pushToLastLine(' ' + herbDisableString)
-
-        return {
-          newIndex: j,
-          lastMeaningfulNode: child,
-          hasHandledSpacing: false,
-        }
-      }
-
-      break
-    }
-
-    return null
-  }
-
   visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
     const attributes = filterNodes(node.children, HTMLAttributeNode)
     const inlineNodes = this.extractInlineNodes(node.children)
@@ -899,7 +867,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const analysis = this.currentElement && this.elementFormattingAnalysis.get(this.currentElement)
     const closeTagInline = analysis?.closeTagInline
 
-    if (this.currentElement && closeTagInline) {
+    if (this.inContentPreservingContext || (this.currentElement && closeTagInline)) {
       this.pushToLastLine(closingTag)
     } else {
       this.pushWithIndent(closingTag)
@@ -1022,7 +990,37 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitERBRenderNode(node: ERBRenderNode) {
-    this.printERBNode(node)
+    if (node.end_node) {
+      this.trackBoundary(node, () => {
+        this.printERBNode(node)
+
+        this.withIndent(() => {
+          const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
+
+          if (hasTextFlow) {
+            this.textFlow.visitTextFlowChildren(node.body)
+          } else {
+            this.visitElementChildren(node.body, null)
+          }
+        })
+
+        if (node.rescue_clause) this.visit(node.rescue_clause)
+        if (node.else_clause) this.visit(node.else_clause)
+        if (node.ensure_clause) this.visit(node.ensure_clause)
+
+        this.visit(node.end_node)
+      })
+    } else {
+      this.printERBNode(node)
+    }
+  }
+
+  visitRubyRenderKeywordsNode(_node: RubyRenderKeywordsNode) {
+    // no-op: extracted metadata, nothing to print
+  }
+
+  visitRubyParameterNode(_node: RubyParameterNode) {
+    // no-op: extracted metadata, nothing to print
   }
 
   visitRubyRenderLocalNode(_node: RubyRenderLocalNode) {
@@ -1068,6 +1066,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       })
 
+      if (node.rescue_clause) this.visit(node.rescue_clause)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.ensure_clause) this.visit(node.ensure_clause)
       if (node.end_node) this.visit(node.end_node)
     })
   }
@@ -1110,7 +1111,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         this.printERBNode(node)
 
         this.withIndent(() => {
-          node.statements.forEach(child => this.visit(child))
+          this.visitAll(node.statements)
         })
 
         if (node.subsequent) this.visit(node.subsequent)
@@ -1274,6 +1275,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const openTagClosing = getOpenTagClosing(node)
 
     if (!openTagInline) return false
+
     if (children.length === 0) return true
 
     const hasNonInlineChildElements = children.some(child => {
@@ -1285,10 +1287,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
 
     if (hasNonInlineChildElements) return false
-
-    if (hasLeadingHerbDisable(node.body) && !isInlineElement(tagName)) {
-      return false
-    }
 
     if (isInlineElement(tagName)) {
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
@@ -1369,15 +1367,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   // --- Utility methods ---
 
-  private captureHerbDisableInline(node: Node): string {
-    return this.capture(() => {
-      const savedIndentLevel = this.indentLevel
-      this.indentLevel = 0
-      this.withInlineMode(() => this.visit(node))
-      this.indentLevel = savedIndentLevel
-    }).join("")
-  }
-
   private fitsOnCurrentLine(content: string): boolean {
     return this.indent.length + content.length <= this.maxLineLength
   }
@@ -1438,11 +1427,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
     }
 
-    const childrenToRender = this.getFilteredChildren(element.body)
-
     const childInline = this.tryRenderInlineFull(element, tagName,
       filterNodes(getOpenTagChildren(element), HTMLAttributeNode),
-      childrenToRender
+      element.body
     )
 
     return childInline !== null ? childInline : ""
@@ -1460,9 +1447,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    */
   tryRenderInlineElement(element: HTMLElementNode): string | null {
     const tagName = getTagName(element)
-    const childrenToRender = this.getFilteredChildren(element.body)
 
-    return this.tryRenderInlineFull(element, tagName, filterNodes(getOpenTagChildren(element), HTMLAttributeNode), childrenToRender)
+    return this.tryRenderInlineFull(element, tagName, filterNodes(getOpenTagChildren(element), HTMLAttributeNode), element.body)
   }
 
 
@@ -1540,9 +1526,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private tryRenderChildrenInline(children: Node[], tagName?: string): string | null {
     let result = ""
     let hasInternalWhitespace = false
-    let addedLeadingSpace = false
 
-    const hasHerbDisable = hasLeadingHerbDisable(children)
     const hasOnlyTextContent = children.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
     const shouldPreserveSpaces = hasOnlyTextContent && tagName && isInlineElement(tagName)
 
@@ -1569,10 +1553,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       }
 
       if (isPureWhitespaceNode(child) && !result.endsWith(' ')) {
-        if (!result && hasHerbDisable && !addedLeadingSpace) {
-          result += ' '
-          addedLeadingSpace = true
-        } else if (result) {
+        if (result) {
           result += ' '
           hasInternalWhitespace = true
         }
@@ -1583,10 +1564,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
 
-        const childrenToRender = this.getFilteredChildren(child.body)
         const childInline = this.tryRenderInlineFull(child, tagName,
           filterNodes(getOpenTagChildren(child), HTMLAttributeNode),
-          childrenToRender
+          child.body
         )
 
         if (!childInline) {
@@ -1604,7 +1584,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return result
     }
 
-    if (hasHerbDisable && result.startsWith(' ') || hasInternalWhitespace) {
+    if (hasInternalWhitespace) {
       return result.trimEnd()
     }
 
@@ -1641,22 +1621,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     return `<${tagName}>${content}</${tagName}>`
   }
 
-  /**
-   * Get filtered children, using smart herb:disable filtering if needed
-   */
-  private getFilteredChildren(body: Node[]): Node[] {
-    const hasHerbDisable = body.some(child =>
-      isNode(child, ERBContentNode) && isHerbDisableComment(child)
-    )
-
-    return hasHerbDisable ? filterEmptyNodesForHerbDisable(body) : body
-  }
-
-  private renderElementInline(element: HTMLElementNode): string {
-    const children = this.getFilteredChildren(element.body)
-
-    return this.renderChildrenInline(children)
-  }
 
   private renderChildrenInline(children: Node[]) {
     let content = ''
@@ -1669,7 +1633,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         const attributes = filterNodes(getOpenTagChildren(child), HTMLAttributeNode)
         this.attributeRenderer.indentLevel = this.indentLevel
         const attributesString = this.attributeRenderer.renderAttributesString(attributes, tagName)
-        const childContent = this.renderElementInline(child)
+        const childContent = this.renderChildrenInline(child.body)
 
         content += `<${tagName}${attributesString}>${childContent}</${tagName}>`
       } else if (isNode(child, ERBContentNode)) {

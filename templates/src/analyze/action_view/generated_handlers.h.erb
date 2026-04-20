@@ -1,0 +1,12 @@
+#ifndef GENERATED_HANDLERS_H
+#define GENERATED_HANDLERS_H
+
+#include "../../include/analyze/action_view/tag_helper_handler.h"
+
+<%- supported_helpers = helpers.select(&:supported?) -%>
+<%- supported_helpers.each do |helper| -%>
+<%- next if helper.custom_transform? -%>
+extern const tag_helper_handler_T <%= helper.safe_name %>_handler;
+<%- end -%>
+
+#endif

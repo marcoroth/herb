@@ -24,7 +24,7 @@ module Analyze::ActionView::AssetTagHelper
       HTML
     end
 
-    test "javascript_include_tag with nonce" do
+    test "javascript_include_tag with nonce true" do
       assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
         <%= javascript_include_tag "application", nonce: true %>
       HTML
@@ -111,6 +111,18 @@ module Analyze::ActionView::AssetTagHelper
     test "javascript_include_tag with interpolated nonce" do
       assert_parsed_snapshot(<<~'HTML', action_view_helpers: true)
         <%= javascript_include_tag "application", nonce: "static-#{dynamic}" %>
+      HTML
+    end
+
+    test "javascript_include_tag with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", nonce: false %>
+      HTML
+    end
+
+    test "javascript_include_tag with skip_pipeline" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", skip_pipeline: true %>
       HTML
     end
   end

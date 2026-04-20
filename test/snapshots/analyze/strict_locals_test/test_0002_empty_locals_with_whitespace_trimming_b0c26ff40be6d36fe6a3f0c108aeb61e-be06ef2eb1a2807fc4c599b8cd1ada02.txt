@@ -1,0 +1,16 @@
+---
+source: "Analyze::StrictLocalsTest#test_0002_empty locals with whitespace trimming"
+input: |2-
+<%# locals: () -%>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:18))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: () " (location: (1:3)-(1:15))
+    │   ├── tag_closing: "-%>" (location: (1:15)-(1:18))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:18)-(2:0))
+        └── content: "\n"

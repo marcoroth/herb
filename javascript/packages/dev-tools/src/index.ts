@@ -14,7 +14,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const hasValidationErrors = document.querySelector('template[data-herb-validation-errors]') !== null;
   const hasValidationError = document.querySelector('template[data-herb-validation-error]') !== null;
   const hasParserErrors = document.querySelector('template[data-herb-parser-error]') !== null;
-  const shouldAutoInit = hasDebugMode || hasDebugErb || hasValidationErrors || hasValidationError || hasParserErrors;
+  const hasOptimizationMismatches = document.querySelector('template[data-herb-optimization-mismatch]') !== null;
+  const shouldAutoInit = hasDebugMode || hasDebugErb || hasValidationErrors || hasValidationError || hasParserErrors || hasOptimizationMismatches;
 
   if (shouldAutoInit) {
     document.addEventListener('DOMContentLoaded', () => {

@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0033_compilation with optimize for link_to"
+input: "{source: \"<%= link_to \\\"Home\\\", \\\"/\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<a href="/">Home</a>'.freeze;
+_buf.to_s

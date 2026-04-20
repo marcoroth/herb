@@ -113,5 +113,47 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "block with rescue compiles correctly" do
+      template = <<~ERB
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "block with rescue and ensure compiles correctly" do
+      template = <<~ERB
+        <% items.each do |item| %>
+          <%= item %>
+        <% rescue StandardError => e %>
+          <%= e.message %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "block with rescue, else, and ensure compiles correctly" do
+      template = <<~ERB
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

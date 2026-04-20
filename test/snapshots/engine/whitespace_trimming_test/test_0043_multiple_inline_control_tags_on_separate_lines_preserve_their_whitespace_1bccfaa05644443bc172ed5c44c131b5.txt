@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0043_multiple inline control tags on separate lines preserve their whitespace"
+input: "{source: \"<ul>\\n  <% if true %>A<% end %>\\n  <% if true %>B<% end %>\\n</ul>\", locals: {}, options: {}}"
+---
+<ul>
+  A
+  B
+</ul>

@@ -1,0 +1,16 @@
+---
+name: debug_missing_translation
+source: "ActionView::Helpers::TranslationHelper#debug_missing_translation"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether missing translations show debug markup instead of raising.
+signature: "debug_missing_translation"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TranslationHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

@@ -1,8 +1,8 @@
 #ifndef HERB_PRISM_ANNOTATE_H
 #define HERB_PRISM_ANNOTATE_H
 
-#include "../ast_nodes.h"
-#include "../util/hb_allocator.h"
+#include "../ast/ast_nodes.h"
+#include "../lib/hb_allocator.h"
 
 void herb_annotate_prism_nodes(
   AST_DOCUMENT_NODE_T* document,

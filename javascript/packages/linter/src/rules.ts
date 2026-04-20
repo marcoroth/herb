@@ -1,14 +1,23 @@
 import type { RuleClass } from "./types.js"
 
+import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
+import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
+import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
+
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
+import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
+import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
+import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
-import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
+import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
+import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
@@ -28,6 +37,9 @@ import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.
 import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
 import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
 import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script-interpolation.js"
+import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
+import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
+import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
@@ -73,24 +85,38 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
+import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
+import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
+import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
+
+import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  A11yNoAccesskeyAttributeRule,
+  A11yNoAriaUnsupportedElementsRule,
+  A11yNoAutofocusAttributeRule,
+
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoUnnecessaryTagAttributesRule,
+  ActionViewNoVoidElementContentRule,
+  ActionViewStrictLocalsFirstLineRule,
+  ActionViewStrictLocalsPartialOnlyRule,
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoDebugOutputRule,
   ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
@@ -107,6 +133,8 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
   ERBNoSilentStatementRule,
+  ERBNoUnusedExpressionsRule,
+  ERBNoUnusedLiteralsRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
@@ -114,6 +142,7 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
+  ERBPreferDirectOutputRule,
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
@@ -159,13 +188,18 @@ export const rules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
+  HTMLNoUnescapedEntitiesRule,
+  HTMLNoUnknownTagRule,
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
+  HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
+
+  SourceIndentationRule,
 
   SVGTagNameCapitalizationRule,
 

@@ -131,4 +131,20 @@ describe("erb-prefer-image-tag-helper", () => {
   test("passes for img with only http URL", () => {
     expectNoOffenses('<img src="http://example.com/image.jpg" alt="External image">')
   })
+
+  test("passes for image_tag with string source", () => {
+    expectNoOffenses('<%= image_tag "logo.png", alt: "Company logo" %>')
+  })
+
+  test("passes for image_tag with ruby expression source", () => {
+    expectNoOffenses('<%= image_tag user.avatar, alt: "Avatar" %>')
+  })
+
+  test("passes for image_tag with image_path source", () => {
+    expectNoOffenses('<%= image_tag image_path("logo.png"), alt: "Logo" %>')
+  })
+
+  test("passes for image_tag with asset_path source", () => {
+    expectNoOffenses('<%= image_tag asset_path("banner.jpg"), alt: "Banner" %>')
+  })
 })

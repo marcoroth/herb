@@ -1,80 +1,67 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
-import { isHTMLOpenTagNode, isHTMLCloseTagNode } from "@herb-tools/core"
+import { ElementStackVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, Mutable, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLCloseTagNode, ERBOpenTagNode, Token, ParseResult, ParserOptions } from "@herb-tools/core"
+
+type HTMLTagNode = HTMLOpenTagNode | HTMLCloseTagNode
 
 interface SVGTagNameCapitalizationAutofixContext extends BaseAutofixContext {
-  node: Mutable<HTMLOpenTagNode | HTMLCloseTagNode>
+  node: Mutable<HTMLTagNode>
   currentTagName: string
   correctCamelCase: string
 }
 
-class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitalizationAutofixContext> {
-  private insideSVG = false
-
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value
-
-    if (tagName && ["svg"].includes(tagName.toLowerCase())) {
-      const wasInsideSVG = this.insideSVG
-      this.insideSVG = true
-      this.visitChildNodes(node)
-      this.insideSVG = wasInsideSVG
-      return
-    }
-
-    if (this.insideSVG) {
-      if (isHTMLOpenTagNode(node.open_tag)) {
-        this.checkTagName(node.open_tag)
-      }
-
-      if (node.close_tag && isHTMLCloseTagNode(node.close_tag)) {
-        this.checkTagName(node.close_tag)
-      }
-    }
-
-    this.visitChildNodes(node)
+class SVGTagNameCapitalizationVisitor extends ElementStackVisitor<SVGTagNameCapitalizationAutofixContext> {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.checkTagName(node.tag_name, "Opening", node)
+    super.visitHTMLOpenTagNode(node)
   }
 
+  visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
+    this.checkTagName(node.tag_name, "Closing", node)
+    super.visitHTMLCloseTagNode(node)
+  }
 
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {
-    const tagName = node.tag_name?.value
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkTagName(node.tag_name, "ERB opening")
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkTagName(tagNameToken: Token | null, type: string, autofixNode?: HTMLTagNode): void {
+    if (!this.isInsideElement("svg")) return
+
+    const tagName = tagNameToken?.value
     if (!tagName) return
 
     if (SVG_CAMEL_CASE_ELEMENTS.has(tagName)) return
 
-    const lowercaseTagName = tagName.toLowerCase()
-    const correctCamelCase = SVG_LOWERCASE_TO_CAMELCASE.get(lowercaseTagName)
+    const correctCamelCase = SVG_LOWERCASE_TO_CAMELCASE.get(tagName.toLowerCase())
+    if (!correctCamelCase || tagName === correctCamelCase) return
 
-    if (correctCamelCase && tagName !== correctCamelCase) {
-      let type: string = node.type
-
-      if (isHTMLOpenTagNode(node)) type = "Opening"
-      if (isHTMLCloseTagNode(node)) type = "Closing"
-
-      this.addOffense(
-        `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
-        node.tag_name!.location,
-        {
-          node,
-          currentTagName: tagName,
-          correctCamelCase
-        }
-      )
-    }
+    this.addOffense(
+      `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
+      tagNameToken!.location,
+      autofixNode ? { node: autofixNode, currentTagName: tagName, correctCamelCase } : undefined
+    )
   }
 }
 
 export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitalizationAutofixContext> {
   static autocorrectable = true
   static ruleName = "svg-tag-name-capitalization"
+  static introducedIn = this.version("0.4.2")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

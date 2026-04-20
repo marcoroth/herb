@@ -1,0 +1,48 @@
+{
+  "name": "@herb-tools/language-service",
+  "version": "0.9.7",
+  "description": "HTML+ERB language service built on the Herb parser, providing a compatible API with vscode-html-languageservice",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-service%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/language-service"
+  },
+  "main": "./dist/herb-language-service.cjs",
+  "module": "./dist/herb-language-service.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/herb-language-service.esm.js",
+      "require": "./dist/herb-language-service.cjs",
+      "default": "./dist/herb-language-service.esm.js"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vscode-html-languageservice": "^5.1.0",
+    "vscode-languageserver-textdocument": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@herb-tools/core": "0.9.7",
+    "vscode-html-languageservice": "^5.1.0",
+    "vscode-languageserver-textdocument": "^1.0.0"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/"
+  ]
+}

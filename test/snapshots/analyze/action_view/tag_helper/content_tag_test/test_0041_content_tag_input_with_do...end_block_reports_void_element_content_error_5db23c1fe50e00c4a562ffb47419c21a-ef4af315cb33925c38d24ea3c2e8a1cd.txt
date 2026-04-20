@@ -1,0 +1,37 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0041_content_tag :input with do...end block reports void element content error"
+input: |2-
+<%= content_tag :input do %>
+  content
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ VoidElementContentError (location: (1:0)-(3:9))
+    │   │       ├── message: "Void element `input` cannot have content. `content_tag :input` does not accept a block for content."
+    │   │       ├── tag_name: "input" (location: (1:4)-(1:15))
+    │   │       ├── helper_name: "content_tag :input"
+    │   │       └── content_type: "a block"
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:28))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag :input do " (location: (1:3)-(1:26))
+    │   │       ├── tag_closing: "%>" (location: (1:26)-(1:28))
+    │   │       ├── tag_name: "input" (location: (1:4)-(1:15))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "input" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:28)-(3:0))
+    │   │       └── content: "\n  content\n"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

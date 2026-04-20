@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize
 
   def initialize(args)
     @args = args
@@ -99,6 +99,7 @@ class Herb::CLI
         bundle exec herb config [path]              Show configuration and file patterns for a project.
         bundle exec herb ruby [file]                Extract Ruby from a file.
         bundle exec herb html [file]                Extract HTML from a file.
+        bundle exec herb diff [old] [new]           Diff two files and show the minimal set of AST differences.
         bundle exec herb playground [file]          Open the content of the source file in the playground.
         bundle exec herb version                    Prints the versions of the Herb gem and the libherb library.
 
@@ -165,7 +166,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -204,6 +205,8 @@ class Herb::CLI
                   end
                 when "actionview"
                   run_actionview_command
+                when "diff"
+                  diff_files
                 when "lint"
                   run_node_tool("herb-lint", "@herb-tools/linter")
                 when "format"
@@ -303,6 +306,18 @@ class Herb::CLI
 
       parser.on("--track-whitespace", "Enable whitespace tracking (for parse command) (default: false)") do
         self.track_whitespace = true
+      end
+
+      parser.on("--action-view-helpers", "Enable Action View helper detection (for parse command) (default: false)") do
+        self.action_view_helpers = true
+      end
+
+      parser.on("--trim", "Enable trimming of leading/trailing whitespace (for compile/render commands)") do
+        self.trim = true
+      end
+
+      parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
+        self.optimize = true
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -557,6 +572,57 @@ class Herb::CLI
     project.print_file_report(@file)
   end
 
+  def diff_files
+    old_file = @args[1]
+    new_file = @args[2]
+
+    if old_file.nil? || new_file.nil?
+      puts "Usage: herb diff <old_file> <new_file> [options]"
+      exit(1)
+    end
+
+    unless File.exist?(old_file)
+      puts "File doesn't exist: #{old_file}"
+      exit(1)
+    end
+
+    unless File.exist?(new_file)
+      puts "File doesn't exist: #{new_file}"
+      exit(1)
+    end
+
+    old_content = File.read(old_file)
+    new_content = File.read(new_file)
+
+    diff_result = Herb.diff(old_content, new_content)
+
+    if json
+      require "json"
+      puts JSON.pretty_generate(diff_result.to_hash)
+    elsif diff_result.identical?
+      puts "Trees are identical."
+    else
+      operations = diff_result.operations
+      puts "#{operations.size} difference#{"s" unless operations.size == 1} found:\n\n"
+
+      operations.each_with_index do |operation, index|
+        puts "  #{index + 1}. #{operation.type} at path [#{operation.path.join(", ")}]"
+
+        if operation.old_node
+          puts "     old: #{operation.old_node.type}"
+        end
+
+        if operation.new_node
+          puts "     new: #{operation.new_node.type}"
+        end
+
+        puts
+      end
+    end
+
+    exit(0)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -572,6 +638,8 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:optimize] = true if optimize
+      options[:trim] = true if trim
       options[:validate_ruby] = true
       options[:framework] = :action_view if @action_view
       engine = Herb::Engine.new(file_content, options)
@@ -661,6 +729,9 @@ class Herb::CLI
       end
 
       options[:framework] = :action_view if @action_view
+      options[:optimize] = true if optimize
+      options[:trim] = true if trim
+
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src
 

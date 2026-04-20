@@ -572,5 +572,127 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class StrictLocalsPositionalArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_positional_argument_error
+      def to_hash: () -> serialized_strict_locals_positional_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsBlockArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_block_argument_error
+      def to_hash: () -> serialized_strict_locals_block_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsSplatArgumentError < Error
+      include Colors
+
+      attr_reader name: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_splat_argument_error
+      def to_hash: () -> serialized_strict_locals_splat_argument_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsMissingParenthesisError < Error
+      include Colors
+
+      attr_reader rest: String?
+
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_strict_locals_missing_parenthesis_error
+      def to_hash: () -> serialized_strict_locals_missing_parenthesis_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class StrictLocalsDuplicateDeclarationError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class VoidElementContentError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token?
+
+      attr_reader helper_name: String?
+
+      attr_reader content_type: String?
+
+      # : (String, Location?, String, Herb::Token, String, String) -> void
+      def initialize: (String, Location?, String, Herb::Token, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_void_element_content_error
+      def to_hash: () -> serialized_void_element_content_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class DotNotationCasingError < Error
+      include Colors
+
+      attr_reader segment: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_dot_notation_casing_error
+      def to_hash: () -> serialized_dot_notation_casing_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

@@ -52,6 +52,7 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
 
 export class ERBNoCaseNodeChildrenRule extends ParserRule {
   static ruleName = "erb-no-case-node-children"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -4,15 +4,15 @@
 #include <string.h>
 
 extern "C" {
-#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/location.h"
-#include "../extension/libherb/include/position.h"
-#include "../extension/libherb/include/range.h"
-#include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/util/hb_array.h"
-#include "../extension/libherb/include/util/hb_buffer.h"
-#include "../extension/libherb/include/util/hb_string.h"
+#include "../extension/libherb/include/location/location.h"
+#include "../extension/libherb/include/location/position.h"
+#include "../extension/libherb/include/location/range.h"
+#include "../extension/libherb/include/lexer/token.h"
+#include "../extension/libherb/include/lib/hb_array.h"
+#include "../extension/libherb/include/lib/hb_buffer.h"
+#include "../extension/libherb/include/lib/hb_string.h"
 }
 
 #include "error_helpers.h"

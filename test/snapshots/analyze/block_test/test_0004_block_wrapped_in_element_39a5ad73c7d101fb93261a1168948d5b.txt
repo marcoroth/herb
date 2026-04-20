@@ -31,6 +31,10 @@ input: |2-
     │   │   │   │   └── @ HTMLTextNode (location: (2:16)-(4:2))
     │   │   │   │       └── content: "\n    Content\n  "
     │   │   │   │
+    │   │   │   ├── block_arguments: []
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
     │   │   │   └── end_node:
     │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
     │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))

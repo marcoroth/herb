@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0042_control tag with left trim and inline content"
+input: "{source: \"<p>\\n  <%- if true %>text<% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  text
+</p>

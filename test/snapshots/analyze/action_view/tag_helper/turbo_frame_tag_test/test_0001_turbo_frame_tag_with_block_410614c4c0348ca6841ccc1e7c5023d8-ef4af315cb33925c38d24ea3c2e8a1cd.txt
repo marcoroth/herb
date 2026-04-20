@@ -27,7 +27,7 @@ options: {action_view_helpers: true}
     │   │               ├── equals: "=" (location: (1:20)-(1:26))
     │   │               └── value:
     │   │                   └── @ HTMLAttributeValueNode (location: (1:20)-(1:26))
-    │   │                       ├── open_quote: """ (location: (1:20)-(1:26))
+    │   │                       ├── open_quote: """ (location: (1:20)-(1:20))
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ LiteralNode (location: (1:20)-(1:26))
     │   │                       │       └── content: "tray"

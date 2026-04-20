@@ -204,6 +204,29 @@
                   </div>
                 </div>
 
+                <div class="relative hidden" data-playground-target="autofixUnsafeWrapper">
+                  <button
+                    data-action="click->playground#autofixUnsafeEditor"
+                    data-playground-target="autofixUnsafeButton"
+                    id="autofix-unsafe-editor"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fas fa-triangle-exclamation w-4"></i>
+                    <i
+                      class="fas fa-circle-check w-4 text-green-600 hidden ease-in duration-300"
+                    ></i>
+
+                    <span class="ml-1">Autofix Unsafe</span>
+                  </button>
+                  <div
+                    data-playground-target="autofixUnsafeTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Autocorrect unsafe Herb Linter offenses
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
                 <div class="relative">
                   <button
                     data-action="click->playground#formatEditor"
@@ -374,6 +397,26 @@
                 </button>
 
                 <button
+                  data-playground-target="viewerButton"
+                  data-viewer="rewrite"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                >
+                  <i class="fas fa-wand-magic-sparkles"></i>
+                  <span class="ml-1">Rewrite</span>
+                </button>
+
+                <button
+                  data-playground-target="viewerButton"
+                  data-viewer="diff"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                >
+                  <i class="fas fa-code-compare"></i>
+                  <span class="ml-1">Diff</span>
+                </button>
+
+                <button
                   disabled
                   data-playground-target="viewerButton"
                   data-viewer="full"
@@ -441,6 +484,16 @@
                     <span class="select-none">Action View helpers</span>
                   </label>
 
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Transform inline conditionals (postfix if/unless, ternaries) into ERBIfNode/ERBUnlessNode wrapping the expression">
+                    <input
+                      type="checkbox"
+                      data-option="transform_conditionals"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Transform conditionals</span>
+                  </label>
+
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Detect ActionView render calls and represent them as ERBRenderNode with extracted partial, collection, layout, object, as, and locals fields">
                     <input
                       type="checkbox"
@@ -449,6 +502,16 @@
                       class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
                     />
                     <span class="select-none">Transform render nodes</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Parse ERB comment strict locals declarations (<%# locals: (...) %>) and transform them into ERBStrictLocalsNode with structured local variable information">
+                    <input
+                      type="checkbox"
+                      data-option="strict_locals"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Strict locals</span>
                   </label>
 
                   <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Serialize the full Prism ProgramNode for the entire extracted Ruby on the DocumentNode">
@@ -480,6 +543,41 @@
                     />
                     <span class="select-none">Prism nodes (deep)</span>
                   </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable HTML tag parsing — uncheck to treat all HTML-like content as literal text (ERB is still parsed)">
+                    <input
+                      type="checkbox"
+                      data-option="html"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      checked
+                    />
+                    <span class="select-none">HTML</span>
+                  </label>
+
+                  <label class="flex items-center gap-1.5 text-gray-300 text-sm" title="Enable dot-notation component tags like &lt;Dialog.Button&gt; — requires each segment to start with an uppercase letter">
+                    <input
+                      type="checkbox"
+                      data-option="dot_notation_tags"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                    />
+                    <span class="select-none">Dot-notation tags</span>
+                  </label>
+
+                  <span class="text-gray-600 mx-1">|</span>
+
+                  <button
+                    data-action="click->playground#expandAllNodes"
+                    class="text-gray-300 hover:text-white text-sm underline"
+                    title="Expand all tree nodes"
+                  >Expand all</button>
+
+                  <button
+                    data-action="click->playground#collapseAllNodes"
+                    class="text-gray-300 hover:text-white text-sm underline"
+                    title="Collapse all tree nodes"
+                  >Collapse all</button>
                 </div>
 
                 <pre
@@ -504,6 +602,107 @@
                 data-action="click->playground#shrinkViewer"
                 class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               ></pre>
+
+              <div
+                data-viewer-target="rewrite"
+                data-playground-target="rewriteViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div class="p-3 border-b border-gray-600 flex gap-4 items-center justify-between">
+                  <div class="flex gap-2 items-center">
+                    <span class="text-sm text-gray-300 mr-2">Rewriter:</span>
+                    <span data-playground-target="rewriteStatus" class="px-2 py-1 text-xs rounded font-medium"></span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 text-gray-300 text-sm">
+                      <input
+                        type="checkbox"
+                        data-playground-target="rewriteActionViewHelpers"
+                        data-action="change->playground#onRewriteActionViewHelpersChange"
+                        class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                      />
+                      <span class="select-none">Action View helpers</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="w-full h-full overflow-auto">
+                  <pre data-playground-target="rewriteOutput" class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4] language-html highlight" style="white-space: pre; line-height: 1.3"></pre>
+                </div>
+              </div>
+
+              <div
+                data-viewer-target="diff"
+                data-playground-target="diffViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div class="p-3 border-b border-gray-600 flex gap-4 items-center justify-between">
+                  <div class="flex gap-2 items-center">
+                    <span class="text-sm text-gray-300 mr-2">Mode:</span>
+
+                    <button
+                      data-playground-target="diffLiveButton"
+                      data-action="click->playground#setDiffModeLive"
+                      class="px-2 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #e5c07b; background: rgba(229, 192, 123, 0.2)"
+                    >Live</button>
+
+                    <button
+                      data-playground-target="diffCheckpointButton"
+                      data-action="click->playground#setDiffModeCheckpoint"
+                      class="px-2 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
+                    >Checkpoint</button>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      data-playground-target="diffSnapshotButton"
+                      data-action="click->playground#diffSnapshot"
+                      class="hidden px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #61afef; background: rgba(97, 175, 239, 0.15)"
+                    >
+                      <i class="fas fa-camera mr-1"></i>
+                      Snapshot
+                    </button>
+
+                    <button
+                      data-playground-target="diffCheckButton"
+                      data-action="click->playground#diffCheck"
+                      class="hidden px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #e5c07b; background: rgba(229, 192, 123, 0.15)"
+                    >
+                      <i class="fas fa-code-compare mr-1"></i>
+                      Diff
+                    </button>
+
+                    <button
+                      data-action="click->playground#clearDiffFeed"
+                      class="px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
+                    >
+                      <i class="fas fa-trash mr-1"></i>
+                      Clear
+                    </button>
+
+                    <span data-playground-target="diffStatus" class="px-2 py-1 text-xs rounded font-medium"></span>
+                  </div>
+                </div>
+
+                <div class="w-full h-full overflow-auto relative">
+                  <div data-playground-target="diffOutput" class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4]" style="white-space: pre-wrap; line-height: 1.5"></div>
+
+                  <div data-playground-target="diffParseError" class="hidden absolute inset-0 flex justify-center z-10" style="padding-top: 2rem; background: rgba(40, 44, 52, 0.5); backdrop-filter: blur(2px)">
+                    <div class="rounded-lg px-5 py-4 text-center self-start" style="background: rgba(40, 44, 52, 0.85); border: 1px solid rgba(171, 178, 191, 0.1)">
+                      <span style="color: #e5c07b"><i class="fas fa-pause-circle mr-2"></i></span>
+                      <span class="text-sm" style="color: #abb2bf">Diff paused — </span>
+                      <span class="text-sm" style="color: #607d8b">fix syntax errors to resume</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <div
                 data-viewer-target="format"

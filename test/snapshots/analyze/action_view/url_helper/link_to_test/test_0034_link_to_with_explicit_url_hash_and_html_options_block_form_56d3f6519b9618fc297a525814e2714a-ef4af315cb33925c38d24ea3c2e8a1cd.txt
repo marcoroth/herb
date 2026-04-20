@@ -16,43 +16,43 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:73)-(1:75))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:12)-(1:54))
+    │   │           ├── @ HTMLAttributeNode (location: (1:56)-(1:68))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:54))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:56)-(1:61))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:12)-(1:54))
-    │   │           │   │               └── content: "href"
+    │   │           │   │           └── @ LiteralNode (location: (1:56)-(1:61))
+    │   │           │   │               └── content: "class"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: ":" (location: (1:12)-(1:54))
+    │   │           │   ├── equals: ": " (location: (1:61)-(1:63))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:54))
-    │   │           │           ├── open_quote: ∅
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:63)-(1:68))
+    │   │           │           ├── open_quote: """ (location: (1:63)-(1:64))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ RubyLiteralNode (location: (1:12)-(1:54))
-    │   │           │           │       └── content: "url_for({ controller: \"profiles\", action: \"show\" })"
+    │   │           │           │   └── @ LiteralNode (location: (1:64)-(1:67))
+    │   │           │           │       └── content: "btn"
     │   │           │           │
-    │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           ├── close_quote: """ (location: (1:67)-(1:68))
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:56)-(1:63))
+    │   │           └── @ HTMLAttributeNode (location: (1:12)-(1:54))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:56)-(1:63))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:54))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:56)-(1:63))
-    │   │               │               └── content: "class"
+    │   │               │           └── @ LiteralNode (location: (1:12)-(1:54))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:56)-(1:63))
+    │   │               ├── equals: ":" (location: (1:12)-(1:54))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:56)-(1:63))
-    │   │                       ├── open_quote: """ (location: (1:56)-(1:63))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:12)-(1:54))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:56)-(1:63))
-    │   │                       │       └── content: "btn"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:12)-(1:54))
+    │   │                       │       └── content: "url_for({ controller: \"profiles\", action: \"show\" })"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:63)-(1:63))
+    │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true
     │   │
     │   │

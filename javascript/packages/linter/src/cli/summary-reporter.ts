@@ -1,6 +1,9 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
+import { UNRELEASED_VERSION, compareSemver } from "../semver.js"
 
 import { ruleDocumentationUrl } from "../urls.js"
+
+import type { VersionSkippedRule } from "../linter.js"
 
 export interface SummaryData {
   files: string[]
@@ -18,6 +21,13 @@ export interface SummaryData {
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   autofixableCount: number
   ignoreDisableComments?: boolean
+  rulesSkippedByVersion?: VersionSkippedRule[]
+  rulesDisabledByConfig?: number
+  rulesNotEnabledByDefault?: number
+  configVersion?: string
+  configPath?: string
+  hasConfigFile?: boolean
+  toolVersion?: string
 }
 
 export class SummaryReporter {
@@ -103,28 +113,88 @@ export class SummaryReporter {
 
     const totalOffenses = totalErrors + totalWarnings + totalInfo + totalHints
 
-    if (autofixableCount > 0 || totalOffenses > 0) {
-      let fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")}`
+    {
+      let fixableLine: string
 
       if (autofixableCount > 0) {
-        fixableLine += ` | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+        fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")} | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+      } else {
+        fixableLine = `${colorize(colorize(`${autofixableCount} ${this.pluralize(autofixableCount, "offense")}`, "gray"), "bold")}`
       }
 
       console.log(`  ${colorize(pad("Fixable"), "gray")} ${fixableLine}`)
     }
+
+    const notEnabledCount = data.rulesNotEnabledByDefault ?? 0
+    const disabledCount = data.rulesDisabledByConfig ?? 0
+    const skippedCount = data.rulesSkippedByVersion?.length ?? 0
+    const rulesParts = [colorize(colorize(`${ruleCount} enabled`, "green"), "bold")]
+
+    if (notEnabledCount > 0) rulesParts.push(colorize(`${notEnabledCount} not enabled`, "cyan"))
+    if (disabledCount > 0) rulesParts.push(colorize(`${disabledCount} disabled`, "yellow"))
+    if (skippedCount > 0) rulesParts.push(colorize(`${skippedCount} skipped (version)`, "gray"))
+
+    console.log(`  ${colorize(pad("Rules"), "gray")} ${rulesParts.join(" | ")}`)
 
     if (showTiming) {
       const duration = Date.now() - startTime
       const timeString = startDate.toTimeString().split(' ')[0]
 
       console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
-      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray")}`)
+      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")}`)
     }
 
     if (filesWithOffenses === 0 && files.length > 1) {
       console.log("")
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
     }
+
+    this.displayVersionSkippedRules(data)
+  }
+
+  displayVersionSkippedRules(data: SummaryData): void {
+    const { rulesSkippedByVersion: skippedRules, configVersion, configPath, hasConfigFile, toolVersion } = data
+
+    if (!skippedRules || skippedRules.length === 0) return
+    if (!hasConfigFile) return
+
+    const ruleCount = skippedRules.length
+    const suggestedVersion = toolVersion || configVersion || "latest"
+
+    console.log("")
+    console.log(` ${colorize(`New rules available:`, "bold")}`)
+    console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
+
+    if (configPath) {
+      console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
+    }
+
+    console.log("")
+
+    const grouped = new Map<string, string[]>()
+
+    for (const rule of skippedRules) {
+      const existing = grouped.get(rule.introducedIn) || []
+      existing.push(rule.ruleName)
+      grouped.set(rule.introducedIn, existing)
+    }
+
+    const sortedVersions = Array.from(grouped.keys()).sort((a, b) => compareSemver(a, b))
+
+    for (const version of sortedVersions) {
+      const ruleNames = grouped.get(version)!
+      const versionLabel = version === UNRELEASED_VERSION ? "next release" : version
+
+      for (const ruleName of ruleNames) {
+        const ruleText = colorize(ruleName, "white")
+        const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(ruleName))
+        console.log(`  ${ruleLink} ${colorize(`(introduced in ${versionLabel})`, "gray")}`)
+      }
+    }
+
+    console.log("")
+    console.log(`  Run ${colorize("herb-lint --upgrade", "cyan")} to update the version. Rules with no offenses will be`)
+    console.log(`  enabled automatically; rules with offenses will be disabled to ease the upgrade.`)
   }
 
   displayMostViolatedRules(ruleOffenses: Map<string, { count: number, files: Set<string> }>, limit: number = 5): void {

@@ -1,0 +1,10 @@
+title: "Mostly HTML, one helper"
+subtitle: "4 lines of HTML with a single content_tag call"
+instance_variables:
+  title: '"Hello"'
+  message: '"World"'
+---
+<div>
+  <h1><%= @title %></h1>
+  <%= tag.p @message, class: "classes" %>
+</div>

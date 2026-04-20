@@ -5,7 +5,7 @@ import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
 import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode } from "@herb-tools/core"
 
-import type { ParseResult, HTMLAttributeNode, ERBContentNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ERBContentNode, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
@@ -203,12 +203,17 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
 export class HTMLNoDuplicateIdsRule extends ParserRule {
   static ruleName = "html-no-duplicate-ids"
+  static introducedIn = this.version("0.4.1")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "error"
     }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {

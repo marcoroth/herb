@@ -1,7 +1,7 @@
 #include <ruby.h>
 
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_arena_debug.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_arena_debug.h"
 
 #include "error_helpers.h"
 #include "extension.h"
@@ -136,9 +136,27 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
     if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
 
+    VALUE transform_conditionals = rb_hash_lookup(options, rb_utf8_str_new_cstr("transform_conditionals"));
+    if (NIL_P(transform_conditionals)) {
+      transform_conditionals = rb_hash_lookup(options, ID2SYM(rb_intern("transform_conditionals")));
+    }
+    if (!NIL_P(transform_conditionals) && RTEST(transform_conditionals)) {
+      parser_options.transform_conditionals = true;
+    }
+
+    VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
+    if (NIL_P(dot_notation_tags)) {
+      dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
+    }
+    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
+
     VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
     if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
     if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }
+
+    VALUE strict_locals = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict_locals"));
+    if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
+    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
 
     VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
     if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
@@ -151,6 +169,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
     if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
     if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
+
+    VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
+    if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
+    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
 
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
@@ -390,6 +412,113 @@ static VALUE Herb_version(VALUE self) {
 #endif
 }
 
+typedef struct {
+  AST_DOCUMENT_NODE_T* old_root;
+  AST_DOCUMENT_NODE_T* new_root;
+  herb_diff_result_T* diff_result;
+  hb_allocator_T old_allocator;
+  hb_allocator_T new_allocator;
+  hb_allocator_T diff_allocator;
+} diff_args_T;
+
+static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
+  VALUE cDiffOperation = rb_const_get(mHerb, rb_intern("DiffOperation"));
+
+  VALUE type = ID2SYM(rb_intern(herb_diff_operation_type_to_string(operation->type)));
+
+  VALUE path_array = rb_ary_new_capa(operation->path.depth);
+  for (uint16_t index = 0; index < operation->path.depth; index++) {
+    rb_ary_push(path_array, UINT2NUM(operation->path.indices[index]));
+  }
+
+  VALUE old_node = operation->old_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node) : Qnil;
+  VALUE new_node = operation->new_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node) : Qnil;
+
+  return rb_funcall(
+    cDiffOperation,
+    rb_intern("new"),
+    6,
+    type,
+    path_array,
+    old_node,
+    new_node,
+    UINT2NUM(operation->old_index),
+    UINT2NUM(operation->new_index)
+  );
+}
+
+static VALUE diff_convert_body(VALUE arg) {
+  diff_args_T* args = (diff_args_T*) arg;
+  herb_diff_result_T* diff_result = args->diff_result;
+
+  VALUE cDiffResult = rb_const_get(mHerb, rb_intern("DiffResult"));
+
+  size_t operation_count = herb_diff_operation_count(diff_result);
+  VALUE operations_array = rb_ary_new_capa((long) operation_count);
+
+  for (size_t index = 0; index < operation_count; index++) {
+    const herb_diff_operation_T* operation = herb_diff_operation_at(diff_result, index);
+    rb_ary_push(operations_array, rb_create_diff_operation(operation));
+  }
+
+  VALUE result_args[] = { diff_result->trees_identical ? Qtrue : Qfalse, operations_array };
+
+  return rb_class_new_instance(2, result_args, cDiffResult);
+}
+
+static VALUE diff_cleanup(VALUE arg) {
+  diff_args_T* args = (diff_args_T*) arg;
+
+  if (args->old_root != NULL) { ast_node_free((AST_NODE_T*) args->old_root, &args->old_allocator); }
+  if (args->new_root != NULL) { ast_node_free((AST_NODE_T*) args->new_root, &args->new_allocator); }
+
+  hb_allocator_destroy(&args->diff_allocator);
+  hb_allocator_destroy(&args->old_allocator);
+  hb_allocator_destroy(&args->new_allocator);
+
+  return Qnil;
+}
+
+static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
+  VALUE old_source, new_source;
+  rb_scan_args(argc, argv, "2", &old_source, &new_source);
+
+  char* old_string = (char*) check_string(old_source);
+  char* new_string = (char*) check_string(new_source);
+
+  diff_args_T args = { 0 };
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  if (!hb_allocator_init(&args.old_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  if (!hb_allocator_init(&args.new_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&args.old_allocator);
+
+    return Qnil;
+  }
+
+  if (!hb_allocator_init(&args.diff_allocator, HB_ALLOCATOR_ARENA)) {
+    hb_allocator_destroy(&args.old_allocator);
+    hb_allocator_destroy(&args.new_allocator);
+
+    return Qnil;
+  }
+
+  args.old_root = herb_parse(old_string, &parser_options, &args.old_allocator);
+  args.new_root = herb_parse(new_string, &parser_options, &args.new_allocator);
+
+  if (args.old_root == NULL || args.new_root == NULL) {
+    diff_cleanup((VALUE) &args);
+
+    return Qnil;
+  }
+
+  args.diff_result = herb_diff(args.old_root, args.new_root, &args.diff_allocator);
+
+  return rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);
+}
+
 __attribute__((__visibility__("default"))) void Init_herb(void) {
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
@@ -411,4 +540,5 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "arena_stats", Herb_arena_stats, -1);
   rb_define_singleton_method(mHerb, "leak_check", Herb_leak_check, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
+  rb_define_singleton_method(mHerb, "diff", Herb_diff, -1);
 }

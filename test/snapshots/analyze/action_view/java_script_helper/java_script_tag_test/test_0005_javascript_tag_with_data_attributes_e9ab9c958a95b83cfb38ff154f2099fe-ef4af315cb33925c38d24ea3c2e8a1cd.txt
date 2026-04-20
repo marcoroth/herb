@@ -16,31 +16,40 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:50)-(1:52))
     │   │       ├── tag_name: "script" (location: (1:4)-(1:18))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:27)-(1:39))
+    │   │           └── @ HTMLAttributeNode (location: (1:27)-(1:44))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:39))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:37))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:27)-(1:39))
+    │   │               │           └── @ LiteralNode (location: (1:27)-(1:37))
     │   │               │               └── content: "data-turbo-eval"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:27)-(1:39))
+    │   │               ├── equals: ": " (location: (1:37)-(1:39))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:27)-(1:39))
-    │   │                       ├── open_quote: """ (location: (1:27)-(1:39))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:39)-(1:44))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:27)-(1:39))
+    │   │                       │   └── @ LiteralNode (location: (1:39)-(1:44))
     │   │                       │       └── content: "false"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:39)-(1:39))
+    │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true
     │   │
     │   │
     │   │
     │   ├── tag_name: "script" (location: (1:4)-(1:18))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:52)-(3:0))
-    │   │       └── content: "\n  console.log('Hello')\n"
+    │   │   └── @ CDATANode (location: (1:0)-(3:9))
+    │   │       ├── tag_opening: "
+    │   │       //<![CDATA[
+    │   │       " (location: (1:0)-(3:9))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ LiteralNode (location: (1:52)-(3:0))
+    │   │       │       └── content: "\n  console.log('Hello')\n"
+    │   │       │
+    │   │       └── tag_closing: "
+    │   │       //]]>
+    │   │       " (location: (1:0)-(3:9))
     │   │
     │   ├── close_tag:
     │   │   └── @ ERBEndNode (location: (3:0)-(3:9))
