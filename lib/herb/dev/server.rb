@@ -131,7 +131,7 @@ module Herb
         handshake = WebSocket::Handshake::Server.new
 
         until handshake.finished?
-          readable = IO.select([socket], nil, nil, HANDSHAKE_TIMEOUT)
+          readable = socket.wait_readable(HANDSHAKE_TIMEOUT)
 
           unless readable
             socket.close

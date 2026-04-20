@@ -40,6 +40,10 @@ Style/SymbolArray:
 Style/BlockDelimiters:
   Enabled: false
 
+Style/SafeNavigationChainLength:
+  Exclude:
+    - lib/herb/cli.rb
+
 Style/GlobalVars:
   Exclude:
     - ext/herb/extconf.rb

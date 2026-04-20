@@ -694,7 +694,7 @@ class Herb::CLI
 
         operations = diff_result.operations
 
-        patchable_types = %w[text_changed attribute_value_changed attribute_added attribute_removed]
+        patchable_types = ["text_changed", "attribute_value_changed", "attribute_added", "attribute_removed"]
 
         can_patch = operations.all? { |operation|
           next false unless patchable_types.include?(operation.type.to_s)
