@@ -111,6 +111,9 @@ module Herb
     # : () -> Array[Herb::Visitor]
     def default_visitors: () -> Array[Herb::Visitor]
 
+    # : () -> Hash[Symbol, untyped]
+    def default_parser_options: () -> Hash[Symbol, untyped]
+
     def ensure_valid_ruby!: (untyped source) -> untyped
   end
 end

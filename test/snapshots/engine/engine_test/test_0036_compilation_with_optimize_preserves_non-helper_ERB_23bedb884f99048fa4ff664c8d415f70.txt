@@ -1,0 +1,9 @@
+---
+source: "Engine::EngineTest#test_0036_compilation with optimize preserves non-helper ERB"
+input: "{source: \"<h1><%= title %></h1>\\n<%= tag.div class: \\\"content\\\" do %>\\n  <p><%= body %></p>\\n<% end %>\\n\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<h1>'.freeze; _buf << (title).to_s; _buf << '</h1>
+<div class="content">
+  <p>'.freeze; _buf << (body).to_s; _buf << '</p>
+</div>'.freeze;
+_buf.to_s

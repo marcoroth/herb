@@ -567,4 +567,127 @@ class ConfigurationTest < Minitest::Spec
     assert_equal false, result[:nesting]
     assert_equal true, result[:accessibility]
   end
+
+  test "engine_option returns default when no config" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal false, config.engine_option("optimize", false)
+    assert_equal true, config.engine_option("strict", true)
+  end
+
+  test "engine_option reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+        strict: false
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.engine_option("optimize", false)
+    assert_equal false, config.engine_option("strict", true)
+  end
+
+  test "engine_option returns default for missing keys" do
+    write_config(<<~YAML)
+      engine:
+        optimize: true
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal true, config.engine_option("optimize", false)
+    assert_equal true, config.engine_option("strict", true)
+  end
+
+  test "engine parser_options defaults to empty hash" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal({}, config.engine_option("parser_options", {}))
+  end
+
+  test "engine parser_options reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: false
+          render_nodes: true
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    parser_options = config.engine_option("parser_options", {})
+    assert_equal false, parser_options["strict"]
+    assert_equal true, parser_options["render_nodes"]
+  end
+
+  test "engine parser_options are passed through to Herb.parse" do
+    engine = Herb::Engine.new("<div>Hello</div>", parser_options: { strict: false })
+    result = engine.src
+
+    assert_kind_of String, result
+    refute_empty result
+  end
+
+  test "engine parser_options from config are used" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: false
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>")
+    result = engine.src
+
+    assert_kind_of String, result
+    refute_empty result
+  end
+
+  test "engine parser_options from properties override config" do
+    write_config(<<~YAML)
+      engine:
+        parser_options:
+          strict: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>", parser_options: { strict: false })
+
+    assert_kind_of String, engine.src
+  end
+
+  test "engine debug defaults to false" do
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal false, config.engine_option("debug", false)
+  end
+
+  test "engine debug reads from config file" do
+    write_config(<<~YAML)
+      engine:
+        debug: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>")
+
+    assert_equal true, engine.debug
+  end
+
+  test "engine debug property overrides config" do
+    write_config(<<~YAML)
+      engine:
+        debug: true
+    YAML
+
+    Herb.configure(@temp_dir)
+
+    engine = Herb::Engine.new("<div>Hello</div>", debug: false)
+
+    assert_equal false, engine.debug
+  end
 end
