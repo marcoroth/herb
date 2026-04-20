@@ -116,11 +116,10 @@ function applyAttributeChange(root: Element, operation: DiffOperation): boolean 
 function applyAttributeAdd(root: Element, operation: DiffOperation): boolean {
   if (operation.new_value === null) return false
 
-  const node = findTarget(root, operation)
-  if (!node) return false
-
   const attribute = parseAttribute(operation.new_value)
   if (!attribute) return false
+
+  const node = findTarget(root, operation) ?? root
 
   node.setAttribute(attribute.name, attribute.value)
 

@@ -5,6 +5,10 @@ module Herb
     class Runner
       include Herb::Colors
 
+      PATCHABLE_TYPES: Array[String]
+
+      def self.can_patch?: (untyped operations) -> untyped
+
       CLEAR_SCREEN: ::String
 
       HIDE_CURSOR: ::String

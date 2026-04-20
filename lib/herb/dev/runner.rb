@@ -8,6 +8,18 @@ module Herb
     class Runner
       include Herb::Colors
 
+      PATCHABLE_TYPES = ["text_changed", "attribute_value_changed", "attribute_added", "attribute_removed"].freeze #: Array[String]
+
+      def self.can_patch?(operations)
+        operations.all? { |operation|
+          next false unless PATCHABLE_TYPES.include?(operation.type.to_s)
+          next false if operation.new_node&.type&.to_s&.include?("ERB")
+          next false if operation.old_node&.type&.to_s&.include?("ERB")
+
+          true
+        }
+      end
+
       CLEAR_SCREEN = "\e[2J\e[H"
       HIDE_CURSOR = "\e[?25l"
       SHOW_CURSOR = "\e[?25h"
@@ -312,16 +324,7 @@ module Herb
         return if diff_result.identical?
 
         operations = diff_result.operations
-
-        patchable_types = ["text_changed", "attribute_value_changed", "attribute_added", "attribute_removed"]
-
-        can_patch = operations.all? { |operation|
-          next false unless patchable_types.include?(operation.type.to_s)
-          next false if operation.new_node&.type&.to_s&.include?("ERB")
-          next false if operation.old_node&.type&.to_s&.include?("ERB")
-
-          true
-        }
+        can_patch = self.class.can_patch?(operations)
 
         if can_patch && websocket.client_count.positive?
           patch_operations = operations.map do |operation|
