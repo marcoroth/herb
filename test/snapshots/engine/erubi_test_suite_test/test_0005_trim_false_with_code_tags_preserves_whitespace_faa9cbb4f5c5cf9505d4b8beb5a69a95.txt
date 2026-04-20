@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0005_trim false with code tags preserves whitespace"
+input: "{source: \"  <% x = 1 %>\\n<%= x %>\\n\", locals: {}, options: {trim: false}}"
+---
+1
