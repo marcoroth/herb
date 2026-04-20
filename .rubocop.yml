@@ -42,7 +42,7 @@ Style/BlockDelimiters:
 
 Style/SafeNavigationChainLength:
   Exclude:
-    - lib/herb/cli.rb
+    - lib/herb/dev/runner.rb
 
 Style/GlobalVars:
   Exclude:
@@ -62,6 +62,7 @@ Metrics/CyclomaticComplexity:
     - bench/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/prism_inspect.rb
@@ -75,6 +76,7 @@ Metrics/MethodLength:
     - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
@@ -92,6 +94,7 @@ Metrics/AbcSize:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/dev/server.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/errors.rb
@@ -107,16 +110,17 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Exclude:
     - bin/**/*
+    - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/project.rb
     - lib/herb/visitor.rb
-    - lib/herb/ast/nodes.rb
-    - lib/herb/dev/server.rb
-    - test/**/*_test.rb
     - templates/template.rb
+    - test/**/*_test.rb
 
 Metrics/ModuleLength:
   Exclude:
@@ -140,6 +144,7 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/diff_operation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb
@@ -152,6 +157,7 @@ Metrics/PerceivedComplexity:
     - bin/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb

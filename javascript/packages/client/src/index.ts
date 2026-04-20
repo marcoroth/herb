@@ -12,7 +12,6 @@ export type {
   HerbMessage,
   WelcomeMessage,
   PatchMessage,
-  RefreshMessage,
   ReloadMessage,
   ErrorMessage,
   FixedMessage,

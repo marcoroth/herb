@@ -9,8 +9,6 @@ export function applyPatch(message: PatchMessage): boolean {
     return false
   }
 
-  console.debug(`[herb-client] found ${roots.length} root(s) for ${message.file}, applying ${message.operations.length} operation(s)`)
-
   let applied = false
 
   for (const operation of message.operations) {

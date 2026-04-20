@@ -10,7 +10,6 @@ import type {
   HerbMessage,
   WelcomeMessage,
   PatchMessage,
-  RefreshMessage,
   ReloadMessage,
   ErrorMessage,
   FixedMessage,
@@ -113,9 +112,6 @@ export class HerbClient {
       case "patch":
         this.handlePatch(message)
         break
-      case "refresh":
-        this.handleRefresh(message)
-        break
       case "reload":
         this.handleReload(message)
         break
@@ -138,38 +134,27 @@ export class HerbClient {
       MismatchAlert.show(message.project, clientProject)
     } else {
       this.projectMatch = true
-      console.debug(`[herb-client] project matched: ${message.project}`)
     }
   }
 
-  private async handlePatch(message: PatchMessage): Promise<void> {
+  private handlePatch(message: PatchMessage): void {
     this.options.onPatch?.(message)
 
     const applied = applyPatch(message)
 
-    if (applied) {
-      console.debug(`[herb-client] patched ${message.file} (${message.operations.length} operations)`)
-    } else {
-      console.debug(`[herb-client] patch failed for ${message.file}, falling back to reload`)
+    if (!applied) {
       window.location.reload()
     }
   }
 
-  private async handleRefresh(message: RefreshMessage): Promise<void> {
-    this.options.onRefresh?.(message)
-    console.debug(`[herb-client] refreshing for ${message.file}`)
+  private handleReload(message: ReloadMessage): void {
+    this.options.onReload?.(message)
     window.location.reload()
   }
 
-  private handleReload(message: ReloadMessage): void {
-    this.options.onReload?.(message)
-    console.debug(`[herb-client] reloading for ${message.file}`)
-    window.location.reload()
-  }
 
   private handleError(message: ErrorMessage): void {
     this.options.onError?.(message)
-    console.debug(`[herb-client] ${message.errors.length} error(s) in ${message.file}`)
 
     const overlay = this.getErrorOverlay()
 
@@ -187,7 +172,6 @@ export class HerbClient {
 
   private handleFixed(message: FixedMessage): void {
     this.options.onFixed?.(message)
-    console.debug(`[herb-client] errors fixed in ${message.file}`)
     this.getErrorOverlay()?.clearErrors()
   }
 

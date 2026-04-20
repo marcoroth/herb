@@ -1,0 +1,53 @@
+# Generated from lib/herb/dev/runner.rb with RBS::Inline
+
+module Herb
+  module Dev
+    class Runner
+      include Herb::Colors
+
+      CLEAR_SCREEN: ::String
+
+      HIDE_CURSOR: ::String
+
+      SHOW_CURSOR: ::String
+
+      def initialize: (?path: untyped, ?cli: untyped) -> untyped
+
+      def run: () -> untyped
+
+      def stop: () -> untyped
+
+      def restart: () -> untyped
+
+      def status: () -> untyped
+
+      private
+
+      def require_cruise: () -> untyped
+
+      def check_existing_server: (untyped expanded_path) -> untyped
+
+      def find_port: () -> untyped
+
+      def print_header: (untyped config, untyped expanded_path) -> untyped
+
+      def index_files: (untyped config, untyped path) -> untyped
+
+      def watch_files: (untyped config, untyped expanded_path, untyped websocket, untyped file_states) -> untyped
+
+      def handle_file_change: (untyped file_path, untyped relative_path, untyped file_states, untyped errored_files, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+
+      def broadcast_errors: (untyped file_path, untyped relative_path, untyped current_parse, untyped previous_content, untyped errored_files, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+
+      def broadcast_fixed: (untyped file_path, untyped relative_path, untyped current_content, untyped file_states, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+
+      def handle_diff: (untyped file_path, untyped relative_path, untyped current_content, untyped previous_content, untyped file_states, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+
+      def print_diff_summary: (untyped operations, untyped can_patch, untyped websocket, untyped timestamp, untyped display_path) -> untyped
+
+      def print_diff_node: (untyped indent, untyped sign, untyped color, untyped node, untyped type) -> untyped
+
+      def extract_node_value: (untyped node, untyped _operation_type) -> untyped
+    end
+  end
+end

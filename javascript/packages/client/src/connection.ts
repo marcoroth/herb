@@ -77,7 +77,6 @@ export class Connection {
 
       this.socket.onopen = () => {
         this.reconnectAttempts = 0
-        console.debug("[herb-client] connected to dev server")
         this.options.onConnect?.()
       }
 
