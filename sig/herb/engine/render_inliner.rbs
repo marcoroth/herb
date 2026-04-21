@@ -1,0 +1,37 @@
+# Generated from lib/herb/engine/render_inliner.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class RenderInliner
+      def initialize: (untyped engine, ?untyped options) -> untyped
+
+      def can_inline?: (untyped node) -> untyped
+
+      def can_inline_collection?: (untyped node) -> untyped
+
+      def collection?: (untyped node) -> untyped
+
+      def collection_expression: (untyped node) -> untyped
+
+      def collection_item_name: (untyped node) -> untyped
+
+      def resolve_path: (untyped node) -> untyped
+
+      def local_assignments: (untyped node) -> untyped
+
+      def parse: (untyped source) -> untyped
+
+      def push: (untyped path) -> untyped
+
+      def pop: (untyped path) -> untyped
+
+      private
+
+      def safe_to_inline?: (untyped file_path) -> untyped
+
+      def find_view_root: () -> untyped
+
+      def find_source_directory: () -> untyped
+    end
+  end
+end

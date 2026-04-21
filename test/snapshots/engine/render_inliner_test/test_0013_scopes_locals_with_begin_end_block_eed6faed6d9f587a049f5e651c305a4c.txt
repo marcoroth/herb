@@ -1,0 +1,7 @@
+---
+source: "Engine::RenderInlinerTest#test_0013_scopes locals with begin/end block"
+input: "{source: \"<%= render partial: \\\"posts/card\\\", locals: { name: \\\"test\\\" } %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; begin; ; name = ("test"); ;; _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>
+'.freeze; ; end;;
+_buf.to_s

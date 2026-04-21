@@ -61,6 +61,8 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
+      def visit_erb_render_node: (untyped node) -> untyped
+
       def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
 
       def visit_erb_if_node: (untyped node) -> untyped
@@ -100,6 +102,10 @@ module Herb
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
+
+      def inline_partial: (untyped node) -> untyped
+
+      def inline_collection: (untyped node) -> untyped
 
       def check_for_escaped_erb_tag!: (untyped opening) -> untyped
 
