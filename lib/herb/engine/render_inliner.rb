@@ -61,6 +61,12 @@ module Herb
         node.resolve(view_root: @view_root, source_directory: @source_directory)
       end
 
+      def optimizable_renders(ast)
+        collector = OptimizableRenderCollector.new(self)
+        ast.accept(collector)
+        collector.results
+      end
+
       def local_assignments(node)
         locals = {} #: Hash[String, String]
 
@@ -123,6 +129,37 @@ module Herb
 
         dir = Pathname.new(@filename).dirname
         @view_root.join(dir)
+      end
+    end
+
+    class OptimizableRenderCollector < ::Herb::Visitor
+      attr_reader :results
+
+      def initialize(inliner)
+        super()
+        @inliner = inliner
+        @results = [] #: Array[Hash[Symbol, untyped]]
+      end
+
+      def visit_erb_render_node(node)
+        if @inliner.can_inline?(node)
+          entry = {
+            node: node,
+            partial_path: node.partial_path,
+            resolved_path: @inliner.resolve_path(node),
+            locals: @inliner.local_assignments(node),
+            collection: @inliner.collection?(node),
+          }
+
+          if entry[:collection]
+            entry[:collection_expression] = @inliner.collection_expression(node)
+            entry[:item_name] = @inliner.collection_item_name(node)
+          end
+
+          @results << entry
+        end
+
+        visit_child_nodes(node)
       end
     end
   end

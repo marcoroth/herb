@@ -17,6 +17,8 @@ module Herb
 
       def resolve_path: (untyped node) -> untyped
 
+      def optimizable_renders: (untyped ast) -> untyped
+
       def local_assignments: (untyped node) -> untyped
 
       def parse: (untyped source) -> untyped
@@ -32,6 +34,14 @@ module Herb
       def find_view_root: () -> untyped
 
       def find_source_directory: () -> untyped
+    end
+
+    class OptimizableRenderCollector < ::Herb::Visitor
+      attr_reader results: untyped
+
+      def initialize: (untyped inliner) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
     end
   end
 end
