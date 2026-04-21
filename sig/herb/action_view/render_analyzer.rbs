@@ -66,6 +66,10 @@ module Herb
 
       def print_results: (untyped result, untyped duration) -> untyped
 
+      def check_dependencies: (untyped erb_files, untyped view_root) -> untyped
+
+      def print_dependency_warnings: (untyped warnings) -> untyped
+
       def find_erb_files: () -> untyped
 
       def find_view_root: () -> untyped
