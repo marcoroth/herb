@@ -8,27 +8,27 @@ module Herb
       PARTIAL_EXTENSIONS = Herb::PARTIAL_EXTENSIONS
 
       def static_partial?
-        partial && !partial.value.empty?
+        keywords&.partial && !keywords&.partial&.value&.empty?
       end
 
       def dynamic?
-        !static_partial? && (object || renderable)
+        !static_partial? && (keywords&.object || keywords&.renderable)
       end
 
       def partial_path
-        partial&.value
+        keywords&.partial&.value
       end
 
       def template_name
-        template_path&.value
+        keywords&.template_path&.value
       end
 
       def layout_name
-        layout&.value
+        keywords&.layout&.value
       end
 
       def local_names
-        locals.map { |local| local.name&.value }.compact
+        keywords&.locals&.map { |local| local.name&.value }&.compact || []
       end
 
       def resolve(view_root: nil, source_directory: nil)
@@ -54,7 +54,7 @@ module Herb
         source_directory = Pathname.new(source_directory) if source_directory && !source_directory.is_a?(Pathname)
 
         PARTIAL_EXTENSIONS.flat_map do |extension|
-          paths = []
+          paths = [] #: Array[Pathname]
 
           if directory
             paths << view_root.join(directory, "_#{base}#{extension}") if view_root
@@ -72,7 +72,7 @@ module Herb
 
         return [] unless name
 
-        suggestions = []
+        suggestions = [] #: Array[String]
 
         if view_root
           view_root = Pathname.new(view_root) unless view_root.is_a?(Pathname)
@@ -113,7 +113,7 @@ module Herb
 
         return [] unless name
 
-        matches = []
+        matches = [] #: Array[String]
 
         PARTIAL_EXTENSIONS.each do |extension|
           if name.include?("/")

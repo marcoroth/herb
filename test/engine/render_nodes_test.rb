@@ -26,13 +26,12 @@ module Engine
       FileUtils.rm_rf(@project_path)
     end
 
-    def compile(template, **options)
+    def compile(template, **)
       Herb::Engine.new(
         template,
         filename: "app/views/posts/show.html.erb",
         project_path: @project_path,
-        framework: :action_view,
-        **options
+        **
       )
     end
 
@@ -93,7 +92,7 @@ module Engine
       assert_includes diagnostics.first[:message], "Partial 'missing/partial' could not be resolved"
     end
 
-    test "validator is disabled without action_view framework" do
+    test "render validator is not run during normal compilation" do
       engine = Herb::Engine.new(
         '<%= render "nonexistent" %>',
         filename: "app/views/posts/show.html.erb",
@@ -124,6 +123,36 @@ module Engine
       with = compile(template)
 
       assert_equal without.src, with.src
+    end
+
+    test "no crash for render with file keyword" do
+      diagnostics = render_diagnostics('<%= render file: "shared/header" %>')
+
+      assert_kind_of Array, diagnostics
+    end
+
+    test "no crash for render with inline keyword" do
+      diagnostics = render_diagnostics('<%= render inline: "<p>Hello</p>" %>')
+
+      assert_kind_of Array, diagnostics
+    end
+
+    test "no crash for render with plain keyword" do
+      diagnostics = render_diagnostics('<%= render plain: "Hello" %>')
+
+      assert_kind_of Array, diagnostics
+    end
+
+    test "no crash for render with collection keyword" do
+      diagnostics = render_diagnostics('<%= render partial: "shared/header", collection: @items %>')
+
+      assert_empty diagnostics
+    end
+
+    test "no crash for render with layout keyword and block" do
+      diagnostics = render_diagnostics('<%= render layout: "shared/header" do %>Content<% end %>')
+
+      assert_kind_of Array, diagnostics
     end
   end
 end

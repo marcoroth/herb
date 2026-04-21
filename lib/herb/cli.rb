@@ -106,7 +106,6 @@ class Herb::CLI
 
         bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
         bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
-        bundle exec herb actionview compile [file]  Compile ERB template with ActionView framework support.
         bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
 
         bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
@@ -370,22 +369,40 @@ class Herb::CLI
     subcommand = @args[1]
     @file = @args[2]
 
+    target_path = @file ? File.expand_path(@file) : Dir.pwd
+    target_directory = File.directory?(target_path) ? target_path : File.dirname(target_path)
+    config = Herb::Configuration.new(target_directory)
+
+    if !(subcommand == "help" || subcommand.nil?) && (config.framework != "actionview")
+      project = config.project_root || target_directory
+      abort <<~MESSAGE
+        Herb also works outside of ActionView, but the `herb actionview` commands require the project to be explicitly configured for ActionView.
+
+        The project at '#{project}' is not configured to use ActionView (current framework: '#{config.framework}').
+
+        To enable ActionView support, add the following to your `.herb.yml`:
+
+          framework: actionview
+      MESSAGE
+    end
+
     case subcommand
     when "check"
-      require_relative "render_checker"
+      require_relative "action_view/render_analyzer"
 
-      path = @file || "."
+      path = File.expand_path(@file || ".")
 
       unless File.directory?(path)
         puts "Not a directory: '#{path}'."
         exit(1)
       end
 
-      checker = Herb::RenderChecker.new(path)
-      has_issues = checker.check!
+      analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+      has_issues = analyzer.check!
+
       exit(has_issues ? 1 : 0)
     when "graph"
-      require_relative "render_checker"
+      require_relative "action_view/render_analyzer"
 
       path = @file || "."
 
@@ -394,19 +411,17 @@ class Herb::CLI
         exit(1)
       end
 
-      checker = Herb::RenderChecker.new(File.directory?(path) ? path : File.dirname(path))
+      path = File.expand_path(path)
+      project_root = File.directory?(path) ? path : config.project_root&.to_s || File.dirname(path)
+      analyzer = Herb::ActionView::RenderAnalyzer.new(project_root)
 
       if File.file?(path)
-        checker.graph_file!(path)
+        analyzer.graph_file!(path)
       else
-        checker.graph!
+        analyzer.graph!
       end
 
       exit(0)
-    when "compile"
-      @file = @args[2]
-      @action_view = true
-      compile_template
     when "render"
       @file = @args[2]
       actionview_render
@@ -420,14 +435,12 @@ class Herb::CLI
         Subcommands:
           check [path]    Check if render calls resolve to valid partial files
           graph [path]    Show render dependency graph for a project or file
-          compile [file]  Compile ERB template with ActionView framework support
           render [file]   Render ERB template using ActionView helpers
 
         Examples:
-          bundle exec herb actionview check .
-          bundle exec herb actionview graph .
+          bundle exec herb actionview check
+          bundle exec herb actionview graph
           bundle exec herb actionview graph app/views/posts/show.html.erb
-          bundle exec herb actionview compile app/views/posts/show.html.erb
           bundle exec herb actionview render app/views/posts/show.html.erb
 
       HELP
@@ -671,7 +684,6 @@ class Herb::CLI
       options[:optimize] = true if optimize
       options[:trim] = true if trim
       options[:validate_ruby] = true
-      options[:framework] = :action_view if @action_view
       engine = Herb::Engine.new(file_content, options)
 
       if json
@@ -758,7 +770,6 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
-      options[:framework] = :action_view if @action_view
       options[:optimize] = true if optimize
       options[:trim] = true if trim
 
