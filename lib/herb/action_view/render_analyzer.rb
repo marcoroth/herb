@@ -784,12 +784,7 @@ module Herb
       def ensure_parallel!
         return if defined?(Parallel)
 
-        require "bundler/inline"
-
-        gemfile(true, quiet: true) do # steep:ignore
-          source "https://rubygems.org" # steep:ignore
-          gem "parallel" # steep:ignore
-        end
+        Herb.ensure_installed { gem "parallel" } # steep:ignore
       end
 
       def collect_ruby_render_references

@@ -903,12 +903,7 @@ module Herb
     def ensure_parallel!
       return if defined?(Parallel)
 
-      require "bundler/inline"
-
-      gemfile(true, quiet: true) do
-        source "https://rubygems.org"
-        gem "parallel"
-      end
+      Herb.ensure_installed { gem "parallel" } # steep:ignore
     end
 
     def separator
