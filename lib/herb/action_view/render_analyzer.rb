@@ -51,6 +51,9 @@ module Herb
 
         print_results(result, duration)
 
+        warnings = check_dependencies(erb_files, view_root)
+        print_dependency_warnings(warnings) if warnings.any?
+
         result.issues?
       end
 
@@ -671,6 +674,77 @@ module Herb
         end
 
         puts ""
+      end
+
+      def check_dependencies(erb_files, view_root)
+        require_relative "template_dependencies"
+
+        dep_analyzer = TemplateDependencies.new(@project_path)
+        dep_analyzer.scan_helpers!
+
+        warnings = [] #: Array[Hash[Symbol, untyped]]
+
+        erb_files.each do |file|
+          result = dep_analyzer.analyze(file)
+          is_partial = File.basename(file).start_with?("_")
+          relative = relative_path(file)
+
+          if is_partial && result.instance_variables.any?
+            result.instance_variables.each do |ivar|
+              warnings << { type: :ivar_in_partial, file: relative, ivar: ivar }
+            end
+          end
+
+          if result.unknown_calls.any?
+            result.unknown_calls.each do |call|
+              warnings << { type: :unknown_call, file: relative, call: call }
+            end
+          end
+        end
+
+        warnings
+      rescue StandardError => e
+        warn "Warning: Dependency analysis failed: #{e.message}"
+        [] #: Array[Hash[Symbol, untyped]]
+      end
+
+      def print_dependency_warnings(warnings)
+        ivar_warnings = warnings.select { |w| w[:type] == :ivar_in_partial }
+        unknown_warnings = warnings.select { |w| w[:type] == :unknown_call }
+
+        puts ""
+        puts " #{bold("Dependency warnings:")}"
+        puts ""
+
+        if ivar_warnings.any?
+          grouped = ivar_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Instance variables in partials")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("Partials should receive data as locals for reactivity tracing.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            ivars = file_warnings.map { |w| w[:ivar] }.uniq.sort
+            puts "    #{yellow(file)}"
+            ivars.each { |ivar| puts "      #{dimmed(ivar)}" }
+            puts ""
+          end
+        end
+
+        if unknown_warnings.any?
+          grouped = unknown_warnings.group_by { |w| w[:file] }
+          puts "  #{yellow("Unknown method calls")} #{dimmed("(#{grouped.size} #{pluralize(grouped.size, "file")})")}"
+          puts "  #{dimmed("Methods not in the ActionView helper registry or app/helpers/.")}"
+          puts ""
+
+          grouped.each do |file, file_warnings|
+            calls = file_warnings.map { |w| w[:call] }.uniq.sort
+            puts "    #{yellow(file)}"
+            calls.each { |call| puts "      #{dimmed(call)}" }
+            puts ""
+          end
+
+          puts ""
+        end
       end
 
       def find_erb_files
