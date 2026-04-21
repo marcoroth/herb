@@ -118,5 +118,19 @@ module Herb
     rescue StandardError
       nil
     end
+
+    def ensure_installed(&block)
+      require "bundler/inline"
+
+      verbose = $VERBOSE
+      $VERBOSE = nil
+
+      gemfile(true, quiet: true) do # steep:ignore
+        source "https://rubygems.org" # steep:ignore
+        instance_eval(&block) # steep:ignore
+      end
+    ensure
+      $VERBOSE = verbose
+    end
   end
 end
