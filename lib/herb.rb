@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 # typed: false
 
+module Herb
+  PARTIAL_EXTENSIONS = [
+    ".html.erb", ".html.herb", ".erb", ".herb", ".turbo_stream.erb", ".turbo_stream.herb"
+  ].freeze
+
+  PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
+end
+
 require_relative "herb/colors"
 require_relative "herb/range"
 require_relative "herb/position"
@@ -21,6 +29,7 @@ require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
 require_relative "herb/ast/erb_content_node"
 require_relative "herb/ast/helpers"
+require_relative "herb/ast/erb_render_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"

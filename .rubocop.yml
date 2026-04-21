@@ -42,6 +42,7 @@ Style/BlockDelimiters:
 
 Style/SafeNavigationChainLength:
   Exclude:
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/dev/runner.rb
 
 Style/GlobalVars:
@@ -74,6 +75,7 @@ Metrics/MethodLength:
   Exclude:
     - bench/**/*
     - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/dev/runner.rb
@@ -90,11 +92,12 @@ Metrics/AbcSize:
   Exclude:
     - bench/**/*
     - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/dev/server.rb
     - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/errors.rb
@@ -110,6 +113,7 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Exclude:
     - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
@@ -155,6 +159,7 @@ Metrics/PerceivedComplexity:
   Exclude:
     - bench/**/*
     - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/dev/runner.rb

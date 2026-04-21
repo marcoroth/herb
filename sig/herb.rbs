@@ -1,6 +1,12 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
+  PARTIAL_EXTENSIONS: untyped
+
+  PARTIAL_GLOB_PATTERN: ::String
+end
+
+module Herb
   # : (String path, ?arena_stats: bool) -> LexResult
   def self.lex_file: (String path, ?arena_stats: bool) -> LexResult
 

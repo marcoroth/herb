@@ -90,28 +90,29 @@ class Herb::CLI
         bundle exec herb [command] [options]
 
       Commands:
-        bundle exec herb lex [file]           Lex a file.
-        bundle exec herb parse [file]         Parse a file.
-        bundle exec herb compile [file]       Compile ERB template to Ruby code.
-        bundle exec herb render [file]        Compile and render ERB template to final output.
-        bundle exec herb analyze [path]       Analyze a project by passing a directory to the root of the project
-        bundle exec herb report [file]        Generate a Markdown bug report for a file
-        bundle exec herb config [path]        Show configuration and file patterns for a project
-        bundle exec herb ruby [file]          Extract Ruby from a file.
-        bundle exec herb html [file]          Extract HTML from a file.
-        bundle exec herb dev [path]           Start the dev server and watch for file changes.
-        bundle exec herb dev stop            Stop the running dev server.
-        bundle exec herb dev restart         Restart the dev server.
-        bundle exec herb dev status          Show dev server status.
-        bundle exec herb diff [old] [new]     Diff two files and show the minimal set of AST differences.
-        bundle exec herb playground [file]    Open the content of the source file in the playground
-        bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
+        bundle exec herb lex [file]                 Lex a file.
+        bundle exec herb parse [file]               Parse a file.
+        bundle exec herb compile [file]             Compile ERB template to Ruby code.
+        bundle exec herb render [file]              Compile and render ERB template to final output.
+        bundle exec herb analyze [path]             Analyze a project by passing a directory to the root of the project.
+        bundle exec herb report [file]              Generate a Markdown bug report for a file.
+        bundle exec herb config [path]              Show configuration and file patterns for a project.
+        bundle exec herb ruby [file]                Extract Ruby from a file.
+        bundle exec herb html [file]                Extract HTML from a file.
+        bundle exec herb diff [old] [new]           Diff two files and show the minimal set of AST differences.
+        bundle exec herb playground [file]          Open the content of the source file in the playground.
+        bundle exec herb dev                        Start the dev server and watch for file changes.
+        bundle exec herb version                    Prints the versions of the Herb gem and the libherb library.
 
-        bundle exec herb lint [patterns]      Lint templates (delegates to @herb-tools/linter)
-        bundle exec herb format [patterns]    Format templates (delegates to @herb-tools/formatter)
-        bundle exec herb highlight [file]     Syntax highlight templates (delegates to @herb-tools/highlighter)
-        bundle exec herb print [file]         Print AST (delegates to @herb-tools/printer)
-        bundle exec herb lsp                  Start the language server (delegates to @herb-tools/language-server)
+        bundle exec herb actionview check [path]    Check if render calls resolve to valid partial files.
+        bundle exec herb actionview graph [path]    Show render dependency graph for a project or file.
+        bundle exec herb actionview render [file]   Render ERB template using ActionView helpers.
+
+        bundle exec herb lint [patterns]            Lint templates (delegates to @herb-tools/linter)
+        bundle exec herb format [patterns]          Format templates (delegates to @herb-tools/formatter)
+        bundle exec herb highlight [file]           Syntax highlight templates (delegates to @herb-tools/highlighter)
+        bundle exec herb print [file]               Print AST (delegates to @herb-tools/printer)
+        bundle exec herb lsp                        Start the language server (delegates to @herb-tools/language-server)
 
       stdin:
         Commands that accept [file] also accept input via stdin:
@@ -211,6 +212,8 @@ class Herb::CLI
                     @file = @args[1]
                     run_dev_server
                   end
+                when "actionview"
+                  run_actionview_command
                 when "diff"
                   diff_files
                 when "lint"
@@ -360,6 +363,143 @@ class Herb::CLI
     return path_result unless path_result.empty?
 
     nil
+  end
+
+  def run_actionview_command
+    subcommand = @args[1]
+    @file = @args[2]
+
+    target_path = @file ? File.expand_path(@file) : Dir.pwd
+    target_directory = File.directory?(target_path) ? target_path : File.dirname(target_path)
+    config = Herb::Configuration.new(target_directory)
+
+    if !(subcommand == "help" || subcommand.nil?) && (config.framework != "actionview")
+      project = config.project_root || target_directory
+      abort <<~MESSAGE
+        Herb also works outside of ActionView, but the `herb actionview` commands require the project to be explicitly configured for ActionView.
+
+        The project at '#{project}' is not configured to use ActionView (current framework: '#{config.framework}').
+
+        To enable ActionView support, add the following to your `.herb.yml`:
+
+          framework: actionview
+      MESSAGE
+    end
+
+    case subcommand
+    when "check"
+      require_relative "action_view/render_analyzer"
+
+      path = File.expand_path(@file || ".")
+
+      unless File.directory?(path)
+        puts "Not a directory: '#{path}'."
+        exit(1)
+      end
+
+      analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+      has_issues = analyzer.check!
+
+      exit(has_issues ? 1 : 0)
+    when "graph"
+      require_relative "action_view/render_analyzer"
+
+      path = @file || "."
+
+      unless File.directory?(path) || File.file?(path)
+        puts "Not a file or directory: '#{path}'."
+        exit(1)
+      end
+
+      path = File.expand_path(path)
+      project_root = File.directory?(path) ? path : config.project_root&.to_s || File.dirname(path)
+      analyzer = Herb::ActionView::RenderAnalyzer.new(project_root)
+
+      if File.file?(path)
+        analyzer.graph_file!(path)
+      else
+        analyzer.graph!
+      end
+
+      exit(0)
+    when "render"
+      @file = @args[2]
+      actionview_render
+    when nil, "help"
+      puts <<~HELP
+        Herb ActionView Commands
+
+        Usage:
+          bundle exec herb actionview [subcommand] [options]
+
+        Subcommands:
+          check [path]    Check if render calls resolve to valid partial files
+          graph [path]    Show render dependency graph for a project or file
+          render [file]   Render ERB template using ActionView helpers
+
+        Examples:
+          bundle exec herb actionview check
+          bundle exec herb actionview graph
+          bundle exec herb actionview graph app/views/posts/show.html.erb
+          bundle exec herb actionview render app/views/posts/show.html.erb
+
+      HELP
+      exit(0)
+    else
+      puts "Unknown actionview subcommand: '#{subcommand}'"
+      puts "Run 'herb actionview help' for available subcommands."
+      exit(1)
+    end
+  end
+
+  def actionview_render
+    require "action_view"
+
+    source = file_content
+
+    lookup_context = ActionView::LookupContext.new([])
+    view = ActionView::Base.with_empty_template_cache.new(lookup_context, {}, nil)
+    handler = ActionView::Template::Handlers::ERB.new
+
+    template = ActionView::Template.new(
+      source,
+      @file || "(eval)",
+      handler,
+      locals: [],
+      format: :html
+    )
+
+    rendered = template.render(view, {})
+
+    if json
+      puts({ success: true, output: rendered, source: source }.to_json)
+    elsif silent
+      puts "Success"
+    else
+      puts rendered
+    end
+
+    exit(0)
+  rescue LoadError
+    puts "Error: ActionView is required for 'herb actionview render'."
+    puts ""
+    puts "Add it to your Gemfile:"
+    puts "  gem 'actionview'"
+    puts ""
+    puts "Or install it directly:"
+    puts "  gem install actionview"
+    exit(1)
+  rescue StandardError => e
+    if json
+      puts({ success: false, error: e.message, source: source }.to_json)
+    elsif silent
+      puts "Failed"
+    else
+      puts "Error: #{e.class}: #{e.message}"
+      puts e.backtrace.first(5).map { |line| "  #{line}" }.join("\n")
+    end
+
+    exit(1)
   end
 
   def node_available?
