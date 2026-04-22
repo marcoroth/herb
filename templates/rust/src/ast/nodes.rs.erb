@@ -160,7 +160,7 @@ macro_rules! convert_specific_node_field {
   };
 }
 
-unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
+pub(crate) unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
   if node_pointer.is_null() {
     return None;
   }

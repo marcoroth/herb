@@ -183,6 +183,16 @@ vscode:
     - any-glob-to-any-file:
       - '**/javascript/packages/vscode/**/*'
 
+dev-client:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/client/**/*'
+
+dev-server:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/herb/dev/**/*'
+
 dev-tools:
   - changed-files:
     - any-glob-to-any-file:

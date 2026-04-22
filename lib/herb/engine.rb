@@ -14,11 +14,22 @@ require_relative "engine/validation_error_overlay"
 require_relative "engine/validators/security_validator"
 require_relative "engine/validators/nesting_validator"
 require_relative "engine/validators/accessibility_validator"
+require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors, :enabled_validators
+
+    # @rbs!
+    #   def self.optimize_warning_issued: () -> bool
+    #   def self.optimize_warning_issued=: (bool) -> bool
+
+    class << self
+      attr_accessor :optimize_warning_issued #: bool
+    end
+
+    self.optimize_warning_issued = false
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -64,12 +75,20 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @debug = properties.fetch(:debug, false)
+      @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
-      @strict = properties.fetch(:strict, true)
+      @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
+      @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
+
+      if @optimize && !self.class.optimize_warning_issued
+        self.class.optimize_warning_issued = true
+
+        warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
+      end
+
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -110,7 +129,11 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
+      action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
+      transform_conditionals = @optimize && action_view_helpers
+      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true,
+                                                            action_view_helpers: action_view_helpers,
+                                                            transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -197,12 +220,36 @@ module Herb
       end
     end
 
+    def self.nested_attribute_value(value)
+      value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
+    end
+
     def self.comment?(code)
       code.include?("#")
     end
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
+    def source_may_contain_action_view_helpers?(source)
+      self.class.action_view_helper_pattern.match?(source)
+    end
+
+    def self.action_view_helper_pattern
+      @action_view_helper_pattern ||= begin
+        require_relative "action_view/helper_registry"
+
+        names = ::Herb::ActionView::HelperRegistry.supported.flat_map { |entry|
+          if entry.receiver_call_detect?
+            "#{entry.name}."
+          else
+            [entry.name, *entry.aliases]
+          end
+        }
+
+        Regexp.new("\\b(?:#{names.map { |name| Regexp.escape(name) }.join("|")})")
+      end
     end
 
     protected
@@ -337,7 +384,7 @@ module Herb
       @src << postamble
     end
 
-    def with_buffer(&_block)
+    def with_buffer(&)
       if @chain_appends
         @src << "; " << @bufvar unless @buffer_on_stack
         yield
@@ -470,6 +517,13 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def default_parser_options
+      fallback = {} #: Hash[Symbol, untyped]
+
+      Herb.configuration.engine_option("parser_options", fallback)
     end
 
     def ensure_valid_ruby!(source)

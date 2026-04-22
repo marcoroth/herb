@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0003_javascript_include_tag with URL"
+input: "{source: \"<%= javascript_include_tag \\\"http://www.example.com/xmlhr.js\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script src="http://www.example.com/xmlhr.js"></script>'.freeze;
+_buf.to_s

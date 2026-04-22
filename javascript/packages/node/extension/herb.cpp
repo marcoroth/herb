@@ -2,6 +2,7 @@ extern "C" {
 #include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/extract.h"
 #include "../extension/libherb/include/herb.h"
+#include "../extension/libherb/include/diff/herb_diff.h"
 #include "../extension/libherb/include/location/location.h"
 #include "../extension/libherb/include/location/range.h"
 #include "../extension/libherb/include/lexer/token.h"
@@ -357,12 +358,132 @@ napi_value Herb_version(napi_env env, napi_callback_info info) {
   return result;
 }
 
+napi_value Herb_diff(napi_env env, napi_callback_info info) {
+  size_t argc = 2;
+  napi_value args[2];
+  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+  if (argc < 2) {
+    napi_throw_error(env, nullptr, "Wrong number of arguments: expected 2 (old_source, new_source)");
+    return nullptr;
+  }
+
+  char* old_string = CheckString(env, args[0]);
+  if (!old_string) { return nullptr; }
+
+  char* new_string = CheckString(env, args[1]);
+  if (!new_string) { free(old_string); return nullptr; }
+
+  hb_allocator_T old_allocator;
+  hb_allocator_T new_allocator;
+  hb_allocator_T diff_allocator;
+
+  if (!hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA)) { free(old_string); free(new_string); return nullptr; }
+  if (!hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA)) { free(old_string); free(new_string); hb_allocator_destroy(&old_allocator); return nullptr; }
+  if (!hb_allocator_init(&diff_allocator, HB_ALLOCATOR_ARENA)) { free(old_string); free(new_string); hb_allocator_destroy(&old_allocator); hb_allocator_destroy(&new_allocator); return nullptr; }
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  AST_DOCUMENT_NODE_T* old_root = herb_parse(old_string, &parser_options, &old_allocator);
+  AST_DOCUMENT_NODE_T* new_root = herb_parse(new_string, &parser_options, &new_allocator);
+
+  if (old_root == nullptr || new_root == nullptr) {
+    if (old_root != nullptr) { ast_node_free((AST_NODE_T*) old_root, &old_allocator); }
+    if (new_root != nullptr) { ast_node_free((AST_NODE_T*) new_root, &new_allocator); }
+
+    hb_allocator_destroy(&diff_allocator);
+    hb_allocator_destroy(&old_allocator);
+    hb_allocator_destroy(&new_allocator);
+
+    free(old_string);
+    free(new_string);
+
+    napi_throw_error(env, nullptr, "Failed to parse source");
+
+    return nullptr;
+  }
+
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+
+  napi_value result;
+  napi_create_object(env, &result);
+
+  napi_value identical;
+  napi_get_boolean(env, diff_result->trees_identical, &identical);
+  napi_set_named_property(env, result, "identical", identical);
+
+  size_t operation_count = herb_diff_operation_count(diff_result);
+
+  napi_value operations;
+  napi_create_array_with_length(env, operation_count, &operations);
+
+  for (size_t index = 0; index < operation_count; index++) {
+    const herb_diff_operation_T* operation = herb_diff_operation_at(diff_result, index);
+
+    napi_value operation_object;
+    napi_value type_val;
+    napi_value path;
+
+    napi_create_object(env, &operation_object);
+    napi_create_string_utf8(env, herb_diff_operation_type_to_string(operation->type), NAPI_AUTO_LENGTH, &type_val);
+    napi_set_named_property(env, operation_object, "type", type_val);
+    napi_create_array_with_length(env, operation->path.depth, &path);
+
+    for (uint16_t path_index = 0; path_index < operation->path.depth; path_index++) {
+      napi_value path_val;
+      napi_create_uint32(env, operation->path.indices[path_index], &path_val);
+      napi_set_element(env, path, path_index, path_val);
+    }
+
+    napi_set_named_property(env, operation_object, "path", path);
+
+    if (operation->old_node != NULL) {
+      napi_set_named_property(env, operation_object, "oldNode", NodeFromCStruct(env, (AST_NODE_T*) operation->old_node));
+    } else {
+      napi_value null_val;
+      napi_get_null(env, &null_val);
+      napi_set_named_property(env, operation_object, "oldNode", null_val);
+    }
+
+    if (operation->new_node != NULL) {
+      napi_set_named_property(env, operation_object, "newNode", NodeFromCStruct(env, (AST_NODE_T*) operation->new_node));
+    } else {
+      napi_value null_val;
+      napi_get_null(env, &null_val);
+      napi_set_named_property(env, operation_object, "newNode", null_val);
+    }
+
+    napi_value old_index_val, new_index_val;
+    napi_create_uint32(env, operation->old_index, &old_index_val);
+    napi_create_uint32(env, operation->new_index, &new_index_val);
+    napi_set_named_property(env, operation_object, "oldIndex", old_index_val);
+    napi_set_named_property(env, operation_object, "newIndex", new_index_val);
+
+    napi_set_element(env, operations, (uint32_t) index, operation_object);
+  }
+
+  napi_set_named_property(env, result, "operations", operations);
+
+  ast_node_free((AST_NODE_T*) old_root, &old_allocator);
+  ast_node_free((AST_NODE_T*) new_root, &new_allocator);
+
+  hb_allocator_destroy(&diff_allocator);
+  hb_allocator_destroy(&old_allocator);
+  hb_allocator_destroy(&new_allocator);
+
+  free(old_string);
+  free(new_string);
+
+  return result;
+}
+
 napi_value Init(napi_env env, napi_value exports) {
   napi_property_descriptor descriptors[] = {
     { "parse", nullptr, Herb_parse, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lex", nullptr, Herb_lex, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "diff", nullptr, Herb_diff, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "parseRuby", nullptr, Herb_parse_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
   };

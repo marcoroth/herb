@@ -1,0 +1,4 @@
+module Parallel
+  def self.map: [T, U] (Array[T], ?in_processes: Integer) { (T) -> U } -> Array[U]
+  def self.processor_count: () -> Integer
+end

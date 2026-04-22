@@ -2,6 +2,14 @@
 
 module Herb
   class Configuration
+    OPTIONS_PATH: String
+
+    OPTIONS: Hash[String, untyped]
+
+    VALID_FRAMEWORKS: Array[String]
+
+    VALID_TEMPLATE_ENGINES: Array[String]
+
     CONFIG_FILENAMES: untyped
 
     PROJECT_INDICATORS: untyped
@@ -11,6 +19,8 @@ module Herb
     DEFAULTS: untyped
 
     attr_reader config: untyped
+
+    attr_reader user_config: untyped
 
     attr_reader config_path: untyped
 
@@ -24,6 +34,12 @@ module Herb
 
     def version: () -> untyped
 
+    # : () -> String
+    def framework: () -> String
+
+    # : () -> String
+    def template_engine: () -> String
+
     def files: () -> untyped
 
     def file_include_patterns: () -> untyped
@@ -33,6 +49,9 @@ module Herb
     def linter: () -> untyped
 
     def engine: () -> untyped
+
+    # : (String, untyped) -> untyped
+    def engine_option: (String, untyped) -> untyped
 
     def enabled_validators: (?untyped overrides) -> untyped
 
@@ -82,7 +101,7 @@ module Herb
 
     def project_root?: (untyped path) -> untyped
 
-    def load_config: () -> untyped
+    def load_user_config: () -> untyped
 
     def deep_merge: (untyped base, untyped override, ?additive_keys: untyped) -> untyped
   end

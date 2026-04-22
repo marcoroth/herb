@@ -407,6 +407,16 @@
                 </button>
 
                 <button
+                  data-playground-target="viewerButton"
+                  data-viewer="diff"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                >
+                  <i class="fas fa-code-compare"></i>
+                  <span class="ml-1">Diff</span>
+                </button>
+
+                <button
                   disabled
                   data-playground-target="viewerButton"
                   data-viewer="full"
@@ -619,6 +629,78 @@
 
                 <div class="w-full h-full overflow-auto">
                   <pre data-playground-target="rewriteOutput" class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4] language-html highlight" style="white-space: pre; line-height: 1.3"></pre>
+                </div>
+              </div>
+
+              <div
+                data-viewer-target="diff"
+                data-playground-target="diffViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div class="p-3 border-b border-gray-600 flex gap-4 items-center justify-between">
+                  <div class="flex gap-2 items-center">
+                    <span class="text-sm text-gray-300 mr-2">Mode:</span>
+
+                    <button
+                      data-playground-target="diffLiveButton"
+                      data-action="click->playground#setDiffModeLive"
+                      class="px-2 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #e5c07b; background: rgba(229, 192, 123, 0.2)"
+                    >Live</button>
+
+                    <button
+                      data-playground-target="diffCheckpointButton"
+                      data-action="click->playground#setDiffModeCheckpoint"
+                      class="px-2 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
+                    >Checkpoint</button>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      data-playground-target="diffSnapshotButton"
+                      data-action="click->playground#diffSnapshot"
+                      class="hidden px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #61afef; background: rgba(97, 175, 239, 0.15)"
+                    >
+                      <i class="fas fa-camera mr-1"></i>
+                      Snapshot
+                    </button>
+
+                    <button
+                      data-playground-target="diffCheckButton"
+                      data-action="click->playground#diffCheck"
+                      class="hidden px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #e5c07b; background: rgba(229, 192, 123, 0.15)"
+                    >
+                      <i class="fas fa-code-compare mr-1"></i>
+                      Diff
+                    </button>
+
+                    <button
+                      data-action="click->playground#clearDiffFeed"
+                      class="px-3 py-1 text-xs rounded font-mono font-medium"
+                      style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
+                    >
+                      <i class="fas fa-trash mr-1"></i>
+                      Clear
+                    </button>
+
+                    <span data-playground-target="diffStatus" class="px-2 py-1 text-xs rounded font-medium"></span>
+                  </div>
+                </div>
+
+                <div class="w-full h-full overflow-auto relative">
+                  <div data-playground-target="diffOutput" class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4]" style="white-space: pre-wrap; line-height: 1.5"></div>
+
+                  <div data-playground-target="diffParseError" class="hidden absolute inset-0 flex justify-center z-10" style="padding-top: 2rem; background: rgba(40, 44, 52, 0.5); backdrop-filter: blur(2px)">
+                    <div class="rounded-lg px-5 py-4 text-center self-start" style="background: rgba(40, 44, 52, 0.85); border: 1px solid rgba(171, 178, 191, 0.1)">
+                      <span style="color: #e5c07b"><i class="fas fa-pause-circle mr-2"></i></span>
+                      <span class="text-sm" style="color: #abb2bf">Diff paused — </span>
+                      <span class="text-sm" style="color: #607d8b">fix syntax errors to resume</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 

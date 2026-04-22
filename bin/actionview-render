@@ -4,13 +4,14 @@
 require "optparse"
 require "json"
 
-class ActionViewRenderer
+require_relative "../test/action_view_renderer"
+
+class ActionViewRenderCLI
   def initialize
     @file = nil
     @source = nil
     @json = false
     @silent = false
-    @locals = {}
   end
 
   def run(args)
@@ -67,22 +68,7 @@ class ActionViewRenderer
   end
 
   def render_template
-    require "bigdecimal"
-    require "action_view"
-
-    lookup_context = ActionView::LookupContext.new([])
-    view = ActionView::Base.with_empty_template_cache.new(lookup_context, {}, nil)
-    handler = ActionView::Template::Handlers::ERB.new
-
-    template = ActionView::Template.new(
-      template_source,
-      @file || "(eval)",
-      handler,
-      locals: [],
-      format: :html
-    )
-
-    rendered = template.render(view, {})
+    rendered = Herb::ActionViewRenderer.render(template_source)
 
     if @json
       puts({ success: true, output: rendered, source: template_source }.to_json)
@@ -107,4 +93,4 @@ class ActionViewRenderer
   end
 end
 
-ActionViewRenderer.new.run(ARGV) if __FILE__ == $PROGRAM_NAME
+ActionViewRenderCLI.new.run(ARGV) if __FILE__ == $PROGRAM_NAME

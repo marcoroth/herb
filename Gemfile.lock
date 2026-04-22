@@ -41,11 +41,21 @@ GIT
 PATH
   remote: .
   specs:
-    herb (0.9.6)
+    herb (0.9.7)
 
 GEM
   remote: https://rubygems.org/
   specs:
+    actionpack (8.1.2)
+      actionview (= 8.1.2)
+      activesupport (= 8.1.2)
+      nokogiri (>= 1.8.5)
+      rack (>= 2.2.4)
+      rack-session (>= 1.0.1)
+      rack-test (>= 0.6.3)
+      rails-dom-testing (~> 2.2)
+      rails-html-sanitizer (~> 1.6)
+      useragent (~> 0.16)
     actionview (8.1.2)
       activesupport (= 8.1.2)
       builder (~> 3.1)
@@ -67,11 +77,49 @@ GEM
       uri (>= 0.13.1)
     ast (2.4.3)
     base64 (0.3.0)
+    benchmark (0.5.0)
     bigdecimal (4.0.1)
+    bubbles (0.1.1)
+      bubbletea
+      harmonica
+      lipgloss
+    bubbletea (0.1.4-aarch64-linux-gnu)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.4-aarch64-linux-musl)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.4-arm64-darwin)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.4-x86_64-darwin)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.4-x86_64-linux-gnu)
+      lipgloss (~> 0.1)
+    bubbletea (0.1.4-x86_64-linux-musl)
+      lipgloss (~> 0.1)
+    bubblezone (0.1.2-aarch64-linux-gnu)
+    bubblezone (0.1.2-aarch64-linux-musl)
+    bubblezone (0.1.2-arm64-darwin)
+    bubblezone (0.1.2-x86_64-darwin)
+    bubblezone (0.1.2-x86_64-linux-gnu)
+    bubblezone (0.1.2-x86_64-linux-musl)
     builder (3.3.0)
+    charm (0.1.0)
+      bubbles
+      bubbletea
+      bubblezone
+      glamour
+      gum
+      harmonica
+      lipgloss
+      ntcharts
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
+    cruise (0.1.0-aarch64-linux-gnu)
+    cruise (0.1.0-aarch64-linux-musl)
+    cruise (0.1.0-arm64-darwin)
+    cruise (0.1.0-x86_64-darwin)
+    cruise (0.1.0-x86_64-linux-gnu)
+    cruise (0.1.0-x86_64-linux-musl)
     csv (3.3.5)
     date (3.5.1)
     difftastic (0.8.0-aarch64-linux)
@@ -95,6 +143,17 @@ GEM
     ffi (1.17.3-x86_64-linux-gnu)
     ffi (1.17.3-x86_64-linux-musl)
     fileutils (1.8.0)
+    glamour (0.2.2-aarch64-linux-gnu)
+    glamour (0.2.2-aarch64-linux-musl)
+    glamour (0.2.2-arm64-darwin)
+    glamour (0.2.2-x86_64-darwin)
+    glamour (0.2.2-x86_64-linux-gnu)
+    glamour (0.2.2-x86_64-linux-musl)
+    gum (0.3.2-aarch64-linux)
+    gum (0.3.2-arm64-darwin)
+    gum (0.3.2-x86_64-darwin)
+    gum (0.3.2-x86_64-linux)
+    harmonica (0.1.1)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     io-console (0.8.2)
@@ -102,15 +161,21 @@ GEM
       pp (>= 0.6.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
-    json (2.18.0)
+    json (2.19.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
+    lipgloss (0.2.2-aarch64-linux-gnu)
+    lipgloss (0.2.2-aarch64-linux-musl)
+    lipgloss (0.2.2-arm64-darwin)
+    lipgloss (0.2.2-x86_64-darwin)
+    lipgloss (0.2.2-x86_64-linux-gnu)
+    lipgloss (0.2.2-x86_64-linux-musl)
     listen (3.10.0)
       logger
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
     logger (1.7.0)
-    loofah (2.25.0)
+    loofah (2.25.1)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     lz_string (0.3.0)
@@ -120,18 +185,24 @@ GEM
     minitest-difftastic (0.2.1)
       difftastic (~> 0.6)
     mutex_m (0.3.0)
-    nokogiri (1.19.0-aarch64-linux-gnu)
+    nokogiri (1.19.2-aarch64-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.19.0-aarch64-linux-musl)
+    nokogiri (1.19.2-aarch64-linux-musl)
       racc (~> 1.4)
-    nokogiri (1.19.0-arm64-darwin)
+    nokogiri (1.19.2-arm64-darwin)
       racc (~> 1.4)
-    nokogiri (1.19.0-x86_64-darwin)
+    nokogiri (1.19.2-x86_64-darwin)
       racc (~> 1.4)
-    nokogiri (1.19.0-x86_64-linux-gnu)
+    nokogiri (1.19.2-x86_64-linux-gnu)
       racc (~> 1.4)
-    nokogiri (1.19.0-x86_64-linux-musl)
+    nokogiri (1.19.2-x86_64-linux-musl)
       racc (~> 1.4)
+    ntcharts (0.1.2-aarch64-linux-gnu)
+    ntcharts (0.1.2-aarch64-linux-musl)
+    ntcharts (0.1.2-arm64-darwin)
+    ntcharts (0.1.2-x86_64-darwin)
+    ntcharts (0.1.2-x86_64-linux-gnu)
+    ntcharts (0.1.2-x86_64-linux-musl)
     parallel (1.27.0)
     parser (3.3.10.1)
       ast (~> 2.4.1)
@@ -145,13 +216,30 @@ GEM
       date
       stringio
     racc (1.8.1)
+    rack (3.2.6)
+    rack-session (2.1.2)
+      base64 (>= 0.1.0)
+      rack (>= 3.0.0)
+    rack-test (2.2.0)
+      rack (>= 1.3)
+    rackup (2.3.1)
+      rack (>= 3)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
       nokogiri (>= 1.6)
-    rails-html-sanitizer (1.6.2)
-      loofah (~> 2.21)
+    rails-html-sanitizer (1.7.0)
+      loofah (~> 2.25)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
+    railties (8.1.2)
+      actionpack (= 8.1.2)
+      activesupport (= 8.1.2)
+      irb (~> 1.13)
+      rackup (>= 1.0.0)
+      rake (>= 12.2)
+      thor (~> 1.0, >= 1.2.2)
+      tsort (>= 0.2)
+      zeitwerk (~> 2.6)
     rainbow (3.1.1)
     rake (13.3.1)
     rake-compiler (1.3.1)
@@ -167,6 +255,9 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    reactionview (0.3.0)
+      actionview (>= 7.0)
+      herb (>= 0.9.0, < 1.0.0)
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -195,13 +286,19 @@ GEM
     strscan (3.1.7)
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
+    thor (1.5.0)
     tsort (0.2.0)
+    turbo-rails (2.0.23)
+      actionpack (>= 7.1.0)
+      railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.2.0)
       unicode-emoji (~> 4.1)
     unicode-emoji (4.2.0)
     uri (1.1.1)
+    useragent (0.16.11)
+    zeitwerk (2.7.5)
 
 PLATFORMS
   aarch64-linux
@@ -216,6 +313,9 @@ PLATFORMS
 
 DEPENDENCIES
   actionview (~> 8.0)
+  benchmark
+  charm
+  cruise
   digest (~> 3.2)
   erubi
   herb!
@@ -229,10 +329,12 @@ DEPENDENCIES
   rake-compiler-dock (~> 1.11)
   rbs!
   rbs-inline (~> 0.12)
+  reactionview (~> 0.3.0)
   reline (~> 0.6)
   rubocop (~> 1.71)
   sorbet
   steep!
+  turbo-rails (~> 2.0)
 
 BUNDLED WITH
    2.7.2

@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0005_content_tag with postfix unless condition"
+input: "{source: \"<%= content_tag(:p, \\\"Notice\\\", class: \\\"alert\\\") unless condition %>\", options: {optimize: true, locals: {condition: false}}}"
+---
+_buf = ::String.new; unless condition 
+ _buf << '<p class="alert">Notice</p>'.freeze; end;
+_buf.to_s
