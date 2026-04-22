@@ -80,8 +80,6 @@ interface ElementStackEntry {
   hasAutoEscapedContent: boolean
 }
 
-const VIRTUAL_CLOSE_TAG_TYPE = "AST_HTML_VIRTUAL_CLOSE_TAG_NODE"
-
 class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAutofixContext> {
   private elementStack: ElementStackEntry[] = []
 
@@ -89,17 +87,17 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
     const tagName = getTagLocalName(node)
 
     if (tagName) {
-      // ActionView tag helpers auto-escape their string argument content.
-      // We detect this by checking two conditions:
-      // 1. The element was created by an ActionView helper (element_source !== "HTML")
-      // 2. The element has a virtual close tag (not an ERB end node), meaning the
-      //    content came from a string argument rather than a block body.
+      // The parser sets `escape_content` on elements created by ActionView tag
+      // helpers. When true (the default), the helper auto-escapes its string
+      // argument content, so unescaped characters in the source are safe.
+      // When false (e.g. `escape: false`), the content is rendered raw.
       //
-      // Block bodies (e.g. `<%= link_to "#" do %>Tom & Jerry<% end %>`) contain
-      // literal template HTML that is NOT auto-escaped, so those must still be checked.
+      // For block bodies and regular HTML elements, `escape_content` is true
+      // but the content is literal template HTML — those are handled by the
+      // close_tag type check (block bodies have ERBEndNode, not virtual close).
       const isActionViewHelper = !!node.element_source && node.element_source !== "HTML"
-      const hasVirtualCloseTag = node.close_tag?.type === VIRTUAL_CLOSE_TAG_TYPE
-      const hasAutoEscapedContent = isActionViewHelper && hasVirtualCloseTag
+      const hasVirtualCloseTag = node.close_tag?.type === "AST_HTML_VIRTUAL_CLOSE_TAG_NODE"
+      const hasAutoEscapedContent = isActionViewHelper && hasVirtualCloseTag && node.escape_content
 
       this.elementStack.push({ tagName, hasAutoEscapedContent })
     }

@@ -215,15 +215,22 @@ describe("html-no-unescaped-entities", () => {
       assertOffenses('<div><%= tag.p("A & B") %> Tom & Jerry</div>')
     })
 
-    // When escape: false is passed, the helper does NOT auto-escape content.
-    // The parser does not currently expose the escape argument in the AST,
-    // so these are false negatives. This documents the known limitation.
-    it("does not flag bare & in tag.p with escape: false (known limitation)", () => {
-      expectNoOffenses('<%= tag.p("Tom & Jerry", escape: false) %>')
+    it("flags bare & in tag.p with escape: false", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= tag.p("Tom & Jerry", escape: false) %>')
     })
 
-    it("does not flag bare & in content_tag with escape disabled (known limitation)", () => {
-      expectNoOffenses('<%= content_tag :p, "Tom & Jerry", {}, false %>')
+    it("flags bare & in tag.p with escape: nil", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= tag.p("Tom & Jerry", escape: nil) %>')
+    })
+
+    it("flags bare & in content_tag with escape disabled (positional arg)", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= content_tag :p, "Tom & Jerry", {}, false %>')
     })
   })
 
