@@ -196,6 +196,57 @@ describe("html-no-unescaped-entities", () => {
     })
   })
 
+  describe("ActionView tag helpers - string arguments (auto-escaped)", () => {
+    it("does not flag bare & in tag.p string argument", () => {
+      expectNoOffenses('<%= tag.p("Tom & Jerry") %>')
+    })
+
+    it("does not flag bare & in content_tag string argument", () => {
+      expectNoOffenses('<%= content_tag :p, "Tom & Jerry" %>')
+    })
+
+    it("does not flag bare & in link_to string argument", () => {
+      expectNoOffenses('<%= link_to "Terms & Conditions", "#" %>')
+    })
+
+    it("still flags bare & in raw HTML alongside ActionView helpers", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<div><%= tag.p("A & B") %> Tom & Jerry</div>')
+    })
+
+    // When escape: false is passed, the helper does NOT auto-escape content.
+    // The parser does not currently expose the escape argument in the AST,
+    // so these are false negatives. This documents the known limitation.
+    it("does not flag bare & in tag.p with escape: false (known limitation)", () => {
+      expectNoOffenses('<%= tag.p("Tom & Jerry", escape: false) %>')
+    })
+
+    it("does not flag bare & in content_tag with escape disabled (known limitation)", () => {
+      expectNoOffenses('<%= content_tag :p, "Tom & Jerry", {}, false %>')
+    })
+  })
+
+  describe("ActionView tag helpers - block bodies (not auto-escaped)", () => {
+    it("flags bare & in link_to block body", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= link_to "#" do %>Tom & Jerry<% end %>')
+    })
+
+    it("flags bare & in content_tag block body", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= content_tag :div do %>Tom & Jerry<% end %>')
+    })
+
+    it("flags bare & in tag.div block body", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
+
+      assertOffenses('<%= tag.div do %>Tom & Jerry<% end %>')
+    })
+  })
+
   describe("escapable raw text elements - textarea and title", () => {
     it("flags bare & inside textarea text content", () => {
       expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.")
