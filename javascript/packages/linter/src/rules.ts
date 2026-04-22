@@ -3,6 +3,7 @@ import type { RuleClass } from "./types.js"
 import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
 import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
+import { A11yNoVisuallyHiddenInteractiveElementsRule } from "./rules/a11y-no-visually-hidden-interactive-elements.js"
 
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
@@ -106,6 +107,7 @@ export const rules: RuleClass[] = [
   A11yNoAccesskeyAttributeRule,
   A11yNoAriaUnsupportedElementsRule,
   A11yNoAutofocusAttributeRule,
+  A11yNoVisuallyHiddenInteractiveElementsRule,
 
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
