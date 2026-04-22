@@ -3,7 +3,7 @@ import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, ge
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -33,19 +33,22 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   }
 
   private hasAriaLabel(node: HTMLElementNode): boolean {
-    return hasAttribute(node.open_tag!, "aria-label")
+    const openTag = node.open_tag as HTMLOpenTagNode
+    return hasAttribute(openTag, "aria-label")
   }
 
   private hasAriaLabelledby(node: HTMLElementNode): boolean {
-    return hasAttribute(node.open_tag!, "aria-labelledby")
+    const openTag = node.open_tag as HTMLOpenTagNode
+    return hasAttribute(openTag, "aria-labelledby")
   }
 
   private hasAriaHidden(node: HTMLElementNode): boolean {
-    if (!hasAttribute(node.open_tag!, "aria-hidden")) {
+    const openTag = node.open_tag as HTMLOpenTagNode
+    if (!hasAttribute(openTag, "aria-hidden")) {
       return false
     }
 
-    const attributes = getAttributes(node.open_tag!)
+    const attributes = getAttributes(openTag)
     const ariaHiddenAttr = findAttributeByName(attributes, "aria-hidden")
 
     if (!ariaHiddenAttr) {
