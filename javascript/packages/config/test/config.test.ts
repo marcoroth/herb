@@ -1440,6 +1440,15 @@ describe("@herb-tools/config", () => {
       expect(config.configVersion).toBeUndefined()
     })
 
+    test("load preserves user config version from .herb.yaml", async () => {
+      createTestFile(testDir, ".herb.yaml", "version: 0.8.0\n\nlinter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.7", silent: true })
+
+      expect(config.version).toBe("0.9.7")
+      expect(config.configVersion).toBe("0.8.0")
+    })
+
     test("load preserves user config version from .herb.yml", async () => {
       createTestFile(testDir, ".herb.yml", "version: 0.8.0\n\nlinter:\n  enabled: true\n")
 
