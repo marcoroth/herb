@@ -1004,19 +1004,6 @@ export class Config {
     silent: boolean,
     version: string
   ): Promise<Config> {
-    const yamlPath = path.join(projectRoot, '.herb.yaml')
-
-    try {
-      await fs.access(yamlPath)
-
-      console.error(`\n✗ Found \`.herb.yaml\` file at ${yamlPath}`)
-      console.error(`  Please rename it to \`.herb.yml\`\n`)
-
-      process.exit(1)
-    } catch {
-      // File doesn't exist
-    }
-
     const configPath = this.configPathFromProjectPath(projectRoot)
 
     try {
@@ -1051,24 +1038,6 @@ export class Config {
     const errors: ConfigValidationError[] = []
     const version = options?.version
     const projectPath = options?.projectPath
-
-    if (projectPath) {
-      try {
-        const yamlPath = path.join(projectPath, '.herb.yaml')
-        await fs.access(yamlPath)
-
-        errors.push({
-          message: 'Found .herb.yaml file. Please rename to .herb.yml',
-          path: [],
-          code: 'wrong_file_extension',
-          severity: 'warning',
-          line: 0,
-          column: 0
-        })
-      } catch {
-        // .herb.yaml doesn't exist
-      }
-    }
 
     let parsed: any
 
