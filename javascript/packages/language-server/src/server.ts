@@ -98,6 +98,7 @@ export class Server {
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
           ...patterns,
+          { globPattern: `**/.herb.yaml` },
           { globPattern: `**/.herb.yml` },
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
@@ -128,7 +129,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        const isConfigChange = event.uri.endsWith("/.herb.yml")
+        const isConfigChange = Config.isConfigPath(event.uri)
         const isCustomRuleChange = event.uri.includes("/.herb/rules/")
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 

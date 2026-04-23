@@ -117,7 +117,7 @@ export class LinterService {
   private shouldLintFile(uri: string): boolean {
     const filePath = uri.replace(/^file:\/\//, '')
 
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
 
     const config = this.settings.projectConfig
     if (!config) return true

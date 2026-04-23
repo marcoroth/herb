@@ -18,7 +18,7 @@ export class ConfigService {
   async validateDocument(document: TextDocument): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = []
 
-    if (!document.uri.endsWith('.herb.yml')) {
+    if (!Config.isConfigPath(document.uri)) {
       return diagnostics
     }
 

@@ -207,7 +207,7 @@ export class FormattingService {
   }
 
   private shouldFormatFile(filePath: string): boolean {
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
     if (!this.config) return true
 
     const hasConfigFile = Config.exists(this.config.projectPath)
@@ -295,7 +295,7 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 
@@ -395,7 +395,7 @@ export class FormattingService {
   }
 
   async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 
