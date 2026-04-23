@@ -171,7 +171,7 @@ export class FormattingService {
         if (this.settings.hasShowDocumentCapability) {
           this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
             if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
+              const configPath = Config.configPathFromProjectPath(this.project.projectPath)
               this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
             }
           })
@@ -257,7 +257,7 @@ export class FormattingService {
         if (this.settings.hasShowDocumentCapability) {
           this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
             if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
+              const configPath = Config.configPathFromProjectPath(this.project.projectPath)
               this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
             }
           })
