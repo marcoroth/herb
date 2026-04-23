@@ -398,6 +398,20 @@ fn find_config_file_finds_config_in_current_dir() {
 }
 
 #[test]
+fn find_project_root_with_yaml_extension() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yaml");
+  fs::write(&config_path, "version: 0.9.7\n").unwrap();
+
+  let sub_dir = dir.path().join("app").join("views");
+  fs::create_dir_all(&sub_dir).unwrap();
+
+  let root = HerbConfig::find_project_root(&sub_dir);
+
+  assert_eq!(root, dir.path().to_path_buf());
+}
+
+#[test]
 fn find_config_file_walks_up_directory_tree() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
