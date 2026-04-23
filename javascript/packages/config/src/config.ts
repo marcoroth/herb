@@ -453,6 +453,14 @@ export class Config {
   }
 
   static configPathFromProjectPath(projectPath: string) {
+    for (const configPath of this.configPaths) {
+      const candidate = path.join(projectPath, configPath)
+
+      if (require('fs').existsSync(candidate)) {
+        return candidate
+      }
+    }
+
     return path.join(projectPath, this.defaultConfigPath)
   }
 
