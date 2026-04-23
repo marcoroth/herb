@@ -136,7 +136,7 @@ npx @herb-tools/linter "**/*.xml.erb"
 
 **Initialize configuration:**
 ```bash
-# Create a .herb.yml configuration file
+# Create a .herb.yaml configuration file
 npx @herb-tools/linter --init
 ```
 
@@ -206,8 +206,8 @@ npx @herb-tools/linter template.html.erb --fail-level hint
 
 By default, the linter exits with code `1` only when errors are present. The `--fail-level` option allows you to control this behavior for CI/CD pipelines where you want stricter enforcement. Valid values are: `error` (default), `warning`, `info`, `hint`.
 
-This can also be configured in `.herb.yml`:
-```yaml [.herb.yml]
+This can also be configured in `.herb.yaml`:
+```yaml [.herb.yaml]
 linter:
   failLevel: warning
 ```
@@ -429,7 +429,7 @@ The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or 
 
 ## Configuration
 
-Create a `.herb.yml` file in your project root to configure the linter:
+Create a `.herb.yaml` file in your project root to configure the linter:
 
 ```bash
 npx @herb-tools/linter --init
@@ -437,7 +437,7 @@ npx @herb-tools/linter --init
 
 ### Basic Configuration
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   enabled: true
 
@@ -468,7 +468,7 @@ linter:
 
 Apply rules to specific files using `include`, `only`, and `exclude` patterns:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   rules:
     # Apply rule only to component files

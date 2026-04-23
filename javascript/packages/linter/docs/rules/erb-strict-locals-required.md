@@ -27,9 +27,9 @@ This rule encourages partials to be explicit about what they expect. Partials th
 
 ## Configuration
 
-This rule is disabled by default. To enable it, add to your [`.herb.yml`](/configuration):
+This rule is disabled by default. To enable it, add to your [`.herb.yaml`](/configuration):
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   rules:
     erb-strict-locals-required:
