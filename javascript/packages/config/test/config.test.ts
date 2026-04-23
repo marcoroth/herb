@@ -80,6 +80,14 @@ describe("@herb-tools/config", () => {
       const configPath = Config.configPathFromProjectPath(testDir)
       expect(configPath).toBe(join(testDir, ".herb.yml"))
     })
+
+    test("prefers .herb.yaml over .herb.yml when both exist", () => {
+      writeFileSync(join(testDir, ".herb.yaml"), "version: 0.9.7\n")
+      writeFileSync(join(testDir, ".herb.yml"), "version: 0.9.7\n")
+
+      const configPath = Config.configPathFromProjectPath(testDir)
+      expect(configPath).toBe(join(testDir, ".herb.yaml"))
+    })
   })
 
   describe("Config.exists", () => {

@@ -41,6 +41,20 @@ class ConfigurationTest < Minitest::Spec
     assert_includes config.file_include_patterns, "**/*.custom.erb"
   end
 
+  test "prefers .herb.yaml over .herb.yml when both exist" do
+    write_config(<<~YAML, ".herb.yaml")
+      version: "0.9.7"
+    YAML
+    write_config(<<~YAML)
+      version: "0.8.0"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal File.join(@temp_dir, ".herb.yaml"), config.config_path.to_s
+    assert_equal "0.9.7", config.version
+  end
+
   test "loads configuration from .herb.yml" do
     write_config(<<~YAML)
       version: "0.9.7"

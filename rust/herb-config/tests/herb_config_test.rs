@@ -374,6 +374,19 @@ fn find_config_file_finds_yaml_extension() {
 }
 
 #[test]
+fn find_config_file_prefers_yaml_over_yml() {
+  let dir = tempfile::tempdir().unwrap();
+  let yaml_path = dir.path().join(".herb.yaml");
+  let yml_path = dir.path().join(".herb.yml");
+  fs::write(&yaml_path, "version: 0.9.7\n").unwrap();
+  fs::write(&yml_path, "version: 0.8.0\n").unwrap();
+
+  let found = HerbConfig::find_config_file(dir.path());
+
+  assert_eq!(found, Some(yaml_path));
+}
+
+#[test]
 fn find_config_file_finds_config_in_current_dir() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
