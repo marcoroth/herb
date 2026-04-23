@@ -7,6 +7,7 @@ import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.j
 const INTERACTIVE_ELEMENTS = ["a", "button", "summary", "select", "option", "textarea"]
 
 const VISUALLY_HIDDEN_CLASSES = ["sr-only"]
+const VISUALLY_HIDDEN_UNDO_CLASSES = ["not-sr-only", "focus:not-sr-only", "focus-within:not-sr-only"]
 
 class NoVisuallyHiddenInteractiveElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -18,7 +19,7 @@ class NoVisuallyHiddenInteractiveElementsVisitor extends BaseRuleVisitor {
       if (classValue) {
         const classes = classValue.split(/\s+/)
 
-        if (VISUALLY_HIDDEN_CLASSES.some((cls) => classes.includes(cls))) {
+        if (VISUALLY_HIDDEN_CLASSES.some((cls) => classes.includes(cls)) && !VISUALLY_HIDDEN_UNDO_CLASSES.some((cls) => classes.includes(cls))) {
           this.addOffense(
             "Avoid visually hiding interactive elements. Visually hiding interactive elements can be confusing to sighted keyboard users as it appears their focus has been lost when they navigate to the hidden element.",
             node.tag_name!.location,
