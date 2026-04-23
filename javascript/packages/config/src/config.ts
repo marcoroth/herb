@@ -126,8 +126,8 @@ export class Config {
   public config: HerbConfig
   public readonly configVersion: string | undefined
 
-  constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
-    this.path = Config.configPathFromProjectPath(projectPath)
+  constructor(projectPath: string, config: HerbConfig, configVersion?: string, configPath?: string) {
+    this.path = configPath || Config.configPathFromProjectPath(projectPath)
     this.config = config
     this.configVersion = configVersion
   }
@@ -1175,7 +1175,7 @@ export class Config {
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved, userConfigVersion)
+    return new Config(projectRoot, resolved, userConfigVersion, configPath)
   }
 
   /**
