@@ -26,6 +26,21 @@ class ConfigurationTest < Minitest::Spec
     assert_equal Herb::Configuration::DEFAULTS["files"]["exclude"], config.file_exclude_patterns
   end
 
+  test "loads configuration from .herb.yaml" do
+    write_config(<<~YAML, ".herb.yaml")
+      version: "0.9.7"
+      files:
+        include:
+          - "**/*.custom.erb"
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_equal File.join(@temp_dir, ".herb.yaml"), config.config_path.to_s
+    assert_equal "0.9.7", config.version
+    assert_includes config.file_include_patterns, "**/*.custom.erb"
+  end
+
   test "loads configuration from .herb.yml" do
     write_config(<<~YAML)
       version: "0.9.7"
