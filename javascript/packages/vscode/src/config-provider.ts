@@ -23,7 +23,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     })
 
     if (this.workspaceRoot) {
-      const herbYmlPattern = new vscode.RelativePattern(this.workspaceRoot, ".herb.yml")
+      const herbYmlPattern = new vscode.RelativePattern(this.workspaceRoot, ".herb.{yaml,yml}")
       const watcher = vscode.workspace.createFileSystemWatcher(herbYmlPattern)
 
       watcher.onDidCreate(() => void this.refresh())
@@ -35,7 +35,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
     context.subscriptions.push(
       vscode.workspace.onDidSaveTextDocument((document) => {
-        if (document.fileName.endsWith('.herb.yml')) {
+        if (Config.isConfigPath(document.fileName)) {
           void this.refresh()
         }
       })

@@ -196,7 +196,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(fileWatcher)
 
-  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.yml')
+  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.{yaml,yml}')
 
   configWatcher.onDidCreate(async () => {
     await updateConfigStatusBarItem()
