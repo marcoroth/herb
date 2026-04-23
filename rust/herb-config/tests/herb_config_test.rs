@@ -363,6 +363,17 @@ fn load_from_path_returns_error_for_invalid_yaml() {
 }
 
 #[test]
+fn find_config_file_finds_yaml_extension() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yaml");
+  fs::write(&config_path, "version: 0.9.7\n").unwrap();
+
+  let found = HerbConfig::find_config_file(dir.path());
+
+  assert_eq!(found, Some(config_path));
+}
+
+#[test]
 fn find_config_file_finds_config_in_current_dir() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");

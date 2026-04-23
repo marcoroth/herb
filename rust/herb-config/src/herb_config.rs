@@ -125,7 +125,7 @@ pub const DEFAULT_INCLUDE_PATTERNS: &[&str] = &[
 
 pub const DEFAULT_EXCLUDE_PATTERNS: &[&str] = &["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*"];
 
-const CONFIG_FILE_NAME: &str = ".herb.yml";
+const CONFIG_FILE_NAMES: &[&str] = &[".herb.yaml", ".herb.yml"];
 const PROJECT_INDICATORS: &[&str] = &[".git", ".herb", "Gemfile", "package.json", "Rakefile", "README.md"];
 
 impl HerbConfig {
@@ -172,9 +172,11 @@ impl HerbConfig {
     let mut current = start.to_path_buf();
 
     loop {
-      let config_path = current.join(CONFIG_FILE_NAME);
-      if config_path.exists() {
-        return Some(config_path);
+      for config_name in CONFIG_FILE_NAMES {
+        let candidate = current.join(config_name);
+        if candidate.exists() {
+          return Some(candidate);
+        }
       }
 
       if !current.pop() {
@@ -195,7 +197,7 @@ impl HerbConfig {
     let mut current = start.to_path_buf();
 
     loop {
-      if current.join(CONFIG_FILE_NAME).exists() {
+      if CONFIG_FILE_NAMES.iter().any(|name| current.join(name).exists()) {
         return current;
       }
 
