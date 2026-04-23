@@ -312,6 +312,29 @@ fn to_formatter_config_uses_defaults() {
 }
 
 #[test]
+fn load_from_path_parses_yaml_extension() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yaml");
+  fs::write(
+    &config_path,
+    r#"
+version: 0.9.7
+linter:
+  enabled: true
+formatter:
+  enabled: false
+"#,
+  )
+  .unwrap();
+
+  let config = HerbConfig::load_from_path(&config_path).unwrap();
+
+  assert_eq!(config.version, Some("0.9.7".into()));
+  assert!(config.linter.enabled);
+  assert!(!config.formatter.enabled);
+}
+
+#[test]
 fn load_from_path_parses_yaml() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
