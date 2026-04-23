@@ -66,6 +66,14 @@ describe("a11y-no-visually-hidden-interactive-elements", () => {
     assertOffenses('<button class="btn sr-only primary">Submit</button>')
   })
 
+  test("passes for button with sr-only and focus:not-sr-only", () => {
+    expectNoOffenses('<button class="sr-only focus:not-sr-only">Skip to content</button>')
+  })
+
+  test("passes for a with sr-only and focus-within:not-sr-only", () => {
+    expectNoOffenses('<a class="sr-only focus-within:not-sr-only" href="#main">Skip to content</a>')
+  })
+
   test("does not flag input elements", () => {
     expectNoOffenses('<input class="sr-only" type="file" />')
   })
