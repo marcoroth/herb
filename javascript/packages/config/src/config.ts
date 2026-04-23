@@ -106,7 +106,7 @@ export type FromObjectOptions = {
 }
 
 export class Config {
-  static configPaths = [".herb.yml", ".herb.yaml"]
+  static configPaths = [".herb.yaml", ".herb.yml"]
   static defaultConfigPath = this.configPaths[0]
 
   private static PROJECT_INDICATORS = [
