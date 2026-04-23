@@ -106,11 +106,13 @@ export type FromObjectOptions = {
 }
 
 export class Config {
-  static configPath = ".herb.yml"
+  static configPaths = [".herb.yml", ".herb.yaml"]
+  static defaultConfigPath = this.configPaths[0]
 
   private static PROJECT_INDICATORS = [
     '.git',
     '.herb',
+    '.herb.yaml',
     '.herb.yml',
     'Gemfile',
     'package.json',
@@ -447,7 +449,7 @@ export class Config {
   }
 
   static configPathFromProjectPath(projectPath: string) {
-    return path.join(projectPath, this.configPath)
+    return path.join(projectPath, this.defaultConfigPath)
   }
 
   /**
@@ -469,7 +471,7 @@ export class Config {
     try {
       let configPath: string
 
-      if (pathOrFile.endsWith(this.configPath)) {
+      if (pathOrFile.endsWith(this.defaultConfigPath)) {
         configPath = pathOrFile
       } else {
         configPath = this.configPathFromProjectPath(pathOrFile)
@@ -520,7 +522,7 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.configPath)
+      const configPath = path.join(currentPath, this.defaultConfigPath)
 
       try {
         fsSync.accessSync(configPath)
@@ -561,7 +563,7 @@ export class Config {
    * @returns string - The raw YAML content
    */
   static readRawYaml(pathOrFile: string): string {
-    const configPath = pathOrFile.endsWith(this.configPath)
+    const configPath = pathOrFile.endsWith(this.defaultConfigPath)
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
@@ -589,7 +591,7 @@ export class Config {
     const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
 
     try {
-      if (pathOrFile.endsWith(this.configPath)) {
+      if (pathOrFile.endsWith(this.defaultConfigPath)) {
         return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError)
       }
 
@@ -886,7 +888,7 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.configPath)
+      const configPath = path.join(currentPath, this.defaultConfigPath)
 
       try {
         await fs.access(configPath)

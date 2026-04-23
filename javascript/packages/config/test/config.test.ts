@@ -41,21 +41,30 @@ describe("@herb-tools/config", () => {
 
     test("sets correct config path", () => {
       const config = new Config(testDir, { version: "0.9.7" })
-      expect(config.path).toBe(join(testDir, ".herb.yml"))
+      expect(config.path).toBe(join(testDir, Config.defaultConfigPath))
+    })
+
+    test("defaultConfigPath is the first entry in configPaths", () => {
+      expect(Config.defaultConfigPath).toBe(Config.configPaths[0])
+    })
+
+    test("configPaths includes both .yaml and .yml", () => {
+      expect(Config.configPaths).toContain(".herb.yaml")
+      expect(Config.configPaths).toContain(".herb.yml")
     })
   })
 
   describe("Config.configPathFromProjectPath", () => {
     test("returns correct path for project directory", () => {
       const configPath = Config.configPathFromProjectPath(testDir)
-      expect(configPath).toBe(join(testDir, ".herb.yml"))
+      expect(configPath).toBe(join(testDir, Config.defaultConfigPath))
     })
 
-    test("appends .herb.yml to any path (including explicit .herb.yml)", () => {
-      const herbYmlPath = join(testDir, ".herb.yml")
+    test("appends defaultConfigPath to any path (including explicit config path)", () => {
+      const herbYmlPath = join(testDir, Config.defaultConfigPath)
       const configPath = Config.configPathFromProjectPath(herbYmlPath)
 
-      expect(configPath).toBe(join(herbYmlPath, ".herb.yml"))
+      expect(configPath).toBe(join(herbYmlPath, Config.defaultConfigPath))
     })
   })
 
