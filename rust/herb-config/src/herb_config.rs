@@ -126,7 +126,7 @@ pub const DEFAULT_INCLUDE_PATTERNS: &[&str] = &[
 pub const DEFAULT_EXCLUDE_PATTERNS: &[&str] = &["coverage/**/*", "log/**/*", "node_modules/**/*", "storage/**/*", "tmp/**/*", "vendor/**/*"];
 
 const CONFIG_FILE_NAMES: &[&str] = &[".herb.yaml", ".herb.yml"];
-const PROJECT_INDICATORS: &[&str] = &[".git", ".herb", "Gemfile", "package.json", "Rakefile", "README.md"];
+const PROJECT_INDICATORS: &[&str] = &[".git", ".herb", ".herb.yaml", ".herb.yml", "Gemfile", "package.json", "Rakefile", "README.md"];
 
 impl HerbConfig {
   pub fn load(start_path: &Path, explicit_config_file: Option<&str>) -> (Self, Option<PathBuf>) {
