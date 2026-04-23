@@ -6,7 +6,7 @@ import { lintToDignosticSeverity } from "./utils"
 import { version } from "../package.json"
 
 /**
- * Configuration service for validation of .herb.yml configuration files
+ * Configuration service for validation of .herb.yaml configuration files
  */
 export class ConfigService {
   private projectPath?: string

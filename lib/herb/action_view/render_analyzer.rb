@@ -41,7 +41,7 @@ module Herb
         if configuration.config_path
           puts "#{green("\u2713")} Using Herb config file at #{dimmed(configuration.config_path.to_s)}"
         else
-          puts dimmed("No .herb.yml found, using defaults")
+          puts dimmed("No .herb.yaml found, using defaults")
         end
 
         puts dimmed("Checking render calls in #{erb_files.count} #{pluralize(erb_files.count, "file")}...")
@@ -234,7 +234,7 @@ module Herb
         if configuration.config_path
           puts "#{green("\u2713")} Using Herb config file at #{dimmed(configuration.config_path.to_s)}"
         else
-          puts dimmed("No .herb.yml found, using defaults")
+          puts dimmed("No .herb.yaml found, using defaults")
         end
 
         puts dimmed("Building render graph for #{erb_files.count} #{pluralize(erb_files.count, "file")}...")

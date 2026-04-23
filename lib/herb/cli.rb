@@ -380,7 +380,7 @@ class Herb::CLI
 
         The project at '#{project}' is not configured to use ActionView (current framework: '#{config.framework}').
 
-        To enable ActionView support, add the following to your `.herb.yml`:
+        To enable ActionView support, add the following to your `.herb.yaml`:
 
           framework: actionview
       MESSAGE

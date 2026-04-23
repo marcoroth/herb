@@ -11,7 +11,7 @@ import { Project } from "./project"
 import { lintToDignosticSeverity, lintToDignosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
+const OPEN_CONFIG_ACTION = 'Open .herb.yaml'
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]

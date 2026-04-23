@@ -8,7 +8,7 @@ import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
 import { version } from "../package.json"
 
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
+const OPEN_CONFIG_ACTION = 'Open .herb.yaml'
 
 export class FormattingService {
   private connection: Connection

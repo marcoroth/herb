@@ -83,7 +83,7 @@ export class CLI {
       Options:
         -i, --input <file>           Input file path
         -o, --output <file>          Output file path (defaults to stdout)
-        --config-file <path>         Explicitly specify path to .herb.yml config file
+        --config-file <path>         Explicitly specify path to .herb.yaml config file
         --verify                     Verify that output matches input exactly
         --stats                      Show parsing and printing statistics
         --glob                       Treat input as glob pattern

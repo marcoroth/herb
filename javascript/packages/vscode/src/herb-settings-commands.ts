@@ -4,7 +4,7 @@ import { Config } from "@herb-tools/config"
 import { HerbConfigProvider } from "./config-provider"
 
 /**
- * Commands to modify .herb.yml settings directly through VS Code
+ * Commands to modify .herb.yaml settings directly through VS Code
  */
 export class HerbSettingsCommands {
   constructor(private context: vscode.ExtensionContext, private configProvider?: HerbConfigProvider) {

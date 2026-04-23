@@ -474,10 +474,10 @@ export class Config {
   }
 
   /**
-   * Check if a .herb.yml config file exists at the given path.
+   * Check if config file exists at the given path.
    *
    * @param pathOrFile - Path to directory or explicit config file path
-   * @returns True if .herb.yml exists at the location, false otherwise
+   * @returns True if config file exists at the location, false otherwise
    */
   static exists(pathOrFile: string): boolean {
     try {
@@ -499,7 +499,7 @@ export class Config {
 
   /**
    * Find the project root by walking up from a given path.
-   * Looks for .herb.yml first, then falls back to project indicators
+   * Looks for config file first, then falls back to project indicators
    * (.git, Gemfile, package.json, etc.)
    *
    * @param startPath - File or directory path to start searching from
@@ -565,9 +565,9 @@ export class Config {
 
   /**
    * Read raw YAML content from a config file.
-   * Handles both explicit .herb.yml paths and directory paths.
+   * Handles both explicit config file paths and directory paths.
    *
-   * @param pathOrFile - Path to .herb.yml file or directory containing it
+   * @param pathOrFile - Path to config file or directory containing it
    * @returns string - The raw YAML content
    */
   static readRawYaml(pathOrFile: string): string {
@@ -626,7 +626,7 @@ export class Config {
    * Load config for editor/language server use (silent mode, no file creation).
    * This is a convenience method for the common pattern used in editors.
    *
-   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param pathOrFile - Directory path or explicit config file path
    * @param version - Optional version string (defaults to package version)
    * @returns Config instance or throws on errors
    */
@@ -643,7 +643,7 @@ export class Config {
    * Load config for CLI use (may create file, show errors).
    * This is a convenience method for the common pattern used in CLI tools.
    *
-   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param pathOrFile - Directory path or explicit config file path
    * @param version - Optional version string (defaults to package version)
    * @param createIfMissing - Whether to create config if missing (default: false)
    * @returns Config instance or throws on errors
@@ -665,13 +665,13 @@ export class Config {
    * Mutate an existing config file by reading it, validating, merging with a mutation, and writing back.
    * This preserves the user's YAML file structure and only writes what's explicitly configured.
    *
-   * @param configPath - Path to the .herb.yml file
+   * @param configPath - Path to config file
    * @param mutation - Partial config to merge (e.g., { linter: { rules: { "rule-name": { enabled: false } } } })
    * @returns Promise<void>
    *
    * @example
-   * // Disable a rule in .herb.yml
-   * await Config.mutateConfigFile('/path/to/.herb.yml', {
+   * // Disable rule in config file
+   * await Config.mutateConfigFile('/path/to/.herb.yaml', {
    *   linter: {
    *     rules: {
    *       'html-img-require-alt': { enabled: false }
