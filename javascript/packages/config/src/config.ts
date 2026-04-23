@@ -534,14 +534,10 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.defaultConfigPath)
-
-      try {
-        fsSync.accessSync(configPath)
-
-        return currentPath
-      } catch {
-        // Config not in this directory, continue
+      for (const configPath of this.configPaths) {
+        if (fsSync.existsSync(path.join(currentPath, configPath))) {
+          return currentPath
+        }
       }
 
       if (!firstIndicatorMatch) {
@@ -900,14 +896,15 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.defaultConfigPath)
+      for (const configPath of this.configPaths) {
+        const candidate = path.join(currentPath, configPath)
 
-      try {
-        await fs.access(configPath)
-
-        return { configPath, projectRoot: currentPath }
-      } catch {
-        // Config not in this directory, continue
+        try {
+          await fs.access(candidate)
+          return { configPath: candidate, projectRoot: currentPath }
+        } catch {
+          // Config file not found in this directory, try next
+        }
       }
 
       if (!firstIndicatorMatch) {
