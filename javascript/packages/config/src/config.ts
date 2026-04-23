@@ -448,6 +448,10 @@ export class Config {
     })
   }
 
+  static isConfigPath(pathOrFile: string): boolean {
+    return this.configPaths.some(name => pathOrFile.endsWith(name))
+  }
+
   static configPathFromProjectPath(projectPath: string) {
     return path.join(projectPath, this.defaultConfigPath)
   }
@@ -471,7 +475,7 @@ export class Config {
     try {
       let configPath: string
 
-      if (pathOrFile.endsWith(this.defaultConfigPath)) {
+      if (this.isConfigPath(pathOrFile)) {
         configPath = pathOrFile
       } else {
         configPath = this.configPathFromProjectPath(pathOrFile)
@@ -563,7 +567,7 @@ export class Config {
    * @returns string - The raw YAML content
    */
   static readRawYaml(pathOrFile: string): string {
-    const configPath = pathOrFile.endsWith(this.defaultConfigPath)
+    const configPath = this.isConfigPath(pathOrFile)
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
@@ -591,7 +595,7 @@ export class Config {
     const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
 
     try {
-      if (pathOrFile.endsWith(this.defaultConfigPath)) {
+      if (this.isConfigPath(pathOrFile)) {
         return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError)
       }
 

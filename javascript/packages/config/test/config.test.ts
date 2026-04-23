@@ -80,6 +80,13 @@ describe("@herb-tools/config", () => {
       expect(Config.exists(testDir)).toBe(true)
     })
 
+    test("handles explicit .herb.yaml path", () => {
+      const configPath = join(testDir, ".herb.yaml")
+      writeFileSync(configPath, "version: 0.9.7\n")
+
+      expect(Config.exists(configPath)).toBe(true)
+    })
+
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
       writeFileSync(configPath, "version: 0.9.7\n")
@@ -102,6 +109,15 @@ describe("@herb-tools/config", () => {
       writeFileSync(configPath, yamlContent)
 
       const rawYaml = Config.readRawYaml(testDir)
+      expect(rawYaml).toBe(yamlContent)
+    })
+
+    test("handles explicit .herb.yaml path", () => {
+      const configPath = join(testDir, ".herb.yaml")
+      const yamlContent = "version: 0.9.7\n"
+      writeFileSync(configPath, yamlContent)
+
+      const rawYaml = Config.readRawYaml(configPath)
       expect(rawYaml).toBe(yamlContent)
     })
 
