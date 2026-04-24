@@ -31,7 +31,7 @@ class DisabledAttributeVisitor extends BaseRuleVisitor {
 
 export class A11yDisabledAttributeRule extends ParserRule {
   static ruleName = "a11y-disabled-attribute"
-  static introducedIn = "unreleased"
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
