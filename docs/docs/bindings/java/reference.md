@@ -280,7 +280,7 @@ Returns the full version information including Herb, Prism, and JNI details:
 import org.herb.Herb;
 
 System.out.println(Herb.version());
-// Output: "herb java v0.10.0, libprism v1.9.0, libherb v0.10.0 (Java JNI)"
+// Output: "herb java v0.10.1, libprism v1.9.0, libherb v0.10.1 (Java JNI)"
 ```
 :::
 
@@ -293,7 +293,7 @@ Returns just the Herb library version:
 import org.herb.Herb;
 
 System.out.println(Herb.herbVersion());
-// Output: "0.10.0"
+// Output: "0.10.1"
 ```
 :::
 

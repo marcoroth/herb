@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/client",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "HMR client for Herb templates - connects to herb dev server and applies live DOM patches",
   "type": "module",
   "license": "MIT",
