@@ -1,0 +1,5 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0006_trim false with comment tags preserves whitespace"
+input: "{source: \"  <%# comment %>\\ntext\\n\", locals: {}, options: {trim: false}}"
+---
+text
