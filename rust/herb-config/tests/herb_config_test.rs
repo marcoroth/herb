@@ -341,7 +341,7 @@ fn load_from_path_parses_yaml() {
   fs::write(
     &config_path,
     r#"
-version: 0.9.7
+version: 0.10.1
 linter:
   enabled: true
   rules:
@@ -357,7 +357,7 @@ formatter:
 
   let config = HerbConfig::load_from_path(&config_path).unwrap();
 
-  assert_eq!(config.version, Some("0.9.7".into()));
+  assert_eq!(config.version, Some("0.10.1".into()));
   assert!(config.linter.enabled);
   assert!(!config.formatter.enabled);
   assert_eq!(config.formatter.indent_width, 4);
@@ -413,7 +413,7 @@ fn find_config_file_prefers_yaml_over_yml() {
 fn find_config_file_finds_config_in_current_dir() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
-  fs::write(&config_path, "version: 0.9.7\n").unwrap();
+  fs::write(&config_path, "version: 0.10.1\n").unwrap();
 
   let found = HerbConfig::find_config_file(dir.path());
 
@@ -438,7 +438,7 @@ fn find_project_root_with_yaml_extension() {
 fn find_config_file_walks_up_directory_tree() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
-  fs::write(&config_path, "version: 0.9.7\n").unwrap();
+  fs::write(&config_path, "version: 0.10.1\n").unwrap();
 
   let sub_dir = dir.path().join("app").join("views");
   fs::create_dir_all(&sub_dir).unwrap();
@@ -460,7 +460,7 @@ fn find_config_file_returns_none_when_not_found() {
 #[test]
 fn load_full_config_with_all_sections() {
   let yaml = r#"
-version: 0.9.7
+version: 0.10.1
 
 files:
   include:
@@ -497,7 +497,7 @@ formatter:
 
   let config: HerbConfig = serde_yaml::from_str(yaml).unwrap();
 
-  assert_eq!(config.version, Some("0.9.7".into()));
+  assert_eq!(config.version, Some("0.10.1".into()));
 
   assert_eq!(config.files.include, vec!["**/*.xml.erb"]);
   assert_eq!(config.files.exclude, vec!["public/**/*"]);

@@ -34,7 +34,7 @@ The dev server consists of two parts:
 
   ⚠️ Experimental: The dev server is experimental and may not work correctly in all cases.
 
-  Herb:      0.9.7
+  Herb:      0.10.1
   Project:   /path/to/project
   Config:    .herb.yaml
   Files:     453 templates indexed
