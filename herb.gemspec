@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
     "Rakefile",
     "README.md",
     "config.yml",
+    "config/**/*.yml",
     "lib/**/*.rb",
     "lib/**/*.yml",
     "sig/**/*.rbs",
