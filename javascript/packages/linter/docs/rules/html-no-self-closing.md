@@ -28,9 +28,9 @@ XHTML and HTML styles.
 This rule is automatically disabled for ActionMailer view files (paths matching `**/views/**/*_mailer/**/*`) because older email clients, particularly legacy versions of Microsoft Outlook, require self-closing syntax for proper rendering of void elements like `<br />`.
 :::
 
-If you want to enable this rule for email templates as well, you can override the default exclusion in your `.herb.yml` configuration:
+If you want to enable this rule for email templates as well, you can override the default exclusion in your `.herb.yaml` configuration:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   rules:
     html-no-self-closing:

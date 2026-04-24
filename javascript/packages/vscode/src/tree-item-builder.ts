@@ -101,7 +101,7 @@ export class TreeItemBuilder {
       )
 
       item.iconPath = new vscode.ThemeIcon('circle-slash', new vscode.ThemeColor('charts.gray'))
-      item.tooltip = 'Linting is disabled in the Herb configuration (.herb.yml). Click to toggle linter setting.'
+      item.tooltip = 'Linting is disabled in the Herb configuration (.herb.yaml). Click to toggle linter setting.'
       item.command = {
         command: 'herb.toggleLinter',
         title: 'Toggle Linter'
@@ -347,7 +347,7 @@ export class TreeItemBuilder {
       )
 
       item.iconPath = new vscode.ThemeIcon('circle-slash', new vscode.ThemeColor('charts.gray'))
-      item.tooltip = 'Formatting is disabled in the Herb configuration (.herb.yml). Click to toggle formatter setting.'
+      item.tooltip = 'Formatting is disabled in the Herb configuration (.herb.yaml). Click to toggle formatter setting.'
       item.command = {
         command: 'herb.toggleFormatter',
         title: 'Toggle Formatter'

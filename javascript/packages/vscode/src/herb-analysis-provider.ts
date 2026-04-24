@@ -76,7 +76,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
         }
       } catch (_error) {
         window.showErrorMessage(
-          'Cannot run Herb analysis: Configuration file has errors. Please fix .herb.yml and try again.',
+          'Cannot run Herb analysis: Configuration file has errors. Please fix .herb.yaml and try again.',
           'Edit Config'
         ).then(selection => {
           if (selection === 'Edit Config') {

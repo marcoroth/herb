@@ -106,11 +106,13 @@ export type FromObjectOptions = {
 }
 
 export class Config {
-  static configPath = ".herb.yml"
+  static configPaths = [".herb.yaml", ".herb.yml"]
+  static defaultConfigPath = this.configPaths[0]
 
   private static PROJECT_INDICATORS = [
     '.git',
     '.herb',
+    '.herb.yaml',
     '.herb.yml',
     'Gemfile',
     'package.json',
@@ -124,8 +126,8 @@ export class Config {
   public config: HerbConfig
   public readonly configVersion: string | undefined
 
-  constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
-    this.path = Config.configPathFromProjectPath(projectPath)
+  constructor(projectPath: string, config: HerbConfig, configVersion?: string, configPath?: string) {
+    this.path = configPath || Config.configPathFromProjectPath(projectPath)
     this.config = config
     this.configVersion = configVersion
   }
@@ -446,8 +448,20 @@ export class Config {
     })
   }
 
+  static isConfigPath(pathOrFile: string): boolean {
+    return this.configPaths.some(name => pathOrFile.endsWith(name))
+  }
+
   static configPathFromProjectPath(projectPath: string) {
-    return path.join(projectPath, this.configPath)
+    for (const configPath of this.configPaths) {
+      const candidate = path.join(projectPath, configPath)
+
+      if (require('fs').existsSync(candidate)) {
+        return candidate
+      }
+    }
+
+    return path.join(projectPath, this.defaultConfigPath)
   }
 
   /**
@@ -460,16 +474,16 @@ export class Config {
   }
 
   /**
-   * Check if a .herb.yml config file exists at the given path.
+   * Check if config file exists at the given path.
    *
    * @param pathOrFile - Path to directory or explicit config file path
-   * @returns True if .herb.yml exists at the location, false otherwise
+   * @returns True if config file exists at the location, false otherwise
    */
   static exists(pathOrFile: string): boolean {
     try {
       let configPath: string
 
-      if (pathOrFile.endsWith(this.configPath)) {
+      if (this.isConfigPath(pathOrFile)) {
         configPath = pathOrFile
       } else {
         configPath = this.configPathFromProjectPath(pathOrFile)
@@ -485,7 +499,7 @@ export class Config {
 
   /**
    * Find the project root by walking up from a given path.
-   * Looks for .herb.yml first, then falls back to project indicators
+   * Looks for config file first, then falls back to project indicators
    * (.git, Gemfile, package.json, etc.)
    *
    * @param startPath - File or directory path to start searching from
@@ -520,14 +534,10 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.configPath)
-
-      try {
-        fsSync.accessSync(configPath)
-
-        return currentPath
-      } catch {
-        // Config not in this directory, continue
+      for (const configPath of this.configPaths) {
+        if (fsSync.existsSync(path.join(currentPath, configPath))) {
+          return currentPath
+        }
       }
 
       if (!firstIndicatorMatch) {
@@ -555,13 +565,13 @@ export class Config {
 
   /**
    * Read raw YAML content from a config file.
-   * Handles both explicit .herb.yml paths and directory paths.
+   * Handles both explicit config file paths and directory paths.
    *
-   * @param pathOrFile - Path to .herb.yml file or directory containing it
+   * @param pathOrFile - Path to config file or directory containing it
    * @returns string - The raw YAML content
    */
   static readRawYaml(pathOrFile: string): string {
-    const configPath = pathOrFile.endsWith(this.configPath)
+    const configPath = this.isConfigPath(pathOrFile)
       ? pathOrFile
       : this.configPathFromProjectPath(pathOrFile)
 
@@ -589,7 +599,7 @@ export class Config {
     const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
 
     try {
-      if (pathOrFile.endsWith(this.configPath)) {
+      if (this.isConfigPath(pathOrFile)) {
         return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError)
       }
 
@@ -616,7 +626,7 @@ export class Config {
    * Load config for editor/language server use (silent mode, no file creation).
    * This is a convenience method for the common pattern used in editors.
    *
-   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param pathOrFile - Directory path or explicit config file path
    * @param version - Optional version string (defaults to package version)
    * @returns Config instance or throws on errors
    */
@@ -633,7 +643,7 @@ export class Config {
    * Load config for CLI use (may create file, show errors).
    * This is a convenience method for the common pattern used in CLI tools.
    *
-   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param pathOrFile - Directory path or explicit config file path
    * @param version - Optional version string (defaults to package version)
    * @param createIfMissing - Whether to create config if missing (default: false)
    * @returns Config instance or throws on errors
@@ -655,13 +665,13 @@ export class Config {
    * Mutate an existing config file by reading it, validating, merging with a mutation, and writing back.
    * This preserves the user's YAML file structure and only writes what's explicitly configured.
    *
-   * @param configPath - Path to the .herb.yml file
+   * @param configPath - Path to config file
    * @param mutation - Partial config to merge (e.g., { linter: { rules: { "rule-name": { enabled: false } } } })
    * @returns Promise<void>
    *
    * @example
-   * // Disable a rule in .herb.yml
-   * await Config.mutateConfigFile('/path/to/.herb.yml', {
+   * // Disable rule in config file
+   * await Config.mutateConfigFile('/path/to/.herb.yaml', {
    *   linter: {
    *     rules: {
    *       'html-img-require-alt': { enabled: false }
@@ -886,14 +896,15 @@ export class Config {
     let firstIndicatorMatch: string | undefined
 
     while (true) {
-      const configPath = path.join(currentPath, this.configPath)
+      for (const configPath of this.configPaths) {
+        const candidate = path.join(currentPath, configPath)
 
-      try {
-        await fs.access(configPath)
-
-        return { configPath, projectRoot: currentPath }
-      } catch {
-        // Config not in this directory, continue
+        try {
+          await fs.access(candidate)
+          return { configPath: candidate, projectRoot: currentPath }
+        } catch {
+          // Config file not found in this directory, try next
+        }
       }
 
       if (!firstIndicatorMatch) {
@@ -1004,19 +1015,6 @@ export class Config {
     silent: boolean,
     version: string
   ): Promise<Config> {
-    const yamlPath = path.join(projectRoot, '.herb.yaml')
-
-    try {
-      await fs.access(yamlPath)
-
-      console.error(`\n✗ Found \`.herb.yaml\` file at ${yamlPath}`)
-      console.error(`  Please rename it to \`.herb.yml\`\n`)
-
-      process.exit(1)
-    } catch {
-      // File doesn't exist
-    }
-
     const configPath = this.configPathFromProjectPath(projectRoot)
 
     try {
@@ -1051,24 +1049,6 @@ export class Config {
     const errors: ConfigValidationError[] = []
     const version = options?.version
     const projectPath = options?.projectPath
-
-    if (projectPath) {
-      try {
-        const yamlPath = path.join(projectPath, '.herb.yaml')
-        await fs.access(yamlPath)
-
-        errors.push({
-          message: 'Found .herb.yaml file. Please rename to .herb.yml',
-          path: [],
-          code: 'wrong_file_extension',
-          severity: 'warning',
-          line: 0,
-          column: 0
-        })
-      } catch {
-        // .herb.yaml doesn't exist
-      }
-    }
 
     let parsed: any
 
@@ -1195,7 +1175,7 @@ export class Config {
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved, userConfigVersion)
+    return new Config(projectRoot, resolved, userConfigVersion, configPath)
   }
 
   /**

@@ -152,7 +152,7 @@ export class Client {
       documentSelector: [
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
-        { scheme: "file", language: "yaml", pattern: "**/.herb.yml" },
+        { scheme: "file", language: "yaml", pattern: "**/.herb.{yaml,yml}" },
       ],
       synchronize: {
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
