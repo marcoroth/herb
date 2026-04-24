@@ -220,6 +220,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     NULL,
     false,
     hb_string("HTML"),
+    true,
     open_tag->base.location.start,
     open_tag->base.location.end,
     errors,
