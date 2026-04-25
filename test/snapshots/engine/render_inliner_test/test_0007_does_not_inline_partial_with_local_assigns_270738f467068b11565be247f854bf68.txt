@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderInlinerTest#test_0007_does not inline partial with local_assigns"
+input: "{source: \"<%= render \\\"shared/item\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; _buf << (render "shared/item").to_s;
+_buf.to_s

@@ -131,9 +131,17 @@ module Herb
 
       action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
       transform_conditionals = @optimize && action_view_helpers
-      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true,
-                                                            action_view_helpers: action_view_helpers,
-                                                            transform_conditionals: transform_conditionals)
+      render_nodes = @optimize && input.include?("render")
+
+      parse_result = ::Herb.parse(
+        input,
+        **@parser_options,
+        track_whitespace: true,
+        action_view_helpers: action_view_helpers,
+        transform_conditionals: transform_conditionals,
+        render_nodes: render_nodes
+      )
+
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -159,7 +167,19 @@ module Herb
           ast.accept(visitor)
         end
 
-        compiler = Compiler.new(self, properties)
+        compiler_options = properties.dup
+
+        if @optimize && render_nodes && properties.fetch(:inline_render, false)
+          require_relative "engine/render_inliner"
+
+          compiler_options[:render_inliner] = RenderInliner.new(
+            self,
+            project_path: @project_path,
+            filename: @relative_file_path
+          )
+        end
+
+        compiler = Compiler.new(self, compiler_options)
 
         ast.accept(compiler)
 
