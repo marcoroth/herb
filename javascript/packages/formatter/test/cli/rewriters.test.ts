@@ -27,12 +27,12 @@ describe("CLI", () => {
       await rm(testDir, { recursive: true }).catch(() => {})
     })
 
-    it("should show rewriter info on stderr when pre-format rewriters are configured", async () => {
+    it("should show rewriter info on stderr when post-format rewriters are configured", async () => {
       const config = dedent`
         formatter:
           enabled: true
           rewriter:
-            pre:
+            post:
               - tailwind-class-sorter
       `
 
@@ -52,7 +52,7 @@ describe("CLI", () => {
         formatter:
           enabled: true
           rewriter:
-            pre:
+            post:
               - tailwind-class-sorter
       `
 
@@ -72,7 +72,7 @@ describe("CLI", () => {
         formatter:
           enabled: true
           rewriter:
-            pre:
+            post:
               - tailwind-class-sorter
       `
 
@@ -97,7 +97,7 @@ describe("CLI", () => {
         formatter:
           enabled: true
           rewriter:
-            pre:
+            post:
               - tailwind-class-sorter
       `
 
@@ -153,7 +153,7 @@ describe("CLI", () => {
         formatter:
           enabled: true
           rewriter:
-            pre:
+            post:
               - tailwind-class-sorter
       `
 

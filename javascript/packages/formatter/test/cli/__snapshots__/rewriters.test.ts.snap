@@ -5,7 +5,7 @@ exports[`CLI > Rewriters > should actually apply Tailwind class sorting 1`] = `
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
 [32m
-Using 1 pre-format rewriter:[0m
+Using 1 post-format rewriter:[0m
 [36m  • tailwind-class-sorter[0m[2m (built-in)[0m
 
 "
@@ -16,7 +16,7 @@ exports[`CLI > Rewriters > should format from stdin with rewriters configured 1`
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
 [32m
-Using 1 pre-format rewriter:[0m
+Using 1 post-format rewriter:[0m
 [36m  • tailwind-class-sorter[0m[2m (built-in)[0m
 
 "
@@ -32,7 +32,7 @@ exports[`CLI > Rewriters > should handle both pre and post rewriters 1`] = `
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
 [32m
-Using 1 pre-format rewriter:[0m
+Using 1 post-format rewriter:[0m
 [36m  • tailwind-class-sorter[0m[2m (built-in)[0m
 
 "
@@ -50,18 +50,18 @@ exports[`CLI > Rewriters > should show multiple rewriters on stderr 1`] = `
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
 [32m
-Using 1 pre-format rewriter:[0m
+Using 1 post-format rewriter:[0m
 [36m  • tailwind-class-sorter[0m[2m (built-in)[0m
 
 "
 `;
 
-exports[`CLI > Rewriters > should show rewriter info on stderr when pre-format rewriters are configured 1`] = `
+exports[`CLI > Rewriters > should show rewriter info on stderr when post-format rewriters are configured 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
 [32m
-Using 1 pre-format rewriter:[0m
+Using 1 post-format rewriter:[0m
 [36m  • tailwind-class-sorter[0m[2m (built-in)[0m
 
 "
