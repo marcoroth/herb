@@ -19,7 +19,7 @@ struct BlockInsideInlineVisitor {
 impl Visitor for BlockInsideInlineVisitor {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     let open_tag = match &node.open_tag {
-      Some(HTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(tag)) => tag,
+      Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(tag)) => tag,
       _ => {
         self.walk_html_element_node(node);
         return;

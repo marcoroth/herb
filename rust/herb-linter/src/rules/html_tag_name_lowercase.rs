@@ -57,7 +57,9 @@ impl Visitor for TagNameLowercaseVisitor {
         if let Some(open_tag) = crate::utils::tag_utils::get_open_tag(node) {
           self.check_open_tag(open_tag);
         }
-        if let Some(herb::union_types::HTMLCloseTagNodeOrHTMLOmittedCloseTagNode::HTMLCloseTagNode(close)) = &node.close_tag {
+        if let Some(herb::union_types::ERBEndNodeOrHTMLCloseTagNodeOrHTMLOmittedCloseTagNodeOrHTMLVirtualCloseTagNode::HTMLCloseTagNode(close)) =
+          &node.close_tag
+        {
           self.check_close_tag(close);
         }
         return;

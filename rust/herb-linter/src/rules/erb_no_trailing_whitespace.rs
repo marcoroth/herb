@@ -38,7 +38,7 @@ impl Visitor for SkipZoneCollector {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     if let Some(ref open_tag) = node.open_tag {
       match open_tag {
-        HTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(tag) => {
+        ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(tag) => {
           if let Some(ref tag_name) = tag.tag_name {
             if Self::is_skip_tag(&tag_name.value) {
               self.skip_zones.push(SkipZone {

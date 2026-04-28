@@ -100,7 +100,7 @@ impl Visitor for SVGTagNameCapitalizationVisitor {
     if self.inside_svg {
       if let Some(ref open_tag) = node.open_tag {
         match open_tag {
-          HTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(open) => {
+          ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(open) => {
             if let Some(ref tag_name_token) = open.tag_name {
               self.check_tag_name(tag_name_token, "Opening");
             }
@@ -111,7 +111,7 @@ impl Visitor for SVGTagNameCapitalizationVisitor {
 
       if let Some(ref close_tag) = node.close_tag {
         match close_tag {
-          HTMLCloseTagNodeOrHTMLOmittedCloseTagNode::HTMLCloseTagNode(close) => {
+          ERBEndNodeOrHTMLCloseTagNodeOrHTMLOmittedCloseTagNodeOrHTMLVirtualCloseTagNode::HTMLCloseTagNode(close) => {
             if let Some(ref tag_name_token) = close.tag_name {
               self.check_tag_name(tag_name_token, "Closing");
             }

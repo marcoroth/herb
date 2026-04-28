@@ -27,7 +27,7 @@ fn get_whitespace_nodes(children: &[AnyNode]) -> Vec<(usize, &WhitespaceNode)> {
     .iter()
     .enumerate()
     .filter_map(|(index, child)| match child {
-      AnyNode::WhitespaceNode(whitespace) => Some((index, whitespace)),
+      AnyNode::WhitespaceNode(whitespace) => Some((index, whitespace.as_ref())),
       _ => None,
     })
     .collect()

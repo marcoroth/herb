@@ -24,7 +24,7 @@ pub fn get_tag_name_from_element(node: &HTMLElementNode) -> Option<&str> {
 
 pub fn get_open_tag(element: &HTMLElementNode) -> Option<&HTMLOpenTagNode> {
   match &element.open_tag {
-    Some(HTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(node)) => Some(node),
+    Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(node)) => Some(node),
     _ => None,
   }
 }
@@ -34,7 +34,7 @@ pub fn get_attributes(node: &HTMLOpenTagNode) -> Vec<&HTMLAttributeNode> {
     .children
     .iter()
     .filter_map(|child| match child {
-      AnyNode::HTMLAttributeNode(attribute) => Some(attribute),
+      AnyNode::HTMLAttributeNode(attribute) => Some(attribute.as_ref()),
       _ => None,
     })
     .collect()
