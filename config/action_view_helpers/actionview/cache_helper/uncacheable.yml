@@ -1,0 +1,16 @@
+---
+name: uncacheable!
+source: "ActionView::Helpers::CacheHelper#uncacheable!"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Raises `UncacheableFragmentError` when called from within a `cache` block. Use to prevent certain content from being fragment cached.
+signature: "uncacheable!"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CacheHelper.html#method-i-uncacheable-21"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

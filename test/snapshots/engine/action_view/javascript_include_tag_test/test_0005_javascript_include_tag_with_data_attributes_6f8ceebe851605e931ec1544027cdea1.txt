@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0005_javascript_include_tag with data attributes"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", data: { turbo_track: \\\"reload\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script data-turbo-track="reload" src="/javascripts/application.js"></script>

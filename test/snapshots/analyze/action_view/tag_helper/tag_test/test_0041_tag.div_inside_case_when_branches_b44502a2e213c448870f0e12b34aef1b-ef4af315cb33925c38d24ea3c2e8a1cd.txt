@@ -1,0 +1,148 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0041_tag.div inside case/when branches"
+input: |2-
+<% case status %>
+<% when "active" %>
+  <%= tag.div class: "active" do %>
+    Active
+  <% end %>
+<% when "inactive" %>
+  <%= tag.div class: "inactive" do %>
+    Inactive
+  <% end %>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(10:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case status " (location: (1:2)-(1:15))
+    │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:17)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:19))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when "active" " (location: (2:2)-(2:17))
+    │   │   │   ├── tag_closing: "%>" (location: (2:17)-(2:19))
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (3 items)
+    │   │   │       ├── @ HTMLTextNode (location: (2:19)-(3:2))
+    │   │   │       │   └── content: "\n  "
+    │   │   │       │
+    │   │   │       ├── @ HTMLElementNode (location: (3:2)-(5:11))
+    │   │   │       │   ├── open_tag:
+    │   │   │       │   │   └── @ ERBOpenTagNode (location: (3:2)-(3:35))
+    │   │   │       │   │       ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │       │   │       ├── content: " tag.div class: "active" do " (location: (3:5)-(3:33))
+    │   │   │       │   │       ├── tag_closing: "%>" (location: (3:33)-(3:35))
+    │   │   │       │   │       ├── tag_name: "div" (location: (3:10)-(3:13))
+    │   │   │       │   │       └── children: (1 item)
+    │   │   │       │   │           └── @ HTMLAttributeNode (location: (3:14)-(3:29))
+    │   │   │       │   │               ├── name:
+    │   │   │       │   │               │   └── @ HTMLAttributeNameNode (location: (3:14)-(3:19))
+    │   │   │       │   │               │       └── children: (1 item)
+    │   │   │       │   │               │           └── @ LiteralNode (location: (3:14)-(3:19))
+    │   │   │       │   │               │               └── content: "class"
+    │   │   │       │   │               │
+    │   │   │       │   │               │
+    │   │   │       │   │               ├── equals: ": " (location: (3:19)-(3:21))
+    │   │   │       │   │               └── value:
+    │   │   │       │   │                   └── @ HTMLAttributeValueNode (location: (3:21)-(3:29))
+    │   │   │       │   │                       ├── open_quote: """ (location: (3:21)-(3:22))
+    │   │   │       │   │                       ├── children: (1 item)
+    │   │   │       │   │                       │   └── @ LiteralNode (location: (3:22)-(3:28))
+    │   │   │       │   │                       │       └── content: "active"
+    │   │   │       │   │                       │
+    │   │   │       │   │                       ├── close_quote: """ (location: (3:28)-(3:29))
+    │   │   │       │   │                       └── quoted: true
+    │   │   │       │   │
+    │   │   │       │   │
+    │   │   │       │   │
+    │   │   │       │   ├── tag_name: "div" (location: (3:10)-(3:13))
+    │   │   │       │   ├── body: (1 item)
+    │   │   │       │   │   └── @ HTMLTextNode (location: (3:35)-(5:2))
+    │   │   │       │   │       └── content: "\n    Active\n  "
+    │   │   │       │   │
+    │   │   │       │   ├── close_tag:
+    │   │   │       │   │   └── @ ERBEndNode (location: (5:2)-(5:11))
+    │   │   │       │   │       ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │   │       │   │       ├── content: " end " (location: (5:4)-(5:9))
+    │   │   │       │   │       └── tag_closing: "%>" (location: (5:9)-(5:11))
+    │   │   │       │   │
+    │   │   │       │   ├── is_void: false
+    │   │   │       │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │       │
+    │   │   │       └── @ HTMLTextNode (location: (5:11)-(6:0))
+    │   │   │           └── content: "\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (6:0)-(6:21))
+    │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │       ├── content: " when "inactive" " (location: (6:2)-(6:19))
+    │   │       ├── tag_closing: "%>" (location: (6:19)-(6:21))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (6:21)-(7:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (7:2)-(9:11))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ ERBOpenTagNode (location: (7:2)-(7:37))
+    │   │           │   │       ├── tag_opening: "<%=" (location: (7:2)-(7:5))
+    │   │           │   │       ├── content: " tag.div class: "inactive" do " (location: (7:5)-(7:35))
+    │   │           │   │       ├── tag_closing: "%>" (location: (7:35)-(7:37))
+    │   │           │   │       ├── tag_name: "div" (location: (7:10)-(7:13))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ HTMLAttributeNode (location: (7:14)-(7:31))
+    │   │           │   │               ├── name:
+    │   │           │   │               │   └── @ HTMLAttributeNameNode (location: (7:14)-(7:19))
+    │   │           │   │               │       └── children: (1 item)
+    │   │           │   │               │           └── @ LiteralNode (location: (7:14)-(7:19))
+    │   │           │   │               │               └── content: "class"
+    │   │           │   │               │
+    │   │           │   │               │
+    │   │           │   │               ├── equals: ": " (location: (7:19)-(7:21))
+    │   │           │   │               └── value:
+    │   │           │   │                   └── @ HTMLAttributeValueNode (location: (7:21)-(7:31))
+    │   │           │   │                       ├── open_quote: """ (location: (7:21)-(7:22))
+    │   │           │   │                       ├── children: (1 item)
+    │   │           │   │                       │   └── @ LiteralNode (location: (7:22)-(7:30))
+    │   │           │   │                       │       └── content: "inactive"
+    │   │           │   │                       │
+    │   │           │   │                       ├── close_quote: """ (location: (7:30)-(7:31))
+    │   │           │   │                       └── quoted: true
+    │   │           │   │
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── tag_name: "div" (location: (7:10)-(7:13))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (7:37)-(9:2))
+    │   │           │   │       └── content: "\n    Inactive\n  "
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ ERBEndNode (location: (9:2)-(9:11))
+    │   │           │   │       ├── tag_opening: "<%" (location: (9:2)-(9:4))
+    │   │           │   │       ├── content: " end " (location: (9:4)-(9:9))
+    │   │           │   │       └── tag_closing: "%>" (location: (9:9)-(9:11))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (9:11)-(10:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (10:0)-(10:9))
+    │           ├── tag_opening: "<%" (location: (10:0)-(10:2))
+    │           ├── content: " end " (location: (10:2)-(10:7))
+    │           └── tag_closing: "%>" (location: (10:7)-(10:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (10:9)-(11:0))
+        └── content: "\n"

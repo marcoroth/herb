@@ -17,4 +17,4 @@ input: "<script />"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── source: "HTML"
+        └── element_source: "HTML"

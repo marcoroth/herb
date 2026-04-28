@@ -1,0 +1,16 @@
+---
+name: read_fragment_for
+source: "ActionView::Helpers::CacheHelper#read_fragment_for"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Reads a cached fragment from the cache store. Returns `nil` on cache miss.
+signature: "read_fragment_for(name, options)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

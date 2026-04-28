@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0030_compilation with optimize for void element"
+input: "{source: \"<%= tag.br %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<br>'.freeze;
+_buf.to_s

@@ -1,0 +1,38 @@
+---
+name: weekday_select
+source: "ActionView::Helpers::FormOptionsHelper#weekday_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns `<select>` and `<option>` tags for the given object and method, using `weekday_options_for_select` to generate the list of option tags.
+signature: "weekday_select(object, method, options = {}, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-weekday_select"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The object name for the select tag."
+  - name: method
+    position: 2
+    type: [string, symbol]
+    optional: false
+    description: "The attribute of the object corresponding to the select tag."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash for customizing the select behavior."
+  - name: html_options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options: []
+special_behaviors: []

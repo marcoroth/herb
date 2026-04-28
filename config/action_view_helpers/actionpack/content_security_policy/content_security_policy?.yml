@@ -1,0 +1,16 @@
+---
+name: content_security_policy?
+source: "ActionController::ContentSecurityPolicy#content_security_policy?"
+gem: actionpack
+output: boolean
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns whether a Content-Security-Policy is present for the current request.
+signature: "content_security_policy?"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

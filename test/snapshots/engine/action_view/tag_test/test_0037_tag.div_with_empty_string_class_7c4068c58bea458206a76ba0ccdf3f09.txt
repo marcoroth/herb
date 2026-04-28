@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0037_tag.div with empty string class"
+input: "{source: \"<%= tag.div class: \\\"\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div class=""></div>

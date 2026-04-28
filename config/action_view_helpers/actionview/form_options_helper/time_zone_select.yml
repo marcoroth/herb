@@ -1,0 +1,53 @@
+---
+name: time_zone_select
+source: "ActionView::Helpers::FormOptionsHelper#time_zone_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns `<select>` and `<option>` tags for the given object and method, using `time_zone_options_for_select` to generate the list of option tags.
+signature: "time_zone_select(object, method, priority_zones = nil, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-time_zone_select"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The object name for the select tag."
+  - name: method
+    position: 2
+    type: [string, symbol]
+    optional: false
+    description: "The attribute of the object corresponding to the select tag."
+  - name: priority_zones
+    position: 3
+    type: [array, regexp]
+    optional: true
+    default: "nil"
+    description: "An array of `ActiveSupport::TimeZone` objects or a Regexp to list above the rest."
+  - name: options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash for customizing the select behavior."
+  - name: html_options
+    position: 5
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: include_blank
+    type: [boolean, string]
+    description: "Include a blank option at the top of the select."
+  - name: model
+    type: class
+    description: "Time zone model object, defaults to `ActiveSupport::TimeZone`."
+  - name: default
+    type: string
+    description: "Default `ActiveSupport::TimeZone` name if the object's time zone is `nil`."
+special_behaviors: []

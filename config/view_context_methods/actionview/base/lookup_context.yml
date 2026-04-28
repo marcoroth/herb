@@ -1,0 +1,8 @@
+---
+name: lookup_context
+source: "ActionView::Base#lookup_context"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the `ActionView::LookupContext` used for template resolution.

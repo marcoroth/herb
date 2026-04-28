@@ -1,0 +1,44 @@
+---
+name: phone_to
+source: "ActionView::Helpers::UrlHelper#phone_to"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a TEL anchor link tag to the specified phone_number. When the link is clicked, the default app to make phone calls is opened and prepopulated with the phone number.
+signature: "phone_to(phone_number, name = nil, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-phone_to"
+tag:
+  name: a
+  is_void: false
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: href
+    source: first_arg
+    wrapper: null
+arguments:
+  - name: phone_number
+    position: 1
+    type: string
+    optional: false
+    description: "The phone number for the tel link."
+  - name: name
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Link text. Defaults to the phone number."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: country_code
+    type: string
+    description: "Prepends a plus sign and the given country code to the phone number."
+special_behaviors: []

@@ -21,7 +21,8 @@ class HerbDisableCommentNoRedundantAllVisitor extends HerbDisableCommentParsedVi
 }
 
 export class HerbDisableCommentNoRedundantAllRule extends ParserRule {
-  name = "herb-disable-comment-no-redundant-all"
+  static ruleName = "herb-disable-comment-no-redundant-all"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -31,7 +32,7 @@ export class HerbDisableCommentNoRedundantAllRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HerbDisableCommentNoRedundantAllVisitor(this.name, context)
+    const visitor = new HerbDisableCommentNoRedundantAllVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -1,0 +1,45 @@
+---
+name: javascript_tag
+source: "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: true
+description: |-
+  Returns a JavaScript tag with the content inside. Content can be passed as the first argument or captured via a block. Supports an automatic nonce value via `nonce: true` when Content Security Policy is enabled.
+signature: "javascript_tag(content_or_options_with_block = nil, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/JavaScriptHelper.html#method-i-javascript_tag"
+tag:
+  name: script
+  is_void: false
+  preferred: false
+  detect_style: call_name
+content:
+  source: first_arg
+  skip_if_hash: true
+attributes_arg: 2
+transform_style: generic
+arguments:
+  - name: content_or_options_with_block
+    position: 1
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "Inline JavaScript content, or options hash when block is given."
+  - name: html_options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<script>` tag."
+options:
+  - name: nonce
+    type: [boolean, string]
+    description: "CSP nonce value. When `true`, uses the Rails-generated nonce."
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+special_behaviors:
+  - type: wrap_body
+    wrapper: cdata

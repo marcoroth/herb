@@ -28,10 +28,12 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
       if (!this.isAllowedContent(child)) {
         const childCode = IdentityPrinter.print(child).trim()
 
-        this.addOffense(
+        const offense = this.createOffense(
           `Do not place \`${childCode}\` between \`${caseCode}\` and \`${conditionCode}\`. Content here is not part of any branch and will not be rendered.`,
           child.location,
         )
+        offense.tags = ["unnecessary"]
+        this.offenses.push(offense)
       }
     }
   }
@@ -49,7 +51,8 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoCaseNodeChildrenRule extends ParserRule {
-  name = "erb-no-case-node-children"
+  static ruleName = "erb-no-case-node-children"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -59,7 +62,7 @@ export class ERBNoCaseNodeChildrenRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoCaseNodeChildrenVisitor(this.name, context)
+    const visitor = new ERBNoCaseNodeChildrenVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

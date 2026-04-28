@@ -1,0 +1,46 @@
+---
+source: "Parser::AttributesTest#test_0126_attribute value with inner attributes using different quote type in double quotes"
+input: "<div data-html=\"<span class='highlight'>text</span>\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:59))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:59))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:53))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:52)-(1:53))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:52))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:14))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:14))
+        │       │       │               └── content: "data-html"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:52))
+        │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:16)-(1:51))
+        │       │               │       └── content: "<span class='highlight'>text</span>"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:51)-(1:52))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:53)-(1:59))
+        │       ├── tag_opening: "</" (location: (1:53)-(1:55))
+        │       ├── tag_name: "div" (location: (1:55)-(1:58))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:58)-(1:59))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

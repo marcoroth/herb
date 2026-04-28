@@ -120,5 +120,13 @@ module Parser
         </div>
       HTML
     end
+
+    test "unclosed ERB tag in attribute position at EOF" do
+      assert_parsed_snapshot(%(<input <%= tag.attributes(type: :text) %))
+    end
+
+    test "unclosed HTML tag after ERB tag in attribute position at EOF" do
+      assert_parsed_snapshot(%(<input <%= tag.attributes(type: :text) %>))
+    end
   end
 end

@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0037_compilation with optimize for tag with dynamic attribute"
+input: "{source: \"<%= tag.div class: css_class %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '"></div>'.freeze;
+_buf.to_s

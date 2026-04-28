@@ -1,0 +1,35 @@
+---
+name: submit
+source: "ActionView::Helpers::FormHelper#submit"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a submit button for the form. When no value is given, it generates a label based on whether the object is a new or persisted record (e.g. "Create Article" or "Update Article"). This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "submit(value = nil, options = {})"
+documentation_url: ""
+tag: null
+arguments:
+  - name: value
+    position: 1
+    type: string
+    optional: true
+    default: "nil"
+    description: "Caption text for the submit button. Auto-generated from the model if omitted."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the button is disabled."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

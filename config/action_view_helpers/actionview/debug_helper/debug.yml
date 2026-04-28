@@ -1,0 +1,21 @@
+---
+name: debug
+source: "ActionView::Helpers::DebugHelper#debug"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a YAML representation of the object wrapped in a `<pre>` tag for display.
+signature: "debug(object)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DebugHelper.html#method-i-debug"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: object
+    optional: false
+    description: "Object to debug."
+options: []
+special_behaviors: []

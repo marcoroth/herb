@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0011_link_to with block containing HTML and object method call"
+input: "{source: \"<%= link_to @profile do %>\\n  <strong><%= @profile.name %></strong> -- <span>Check it out!</span>\\n<% end %>\\n\", locals: {\"@profile\": #<data Engine::ActionView::LinkToTest::Profile id=100, name=\"Alice\">}, options: {action_view_helpers: true}}"
+---
+<a href="/profiles/100">
+  <strong>Alice</strong> -- <span>Check it out!</span>
+</a>

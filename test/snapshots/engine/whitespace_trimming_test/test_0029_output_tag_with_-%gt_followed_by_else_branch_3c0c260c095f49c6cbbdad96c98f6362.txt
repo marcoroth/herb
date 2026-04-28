@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0029_output tag with -%> followed by else branch"
+input: "{source: \"<% if false %>\\nX\\n<%= -%>\\n<% else %>\\nY\\n<% end %>\", options: {}}"
+---
+_buf = ::String.new; if false 
+ _buf << 'X
+'.freeze; _buf << ().to_s; else 
+ _buf << 'Y
+'.freeze; end 
+_buf.to_s

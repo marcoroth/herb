@@ -5,7 +5,7 @@ import { IdentityPrinter } from "../../src/index.js"
 
 import { HTMLTextNode, ERBContentNode, ERBEndNode, LiteralNode } from "@herb-tools/core"
 
-import type { Node, ParseResult } from "@herb-tools/core"
+import type { Node, ParseResult, ParseOptions } from "@herb-tools/core"
 
 export function createLocation(line = 1, column = 1) {
   return {
@@ -90,8 +90,8 @@ export function expectResultWithNoErrors(parseResult: ParseResult, source: strin
   expect(parseResult.value.recursiveErrors(), source).toEqual([])
 }
 
-export function expectSourceToPrint(source: string, expectedOutput: string, failOnErrors: boolean = true) {
-  const parseResult = Herb.parse(source, { track_whitespace: true })
+export function expectSourceToPrint(source: string, expectedOutput: string, failOnErrors: boolean = true, parseOptions: ParseOptions = {}) {
+  const parseResult = Herb.parse(source, { track_whitespace: true, ...parseOptions })
 
   if (failOnErrors) {
     expectResultWithNoErrors(parseResult, source)
@@ -104,6 +104,6 @@ export function expectSourceToPrint(source: string, expectedOutput: string, fail
   expect(output).toBe(expectedOutput)
 }
 
-export function expectPrintRoundTrip(input: string, failOnErrors: boolean = true) {
-  expectSourceToPrint(input, input, failOnErrors)
+export function expectPrintRoundTrip(input: string, failOnErrors: boolean = true, parseOptions: ParseOptions = {}) {
+  expectSourceToPrint(input, input, failOnErrors, parseOptions)
 }

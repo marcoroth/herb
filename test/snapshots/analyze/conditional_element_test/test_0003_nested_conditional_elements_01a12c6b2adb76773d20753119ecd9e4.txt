@@ -203,7 +203,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (7:22)-(7:23))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (7:23)-(8:2))
     │   │   │   │       └── content: "\n  "
@@ -243,7 +243,7 @@ input: |2-
     │   │   │   │
     │   │   │   │
     │   │   │   ├── tag_name: "div" (location: (5:5)-(5:8))
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (10:11)-(11:0))
     │   │       └── content: "\n"
@@ -283,7 +283,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "div" (location: (2:3)-(2:6))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (13:9)-(14:0))
         └── content: "\n"

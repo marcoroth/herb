@@ -10,6 +10,13 @@ const external = [
   "url",
   "fs",
   "module",
+  "os",
+  "worker_threads",
+  "node:path",
+  "node:url",
+  "node:fs",
+  "node:os",
+  "node:worker_threads",
 ]
 
 function isExternal(id) {
@@ -41,6 +48,27 @@ export default [
     ],
   },
 
+  // Lint worker entry point (CommonJS - used by worker_threads)
+  {
+    input: "src/cli/lint-worker.ts",
+    output: {
+      file: "dist/lint-worker.js",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
+  },
+
   // Library exports (ESM)
   {
     input: "src/index.ts",
@@ -49,7 +77,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       json(),
@@ -70,7 +98,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       commonjs(),

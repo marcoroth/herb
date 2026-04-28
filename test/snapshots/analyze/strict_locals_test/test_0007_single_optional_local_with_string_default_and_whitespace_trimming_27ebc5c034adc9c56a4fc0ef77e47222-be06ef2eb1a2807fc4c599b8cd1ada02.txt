@@ -1,0 +1,25 @@
+---
+source: "Analyze::StrictLocalsTest#test_0007_single optional local with string default and whitespace trimming"
+input: |2-
+<%# locals: (message: "Hello, world!") -%>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:42))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message: "Hello, world!") " (location: (1:3)-(1:39))
+    │   ├── tag_closing: "-%>" (location: (1:39)-(1:42))
+    │   └── locals: (1 item)
+    │       └── @ RubyParameterNode (location: (1:13)-(1:37))
+    │           ├── name: "message" (location: (1:13)-(1:21))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:22)-(1:37))
+    │           │       └── content: "\"Hello, world!\""
+    │           │
+    │           ├── kind: "keyword"
+    │           └── required: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:42)-(2:0))
+        └── content: "\n"

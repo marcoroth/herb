@@ -3,12 +3,17 @@
 module Herb
   class Engine
     class Validator < Herb::Visitor
-      attr_reader :diagnostics
+      attr_reader :diagnostics, :enabled
 
-      def initialize
-        super
+      def initialize(enabled: true)
+        super()
 
+        @enabled = enabled
         @diagnostics = []
+      end
+
+      def enabled?
+        @enabled
       end
 
       def validate(node)

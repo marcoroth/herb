@@ -4,7 +4,8 @@ import type { LintOffense, FullRuleConfig } from "../types.js"
 import type { ParseResult, HerbError } from "@herb-tools/core"
 
 export class ParserNoErrorsRule extends ParserRule {
-  name = "parser-no-errors"
+  static ruleName = "parser-no-errors"
+  static introducedIn = this.version("0.5.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -19,14 +20,10 @@ export class ParserNoErrorsRule extends ParserRule {
     )
   }
 
-  private herbErrorToLintOffense(error: HerbError): LintOffense {
+  protected herbErrorToLintOffense(error: HerbError): LintOffense {
     return {
+      ...super.herbErrorToLintOffense(error),
       message: `${error.message} (\`${error.type}\`)`,
-      location: error.location,
-      severity: error.severity,
-      rule: this.name,
-      code: this.name,
-      source: "linter"
     }
   }
 }

@@ -1,5 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "./rule-utils.js"
+import { hasAttributeValue } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -34,7 +35,8 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
 
 export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttributeAutofixContext> {
   static autocorrectable = true
-  name = "html-boolean-attributes-no-value"
+  static ruleName = "html-boolean-attributes-no-value"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -44,7 +46,7 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
-    const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
+    const visitor = new BooleanAttributesNoValueVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

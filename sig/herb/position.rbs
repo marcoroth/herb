@@ -1,6 +1,7 @@
 # Generated from lib/herb/position.rb with RBS::Inline
 
 module Herb
+  # : type serialized_position = { line: Integer, column: Integer }
   class Position
     attr_reader line: Integer
 

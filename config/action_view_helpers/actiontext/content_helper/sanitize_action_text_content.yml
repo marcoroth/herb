@@ -1,0 +1,21 @@
+---
+name: sanitize_action_text_content
+source: "ActionText::ContentHelper#sanitize_action_text_content"
+gem: actiontext
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Sanitizes Action Text content HTML using the configured sanitizer, allowed tags, allowed attributes, and scrubber. Returns the sanitized HTML as an `html_safe` string.
+signature: "sanitize_action_text_content(content)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionText/ContentHelper.html#method-i-sanitize_action_text_content"
+tag: null
+arguments:
+  - name: content
+    position: 1
+    type: object
+    optional: false
+    description: "The Action Text content object to sanitize."
+options: []
+special_behaviors: []

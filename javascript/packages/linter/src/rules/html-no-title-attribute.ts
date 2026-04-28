@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -13,7 +14,7 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
   }
 
   private checkTitleAttribute(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (!tagName || this.ALLOWED_ELEMENTS_WITH_TITLE.has(tagName)) {
       return
@@ -29,17 +30,18 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoTitleAttributeRule extends ParserRule {
-  name = "html-no-title-attribute"
+  static ruleName = "html-no-title-attribute"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoTitleAttributeVisitor(this.name, context)
+    const visitor = new NoTitleAttributeVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -2,7 +2,7 @@
 
 set -e  # Exit on error
 
-FORCE_UPDATE_SNAPSHOTS=true bundle exec rake test
+FORCE_UPDATE_SNAPSHOTS=true bundle exec rake test:all
 
 echo ""
 echo "Force updated snapshots!"

@@ -1,0 +1,21 @@
+---
+source: "Parser::TagsTest#test_0064_dot-notation component tag self-closing"
+input: "<Dialog.Button />"
+options: {dot_notation_tags: true}
+---
+@ DocumentNode (location: (1:0)-(1:17))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:17))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "Dialog.Button" (location: (1:1)-(1:14))
+        │       ├── tag_closing: "/>" (location: (1:15)-(1:17))
+        │       ├── children: []
+        │       └── is_void: true
+        │
+        ├── tag_name: "Dialog.Button" (location: (1:1)-(1:14))
+        ├── body: []
+        ├── close_tag: ∅
+        ├── is_void: true
+        └── element_source: "HTML"

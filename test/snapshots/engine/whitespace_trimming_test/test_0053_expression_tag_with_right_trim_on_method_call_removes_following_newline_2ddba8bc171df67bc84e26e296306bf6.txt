@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0053_expression tag with right trim on method call removes following newline"
+input: "{source: \"<%= name.upcase -%>\\nworld\", locals: {name: \"hello\"}, options: {}}"
+---
+HELLOworld

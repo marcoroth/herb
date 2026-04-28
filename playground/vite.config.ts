@@ -1,3 +1,4 @@
+import { resolve } from "path"
 import { defineConfig } from "vite"
 import { execSync } from "child_process"
 
@@ -64,6 +65,31 @@ function getCommitInfo() {
 export default defineConfig({
   define: {
     __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
+  },
+  resolve: {
+    dedupe: ['@ruby/prism'],
+    alias: {
+      '@ruby/prism/src/nodes.js': resolve(__dirname, '../node_modules/@ruby/prism/src/nodes.js'),
+      '@ruby/prism/src/visitor.js': resolve(__dirname, '../node_modules/@ruby/prism/src/visitor.js'),
+      '@ruby/prism/src/deserialize.js': resolve(__dirname, '../node_modules/@ruby/prism/src/deserialize.js'),
+    },
+  },
+  build: {
+    minify: false,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        prism: resolve(__dirname, 'prism/index.html'),
+      },
+      output: {
+        minify: {
+          compress: true,
+          mangle: {
+            keepNames: true,
+          },
+        },
+      },
+    },
   },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173

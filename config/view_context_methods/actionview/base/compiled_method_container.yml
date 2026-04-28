@@ -1,0 +1,8 @@
+---
+name: compiled_method_container
+source: "ActionView::Base#compiled_method_container"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the module where compiled template methods are stored.

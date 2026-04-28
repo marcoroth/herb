@@ -46,6 +46,10 @@ input: |2-
     │   │           │   │   │   │   └── @ HTMLTextNode (location: (4:29)-(6:4))
     │   │           │   │   │   │       └── content: "\n      Nested\n    "
     │   │           │   │   │   │
+    │   │           │   │   │   ├── block_arguments: []
+    │   │           │   │   │   ├── rescue_clause: ∅
+    │   │           │   │   │   ├── else_clause: ∅
+    │   │           │   │   │   ├── ensure_clause: ∅
     │   │           │   │   │   └── end_node:
     │   │           │   │   │       └── @ ERBEndNode (location: (6:4)-(6:13))
     │   │           │   │   │           ├── tag_opening: "<%" (location: (6:4)-(6:6))
@@ -56,6 +60,10 @@ input: |2-
     │   │           │   │   └── @ HTMLTextNode (location: (6:13)-(7:2))
     │   │           │   │       └── content: "\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (7:2)-(7:11))
     │   │           │           ├── tag_opening: "<%" (location: (7:2)-(7:4))

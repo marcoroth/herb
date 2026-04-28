@@ -1,6 +1,6 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb, HerbBackend } from "../src/index-esm.mjs"
+import { Herb, HerbBackend } from "../src/index.ts"
 
 describe("@herb-tools/node", () => {
   beforeAll(async () => {
@@ -18,7 +18,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.8.10, @herb-tools/core@0.8.10, libprism@1.9.0, libherb@0.8.10 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.10.1, @herb-tools/core@0.10.1, libprism@1.9.0, libherb@0.10.1 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {

@@ -1,0 +1,122 @@
+# Generated from lib/herb/action_view/render_analyzer.rb with RBS::Inline
+
+module Herb
+  module ActionView
+    class RenderAnalyzer
+      include Colors
+
+      class Result < Data
+        attr_reader render_calls(): untyped
+
+        attr_reader dynamic_calls(): untyped
+
+        attr_reader partial_files(): untyped
+
+        attr_reader unresolved(): untyped
+
+        attr_reader unused(): untyped
+
+        attr_reader view_root(): untyped
+
+        def self.new: (untyped render_calls, untyped dynamic_calls, untyped partial_files, untyped unresolved, untyped unused, untyped view_root) -> instance
+                    | (render_calls: untyped, dynamic_calls: untyped, partial_files: untyped, unresolved: untyped, unused: untyped, view_root: untyped) -> instance
+
+        def self.members: () -> [ :render_calls, :dynamic_calls, :partial_files, :unresolved, :unused, :view_root ]
+
+        def members: () -> [ :render_calls, :dynamic_calls, :partial_files, :unresolved, :unused, :view_root ]
+      end
+
+      class Result
+        def issues?: () -> untyped
+      end
+
+      attr_reader project_path: untyped
+
+      attr_reader configuration: untyped
+
+      def initialize: (untyped project_path, ?configuration: untyped) -> untyped
+
+      def check!: () -> untyped
+
+      def fully_resolvable?: (untyped file_path) -> untyped
+
+      def graph_file!: (untyped file_path) -> untyped
+
+      def graph!: () -> untyped
+
+      def analyze: (?untyped erb_files, ?untyped view_root) -> untyped
+
+      def analyze_from_collected: (render_calls_by_file: untyped, ?dynamic_prefixes_from_erb: untyped, ?layout_refs_from_erb: untyped) -> untyped
+
+      def print_file_lists: (untyped result) -> untyped
+
+      def print_issue_summary: (untyped result) -> untyped
+
+      def print_summary_line: (untyped result) -> untyped
+
+      private
+
+      def print_partial_tree: (untyped partial_names, untyped render_graph, untyped partial_files, untyped view_root, untyped reachable, ?indent: untyped, ?visited: untyped) -> untyped
+
+      def file_display_name: (untyped file, untyped view_root) -> untyped
+
+      def compute_reachable: (untyped render_graph, untyped partial_files, untyped ruby_references, untyped dynamic_prefixes) -> untyped
+
+      def trace_to_entry_points: (untyped partial_name, untyped reverse_graph, untyped _partial_files, untyped view_root) -> untyped
+
+      def print_results: (untyped result, untyped duration) -> untyped
+
+      def find_erb_files: () -> untyped
+
+      def find_view_root: () -> untyped
+
+      def find_partial_files: (untyped view_root) -> untyped
+
+      def partial_name_for_file: (untyped file_path, untyped view_root) -> untyped
+
+      def collect_render_calls_by_file: (untyped files) -> untyped
+
+      def process_file_for_render_calls: (untyped file) -> untyped
+
+      def ensure_parallel!: () -> untyped
+
+      def collect_ruby_render_references: () -> untyped
+
+      def build_render_graph: (untyped render_calls_by_file, untyped partial_files, untyped view_root) -> untyped
+
+      def find_unused_by_reachability: (untyped render_graph, untyped partial_files, untyped ruby_references, untyped dynamic_prefixes, untyped _view_root) -> untyped
+
+      def partition_dynamic: (untyped render_calls) -> untyped
+
+      def dynamic_partial?: (untyped partial_name) -> untyped
+
+      def collect_all_dynamic_prefixes: (untyped dynamic_calls, untyped ruby_references) -> untyped
+
+      def find_unresolved: (untyped render_calls, untyped partial_files, untyped view_root) -> untyped
+
+      def resolve_partial: (untyped partial_name, untyped source_file, untyped partial_files, untyped view_root) -> untyped
+
+      def expected_file_path: (untyped partial_name, untyped view_root) -> untyped
+
+      def label: (untyped text, ?untyped width) -> untyped
+
+      def stat: (untyped count, untyped text, untyped color) -> untyped
+
+      def separator: () -> untyped
+
+      def pluralize: (untyped count, untyped singular, ?untyped plural) -> untyped
+
+      def format_duration: (untyped seconds) -> untyped
+
+      def relative_path: (untyped path) -> untyped
+    end
+
+    class RenderCallVisitor < Visitor
+      attr_reader render_calls: untyped
+
+      def initialize: (untyped file) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
+    end
+  end
+end

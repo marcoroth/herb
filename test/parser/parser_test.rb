@@ -50,7 +50,7 @@ module Parser
                 │       └── tag_closing: ">" (location: (1:27)-(1:28))
                 │
                 ├── is_void: false
-                └── source: "HTML"
+                └── element_source: "HTML"
       SNAPSHOT
 
       file.unlink

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0005_image_tag with protocol-relative URL"
+input: "{source: \"<%= image_tag \\\"//cdn.example.com/icon.png\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img src="//cdn.example.com/icon.png" />

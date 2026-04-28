@@ -1,0 +1,6 @@
+module DidYouMean
+  class SpellChecker
+    def initialize: (dictionary: Array[String]) -> void
+    def correct: (String input) -> Array[String]
+  end
+end

@@ -1,7 +1,7 @@
 #include "error_helpers.h"
 #include "extension_helpers.h"
 
-#include "../../src/include/ast_node.h"
+#include "../../src/include/ast/ast_node.h"
 #include "../../src/include/errors.h"
 
 #include <stdlib.h>
@@ -18,7 +18,7 @@ jobject <%= error.name %>FromCStruct(JNIEnv* env, <%= error.struct_type %>* <%= 
 
   jstring jtype = (*env)->NewStringUTF(env, "<%= error.name %>");
   jobject location = CreateLocation(env, <%= error.human %>->base.location);
-  jstring jmessage = (*env)->NewStringUTF(env, <%= error.human %>->base.message);
+  jstring jmessage = CreateStringFromHbString(env, <%= error.human %>->base.message);
 
   return (*env)->NewObject(env, errorClass, constructor, jtype, location, jmessage);
 }

@@ -1,0 +1,40 @@
+---
+source: "Analyze::StrictLocalsTest#test_0056_named double-splat does not suppress forwarding error"
+input: |2-
+<%# locals: (**attributes) %>
+<%= helper(**) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(3:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (2:11)-(2:13))
+│       ├── message: "argument_no_forwarding_star_star: unexpected `**`; no anonymous keyword rest parameter"
+│       ├── error_message: "unexpected `**`; no anonymous keyword rest parameter"
+│       ├── diagnostic_id: "argument_no_forwarding_star_star"
+│       └── level: "syntax"
+│
+└── children: (4 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:29))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (**attributes) " (location: (1:3)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   └── locals: (1 item)
+    │       └── @ RubyParameterNode (location: (1:13)-(1:25))
+    │           ├── name: "attributes" (location: (1:15)-(1:25))
+    │           ├── default_value: ∅
+    │           ├── kind: "keyword_rest"
+    │           └── required: false
+    │
+    │
+    ├── @ HTMLTextNode (location: (1:29)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (2:0)-(2:17))
+    │   ├── tag_opening: "<%=" (location: (2:0)-(2:3))
+    │   ├── content: " helper(**) " (location: (2:3)-(2:15))
+    │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (2:17)-(3:0))
+        └── content: "\n"

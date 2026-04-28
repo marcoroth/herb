@@ -170,6 +170,14 @@ describe("@herb-tools/formatter - content preserving tags", () => {
     `)
   })
 
+  test("preserves pre with inline child element exceeding max line length", () => {
+    const content = "x".repeat(66)
+    const source = `<div>\n  <pre><code>${content}</code></pre>\n</div>`
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
+    expect(formatter.format(result)).toEqual(result)
+  })
+
   test("preserves textarea with ERB control flow", () => {
     const source = dedent`
       <textarea>

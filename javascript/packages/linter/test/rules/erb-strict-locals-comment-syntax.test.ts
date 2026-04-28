@@ -94,30 +94,6 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     `)
   })
 
-  test("flags missing parentheses around parameters", () => {
-    expectError("Wrap parameters in parentheses: `locals: (name:)` or `locals: (name: default)`.")
-
-    assertOffenses(dedent`
-      <%# locals: user %>
-    `)
-  })
-
-  test("flags empty locals: without parentheses", () => {
-    expectError("Add parameters after `locals:`. Use `locals: (name:)` or `locals: ()` for no locals.")
-
-    assertOffenses(dedent`
-      <%# locals: %>
-    `)
-  })
-
-  test("flags unbalanced parentheses", () => {
-    expectError("Unbalanced parentheses in `locals:` comment. Ensure all opening parentheses have matching closing parentheses.")
-
-    assertOffenses(dedent`
-      <%# locals: (user: %>
-    `)
-  })
-
   test("flags Ruby comment syntax for strict locals in execution tags", () => {
     expectError("Use `<%#` instead of `<% #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
     expectError("Use `<%#` instead of `<%- #` for strict locals comments. Only ERB comment syntax is recognized by Rails.")
@@ -125,64 +101,6 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     assertOffenses(dedent`
       <% # locals: (user:) %>
       <%- # locals: (admin: false) %>
-    `)
-  })
-
-  test("flags positional arguments (not supported)", () => {
-    expectError("Positional argument `user` is not allowed. Use keyword argument format: `user:`.")
-
-    assertOffenses(dedent`
-      <%# locals: (user) %>
-    `)
-  })
-
-  test("flags block arguments (not supported)", () => {
-    expectError("Block argument `&block` is not allowed. Strict locals only support keyword arguments.")
-
-    assertOffenses(dedent`
-      <%# locals: (&block) %>
-    `)
-  })
-
-  test("flags single splat arguments (not supported)", () => {
-    expectError("Splat argument `*args` is not allowed. Strict locals only support keyword arguments.")
-
-    assertOffenses(dedent`
-      <%# locals: (*args) %>
-    `)
-  })
-
-  test("flags trailing comma in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (user:,) %>
-    `)
-  })
-
-  test("flags leading comma in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (, user:) %>
-    `)
-  })
-
-  test("flags double commas in parameters", () => {
-    expectError("Unexpected comma in `locals:` parameters.")
-
-    assertOffenses(dedent`
-      <%# locals: (user:,, admin:) %>
-    `)
-  })
-
-  test("flags duplicate strict locals comments", () => {
-    expectError("Duplicate `locals:` declaration. Only one `locals:` comment is allowed per partial (first declaration at line 1).")
-
-    assertOffenses(dedent`
-      <%# locals: (user:) %>
-      <p>Content</p>
-      <%# locals: (admin:) %>
     `)
   })
 

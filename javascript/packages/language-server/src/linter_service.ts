@@ -1,4 +1,4 @@
-import { Diagnostic, Range, Position, CodeDescription, Connection } from "vscode-languageserver/node"
+import { Diagnostic, CodeDescription, Connection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
@@ -8,7 +8,8 @@ import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { Project } from "./project"
-import { lintToDignosticSeverity } from "./utils"
+import { lintToDignosticSeverity, lintToDignosticTags } from "./utils"
+import { lspRangeFromLocation } from "./range_utils"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
@@ -113,7 +114,27 @@ export class LinterService {
     }
   }
 
+  private shouldLintFile(uri: string): boolean {
+    const filePath = uri.replace(/^file:\/\//, '')
+
+    if (filePath.endsWith('.herb.yml')) return false
+
+    const config = this.settings.projectConfig
+    if (!config) return true
+
+    const hasConfigFile = Config.exists(config.projectPath)
+    if (!hasConfigFile) return true
+
+    const relativePath = filePath.replace(this.project.projectPath + '/', '')
+
+    return config.isLinterEnabledForPath(relativePath)
+  }
+
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
+    if (!this.shouldLintFile(textDocument.uri)) {
+      return { diagnostics: [] }
+    }
+
     const settings = await this.settings.getDocumentSettings(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
@@ -138,21 +159,22 @@ export class LinterService {
             'parser-no-errors': { enabled: false }
           }
         }
-      }, { projectPath: projectConfig?.projectPath || process.cwd() })
+      }, {
+        projectPath: projectConfig?.projectPath || process.cwd(),
+        configVersion: projectConfig?.configVersion
+      })
 
-      const filteredRules = Linter.filterRulesByConfig(this.allRules, config.linter?.rules)
+      const { enabled: filteredRules } = Linter.filterRulesByConfig(this.allRules, config.linter?.rules, config.configVersion)
 
       this.linter = new Linter(Herb, filteredRules, config, this.allRules)
+      this.linter.mode = "editor"
     }
 
     const content = textDocument.getText()
     const lintResult = this.linter.lint(content, { fileName: textDocument.uri })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {
-      const range = Range.create(
-        Position.create(offense.location.start.line - 1, offense.location.start.column),
-        Position.create(offense.location.end.line - 1, offense.location.end.column),
-      )
+      const range = lspRangeFromLocation(offense.location)
 
       const customRulePath = this.customRulePaths.get(offense.rule)
       const codeDescription: CodeDescription = {
@@ -161,7 +183,7 @@ export class LinterService {
           : ruleDocumentationUrl(offense.rule)
       }
 
-      return {
+      const diagnostic: Diagnostic = {
         source: this.source,
         severity: lintToDignosticSeverity(offense.severity),
         range,
@@ -170,6 +192,14 @@ export class LinterService {
         data: { rule: offense.rule },
         codeDescription
       }
+
+      const tags = lintToDignosticTags(offense.tags)
+
+      if (tags.length > 0) {
+        diagnostic.tags = tags
+      }
+
+      return diagnostic
     })
 
     return { diagnostics }

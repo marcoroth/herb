@@ -1,0 +1,8 @@
+---
+name: automatically_disable_submit_tag
+source: "ActionView::Base#automatically_disable_submit_tag"
+gem: actionview
+category: base
+output: boolean
+description: |-
+  Returns whether `submit_tag` is automatically disabled on click to prevent double submission.

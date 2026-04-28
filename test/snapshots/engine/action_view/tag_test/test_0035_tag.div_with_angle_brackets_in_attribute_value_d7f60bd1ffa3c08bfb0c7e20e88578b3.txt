@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0035_tag.div with angle brackets in attribute value"
+input: "{source: \"<%= tag.div title: user_input %>\", options: {optimize: true, locals: {user_input: \"<b>bold</b>\"}}}"
+---
+_buf = ::String.new; _buf << '<div title="'.freeze; _buf << ::Herb::Engine.attr((user_input)); _buf << '"></div>'.freeze;
+_buf.to_s

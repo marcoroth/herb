@@ -3,7 +3,7 @@ import { describe, test } from "vitest"
 import { HTMLAriaLevelMustBeValidRule } from "../../src/rules/html-aria-level-must-be-valid.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAriaLevelMustBeValidRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLAriaLevelMustBeValidRule)
 
 describe("HTMLAriaLevelMustBeValidRule", () => {
   test("allows valid aria-level values 1-6", () => {
@@ -26,7 +26,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags negative aria-level values", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="-1">Negative</div>
@@ -34,7 +34,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags zero aria-level value", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `0`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `0`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="0">Main</div>
@@ -42,7 +42,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags aria-level values greater than 6", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `7`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `7`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="7">Too deep</div>
@@ -50,7 +50,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags non-numeric aria-level values", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `foo`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `foo`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="foo">Invalid</div>
@@ -58,10 +58,10 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags multiple invalid aria-level values", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `0`.')
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `7`.')
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `foo`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `0`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `7`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `foo`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="-1">Negative</div>
@@ -72,7 +72,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("handles floating point numbers", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `1.5`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `1.5`.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="1.5">Float</div>
@@ -80,7 +80,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags whitespace in aria-level values", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got ` 2 `.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got ` 2 `.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level=" 2 ">Whitespace</div>
@@ -102,7 +102,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("disallows mixed ERB expressions with no output in aria-level values", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
 
     assertOffenses(dedent`
       <div aria-level="-1<% @level %>">Dynamic level</div>
@@ -110,7 +110,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("disallows mixed ERB expressions with valid static value and dynamic ERB output", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got `1` and the ERB expression `<%= @level %>`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got `1` and the ERB expression `<%= @level %>`.')
 
     assertOffenses(dedent`
       <div aria-level="1<%= @level %>">Dynamic level</div>
@@ -124,7 +124,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test.todo("flags mixed ERB expressions in aria-level values if one branch is valid", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, at least one branch has an invlid value: `-1`.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, at least one branch has an invlid value: `-1`.')
 
     assertOffenses(dedent`
       <div aria-level="<% if valid? %>1<% else %>-1<% end %>">Dynamic level</div>
@@ -132,7 +132,7 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
   })
 
   test("flags empty aria-level attribute", () => {
-    expectError('The `aria-level` attribute must be an integer between 1 and 6, got an empty value.')
+    expectWarning('The `aria-level` attribute must be an integer between 1 and 6, got an empty value.')
 
     assertOffenses(dedent`
       <div role="heading" aria-level="">Empty value</div>

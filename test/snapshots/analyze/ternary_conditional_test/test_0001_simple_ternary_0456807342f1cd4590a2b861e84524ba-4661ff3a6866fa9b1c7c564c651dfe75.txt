@@ -1,0 +1,44 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0001_simple ternary"
+input: |2-
+<%= condition ? 'yes' : 'no' %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if condition " (location: (1:0)-(1:31))
+    │   ├── tag_closing: "%>" (location: (1:31)-(1:31))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:31))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " 'yes' " (location: (1:15)-(1:22))
+    │   │       ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (1:31)-(1:31))
+    │   │       ├── tag_opening: "<%" (location: (1:31)-(1:31))
+    │   │       ├── content: " else " (location: (1:31)-(1:31))
+    │   │       ├── tag_closing: "%>" (location: (1:31)-(1:31))
+    │   │       └── statements: (1 item)
+    │   │           └── @ ERBContentNode (location: (1:0)-(1:31))
+    │   │               ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │               ├── content: " 'no' " (location: (1:23)-(1:29))
+    │   │               ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   │               ├── parsed: false
+    │   │               └── valid: true
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:31)-(1:31))
+    │           ├── tag_opening: "<%" (location: (1:31)-(1:31))
+    │           ├── content: " end " (location: (1:31)-(1:31))
+    │           └── tag_closing: "%>" (location: (1:31)-(1:31))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

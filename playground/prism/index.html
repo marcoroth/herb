@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Herb Ruby Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class'
+      }
+    </script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"
+      integrity="sha512-GWzVrcGlo0TxTRvz9ttioyYJ+Wwk9Ck0G81D+eO63BaqHaJ3YZX9wuqjwgfcV/MrB2PhaVX9DkYVhbFpStnqpQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-one-dark.min.css"
+    />
+  </head>
+
+  <body class="bg-white dark:bg-zinc-900 flex flex-col" data-controller="playground iframe" data-playground-mode-value="ruby">
+    <script type="module" src="/src/entry-client.ts"></script>
+
+    <div class="w-full md:max-h-[100vh] overflow-hidden">
+      <nav
+        class="mx-auto flex items-center justify-between p-1 py-2 px-8 border dark:border-gray-700 hidden"
+        data-iframe-target="hide"
+      >
+        <div class="flex font-medium items-center h-8 md:flex-1">
+          <div class="w-auto text-xl">🌿 Herb</div>
+          <span class="block md:hidden text-gray-500 dark:text-gray-400 ml-2">Ruby Playground</span>
+        </div>
+
+        <div class="hidden md:flex">
+          <div class="text-center text-lg font-medium text-gray-900 dark:text-gray-100">
+            Ruby Playground
+          </div>
+        </div>
+
+        <div class="hidden lg:flex lg:flex-1 lg:justify-end">
+          <div class="flex flex-row-reserve space-x-4 py-0 items-center">
+            <a
+              href="/"
+              class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >&larr; Herb Playground</a
+            >
+            <a
+              href="https://docs.herb-tools.dev"
+              class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              target="_blank"
+              >Documentation</a
+            >
+            <a
+              href="https://github.com/marcoroth/herb"
+              target="_blank"
+              class="opacity-50 hover:opacity-100 dark:opacity-70 dark:hover:opacity-100"
+            >
+              <i class="h-6 w-6 fa-brands fa-github text-black dark:text-white"></i>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="px-3 lg:px-8 h-screen">
+        <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="mt-6">
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-3 mb-2">
+              <div class="flex items-center text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium">
+                Ruby File
+              </div>
+
+              <div class="hidden lg:flex items-center gap-4 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] lg:ml-auto">
+                <div data-playground-target="position"></div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+                <div class="relative">
+                  <button
+                    data-action="click->playground#copyEditorContent"
+                    data-playground-target="copyButton"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fas fa-copy"></i>
+                    <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
+                    <span class="ml-1">Copy</span>
+                  </button>
+                  <div
+                    data-playground-target="copyTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Copy editor content to clipboard
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <button
+                    data-action="click->playground#share"
+                    data-playground-target="shareButton"
+                    id="copy-share-url"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fas fa-share"></i>
+                    <i
+                      class="fas fa-circle-check text-green-600 hidden ease-in duration-300"
+                    ></i>
+                    <i
+                      class="fas fa-circle-xmark text-red-600 hidden ease-in duration-300"
+                    ></i>
+
+                    <span class="ml-1">Share</span>
+                  </button>
+                  <div
+                    data-playground-target="shareTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Share your code - ideal for bug reports
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <button
+                    data-action="click->playground#openGitHubIssue"
+                    data-playground-target="githubButton"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fab fa-github w-4"></i>
+                    <span class="ml-1">Issue</span>
+                  </button>
+                  <div
+                    data-playground-target="githubTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Open GitHub issue with current playground state
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <button
+                    data-action="click->playground#insert click->playground#analyze"
+                    data-playground-target="exampleButton"
+                    id="example"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fas fa-file w-4"></i>
+                    <i
+                      class="fas fa-circle-check w-4 text-green-600 hidden ease-in duration-300"
+                    ></i>
+
+                    <span class="ml-1">Example</span>
+                  </button>
+                  <div
+                    data-playground-target="exampleTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Load example code into the editor
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
+              <div class="flex items-center gap-0 ml-auto">
+                <a
+                  data-playground-target="switchLink"
+                  href="/"
+                  class="rounded-l-md text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-1.5 text-sm font-medium"
+                >HTML+ERB (Herb)</a>
+                <a
+                  data-playground-target="switchLink"
+                  href="/prism/"
+                  class="rounded-r-md text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 text-sm font-medium"
+                >Ruby (Prism)</a>
+              </div>
+              </div>
+
+            <div
+              class="mt-2 outline outline-1 outline-gray-300 dark:outline-gray-600 z-10 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800 h-[30vh] md:h-[calc(100vh-110px)]"
+            >
+              <textarea
+                data-playground-target="input"
+                data-action="input->playground#input"
+                id="input"
+                class="h-full border-none font-mono w-full text-sm dark:bg-gray-800 dark:text-gray-200"
+                placeholder="Your Ruby code goes here"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="mt-6" data-contoller="output">
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-3 mb-2">
+              <div class="flex items-center text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium">
+                Prism AST
+              </div>
+
+              <div class="flex items-center gap-3 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt]">
+                <span data-playground-target="time"></span>
+              </div>
+
+              <div class="relative flex items-center">
+                <button
+                  data-action="click->playground#copyViewerContent"
+                  data-playground-target="copyViewerButton"
+                  class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
+                >
+                  <i class="fas fa-copy"></i>
+                  <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
+                </button>
+                <div
+                  data-playground-target="copyViewerTooltip"
+                  class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                >
+                  Copy current panel content
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                </div>
+              </div>
+
+              <div class="hidden lg:flex items-center gap-3 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] lg:ml-auto">
+                <div data-playground-target="version" class="cursor-help flex items-center gap-1" title="">
+                  <i class="fas fa-info-circle text-xs opacity-50 dark:opacity-70"></i>
+                </div>
+                <a data-playground-target="commitHash" class="hover:text-gray-600 dark:hover:text-gray-300 underline" href="#" target="_blank"></a>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button
+                  data-playground-target="viewerButton"
+                  data-viewer="parse"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                  data-active="true"
+                >
+                  <i class="fas fa-folder-tree"></i>
+                  <span class="ml-1"
+                    >Parse</span
+                  >
+                </button>
+              </div>
+
+            <div class="mt-2">
+              <div
+                data-viewer-target="parse"
+                data-playground-target="parseViewer"
+                data-action="click->playground#shrinkViewer"
+                class="w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <pre
+                  data-playground-target="parseOutput"
+                  class="w-full p-3 m-0 font-mono bg-[#282c34] text-[#dcdfe4] highlight"
+                  style="white-space: pre; line-height: 1.3"
+                ></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

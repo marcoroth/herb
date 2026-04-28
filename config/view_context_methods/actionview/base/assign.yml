@@ -1,0 +1,8 @@
+---
+name: assign
+source: "ActionView::Base#assign"
+gem: actionview
+category: base
+output: object
+description: |-
+  Assigns instance variables from a hash to the view context.

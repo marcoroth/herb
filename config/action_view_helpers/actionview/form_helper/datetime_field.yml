@@ -1,0 +1,43 @@
+---
+name: datetime_field
+source: "ActionView::Helpers::FormHelper#datetime_field"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates an `<input type="datetime-local">` for a specified attribute on a model object. The default value is formatted with `strftime("%Y-%m-%dT%T")`. Also available as `datetime_local_field`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "datetime_field(object_name, method, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-datetime_field"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: include_seconds
+    type: boolean
+    description: "If `false`, renders just date, hour, and minute without seconds."
+  - name: min
+    type: [string, date, time]
+    description: "Minimum datetime value (ISO8601 string or Date/Time object)."
+  - name: max
+    type: [string, date, time]
+    description: "Maximum datetime value (ISO8601 string or Date/Time object)."
+special_behaviors: []
+aliases:
+  - datetime_local_field

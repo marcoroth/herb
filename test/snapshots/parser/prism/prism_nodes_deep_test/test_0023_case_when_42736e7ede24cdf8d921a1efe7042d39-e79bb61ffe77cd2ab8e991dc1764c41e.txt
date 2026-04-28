@@ -1,0 +1,110 @@
+---
+source: "Parser::Prism::PrismNodesDeepTest#test_0023_case/when"
+input: "<% case role %><% when \"admin\" %><%= \"Admin\" %><% when \"user\" %><%= \"User\" %><% end %>"
+options: {prism_nodes: true, prism_nodes_deep: true}
+---
+@ DocumentNode (location: (1:0)-(1:86))
+└── children: (1 item)
+    └── @ ERBCaseNode (location: (1:0)-(1:86))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " case role " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── children: []
+        ├── prism_node:
+        │   └── @ CaseNode (location: (1:3)-(1:83))
+        │       ├── predicate:
+        │       │   └── @ CallNode (location: (1:8)-(1:12))
+        │       │       ├── receiver: ∅
+        │       │       ├── call_operator_loc: ∅
+        │       │       ├── name: :role
+        │       │       ├── message_loc: (1:8)-(1:12)
+        │       │       ├── opening_loc: ∅
+        │       │       ├── arguments: ∅
+        │       │       ├── closing_loc: ∅
+        │       │       ├── equal_loc: ∅
+        │       │       └── block: ∅
+        │       ├── conditions: (2 items)
+        │       │   ├── @ WhenNode (location: (1:18)-(1:44))
+        │       │   │   ├── keyword_loc: (1:18)-(1:22)
+        │       │   │   ├── conditions: (1 item)
+        │       │   │   │   └── @ StringNode (location: (1:23)-(1:30))
+        │       │   │   │       ├── opening_loc: (1:23)-(1:24)
+        │       │   │   │       ├── content_loc: (1:24)-(1:29)
+        │       │   │   │       ├── closing_loc: (1:29)-(1:30)
+        │       │   │   │       └── unescaped: "admin"
+        │       │   │   ├── then_keyword_loc: ∅
+        │       │   │   └── statements:
+        │       │   │       └── @ StatementsNode (location: (1:37)-(1:44))
+        │       │   │           └── body: (1 item)
+        │       │   │               └── @ StringNode (location: (1:37)-(1:44))
+        │       │   │                   ├── opening_loc: (1:37)-(1:38)
+        │       │   │                   ├── content_loc: (1:38)-(1:43)
+        │       │   │                   ├── closing_loc: (1:43)-(1:44)
+        │       │   │                   └── unescaped: "Admin"
+        │       │   └── @ WhenNode (location: (1:50)-(1:74))
+        │       │       ├── keyword_loc: (1:50)-(1:54)
+        │       │       ├── conditions: (1 item)
+        │       │       │   └── @ StringNode (location: (1:55)-(1:61))
+        │       │       │       ├── opening_loc: (1:55)-(1:56)
+        │       │       │       ├── content_loc: (1:56)-(1:60)
+        │       │       │       ├── closing_loc: (1:60)-(1:61)
+        │       │       │       └── unescaped: "user"
+        │       │       ├── then_keyword_loc: ∅
+        │       │       └── statements:
+        │       │           └── @ StatementsNode (location: (1:68)-(1:74))
+        │       │               └── body: (1 item)
+        │       │                   └── @ StringNode (location: (1:68)-(1:74))
+        │       │                       ├── opening_loc: (1:68)-(1:69)
+        │       │                       ├── content_loc: (1:69)-(1:73)
+        │       │                       ├── closing_loc: (1:73)-(1:74)
+        │       │                       └── unescaped: "User"
+        │       ├── else_clause: ∅
+        │       ├── case_keyword_loc: (1:3)-(1:7)
+        │       └── end_keyword_loc: (1:80)-(1:83)
+        ├── conditions: (2 items)
+        │   ├── @ ERBWhenNode (location: (1:15)-(1:33))
+        │   │   ├── tag_opening: "<%" (location: (1:15)-(1:17))
+        │   │   ├── content: " when "admin" " (location: (1:17)-(1:31))
+        │   │   ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        │   │   ├── then_keyword: ∅
+        │   │   └── statements: (1 item)
+        │   │       └── @ ERBContentNode (location: (1:33)-(1:47))
+        │   │           ├── tag_opening: "<%=" (location: (1:33)-(1:36))
+        │   │           ├── content: " "Admin" " (location: (1:36)-(1:45))
+        │   │           ├── tag_closing: "%>" (location: (1:45)-(1:47))
+        │   │           ├── parsed: true
+        │   │           ├── valid: true
+        │   │           └── prism_node:
+        │   │               └── @ StringNode (location: (1:37)-(1:44))
+        │   │                   ├── opening_loc: (1:37)-(1:38)
+        │   │                   ├── content_loc: (1:38)-(1:43)
+        │   │                   ├── closing_loc: (1:43)-(1:44)
+        │   │                   └── unescaped: "Admin"
+        │   │
+        │   │
+        │   └── @ ERBWhenNode (location: (1:47)-(1:64))
+        │       ├── tag_opening: "<%" (location: (1:47)-(1:49))
+        │       ├── content: " when "user" " (location: (1:49)-(1:62))
+        │       ├── tag_closing: "%>" (location: (1:62)-(1:64))
+        │       ├── then_keyword: ∅
+        │       └── statements: (1 item)
+        │           └── @ ERBContentNode (location: (1:64)-(1:77))
+        │               ├── tag_opening: "<%=" (location: (1:64)-(1:67))
+        │               ├── content: " "User" " (location: (1:67)-(1:75))
+        │               ├── tag_closing: "%>" (location: (1:75)-(1:77))
+        │               ├── parsed: true
+        │               ├── valid: true
+        │               └── prism_node:
+        │                   └── @ StringNode (location: (1:68)-(1:74))
+        │                       ├── opening_loc: (1:68)-(1:69)
+        │                       ├── content_loc: (1:69)-(1:73)
+        │                       ├── closing_loc: (1:73)-(1:74)
+        │                       └── unescaped: "User"
+        │
+        │
+        ├── else_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:77)-(1:86))
+                ├── tag_opening: "<%" (location: (1:77)-(1:79))
+                ├── content: " end " (location: (1:79)-(1:84))
+                └── tag_closing: "%>" (location: (1:84)-(1:86))

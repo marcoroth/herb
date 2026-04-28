@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0011_<%#= expression %> with surrounding code"
+input: "{source: \"<div>\\n  <%#= render \\\"partial\\\" %>\\n  <p>Visible content</p>\\n</div>\\n\", locals: {}, options: {}}"
+---
+<div>
+  <p>Visible content</p>
+</div>

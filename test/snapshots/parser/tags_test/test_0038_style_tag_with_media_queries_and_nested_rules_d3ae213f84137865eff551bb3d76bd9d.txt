@@ -26,4 +26,4 @@ input: "<style>@media (max-width: 768px) { .class > .nested { display: none; } }
         │       └── tag_closing: ">" (location: (1:79)-(1:80))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

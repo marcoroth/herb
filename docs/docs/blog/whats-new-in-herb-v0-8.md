@@ -54,7 +54,7 @@ _November 12, 2025_ • Marco Roth
 
 Today, we are excited to announce **Herb v0.8**, the most feature-packed release so far!
 
-If you're not familiar with Herb yet: it's an ecosystem of tools specifically built for HTML+ERB files. If you haven't used Herb before, we suggest reading the [Overview](/overview) page first.
+If you're not familiar with Herb yet: it's an ecosystem of powerful and seamless developer tools for HTML+ERB templates. If you haven't used Herb before, we suggest reading the [Overview](/overview) page first.
 
 Its main goal is to improve the developer experience while working with `.html.erb` files, but also to improve HTML rendering from Ruby and drive innovation in the Ruby and Rails view layers.
 

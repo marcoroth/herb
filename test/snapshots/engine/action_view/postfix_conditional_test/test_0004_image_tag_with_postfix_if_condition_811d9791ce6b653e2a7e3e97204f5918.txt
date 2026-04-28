@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0004_image_tag with postfix if condition"
+input: "{source: \"<%= image_tag \\\"icon.png\\\", alt: \\\"Icon\\\" if condition %>\", locals: {condition: true}, options: {action_view_helpers: true}}"
+---
+<img alt="Icon" src="/images/icon.png" />

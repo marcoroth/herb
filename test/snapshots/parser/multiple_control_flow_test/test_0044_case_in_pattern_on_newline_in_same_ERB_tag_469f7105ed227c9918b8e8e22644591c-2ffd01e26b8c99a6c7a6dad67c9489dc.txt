@@ -1,0 +1,50 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0044_case in pattern on newline in same ERB tag"
+input: |2-
+<% case value
+   in 1 %>
+  One
+<% in 2 %>
+  Two
+<% end %>
+options: {strict: false}
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseMatchNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case value
+    │      in 1 " (location: (1:2)-(2:8))
+    │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
+    │   ├── children: []
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBInNode (location: (2:10)-(4:0))
+    │   │   │   ├── tag_opening: ∅
+    │   │   │   ├── content: ∅
+    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:10)-(4:0))
+    │   │   │           └── content: "\n  One\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBInNode (location: (4:0)-(4:10))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " in 2 " (location: (4:2)-(4:8))
+    │   │       ├── tag_closing: "%>" (location: (4:8)-(4:10))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (4:10)-(6:0))
+    │   │               └── content: "\n  Two\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

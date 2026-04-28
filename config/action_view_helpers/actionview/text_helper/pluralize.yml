@@ -1,0 +1,32 @@
+---
+name: pluralize
+source: "ActionView::Helpers::TextHelper#pluralize"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Attempts to pluralize the singular word unless count is 1. Returns the count followed by the pluralized word.
+signature: "pluralize(count, singular, plural_arg = nil, plural: plural_arg, locale: I18n.locale)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-pluralize"
+tag: null
+arguments:
+  - name: count
+    position: 1
+    type: integer
+    optional: false
+    description: "The count to determine pluralization."
+  - name: singular
+    position: 2
+    type: string
+    optional: false
+    description: "The singular form of the word."
+options:
+  - name: plural
+    type: string
+    description: "Explicit plural form to use."
+  - name: locale
+    type: symbol
+    description: "Locale for pluralization rules."
+special_behaviors: []

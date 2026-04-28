@@ -1,0 +1,17 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0014_non-output tag with ternary remains unchanged"
+input: |2-
+<% x = cond ? 'yes' : 'no' %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:29))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " x = cond ? 'yes' : 'no' " (location: (1:2)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:29)-(2:0))
+        └── content: "\n"

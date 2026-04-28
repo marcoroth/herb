@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 import { HTMLAriaRoleMustBeValidRule } from "../../src/rules/html-aria-role-must-be-valid.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAriaRoleMustBeValidRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLAriaRoleMustBeValidRule)
 
 describe("html-aria-role-must-be-valid", () => {
   it("should not show an error for valid attributes", () => {
@@ -10,7 +10,7 @@ describe("html-aria-role-must-be-valid", () => {
   })
 
   it("should show an error for an invalid attrbute", () => {
-    expectError("The `role` attribute must be a valid ARIA role. Role `invalid-role` is not recognized.")
+    expectWarning("The `role` attribute must be a valid ARIA role. Role `invalid-role` is not recognized.")
 
     assertOffenses(`<div role="invalid-role"></div>`)
   })

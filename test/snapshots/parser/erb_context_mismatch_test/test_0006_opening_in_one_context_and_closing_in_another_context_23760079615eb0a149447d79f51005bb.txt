@@ -90,7 +90,7 @@ input: |2-
     │   │
     │   │
     │   ├── tag_name: "h1" (location: (2:3)-(2:5))
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (9:9)-(10:0))
         └── content: "\n"

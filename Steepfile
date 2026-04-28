@@ -16,4 +16,8 @@ target :lib do
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"
   ignore "lib/herb/engine/error_formatter.rb"
+  ignore "lib/herb/bootstrap.rb"
+  ignore "lib/herb/dev/server.rb"
+  ignore "lib/herb/dev/server_entry.rb"
+  ignore "lib/herb/dev/runner.rb"
 end

@@ -1,5 +1,10 @@
-<%- base_arguments = [["type", "String"], ["location", "Location"], ["message", "String"]] -%>
+<%- base_arguments = [["type", "String"], ["location", "Location?"], ["message", "String"]] -%>
 module Herb
+  #: type serialized_error = {
+  #|  type: String,
+  #|  location: serialized_location?,
+  #|  message: String
+  #| }
   module Errors
     class Error
       <%- base_arguments.each do |argument, type| -%>
@@ -49,7 +54,12 @@ module Herb
       <%- if error.fields.any? -%>
 
       <%- error.fields.each do |field| -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
+      #|  <%= "#{field.name}: #{field.ruby_type}?," %>
+      <%- end -%>
+      #| }
+
+      <%- error.fields.each do |field| -%>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %>?
       <%- end -%>
 
       #: (<%= [*base_arguments.map(&:last), *error.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -81,7 +91,7 @@ module Herb
       def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         output = +""
 
-        output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location.tree_inspect})\n")}")
+        output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location&.tree_inspect})\n")}")
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
         output += white("<%= symbol %> message: #{green(message.inspect)}\n")
         <%- error.fields.each do |field| -%>

@@ -163,12 +163,11 @@ describe('DocumentSaveService', () => {
 
         expect(autofixService.autofix).toHaveBeenCalledWith(document)
 
-        expect(formattingService.formatOnSave).toHaveBeenCalled()
-
-        const callArgs = vi.mocked(formattingService.formatOnSave).mock.calls[0]
-        expect(callArgs[0].uri).toBe(document.uri)
-        expect(callArgs[0].getText()).toBe('<div>fixed</div>\n')
-        expect(callArgs[1]).toBe(TextDocumentSaveReason.Manual)
+        expect(formattingService.formatOnSave).toHaveBeenCalledWith(
+          document,
+          TextDocumentSaveReason.Manual,
+          '<div>fixed</div>\n'
+        )
 
         expect(result).toEqual(formatEdits)
       })

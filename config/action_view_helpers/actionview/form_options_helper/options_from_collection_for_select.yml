@@ -1,0 +1,37 @@
+---
+name: options_from_collection_for_select
+source: "ActionView::Helpers::FormOptionsHelper#options_from_collection_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a string of `<option>` tags that have been compiled by iterating over the `collection` and assigning the result of a call to the `value_method` as the option value and the `text_method` as the option text.
+signature: "options_from_collection_for_select(collection, value_method, text_method, selected = nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-options_from_collection_for_select"
+tag: null
+arguments:
+  - name: collection
+    position: 1
+    type: array
+    optional: false
+    description: "The collection of objects to build options from."
+  - name: value_method
+    position: 2
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on each member to get the option value."
+  - name: text_method
+    position: 3
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on each member to get the option text."
+  - name: selected
+    position: 4
+    type: [string, array, hash, proc]
+    optional: true
+    default: "nil"
+    description: "The selected value(s), a Proc, or a hash with `:selected` and `:disabled` keys."
+options: []
+special_behaviors: []

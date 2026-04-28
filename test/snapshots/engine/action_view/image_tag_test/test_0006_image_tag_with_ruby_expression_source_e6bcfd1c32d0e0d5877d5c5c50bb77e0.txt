@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0006_image_tag with ruby expression source"
+input: "{source: \"<%= image_tag user_avatar %>\", locals: {user_avatar: \"http://example.com/avatar.png\"}, options: {action_view_helpers: true}}"
+---
+<img src="http://example.com/avatar.png" />

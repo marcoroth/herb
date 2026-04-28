@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLIframeHasTitleRule } from "../../src/rules/html-iframe-has-title.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLIframeHasTitleRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLIframeHasTitleRule)
 
 describe("html-iframe-has-title", () => {
   test("passes for iframe with title attribute", () => {
@@ -10,22 +10,22 @@ describe("html-iframe-has-title", () => {
   })
 
   test("fails for iframe with empty title attribute", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<iframe src="https://example.com" title=""></iframe>`)
   })
 
   test("fails for iframe with empty title attribute", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<iframe src="https://example.com" title=" "></iframe>`)
   })
 
   test("fails for iframe without title attribute", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<iframe src="https://example.com"></iframe>`)
   })
 
   test("fails for self-closing iframe without title", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<iframe src="https://example.com" />`)
   })
 
@@ -42,7 +42,7 @@ describe("html-iframe-has-title", () => {
   })
 
   test("handles mixed case iframe tag", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<IFRAME src="https://example.com"></IFRAME>`)
   })
 
@@ -51,7 +51,7 @@ describe("html-iframe-has-title", () => {
   })
 
   test("handles multiple iframe elements", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`
       <iframe src="https://example1.com" title="First iframe"></iframe>
       <iframe src="https://example2.com"></iframe>
@@ -68,7 +68,7 @@ describe("html-iframe-has-title", () => {
   })
 
   test("fails for iframe with other attributes but no title", () => {
-    expectError("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
+    expectWarning("`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.")
     assertOffenses(`<iframe src="https://example.com" width="600" height="400" frameborder="0"></iframe>`)
   })
 

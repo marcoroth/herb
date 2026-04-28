@@ -34,7 +34,8 @@ class ERBNoConditionalHTMLElementRuleVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoConditionalHTMLElementRule extends ParserRule {
-  name = "erb-no-conditional-html-element"
+  static ruleName = "erb-no-conditional-html-element"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -44,7 +45,7 @@ export class ERBNoConditionalHTMLElementRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoConditionalHTMLElementRuleVisitor(this.name, context)
+    const visitor = new ERBNoConditionalHTMLElementRuleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

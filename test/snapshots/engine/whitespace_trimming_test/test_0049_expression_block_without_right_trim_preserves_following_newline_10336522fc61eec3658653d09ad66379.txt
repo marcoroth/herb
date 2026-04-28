@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0049_expression block without right trim preserves following newline"
+input: "{source: \"<%= capture do %>\\nbar\\n<% end %>\", locals: {}, options: {}}"
+---
+
+bar

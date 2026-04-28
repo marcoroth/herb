@@ -1,0 +1,16 @@
+---
+name: with_output_buffer
+source: "ActionView::Helpers::CaptureHelper#with_output_buffer"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: true
+description: |-
+  Swaps the output buffer for the duration of the block and returns the captured content as a string.
+signature: "with_output_buffer(buf = nil, &block)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

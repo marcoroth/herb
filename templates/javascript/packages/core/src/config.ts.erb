@@ -1,0 +1,43 @@
+<%
+  options = YAML.safe_load_file("config/options.yml")
+
+  def camel_case(string)
+    parts = string.split("_")
+    parts[0] + parts[1..].map(&:capitalize).join
+  end
+
+  def pascal_case(string)
+    string.split("_").map(&:capitalize).join
+  end
+-%>
+
+<% options.each do |key, config| -%>
+export type <%= pascal_case(key) %> = <%= config["values"].map { |v| "\"#{v}\"" }.join(" | ") %>
+<% end -%>
+
+<% options.each do |key, config| -%>
+export const VALID_<%= key.upcase %>S: readonly <%= pascal_case(key) %>[] = [<%= config["values"].map { |v| "\"#{v}\"" }.join(", ") %>] as const
+<% end -%>
+
+<% options.each do |key, config| -%>
+export const DEFAULT_<%= key.upcase %>: <%= pascal_case(key) %> = "<%= config["default"] %>"
+<% end -%>
+
+export interface HerbConfig {
+<% options.each do |key, _config| -%>
+  <%= camel_case(key) %>: <%= pascal_case(key) %>
+<% end -%>
+}
+
+export const DEFAULT_CONFIG: HerbConfig = {
+<% options.each do |key, _config| -%>
+  <%= camel_case(key) %>: DEFAULT_<%= key.upcase %>,
+<% end -%>
+}
+
+<% options.each do |key, _config| -%>
+export function isValid<%= pascal_case(key) %>(value: string): value is <%= pascal_case(key) %> {
+  return (VALID_<%= key.upcase %>S as readonly string[]).includes(value)
+}
+
+<% end -%>

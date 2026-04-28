@@ -1,0 +1,21 @@
+---
+name: sanitize_css
+source: "ActionView::Helpers::SanitizeHelper#sanitize_css"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Sanitizes a block of CSS code, removing unsafe properties.
+signature: "sanitize_css(style)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/SanitizeHelper.html#method-i-sanitize_css"
+tag: null
+arguments:
+  - name: style
+    position: 1
+    type: string
+    optional: false
+    description: "CSS string to sanitize."
+options: []
+special_behaviors: []

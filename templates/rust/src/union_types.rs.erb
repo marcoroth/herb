@@ -5,7 +5,7 @@ use crate::Location;
 <%- union_kinds.each do |kinds| -%>
 <%-
   enum_name = kinds.sort.join("Or")
-  snake_name = enum_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+  snake_name = Herb::Template.underscore(enum_name).downcase
 -%>
 /// Union type for <%= kinds.join(" | ") %>
 #[derive(Debug, Clone)]

@@ -1,0 +1,42 @@
+---
+name: select_day
+source: "ActionView::Helpers::DateHelper#select_day"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the days 1 through 31 with the current day selected. The `date` can also be substituted for a day number. If you want to display days with a leading zero set the `:use_two_digit_numbers` key in options to `true`. Override the field name using the `:field_name` option, `"day"` by default.
+signature: "select_day(date, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_day"
+tag: null
+arguments:
+  - name: date
+    position: 1
+    type: [date, time, integer]
+    optional: false
+    description: "The date, time, or day number to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the day select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"day\"`."
+  - name: use_two_digit_numbers
+    type: boolean
+    description: "If `true`, displays days with a leading zero."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

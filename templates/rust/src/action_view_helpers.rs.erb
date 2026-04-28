@@ -1,0 +1,154 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum HelperType {
+<%- helpers.each do |helper| -%>
+  /// `<%= helper.name %>` — <%= helper.source %>
+  <%= helper.camel_case_name %>,
+<%- end -%>
+}
+
+impl HelperType {
+  pub fn as_str(&self) -> &'static str {
+    match self {
+    <%- helpers.each do |helper| -%>
+      HelperType::<%= helper.camel_case_name %> => "<%= helper.name %>",
+    <%- end -%>
+    }
+  }
+
+  pub fn from_name(name: &str) -> Option<HelperType> {
+    match name {
+    <%- helpers.each do |helper| -%>
+      "<%= helper.name %>" => Some(HelperType::<%= helper.camel_case_name %>),
+    <%- end -%>
+      _ => None,
+    }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct HelperArgument {
+  pub name: &'static str,
+  pub position: usize,
+  pub argument_type: &'static str,
+  pub optional: bool,
+  pub default: Option<&'static str>,
+  pub splat: bool,
+  pub description: &'static str,
+}
+
+#[derive(Debug, Clone)]
+pub struct HelperOption {
+  pub name: &'static str,
+  pub option_type: &'static str,
+  pub maps_to: Option<&'static str>,
+  pub description: &'static str,
+}
+
+#[derive(Debug, Clone)]
+pub struct HelperImplicitAttribute {
+  pub name: &'static str,
+  pub source: &'static str,
+  pub source_with_block: Option<&'static str>,
+  pub wrapper: &'static str,
+  pub skip_wrapping_for: &'static [&'static str],
+}
+
+#[derive(Debug, Clone)]
+pub struct HelperEntry {
+  pub name: &'static str,
+  pub helper_type: HelperType,
+  pub source: &'static str,
+  pub gem: &'static str,
+  pub output: &'static str,
+  pub visibility: &'static str,
+  pub tag_name: Option<&'static str>,
+  pub is_void: bool,
+  pub supports_block: bool,
+  pub preferred_for_tag: bool,
+  pub supported: bool,
+  pub detect_style: &'static str,
+  pub description: &'static str,
+  pub signature: &'static str,
+  pub documentation_url: &'static str,
+  pub implicit_attribute: Option<&'static HelperImplicitAttribute>,
+  pub arguments: &'static [HelperArgument],
+  pub options: &'static [HelperOption],
+  pub special_behaviors: &'static [&'static str],
+  pub aliases: &'static [&'static str],
+}
+
+<%- helpers.each do |helper| -%>
+<%- if helper.implicit_attribute? -%>
+static <%= helper.constant_name %>_IMPLICIT_ATTR: HelperImplicitAttribute = HelperImplicitAttribute {
+  name: "<%= helper.implicit_attribute.name %>",
+  source: "<%= helper.implicit_attribute.source %>",
+  source_with_block: <%= helper.implicit_attribute.source_with_block ? "Some(\"#{helper.implicit_attribute.source_with_block}\")" : "None" %>,
+  wrapper: "<%= helper.implicit_attribute.wrapper %>",
+  skip_wrapping_for: &[<%= helper.implicit_attribute.skip_wrapping_for.map { |s| "\"#{s}\"" }.join(", ") %>],
+};
+
+<%- end -%>
+<%- end -%>
+
+static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
+<%- helpers.each do |helper| -%>
+  HelperEntry {
+    name: "<%= helper.name %>",
+    helper_type: HelperType::<%= helper.camel_case_name %>,
+    source: "<%= helper.source %>",
+    gem: "<%= helper.gem %>",
+    output: "<%= helper.output %>",
+    visibility: "<%= helper.visibility %>",
+    tag_name: <%= helper.tag_name ? "Some(\"#{helper.tag_name}\")" : "None" %>,
+    is_void: <%= helper.void? %>,
+    supports_block: <%= helper.supports_block %>,
+    preferred_for_tag: <%= helper.preferred_for_tag %>,
+    supported: <%= helper.supported %>,
+    detect_style: "<%= helper.detect_style || "call_name" %>",
+    description: "<%= helper.escaped_description %>",
+    signature: "<%= helper.escaped_signature %>",
+    documentation_url: "<%= helper.documentation_url %>",
+    implicit_attribute: <%= helper.implicit_attribute? ? "Some(&#{helper.constant_name}_IMPLICIT_ATTR)" : "None" %>,
+    arguments: &[
+    <%- helper.arguments.each do |arg| -%>
+      HelperArgument { name: "<%= arg.name %>", position: <%= arg.position %>, argument_type: "<%= arg.type_display %>", optional: <%= arg.optional %>, default: <%= arg.default ? "Some(\"#{arg.escaped_default}\")" : "None" %>, splat: <%= arg.splat %>, description: "<%= arg.escaped_description %>" },
+    <%- end -%>
+    ],
+    options: &[
+    <%- helper.options.each do |opt| -%>
+      HelperOption { name: "<%= opt.name %>", option_type: "<%= opt.type_display %>", maps_to: <%= opt.maps_to ? "Some(\"#{opt.maps_to}\")" : "None" %>, description: "<%= opt.escaped_description %>" },
+    <%- end -%>
+    ],
+    special_behaviors: &[<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],
+    aliases: &[<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>],
+  },
+<%- end -%>
+];
+
+pub fn get(helper_type: HelperType) -> &'static HelperEntry {
+  &REGISTRY[helper_type as usize]
+}
+
+pub fn find_by_name(name: &str) -> Option<&'static HelperEntry> {
+  REGISTRY.iter().find(|entry| entry.name == name)
+}
+
+pub fn find_by_source(source: &str) -> Option<&'static HelperEntry> {
+  REGISTRY.iter().find(|entry| entry.source == source)
+}
+
+pub fn helpers_for_tag(tag_name: &str) -> Vec<&'static HelperEntry> {
+  REGISTRY.iter().filter(|entry| entry.tag_name == Some(tag_name)).collect()
+}
+
+pub fn find_preferred_for_tag(tag_name: &str) -> Option<&'static HelperEntry> {
+  REGISTRY.iter().find(|entry| entry.tag_name == Some(tag_name) && entry.preferred_for_tag)
+}
+
+pub fn entries() -> &'static [HelperEntry] {
+  &REGISTRY
+}
+
+pub fn count() -> usize {
+  REGISTRY.len()
+}

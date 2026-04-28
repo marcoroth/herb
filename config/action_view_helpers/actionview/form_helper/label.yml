@@ -1,0 +1,47 @@
+---
+name: label
+source: "ActionView::Helpers::FormHelper#label"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a `<label>` tag for a specified attribute on a model object. The label text defaults to the attribute name unless a translation is found or explicitly provided. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "label(object_name, method, content_or_options = nil, options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-label"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: content_or_options
+    position: 3
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "Label text string, or options hash when a block is given."
+  - name: options
+    position: 4
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options:
+  - name: value
+    type: string
+    description: "Value used in the `for` attribute to target a specific radio button."
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+  - name: for
+    type: string
+    description: "Explicit `for` attribute value."
+special_behaviors: []

@@ -1,0 +1,8 @@
+---
+name: default_formats
+source: "ActionView::Base#default_formats"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the default formats list for template rendering.

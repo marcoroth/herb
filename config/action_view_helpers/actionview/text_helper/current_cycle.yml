@@ -1,0 +1,22 @@
+---
+name: current_cycle
+source: "ActionView::Helpers::TextHelper#current_cycle"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns the current cycle string after a cycle has been started. Useful for complex table highlighting or any other design need which requires the current cycle string in more than one place.
+signature: "current_cycle(name = \"default\")"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-current_cycle"
+tag: null
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: true
+    default: "\"default\""
+    description: "Name of the cycle to return the current value for."
+options: []
+special_behaviors: []

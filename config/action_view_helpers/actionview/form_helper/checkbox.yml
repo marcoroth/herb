@@ -1,0 +1,49 @@
+---
+name: checkbox
+source: "ActionView::Helpers::FormHelper#checkbox"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates an `<input type="checkbox">` for a specified attribute on a model object, along with a hidden field for the unchecked value. Also available as `check_box`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "checkbox(object_name, method, options = {}, checked_value = \"1\", unchecked_value = \"0\")"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-checkbox"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+  - name: checked_value
+    position: 4
+    type: string
+    optional: true
+    default: "\"1\""
+    description: "Value submitted when the checkbox is checked."
+  - name: unchecked_value
+    position: 5
+    type: string
+    optional: true
+    default: "\"0\""
+    description: "Value submitted when the checkbox is unchecked (via hidden field)."
+options:
+  - name: include_hidden
+    type: boolean
+    description: "If `false`, omits the hidden field for the unchecked value."
+special_behaviors: []
+aliases:
+  - check_box

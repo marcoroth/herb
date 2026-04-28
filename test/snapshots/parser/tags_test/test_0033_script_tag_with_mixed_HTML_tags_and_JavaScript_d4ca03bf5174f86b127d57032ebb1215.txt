@@ -26,4 +26,4 @@ input: "<script><span>function test() { return x > y; }</span></script>"
         │       └── tag_closing: ">" (location: (1:62)-(1:63))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

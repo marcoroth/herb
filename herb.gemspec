@@ -12,12 +12,12 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
-  spec.summary = "Powerful and seamless HTML-aware ERB parsing and tooling."
-  spec.description = spec.summary
+  spec.summary = "The modern HTML+ERB Toolchain"
+  spec.description = "A collection of powerful and seamless developer tools for HTML+ERB templates."
   spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"
 
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.2.0"
   spec.require_paths = ["lib"]
 
   spec.files = Dir[
@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
     "Rakefile",
     "README.md",
     "config.yml",
+    "config/**/*.yml",
     "lib/**/*.rb",
     "lib/**/*.yml",
     "sig/**/*.rbs",

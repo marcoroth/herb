@@ -46,4 +46,4 @@ input: "<style>.user-<%= @user.id %> { color: <%= @theme_color %>; }</style>"
         │       └── tag_closing: ">" (location: (1:67)-(1:68))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

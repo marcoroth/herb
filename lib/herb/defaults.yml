@@ -1,3 +1,6 @@
+framework: ruby
+template_engine: erubi
+
 files:
   include:
     - "**/*.herb"
@@ -15,6 +18,12 @@ files:
     - "storage/**/*"
     - "tmp/**/*"
     - "vendor/**/*"
+
+engine:
+  validators:
+    security: true
+    nesting: true
+    accessibility: true
 
 linter:
   enabled: true

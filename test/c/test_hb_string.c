@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_string.h"
+#include "../../src/include/lib/hb_string.h"
 #include <string.h>
 
 TEST(hb_string_equals_tests)

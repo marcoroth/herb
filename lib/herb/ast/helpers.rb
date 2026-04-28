@@ -4,12 +4,12 @@
 module Herb
   module AST
     module Helpers
-      #: (Herb::AST::Node) -> bool
+      #: (Herb::AST::Node?) -> bool
       def erb_outputs?(node)
         return false unless node.is_a?(Herb::AST::ERBContentNode)
 
-        opening = node.tag_opening&.value
-        opening&.include?("=") && !opening&.start_with?("<%#")
+        opening = node.tag_opening&.value || ""
+        opening.include?("=") && !opening.start_with?("<%#")
       end
 
       #: (String) -> bool

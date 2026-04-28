@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0033_tag.div with script tag in attribute value"
+input: "{source: \"<%= tag.div data: { value: user_input } %>\", locals: {user_input: \"<script>alert(\\\"xss\\\")</script>\"}, options: {action_view_helpers: true}}"
+---
+<div data-value="&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"></div>

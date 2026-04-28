@@ -1,0 +1,10 @@
+---
+name: prefix_partial_path_with_controller_namespace
+source: "ActionView::Base#prefix_partial_path_with_controller_namespace"
+gem: actionview
+category: base
+output: boolean
+description: |-
+  Returns whether partial paths include the controller namespace.
+aliases:
+  - "prefix_partial_path_with_controller_namespace?"

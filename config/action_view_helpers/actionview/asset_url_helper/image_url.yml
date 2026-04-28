@@ -1,0 +1,23 @@
+---
+name: image_url
+source: "ActionView::Helpers::AssetUrlHelper#image_url"
+gem: actionview
+output: url
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Computes the full URL to an image asset.
+signature: "image_url(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-image_url"
+tag: null
+arguments:
+  - name: source
+    position: 1
+    type: string
+    optional: false
+    description: "Image file name or path."
+options: []
+special_behaviors: []
+aliases:
+  - url_to_image

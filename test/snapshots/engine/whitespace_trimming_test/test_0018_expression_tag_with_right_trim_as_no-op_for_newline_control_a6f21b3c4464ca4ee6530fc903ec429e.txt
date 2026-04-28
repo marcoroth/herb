@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0018_expression tag with right trim as no-op for newline control"
+input: "{source: \"2024-07-09 with the filters: \\\"archived:false\\\"<%= -%>.\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '2024-07-09 with the filters: "archived:false"'.freeze; _buf << ().to_s; _buf << '.
+'.freeze;
+_buf.to_s

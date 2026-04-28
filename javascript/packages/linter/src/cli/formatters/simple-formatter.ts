@@ -1,7 +1,8 @@
 import { colorize, hyperlink, TextFormatter } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
-import { ruleDocumentationUrl, fileUrl } from "../../urls.js"
+import { ruleDocumentationUrl } from "../../urls.js"
+import { fileUrl } from "../file-url.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"

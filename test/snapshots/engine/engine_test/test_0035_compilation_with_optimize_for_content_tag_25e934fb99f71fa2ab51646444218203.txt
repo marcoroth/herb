@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0035_compilation with optimize for content_tag"
+input: "{source: \"<%= content_tag :div, \\\"Content\\\", class: \\\"box\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="box">Content</div>'.freeze;
+_buf.to_s

@@ -297,5 +297,159 @@ module Analyze
           Content
       HTML
     end
+
+    test "block with rescue" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and else" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue, else, and ensure" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue %>
+          <%= "error" %>
+        <% else %>
+          <%= "no error" %>
+        <% ensure %>
+          <%= "cleanup" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with multiple rescues" do
+      assert_parsed_snapshot(<<~HTML)
+        <% 5.times do %>
+          <%= "foo" %>
+        <% rescue StandardError %>
+          <%= "standard error" %>
+        <% rescue ArgumentError %>
+          <%= "argument error" %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rescue wrapped in element" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <% items.each do |item| %>
+            <%= item %>
+          <% rescue %>
+            <span>Error</span>
+          <% end %>
+        </div>
+      HTML
+    end
+
+    test "block with optional argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |item = nil| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "block with rest argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |*items| %>
+          <%= items %>
+        <% end %>
+      HTML
+    end
+
+    test "block with keyword rest argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |**options| %>
+          <%= options %>
+        <% end %>
+      HTML
+    end
+
+    test "block with block parameter argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |&callback| %>
+          <%= callback %>
+        <% end %>
+      HTML
+    end
+
+    test "block with mixed arguments" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |item, *rest, **opts, &blk| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "block with required keyword argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |name:| %>
+          <%= name %>
+        <% end %>
+      HTML
+    end
+
+    test "block with optional keyword argument with default" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |title: "hello"| %>
+          <%= title %>
+        <% end %>
+      HTML
+    end
+
+    test "block with mixed positional and keyword arguments" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |item, name:, title: "default"| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "block with duplicate positional and keyword argument name" do
+      assert_parsed_snapshot(<<~HTML)
+        <% block do |name, name:| %>
+          <%= name %>
+        <% end %>
+      HTML
+    end
   end
 end

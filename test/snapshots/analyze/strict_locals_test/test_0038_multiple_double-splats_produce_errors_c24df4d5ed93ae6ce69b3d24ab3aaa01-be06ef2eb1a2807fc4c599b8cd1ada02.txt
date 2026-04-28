@@ -1,0 +1,23 @@
+---
+source: "Analyze::StrictLocalsTest#test_0038_multiple double-splats produce errors"
+input: |2-
+<%# locals: (**attributes, **more) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:37))
+    │   ├── errors: (1 error)
+    │   │   └── @ RubyParseError (location: (1:27)-(1:33))
+    │   │       ├── message: "parameter_assoc_splat_multi: unexpected multiple `**` splat parameters"
+    │   │       ├── error_message: "unexpected multiple `**` splat parameters"
+    │   │       ├── diagnostic_id: "parameter_assoc_splat_multi"
+    │   │       └── level: "syntax"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (**attributes, **more) " (location: (1:3)-(1:35))
+    │   ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:37)-(2:0))
+        └── content: "\n"

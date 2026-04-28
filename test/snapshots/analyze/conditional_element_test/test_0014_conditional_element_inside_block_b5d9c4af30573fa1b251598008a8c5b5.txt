@@ -129,7 +129,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (5:32)-(5:33))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (5:33)-(6:2))
     │   │   │   │       └── content: "\n  "
@@ -169,11 +169,21 @@ input: |2-
     │   │   │   │
     │   │   │   │
     │   │   │   ├── tag_name: "div" (location: (3:5)-(3:8))
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (8:11)-(9:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+    │   │       ├── name: "item" (location: (1:18)-(1:22))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (9:0)-(9:9))
     │           ├── tag_opening: "<%" (location: (9:0)-(9:2))

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0003_link_to with postfix if condition"
+input: "{source: \"<%= link_to \\\"Settings\\\", \\\"/settings\\\" if condition %>\", locals: {condition: true}, options: {action_view_helpers: true}}"
+---
+<a href="/settings">Settings</a>

@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "../../src/rules/html-avoid-both-disabled-and-aria-disabled.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAvoidBothDisabledAndAriaDisabledRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLAvoidBothDisabledAndAriaDisabledRule)
 
 describe("html-avoid-both-disabled-and-aria-disabled", () => {
   test("passes for button with only disabled", () => {
@@ -18,37 +18,37 @@ describe("html-avoid-both-disabled-and-aria-disabled", () => {
   })
 
   test("fails for button with both disabled and aria-disabled", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<button disabled aria-disabled="true">Click me</button>`)
   })
 
   test("fails for input with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<input type="text" disabled aria-disabled="false">`)
   })
 
   test("fails for textarea with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<textarea disabled aria-disabled="true"></textarea>`)
   })
 
   test("fails for select with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<select disabled aria-disabled="true"><option>Test</option></select>`)
   })
 
   test("fails for fieldset with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<fieldset disabled aria-disabled="true"><input type="text"></fieldset>`)
   })
 
   test("fails for option with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<option disabled aria-disabled="true">Test option</option>`)
   })
 
   test("fails for optgroup with both attributes", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<optgroup disabled aria-disabled="true" label="Test"><option>Test</option></optgroup>`)
   })
 
@@ -61,18 +61,18 @@ describe("html-avoid-both-disabled-and-aria-disabled", () => {
   })
 
   test("handles mixed case attribute names", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<button DISABLED ARIA-DISABLED="true">Mixed case</button>`)
   })
 
   test("handles boolean disabled attribute", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`<button disabled="disabled" aria-disabled="true">Boolean disabled</button>`)
   })
 
   test("handles multiple form elements", () => {
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
-    expectError("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
+    expectWarning("aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.")
     assertOffenses(`
       <button disabled>OK</button>
       <input type="text" disabled aria-disabled="true">

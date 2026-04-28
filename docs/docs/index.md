@@ -2,12 +2,12 @@
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
-title: "Herb - Powerful and seamless HTML-aware ERB parsing and tooling."
+title: "Herb - The modern HTML+ERB Toolchain"
 
 hero:
   name: "Herb"
-  text: "Powerful and seamless HTML-aware ERB parsing and tooling."
-  tagline: "Next-generation HTML+ERB parsing ecosystem for smarter developer tooling."
+  text: "The modern HTML+ERB Toolchain"
+  tagline: "An ecosystem of powerful and seamless developer tools for HTML+ERB templates."
 
   image:
     src: /herb.svg
@@ -27,8 +27,16 @@ hero:
       link: https://github.com/marcoroth/herb
 
     - theme: alt
-      text: Playground
+      text: What's new in v0.9
+      link: /blog/whats-new-in-herb-v0-9
+
+    - theme: alt
+      text: Herb Playground
       link: /playground
+
+    - theme: alt
+      text: Prism Playground
+      link: /playground/prism
 
 features:
   - title: HTML-aware
@@ -61,7 +69,7 @@ features:
 
   - title: Works Across Languages
     icon: 🌎
-    details: Native bindings for Ruby, JavaScript/TypeScript, and other high-level programming languages.
+    details: Native bindings for Ruby, Node.js, JavaScript/TypeScript, Java, and Rust.
 
   - title: Expanding Template Language Support
     icon: 🏗️

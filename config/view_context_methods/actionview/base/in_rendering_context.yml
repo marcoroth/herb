@@ -1,0 +1,8 @@
+---
+name: in_rendering_context
+source: "ActionView::Base#in_rendering_context"
+gem: actionview
+category: base
+output: object
+description: |-
+  Executes a block within a rendering context with the given options.

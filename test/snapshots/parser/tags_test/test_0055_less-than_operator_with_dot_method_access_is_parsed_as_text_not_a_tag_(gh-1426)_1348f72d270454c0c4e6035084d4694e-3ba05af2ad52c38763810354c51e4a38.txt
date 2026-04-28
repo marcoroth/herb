@@ -1,0 +1,9 @@
+---
+source: "Parser::TagsTest#test_0055_less-than operator with dot method access is parsed as text not a tag (gh-1426)"
+input: "n <o.length"
+options: {html: false}
+---
+@ DocumentNode (location: (1:0)-(1:11))
+└── children: (1 item)
+    └── @ LiteralNode (location: (1:0)-(1:11))
+        └── content: "n <o.length"

@@ -186,7 +186,7 @@ export class FormattingService {
     }
   }
 
-  async formatOnSave(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
+  async formatOnSave(document: TextDocument, reason: TextDocumentSaveReason, textOverride?: string): Promise<TextEdit[]> {
     this.connection.console.log(`[Formatting] formatOnSave called for ${document.uri}`)
 
     if (reason !== TextDocumentSaveReason.Manual) {
@@ -203,7 +203,7 @@ export class FormattingService {
       return []
     }
 
-    return this.performFormatting({ textDocument: { uri: document.uri }, options: { tabSize: 2, insertSpaces: true } })
+    return this.performFormatting({ textDocument: { uri: document.uri }, options: { tabSize: 2, insertSpaces: true } }, textOverride)
   }
 
   private shouldFormatFile(filePath: string): boolean {
@@ -235,7 +235,7 @@ export class FormattingService {
     } as Config
   }
 
-  private async performFormatting(params: DocumentFormattingParams): Promise<TextEdit[]> {
+  private async performFormatting(params: DocumentFormattingParams, textOverride?: string): Promise<TextEdit[]> {
     const document = this.documents.get(params.textDocument.uri)
 
     if (!document) {
@@ -243,7 +243,7 @@ export class FormattingService {
     }
 
     try {
-      const text = document.getText()
+      const text = textOverride ?? document.getText()
       const config = await this.getConfigWithSettings(params.textDocument.uri)
 
       this.connection.console.log(`[Formatting] Creating formatter with ${this.preRewriters.length} pre-rewriters, ${this.postRewriters.length} post-rewriters`)

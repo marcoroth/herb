@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0034_compilation with optimize for image_tag"
+input: "{source: \"<%= image_tag \\\"photo.jpg\\\", alt: \\\"Photo\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<img alt="Photo" src="'.freeze; _buf << ::Herb::Engine.attr((image_path("photo.jpg"))); _buf << '" />'.freeze;
+_buf.to_s

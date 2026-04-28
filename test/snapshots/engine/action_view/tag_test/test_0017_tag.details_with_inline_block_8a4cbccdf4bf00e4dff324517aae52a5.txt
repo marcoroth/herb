@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0017_tag.details with inline block"
+input: "{source: \"<%= tag.details { \\\"Some content\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<details>Some content</details>

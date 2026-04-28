@@ -1,0 +1,61 @@
+---
+source: tests/parse_ruby_test.rs
+expression: result.prettyprint()
+---
+@ ProgramNode (location: (0,0)-(2,3))
+├── locals: []
+└── statements:
+    @ StatementsNode (location: (0,0)-(2,3))
+    └── body: (length: 1)
+        └── @ DefNode (location: (0,0)-(2,3))
+            ├── name: :greet
+            ├── name_loc: (0,4)-(0,9) = "greet"
+            ├── receiver: nil
+            ├── parameters:
+            │   @ ParametersNode (location: (0,10)-(0,14))
+            │   ├── requireds: (length: 1)
+            │   │   └── @ RequiredParameterNode (location: (0,10)-(0,14))
+            │   │       ├── ParameterFlags: nil
+            │   │       └── name: :name
+            │   ├── optionals: (length: 0)
+            │   ├── rest: nil
+            │   ├── posts: (length: 0)
+            │   ├── keywords: (length: 0)
+            │   ├── keyword_rest: nil
+            │   ├── block: nil
+            ├── body:
+            │   @ StatementsNode (location: (1,2)-(1,19))
+            │   └── body: (length: 1)
+            │       └── @ InterpolatedStringNode (location: (1,2)-(1,19))
+            │           ├── InterpolatedStringNodeFlags: nil
+            │           ├── opening_loc: (1,2)-(1,3) = "\""
+            │           ├── parts: (length: 3)
+            │           │   ├── @ StringNode (location: (1,3)-(1,10))
+            │           │   │   ├── StringFlags: frozen
+            │           │   │   ├── opening_loc: nil
+            │           │   │   ├── content_loc: (1,3)-(1,10) = "Hello, "
+            │           │   │   ├── closing_loc: nil
+            │           │   │   ├── unescaped: "Hello, "
+            │           │   ├── @ EmbeddedStatementsNode (location: (1,10)-(1,17))
+            │           │   │   ├── opening_loc: (1,10)-(1,12) = "\#{"
+            │           │   │   ├── statements:
+            │           │   │   │   @ StatementsNode (location: (1,12)-(1,16))
+            │           │   │   │   └── body: (length: 1)
+            │           │   │   │       └── @ LocalVariableReadNode (location: (1,12)-(1,16))
+            │           │   │   │           ├── name: :name
+            │           │   │   │           └── depth: 0
+            │           │   │   └── closing_loc: (1,16)-(1,17) = "}"
+            │           │   └── @ StringNode (location: (1,17)-(1,18))
+            │           │       ├── StringFlags: frozen
+            │           │       ├── opening_loc: nil
+            │           │       ├── content_loc: (1,17)-(1,18) = "!"
+            │           │       ├── closing_loc: nil
+            │           │       └── unescaped: "!"
+            │           └── closing_loc: (1,18)-(1,19) = "\""
+            ├── locals: [:name]
+            ├── def_keyword_loc: (0,0)-(0,3) = "def"
+            ├── operator_loc: nil
+            ├── lparen_loc: (0,9)-(0,10) = "("
+            ├── rparen_loc: (0,14)-(0,15) = ")"
+            ├── equal_loc: nil
+            └── end_keyword_loc: (2,0)-(2,3) = "end"

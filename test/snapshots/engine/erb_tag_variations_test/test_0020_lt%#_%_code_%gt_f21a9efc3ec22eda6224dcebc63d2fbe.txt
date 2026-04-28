@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0020_<%# % code %>"
+input: "{source: \"<%# % code %>\", locals: {}, options: {}}"
+---

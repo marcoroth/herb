@@ -68,7 +68,7 @@ input: |2-
     │   │           │   │       └── tag_closing: ">" (location: (4:26)-(4:27))
     │   │           │   │
     │   │           │   ├── is_void: false
-    │   │           │   └── source: "HTML"
+    │   │           │   └── element_source: "HTML"
     │   │           │
     │   │           └── @ HTMLTextNode (location: (4:27)-(5:0))
     │   │               └── content: "\n"
@@ -106,7 +106,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (6:21)-(6:22))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (6:22)-(7:0))
     │   └── content: "\n"

@@ -115,5 +115,23 @@ module Engine
 
       assert_evaluated_snapshot(template, { value: "<b>Hello</b>" })
     end
+
+    test "evaluation: standalone erb comment trims trailing newline" do
+      template = "<%# comment %>\n"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "evaluation: erb comment before code trims trailing newline" do
+      template = "<%# comment %>\n<% if true %>content<% end %>"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "evaluation: multiple erb comments trim trailing newlines" do
+      template = "<%# comment1 %>\n<%# comment2 %>\n"
+
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

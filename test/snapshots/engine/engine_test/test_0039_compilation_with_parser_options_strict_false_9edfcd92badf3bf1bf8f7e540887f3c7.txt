@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0039_compilation with parser_options strict false"
+input: "{source: \"<div>Hello</div>\", options: {parser_options: {strict: false}}}"
+---
+_buf = ::String.new; _buf << '<div>Hello</div>'.freeze;
+_buf.to_s

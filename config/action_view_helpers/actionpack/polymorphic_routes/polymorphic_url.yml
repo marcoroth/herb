@@ -1,0 +1,33 @@
+---
+name: polymorphic_url
+source: "ActionDispatch::Routing::PolymorphicRoutes#polymorphic_url"
+gem: actionpack
+output: url
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns the URL for the given record or array of records. Automatically resolves to the named route based on the class of the record.
+signature: "polymorphic_url(record_or_hash_or_array, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_url"
+tag: null
+arguments:
+  - name: record_or_hash_or_array
+    position: 1
+    type: object
+    optional: false
+    description: "An Active Record instance, class, array, or hash."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "URL options hash."
+options:
+  - name: action
+    type: symbol
+    description: "Route action (e.g. `:edit`, `:new`)."
+  - name: routing_type
+    type: symbol
+    description: "Whether to generate `:url` or `:path`. Defaults to `:url`."
+special_behaviors: []

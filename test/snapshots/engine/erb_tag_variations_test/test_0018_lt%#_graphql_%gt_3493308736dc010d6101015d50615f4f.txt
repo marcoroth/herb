@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0018_<%# graphql %>"
+input: "{source: \"<%# graphql query { users { id } } %>\", locals: {}, options: {}}"
+---

@@ -1,0 +1,16 @@
+---
+name: flash
+source: "ActionView::Helpers::ControllerHelper#flash"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the flash messages hash. Access `flash[:notice]`, `flash[:alert]`, etc. Delegated to the controller.
+signature: "flash"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

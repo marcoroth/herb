@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0001_tag.div with postfix if condition"
+input: "{source: \"<%= tag.div(\\\"visible\\\", class: \\\"notice\\\") if condition %>\", locals: {condition: true}, options: {action_view_helpers: true}}"
+---
+<div class="notice">visible</div>

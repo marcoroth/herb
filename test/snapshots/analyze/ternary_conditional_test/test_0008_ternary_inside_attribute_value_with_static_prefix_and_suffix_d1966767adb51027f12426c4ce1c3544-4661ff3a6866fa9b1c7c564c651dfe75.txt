@@ -1,0 +1,91 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0008_ternary inside attribute value with static prefix and suffix"
+input: |2-
+<div class="container <%= cond ? 'active' : 'inactive' %> mb-4">content</div>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:77))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:64))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:63)-(1:64))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:63))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:63))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (3 items)
+    │   │       │               │   ├── @ LiteralNode (location: (1:12)-(1:22))
+    │   │       │               │   │   └── content: "container "
+    │   │       │               │   │
+    │   │       │               │   ├── @ ERBIfNode (location: (1:22)-(1:57))
+    │   │       │               │   │   ├── tag_opening: "<%" (location: (1:22)-(1:22))
+    │   │       │               │   │   ├── content: " if cond " (location: (1:22)-(1:57))
+    │   │       │               │   │   ├── tag_closing: "%>" (location: (1:57)-(1:57))
+    │   │       │               │   │   ├── then_keyword: ∅
+    │   │       │               │   │   ├── statements: (1 item)
+    │   │       │               │   │   │   └── @ ERBContentNode (location: (1:22)-(1:57))
+    │   │       │               │   │   │       ├── tag_opening: "<%=" (location: (1:22)-(1:25))
+    │   │       │               │   │   │       ├── content: " 'active' " (location: (1:32)-(1:42))
+    │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:55)-(1:57))
+    │   │       │               │   │   │       ├── parsed: false
+    │   │       │               │   │   │       └── valid: true
+    │   │       │               │   │   │
+    │   │       │               │   │   ├── subsequent:
+    │   │       │               │   │   │   └── @ ERBElseNode (location: (1:57)-(1:57))
+    │   │       │               │   │   │       ├── tag_opening: "<%" (location: (1:57)-(1:57))
+    │   │       │               │   │   │       ├── content: " else " (location: (1:57)-(1:57))
+    │   │       │               │   │   │       ├── tag_closing: "%>" (location: (1:57)-(1:57))
+    │   │       │               │   │   │       └── statements: (1 item)
+    │   │       │               │   │   │           └── @ ERBContentNode (location: (1:22)-(1:57))
+    │   │       │               │   │   │               ├── tag_opening: "<%=" (location: (1:22)-(1:25))
+    │   │       │               │   │   │               ├── content: " 'inactive' " (location: (1:43)-(1:55))
+    │   │       │               │   │   │               ├── tag_closing: "%>" (location: (1:55)-(1:57))
+    │   │       │               │   │   │               ├── parsed: false
+    │   │       │               │   │   │               └── valid: true
+    │   │       │               │   │   │
+    │   │       │               │   │   │
+    │   │       │               │   │   └── end_node:
+    │   │       │               │   │       └── @ ERBEndNode (location: (1:57)-(1:57))
+    │   │       │               │   │           ├── tag_opening: "<%" (location: (1:57)-(1:57))
+    │   │       │               │   │           ├── content: " end " (location: (1:57)-(1:57))
+    │   │       │               │   │           └── tag_closing: "%>" (location: (1:57)-(1:57))
+    │   │       │               │   │
+    │   │       │               │   │
+    │   │       │               │   └── @ LiteralNode (location: (1:57)-(1:62))
+    │   │       │               │       └── content: " mb-4"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:62)-(1:63))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:64)-(1:71))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:71)-(1:77))
+    │   │       ├── tag_opening: "</" (location: (1:71)-(1:73))
+    │   │       ├── tag_name: "div" (location: (1:73)-(1:76))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:76)-(1:77))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:77)-(2:0))
+        └── content: "\n"

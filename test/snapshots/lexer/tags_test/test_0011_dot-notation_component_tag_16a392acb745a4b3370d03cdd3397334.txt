@@ -1,0 +1,15 @@
+---
+source: "Lexer::TagsTest#test_0011_dot-notation component tag"
+input: "<Dialog.Button></Dialog.Button>"
+---
+#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=(1:0) end=(1:1)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Dialog" range=[1, 7] start=(1:1) end=(1:7)>
+#<Herb::Token type="TOKEN_CHARACTER" value="." range=[7, 8] start=(1:7) end=(1:8)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Button" range=[8, 14] start=(1:8) end=(1:14)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[14, 15] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[15, 17] start=(1:15) end=(1:17)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Dialog" range=[17, 23] start=(1:17) end=(1:23)>
+#<Herb::Token type="TOKEN_CHARACTER" value="." range=[23, 24] start=(1:23) end=(1:24)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Button" range=[24, 30] start=(1:24) end=(1:30)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[30, 31] start=(1:30) end=(1:31)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[31, 31] start=(1:31) end=(1:31)>

@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/linter",
-  "version": "0.8.10",
+  "version": "0.10.1",
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -25,7 +25,8 @@
     "test:native": "HERB_TEST_BACKEND=node vitest run",
     "test:watch": "vitest --watch",
     "rule-progress": "tsx scripts/rule-progress.ts",
-    "prepublishOnly": "yarn clean && yarn build && yarn test"
+    "check:rule-versions": "! grep -rl 'static introducedIn = \"unreleased\"' src/rules/ 2>/dev/null || (echo '\\n✗ Found linter rules with introducedIn = \"unreleased\". Update them to a release version before publishing.\\n' && exit 1)",
+    "prepublishOnly": "yarn check:rule-versions && yarn clean && yarn build && yarn test"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -49,13 +50,13 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.8.10",
-    "@herb-tools/core": "0.8.10",
-    "@herb-tools/highlighter": "0.8.10",
-    "@herb-tools/node-wasm": "0.8.10",
-    "@herb-tools/printer": "0.8.10",
-    "@herb-tools/rewriter": "0.8.10",
-    "picomatch": "^4.0.2",
+    "@herb-tools/config": "0.10.1",
+    "@herb-tools/core": "0.10.1",
+    "@herb-tools/highlighter": "0.10.1",
+    "@herb-tools/node-wasm": "0.10.1",
+    "@herb-tools/printer": "0.10.1",
+    "@herb-tools/rewriter": "0.10.1",
+    "picomatch": "^4.0.4",
     "tinyglobby": "^0.2.15"
   },
   "files": [

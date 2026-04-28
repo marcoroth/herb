@@ -1,0 +1,22 @@
+---
+name: url_for
+source: "ActionView::Helpers::UrlHelper#url_for"
+gem: actionview
+output: url
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns the URL for the set of options provided.
+signature: "url_for(options = nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/RoutingUrlFor.html#method-i-url_for"
+tag: null
+arguments:
+  - name: options
+    position: 1
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "URL string or `url_for` options hash."
+options: []
+special_behaviors: []

@@ -120,7 +120,10 @@ describe('FormattingService', () => {
         <div>
           <h1>Title</h1>
           <p>Some content that is long enough to force multi-line formatting</p>
-          <div><span>Nested content</span></div>
+
+          <div>
+            <span>Nested content</span>
+          </div>
         </div>
       ` + '\n'
 
@@ -154,7 +157,10 @@ describe('FormattingService', () => {
         <div>
             <h1>Title</h1>
             <p>Content with multiple elements</p>
-            <div><span>Nested</span></div>
+
+            <div>
+                <span>Nested</span>
+            </div>
         </div>
       ` + '\n'
 

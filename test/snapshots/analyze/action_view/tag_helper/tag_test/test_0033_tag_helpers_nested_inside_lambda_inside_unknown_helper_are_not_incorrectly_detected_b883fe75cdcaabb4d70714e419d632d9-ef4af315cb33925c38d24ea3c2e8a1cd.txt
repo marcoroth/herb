@@ -1,0 +1,29 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0033_tag helpers nested inside lambda inside unknown helper are not incorrectly detected"
+input: |2-
+<%= my_table(data: @things) do |table|
+  table.with_column(value: lambda do |thing|
+    tag.div class: "flex" do
+      link_to(thing.name, thing_path(thing))
+    end
+  end)
+end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(7:6))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " my_table(data: @things) do |table|
+    │     table.with_column(value: lambda do |thing|
+    │       tag.div class: "flex" do
+    │         link_to(thing.name, thing_path(thing))
+    │       end
+    │     end)
+    │   end " (location: (1:3)-(7:4))
+    │   ├── tag_closing: "%>" (location: (7:4)-(7:6))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

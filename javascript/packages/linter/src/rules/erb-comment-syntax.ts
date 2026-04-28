@@ -34,7 +34,8 @@ class ERBCommentSyntaxVisitor extends BaseRuleVisitor<ERBCommentSyntaxAutofixCon
 
 export class ERBCommentSyntax extends ParserRule<ERBCommentSyntaxAutofixContext> {
   static autocorrectable = true
-  name = "erb-comment-syntax"
+  static ruleName = "erb-comment-syntax"
+  static introducedIn = this.version("0.7.5")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -44,7 +45,7 @@ export class ERBCommentSyntax extends ParserRule<ERBCommentSyntaxAutofixContext>
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBCommentSyntaxAutofixContext>[] {
-    const visitor = new ERBCommentSyntaxVisitor(this.name, context)
+    const visitor = new ERBCommentSyntaxVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

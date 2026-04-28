@@ -1,0 +1,16 @@
+---
+name: digest_path_from_template
+source: "ActionView::Helpers::CacheHelper#digest_path_from_template"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the digest path used for cache key generation from the current template.
+signature: "digest_path_from_template(template)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

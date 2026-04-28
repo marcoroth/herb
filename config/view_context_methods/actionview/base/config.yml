@@ -1,0 +1,8 @@
+---
+name: config
+source: "ActionView::Base#config"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the application configuration object.

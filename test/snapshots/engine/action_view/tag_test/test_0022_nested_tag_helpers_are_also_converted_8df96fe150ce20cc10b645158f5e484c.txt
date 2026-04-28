@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TagTest#test_0022_nested tag helpers are also converted"
+input: "{source: \"<%= tag.div class: \\\"outer\\\" do %>\\n  <%= tag.span \\\"Inner\\\" %>\\n<% end %>\\n\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div class="outer">
+  <span>Inner</span>
+</div>

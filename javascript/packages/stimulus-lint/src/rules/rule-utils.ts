@@ -1,15 +1,9 @@
-import {
-  BaseRuleVisitor,
-  AttributeVisitorMixin,
-  getAttributeName,
-  getStaticAttributeValue,
-  forEachAttribute,
-  ParserRule
-} from "@herb-tools/linter"
+import { DEFAULT_STIMULUS_LINT_CONTEXT } from "../types.js"
+import { BaseRuleVisitor, AttributeVisitorMixin, ParserRule } from "@herb-tools/linter"
+import { getAttributeName, getStaticAttributeValue, getTokenList, forEachAttribute, didyoumean } from "@herb-tools/core"
 
 import type { Project, RegisteredController } from "stimulus-parser"
 import type { ParseResult, HTMLOpenTagNode, Location } from "@herb-tools/core"
-import { DEFAULT_STIMULUS_LINT_CONTEXT } from "../types.js"
 import type { StimulusLintContext } from "../types.js"
 
 export * from "@herb-tools/linter"
@@ -49,7 +43,8 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
    */
   protected validateControllerIdentifier(identifier: string, location: Location): boolean {
     if (!this.isControllerAvailable(identifier)) {
-      const suggestion = didyoumean(identifier, this.registeredControllerIdentifiers)
+      const match = didyoumean(identifier, this.registeredControllerIdentifiers, 2)
+      const suggestion = match ? ` Did you mean \`${match}\`?` : ""
 
       this.addOffense(
         `Unknown Stimulus controller \`${identifier}\`. Make sure the controller is defined in your project.${suggestion}`,
@@ -83,7 +78,7 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
    * Get Stimulus controller identifiers from data-controller attribute
    */
   protected getControllerIdentifiers(value: string): string[] {
-    return value.split(/\s+/).filter(id => id.length > 0)
+    return getTokenList(value)
   }
 
   /**
@@ -119,7 +114,7 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
 
       if (match && value) {
         const controller = match[1]
-        const targetNames = value.split(/\s+/).filter(t => t.length > 0)
+        const targetNames = getTokenList(value)
         targets.set(controller, targetNames)
       }
     }
@@ -186,7 +181,7 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
 
       if (match && value) {
         const [, controller] = match
-        const outletNames = value.split(/\s+/).filter(o => o.length > 0)
+        const outletNames = getTokenList(value)
 
         outlets.set(controller, outletNames)
       }
@@ -217,50 +212,6 @@ export abstract class HerbParserRule extends ParserRule {
 
     return true
   }
-}
-
-export function getSuggestion(input: string, candidates: string[]): string | null {
-  for (const candidate of candidates) {
-    if (levenshteinDistance(input.toLowerCase(), candidate.toLowerCase()) <= 2) {
-      return candidate
-    }
-  }
-
-  return null
-}
-
-export function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = []
-
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i]
-  }
-
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j
-  }
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1]
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1,
-          matrix[i][j - 1] + 1,
-          matrix[i - 1][j] + 1
-        )
-      }
-    }
-  }
-
-  return matrix[b.length][a.length]
-}
-
-export function didyoumean(input: string, candidates: string[]): string | null {
-  const suggestion = getSuggestion(input, candidates)
-
-  return suggestion ? ` Did you mean \`${suggestion}\`?` : ""
 }
 
 // [event->]controller#method[:options]

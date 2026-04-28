@@ -1,0 +1,16 @@
+---
+name: multiple_file_field_include_hidden
+source: "ActionView::Helpers::FormHelper#multiple_file_field_include_hidden"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether multiple file fields include a hidden field to allow clearing.
+signature: "multiple_file_field_include_hidden"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

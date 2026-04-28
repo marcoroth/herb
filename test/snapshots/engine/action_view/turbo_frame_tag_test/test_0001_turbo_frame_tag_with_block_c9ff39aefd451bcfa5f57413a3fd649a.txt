@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0001_turbo_frame_tag with block"
+input: "{source: \"<%= turbo_frame_tag \\\"tray\\\" do %>\\n  Content\\n<% end %>\\n\", locals: {}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="tray">
+  Content
+</turbo-frame>

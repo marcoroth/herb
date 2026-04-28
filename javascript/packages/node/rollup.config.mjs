@@ -1,5 +1,6 @@
 import typescript from "@rollup/plugin-typescript"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
+import commonjs from "@rollup/plugin-commonjs"
 import json from "@rollup/plugin-json"
 
 const external = [
@@ -23,7 +24,7 @@ function isExternal(id) {
 
 export default [
   {
-    input: "src/index-esm.mts",
+    input: "src/index.ts",
     output: {
       file: "dist/herb-node.esm.js",
       format: "esm",
@@ -43,7 +44,7 @@ export default [
   },
 
   {
-    input: "src/index-cjs.cts",
+    input: "src/index.ts",
     output: {
       file: "dist/herb-node.cjs",
       format: "cjs",
@@ -51,12 +52,15 @@ export default [
     },
     external: isExternal,
     plugins: [
-      nodeResolve(),
-      json(),
       typescript({
         tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
         rootDir: "src/",
       }),
+      nodeResolve({ extensions: [".js", ".ts", ".cts"] }),
+      commonjs({ extensions: [".js", ".cjs", ".cts"], ignoreDynamicRequires: true }),
+      json(),
     ],
   },
 ]

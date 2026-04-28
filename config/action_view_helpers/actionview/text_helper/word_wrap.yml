@@ -1,0 +1,27 @@
+---
+name: word_wrap
+source: "ActionView::Helpers::TextHelper#word_wrap"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Wraps text into lines no longer than the specified `line_width`.
+signature: "word_wrap(text, line_width: 80, break_sequence: \" \")"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-word_wrap"
+tag: null
+arguments:
+  - name: text
+    position: 1
+    type: string
+    optional: false
+    description: "The text to wrap."
+options:
+  - name: line_width
+    type: integer
+    description: "Maximum line width. Defaults to 80."
+  - name: break_sequence
+    type: string
+    description: "Line break sequence. Defaults to newline."
+special_behaviors: []

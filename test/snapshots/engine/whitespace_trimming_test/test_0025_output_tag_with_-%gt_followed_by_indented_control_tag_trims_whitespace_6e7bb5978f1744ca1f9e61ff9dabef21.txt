@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0025_output tag with -%> followed by indented control tag trims whitespace"
+input: "{source: \"A<%= -%>\\n <% if true %>\\nB\\n<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << 'A'.freeze; _buf << ().to_s;  if true 
+ _buf << 'B
+'.freeze; end 
+_buf.to_s

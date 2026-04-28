@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0004_javascript_include_tag with URL and async"
+input: "{source: \"<%= javascript_include_tag \\\"http://www.example.com/xmlhr.js\\\", async: true %>\", type: \"herb_output\", action_view_helpers: true}"
+---
+<script async src="http://www.example.com/xmlhr.js"></script>

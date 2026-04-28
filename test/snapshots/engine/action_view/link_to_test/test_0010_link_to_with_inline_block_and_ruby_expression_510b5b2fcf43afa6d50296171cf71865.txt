@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0010_link_to with inline block and ruby expression"
+input: "{source: \"<%= link_to(\\\"#\\\") { @user_name } %>\", locals: {\"@user_name\": \"Alice\"}, options: {action_view_helpers: true}}"
+---
+<a href="#">Alice</a>

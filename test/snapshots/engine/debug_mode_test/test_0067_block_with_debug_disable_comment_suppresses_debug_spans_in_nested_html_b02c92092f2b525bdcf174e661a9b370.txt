@@ -1,0 +1,11 @@
+---
+source: "Engine::DebugModeTest#test_0067_block with debug disable comment suppresses debug spans in nested html"
+input: "{source: \"<%= content_for :sidebar do # herb:debug disable %>\\n  <div><%= \\\"First\\\" %></div>\\n  <p><%= \\\"Second\\\" %></p>\\n  <span><%= \\\"Third\\\" %></span>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << (content_for :sidebar do # herb:debug disable
+; _buf << '
+  <div>'.freeze; _buf << ("First").to_s; _buf << '</div>
+  <p>'.freeze; _buf << ("Second").to_s; _buf << '</p>
+  <span>'.freeze; _buf << ("Third").to_s; _buf << '</span>
+'.freeze; end )
+_buf.to_s

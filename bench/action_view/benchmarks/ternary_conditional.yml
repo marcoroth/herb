@@ -1,0 +1,8 @@
+title: "Helper with ternary conditional"
+subtitle: "tag.div with ternary class — tests transform_conditionals ternary integration"
+locals:
+  active: "true"
+---
+<%= tag.div class: (active ? "active" : "inactive") do %>
+  Content
+<% end %>

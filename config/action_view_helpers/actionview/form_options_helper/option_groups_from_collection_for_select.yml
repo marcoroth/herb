@@ -1,0 +1,47 @@
+---
+name: option_groups_from_collection_for_select
+source: "ActionView::Helpers::FormOptionsHelper#option_groups_from_collection_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a string of `<option>` tags, like `options_from_collection_for_select`, but groups them by `<optgroup>` tags based on the object relationships of the arguments.
+signature: "option_groups_from_collection_for_select(collection, group_method, group_label_method, option_key_method, option_value_method, selected_key = nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-option_groups_from_collection_for_select"
+tag: null
+arguments:
+  - name: collection
+    position: 1
+    type: array
+    optional: false
+    description: "An array of objects representing the `<optgroup>` tags."
+  - name: group_method
+    position: 2
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a member of `collection` to return an array of child objects for the `<option>` tags."
+  - name: group_label_method
+    position: 3
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a member of `collection` to return the `label` attribute for its `<optgroup>` tag."
+  - name: option_key_method
+    position: 4
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a child object to return the `value` attribute for its `<option>` tag."
+  - name: option_value_method
+    position: 5
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a child object to return the contents of its `<option>` tag."
+  - name: selected_key
+    position: 6
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "The selected value, or a hash with `:selected` and `:disabled` keys."
+options: []
+special_behaviors: []

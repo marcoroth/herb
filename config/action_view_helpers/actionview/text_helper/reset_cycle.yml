@@ -1,0 +1,22 @@
+---
+name: reset_cycle
+source: "ActionView::Helpers::TextHelper#reset_cycle"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Resets a cycle so that it starts from the first element the next time it is called. Pass in `name` to reset a named cycle.
+signature: "reset_cycle(name = \"default\")"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-reset_cycle"
+tag: null
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: true
+    default: "\"default\""
+    description: "Name of the cycle to reset."
+options: []
+special_behaviors: []

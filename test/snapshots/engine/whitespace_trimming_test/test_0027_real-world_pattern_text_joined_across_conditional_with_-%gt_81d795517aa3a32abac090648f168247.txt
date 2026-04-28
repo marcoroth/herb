@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0027_real-world pattern: text joined across conditional with -%>"
+input: "{source: \"  as of X<%= -%>\\n  <% if true %>\\n    with filters<%= -%>\\n  <% end %>\\n.\", options: {}}"
+---
+_buf = ::String.new; _buf << '  as of X'.freeze; _buf << ().to_s;   if true 
+ _buf << '    with filters'.freeze; _buf << ().to_s;   end 
+ _buf << '.'.freeze;
+_buf.to_s

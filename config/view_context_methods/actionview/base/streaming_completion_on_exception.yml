@@ -1,0 +1,8 @@
+---
+name: streaming_completion_on_exception
+source: "ActionView::Base#streaming_completion_on_exception"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the HTML content rendered when streaming encounters an exception.

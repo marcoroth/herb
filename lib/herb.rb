@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 # typed: false
 
+module Herb
+  PARTIAL_EXTENSIONS = [
+    ".html.erb", ".html.herb", ".erb", ".herb", ".turbo_stream.erb", ".turbo_stream.herb"
+  ].freeze
+
+  PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
+end
+
 require_relative "herb/colors"
 require_relative "herb/range"
 require_relative "herb/position"
@@ -13,6 +21,8 @@ require_relative "herb/result"
 require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
+require_relative "herb/diff_operation"
+require_relative "herb/diff_result"
 
 require_relative "herb/linter"
 require_relative "herb/offense"
@@ -21,7 +31,9 @@ require_relative "herb/lint_result"
 require_relative "herb/ast"
 require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
+require_relative "herb/ast/erb_content_node"
 require_relative "herb/ast/helpers"
+require_relative "herb/ast/erb_render_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"
@@ -32,6 +44,7 @@ require_relative "herb/configuration"
 
 require_relative "herb/version"
 
+require_relative "herb/html/util"
 require_relative "herb/visitor"
 require_relative "herb/engine"
 
@@ -39,12 +52,12 @@ begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
 
   if RUBY_PATCHLEVEL == -1
-    require_relative "herb/herb"
+    require "herb/herb"
   else
     begin
-      require_relative "herb/#{major}.#{minor}/herb"
+      require "herb/#{major}.#{minor}/herb"
     rescue LoadError
-      require_relative "herb/herb"
+      require "herb/herb"
     end
   end
 rescue LoadError => e
@@ -71,6 +84,23 @@ end
 
 module Herb
   class << self
+    #: (String path, ?arena_stats: bool) -> LexResult
+    def lex_file(path, **)
+      lex(File.read(path), **)
+    end
+
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
+    def parse_file(path, **)
+      parse(File.read(path), **)
+    end
+
+    #: (String source) -> Prism::ParseResult
+    def parse_ruby(source)
+      require "prism"
+
+      Prism.parse(source)
+    end
+
     #: (String, ?file_name: String?, ?config: String | Hash[String, untyped] | Configuration | nil) -> LintResult?
     def lint(source, file_name: nil, config: nil)
       unless Herb::Linter.available?
@@ -99,6 +129,7 @@ module Herb
       lint(source, file_name: path, config: config)
     end
 
+
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)
     end
@@ -109,6 +140,30 @@ module Herb
 
     def reset_configuration!
       @configuration = nil
+    end
+
+    def dev_server_port(project_path = nil)
+      require_relative "herb/dev/server_entry"
+
+      project_path ||= Dir.pwd
+      entry = Dev::ServerEntry.find_by_project(project_path)
+      entry&.port
+    rescue StandardError
+      nil
+    end
+
+    def ensure_installed(&block)
+      require "bundler/inline"
+
+      verbose = $VERBOSE
+      $VERBOSE = nil
+
+      gemfile(true, quiet: true) do # steep:ignore
+        source "https://rubygems.org" # steep:ignore
+        instance_eval(&block) # steep:ignore
+      end
+    ensure
+      $VERBOSE = verbose
     end
   end
 end

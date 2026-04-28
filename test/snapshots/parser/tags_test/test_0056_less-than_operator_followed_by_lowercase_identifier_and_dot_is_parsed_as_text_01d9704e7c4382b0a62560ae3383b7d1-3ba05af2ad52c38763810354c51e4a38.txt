@@ -1,0 +1,9 @@
+---
+source: "Parser::TagsTest#test_0056_less-than operator followed by lowercase identifier and dot is parsed as text"
+input: "<foo.bar"
+options: {html: false}
+---
+@ DocumentNode (location: (1:0)-(1:8))
+└── children: (1 item)
+    └── @ LiteralNode (location: (1:0)-(1:8))
+        └── content: "<foo.bar"

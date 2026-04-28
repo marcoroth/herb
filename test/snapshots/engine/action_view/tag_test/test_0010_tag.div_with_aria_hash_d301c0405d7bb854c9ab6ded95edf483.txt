@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0010_tag.div with aria hash"
+input: "{source: \"<%= tag.div aria: { label: \\\"hello\\\", hidden: true } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div aria-label="hello" aria-hidden="true"></div>

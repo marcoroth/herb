@@ -85,6 +85,49 @@ code.language-tree {
   white-space: pre;
 }
 
+.tree-line {
+  display: block;
+  position: relative;
+}
+
+.tree-toggle {
+  display: none;
+}
+
+.tree-collapsible .token.node,
+.tree-collapsible .token.error-class {
+  cursor: pointer;
+  font-size: 0;
+}
+
+.tree-collapsible .token.node::before,
+.tree-collapsible .token.error-class::before {
+  content: attr(data-prefix) " " attr(data-name);
+  font-size: 14px;
+}
+
+.tree-collapsible:not([data-collapsed="true"]) .token.node:hover::before,
+.tree-collapsible:not([data-collapsed="true"]) .token.error-class:hover::before {
+  content: "- " attr(data-name);
+}
+
+.tree-collapsible[data-collapsed="true"] .token.node:hover::before,
+.tree-collapsible[data-collapsed="true"] .token.error-class:hover::before {
+  content: "+ " attr(data-name);
+}
+
+
+.tree-collapsible[data-collapsed="true"] .token.node::after,
+.tree-collapsible[data-collapsed="true"] .token.error-class::after {
+  content: " \2026";
+  color: #607d8b;
+  font-style: italic;
+}
+
+.tree-collapsible[data-collapsed="true"] {
+  opacity: 0.25;
+}
+
 #monaco-input-container {
   width: 100%;
   height: 100% !important;
@@ -184,6 +227,137 @@ code.language-tree {
   background-color: rgba(255, 193, 7, 0.6);
   border: 1px solid #ff9800;
   border-radius: 2px;
+}
+
+/* Diff operation cards */
+.diff-operation {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 4px;
+  border-left: 3px solid;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.diff-operation:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.diff-op-inserted    { border-left-color: #90b874; }
+.diff-op-removed     { border-left-color: #e06c75; }
+.diff-op-replaced    { border-left-color: #d19a66; }
+.diff-op-changed     { border-left-color: #e5c07b; }
+.diff-op-erb         { border-left-color: #c678dd; }
+.diff-op-attribute   { border-left-color: #61afef; }
+.diff-op-tag         { border-left-color: #d19a66; }
+.diff-op-moved       { border-left-color: #56b6c2; }
+
+.diff-label-inserted    { color: #90b874; }
+.diff-label-removed     { color: #e06c75; }
+.diff-label-replaced    { color: #d19a66; }
+.diff-label-changed     { color: #e5c07b; }
+.diff-label-erb         { color: #c678dd; }
+.diff-label-attribute   { color: #61afef; }
+.diff-label-tag         { color: #d19a66; }
+.diff-label-moved       { color: #56b6c2; }
+
+.diff-value-old {
+  color: #e06c75;
+  background: rgba(224, 108, 117, 0.1);
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-top: 2px;
+  margin-left: 1rem;
+}
+
+.diff-value-new {
+  color: #90b874;
+  background: rgba(144, 184, 116, 0.1);
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-top: 2px;
+  margin-left: 1rem;
+}
+
+.diff-path {
+  color: #607d8b;
+}
+
+.diff-index {
+  color: #607d8b;
+}
+
+.diff-node-type {
+  color: #abb2bf;
+}
+
+.diff-location {
+  color: #607d8b;
+}
+
+.diff-feed-header {
+  color: #abb2bf;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.diff-feed-current .diff-feed-header {
+  color: #e5c07b;
+}
+
+.diff-feed-current {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.diff-feed-past {
+  opacity: 0.5;
+}
+
+.diff-feed-past:hover {
+  opacity: 0.75;
+}
+
+.diff-empty {
+  color: #607d8b;
+}
+
+.diff-rollback-button {
+  color: #abb2bf;
+  background: rgba(171, 178, 191, 0.1);
+  padding: 1px 8px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
+  transition: color 0.15s, background 0.15s;
+}
+
+.diff-rollback-button:hover {
+  color: #e5c07b;
+  background: rgba(229, 192, 123, 0.15);
+}
+
+.diff-rollback-button[title] {
+  cursor: pointer;
+}
+
+.diff-rollback-button[title]:hover::after {
+  bottom: auto;
+  top: 100%;
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+
+.diff-rollback-button[title]:hover::before {
+  bottom: auto;
+  top: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #333;
 }
 
 /* Tooltip styles */

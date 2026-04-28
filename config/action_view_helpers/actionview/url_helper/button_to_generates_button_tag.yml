@@ -1,0 +1,16 @@
+---
+name: button_to_generates_button_tag
+source: "ActionView::Helpers::UrlHelper#button_to_generates_button_tag"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether `button_to` generates a `<button>` element instead of an `<input type="submit">`.
+signature: "button_to_generates_button_tag"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

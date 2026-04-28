@@ -1,0 +1,68 @@
+---
+name: image_tag
+source: "ActionView::Helpers::AssetTagHelper#image_tag"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: false
+description: |-
+  Returns an HTML `<img>` tag for the source. The source can be a full path, a file, or an Active Storage attachment. Options include `:size` (as `"WxH"` or `"N"`), `:srcset` (hash or array of [source, descriptor] pairs), and standard HTML attributes.
+signature: "image_tag(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-image_tag"
+tag:
+  name: img
+  is_void: true
+  preferred: true
+  detect_style: call_name
+  implicit_attribute:
+    name: src
+    source: first_arg
+    wrapper: image_path
+    wrapper_quotes_arg: true
+    skip_wrapping_for:
+      - url
+      - path_helper
+content: null
+attributes_arg: 2
+transform_style: generic
+arguments:
+  - name: source
+    position: 1
+    type: string
+    optional: false
+    description: "Image source path, URL, or Active Storage blob."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: alt
+    type: string
+    description: "Alt text for the image. Defaults to a humanized version of the filename."
+  - name: size
+    type: string
+    description: |-
+      Image dimensions as `"WxH"` (e.g. `"32x32"`). Sets both width and height.
+  - name: width
+    type: [string, integer]
+    description: "Image width in pixels."
+  - name: height
+    type: [string, integer]
+    description: "Image height in pixels."
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors:
+  - type: size_to_dimensions
+    attribute: size
+    width_attribute: width
+    height_attribute: height
+  - type: remove_non_html_options
+    options: [skip_pipeline]

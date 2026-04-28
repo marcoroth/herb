@@ -44,17 +44,18 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLAriaLabelIsWellFormattedRule extends ParserRule {
-  name = "html-aria-label-is-well-formatted"
+  static ruleName = "html-aria-label-is-well-formatted"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AriaLabelIsWellFormattedVisitor(this.name, context)
+    const visitor = new AriaLabelIsWellFormattedVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

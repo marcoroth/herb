@@ -1,0 +1,32 @@
+---
+name: field_name
+source: "ActionView::Helpers::FormTagHelper#field_name"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Generates an HTML `name` attribute value for a form field based on the object name and method.
+signature: "field_name(object_name, method_name, *method_names, multiple: false, index: nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-field_name"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: string
+    optional: false
+    description: "The name of the object."
+  - name: method_name
+    position: 2
+    type: string
+    optional: false
+    description: "The name of the attribute."
+options:
+  - name: multiple
+    type: boolean
+    description: "If `true`, appends `[]` to the name for array parameters."
+  - name: index
+    type: integer
+    description: "Index for nested fields."
+special_behaviors: []

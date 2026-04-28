@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0003_<%== expression %>"
+input: "{source: \"<%== value %>\", locals: {value: \"<b>bold</b>\"}, options: {}}"
+---
+&lt;b&gt;bold&lt;/b&gt;

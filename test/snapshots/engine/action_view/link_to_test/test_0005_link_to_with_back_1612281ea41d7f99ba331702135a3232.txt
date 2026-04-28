@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0005_link_to with :back"
+input: "{source: \"<%= link_to \\\"Back\\\", :back %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<a href="javascript:history.back()">Back</a>

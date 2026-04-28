@@ -1,0 +1,26 @@
+---
+name: turbo_refresh_scroll_tag
+source: "Turbo::DriveHelper#turbo_refresh_scroll_tag"
+gem: turbo-rails
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<meta>` tag with `name="turbo-refresh-scroll"`. Configures scroll strategy for page refreshes. Can be `:reset` (default) or `:preserve`.
+signature: "turbo_refresh_scroll_tag(scroll = :reset)"
+documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/DriveHelper#turbo_refresh_scroll_tag-instance_method"
+tag:
+  name: meta
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: scroll
+    position: 1
+    type: symbol
+    optional: true
+    default: ":reset"
+    description: "Scroll strategy (`:reset` or `:preserve`)."
+options: []
+special_behaviors: []

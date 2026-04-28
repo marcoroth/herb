@@ -1,0 +1,40 @@
+---
+name: image_submit_tag
+source: "ActionView::Helpers::FormTagHelper#image_submit_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Displays an image which when clicked will submit the form.
+signature: "image_submit_tag(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-image_submit_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: src
+    source: first_arg
+    wrapper: image_path
+    skip_wrapping_for:
+      - url
+arguments:
+  - name: source
+    position: 1
+    type: string
+    optional: false
+    description: "Image source path or URL."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the submit button is disabled."
+special_behaviors: []

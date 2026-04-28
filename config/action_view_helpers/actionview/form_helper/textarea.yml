@@ -1,0 +1,37 @@
+---
+name: textarea
+source: "ActionView::Helpers::FormHelper#textarea"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a `<textarea>` for a specified attribute on a model object. Also available as `text_area`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "textarea(object_name, method, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-textarea"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: size
+    type: string
+    description: "Columns and rows in `\"COLSxROWS\"` format (e.g. `\"20x30\"`)."
+special_behaviors: []
+aliases:
+  - text_area

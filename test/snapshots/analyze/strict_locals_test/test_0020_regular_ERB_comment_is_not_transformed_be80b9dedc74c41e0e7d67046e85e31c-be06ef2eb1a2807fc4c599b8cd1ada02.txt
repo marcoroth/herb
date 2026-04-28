@@ -1,0 +1,17 @@
+---
+source: "Analyze::StrictLocalsTest#test_0020_regular ERB comment is not transformed"
+input: |2-
+<%# This is just a regular comment %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:37))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " This is just a regular comment " (location: (1:3)-(1:35))
+    │   ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:37)-(2:0))
+        └── content: "\n"

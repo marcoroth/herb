@@ -1,0 +1,16 @@
+---
+name: auto_include_nonce_for_scripts
+source: "ActionView::Helpers::AssetTagHelper#auto_include_nonce_for_scripts"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether CSP nonce is automatically included in `<script>` tags.
+signature: "auto_include_nonce_for_scripts"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

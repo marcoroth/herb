@@ -267,6 +267,35 @@ fn is_rule_enabled_for_path_include_overrides_default_exclude() {
 }
 
 #[test]
+fn is_rule_enabled_for_path_normalizes_absolute_paths() {
+  let config = LinterConfig {
+    rules: HashMap::from([(
+      "html-tag-name-lowercase".into(),
+      RuleConfig {
+        exclude: vec!["app/views/layouts/jasmine.*".into()],
+        ..Default::default()
+      },
+    )]),
+  };
+
+  assert!(!config.is_rule_enabled_for_path_with_project("html-tag-name-lowercase", "app/views/layouts/jasmine.html.erb", &[], Some("/test/project"),));
+
+  assert!(!config.is_rule_enabled_for_path_with_project(
+    "html-tag-name-lowercase",
+    "/test/project/app/views/layouts/jasmine.html.erb",
+    &[],
+    Some("/test/project"),
+  ));
+
+  assert!(config.is_rule_enabled_for_path_with_project(
+    "html-tag-name-lowercase",
+    "/test/project/app/views/home/index.html.erb",
+    &[],
+    Some("/test/project"),
+  ));
+}
+
+#[test]
 fn get_rule_config_returns_none_when_not_configured() {
   let config = LinterConfig::new();
 

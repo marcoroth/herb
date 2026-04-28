@@ -1,0 +1,41 @@
+---
+name: form_for
+source: "ActionView::Helpers::FormHelper#form_for"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a form that allows the user to create or update the attributes of a specific model object. Superseded by `form_with` in modern Rails.
+signature: "form_for(record, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-form_for"
+tag:
+  name: form
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: record
+    position: 1
+    type: object
+    optional: false
+    description: "The model object the form is for."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Form options hash."
+options:
+  - name: url
+    type: [string, hash]
+    description: "URL the form submits to."
+  - name: method
+    type: symbol
+    description: "HTTP method for the form."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

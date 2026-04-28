@@ -1,0 +1,41 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0012_if statement"
+input: "<% if true %><%= \"yes\" %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:34))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:34))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true " (location: (1:2)-(1:11))
+        ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── then_keyword: ∅
+        ├── prism_node:
+        │   └── @ IfNode (location: (1:3)-(1:31))
+        │       ├── if_keyword_loc: (1:3)-(1:5)
+        │       ├── predicate:
+        │       │   └── @ TrueNode (location: (1:6)-(1:10))
+        │       ├── then_keyword_loc: ∅
+        │       ├── statements: ∅
+        │       ├── subsequent: ∅
+        │       └── end_keyword_loc: (1:28)-(1:31)
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:13)-(1:25))
+        │       ├── tag_opening: "<%=" (location: (1:13)-(1:16))
+        │       ├── content: " "yes" " (location: (1:16)-(1:23))
+        │       ├── tag_closing: "%>" (location: (1:23)-(1:25))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node:
+        │           └── @ StringNode (location: (1:17)-(1:22))
+        │               ├── opening_loc: (1:17)-(1:18)
+        │               ├── content_loc: (1:18)-(1:21)
+        │               ├── closing_loc: (1:21)-(1:22)
+        │               └── unescaped: "yes"
+        │
+        ├── subsequent: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:25)-(1:34))
+                ├── tag_opening: "<%" (location: (1:25)-(1:27))
+                ├── content: " end " (location: (1:27)-(1:32))
+                └── tag_closing: "%>" (location: (1:32)-(1:34))

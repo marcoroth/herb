@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0051_content_tag expression block with right trim removes following newline"
+input: "{source: \"<%= content_tag :div do -%>\\n  <span>text</span>\\n<% end %>\", locals: {}, options: {}}"
+---
+<div>  <span>text</span>
+</div>

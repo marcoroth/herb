@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0008_turbo_frame_tag with data attributes"
+input: "{source: \"<%= turbo_frame_tag \\\"tray\\\", data: { controller: \\\"frame\\\" } do %>Content<% end %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<turbo-frame data-controller="frame" id="tray">Content</turbo-frame>'.freeze;
+_buf.to_s

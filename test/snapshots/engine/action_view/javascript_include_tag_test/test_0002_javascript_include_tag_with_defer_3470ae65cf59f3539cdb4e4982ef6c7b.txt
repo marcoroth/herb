@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0002_javascript_include_tag with defer"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", defer: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script defer src="/javascripts/application.js"></script>

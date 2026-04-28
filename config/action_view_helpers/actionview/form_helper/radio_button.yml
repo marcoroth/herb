@@ -1,0 +1,37 @@
+---
+name: radio_button
+source: "ActionView::Helpers::FormHelper#radio_button"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates an `<input type="radio">` for a specified attribute on a model object. The radio button is checked if the current value of the method matches `tag_value`. This is the model-bound version used inside `form_with`/`form_for` blocks.
+signature: "radio_button(object_name, method, tag_value, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-radio_button"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: symbol
+    optional: false
+    description: "The attribute name on the object."
+  - name: tag_value
+    position: 3
+    type: string
+    optional: false
+    description: "The value of this radio button option."
+  - name: options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []

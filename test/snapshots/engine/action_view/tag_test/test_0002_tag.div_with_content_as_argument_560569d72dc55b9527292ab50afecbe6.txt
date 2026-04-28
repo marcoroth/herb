@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0002_tag.div with content as argument"
+input: "{source: \"<%= tag.div \\\"Content\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div>Content</div>'.freeze;
+_buf.to_s

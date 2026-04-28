@@ -1,0 +1,109 @@
+---
+source: "Analyze::ActionView::JavaScriptHelper::JavaScriptTagTest#test_0015_javascript_tag with less-than and nested ERB control flow (gh-1426)"
+input: |2-
+<%= javascript_tag do %>
+  if (n<o.length) {
+    <% if condition %>
+      doSomething()
+    <% end %>
+  }
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (1 item)
+    └── @ ERBBlockNode (location: (1:0)-(8:0))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:24))
+        │       ├── message: "ERB block started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "ERB block"
+        │
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " javascript_tag do " (location: (1:3)-(1:22))
+        ├── tag_closing: "%>" (location: (1:22)-(1:24))
+        ├── body: (2 items)
+        │   ├── @ HTMLTextNode (location: (1:24)-(2:7))
+        │   │   └── content: "\n  if (n"
+        │   │
+        │   └── @ HTMLOpenTagNode (location: (2:7)-(8:0))
+        │       ├── errors: (4 errors)
+        │       │   ├── @ UnexpectedError (location: (2:9)-(2:10))
+        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
+        │       │   │   ├── description: "Unexpected Token"
+        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+        │       │   │   └── found: "a character"
+        │       │   │
+        │       │   ├── @ UnexpectedError (location: (2:18)-(2:19))
+        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
+        │       │   │   ├── description: "Unexpected Token"
+        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+        │       │   │   └── found: "a character"
+        │       │   │
+        │       │   ├── @ UnexpectedError (location: (6:2)-(6:3))
+        │       │   │   ├── message: "Unexpected Token. Expected: an identifier, `@`, `<%`, whitespace, or a newline, found: a character."
+        │       │   │   ├── description: "Unexpected Token"
+        │       │   │   ├── expected: "an identifier, `@`, `<%`, whitespace, or a newline"
+        │       │   │   └── found: "a character"
+        │       │   │
+        │       │   └── @ UnclosedOpenTagError (location: (2:8)-(8:0))
+        │       │       ├── message: "Opening tag `<o>` at (2:8) is missing closing `>`."
+        │       │       └── tag_name: "o" (location: (2:8)-(2:9))
+        │       │
+        │       ├── tag_opening: "<" (location: (2:7)-(2:8))
+        │       ├── tag_name: "o" (location: (2:8)-(2:9))
+        │       ├── tag_closing: ∅
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (2:10)-(2:17))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:10)-(2:17))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (2:10)-(2:17))
+        │       │   │   │               └── content: "length)"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   ├── @ ERBIfNode (location: (3:4)-(5:13))
+        │       │   │   ├── tag_opening: "<%" (location: (3:4)-(3:6))
+        │       │   │   ├── content: " if condition " (location: (3:6)-(3:20))
+        │       │   │   ├── tag_closing: "%>" (location: (3:20)-(3:22))
+        │       │   │   ├── then_keyword: ∅
+        │       │   │   ├── statements: (1 item)
+        │       │   │   │   └── @ HTMLAttributeNode (location: (4:6)-(4:19))
+        │       │   │   │       ├── name:
+        │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (4:6)-(4:19))
+        │       │   │   │       │       └── children: (1 item)
+        │       │   │   │       │           └── @ LiteralNode (location: (4:6)-(4:19))
+        │       │   │   │       │               └── content: "doSomething()"
+        │       │   │   │       │
+        │       │   │   │       │
+        │       │   │   │       ├── equals: ∅
+        │       │   │   │       └── value: ∅
+        │       │   │   │
+        │       │   │   ├── subsequent: ∅
+        │       │   │   └── end_node:
+        │       │   │       └── @ ERBEndNode (location: (5:4)-(5:13))
+        │       │   │           ├── tag_opening: "<%" (location: (5:4)-(5:6))
+        │       │   │           ├── content: " end " (location: (5:6)-(5:11))
+        │       │   │           └── tag_closing: "%>" (location: (5:11)-(5:13))
+        │       │   │
+        │       │   │
+        │       │   └── @ ERBContentNode (location: (7:0)-(7:9))
+        │       │       ├── errors: (1 error)
+        │       │       │   └── @ ERBControlFlowScopeError (location: (7:0)-(7:9))
+        │       │       │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+        │       │       │       └── keyword: "`<% end %>`"
+        │       │       │
+        │       │       ├── tag_opening: "<%" (location: (7:0)-(7:2))
+        │       │       ├── content: " end " (location: (7:2)-(7:7))
+        │       │       ├── tag_closing: "%>" (location: (7:7)-(7:9))
+        │       │       ├── parsed: true
+        │       │       └── valid: false
+        │       │
+        │       └── is_void: false
+        │
+        ├── block_arguments: []
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node: ∅

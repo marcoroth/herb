@@ -1,0 +1,16 @@
+---
+name: assign_controller
+source: "ActionView::Helpers::ControllerHelper#assign_controller"
+gem: actionview
+output: void
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Assigns the controller instance to the view context. Called internally during rendering setup.
+signature: "assign_controller(controller)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

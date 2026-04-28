@@ -1,0 +1,6 @@
+---
+source: "Engine::HeredocTest#test_0001_heredoc in code tag"
+input: "{source: \"<%\\n  text = <<~TEXT\\n    Hello, world!\\n  TEXT\\n%>\\n<%= text %>\\n\", locals: {}, options: {escape: false}}"
+---
+Hello, world!
+

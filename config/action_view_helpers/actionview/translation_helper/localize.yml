@@ -1,0 +1,29 @@
+---
+name: localize
+source: "ActionView::Helpers::TranslationHelper#localize"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Delegates to `I18n.localize` with no additional functionality. Also available as `l()`.
+signature: "localize(object, **options)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TranslationHelper.html#method-i-localize"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: object
+    optional: false
+    description: "Date, Time, or Number to localize."
+options:
+  - name: format
+    type: symbol
+    description: "Format for the localized output."
+  - name: locale
+    type: symbol
+    description: "Locale to use."
+special_behaviors: []
+aliases:
+  - l

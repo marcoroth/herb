@@ -71,4 +71,4 @@ input: "<img src=\"image.png\" <% if lazy? %>loading=\"lazy\"<% end %>>"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── source: "HTML"
+        └── element_source: "HTML"

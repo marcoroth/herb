@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0033_leading whitespace before statement tag followed by newline is not preserved"
+input: "{source: \"<p>\\n  <% if true %>\\n    text\\n  <% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+    text
+</p>

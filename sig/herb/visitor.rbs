@@ -4,14 +4,20 @@ module Herb
   class Visitor
     include AST::Helpers
 
-    # : (Herb::AST::Node) -> void
-    def visit: (Herb::AST::Node) -> void
+    # : (Herb::AST::Node?) -> void
+    def visit: (Herb::AST::Node?) -> void
 
-    # : (Array[Herb::AST::Node]) -> void
-    def visit_all: (Array[Herb::AST::Node]) -> void
+    # : (Array[Herb::AST::Node?]) -> void
+    def visit_all: (Array[Herb::AST::Node?]) -> void
 
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_node: (Herb::AST::Node) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_erb_node: (Herb::AST::Node) -> void
 
     # : (Herb::AST::DocumentNode) -> void
     def visit_document_node: (Herb::AST::DocumentNode) -> void
@@ -31,6 +37,9 @@ module Herb
     # : (Herb::AST::HTMLOmittedCloseTagNode) -> void
     def visit_html_omitted_close_tag_node: (Herb::AST::HTMLOmittedCloseTagNode) -> void
 
+    # : (Herb::AST::HTMLVirtualCloseTagNode) -> void
+    def visit_html_virtual_close_tag_node: (Herb::AST::HTMLVirtualCloseTagNode) -> void
+
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
@@ -45,6 +54,15 @@ module Herb
 
     # : (Herb::AST::HTMLAttributeNode) -> void
     def visit_html_attribute_node: (Herb::AST::HTMLAttributeNode) -> void
+
+    # : (Herb::AST::RubyLiteralNode) -> void
+    def visit_ruby_literal_node: (Herb::AST::RubyLiteralNode) -> void
+
+    # : (Herb::AST::RubyHTMLAttributesSplatNode) -> void
+    def visit_ruby_html_attributes_splat_node: (Herb::AST::RubyHTMLAttributesSplatNode) -> void
+
+    # : (Herb::AST::ERBOpenTagNode) -> void
+    def visit_erb_open_tag_node: (Herb::AST::ERBOpenTagNode) -> void
 
     # : (Herb::AST::HTMLTextNode) -> void
     def visit_html_text_node: (Herb::AST::HTMLTextNode) -> void
@@ -108,6 +126,21 @@ module Herb
 
     # : (Herb::AST::ERBUnlessNode) -> void
     def visit_erb_unless_node: (Herb::AST::ERBUnlessNode) -> void
+
+    # : (Herb::AST::RubyRenderLocalNode) -> void
+    def visit_ruby_render_local_node: (Herb::AST::RubyRenderLocalNode) -> void
+
+    # : (Herb::AST::RubyRenderKeywordsNode) -> void
+    def visit_ruby_render_keywords_node: (Herb::AST::RubyRenderKeywordsNode) -> void
+
+    # : (Herb::AST::ERBRenderNode) -> void
+    def visit_erb_render_node: (Herb::AST::ERBRenderNode) -> void
+
+    # : (Herb::AST::RubyParameterNode) -> void
+    def visit_ruby_parameter_node: (Herb::AST::RubyParameterNode) -> void
+
+    # : (Herb::AST::ERBStrictLocalsNode) -> void
+    def visit_erb_strict_locals_node: (Herb::AST::ERBStrictLocalsNode) -> void
 
     # : (Herb::AST::ERBYieldNode) -> void
     def visit_erb_yield_node: (Herb::AST::ERBYieldNode) -> void

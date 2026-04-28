@@ -41,7 +41,8 @@ class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAu
 
 export class ERBNoExtraNewLineRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-no-extra-newline"
+  static ruleName = "erb-no-extra-newline"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -51,7 +52,7 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
+    const visitor = new ERBNoExtraNewLineVisitor(this.ruleName, context)
 
     visitor.visit(source)
 

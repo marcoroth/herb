@@ -1,0 +1,37 @@
+---
+name: link_to_unless_current
+source: "ActionView::Helpers::UrlHelper#link_to_unless_current"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a link tag of the given name using a URL created by the set of options unless the current request URI is the same as the link's, in which case only the name is returned or the given block is yielded.
+signature: "link_to_unless_current(name, options = {}, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to_unless_current"
+tag:
+  name: a
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Link text."
+  - name: options
+    position: 2
+    type: [string, hash]
+    optional: true
+    default: "{}"
+    description: "URL string or `url_for` options hash."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []

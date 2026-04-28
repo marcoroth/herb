@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0034_tag.div with quotes in attribute value"
+input: "{source: \"<%= tag.div title: user_input %>\", options: {optimize: true, locals: {user_input: \"He said \\\"hello\\\" & goodbye\"}}}"
+---
+_buf = ::String.new; _buf << '<div title="'.freeze; _buf << ::Herb::Engine.attr((user_input)); _buf << '"></div>'.freeze;
+_buf.to_s

@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0038_leading whitespace with else branch and inline content"
+input: "{source: \"<p>\\n  <% if false %>nope<% else %>text<% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  text
+</p>

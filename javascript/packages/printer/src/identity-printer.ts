@@ -72,6 +72,10 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitHTMLVirtualCloseTagNode(_node: Nodes.HTMLVirtualCloseTagNode): void {
+    // Virtual closing tags don't print anything (they are synthetic)
+  }
+
   visitHTMLOmittedCloseTagNode(_node: Nodes.HTMLOmittedCloseTagNode): void {
     // Omitted closing tags don't print anything
   }
@@ -143,15 +147,23 @@ export class IdentityPrinter extends Printer {
   }
 
   visitHTMLAttributeValueNode(node: Nodes.HTMLAttributeValueNode): void {
-    if (node.quoted && node.open_quote) {
-      this.write(node.open_quote.value)
+    if (node.quoted) {
+      this.write(node.open_quote?.value ?? '"')
     }
 
     this.visitChildNodes(node)
 
-    if (node.quoted && node.close_quote) {
-      this.write(node.close_quote.value)
+    if (node.quoted) {
+      this.write(node.close_quote?.value ?? '"')
     }
+  }
+
+  visitRubyLiteralNode(node: Nodes.RubyLiteralNode): void {
+    this.write(node.content)
+  }
+
+  visitRubyHTMLAttributesSplatNode(node: Nodes.RubyHTMLAttributesSplatNode): void {
+    this.write(node.content)
   }
 
   visitHTMLCommentNode(node: Nodes.HTMLCommentNode): void {
@@ -202,6 +214,10 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitERBOpenTagNode(node: Nodes.ERBOpenTagNode): void {
+    this.printERBNode(node)
+  }
+
   visitERBContentNode(node: Nodes.ERBContentNode): void {
     this.printERBNode(node)
   }
@@ -239,6 +255,18 @@ export class IdentityPrinter extends Printer {
 
     if (node.body) {
       node.body.forEach(child => this.visit(child))
+    }
+
+    if (node.rescue_clause) {
+      this.visit(node.rescue_clause)
+    }
+
+    if (node.else_clause) {
+      this.visit(node.else_clause)
+    }
+
+    if (node.ensure_clause) {
+      this.visit(node.ensure_clause)
     }
 
     if (node.end_node) {
@@ -368,6 +396,46 @@ export class IdentityPrinter extends Printer {
     if (node.end_node) {
       this.visit(node.end_node)
     }
+  }
+
+  visitERBRenderNode(node: Nodes.ERBRenderNode): void {
+    this.printERBNode(node)
+
+    if (node.end_node) {
+      if (node.body) {
+        node.body.forEach(child => this.visit(child))
+      }
+
+      if (node.rescue_clause) {
+        this.visit(node.rescue_clause)
+      }
+
+      if (node.else_clause) {
+        this.visit(node.else_clause)
+      }
+
+      if (node.ensure_clause) {
+        this.visit(node.ensure_clause)
+      }
+
+      this.visit(node.end_node)
+    }
+  }
+
+  visitRubyRenderKeywordsNode(_node: Nodes.RubyRenderKeywordsNode): void {
+    // no-op: extracted metadata, nothing to print
+  }
+
+  visitRubyRenderLocalNode(_node: Nodes.RubyRenderLocalNode): void {
+    // extracted metadata, nothing to print
+  }
+
+  visitERBStrictLocalsNode(node: Nodes.ERBStrictLocalsNode): void {
+    this.printERBNode(node)
+  }
+
+  visitRubyParameterNode(_node: Nodes.RubyParameterNode): void {
+    // extracted metadata, nothing to print
   }
 
   visitERBYieldNode(node: Nodes.ERBYieldNode): void {

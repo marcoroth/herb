@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0007_tag.img with attributes"
+input: "{source: \"<%= tag.img src: \\\"image.png\\\", alt: \\\"Photo\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img src="image.png" alt="Photo">

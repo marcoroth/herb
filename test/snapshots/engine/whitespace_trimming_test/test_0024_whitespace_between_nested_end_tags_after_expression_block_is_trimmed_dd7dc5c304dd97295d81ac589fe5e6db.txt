@@ -1,0 +1,12 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0024_whitespace between nested end tags after expression block is trimmed"
+input: "{source: \"<% 1.times do %>\\n  <% 1.times do %>\\n    <%= tag.p do %>\\n      text\\n    <% end %>\\n  <% end %>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; 1.times do 
+   1.times do 
+ _buf << '    '.freeze; _buf << (tag.p do; _buf << '
+      text
+'.freeze;     end )
+   end 
+ end 
+_buf.to_s

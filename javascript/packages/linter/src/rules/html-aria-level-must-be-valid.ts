@@ -63,17 +63,18 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
-  name = "html-aria-level-must-be-valid"
+  static ruleName = "html-aria-level-must-be-valid"
+  static introducedIn = this.version("0.4.3")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "warning"
     }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLAriaLevelMustBeValidVisitor(this.name, context)
+    const visitor = new HTMLAriaLevelMustBeValidVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

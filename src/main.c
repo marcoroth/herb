@@ -1,14 +1,23 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
-#include "include/ast_pretty_print.h"
+#include "include/ast/ast_node.h"
+#include "include/ast/ast_nodes.h"
+
+#ifndef HERB_EXCLUDE_PRETTYPRINT
+#  include "include/ast/ast_pretty_print.h"
+#endif
+
 #include "include/extract.h"
 #include "include/herb.h"
-#include "include/io.h"
-#include "include/ruby_parser.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/string.h"
+#include "include/lexer/lex_helpers.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_arena.h"
+#include "include/lib/hb_arena_debug.h"
+#include "include/lib/hb_buffer.h"
+#include "include/lib/string.h"
+#include "include/macros.h"
+#include "include/prism/ruby_parser.h"
+#include "include/util/io.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +46,7 @@ int main(const int argc, char* argv[]) {
   if (argc < 2) {
     puts("./herb [command] [options]\n");
 
-    puts("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n");
+    puts("Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.\n");
 
     puts("./herb lex [file]      -  Lex a file");
     puts("./herb parse [file]    -  Parse a file");
@@ -53,72 +62,90 @@ int main(const int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  hb_allocator_T malloc_allocator = hb_allocator_with_malloc();
+  char* source = herb_read_file(argv[2], &malloc_allocator);
+
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    fprintf(stderr, "Failed to initialize allocator\n");
+    hb_allocator_dealloc(&malloc_allocator, source);
+    return EXIT_FAILURE;
+  }
+
   hb_buffer_T output;
-
-  if (!hb_buffer_init(&output, 4096)) { return 1; }
-
-  char* source = herb_read_file(argv[2]);
+  if (!hb_buffer_init(&output, 4096, &allocator)) { return 1; }
 
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
+  int silent = 0;
+  if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
+
   if (string_equals(argv[1], "lex")) {
-    herb_lex_to_buffer(source, &output);
+    herb_lex_to_buffer(source, &output, &allocator);
     clock_gettime(CLOCK_MONOTONIC, &end);
+
+    if (!silent) { hb_arena_print_stats((hb_arena_T*) allocator.context); }
 
     puts(output.value);
     print_time_diff(start, end, "lexing");
 
-    free(output.value);
-    free(source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
 
   if (string_equals(argv[1], "parse")) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, &allocator);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    int silent = 0;
-    if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
-
     if (!silent) {
+      hb_arena_print_stats((hb_arena_T*) allocator.context);
+
+#ifndef HERB_EXCLUDE_PRETTYPRINT
       ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
       puts(output.value);
+#endif
 
       print_time_diff(start, end, "parsing");
     }
 
-    ast_node_free((AST_NODE_T*) root);
-    free(output.value);
-    free(source);
+    ast_node_free((AST_NODE_T*) root, &allocator);
+
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
 
   if (string_equals(argv[1], "ruby")) {
-    herb_extract_ruby_to_buffer(source, &output);
+    herb_extract_ruby_to_buffer(source, &output, &allocator);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     puts(output.value);
     print_time_diff(start, end, "extracting Ruby");
 
-    free(output.value);
-    free(source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
 
   if (string_equals(argv[1], "html")) {
-    herb_extract_html_to_buffer(source, &output);
+    herb_extract_html_to_buffer(source, &output, &allocator);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     puts(output.value);
     print_time_diff(start, end, "extracting HTML");
 
-    free(output.value);
-    free(source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }
@@ -126,14 +153,15 @@ int main(const int argc, char* argv[]) {
   if (string_equals(argv[1], "prism")) {
     printf("HTML+ERB File: \n%s\n", source);
 
-    char* ruby_source = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY);
+    char* ruby_source = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY, &allocator);
     printf("Extracted Ruby: \n%s\n", ruby_source);
 
     herb_parse_ruby_to_stdout(ruby_source);
 
-    free(ruby_source);
-    free(output.value);
-    free(source);
+    hb_allocator_dealloc(&allocator, ruby_source);
+    hb_buffer_free(&output);
+    hb_allocator_destroy(&allocator);
+    hb_allocator_dealloc(&malloc_allocator, source);
 
     return EXIT_SUCCESS;
   }

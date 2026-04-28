@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0029_tag.div with dynamic integer data attribute value"
+input: "{source: \"<%= tag.div data: { count: item_count } %>\", options: {optimize: true, locals: {item_count: 42}}}"
+---
+_buf = ::String.new; _buf << '<div data-count="'.freeze; _buf << ::Herb::Engine.attr((::Herb::Engine.nested_attribute_value(item_count))); _buf << '"></div>'.freeze;
+_buf.to_s

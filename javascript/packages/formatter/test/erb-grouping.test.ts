@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("ERB Tag Grouping", () => {
   beforeAll(async () => {
@@ -13,6 +15,8 @@ describe("ERB Tag Grouping", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("groups consecutive erb-output tags together", () => {
@@ -79,6 +83,24 @@ describe("ERB Tag Grouping", () => {
         <%= user.name %>
         <%= time.strftime("%Y") %>
       </div>
+    `)
+  })
+
+  test("adjacent ERB output tags stay on one line inside ERB blocks", () => {
+    expectFormattedToMatch(dedent`
+      <% some_block do %>
+        <%= "abcdef" %><%= "*" if required? %>
+      <% end %>
+    `)
+  })
+
+  test("adjacent ERB output tags stay on one line at top-level and inside blocks", () => {
+    expectFormattedToMatch(dedent`
+      <%= "abcdef" %><%= "*" if required? %>
+
+      <% some_block do %>
+        <%= "abcdef" %><%= "*" if required? %>
+      <% end %>
     `)
   })
 

@@ -1,0 +1,16 @@
+---
+name: apply_form_for_options!
+source: "ActionView::Helpers::FormHelper#apply_form_for_options!"
+gem: actionview
+output: void
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Applies default form options based on the model object. Determines the URL, method, and scope automatically.
+signature: "apply_form_for_options!(object, options)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

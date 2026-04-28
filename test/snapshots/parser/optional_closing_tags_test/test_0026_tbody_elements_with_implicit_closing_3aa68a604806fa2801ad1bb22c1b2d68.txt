@@ -77,7 +77,7 @@ input: |2-
     │   │   │   │   │   │       │       └── tag_closing: ">" (location: (3:22)-(3:23))
     │   │   │   │   │   │       │
     │   │   │   │   │   │       ├── is_void: false
-    │   │   │   │   │   │       └── source: "HTML"
+    │   │   │   │   │   │       └── element_source: "HTML"
     │   │   │   │   │   │
     │   │   │   │   │   ├── close_tag:
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (3:23)-(3:28))
@@ -87,7 +87,7 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (3:27)-(3:28))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:28)-(4:2))
     │   │   │   │       └── content: "\n  "
@@ -97,7 +97,7 @@ input: |2-
     │   │   │   │       └── tag_name: "tbody" (location: (2:3)-(2:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLElementNode (location: (4:2)-(6:0))
     │   │       ├── errors: (1 error)
@@ -152,7 +152,7 @@ input: |2-
     │   │       │   │   │       │       └── tag_closing: ">" (location: (5:22)-(5:23))
     │   │       │   │   │       │
     │   │       │   │   │       ├── is_void: false
-    │   │       │   │   │       └── source: "HTML"
+    │   │       │   │   │       └── element_source: "HTML"
     │   │       │   │   │
     │   │       │   │   ├── close_tag:
     │   │       │   │   │   └── @ HTMLCloseTagNode (location: (5:23)-(5:28))
@@ -162,7 +162,7 @@ input: |2-
     │   │       │   │   │       └── tag_closing: ">" (location: (5:27)-(5:28))
     │   │       │   │   │
     │   │       │   │   ├── is_void: false
-    │   │       │   │   └── source: "HTML"
+    │   │       │   │   └── element_source: "HTML"
     │   │       │   │
     │   │       │   └── @ HTMLTextNode (location: (5:28)-(6:0))
     │   │       │       └── content: "\n"
@@ -172,7 +172,7 @@ input: |2-
     │   │       │       └── tag_name: "tbody" (location: (4:3)-(4:8))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── source: "HTML"
+    │   │       └── element_source: "HTML"
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:8))
@@ -182,7 +182,7 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:8)-(7:0))
         └── content: "\n"

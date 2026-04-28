@@ -20,12 +20,26 @@ module Herb
 
     attr_reader visitors: untyped
 
+    attr_reader enabled_validators: untyped
+
+    def self.optimize_warning_issued: () -> bool
+
+    def self.optimize_warning_issued=: (bool) -> bool
+
+    attr_accessor optimize_warning_issued: bool
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError
     end
 
+    class GeneratorTemplateError < CompilationError
+    end
+
     class InvalidRubyError < CompilationError
+      attr_reader compiled_source: untyped
+
+      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
     end
 
     def initialize: (untyped input, ?untyped properties) -> untyped
@@ -38,15 +52,27 @@ module Herb
 
     def self.css: (untyped value) -> untyped
 
+    def self.nested_attribute_value: (untyped value) -> untyped
+
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
+
+    def source_may_contain_action_view_helpers?: (untyped source) -> untyped
+
+    def self.action_view_helper_pattern: () -> untyped
 
     def add_text: (untyped text) -> untyped
 
     def add_code: (untyped code) -> untyped
 
+    def expression_block?: () -> untyped
+
     def add_expression: (untyped indicator, untyped code) -> untyped
+
+    def add_context_aware_expression: (untyped indicator, untyped code, untyped context) -> untyped
+
+    def context_escape_function: (untyped context) -> untyped
 
     def add_expression_result: (untyped code) -> untyped
 
@@ -74,9 +100,9 @@ module Herb
 
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
-    def handle_validation_errors: (untyped errors, untyped input) -> untyped
+    def handle_validation_errors: (untyped validators, untyped input) -> untyped
 
-    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
+    def add_validation_overlay: (untyped validators, ?untyped input) -> untyped
 
     def escape_attr: (untyped text) -> untyped
 
@@ -84,5 +110,10 @@ module Herb
 
     # : () -> Array[Herb::Visitor]
     def default_visitors: () -> Array[Herb::Visitor]
+
+    # : () -> Hash[Symbol, untyped]
+    def default_parser_options: () -> Hash[Symbol, untyped]
+
+    def ensure_valid_ruby!: (untyped source) -> untyped
   end
 end

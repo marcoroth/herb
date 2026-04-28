@@ -1,0 +1,20 @@
+---
+name: turbo_page_requires_reload_tag
+source: "Turbo::DriveHelper#turbo_page_requires_reload_tag"
+gem: turbo-rails
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<meta>` tag with `name="turbo-visit-control" content="reload"`. Forces the page, when loaded by Turbo, to cause a full page reload.
+signature: "turbo_page_requires_reload_tag"
+documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/DriveHelper#turbo_page_requires_reload_tag-instance_method"
+tag:
+  name: meta
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments: []
+options: []
+special_behaviors: []

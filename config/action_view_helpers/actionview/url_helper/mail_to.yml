@@ -1,0 +1,56 @@
+---
+name: mail_to
+source: "ActionView::Helpers::UrlHelper#mail_to"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a mailto link tag to the specified email_address, which is also used as the name of the link unless name is specified. Additional HTML attributes for the link can be passed in html_options.
+signature: "mail_to(email_address, name = nil, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-mail_to"
+tag:
+  name: a
+  is_void: false
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: href
+    source: first_arg
+    wrapper: null
+arguments:
+  - name: email_address
+    position: 1
+    type: string
+    optional: false
+    description: "The email address for the mailto link."
+  - name: name
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Link text. Defaults to the email address."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: subject
+    type: string
+    description: "Preset subject line for the email."
+  - name: body
+    type: string
+    description: "Preset body for the email."
+  - name: cc
+    type: string
+    description: "Carbon copy recipients."
+  - name: bcc
+    type: string
+    description: "Blind carbon copy recipients."
+  - name: reply_to
+    type: string
+    description: "Preset the Reply-To field of the email."
+special_behaviors: []

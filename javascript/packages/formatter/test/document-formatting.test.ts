@@ -196,23 +196,13 @@ describe("Document-level formatting", () => {
   })
 
   test("handles ERB loops with proper spacing", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <% items = [1, 2, 3] %>
 
       <% items.each do |item| %>
         <div class="item">
           <span><%= item %></span>
         </div>
-      <% end %>
-
-      <div class="footer">Done</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
-      <% items = [1, 2, 3] %>
-
-      <% items.each do |item| %>
-        <div class="item"><span><%= item %></span></div>
       <% end %>
 
       <div class="footer">Done</div>
@@ -689,8 +679,7 @@ describe("Document-level formatting", () => {
                 </h1>
 
                 <h2 class="text-inherit opacity-60 text-sm line-clamp-1">
-                  <%= event.static_metadata.location %> •
-                  <%= event.formatted_dates %>
+                  <%= event.static_metadata.location %> • <%= event.formatted_dates %>
                 </h2>
 
                 <h2 class="text-inherit font-medium text-sm line-clamp-3 hidden lg:block">

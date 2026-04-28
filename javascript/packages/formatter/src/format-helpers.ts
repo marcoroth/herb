@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput } from "@herb-tools/core"
+import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -21,7 +21,6 @@ export interface ContentUnit {
   type: 'text' | 'inline' | 'erb' | 'block'
   isAtomic: boolean
   breaksFlow: boolean
-  isHerbDisable?: boolean
 }
 
 /**
@@ -33,6 +32,12 @@ export interface ContentUnitWithNode {
 }
 
 // --- Constants ---
+
+/**
+ * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
+ * characters like NBSP (U+00A0) and full-width space (U+3000)
+ */
+export const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
@@ -51,37 +56,35 @@ export const CONTENT_PRESERVING_ELEMENTS = new Set([
   'script', 'style', 'pre', 'textarea'
 ])
 
+// https://tailwindcss.com/docs/white-space
+export const WHITESPACE_PRESERVING_CLASSES = [
+  'whitespace-pre-line',
+  'whitespace-pre-wrap',
+  'whitespace-pre',
+  'whitespace-break-spaces',
+]
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/white-space
+export const WHITESPACE_PRESERVING_STYLE_VALUES = new Set([
+  'pre',
+  'pre-line',
+  'pre-wrap',
+  'break-spaces',
+])
+
 export const SPACEABLE_CONTAINERS = new Set([
   'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
   'figure', 'details', 'summary', 'dialog', 'fieldset'
-])
-
-/**
- * Token list attributes that contain space-separated values and benefit from
- * spacing around ERB content for readability
- */
-export const TOKEN_LIST_ATTRIBUTES = new Set([
-  'class', 'data-controller', 'data-action'
 ])
 
 
 // --- Node Utility Functions ---
 
 /**
- * Check if a node is pure whitespace (empty text node with only whitespace)
- */
-export function isPureWhitespaceNode(node: Node): boolean {
-  return isNode(node, HTMLTextNode) && node.content.trim() === ""
-}
-
-/**
  * Check if a node is non-whitespace (has meaningful content)
  */
 export function isNonWhitespaceNode(node: Node): boolean {
-  if (isNode(node, WhitespaceNode)) return false
-  if (isNode(node, HTMLTextNode)) return node.content.trim() !== ""
-
-  return true
+  return !isPureWhitespaceNode(node)
 }
 
 /**
@@ -126,34 +129,6 @@ export function filterSignificantChildren(body: Node[]): Node[] {
 
     return true
   })
-}
-
-/**
- * Smart filter that preserves exactly ONE whitespace before herb:disable comments
- */
-export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
-  const result: Node[] = []
-  let pendingWhitespace: Node | null = null
-
-  for (const node of nodes) {
-    const isWhitespace = isNode(node, WhitespaceNode) || (isNode(node, HTMLTextNode) && node.content.trim() === "")
-    const isHerbDisable = isNode(node, ERBContentNode) && isHerbDisableComment(node)
-
-    if (isWhitespace) {
-      if (!pendingWhitespace) {
-        pendingWhitespace = node
-      }
-    } else {
-      if (isHerbDisable && pendingWhitespace) {
-        result.push(pendingWhitespace)
-      }
-
-      pendingWhitespace = null
-      result.push(node)
-    }
-  }
-
-  return result
 }
 
 // --- Punctuation and Word Spacing Functions ---
@@ -391,24 +366,50 @@ export function hasMixedTextAndInlineContent(children: Node[]): boolean {
   return (hasText && hasInlineElements) || (hasERBOutput(children) && hasText)
 }
 
+export function hasWhitespacePreservingStyle(element: HTMLElementNode): boolean {
+  if (getTokenList(element, "class").some(klass => WHITESPACE_PRESERVING_CLASSES.some(whitespace => klass.includes(whitespace)))) return true
+
+  const styleValue = getStaticAttributeValue(element, "style")
+  if (styleValue) {
+    const match = styleValue.match(/white-space\s*:\s*([^;!]+)/)
+
+    if (match) {
+      const value = match[1].trim().toLowerCase()
+      if (WHITESPACE_PRESERVING_STYLE_VALUES.has(value)) return true
+    }
+  }
+
+  return false
+}
+
 export function isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): boolean {
   const tagName = getTagName(element)
+  if (CONTENT_PRESERVING_ELEMENTS.has(tagName)) return true
 
-  return CONTENT_PRESERVING_ELEMENTS.has(tagName)
+  if (isNode(element, HTMLElementNode)) {
+    return hasWhitespacePreservingStyle(element)
+  }
+
+  return false
 }
 
 /**
- * Count consecutive inline elements/ERB at the start of children (with no whitespace between)
+ * Count consecutive inline elements/ERB with no whitespace between them.
+ * Starts from startIndex and skips indices in processedIndices.
  */
-export function countAdjacentInlineElements(children: Node[]): number {
+export function countAdjacentInlineElements(children: Node[], startIndex = 0, processedIndices?: Set<number>): number {
   let count = 0
   let lastSignificantIndex = -1
 
-  for (let i = 0; i < children.length; i++) {
+  for (let i = startIndex; i < children.length; i++) {
     const child = children[i]
 
     if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
       continue
+    }
+
+    if (processedIndices?.has(i)) {
+      break
     }
 
     const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)
@@ -477,7 +478,7 @@ export function endsWithWhitespace(text: string): boolean {
 /**
  * Check if an ERB content node is a herb:disable comment
  */
-export function isHerbDisableComment(node: Node): boolean {
+export function isHerbDisableComment(node: Node): node is ERBContentNode & { tag_opening: { value: "<%#" } } {
   if (!isNode(node, ERBContentNode)) return false
   if (node.tag_opening?.value !== "<%#") return false
 

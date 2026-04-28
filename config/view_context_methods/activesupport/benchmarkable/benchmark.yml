@@ -1,0 +1,8 @@
+---
+name: benchmark
+source: "ActiveSupport::Benchmarkable#benchmark"
+gem: activesupport
+category: benchmarkable
+output: void
+description: |-
+  Measures the execution time of a block and logs it.

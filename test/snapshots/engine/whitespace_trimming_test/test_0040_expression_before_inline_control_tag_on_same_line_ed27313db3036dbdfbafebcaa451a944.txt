@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0040_expression before inline control tag on same line"
+input: "{source: \"<%= \\\"A\\\" %><% if true %>B<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << ("A").to_s; if true; _buf << 'B'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

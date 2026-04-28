@@ -25,6 +25,16 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (2:10)-(3:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:17)-(1:18))
+    │   │       ├── name: "i" (location: (1:17)-(1:18))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (3:0)-(3:9))
     │           ├── tag_opening: "<%" (location: (3:0)-(3:2))

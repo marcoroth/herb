@@ -82,7 +82,7 @@ export class AttributeFormatVisitor extends AttributeVisitorMixin {
 }
 
 export class StimulusAttributeFormatRule extends ParserRule {
-  name = "stimulus-attribute-format"
+  static ruleName = "stimulus-attribute-format"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -92,7 +92,7 @@ export class StimulusAttributeFormatRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
-    const visitor = new AttributeFormatVisitor(this.name, context)
+    const visitor = new AttributeFormatVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

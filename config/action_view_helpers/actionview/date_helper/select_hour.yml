@@ -1,0 +1,48 @@
+---
+name: select_hour
+source: "ActionView::Helpers::DateHelper#select_hour"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the hours 0 through 23 with the current hour selected. The `datetime` can be either a `Time` or `DateTime` object or an integer. Override the field name using the `:field_name` option, `"hour"` by default.
+signature: "select_hour(datetime, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_hour"
+tag: null
+arguments:
+  - name: datetime
+    position: 1
+    type: [time, datetime, integer]
+    optional: false
+    description: "The time, datetime, or integer to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the hour select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"hour\"`."
+  - name: ampm
+    type: boolean
+    description: "If `true`, shows hours in AM/PM format."
+  - name: start_hour
+    type: integer
+    description: "The starting hour for the hour select."
+  - name: end_hour
+    type: integer
+    description: "The ending hour for the hour select."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

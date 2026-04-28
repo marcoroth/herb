@@ -44,7 +44,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       json(),
@@ -65,7 +65,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       commonjs(),

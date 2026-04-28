@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineTest#test_0027_CDATA section compiles correctly"
+input: "{source: \"<![CDATA[ content ]]>\", locals: {}, options: {}}"
+---
+<![CDATA[ content ]]>

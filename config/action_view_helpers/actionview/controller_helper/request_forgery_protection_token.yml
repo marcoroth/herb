@@ -1,0 +1,16 @@
+---
+name: request_forgery_protection_token
+source: "ActionView::Helpers::ControllerHelper#request_forgery_protection_token"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the token parameter name used for CSRF protection. Delegated to the controller.
+signature: "request_forgery_protection_token"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

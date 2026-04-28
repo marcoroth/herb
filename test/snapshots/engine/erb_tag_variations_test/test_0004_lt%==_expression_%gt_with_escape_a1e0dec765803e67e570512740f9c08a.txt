@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0004_<%== expression %> with escape"
+input: "{source: \"<%== value %>\", locals: {value: \"<b>bold</b>\"}, options: {escape: true}}"
+---
+<b>bold</b>

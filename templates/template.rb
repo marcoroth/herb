@@ -7,6 +7,16 @@ require "yaml"
 
 module Herb
   module Template
+    def self.underscore(name)
+      name
+        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([a-z\d])([A-Z])/, '\1_\2')
+    end
+
+    ALWAYS_INVISIBLE_FIELD_CLASSES = ["PrismContextField", "AnalyzedRubyField"].freeze
+    CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
+    ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
+
     class Field
       attr_reader :name, :options
 
@@ -14,12 +24,51 @@ module Herb
         @name = name
         @options = options
       end
+
+      def always_invisible?
+        ALWAYS_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def conditionally_invisible?
+        CONDITIONALLY_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+
+      def invisible?
+        ALL_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
+      end
+    end
+
+    class FieldVisibility
+      attr_reader :field, :prism_field_name
+
+      def initialize(field:, static_last:, dynamic_last:, prism_field_name:)
+        @field = field
+        @static_last = static_last
+        @dynamic_last = dynamic_last
+        @prism_field_name = prism_field_name
+      end
+
+      def static_last?
+        @static_last
+      end
+
+      def dynamic_last?
+        @dynamic_last
+      end
+
+      def symbol
+        @static_last ? "└── " : "├── "
+      end
+
+      def prefix
+        @static_last ? "    " : "│   "
+      end
     end
 
     class ArrayField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def ruby_type
@@ -42,7 +91,7 @@ module Herb
 
       def c_item_type
         if specific_kind
-          "AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_T*"
+          "AST_#{Template.underscore(specific_kind).upcase}_T*"
         else
           "void*"
         end
@@ -58,14 +107,14 @@ module Herb
     end
 
     class NodeField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def c_type
         if specific_kind
-          "struct AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_STRUCT*"
+          "struct AST_#{Template.underscore(specific_kind).upcase}_STRUCT*"
         else
           "AST_NODE_T*"
         end
@@ -139,7 +188,7 @@ module Herb
       end
 
       def c_type
-        "const char*"
+        "hb_string_T"
       end
     end
 
@@ -195,11 +244,33 @@ module Herb
 
     class PrismNodeField < Field
       def ruby_type
-        "Prism::Node"
+        "String"
       end
 
       def c_type
-        "pm_node_t*"
+        "herb_prism_node_T"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
+    class PrismContextField < Field
+      def ruby_type
+        "nil"
+      end
+
+      def c_type
+        "herb_prism_context_T*"
       end
     end
 
@@ -223,13 +294,35 @@ module Herb
       end
     end
 
+    class PrismSerializedField < Field
+      def ruby_type
+        "String"
+      end
+
+      def c_type
+        "prism_serialized_T"
+      end
+
+      def java_type
+        "byte[]"
+      end
+
+      def rust_type
+        "Option<Vec<u8>>"
+      end
+
+      def js_type
+        "Uint8Array | null"
+      end
+    end
+
     class ElementSourceField < Field
       def ruby_type
         "String"
       end
 
       def c_type
-        "element_source_t"
+        "hb_string_T"
       end
     end
 
@@ -250,20 +343,22 @@ module Herb
 
       def field_type_for(name)
         case name
-        when "array"          then ArrayField
-        when "node"           then NodeField
-        when "borrowed_node"  then BorrowedNodeField
-        when "token"          then TokenField
-        when "token_type"     then TokenTypeField
-        when "string"         then StringField
-        when "position"       then PositionField
-        when "location"       then LocationField
-        when "size_t"         then SizeTField
-        when "boolean"        then BooleanField
-        when "prism_node"     then PrismNodeField
-        when "analyzed_ruby"  then AnalyzedRubyField
-        when "element_source" then ElementSourceField
-        when "void*"          then VoidPointerField
+        when "array"            then ArrayField
+        when "node"             then NodeField
+        when "borrowed_node"    then BorrowedNodeField
+        when "token"            then TokenField
+        when "token_type"       then TokenTypeField
+        when "string"           then StringField
+        when "position"         then PositionField
+        when "location"         then LocationField
+        when "size_t"           then SizeTField
+        when "boolean"          then BooleanField
+        when "prism_node"       then PrismNodeField
+        when "prism_context"    then PrismContextField
+        when "analyzed_ruby"    then AnalyzedRubyField
+        when "prism_serialized" then PrismSerializedField
+        when "element_source"   then ElementSourceField
+        when "void*"            then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end
@@ -279,7 +374,7 @@ module Herb
         @message_template = config.dig("message", "template")
         @message_arguments = config.dig("message", "arguments")
 
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = camelized.upcase
         @struct_type = "#{camelized.upcase}_T"
         @struct_name = "#{camelized.upcase}_STRUCT"
@@ -306,7 +401,7 @@ module Herb
 
       def initialize(config)
         @name = config.fetch("name")
-        camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
+        camelized = Template.underscore(@name)
         @type = "AST_#{camelized.upcase}"
         @struct_type = "AST_#{camelized.upcase}_T"
         @struct_name = "AST_#{camelized.upcase}_STRUCT"
@@ -323,6 +418,365 @@ module Herb
 
       def c_type
         @struct_type
+      end
+
+      def field_visibilities
+        @field_visibilities ||= begin
+          prism_fields = @fields.select(&:conditionally_invisible?)
+          last_prism_field_name = prism_fields.last&.name
+
+          @fields.each_with_index.map do |field, index|
+            remaining = @fields[(index + 1)..] || []
+            all_remaining_always_invisible = remaining.all?(&:always_invisible?)
+            all_remaining_invisible = remaining.all?(&:invisible?)
+            any_remaining_conditionally_invisible = remaining.any?(&:conditionally_invisible?)
+
+            static_last = all_remaining_always_invisible
+            dynamic_last = !static_last && all_remaining_invisible && any_remaining_conditionally_invisible
+
+            FieldVisibility.new(
+              field: field,
+              static_last: static_last,
+              dynamic_last: dynamic_last,
+              prism_field_name: dynamic_last ? last_prism_field_name : nil
+            )
+          end
+        end
+      end
+
+      def field_visibility(index)
+        field_visibilities[index]
+      end
+    end
+
+    def self.escape_string(string)
+      string.to_s.gsub(/["\\]/) do |char|
+        case char
+        when "\\" then "\\\\"
+        when '"'  then '\\"'
+        else char
+        end
+      end
+    end
+
+    class HelperArgument
+      attr_reader :name, :position, :type, :optional, :default, :splat, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @position = config.fetch("position")
+        @type = Array(config.fetch("type"))
+        @optional = config.fetch("optional", false)
+        @default = config.fetch("default", nil)
+        @splat = config.fetch("splat", false)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
+      end
+
+      def escaped_default
+        @default ? Template.escape_string(@default) : nil
+      end
+    end
+
+    class HelperOption
+      attr_reader :name, :type, :maps_to, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = Array(config.fetch("type"))
+        @maps_to = config.fetch("maps_to", nil)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
+      end
+    end
+
+    class HelperImplicitAttribute
+      attr_reader :name, :source, :source_with_block, :wrapper, :skip_wrapping_for,
+                  :wrapper_quotes_arg
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @source = config.fetch("source")
+        @source_with_block = config.fetch("source_with_block", nil)
+        @wrapper = config.fetch("wrapper")
+        @wrapper_quotes_arg = config.fetch("wrapper_quotes_arg", false)
+        @skip_wrapping_for = config.fetch("skip_wrapping_for", [])
+      end
+    end
+
+    class HelperContent
+      attr_reader :source, :arg_position, :skip_if_hash, :to_s_suffix_when_single
+
+      def initialize(config)
+        @source = config.fetch("source")
+        @arg_position = config.fetch("arg_position", nil)
+        @skip_if_hash = config.fetch("skip_if_hash", false)
+        @to_s_suffix_when_single = config.fetch("to_s_suffix_when_single", false)
+      end
+
+      def null?
+        false
+      end
+
+      def first_arg?
+        @source == "first_arg"
+      end
+
+      def block_or_arg?
+        @source == "block_or_arg"
+      end
+    end
+
+    class HelperSpecialBehavior
+      attr_reader :type, :config
+
+      def initialize(config)
+        if config.is_a?(String)
+          @type = config
+          @config = {}
+        else
+          @type = config.fetch("type")
+          @config = config
+        end
+      end
+
+      def implied_attribute?
+        @type == "implied_attribute"
+      end
+
+      def wrap_body?
+        @type == "wrap_body"
+      end
+
+      def multiple_elements?
+        @type == "multiple_elements"
+      end
+
+      def size_to_dimensions?
+        @type == "size_to_dimensions"
+      end
+
+      def remove_non_html_options?
+        @type == "remove_non_html_options"
+      end
+
+      def [](key)
+        @config[key.to_s]
+      end
+
+      def to_s
+        @type
+      end
+    end
+
+    class HelperTagInfo
+      attr_reader :name, :is_void, :preferred, :detect_style, :implicit_attribute
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @is_void = config.fetch("is_void", false)
+        @preferred = config.fetch("preferred", false)
+        @detect_style = config.fetch("detect_style", nil)
+
+        implicit_config = config.fetch("implicit_attribute", nil)
+        @implicit_attribute = implicit_config ? HelperImplicitAttribute.new(implicit_config) : nil
+      end
+
+      def preferred?
+        @preferred
+      end
+
+      def implicit_attribute?
+        !@implicit_attribute.nil?
+      end
+
+      def call_name_detect?
+        @detect_style == "call_name"
+      end
+
+      def receiver_call_detect?
+        @detect_style == "receiver_call"
+      end
+    end
+
+    class HelperType
+      attr_reader :name, :source, :gem, :output, :visibility, :supports_block,
+                  :supported, :description, :signature, :documentation_url, :tag,
+                  :content, :attributes_arg, :attributes_arg_with_block,
+                  :transform_style, :custom_transform,
+                  :arguments, :options, :special_behaviors, :aliases
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @source = config.fetch("source")
+        @gem = config.fetch("gem")
+        @output = config.fetch("output", "html")
+        @visibility = config.fetch("visibility", "public")
+        @supports_block = config.fetch("supports_block", false)
+        @supported = config.fetch("supported", false)
+        @description = config.fetch("description", "").strip
+        @signature = config.fetch("signature")
+        @documentation_url = config.fetch("documentation_url")
+
+        tag_config = config.fetch("tag", nil)
+        @tag = tag_config ? HelperTagInfo.new(tag_config) : nil
+
+        content_config = config.fetch("content", nil)
+        @content = content_config ? HelperContent.new(content_config) : nil
+
+        @attributes_arg = config.fetch("attributes_arg", nil)
+        @attributes_arg_with_block = config.fetch("attributes_arg_with_block", nil)
+        @transform_style = config.fetch("transform_style", "generic")
+        @custom_transform = config.fetch("custom_transform", nil)
+
+        @arguments = (config.fetch("arguments", []) || []).map { |arg| HelperArgument.new(arg) }
+        @options = (config.fetch("options", []) || []).map { |opt| HelperOption.new(opt) }
+
+        raw_behaviors = config.fetch("special_behaviors", []) || []
+        @special_behaviors = raw_behaviors.map { |b| HelperSpecialBehavior.new(b) }
+        @aliases = config.fetch("aliases", []) || []
+      end
+
+      def tag_name
+        @tag&.name
+      end
+
+      def void?
+        @tag&.is_void || false
+      end
+
+      def preferred_for_tag
+        @tag&.preferred || false
+      end
+
+      def detect_style
+        @tag&.detect_style
+      end
+
+      def implicit_attribute
+        @tag&.implicit_attribute
+      end
+
+      # "ActionView::Helpers::UrlHelper#link_to" => "UrlHelper"
+      def module_name
+        source.split("#").first.split("::").last
+      end
+
+      # "ActionView::Helpers::UrlHelper#link_to" => "url_helper"
+      def module_key
+        module_name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+      end
+
+      # "link_to" => "link_to", "current_page?" => "current_page_p", "uncacheable!" => "uncacheable_bang"
+      def safe_name
+        name.gsub("?", "_p").gsub("!", "_bang")
+      end
+
+      # "link_to" => "LINK_TO", "current_page?" => "CURRENT_PAGE_P", "content_for?" => "CONTENT_FOR_P"
+      def constant_name
+        safe_name.upcase
+      end
+
+      # "link_to" => "LinkTo", "current_page?" => "CurrentPage"
+      def camel_case_name
+        safe_name.split("_").map(&:capitalize).join
+      end
+
+      # "link_to" => "linkTo", "current_page?" => "currentPage"
+      def lower_camel_case_name
+        parts = safe_name.split("_")
+
+        parts.first + parts[1..].map(&:capitalize).join
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
+      end
+
+      def escaped_signature
+        Template.escape_string(@signature)
+      end
+
+      def public?
+        @visibility == "public"
+      end
+
+      def internal?
+        @visibility == "internal"
+      end
+
+      def tag?
+        !@tag.nil?
+      end
+
+      def preferred_for_tag?
+        @tag&.preferred || false
+      end
+
+      def supported?
+        @supported
+      end
+
+      def static_tag_name?
+        !tag_name.nil?
+      end
+
+      def implicit_attribute?
+        !implicit_attribute.nil?
+      end
+
+      def call_name_detect?
+        @tag&.call_name_detect? || false
+      end
+
+      def receiver_call_detect?
+        @tag&.receiver_call_detect? || false
+      end
+
+      def html_output?
+        @output == "html"
+      end
+
+      def text_output?
+        @output == "text"
+      end
+
+      def url_output?
+        @output == "url"
+      end
+
+      def boolean_output?
+        @output == "boolean"
+      end
+
+      def void_output?
+        @output == "void"
+      end
+
+      def content?
+        !@content.nil?
+      end
+
+      def generic_transform?
+        @transform_style == "generic"
+      end
+
+      def custom_transform?
+        @transform_style == "custom"
       end
     end
 
@@ -418,7 +872,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -479,6 +933,12 @@ module Herb
 
     def self.errors
       (config.dig("errors", "types") || []).map { |node| ErrorType.new(node) }
+    end
+
+    def self.helpers
+      Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
+        HelperType.new(YAML.load_file(file))
+      end
     end
 
     def self.config

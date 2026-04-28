@@ -9,7 +9,7 @@ await initializeHerb()
 const themeConfig = createThemeConfig()
 
 const title = "Herb"
-const description = "Powerful and seamless HTML-aware ERB parsing and tooling."
+const description = "An ecosystem of powerful and seamless developer tools for HTML+ERB templates."
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -23,7 +23,7 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }],
     ['meta', { property: 'og:image', content: '/social.png' }],
     ['meta', { property: 'og:title', content: 'Herb Tools' }],
-    ['meta', { property: 'og:description', content: 'Powerful and seamless HTML-aware ERB parsing and tooling.' }],
+    ['meta', { property: 'og:description', content: 'An ecosystem of powerful and seamless developer tools for HTML+ERB templates.' }],
     ['meta', { property: 'og:url', content: 'https://herb-tools.dev' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['script', { defer: true, 'data-domain': 'herb-tools.dev', src: 'https://plausible.io/js/script.js' }],

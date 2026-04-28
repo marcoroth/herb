@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ImageTagTest#test_0003_image_tag with multiple attributes"
+input: "{source: \"<%= image_tag \\\"photo.jpg\\\", alt: \\\"Photo\\\", class: \\\"avatar\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<img alt="Photo" class="avatar" src="/images/photo.jpg" />

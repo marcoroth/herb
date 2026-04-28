@@ -209,9 +209,8 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("passes for output ERB IDs in loops (unique per iteration)", () => {
-    expectError('Duplicate ID `user-<%= user.id %>` found. IDs must be unique within a document.')
-    assertOffenses(dedent`
+  test("passes for output ERB IDs in separate block contexts (unique per iteration)", () => {
+    expectNoOffenses(dedent`
       <% users.each do |user| %>
         <div id="user-<%= user.id %>">User</div>
       <% end %>
@@ -319,6 +318,246 @@ describe("html-no-duplicate-ids", () => {
       <% @users.each do |user| %>
         <div id="<%= user.id %>"></div>
       <% end %>
+    `)
+  })
+
+  test("passes for dynamic IDs with same pattern in separate each blocks (issue #388)", () => {
+    expectNoOffenses(dedent`
+      <% first_options.each do |opt| %>
+        <div id="option--<%= opt[:id] %>"></div>
+      <% end %>
+
+      <% second_options.each do |opt| %>
+        <div id="option--<%= opt[:id] %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate dynamic IDs within same block", () => {
+    expectError('Duplicate ID `item-<%= item.id %>` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+
+    assertOffenses(dedent`
+      <% items.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+        <span id="item-<%= item.id %>"></span>
+      <% end %>
+    `)
+  })
+
+  test("passes for three separate each blocks with same dynamic ID pattern", () => {
+    expectNoOffenses(dedent`
+      <% first.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% second.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% third.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in global scope and same dynamic ID in a block", () => {
+    expectNoOffenses(dedent`
+      <div id="user-<%= user.id %>"></div>
+
+      <% items.each do |item| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in a block and same dynamic ID in global scope", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+
+      <div id="user-<%= user.id %>"></div>
+    `)
+  })
+
+  test("passes for dynamic ID in an if branch and same dynamic ID in global scope", () => {
+    expectNoOffenses(dedent`
+      <div id="user-<%= user.id %>"></div>
+
+      <% if condition %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for nested each blocks with same dynamic ID pattern", () => {
+    expectNoOffenses(dedent`
+      <% groups.each do |group| %>
+        <% group.items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for different dynamic ID patterns in separate blocks", () => {
+    expectNoOffenses(dedent`
+      <% users.each do |user| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+
+      <% posts.each do |post| %>
+        <div id="post-<%= post.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic IDs across map and each blocks", () => {
+    expectNoOffenses(dedent`
+      <% items.map do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% items.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for static IDs in separate each blocks", () => {
+    expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <% first.each do |item| %>
+        <div id="static-id"></div>
+      <% end %>
+
+      <% second.each do |item| %>
+        <div id="static-id"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in each block nested inside if/else", () => {
+    expectNoOffenses(dedent`
+      <% if condition %>
+        <% items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% else %>
+        <% items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for tag helper with unique id", () => {
+    expectNoOffenses('<%= tag.div id: "unique" %>')
+  })
+
+  test("fails for duplicate IDs between tag helper and HTML element", () => {
+    expectError('Duplicate ID `my-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= tag.div id: "my-id" do %>
+        content
+      <% end %>
+      <div id="my-id">content</div>
+    `)
+  })
+
+  test("fails for duplicate IDs between two tag helpers", () => {
+    expectError('Duplicate ID `my-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= tag.div id: "my-id" do %>
+        content
+      <% end %>
+      <%= tag.span id: "my-id" %>
+    `)
+  })
+
+  test("passes for IDs in mutually exclusive branches with HTML and tag helper", () => {
+    expectNoOffenses(dedent`
+      <% if use_tag_helper? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate IDs in same branch with void tag helper and HTML", () => {
+    expectError('Duplicate ID `my-id` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+    assertOffenses(dedent`
+      <% if condition? %>
+        <%= tag.img id: "my-id", src: "/image.png", alt: "Photo" %>
+        <img id="my-id" src="/other.png" alt="Other">
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate IDs in same branch with block tag helper and HTML", () => {
+    expectError('Duplicate ID `my-id` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+    assertOffenses(dedent`
+      <% if condition? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("passes for IDs in mutually exclusive branches with tag helpers on both sides", () => {
+    expectNoOffenses(dedent`
+      <% if condition? %>
+        <%= tag.div id: "shared-id" do %>
+          branch one
+        <% end %>
+      <% else %>
+        <%= tag.span id: "shared-id" do %>
+          branch two
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("fails for turbo_frame_tag with duplicate id from positional argument and another element", () => {
+    expectError('Duplicate ID `my-frame` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= turbo_frame_tag "my-frame" do %>
+        content
+      <% end %>
+      <div id="my-frame">content</div>
+    `)
+  })
+
+  test("passes for turbo_frame_tag id in mutually exclusive branch with HTML id", () => {
+    expectNoOffenses(dedent`
+      <% if turbo? %>
+        <%= turbo_frame_tag "my-frame" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-frame">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for image_tag with duplicate id and HTML element", () => {
+    expectError('Duplicate ID `logo` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= image_tag "logo.png", id: "logo" %>
+      <img src="logo.png" id="logo">
+    `)
+  })
+
+  test("fails for link_to with duplicate id and HTML element", () => {
+    expectError('Duplicate ID `home-link` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <%= link_to "Home", root_path, id: "home-link" %>
+      <a href="/" id="home-link">Home</a>
     `)
   })
 })

@@ -47,7 +47,8 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLNoUnderscoresInAttributeNamesRule extends ParserRule {
-  name = "html-no-underscores-in-attribute-names"
+  static ruleName = "html-no-underscores-in-attribute-names"
+  static introducedIn = this.version("0.7.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -57,7 +58,7 @@ export class HTMLNoUnderscoresInAttributeNamesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoUnderscoresInAttributeNamesVisitor(this.name, context)
+    const visitor = new HTMLNoUnderscoresInAttributeNamesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

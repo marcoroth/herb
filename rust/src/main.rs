@@ -139,7 +139,7 @@ fn html_command(file_path: &str) {
 fn print_usage() {
   println!("Usage: herb-rust [command] [file]");
   println!();
-  println!("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.");
+  println!("Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.");
   println!();
   println!("Commands:");
   println!("  version       - Show version information");

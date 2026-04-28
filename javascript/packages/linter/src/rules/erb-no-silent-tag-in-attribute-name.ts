@@ -27,7 +27,8 @@ class ERBNoSilentTagInAttributeNameVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoSilentTagInAttributeNameRule extends ParserRule {
-  name = "erb-no-silent-tag-in-attribute-name"
+  static ruleName = "erb-no-silent-tag-in-attribute-name"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -37,7 +38,7 @@ export class ERBNoSilentTagInAttributeNameRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoSilentTagInAttributeNameVisitor(this.name, context)
+    const visitor = new ERBNoSilentTagInAttributeNameVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

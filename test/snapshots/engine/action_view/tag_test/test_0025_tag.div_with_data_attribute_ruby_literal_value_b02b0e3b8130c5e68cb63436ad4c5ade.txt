@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0025_tag.div with data attribute ruby literal value"
+input: "{source: \"<%= tag.div data: { controller: \\\"content\\\", user_id: 123 } do %>Content<% end %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div data-controller="content" data-user-id="123">Content</div>

@@ -12,7 +12,7 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "%s. Expected: `%s`, found: `%s`."
+        template: "%s. Expected: %s, found: %s."
         arguments:
           - description
           - expected
@@ -30,10 +30,10 @@ errors:
 
     - name: UnexpectedTokenError
       message:
-        template: "Found `%s` when expecting `%s` at (%u:%u)."
+        template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_string(found->type)
-          - token_type_to_string(expected_type)
+          - token_type_to_friendly_string(found->type)
+          - token_type_to_friendly_string(expected_type)
           - found->location.start.line
           - found->location.start.column
 
@@ -164,7 +164,7 @@ errors:
 
     - name: ERBCaseWithConditionsError
       message:
-        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
         arguments: []
 
       fields: []
@@ -336,6 +336,156 @@ errors:
         - name: nested_tag_column
           type: size_t
 
+    - name: RenderAmbiguousLocalsError
+      message:
+        template: "Did you mean `render partial: '%s', locals: { ... }`? Using `render '%s', locals: { ... }` passes a local variable named `locals` to the partial instead of setting the `locals:` option."
+        arguments:
+          - partial
+          - partial
+
+      fields:
+        - name: partial
+          type: string
+
+    - name: RenderMissingLocalsError
+      message:
+        template: "Wrap `%s` in `locals: { ... }` when using `partial:`. Use `render partial: '%s', locals: { %s }` instead. Without `locals:`, these keyword arguments are ignored."
+        arguments:
+          - keywords
+          - partial
+          - keywords
+
+      fields:
+        - name: partial
+          type: string
+
+        - name: keywords
+          type: string
+
+    - name: RenderNoArgumentsError
+      message:
+        template: "No arguments passed to `render`. It needs a partial name, a keyword argument like `partial:`, `template:`, or `layout:`, or a renderable object."
+        arguments: []
+
+      fields: []
+
+    - name: RenderConflictingPartialError
+      message:
+        template: "Both a positional partial `'%s'` and a keyword `partial: '%s'` were passed to `render`. Use one form or the other, not both."
+        arguments:
+          - positional_partial
+          - keyword_partial
+
+      fields:
+        - name: positional_partial
+          type: string
+
+        - name: keyword_partial
+          type: string
+
+    - name: RenderInvalidAsOptionError
+      message:
+        template: "The `as:` value `'%s'` is not a valid Ruby identifier. Use a name that starts with a lowercase letter or underscore, like `as: :item`."
+        arguments:
+          - as_value
+
+      fields:
+        - name: as_value
+          type: string
+
+    - name: RenderObjectAndCollectionError
+      message:
+        template: "The `object:` and `collection:` options are mutually exclusive. Use one or the other in your `render` call."
+        arguments: []
+
+      fields: []
+
+    - name: RenderLayoutWithoutBlockError
+      message:
+        template: "Layout rendering needs a block. Use `render layout: '%s' do ... end` so the layout has content to wrap."
+        arguments:
+          - layout
+
+      fields:
+        - name: layout
+          type: string
+
+    - name: StrictLocalsPositionalArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Positional argument `%s` is not allowed. Use keyword argument format: `%s:`."
+        arguments:
+          - name
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsBlockArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Block argument `&%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsSplatArgumentError
+      message:
+        template: "Strict locals only support keyword arguments. Splat argument `*%s` is not allowed."
+        arguments:
+          - name
+
+      fields:
+        - name: name
+          type: string
+
+    - name: StrictLocalsMissingParenthesisError
+      message:
+        template: "Strict locals declaration requires parentheses. Expected `locals: (...)` but got `locals: %s`."
+        arguments:
+          - rest
+
+      fields:
+        - name: rest
+          type: string
+
+    - name: StrictLocalsDuplicateDeclarationError
+      message:
+        template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
+        arguments: []
+
+      fields: []
+
+    - name: VoidElementContentError
+      message:
+        template: "Void element `%s` cannot have content. `%s` does not accept %s for content."
+        arguments:
+          - tag_name->value
+          - helper_name
+          - content_type
+
+      fields:
+        - name: tag_name
+          type: token
+
+        - name: helper_name
+          type: string
+
+        - name: content_type
+          type: string
+
+    - name: DotNotationCasingError
+      message:
+        template: "Dot-notation component tags require the first segment to start with an uppercase letter. `%s` does not start with an uppercase letter."
+        arguments:
+          - segment->value
+
+      fields:
+        - name: segment
+          type: token
+
 warnings:
   fields: []
   types: []
@@ -368,6 +518,12 @@ nodes:
         - name: children
           type: array
           kind: Node
+
+        - name: prism_context
+          type: prism_context
+
+        - name: prism_node
+          type: prism_node
 
     - name: LiteralNode
       fields:
@@ -426,6 +582,11 @@ nodes:
         - name: tag_name
           type: token
 
+    - name: HTMLVirtualCloseTagNode
+      fields:
+        - name: tag_name
+          type: token
+
     - name: HTMLElementNode
       fields:
         - name: open_tag
@@ -433,6 +594,7 @@ nodes:
           kind:
             - HTMLOpenTagNode
             - HTMLConditionalOpenTagNode
+            - ERBOpenTagNode
 
         - name: tag_name
           type: token
@@ -446,11 +608,13 @@ nodes:
           kind:
             - HTMLCloseTagNode
             - HTMLOmittedCloseTagNode
+            - HTMLVirtualCloseTagNode
+            - ERBEndNode
 
         - name: is_void
           type: boolean
 
-        - name: source
+        - name: element_source
           type: element_source
 
     - name: HTMLConditionalElementNode
@@ -487,7 +651,7 @@ nodes:
         - name: tag_name
           type: token
 
-        - name: source
+        - name: element_source
           type: element_source
 
     - name: HTMLAttributeValueNode
@@ -525,6 +689,37 @@ nodes:
         - name: value
           type: node
           kind: HTMLAttributeValueNode
+
+    - name: RubyLiteralNode
+      fields:
+        - name: content
+          type: string
+
+    - name: RubyHTMLAttributesSplatNode
+      fields:
+        - name: content
+          type: string
+
+        - name: prefix
+          type: string
+
+    - name: ERBOpenTagNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: tag_name
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
 
     - name: HTMLTextNode
       fields:
@@ -604,6 +799,9 @@ nodes:
         - name: valid
           type: boolean
 
+        - name: prism_node
+          type: prism_node
+
     - name: ERBEndNode
       fields:
         - name: tag_opening
@@ -647,6 +845,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -678,9 +879,29 @@ nodes:
         # - name: opener
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: body
           type: array
           kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
 
         - name: end_node
           type: node
@@ -726,6 +947,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBWhenNode
@@ -756,6 +980,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: conditions
           type: array
           kind: ERBInNode
@@ -782,6 +1009,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -803,6 +1033,9 @@ nodes:
 
         # - name: predicate
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -828,6 +1061,9 @@ nodes:
 
         # - name: collection
         #   type: prism_node
+
+        - name: prism_node
+          type: prism_node
 
         - name: statements
           type: array
@@ -889,6 +1125,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -926,6 +1165,9 @@ nodes:
         # - name: predicate
         #   type: prism_node
 
+        - name: prism_node
+          type: prism_node
+
         - name: statements
           type: array
           kind: Node
@@ -937,6 +1179,156 @@ nodes:
         - name: end_node
           type: node
           kind: ERBEndNode
+
+    - name: RubyRenderLocalNode
+      fields:
+        - name: name
+          type: token
+
+        - name: value
+          type: node
+          kind: RubyLiteralNode
+
+    - name: RubyRenderKeywordsNode
+      fields:
+        - name: partial
+          type: token
+
+        - name: template_path
+          type: token
+
+        - name: layout
+          type: token
+
+        - name: file
+          type: token
+
+        - name: inline_template
+          type: token
+
+        - name: body
+          type: token
+
+        - name: plain
+          type: token
+
+        - name: html
+          type: token
+
+        - name: renderable
+          type: token
+
+        - name: collection
+          type: token
+
+        - name: object
+          type: token
+
+        - name: as_name
+          type: token
+
+        - name: spacer_template
+          type: token
+
+        - name: formats
+          type: token
+
+        - name: variants
+          type: token
+
+        - name: handlers
+          type: token
+
+        - name: content_type
+          type: token
+
+        - name: locals
+          type: array
+          kind:
+            - RubyRenderLocalNode
+
+    - name: ERBRenderNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: keywords
+          type: node
+          kind: RubyRenderKeywordsNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
+    - name: RubyParameterNode
+      fields:
+        - name: name
+          type: token
+
+        - name: default_value
+          type: node
+          kind: RubyLiteralNode
+
+        - name: kind
+          type: string
+
+        - name: required
+          type: boolean
+
+    - name: ERBStrictLocalsNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+        - name: prism_node
+          type: prism_node
+
+        - name: locals
+          type: array
+          kind:
+            - RubyParameterNode
 
     - name: ERBYieldNode
       fields:

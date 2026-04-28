@@ -55,13 +55,13 @@ pub trait Visitor {
     <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     <%- if field.specific_kind && field.specific_kind != "Node" -%>
     if let Some(ref child) = node.<%= field.name %> {
-      self.visit_<%= field.specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").downcase %>(child);
+      self.visit_<%= Herb::Template.underscore(field.specific_kind).downcase %>(child);
     }
     <%- elsif field.union_kind -%>
     if let Some(ref child) = node.<%= field.name %> {
       match child {
         <%- field.union_kind.each do |kind| -%>
-        <%= field.union_type_name %>::<%= kind %>(n) => self.visit_<%= kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").downcase %>(n),
+        <%= field.union_type_name %>::<%= kind %>(n) => self.visit_<%= Herb::Template.underscore(kind).downcase %>(n),
         <%- end -%>
       }
     }

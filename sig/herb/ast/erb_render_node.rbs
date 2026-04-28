@@ -1,0 +1,29 @@
+# Generated from lib/herb/ast/erb_render_node.rb with RBS::Inline
+
+module Herb
+  module AST
+    class ERBRenderNode < Node
+      PARTIAL_EXTENSIONS: untyped
+
+      def static_partial?: () -> untyped
+
+      def dynamic?: () -> untyped
+
+      def partial_path: () -> untyped
+
+      def template_name: () -> untyped
+
+      def layout_name: () -> untyped
+
+      def local_names: () -> untyped
+
+      def resolve: (?view_root: untyped, ?source_directory: untyped) -> untyped
+
+      def candidate_paths: (?untyped name, ?untyped view_root, ?untyped source_directory) -> untyped
+
+      def similar_partials: (?view_root: untyped, ?source_directory: untyped, ?limit: untyped) -> untyped
+
+      def find_non_partial_matches: (?untyped name, ?untyped view_root, ?untyped source_directory) -> untyped
+    end
+  end
+end

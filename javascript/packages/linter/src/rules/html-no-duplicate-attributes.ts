@@ -1,8 +1,9 @@
 import { ParserRule, BaseAutofixContext } from "../types.js"
-import { ControlFlowTrackingVisitor, ControlFlowType, getAttributeName } from "./rule-utils.js"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils.js"
+import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult, Location } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult, Location, ERBOpenTagNode, ParserOptions } from "@herb-tools/core"
 
 interface ControlFlowState {
   previousBranchAttributes: Set<string>
@@ -23,10 +24,19 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
   private controlFlowAttributes = new Set<string>()
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.resetAttributeSets()
+    super.visitHTMLOpenTagNode(node)
+  }
+
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.resetAttributeSets()
+    super.visitERBOpenTagNode(node)
+  }
+
+  private resetAttributeSets(): void {
     this.tagAttributes = new Set()
     this.currentBranchAttributes = new Set()
     this.controlFlowAttributes = new Set()
-    super.visitHTMLOpenTagNode(node)
   }
 
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
@@ -162,7 +172,8 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
 }
 
 export class HTMLNoDuplicateAttributesRule extends ParserRule {
-  name = "html-no-duplicate-attributes"
+  static ruleName = "html-no-duplicate-attributes"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -171,8 +182,12 @@ export class HTMLNoDuplicateAttributesRule extends ParserRule {
     }
   }
 
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoDuplicateAttributesVisitor(this.name, context)
+    const visitor = new NoDuplicateAttributesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

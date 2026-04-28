@@ -1,0 +1,16 @@
+---
+name: image_loading
+source: "ActionView::Helpers::AssetTagHelper#image_loading"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the default `loading` attribute for `image_tag` (e.g. `"lazy"`).
+signature: "image_loading"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

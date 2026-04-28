@@ -1,0 +1,16 @@
+---
+name: write_fragment_for
+source: "ActionView::Helpers::CacheHelper#write_fragment_for"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Writes a fragment to the cache store.
+signature: "write_fragment_for(name, fragment, options)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

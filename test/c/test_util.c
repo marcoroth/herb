@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "include/test.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/util.h"
+#include "../../src/include/util/util.h"
 
 
 TEST(util_is_newline)

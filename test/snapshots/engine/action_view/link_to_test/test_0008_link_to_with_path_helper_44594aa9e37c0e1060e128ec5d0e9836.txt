@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0008_link_to with path helper"
+input: "{source: \"<%= link_to \\\"Click me\\\", root_path %>\", locals: {root_path: \"/home\"}, options: {action_view_helpers: true}}"
+---
+<a href="/home">Click me</a>

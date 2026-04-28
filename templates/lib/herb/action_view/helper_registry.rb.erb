@@ -1,0 +1,288 @@
+module Herb
+  module ActionView
+    module HelperType
+    <%- helpers.each do |helper| -%>
+      <%= helper.constant_name %> = :<%= helper.name %>
+    <%- end -%>
+
+      ALL = [
+      <%- helpers.each do |helper| -%>
+        <%= helper.constant_name %>,
+      <%- end -%>
+      ].freeze #: Array[Symbol]
+    end
+
+    class HelperArgument
+      attr_reader :name #: String
+      attr_reader :position #: Integer
+      attr_reader :type #: String
+      attr_reader :default #: String?
+      attr_reader :description #: String
+
+      #: (String, Integer, String, bool, String?, bool, String) -> void
+      def initialize(name, position, type, optional, default, splat, description)
+        @name = name
+        @position = position
+        @type = type
+        @optional = optional
+        @default = default
+        @splat = splat
+        @description = description
+      end
+
+      #: () -> bool
+      def optional? = @optional
+
+      #: () -> bool
+      def splat? = @splat
+    end
+
+    class HelperOption
+      attr_reader :name #: String
+      attr_reader :type #: String
+      attr_reader :maps_to #: String?
+      attr_reader :description #: String
+
+      #: (String, String, String?, String) -> void
+      def initialize(name, type, maps_to, description)
+        @name = name
+        @type = type
+        @maps_to = maps_to
+        @description = description
+      end
+
+      #: () -> bool
+      def maps_to_data_attribute? = maps_to&.start_with?("data-") || false
+
+      #: () -> bool
+      def maps_to_aria_attribute? = maps_to&.start_with?("aria-") || false
+    end
+
+    class HelperImplicitAttribute
+      attr_reader :name #: String
+      attr_reader :source #: String
+      attr_reader :source_with_block #: String?
+      attr_reader :wrapper #: String
+      attr_reader :skip_wrapping_for #: Array[String]
+
+      #: (String, String, String?, String, Array[String]) -> void
+      def initialize(name, source, source_with_block, wrapper, skip_wrapping_for)
+        @name = name
+        @source = source
+        @source_with_block = source_with_block
+        @wrapper = wrapper
+        @skip_wrapping_for = skip_wrapping_for
+      end
+    end
+
+    class HelperEntry
+      attr_reader :name #: String
+      attr_reader :type #: Symbol
+      attr_reader :source #: String
+      attr_reader :gem #: String
+      attr_reader :output #: Symbol
+      attr_reader :visibility #: String
+      attr_reader :tag_name #: String?
+      attr_reader :detect_style #: Symbol
+      attr_reader :description #: String
+      attr_reader :signature #: String
+      attr_reader :documentation_url #: String
+      attr_reader :implicit_attribute #: HelperImplicitAttribute?
+      attr_reader :arguments #: Array[HelperArgument]
+      attr_reader :options #: Array[HelperOption]
+      attr_reader :special_behaviors #: Array[Symbol]
+      attr_reader :aliases #: Array[String]
+
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      def initialize( # rubocop:disable Metrics/ParameterLists
+        name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
+        preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
+        implicit_attribute:, arguments:, options:, special_behaviors:, aliases:
+      )
+        @name = name
+        @type = type
+        @source = source
+        @gem = gem
+        @output = output
+        @visibility = visibility
+        @tag_name = tag_name
+        @is_void = is_void
+        @supports_block = supports_block
+        @preferred_for_tag = preferred_for_tag
+        @supported = supported
+        @detect_style = detect_style
+        @description = description
+        @signature = signature
+        @documentation_url = documentation_url
+        @implicit_attribute = implicit_attribute
+        @arguments = arguments
+        @options = options
+        @special_behaviors = special_behaviors
+        @aliases = aliases
+      end
+
+      #: () -> bool
+      def void? = @is_void
+
+      #: () -> bool
+      def supports_block? = @supports_block
+
+      #: () -> bool
+      def preferred_for_tag? = @preferred_for_tag
+
+      #: () -> bool
+      def supported? = @supported
+
+      #: () -> bool
+      def static_tag_name? = !@tag_name.nil?
+
+      #: () -> bool
+      def implicit_attribute? = !@implicit_attribute.nil?
+
+      #: () -> bool
+      def call_name_detect? = @detect_style == :call_name
+
+      #: () -> bool
+      def receiver_call_detect? = @detect_style == :receiver_call
+    end
+
+    module HelperRegistry
+    <%- helpers.each do |helper| -%>
+      <%= helper.constant_name %> = HelperEntry.new(
+        name: "<%= helper.name %>",
+        type: HelperType::<%= helper.constant_name %>,
+        source: "<%= helper.source %>",
+        gem: "<%= helper.gem %>",
+        output: :<%= helper.output %>,
+        visibility: "<%= helper.visibility %>",
+        tag_name: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "nil" %>,
+        is_void: <%= helper.void? %>,
+        supports_block: <%= helper.supports_block %>,
+        preferred_for_tag: <%= helper.preferred_for_tag %>,
+        supported: <%= helper.supported %>,
+        detect_style: :<%= helper.detect_style || "call_name" %>,
+        description: "<%= helper.escaped_description %>",
+        signature: "<%= helper.escaped_signature %>",
+        documentation_url: "<%= helper.documentation_url %>",
+      <%- if helper.implicit_attribute? -%>
+        implicit_attribute: HelperImplicitAttribute.new(
+          "<%= helper.implicit_attribute.name %>",
+          "<%= helper.implicit_attribute.source %>",
+          <%= helper.implicit_attribute.source_with_block ? "\"#{helper.implicit_attribute.source_with_block}\"" : "nil" %>,
+          "<%= helper.implicit_attribute.wrapper %>",
+          [<%= helper.implicit_attribute.skip_wrapping_for.map { |s| "\"#{s}\"" }.join(", ") %>]
+        ),
+      <%- else -%>
+        implicit_attribute: nil,
+      <%- end -%>
+        arguments: [
+        <%- helper.arguments.each do |arg| -%>
+          HelperArgument.new("<%= arg.name %>", <%= arg.position %>, "<%= arg.type_display %>", <%= arg.optional %>, <%= arg.default ? "\"#{arg.escaped_default}\"" : "nil" %>, <%= arg.splat %>, "<%= arg.escaped_description %>"),
+        <%- end -%>
+        ],
+        options: [
+        <%- helper.options.each do |opt| -%>
+          HelperOption.new("<%= opt.name %>", "<%= opt.type_display %>", <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "nil" %>, "<%= opt.escaped_description %>"),
+        <%- end -%>
+        ],
+        special_behaviors: [<%= helper.special_behaviors.map { |b| ":#{b}" }.join(", ") %>],
+        aliases: [<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>],
+      ).freeze #: HelperEntry
+
+    <%- end -%>
+      ENTRIES = {
+      <%- helpers.each do |helper| -%>
+        "<%= helper.name %>" => <%= helper.constant_name %>,
+      <%- helper.aliases.each do |alias_name| -%>
+        "<%= alias_name %>" => <%= helper.constant_name %>,
+      <%- end -%>
+      <%- end -%>
+      }.freeze #: Hash[String, HelperEntry]
+
+      BY_SOURCE = {
+      <%- helpers.each do |helper| -%>
+        "<%= helper.source %>" => <%= helper.constant_name %>,
+      <%- end -%>
+      }.freeze #: Hash[String, HelperEntry]
+
+      <%- helpers_by_tag = helpers.select(&:static_tag_name?).group_by(&:tag_name) -%>
+
+      BY_TAG_NAME = {
+      <%- helpers_by_tag.each do |tag_name, helpers| -%>
+        "<%= tag_name %>" => [<%= helpers.map(&:constant_name).join(", ") %>].freeze,
+      <%- end -%>
+      }.freeze #: Hash[String, Array[HelperEntry]]
+
+      class << self
+        #: (String) -> HelperEntry?
+        def get(name)
+          ENTRIES[name.to_s]
+        end
+
+        #: (String) -> HelperEntry?
+        def find_by_source(source)
+          BY_SOURCE[source]
+        end
+
+        #: () -> Array[HelperEntry]
+        def entries
+          ENTRIES.values
+        end
+
+        #: () { (HelperEntry) -> void } -> void
+        def each(&block)
+          entries.each(&block)
+        end
+
+        #: (String) -> Array[HelperEntry]
+        def helpers_for_tag(tag_name)
+          BY_TAG_NAME[tag_name] || []
+        end
+
+        #: (String) -> HelperEntry?
+        def find_preferred_for_tag(tag_name)
+          helpers = BY_TAG_NAME[tag_name]
+          return nil unless helpers
+
+          helpers.find(&:preferred_for_tag?) || helpers.first
+        end
+
+        #: () -> Integer
+        def count
+          ENTRIES.size
+        end
+
+        #: (String) -> bool
+        def supported?(name)
+          entry = get(name)
+          entry&.supported? || false
+        end
+
+        #: (String) -> bool
+        def exists?(name)
+          ENTRIES.key?(name.to_s)
+        end
+
+        #: () -> Array[HelperEntry]
+        def supported
+          entries.select(&:supported?)
+        end
+
+        #: (String) -> Array[HelperEntry]
+        def by_gem(gem_name)
+          entries.select { |entry| entry.gem == gem_name }
+        end
+
+        #: (Symbol) -> Array[HelperEntry]
+        def by_output(output)
+          entries.select { |entry| entry.output == output }
+        end
+
+        #: (String) -> Array[HelperEntry]
+        def by_module(module_name)
+          entries.select { |entry| entry.source.split("#").first.split("::").last == module_name }
+        end
+      end
+    end
+  end
+end

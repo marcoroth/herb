@@ -1,0 +1,69 @@
+---
+name: grouped_collection_select
+source: "ActionView::Helpers::FormOptionsHelper#grouped_collection_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns `<select>`, `<optgroup>`, and `<option>` tags for the collection of existing return values of `method` for `object`'s class. The value returned from calling `method` on the instance `object` will be selected. If calling `method` returns `nil`, no selection is made without including `:prompt` or `:include_blank` in the options hash.
+signature: "grouped_collection_select(object, method, collection, group_method, group_label_method, option_key_method, option_value_method, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-grouped_collection_select"
+tag: null
+arguments:
+  - name: object
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The object name for the select tag."
+  - name: method
+    position: 2
+    type: [string, symbol]
+    optional: false
+    description: "The attribute of the object corresponding to the select tag."
+  - name: collection
+    position: 3
+    type: array
+    optional: false
+    description: "An array of objects representing the `<optgroup>` tags."
+  - name: group_method
+    position: 4
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a member of `collection` to return an array of child objects for the `<option>` tags."
+  - name: group_label_method
+    position: 5
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a member of `collection` to return the `label` attribute for its `<optgroup>` tag."
+  - name: option_key_method
+    position: 6
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a child object to return the `value` attribute for its `<option>` tag."
+  - name: option_value_method
+    position: 7
+    type: [symbol, string]
+    optional: false
+    description: "Method to call on a child object to return the contents of its `<option>` tag."
+  - name: options
+    position: 8
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash for customizing the select behavior."
+  - name: html_options
+    position: 9
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: include_blank
+    type: [boolean, string]
+    description: "Include a blank option at the top of the select."
+  - name: prompt
+    type: [boolean, string]
+    description: "Prepend an option with a generic prompt or the given prompt string."
+special_behaviors: []

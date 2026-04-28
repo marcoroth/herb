@@ -1,0 +1,42 @@
+---
+name: form_tag
+source: "ActionView::Helpers::FormTagHelper#form_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Starts a form tag that points the action to a URL configured with `url_for_options`. The method for the form defaults to POST. Superseded by `form_with` in modern Rails.
+signature: "form_tag(url_for_options = {}, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-form_tag"
+tag:
+  name: form
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: url_for_options
+    position: 1
+    type: [string, hash]
+    optional: true
+    default: "{}"
+    description: "URL or `url_for` options."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: method
+    type: symbol
+    description: "HTTP method for the form."
+  - name: multipart
+    type: boolean
+    description: "If `true`, sets enctype to `multipart/form-data`."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

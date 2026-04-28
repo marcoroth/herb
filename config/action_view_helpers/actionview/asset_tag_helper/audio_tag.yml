@@ -1,0 +1,45 @@
+---
+name: audio_tag
+source: "ActionView::Helpers::AssetTagHelper#audio_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns an HTML `<audio>` tag for the sources. If sources is a string, a single `<audio>` tag will be returned. If sources is an array, an `<audio>` tag with nested `<source>` tags for each source will be returned. The sources can be full paths, files in your public audios directory, or Active Storage attachments.
+signature: "audio_tag(*sources, **options)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-audio_tag"
+tag:
+  name: audio
+  is_void: false
+  preferred: true
+  detect_style: call_name
+  implicit_attribute:
+    name: src
+    source: first_arg
+    wrapper: audio_path
+    skip_wrapping_for:
+      - url
+arguments:
+  - name: sources
+    position: 1
+    type: string
+    optional: false
+    splat: true
+    description: "One or more audio file paths or URLs."
+options:
+  - name: controls
+    type: boolean
+    description: "Whether to show playback controls."
+  - name: autoplay
+    type: boolean
+    description: "Whether to start playing automatically."
+  - name: loop
+    type: boolean
+    description: "Whether audio loops."
+  - name: preload
+    type: string
+    description: |-
+      Preload behavior (`"auto"`, `"metadata"`, `"none"`).
+special_behaviors: []

@@ -18,6 +18,7 @@ const defaultSidebar = [
       { text: "Formatter", link: "/projects/formatter" },
       { text: "Linter", link: "/projects/linter" },
       { text: "CLI", link: "/projects/cli" },
+      { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
     ],
   },
@@ -25,6 +26,7 @@ const defaultSidebar = [
     text: "Utility Libraries",
     collapsed: false,
     items: [
+      { text: "Dev Server Client", link: "/projects/client" },
       { text: "Language Service", link: "/projects/language-service" },
       { text: "Highlighter", link: "/projects/highlighter" },
       { text: "Syntax Tree Printer", link: "/projects/printer" },
@@ -132,9 +134,15 @@ export function createThemeConfig() {
     logo: "/herb.svg",
     nav: [
       { text: "Home", link: "/" },
-      { text: "Blog", link: "/blog/whats-new-in-herb-v0-8" },
+      { text: "Blog", link: "/blog" },
       { text: "Documentation", link: "/overview" },
-      { text: "Playground", link: "/playground" },
+      {
+        text: "Playground",
+        items: [
+          { text: "Herb Playground", link: "/playground/" },
+          { text: "Prism Playground", link: "/playground/prism" },
+        ],
+      },
     ],
     outline: [2, 4],
     search: {

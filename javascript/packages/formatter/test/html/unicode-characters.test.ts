@@ -125,7 +125,9 @@ describe("Unicode character handling", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <p><%= "Text with — dash" %> and 'quotes'</p>
+      <p>
+        <%= "Text with — dash" %> and 'quotes'
+      </p>
 
       <%# ERB comment %>
     `)

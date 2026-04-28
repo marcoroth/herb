@@ -69,12 +69,44 @@ impl Default for HerbFormatterConfig {
   }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HerbValidatorsConfig {
+  #[serde(default = "default_validator_enabled")]
+  pub security: bool,
+  #[serde(default = "default_validator_enabled")]
+  pub nesting: bool,
+  #[serde(default = "default_validator_enabled")]
+  pub accessibility: bool,
+}
+
+fn default_validator_enabled() -> bool {
+  true
+}
+
+impl Default for HerbValidatorsConfig {
+  fn default() -> Self {
+    Self {
+      security: true,
+      nesting: true,
+      accessibility: true,
+    }
+  }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HerbEngineConfig {
+  #[serde(default)]
+  pub validators: HerbValidatorsConfig,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HerbConfig {
   #[serde(default)]
   pub version: Option<String>,
   #[serde(default)]
   pub files: FilesConfig,
+  #[serde(default)]
+  pub engine: HerbEngineConfig,
   #[serde(default)]
   pub linter: HerbLinterConfig,
   #[serde(default)]

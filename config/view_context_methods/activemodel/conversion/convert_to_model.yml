@@ -1,0 +1,8 @@
+---
+name: convert_to_model
+source: "ActiveModel::Conversion#convert_to_model"
+gem: activemodel
+category: conversion
+output: object
+description: |-
+  Converts an object to an Active Model-compatible object via `to_model`.

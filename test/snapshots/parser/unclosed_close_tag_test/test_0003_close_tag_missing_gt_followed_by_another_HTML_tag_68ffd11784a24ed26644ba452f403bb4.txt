@@ -42,7 +42,7 @@ input: "<div><p>Hello</p</div>"
         │       │       └── tag_closing: ∅
         │       │
         │       ├── is_void: false
-        │       └── source: "HTML"
+        │       └── element_source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:16)-(1:22))
@@ -52,4 +52,4 @@ input: "<div><p>Hello</p</div>"
         │       └── tag_closing: ">" (location: (1:21)-(1:22))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

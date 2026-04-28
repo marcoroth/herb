@@ -72,7 +72,8 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
 }
 
 export class HerbDisableCommentUnnecessaryRule extends ParserRule {
-  name = "herb-disable-comment-unnecessary"
+  static ruleName = "herb-disable-comment-unnecessary"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -90,7 +91,7 @@ export class HerbDisableCommentUnnecessaryRule extends ParserRule {
     if (!ignoredOffensesByLine) return []
 
     const visitor = new HerbDisableCommentUnnecessaryVisitor(
-      this.name,
+      this.ruleName,
       ignoredOffensesByLine,
       validRuleNames,
       context
