@@ -75,14 +75,31 @@ const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
 
 // Per the HTML5 spec (§13.2.5.36, §13.2.5.37), no characters are parse errors
 // in quoted attribute values. Entity checks only apply to text content.
+interface ElementStackEntry {
+  tagName: string
+  hasAutoEscapedContent: boolean
+}
+
 class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAutofixContext> {
-  private elementStack: string[] = []
+  private elementStack: ElementStackEntry[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
     if (tagName) {
-      this.elementStack.push(tagName)
+      // The parser sets `escape_content` on elements created by ActionView tag
+      // helpers. When true (the default), the helper auto-escapes its string
+      // argument content, so unescaped characters in the source are safe.
+      // When false (e.g. `escape: false`), the content is rendered raw.
+      //
+      // For block bodies and regular HTML elements, `escape_content` is true
+      // but the content is literal template HTML — those are handled by the
+      // close_tag type check (block bodies have ERBEndNode, not virtual close).
+      const isActionViewHelper = !!node.element_source && node.element_source !== "HTML"
+      const hasVirtualCloseTag = node.close_tag?.type === "AST_HTML_VIRTUAL_CLOSE_TAG_NODE"
+      const hasAutoEscapedContent = isActionViewHelper && hasVirtualCloseTag && node.escape_content
+
+      this.elementStack.push({ tagName, hasAutoEscapedContent })
     }
 
     super.visitHTMLElementNode(node)
@@ -93,11 +110,16 @@ class HTMLNoUnescapedEntitiesVisitor extends BaseRuleVisitor<UnescapedEntitiesAu
   }
 
   private get insideRawTextElement(): boolean {
-    return this.elementStack.some((tagName) => RAW_TEXT_ELEMENTS.has(tagName))
+    return this.elementStack.some((entry) => RAW_TEXT_ELEMENTS.has(entry.tagName))
+  }
+
+  private get insideAutoEscapedHelper(): boolean {
+    const current = this.elementStack.at(-1)
+    return !!current?.hasAutoEscapedContent
   }
 
   visitHTMLTextNode(node: HTMLTextNode): void {
-    if (this.insideRawTextElement) {
+    if (this.insideRawTextElement || this.insideAutoEscapedHelper) {
       super.visitHTMLTextNode(node)
       return
     }
