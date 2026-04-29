@@ -4,6 +4,7 @@ import { BaseFormatter } from "./base-formatter.js"
 import { LineWrapper } from "@herb-tools/highlighter"
 import { ruleDocumentationUrl } from "../../urls.js"
 import { fileUrl } from "../file-url.js"
+import { formatDiff } from "../diff.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -34,7 +35,9 @@ export class DetailedFormatter extends BaseFormatter {
       allOffenses.filter(item => item.autocorrectable).map(item => item.offense)
     )
 
-    if (isSingleFile) {
+    const hasDiffs = allOffenses.some(item => item.autofixDiff && item.autofixDiff.length > 0)
+
+    if (isSingleFile && !hasDiffs) {
       const { filename, content } = allOffenses[0]
       const diagnostics = allOffenses.map(item => item.offense)
 
@@ -53,8 +56,8 @@ export class DetailedFormatter extends BaseFormatter {
     } else {
       const totalMessageCount = allOffenses.length
 
-      for (let i = 0; i < allOffenses.length; i++) {
-        const { filename, offense, content, autocorrectable } = allOffenses[i]
+      for (let index = 0; index < allOffenses.length; index++) {
+        const { filename, offense, content, autocorrectable, autofixDiff } = allOffenses[index]
 
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
         const suffix = autocorrectable ? correctableTag : undefined
@@ -68,8 +71,15 @@ export class DetailedFormatter extends BaseFormatter {
         })
         console.log(`\n${formatted}`)
 
+        if (autofixDiff && autofixDiff.length > 0) {
+          const diffHeader = colorize("  Suggested fix:", "cyan")
+          const diffOutput = formatDiff(autofixDiff)
+
+          console.log(`${diffHeader}\n${diffOutput}`)
+        }
+
         const width = LineWrapper.getTerminalWidth()
-        const progressText = `[${i + 1}/${totalMessageCount}]`
+        const progressText = `[${index + 1}/${totalMessageCount}]`
         const rightPadding = 16
         const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)
         const separator = '⎯'
