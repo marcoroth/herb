@@ -1,0 +1,8 @@
+---
+source: "Engine::RenderInlinerTest#test_0012_detects circular references and falls back"
+input: "{source: \"<%= render \\\"shared/a\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; begin; ;; begin; ;; _buf << (render "shared/a").to_s; _buf << '
+'.freeze; ; end;; _buf << '
+'.freeze; ; end;;
+_buf.to_s
