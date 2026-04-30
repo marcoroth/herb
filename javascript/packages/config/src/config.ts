@@ -286,12 +286,25 @@ export class Config {
    * @param excludePatterns - Array of glob patterns to check against
    * @returns true if the path matches any exclude pattern
    */
+  private normalizeFilePath(filePath: string): string {
+    if (path.isAbsolute(filePath)) {
+      const projectDir = this.projectPath + path.sep
+
+      if (filePath.startsWith(projectDir)) {
+        return filePath.slice(projectDir.length)
+      }
+    }
+
+    return filePath
+  }
+
   private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
     if (!excludePatterns || excludePatterns.length === 0) {
       return false
     }
 
-    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**
@@ -305,7 +318,8 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**

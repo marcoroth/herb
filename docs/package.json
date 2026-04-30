@@ -19,14 +19,14 @@
     "fetch:contributors": "mkdir -p .vitepress/data/ && gh api -X get https://api.github.com/repos/marcoroth/herb/contributors > .vitepress/data/contributors.json"
   },
   "dependencies": {
-    "@herb-tools/browser": "0.9.5",
-    "@herb-tools/core": "0.9.5",
-    "@herb-tools/node": "0.9.5",
+    "@herb-tools/browser": "0.10.1",
+    "@herb-tools/core": "0.10.1",
+    "@herb-tools/node": "0.10.1",
     "medium-zoom": "^1.1.0"
   },
   "devDependencies": {
     "@shikijs/vitepress-twoslash": "^4.0.2",
     "vitepress": "^2.0.0-alpha.17",
-    "vitepress-plugin-group-icons": "^1.7.3"
+    "vitepress-plugin-group-icons": "^1.7.5"
   }
 }

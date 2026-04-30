@@ -4,7 +4,7 @@ import { isERBOutputNode, PrismVisitor } from "@herb-tools/core"
 import { isActionViewHelperCall } from "./action-view-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBNode, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 class ActionViewHelperCallCollector extends PrismVisitor {
   public readonly matches: { helperName: string }[] = []
@@ -21,19 +21,19 @@ class ActionViewHelperCallCollector extends PrismVisitor {
 }
 
 class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
-  visitERBNode(node: ERBNode): void {
+  visitERBContentNode(node: ERBContentNode): void {
     this.checkSilentHelper(node)
-    super.visitERBNode(node)
+    super.visitERBContentNode(node)
   }
 
-  private checkSilentHelper(node: ERBNode): void {
+  private checkSilentHelper(node: ERBContentNode): void {
     if (isERBOutputNode(node)) return
 
     const tagOpening = node.tag_opening?.value
     if (!tagOpening) return
     if (tagOpening.startsWith("<%%")) return
 
-    const prismNode = (node as any).prismNode
+    const prismNode = node.prismNode
     if (!prismNode) return
 
     const collector = new ActionViewHelperCallCollector()

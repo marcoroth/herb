@@ -11,7 +11,15 @@
 # GitHub Repo: https://github.com/marcoroth/herb
 #
 
-version: 0.9.5
+version: 0.10.1
+
+# # Framework and template engine configuration
+#
+# # Options: ruby | actionview | hanami | sinatra (default: ruby)
+# framework: ruby
+#
+# # Options: erubi | erb | herb (default: erubi)
+# template_engine: erubi
 
 # files:
 #   # Additional patterns beyond the defaults (**.html, **.rhtml, **.html.erb, etc.)

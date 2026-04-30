@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TurboFrameTagTest#test_0004_turbo_frame_tag with src and target"
+input: "{source: \"<%= turbo_frame_tag \\\"tray\\\", src: \\\"/path\\\", target: \\\"_top\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<turbo-frame id="tray" src="/path" target="_top"></turbo-frame>

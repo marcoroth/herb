@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0037_tag.div with empty string class"
+input: "{source: \"<%= tag.div class: \\\"\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class=""></div>'.freeze;
+_buf.to_s
