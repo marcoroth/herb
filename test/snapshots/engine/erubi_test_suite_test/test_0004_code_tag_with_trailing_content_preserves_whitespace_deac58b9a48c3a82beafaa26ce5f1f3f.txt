@@ -1,0 +1,6 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0004_code tag with trailing content preserves whitespace"
+input: "{source: \"  <% x = 1 %> b\\n<%= x %>\", locals: {}, options: {}}"
+---
+ b
+1
