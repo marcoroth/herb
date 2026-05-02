@@ -134,7 +134,7 @@ GEM
     dispersion (0.2.0)
       prism
     drb (2.2.3)
-    erb (6.0.1.1)
+    erb (6.0.4)
     erubi (1.13.1)
     ffi (1.17.3-aarch64-linux-gnu)
     ffi (1.17.3-aarch64-linux-musl)
@@ -157,8 +157,9 @@ GEM
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     io-console (0.8.2)
-    irb (1.16.0)
+    irb (1.18.0)
       pp (>= 0.6.0)
+      prism (>= 1.3.0)
       rdoc (>= 4.0.0)
       reline (>= 0.4.2)
     json (2.19.4)
@@ -251,7 +252,7 @@ GEM
     rbs-inline (0.12.0)
       prism (>= 0.29)
       rbs (>= 3.8.0)
-    rdoc (7.1.0)
+    rdoc (7.2.0)
       erb
       psych (>= 4.0.0)
       tsort
@@ -319,7 +320,7 @@ DEPENDENCIES
   digest (~> 3.2)
   erubi
   herb!
-  irb (~> 1.16)
+  irb (~> 1.18)
   lz_string
   maxitest (~> 6.0)
   minitest-difftastic (~> 0.2)
