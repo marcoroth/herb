@@ -180,9 +180,11 @@ GEM
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
     lz_string (0.3.0)
-    maxitest (6.2.0)
-      minitest (>= 5.20.0, < 5.28.0)
-    minitest (5.27.0)
+    maxitest (7.1.1)
+      minitest (>= 6.0.0, < 6.1.0)
+    minitest (6.0.6)
+      drb (~> 2.0)
+      prism (~> 1.5)
     minitest-difftastic (0.2.1)
       difftastic (~> 0.6)
     mutex_m (0.3.0)
@@ -322,7 +324,7 @@ DEPENDENCIES
   herb!
   irb (~> 1.18)
   lz_string
-  maxitest (~> 6.0)
+  maxitest (~> 7.1)
   minitest-difftastic (~> 0.2)
   prism!
   rake (~> 13.4)
