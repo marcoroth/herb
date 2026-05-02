@@ -30,7 +30,7 @@
     "tsx": "^4.20.4",
     "typescript": "^6.0.3",
     "vitest": "^4.0.0",
-    "yaml": "^2.8.3",
+    "yaml": "^2.8.4",
     "yeoman-environment": "^4.4.1",
     "yeoman-generator": "^8.1.2"
   },
