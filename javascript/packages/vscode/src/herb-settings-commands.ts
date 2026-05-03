@@ -1,11 +1,10 @@
 import * as vscode from "vscode"
-import * as path from "path"
 
 import { Config } from "@herb-tools/config"
 import { HerbConfigProvider } from "./config-provider"
 
 /**
- * Commands to modify .herb.yml settings directly through VS Code
+ * Commands to modify .herb.yaml settings directly through VS Code
  */
 export class HerbSettingsCommands {
   constructor(private context: vscode.ExtensionContext, private configProvider?: HerbConfigProvider) {
@@ -236,7 +235,7 @@ export class HerbSettingsCommands {
 
     if (!workspaceRoot) { return }
 
-    const configPath = path.join(workspaceRoot, ".herb.yml")
+    const configPath = Config.configPathFromProjectPath(workspaceRoot)
 
     try {
       const document = await vscode.workspace.openTextDocument(configPath)

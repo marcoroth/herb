@@ -11,11 +11,12 @@ module Herb
     VALID_FRAMEWORKS = OPTIONS["framework"]["values"].freeze #: Array[String]
     VALID_TEMPLATE_ENGINES = OPTIONS["template_engine"]["values"].freeze #: Array[String]
 
-    CONFIG_FILENAMES = [".herb.yml"].freeze
+    CONFIG_FILENAMES = [".herb.yaml", ".herb.yml"].freeze
 
     PROJECT_INDICATORS = [
       ".git",
       ".herb",
+      ".herb.yaml",
       ".herb.yml",
       "Gemfile",
       "package.json",

@@ -1,14 +1,14 @@
 # Configuration <Badge type="tip" text="^0.8.0" />
 
-Herb uses a `.herb.yml` configuration file to customize how the tools behave in your project. This configuration is shared across all Herb tools including the linter, formatter, and language server.
+Herb uses a `.herb.yaml` configuration file to customize how the tools behave in your project. This configuration is shared across all Herb tools including the linter, formatter, and language server.
 
 ## Configuration File Location
 
-The configuration file should be placed in your project root as `.herb.yml`:
+The configuration file should be placed in your project root as `.herb.yaml`:
 
 ```
 your-project/
-├── .herb.yml    # Herb configuration
+├── .herb.yaml    # Herb configuration
 ├── Gemfile
 ├── app/
 └── ...
@@ -18,7 +18,7 @@ your-project/
 
 Configuration settings are applied in the following order (highest to lowest priority):
 
-1. **Project configuration** (`.herb.yml` file)
+1. **Project configuration** (`.herb.yaml` file)
 2. **Editor settings** (VS Code workspace/user settings)
 3. **Default settings**
 
@@ -26,7 +26,7 @@ Configuration settings are applied in the following order (highest to lowest pri
 
 ### Default Behavior (No Config File)
 
-If no `.herb.yml` file exists in your project:
+If no `.herb.yaml` file exists in your project:
 
 - **Language Server**: Uses built-in defaults and works out-of-the-box
 - **Linter**: Enabled with all rules (automatic exclusion of `parser-no-errors` in language server only)
@@ -34,12 +34,12 @@ If no `.herb.yml` file exists in your project:
 - **Editor settings**: VS Code user/workspace settings are respected
 
 ::: tip Recommended for Projects
-If you're using Herb in a project with multiple developers, it's highly recommended to create a `.herb.yml` configuration file and commit it to your repository. This ensures all team members use consistent linting rules and formatting settings, preventing configuration drift and maintaining code quality standards across the project.
+If you're using Herb in a project with multiple developers, it's highly recommended to create a `.herb.yaml` configuration file and commit it to your repository. This ensures all team members use consistent linting rules and formatting settings, preventing configuration drift and maintaining code quality standards across the project.
 :::
 
 ### Creating a Configuration File
 
-To create a `.herb.yml` configuration file in your project, run either CLI tool with the `--init` flag:
+To create a `.herb.yaml` configuration file in your project, run either CLI tool with the `--init` flag:
 
 ```bash
 # Create config using the linter
@@ -59,13 +59,13 @@ This will generate a configuration file with sensible defaults:
 The CLIs support a `--force` flag to override project configuration:
 
 ```bash
-# Force linting even if disabled in .herb.yml
+# Force linting even if disabled in .herb.yaml
 herb-lint --force app/views/
 
 # Force linting on a file excluded by configuration
 herb-lint --force app/views/excluded-file.html.erb
 
-# Force formatting even if disabled in .herb.yml
+# Force formatting even if disabled in .herb.yaml
 herb-format --force --check app/views/
 ```
 
@@ -75,7 +75,7 @@ When using `--force` on an explicitly specified file that is excluded by configu
 
 Configure the linter behavior and rules:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   enabled: true  # Enable/disable linter globally
 
@@ -182,7 +182,7 @@ linter:
 
 Example:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 linter:
   rules:
     # This rule only runs on component files, excluding legacy ones
@@ -206,7 +206,7 @@ linter:
 
 Configure the template engine behavior:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 engine:
   validators:
     security: true       # Enable/disable security validation (default: true)
@@ -226,7 +226,7 @@ When a validator is disabled (`false`), the engine skips it entirely during comp
 
 ### Validation Mode
 
-The `validation_mode` controls how the engine handles validation results. This is set programmatically when creating an `Herb::Engine` instance, not in `.herb.yml`:
+The `validation_mode` controls how the engine handles validation results. This is set programmatically when creating an `Herb::Engine` instance, not in `.herb.yaml`:
 
 - **`:raise`** (default): Raises an exception when validation errors are found
 - **`:overlay`**: Renders validation errors as an in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
@@ -249,7 +249,7 @@ Herb::Engine.new(source, validation_mode: :none)
 
 ### Overriding Validators Programmatically
 
-Validator settings from `.herb.yml` can be overridden when creating an engine instance:
+Validator settings from `.herb.yaml` can be overridden when creating an engine instance:
 
 **Disable security validator for this template only**
 ```ruby
@@ -269,7 +269,7 @@ Herb::Engine.new(source, validators: {
 
 Configure the formatter behavior:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 formatter:
   enabled: false     # Disabled by default (experimental)
   indentWidth: 2     # Number of spaces for indentation
@@ -294,14 +294,14 @@ formatter:
 - **`exclude`**: Array of glob patterns - Additional patterns to exclude from formatting (additive to defaults)
 
 ::: warning Experimental Feature
-The formatter is currently experimental. Enable it in `.herb.yml` and test thoroughly before using in production.
+The formatter is currently experimental. Enable it in `.herb.yaml` and test thoroughly before using in production.
 :::
 
 ## Top-Level File Configuration
 
 Global file configuration that applies to both linter and formatter:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 files:
   # Additional glob patterns to include (additive to defaults, applies to all tools)
   include:
@@ -326,7 +326,7 @@ File patterns are merged in the following order:
 
 Example:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 files:
   include:
     - '**/*.xml.erb'    # Applies to all tools
@@ -379,7 +379,7 @@ bundle exec herb config ../other-project/
 Running `bundle exec herb config .` displays:
 
 - **Project root**: The detected project root directory
-- **Config file**: Path to the `.herb.yml` file (or "(using defaults)" if none)
+- **Config file**: Path to the `.herb.yaml` file (or "(using defaults)" if none)
 - **Include patterns**: All patterns used to find files
 - **Exclude patterns**: All patterns used to exclude files
 - **Files**: List of included and excluded files with their status
@@ -390,7 +390,7 @@ Example output:
 Herb Configuration
 
 Project root: /path/to/project
-Config file:  /path/to/project/.herb.yml
+Config file:  /path/to/project/.herb.yaml
 
 Include patterns:
   + **/*.herb
@@ -434,7 +434,7 @@ Example output:
 Herb Configuration for Linter
 
 Project root: /path/to/project
-Config file:  /path/to/project/.herb.yml
+Config file:  /path/to/project/.herb.yaml
 
 Include patterns (files + linter):
   + **/*.html.erb
@@ -456,7 +456,7 @@ Files for linter (40 included, 7 excluded):
 
 ::: tip Debugging Configuration
 The `bundle exec herb config` command is useful for:
-- Verifying your `.herb.yml` is being read correctly
+- Verifying your `.herb.yaml` is being read correctly
 - Understanding why certain files are included or excluded
 - Debugging tool-specific patterns
 - Confirming the project root detection

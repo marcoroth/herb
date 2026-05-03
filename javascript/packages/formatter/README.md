@@ -145,7 +145,7 @@ herb-format templates/
 
 **Initialize configuration:**
 ```bash
-# Create a .herb.yml configuration file
+# Create a .herb.yaml configuration file
 herb-format --init
 ```
 
@@ -186,7 +186,7 @@ herb-format --version
 
 ## Configuration
 
-Create a `.herb.yml` file in your project root to configure the formatter:
+Create a `.herb.yaml` file in your project root to configure the formatter:
 
 ```bash
 herb-format --init
@@ -194,7 +194,7 @@ herb-format --init
 
 ### Basic Configuration
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 formatter:
   enabled: true  # Must be enabled for formatting to work
   indentWidth: 2
@@ -276,9 +276,9 @@ The `<%# herb:formatter ignore %>` directive must be an exact match. Extra text
 
 The formatter supports **rewriters** that allow you to transform templates before and after formatting.
 
-Configure rewriters in your `.herb.yml`:
+Configure rewriters in your `.herb.yaml`:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 formatter:
   enabled: true
   indentWidth: 2
