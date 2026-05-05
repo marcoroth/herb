@@ -3,7 +3,8 @@ source: "Engine::ERBTagVariationsTest#test_0011_<%#= expression %> with surround
 input: "{source: \"<div>\\n  <%#= render \\\"partial\\\" %>\\n  <p>Visible content</p>\\n</div>\\n\", options: {}}"
 ---
 _buf = ::String.new; _buf << '<div>
-  <p>Visible content</p>
+'.freeze; 
+ _buf << '  <p>Visible content</p>
 </div>
 '.freeze;
 _buf.to_s

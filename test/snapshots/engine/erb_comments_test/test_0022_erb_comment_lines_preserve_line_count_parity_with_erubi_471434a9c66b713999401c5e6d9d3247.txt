@@ -1,0 +1,9 @@
+---
+source: "Engine::ERBCommentsTest#test_0022_erb comment lines preserve line count parity with erubi"
+input: "{source: \"<%# comment 1 %>\\n<%# comment 2 %>\\n<% code = 1 %>\\n<%= code %>\", options: {}}"
+---
+_buf = ::String.new; 
+ 
+ code = 1 
+ _buf << (code).to_s;
+_buf.to_s
