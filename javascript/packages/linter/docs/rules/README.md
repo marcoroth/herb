@@ -126,6 +126,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Turbo
 
+- [`html-turbo-permanent`](./html-turbo-permanent.md) - Disallow values on `data-turbo-permanent`
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 
 

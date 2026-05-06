@@ -93,6 +93,7 @@ import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscor
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
+import { HTMLTurboPermanentRule } from "./rules/html-turbo-permanent.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
@@ -196,6 +197,7 @@ export const rules: RuleClass[] = [
   HTMLRequireClosingTagsRule,
   HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
+  HTMLTurboPermanentRule,
 
   ParserNoErrorsRule,
 
