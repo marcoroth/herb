@@ -24,8 +24,5 @@ gem "reactionview", "~> 0.3.0"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
+gem "steep", "~> 2.0"
 gem "turbo-rails", "~> 2.0"
-
-# TODO: Remove once https://github.com/ruby/rbs/pull/2850 is merged and released
-gem "rbs", github: "marcoroth/rbs", branch: "psych-load-unsafe-file"
-gem "steep", github: "soutaro/steep", branch: "master"
