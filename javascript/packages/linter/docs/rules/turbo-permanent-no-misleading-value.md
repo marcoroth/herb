@@ -1,6 +1,6 @@
-# Linter Rule: HTML Turbo permanent attribute usage
+# Linter Rule: Disallow misleading values on `data-turbo-permanent`
 
-**Rule:** `html-turbo-permanent`
+**Rule:** `turbo-permanent-no-misleading-value`
 
 ## Description
 

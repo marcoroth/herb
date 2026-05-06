@@ -5,7 +5,7 @@ import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
-class HTMLTurboPermanentVisitor extends BaseRuleVisitor {
+class TurboPermanentNoMisleadingValueVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkTurboPermanentAttribute(node)
     super.visitHTMLOpenTagNode(node)
@@ -24,8 +24,8 @@ class HTMLTurboPermanentVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLTurboPermanentRule extends ParserRule {
-  static ruleName = "html-turbo-permanent"
+export class TurboPermanentNoMisleadingValueRule extends ParserRule {
+  static ruleName = "turbo-permanent-no-misleading-value"
   static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
@@ -36,7 +36,7 @@ export class HTMLTurboPermanentRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLTurboPermanentVisitor(this.ruleName, context)
+    const visitor = new TurboPermanentNoMisleadingValueVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

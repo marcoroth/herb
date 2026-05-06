@@ -93,7 +93,6 @@ import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscor
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
-import { HTMLTurboPermanentRule } from "./rules/html-turbo-permanent.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
@@ -101,6 +100,7 @@ import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
+import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
@@ -197,7 +197,6 @@ export const rules: RuleClass[] = [
   HTMLRequireClosingTagsRule,
   HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
-  HTMLTurboPermanentRule,
 
   ParserNoErrorsRule,
 
@@ -205,5 +204,6 @@ export const rules: RuleClass[] = [
 
   SVGTagNameCapitalizationRule,
 
+  TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,
 ]

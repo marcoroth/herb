@@ -1,12 +1,12 @@
 import { describe, test } from "vitest"
-import { HTMLTurboPermanentRule } from "../../src/rules/html-turbo-permanent.js"
+import { TurboPermanentNoMisleadingValueRule } from "../../src/rules/turbo-permanent-no-misleading-value.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLTurboPermanentRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(TurboPermanentNoMisleadingValueRule)
 
 const MESSAGE = "Attribute `data-turbo-permanent` should not contain any value. Its presence alone enables the behavior, so values like `\"true\"` or `\"false\"` are misleading."
 
-describe("html-turbo-permanent", () => {
+describe("turbo-permanent-no-misleading-value", () => {
   test("passes when no explicit value is given", () => {
     expectNoOffenses('<div id="cart-counter" data-turbo-permanent>1 item</div>')
   })
