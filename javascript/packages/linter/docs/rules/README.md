@@ -9,6 +9,7 @@ This page contains documentation for all Herb Linter rules.
 - [`a11y-no-accesskey-attribute`](./a11y-no-accesskey-attribute.md) - Prevent usage of the `accesskey` attribute
 - [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
 - [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
+- [`a11y-no-redundant-image-alt`](./a11y-no-redundant-image-alt.md) - Prevent redundant words in `<img>` `alt` attributes
 
 
 #### Action View
