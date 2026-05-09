@@ -41,7 +41,7 @@
   "dependencies": {
     "clear-module": "^4.1.2",
     "escalade": "^3.2.0",
-    "jiti": "^2.5.1",
+    "jiti": "^2.7.0",
     "postcss": "^8.5.10",
     "postcss-import": "^16.1.1"
   },
