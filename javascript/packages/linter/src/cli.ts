@@ -178,7 +178,7 @@ export class CLI {
       const configPath = configFile || this.projectPath
 
       if (!Config.exists(configPath)) {
-        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        console.error(`\n✗ No .herb.yaml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
         process.exit(1)
       }
 
@@ -186,7 +186,7 @@ export class CLI {
       const configVersion = config.configVersion
 
       if (configVersion === version) {
-        console.log(`\n✓ Your .herb.yml is already at version ${version}. Nothing to upgrade.\n`)
+        console.log(`\n✓ Your .herb.yaml is already at version ${version}. Nothing to upgrade.\n`)
         process.exit(0)
       }
 
@@ -253,7 +253,7 @@ export class CLI {
       content = content.replace(/^version:\s*.+$/m, `version: ${version}`)
       await fs.writeFile(config.path, content, "utf-8")
 
-      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion ?? "unversioned", "cyan")} to ${colorize(version, "cyan")}`)
+      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yaml", "cyan")} version from ${colorize(configVersion ?? "unversioned", "cyan")} to ${colorize(version, "cyan")}`)
 
       if (rulesToEnable.length > 0) {
         console.log(`\n${colorize("✓", "brightGreen")} Enabled ${colorize(String(rulesToEnable.length), "bold")} new ${rulesToEnable.length === 1 ? "rule" : "rules"} (no offenses found):\n`)
@@ -273,7 +273,7 @@ export class CLI {
           console.log(`  ${colorize("✗", "red")} ${colorize(rule.ruleName, "white")} ${colorize(`(${offenseCount} ${offenseCount === 1 ? "offense" : "offenses"})`, "gray")}`)
         }
 
-        console.log(`\n  When you're ready, review the disabled ${rulesToDisable.length === 1 ? "rule" : "rules"} in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.`)
+        console.log(`\n  When you're ready, review the disabled ${rulesToDisable.length === 1 ? "rule" : "rules"} in your ${colorize(".herb.yaml", "cyan")} and re-enable them after fixing the offenses.`)
       }
 
       if (skippedByVersion.length === 0) {
@@ -288,7 +288,7 @@ export class CLI {
       const configPath = configFile || this.projectPath
 
       if (!Config.exists(configPath)) {
-        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        console.error(`\n✗ No .herb.yaml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
         process.exit(1)
       }
 
@@ -336,13 +336,13 @@ export class CLI {
       const totalOffenses = Array.from(failingRules.values()).reduce((sum, count) => sum + count, 0)
       const sortedRules = Array.from(failingRules.entries()).sort((a, b) => b[1] - a[1])
 
-      console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(failingRules.size), "bold")} ${failingRules.size === 1 ? "rule" : "rules"}. Disabled in ${colorize(".herb.yml", "cyan")}:\n`)
+      console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(failingRules.size), "bold")} ${failingRules.size === 1 ? "rule" : "rules"}. Disabled in ${colorize(".herb.yaml", "cyan")}:\n`)
 
       for (const [ruleName, count] of sortedRules) {
         console.log(`  ${colorize("✗", "red")} ${colorize(ruleName, "white")} ${colorize(`(${count} ${count === 1 ? "offense" : "offenses"})`, "gray")}`)
       }
 
-      console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
+      console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yaml", "cyan")} and re-enable them after fixing the offenses.\n`)
       process.exit(0)
     }
 
@@ -366,11 +366,11 @@ export class CLI {
       await this.beforeProcess()
 
       if (linterConfig.enabled === false && !force) {
-        this.exitWithInfo("Linter is disabled in .herb.yml configuration. Use --force to lint anyway.", formatOption, 0, { startTime, startDate, showTiming })
+        this.exitWithInfo("Linter is disabled in .herb.yaml configuration. Use --force to lint anyway.", formatOption, 0, { startTime, startDate, showTiming })
       }
 
       if (force && linterConfig.enabled === false) {
-        console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
+        console.log("⚠️  Forcing linter run (disabled in .herb.yaml)")
         console.log()
       }
 
@@ -442,8 +442,8 @@ export class CLI {
 
       if (!Config.exists(this.projectPath) && formatOption !== 'json' && !useGitHubActions) {
         console.log("")
-        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
-        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
+        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yaml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
+        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yaml", "cyan")}.`)
       }
 
       await this.afterProcess(results, outputOptions)

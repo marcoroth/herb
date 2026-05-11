@@ -50,9 +50,9 @@ export class CLI {
       -c, --check                     check if files are formatted without modifying them
       -h, --help                      show help
       -v, --version                   show version
-      --init                          create a .herb.yml configuration file in the current directory
-      --config-file <path>            explicitly specify path to .herb.yml config file
-      --force                         force formatting even if disabled in .herb.yml
+      --init                          create a .herb.yaml configuration file in the current directory
+      --config-file <path>            explicitly specify path to .herb.yaml config file
+      --force                         force formatting even if disabled in .herb.yaml
       --indent-width <number>         number of spaces per indentation level (default: 2)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
@@ -196,15 +196,15 @@ export class CLI {
       const formatterConfig = config.formatter || {}
 
       if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
-        console.log("Formatter is disabled in .herb.yml configuration.")
-        console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
+        console.log("Formatter is disabled in .herb.yaml configuration.")
+        console.log("To enable formatting, set formatter.enabled: true in .herb.yaml")
         console.log("Or use --force to format anyway.")
 
         process.exit(0)
       }
 
       if (isForceMode && hasConfigFile && formatterConfig.enabled === false) {
-        console.error("⚠️  Forcing formatter run (disabled in .herb.yml)")
+        console.error("⚠️  Forcing formatter run (disabled in .herb.yaml)")
         console.error()
       }
 

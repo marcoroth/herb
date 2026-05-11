@@ -205,7 +205,7 @@ module Herb
           if configuration.config_path
             puts "#{green("✓")} Using Herb config file at #{dimmed(configuration.config_path)}"
           else
-            puts dimmed("No .herb.yml found, using defaults")
+            puts dimmed("No .herb.yaml found, using defaults")
           end
 
           puts dimmed("Analyzing #{files.count} #{pluralize(files.count, "file")}...")

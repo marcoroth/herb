@@ -38,17 +38,17 @@ export class ArgumentParser {
     Usage: herb-lint [files|directories|glob-patterns...] [options]
 
     Arguments:
-      files            Files, directories, or glob patterns to lint (defaults to configured extensions in .herb.yml)
+      files            Files, directories, or glob patterns to lint (defaults to configured extensions in .herb.yaml)
                        Multiple arguments are supported (e.g., herb-lint file1.erb file2.erb dir/ "**/*.erb")
 
     Options:
       -h, --help                    show help
       -v, --version                 show version
-      --init                        create a .herb.yml configuration file in the current directory
-      --upgrade                     update .herb.yml version and disable all newly introduced rules
-      --disable-failing             lint the codebase and disable all rules that have offenses in .herb.yml
-      -c, --config-file <path>      explicitly specify path to .herb.yml config file
-      --force                       force linting even if disabled in .herb.yml
+      --init                        create a .herb.yaml configuration file in the current directory
+      --upgrade                     update .herb.yaml version and disable all newly introduced rules
+      --disable-failing             lint the codebase and disable all rules that have offenses in .herb.yaml
+      -c, --config-file <path>      explicitly specify path to .herb.yaml config file
+      --force                       force linting even if disabled in .herb.yaml
       --fix                         automatically fix auto-correctable offenses
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments

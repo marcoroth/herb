@@ -125,7 +125,7 @@ export class Linter {
    *
    * @param allRules - All available rule classes to filter from
    * @param userRulesConfig - Optional user configuration for rules
-   * @param configVersion - Optional version from the user's .herb.yml for version-gated filtering
+   * @param configVersion - Optional version from the user's .herb.yaml for version-gated filtering
    * @returns Object with enabled rules and rules skipped due to version gating
    */
   static filterRulesByConfig(

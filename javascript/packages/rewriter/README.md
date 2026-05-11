@@ -207,11 +207,11 @@ By default, rewriters are auto-discovered from: `.herb/rewriters/**/*.mjs`
 Custom rewriters must use the `.mjs` extension to avoid Node.js module type warnings. The `.mjs` extension explicitly marks files as ES modules.
 :::
 
-#### Configuring in `.herb.yml`
+#### Configuring in `.herb.yaml`
 
 Reference custom rewriters by their name in your configuration:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 formatter:
   enabled: true
   rewriter:
@@ -339,4 +339,4 @@ class MyRewriter extends StringRewriter {
 
 - [Formatter Documentation](/projects/formatter) - Using rewriters with the formatter
 - [Core Documentation](/projects/core) - AST node types and visitor pattern
-- [Config Documentation](/projects/config) - Configuring rewriters in `.herb.yml`
+- [Config Documentation](/projects/config) - Configuring rewriters in `.herb.yaml`

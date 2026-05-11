@@ -245,12 +245,12 @@ export class CodeActionService {
     const configUri = `file://${configPath}`
 
     const action: CodeAction = {
-      title: `Herb Linter: Disable \`${ruleName}\` in \`.herb.yml\``,
+      title: `Herb Linter: Disable \`${ruleName}\` in \`.herb.yaml\``,
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
       command: {
-        title: 'Open .herb.yml',
+        title: 'Open .herb.yaml',
         command: 'vscode.open',
         arguments: [configUri]
       }

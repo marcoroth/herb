@@ -77,7 +77,7 @@ export class Service {
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
           `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yml file.`
+          `Consider updating your .herb.yaml file.`
         )
       }
     } catch (error) {
@@ -122,7 +122,7 @@ export class Service {
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
           `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yml file.`
+          `Consider updating your .herb.yaml file.`
         )
       }
     } catch (error) {
