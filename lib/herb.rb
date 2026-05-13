@@ -23,10 +23,8 @@ require_relative "herb/parser_options"
 require_relative "herb/parse_result"
 require_relative "herb/diff_operation"
 require_relative "herb/diff_result"
+require_relative "herb/diagnostic"
 
-require_relative "herb/linter"
-require_relative "herb/offense"
-require_relative "herb/lint_result"
 
 require_relative "herb/ast"
 require_relative "herb/ast/node"
@@ -101,34 +99,59 @@ module Herb
       Prism.parse(source)
     end
 
-    #: (String, ?file_name: String?, ?config: String | Hash[String, untyped] | Configuration | nil) -> LintResult?
-    def lint(source, file_name: nil, config: nil)
-      unless Herb::Linter.available?
-        raise NotImplementedError,
-          "Herb.lint is not available because the native extension was built without linter support. " \
-          "Build the Rust linter first (`cargo build -p herb-linter`) and recompile the extension."
+    #: () -> bool
+    def linter_available?
+      linter_loaded? || begin
+        require "herb-linter"
+
+        true
+      rescue LoadError
+        false
       end
-
-      config_json = case config
-                    when String then config
-                    when Hash then JSON.generate(config)
-                    when Configuration then JSON.generate(config.linter)
-                    when nil then nil
-                    else raise ArgumentError, "config must be a String, Hash, Herb::Configuration, or nil"
-                    end
-
-      hash = Herb::Linter.lint(source, config_json, file_name)
-      return nil if hash.nil?
-
-      LintResult.from(hash)
     end
 
-    #: (String, ?config: String | Hash[String, untyped] | Configuration | nil) -> LintResult?
+    #: () -> bool
+    def linter_loaded?
+      defined?(Herb::Linter::VERSION) ? true : false
+    end
+
+    #: () -> void
+    def linter!
+      return if linter_loaded?
+
+      require "herb-linter"
+    rescue LoadError
+      # fall through to the check below
+    ensure
+      return if defined?(Herb::Linter::Runner)
+
+      raise LoadError, <<~MESSAGE
+        The herb-linter gem is required but not installed or not fully loaded.
+
+        Install it with:
+          gem install herb-linter
+
+        Or add it to your Gemfile:
+          gem "herb-linter"
+
+        If the gem is already installed, make sure to require it:
+          require "herb-linter"
+      MESSAGE
+    end
+
+    #: (String, ?file_name: String?, ?config: Hash[String, untyped]?) -> Herb::Linter::LintResult
+    def lint(source, file_name: nil, config: nil)
+      linter!
+
+      Herb::Linter::Runner.new(config: config).lint(source, file_name: file_name)
+    end
+
+    #: (String, ?config: Hash[String, untyped]?) -> Herb::Linter::LintResult
     def lint_file(path, config: nil)
-      source = File.read(path)
-      lint(source, file_name: path, config: config)
-    end
+      linter!
 
+      Herb::Linter::Runner.new(config: config).lint_file(path)
+    end
 
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)

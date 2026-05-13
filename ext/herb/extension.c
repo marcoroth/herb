@@ -8,9 +8,6 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
-#ifdef HAS_HERB_LINTER
-#  include "linter.h"
-#endif
 
 VALUE mHerb;
 VALUE cPosition;
@@ -545,8 +542,4 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "leak_check", Herb_leak_check, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
   rb_define_singleton_method(mHerb, "diff", Herb_diff, -1);
-
-#ifdef HAS_HERB_LINTER
-  Init_herb_linter();
-#endif
 }

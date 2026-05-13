@@ -1,0 +1,81 @@
+PATH
+  remote: ..
+  specs:
+    herb (0.10.1)
+    prism (1.9.0)
+
+PATH
+  remote: .
+  specs:
+    herb-linter (0.10.1)
+      herb (= 0.10.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    date (3.5.1)
+    drb (2.2.3)
+    erb (6.0.4)
+    io-console (0.8.2)
+    irb (1.18.0)
+      pp (>= 0.6.0)
+      prism (>= 1.3.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
+    maxitest (7.1.1)
+      minitest (>= 6.0.0, < 6.1.0)
+    minitest (6.0.5)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    pp (0.6.3)
+      prettyprint
+    prettyprint (0.2.0)
+    psych (5.3.1)
+      date
+      stringio
+    rake (13.4.2)
+    rake-compiler (1.3.1)
+      rake
+    rdoc (7.2.0)
+      erb
+      psych (>= 4.0.0)
+      tsort
+    reline (0.6.3)
+      io-console (~> 0.5)
+    stringio (3.2.0)
+    tsort (0.2.0)
+
+PLATFORMS
+  arm64-darwin-23
+  ruby
+
+DEPENDENCIES
+  herb!
+  herb-linter!
+  irb (~> 1.18)
+  maxitest
+  rake-compiler
+
+CHECKSUMS
+  date (3.5.1) sha256=750d06384d7b9c15d562c76291407d89e368dda4d4fff957eb94962d325a0dc0
+  drb (2.2.3) sha256=0b00d6fdb50995fe4a45dea13663493c841112e4068656854646f418fda13373
+  erb (6.0.4) sha256=38e3803694be357fe2bfe312487c74beaf9fb4e5beb3e22498952fe1645b95d9
+  herb (0.10.1)
+  herb-linter (0.10.1)
+  io-console (0.8.2) sha256=d6e3ae7a7cc7574f4b8893b4fca2162e57a825b223a177b7afa236c5ef9814cc
+  irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
+  maxitest (7.1.1) sha256=f504c01714f83d8e4483be8cb1a6b02faa7e08a135202c0516c1e55fd11cd78d
+  minitest (6.0.5) sha256=f007d7246bf4feea549502842cd7c6aba8851cdc9c90ba06de9c476c0d01155c
+  pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
+  prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
+  prism (1.9.0)
+  psych (5.3.1) sha256=eb7a57cef10c9d70173ff74e739d843ac3b2c019a003de48447b2963d81b1974
+  rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
+  rake-compiler (1.3.1) sha256=6b351612b6e2d73ddd5563ee799bb58685176e05363db6758504bd11573d670a
+  rdoc (7.2.0) sha256=8650f76cd4009c3b54955eb5d7e3a075c60a57276766ebf36f9085e8c9f23192
+  reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
+  stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1
+  tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
+
+BUNDLED WITH
+  4.0.6

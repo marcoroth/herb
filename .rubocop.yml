@@ -47,7 +47,7 @@ Style/SafeNavigationChainLength:
 
 Style/GlobalVars:
   Exclude:
-    - ext/herb/extconf.rb
+    - "**/extconf.rb"
 
 Style/AccessorGrouping:
   Exclude:
@@ -109,6 +109,8 @@ Metrics/AbcSize:
     - test/engine/rails_compatibility_test.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - herb-linter/lib/herb/linter/lint_result.rb
+    - herb-linter/test/**
 
 Metrics/ClassLength:
   Exclude:
@@ -137,7 +139,7 @@ Metrics/BlockLength:
   Max: 30
   Exclude:
     - Rakefile
-    - "*.gemspec"
+    - "**/*.gemspec"
     - "**/*.rake"
     - lib/herb/cli.rb
     - lib/herb/project.rb
@@ -154,6 +156,8 @@ Metrics/ParameterLists:
     - lib/herb/errors.rb
     - lib/herb/parser_options.rb
     - lib/herb/prism_inspect.rb
+    - herb-linter/lib/herb/linter/offense.rb
+    - herb-linter/lib/herb/linter/lint_result.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
@@ -221,3 +225,7 @@ Style/IfUnlessModifier:
 
 Style/DocumentDynamicEvalDefinition:
   Enabled: false
+
+Naming/FileName:
+  Exclude:
+    - herb-linter/lib/herb-linter.rb

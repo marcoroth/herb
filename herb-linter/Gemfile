@@ -1,0 +1,10 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gemspec
+
+gem "herb", path: ".."
+gem "irb", "~> 1.18"
+gem "maxitest"
+gem "rake-compiler"

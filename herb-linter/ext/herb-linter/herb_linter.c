@@ -1,11 +1,8 @@
-#ifdef HAS_HERB_LINTER
+#include <ruby.h>
 
-#  include <ruby.h>
+#include "herb_linter.h"
 
-#  include "extension.h"
-#  include "herb_linter.h"
-
-static VALUE Herb_lint(int argc, VALUE* argv, VALUE self) {
+static VALUE Backend_lint(int argc, VALUE* argv, VALUE self) {
   VALUE source, config_json, file_name;
   rb_scan_args(argc, argv, "12", &source, &config_json, &file_name);
 
@@ -38,13 +35,13 @@ static VALUE Herb_lint(int argc, VALUE* argv, VALUE self) {
   return hash;
 }
 
-static VALUE Herb_lint_rule_count(VALUE self) {
+static VALUE Backend_rule_count(VALUE self) {
   size_t count = herb_lint_rule_count();
 
   return SIZET2NUM(count);
 }
 
-static VALUE Herb_lint_rule_names(VALUE self) {
+static VALUE Backend_rule_names(VALUE self) {
   size_t count = 0;
   char** names = herb_lint_rule_names(&count);
 
@@ -59,17 +56,17 @@ static VALUE Herb_lint_rule_names(VALUE self) {
   return array;
 }
 
-static VALUE Herb_linter_available(VALUE self) {
+static VALUE Backend_available(VALUE self) {
   return Qtrue;
 }
 
-void Init_herb_linter(void) {
+__attribute__((__visibility__("default"))) void Init_herb_linter(void) {
+  VALUE mHerb = rb_define_module("Herb");
   VALUE cLinter = rb_define_class_under(mHerb, "Linter", rb_cObject);
+  VALUE cBackend = rb_define_class_under(cLinter, "Backend", rb_cObject);
 
-  rb_define_singleton_method(cLinter, "available?", Herb_linter_available, 0);
-  rb_define_singleton_method(cLinter, "lint", Herb_lint, -1);
-  rb_define_singleton_method(cLinter, "rule_count", Herb_lint_rule_count, 0);
-  rb_define_singleton_method(cLinter, "rule_names", Herb_lint_rule_names, 0);
+  rb_define_singleton_method(cBackend, "available?", Backend_available, 0);
+  rb_define_singleton_method(cBackend, "lint", Backend_lint, -1);
+  rb_define_singleton_method(cBackend, "rule_count", Backend_rule_count, 0);
+  rb_define_singleton_method(cBackend, "rule_names", Backend_rule_names, 0);
 }
-
-#endif

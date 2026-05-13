@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+gem_root = File.expand_path("..", __dir__)
+binary = File.join(gem_root, "bin", "herb-lint")
+
+unless File.exist?(binary)
+  warn <<~MESSAGE
+    The herb-lint binary was not found.
+
+    This usually means the gem was not installed with a precompiled binary for your platform.
+
+    Try reinstalling:
+      gem install herb-linter --platform ruby
+  MESSAGE
+
+  exit 1
+end
+
+exec(binary, *ARGV)
