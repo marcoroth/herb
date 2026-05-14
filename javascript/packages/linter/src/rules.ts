@@ -1,6 +1,7 @@
 import type { RuleClass } from "./types.js"
 
 import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
+import { A11yNoAriaLabelMisuseRule } from "./rules/a11y-no-aria-label-misuse.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
 import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
 
@@ -104,6 +105,7 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 
 export const rules: RuleClass[] = [
   A11yNoAccesskeyAttributeRule,
+  A11yNoAriaLabelMisuseRule,
   A11yNoAriaUnsupportedElementsRule,
   A11yNoAutofocusAttributeRule,
 
