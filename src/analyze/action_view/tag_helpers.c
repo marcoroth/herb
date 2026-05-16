@@ -241,6 +241,50 @@ static void calculate_tag_name_positions(
   }
 }
 
+// Checks whether a call node has an `escape: false` or `escape: nil` keyword
+// argument, or (for content_tag) a falsey 4th positional argument.
+// Returns true when the helper will auto-escape its content (the default).
+static bool extract_escape_content(
+  pm_call_node_t* call_node,
+  const char* handler_name
+) {
+  if (!call_node || !call_node->arguments) { return true; }
+
+  pm_arguments_node_t* arguments = call_node->arguments;
+
+  // content_tag(:p, "text", {}, false) — 4th positional arg disables escaping
+  if (strcmp(handler_name, "content_tag") == 0 && arguments->arguments.size >= 4) {
+    pm_node_t* escape_arg = arguments->arguments.nodes[3];
+    if (escape_arg->type == PM_FALSE_NODE || escape_arg->type == PM_NIL_NODE) { return false; }
+  }
+
+  // Check for `escape:` keyword argument in the last argument
+  pm_node_t* last_argument = arguments->arguments.nodes[arguments->arguments.size - 1];
+  if (last_argument->type != PM_KEYWORD_HASH_NODE) { return true; }
+
+  pm_keyword_hash_node_t* hash = (pm_keyword_hash_node_t*) last_argument;
+
+  for (size_t i = 0; i < hash->elements.size; i++) {
+    pm_node_t* element = hash->elements.nodes[i];
+    if (element->type != PM_ASSOC_NODE) { continue; }
+
+    pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
+    if (assoc->key->type != PM_SYMBOL_NODE) { continue; }
+
+    pm_symbol_node_t* key_node = (pm_symbol_node_t*) assoc->key;
+    size_t key_length = pm_string_length(&key_node->unescaped);
+    const char* key_source = (const char*) pm_string_source(&key_node->unescaped);
+
+    if (key_length == 6 && strncmp(key_source, "escape", 6) == 0) {
+      // escape: false or escape: nil means no auto-escaping
+      if (assoc->value->type == PM_FALSE_NODE || assoc->value->type == PM_NIL_NODE) { return false; }
+      return true;
+    }
+  }
+
+  return true;
+}
+
 static const char* JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS[] = { "protocol", "extname", "host", "skip_pipeline", NULL };
 static const char* IMAGE_TAG_PATH_OPTIONS[] = { "skip_pipeline", NULL };
 
@@ -736,6 +780,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     close_tag = (AST_NODE_T*) virtual_close;
   }
 
+  bool escape_content = extract_escape_content(parse_context->info->call_node, handler->name);
+
   AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
     tag_name_token,
@@ -743,6 +789,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     close_tag,
     is_void,
     handler->source,
+    escape_content,
     erb_node->base.location.start,
     erb_node->base.location.end,
     element_errors,
@@ -860,6 +907,7 @@ static AST_NODE_T* create_javascript_include_tag_element(
     (AST_NODE_T*) virtual_close,
     false,
     parse_context->matched_handler->source,
+    true,
     erb_node->base.location.start,
     erb_node->base.location.end,
     hb_array_init(0, allocator),
@@ -1173,6 +1221,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
     is_void ? NULL : close_tag,
     is_void,
     parse_context->matched_handler->source,
+    true,
     block_node->base.location.start,
     element_end,
     element_errors,
@@ -1398,6 +1447,10 @@ static AST_NODE_T* transform_link_to_helper(
     allocator
   );
 
+  bool escape_content = extract_escape_content(
+    parse_context->info->call_node, parse_context->matched_handler->name
+  );
+
   AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
     (AST_NODE_T*) open_tag_node,
     tag_name_token,
@@ -1405,6 +1458,7 @@ static AST_NODE_T* transform_link_to_helper(
     (AST_NODE_T*) virtual_close,
     false,
     parse_context->matched_handler->source,
+    escape_content,
     erb_node->base.location.start,
     erb_node->base.location.end,
     hb_array_init(0, allocator),
