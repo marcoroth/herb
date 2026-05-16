@@ -571,8 +571,8 @@ export class Linter {
     const unfixed: LintOffense[] = []
 
     if (parserOffenses.length > 0) {
-      const parseResult = this.parseCache.get(currentSource)
       let needsReindent = false
+      let lastParseResult: ParseResult | null = null
 
       for (const offense of parserOffenses) {
         const ruleClass = this.findRuleClass(offense.rule)
@@ -598,6 +598,9 @@ export class Linter {
           continue
         }
 
+        const parserOptions = rule.parserOptions || {}
+        const parseResult = this.parseCache.get(currentSource, parserOptions)
+
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
           const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
@@ -621,6 +624,7 @@ export class Linter {
 
         if (fixedResult) {
           fixed.push(offense)
+          lastParseResult = parseResult
 
           if (this.isParserRuleClass(ruleClass) && ruleClass.reindentAfterAutofix === true) {
             needsReindent = true
@@ -630,11 +634,11 @@ export class Linter {
         }
       }
 
-      if (fixed.length > 0) {
+      if (fixed.length > 0 && lastParseResult) {
         if (needsReindent) {
-          currentSource = new IndentPrinter().print(parseResult.value)
+          currentSource = new IndentPrinter().print(lastParseResult.value)
         } else {
-          currentSource = new IdentityPrinter().print(parseResult.value)
+          currentSource = new IdentityPrinter().print(lastParseResult.value)
         }
       }
     }
@@ -685,5 +689,15 @@ export class Linter {
       fixed,
       unfixed
     }
+  }
+
+  previewAutofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    this.parseCache.clear()
+
+    const result = this.autofix(source, context, offensesToFix, options)
+
+    this.parseCache.clear()
+
+    return result
   }
 }
