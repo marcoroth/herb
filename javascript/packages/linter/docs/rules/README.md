@@ -126,6 +126,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Turbo
 
+- [`turbo-permanent-no-misleading-value`](./turbo-permanent-no-misleading-value.md) - Disallow misleading values on `data-turbo-permanent`
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 
 
