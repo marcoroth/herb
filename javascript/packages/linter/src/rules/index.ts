@@ -1,3 +1,4 @@
+export * from "./a11y-disabled-attribute.js"
 export * from "./a11y-no-accesskey-attribute.js"
 export * from "./a11y-no-aria-unsupported-elements.js"
 export * from "./a11y-no-autofocus-attribute.js"
