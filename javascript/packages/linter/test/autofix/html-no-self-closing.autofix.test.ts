@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
@@ -78,6 +79,40 @@ describe("html-no-self-closing autofix", () => {
   test("preserves whitespace before slash", () => {
     const input = '<input type="text" />'
     const expected = '<input type="text">'
+
+    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("preserves indentation of closing tag for nested void element", () => {
+    const input = dedent`
+      <figure>
+        <img
+          src="/image.png"
+          alt="An image"
+        />
+      </figure>`
+    const expected = dedent`
+      <figure>
+        <img
+          src="/image.png"
+          alt="An image"
+        >
+      </figure>`
+
+    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("drops newline before closing when /> is on its own line without indentation", () => {
+    const input = '<img class="x"\n/>'
+    const expected = '<img class="x">'
 
     const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
     const result = linter.autofix(input)
