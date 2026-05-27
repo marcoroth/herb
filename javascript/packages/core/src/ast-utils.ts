@@ -760,7 +760,7 @@ export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementN
 // --- AST Mutation Utilities ---
 
 const CHILD_ARRAY_PROPS = ["children", "body", "statements", "conditions"]
-const LINKED_NODE_PROPS = ["subsequent", "else_clause"]
+const LINKED_NODE_PROPS = ["subsequent", "else_clause", "open_tag", "close_tag", "value", "name"]
 
 /**
  * Finds the array containing a target node in the AST, along with its index.
