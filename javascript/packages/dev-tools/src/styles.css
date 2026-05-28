@@ -502,6 +502,37 @@
   background-color: #f5f3ff;
 }
 
+/* Debug outlines use classes (not inline styles) so user outline utilities are preserved */
+.herb-debug-outline--view {
+  outline: 2px dotted #3b82f6;
+  outline-offset: 2px;
+}
+
+.herb-debug-outline--partial {
+  outline: 2px dotted #10b981;
+  outline-offset: 2px;
+}
+
+.herb-debug-outline--component {
+  outline: 2px dotted #f59e0b;
+  outline-offset: 2px;
+}
+
+.herb-debug-outline--erb {
+  outline: 2px dotted #a78bfa;
+  outline-offset: 1px;
+}
+
+.herb-debug-outline--view.herb-debug-outline--root,
+.herb-debug-outline--partial.herb-debug-outline--root,
+.herb-debug-outline--component.herb-debug-outline--root {
+  outline-offset: -2px;
+}
+
+.herb-debug-position-anchor {
+  position: relative;
+}
+
 .herb-toggle-label:hover .herb-toggle-switch {
   background: #94a3b8;
 }

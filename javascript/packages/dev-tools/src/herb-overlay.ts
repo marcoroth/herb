@@ -40,6 +40,50 @@ export class HerbOverlay {
     { value: 'zed', label: 'Zed' },
   ];
 
+  private static readonly DEBUG_OUTLINE_CLASS = {
+    view: 'herb-debug-outline--view',
+    partial: 'herb-debug-outline--partial',
+    component: 'herb-debug-outline--component',
+    erb: 'herb-debug-outline--erb',
+  } as const;
+
+  private applyDebugOutline(element: HTMLElement, type: keyof typeof HerbOverlay.DEBUG_OUTLINE_CLASS) {
+    element.classList.add(HerbOverlay.DEBUG_OUTLINE_CLASS[type]);
+
+    if (element.tagName.toLowerCase() === 'html') {
+      element.classList.add('herb-debug-outline--root');
+    }
+  }
+
+  private removeDebugOutline(element: HTMLElement, type: keyof typeof HerbOverlay.DEBUG_OUTLINE_CLASS) {
+    element.classList.remove(HerbOverlay.DEBUG_OUTLINE_CLASS[type]);
+    element.classList.remove('herb-debug-outline--root');
+  }
+
+  private clearAllDebugOutlineClasses(element: HTMLElement) {
+    element.classList.remove(
+      HerbOverlay.DEBUG_OUTLINE_CLASS.view,
+      HerbOverlay.DEBUG_OUTLINE_CLASS.partial,
+      HerbOverlay.DEBUG_OUTLINE_CLASS.component,
+      HerbOverlay.DEBUG_OUTLINE_CLASS.erb,
+      'herb-debug-outline--root'
+    );
+  }
+
+  private ensurePositionAnchor(element: HTMLElement) {
+    if (window.getComputedStyle(element).position === 'static') {
+      element.classList.add('herb-debug-position-anchor');
+      element.setAttribute('data-herb-debug-position-anchored', 'true');
+    }
+  }
+
+  private removePositionAnchor(element: HTMLElement) {
+    if (element.getAttribute('data-herb-debug-position-anchored') === 'true') {
+      element.classList.remove('herb-debug-position-anchor');
+      element.removeAttribute('data-herb-debug-position-anchored');
+    }
+  }
+
   constructor(private options: HerbDevToolsOptions = {}) {
     if (options.autoInit !== false) {
       this.init();
@@ -437,16 +481,10 @@ export class HerbOverlay {
       const element = outline as HTMLElement;
 
       if (this.showingViewOutlines) {
-        element.style.outline = '2px dotted #3b82f6';
-        element.style.outlineOffset = element.tagName.toLowerCase() === 'html' ? '-2px' : '2px';
-        element.classList.add('show-outline');
-
+        this.applyDebugOutline(element, 'view');
         this.createOverlayLabel(element, 'view');
       } else {
-        element.style.outline = 'none';
-        element.style.outlineOffset = '0';
-        element.classList.remove('show-outline');
-
+        this.removeDebugOutline(element, 'view');
         this.removeOverlayLabel(element);
       }
     });
@@ -462,16 +500,10 @@ export class HerbOverlay {
       const element = outline as HTMLElement;
 
       if (this.showingPartialOutlines) {
-        element.style.outline = '2px dotted #10b981';
-        element.style.outlineOffset = element.tagName.toLowerCase() === 'html' ? '-2px' : '2px';
-        element.classList.add('show-outline');
-
+        this.applyDebugOutline(element, 'partial');
         this.createOverlayLabel(element, 'partial');
       } else {
-        element.style.outline = 'none';
-        element.style.outlineOffset = '0';
-        element.classList.remove('show-outline');
-
+        this.removeDebugOutline(element, 'partial');
         this.removeOverlayLabel(element);
       }
     });
@@ -487,16 +519,10 @@ export class HerbOverlay {
       const element = outline as HTMLElement;
 
       if (this.showingComponentOutlines) {
-        element.style.outline = '2px dotted #f59e0b';
-        element.style.outlineOffset = element.tagName.toLowerCase() === 'html' ? '-2px' : '2px';
-        element.classList.add('show-outline');
-
+        this.applyDebugOutline(element, 'component');
         this.createOverlayLabel(element, 'component');
       } else {
-        element.style.outline = 'none';
-        element.style.outlineOffset = '0';
-        element.classList.remove('show-outline');
-
+        this.removeDebugOutline(element, 'component');
         this.removeOverlayLabel(element);
       }
     });
@@ -543,19 +569,12 @@ export class HerbOverlay {
     if (shouldAttachToParent && element.parentElement) {
       const parent = element.parentElement;
 
-      element.style.outline = 'none';
-      element.classList.remove('show-outline');
-
-      const outlineColor = type === 'component' ? '#f59e0b' : type === 'partial' ? '#10b981' : '#3b82f6';
-      parent.style.outline = `2px dotted ${outlineColor}`;
-      parent.style.outlineOffset = parent.tagName.toLowerCase() === 'html' ? '-2px' : '2px';
-      parent.classList.add('show-outline');
+      this.clearAllDebugOutlineClasses(element);
+      this.applyDebugOutline(parent, type);
 
       parent.setAttribute('data-herb-debug-attached-outline-type', type);
 
-      if (window.getComputedStyle(parent).position === 'static') {
-        parent.style.position = 'relative';
-      }
+      this.ensurePositionAnchor(parent);
       label.style.position = 'absolute';
       label.style.top = '0';
       label.style.left = '0';
@@ -568,9 +587,7 @@ export class HerbOverlay {
       label.style.top = '0';
     }
 
-    if (window.getComputedStyle(element).position === 'static') {
-      element.style.position = 'relative';
-    }
+    this.ensurePositionAnchor(element);
     element.appendChild(label);
   }
 
@@ -585,16 +602,24 @@ export class HerbOverlay {
         label.remove();
       }
 
-      parent.style.outline = 'none';
-      parent.style.outlineOffset = '0';
-      parent.classList.remove('show-outline');
+      const attachedType = parent.getAttribute('data-herb-debug-attached-outline-type') as 'view' | 'partial' | 'component' | null;
+
+      if (attachedType) {
+        this.removeDebugOutline(parent, attachedType);
+      } else {
+        this.clearAllDebugOutlineClasses(parent);
+      }
+
       parent.removeAttribute('data-herb-debug-attached-outline-type');
+      this.removePositionAnchor(parent);
     } else {
       const label = element.querySelector('.herb-overlay-label');
 
       if (label) {
         label.remove();
       }
+
+      this.removePositionAnchor(element);
     }
   }
 
@@ -665,9 +690,7 @@ export class HerbOverlay {
       const realElement = (element.children[0] as HTMLElement) || element
 
       if (this.showingERBOutlines) {
-
-        realElement.style.outline = '2px dotted #a78bfa';
-        realElement.style.outlineOffset = '1px';
+        this.applyDebugOutline(realElement, 'erb');
 
         if (needsWrapperToggled) {
           element.style.display = 'inline';
@@ -681,8 +704,7 @@ export class HerbOverlay {
           this.addERBHoverReveal(element);
         }
       } else {
-        realElement.style.outline = 'none';
-        realElement.style.outlineOffset = '0';
+        this.removeDebugOutline(realElement, 'erb');
 
         if (needsWrapperToggled) {
           element.style.display = 'contents';
