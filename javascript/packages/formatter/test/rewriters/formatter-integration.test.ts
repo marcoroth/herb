@@ -36,22 +36,22 @@ describe("Formatter with Rewriters Integration", () => {
     expect(info.warnings).toEqual([])
   })
 
-  test("loadRewriters with Tailwind class sorter", async () => {
+  test("loadRewriters with Tailwind class sorter as post-rewriter", async () => {
     const info = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
-      post: [],
+      pre: [],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
-    expect(info.preCount).toBe(1)
-    expect(info.postCount).toBe(0)
+    expect(info.preCount).toBe(0)
+    expect(info.postCount).toBe(1)
   })
 
   test("formats with Tailwind class sorter enabled", async () => {
     const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
@@ -82,32 +82,28 @@ describe("Formatter with Rewriters Integration", () => {
   test("loadRewriters is idempotent", async () => {
     const info1 = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
     const info2 = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
-    expect(info1.preCount).toBe(info2.preCount)
+    expect(info1.postCount).toBe(info2.postCount)
   })
 
   test("format works with file path parameter", async () => {
     const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
     const formatter = new Formatter(Herb, { indentWidth: 2, preRewriters, postRewriters })
-
-    const source = dedent`
-      <div class="px-4 bg-blue-500"></div>
-    `
-
+    const source = `<div class="px-4 bg-blue-500"></div>`
     const result = formatter.format(source, {}, "path/to/file.html.erb")
 
     expect(result).toBeDefined()
@@ -116,7 +112,7 @@ describe("Formatter with Rewriters Integration", () => {
   test("continues formatting even if rewriter fails", async () => {
     const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
@@ -145,7 +141,7 @@ describe("Formatter with Rewriters Integration", () => {
   test("formats complex ERB with rewriters", async () => {
     const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
-      pre: ["tailwind-class-sorter"],
+      post: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
@@ -172,5 +168,94 @@ describe("Formatter with Rewriters Integration", () => {
         <% end %>
       </div>
     `)
+  })
+
+  describe("Action View Tag Helper class sorting", () => {
+    test("sorts classes in tag.div with block", async () => {
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
+        baseDir: process.cwd(),
+        post: ["tailwind-class-sorter"],
+        loadCustomRewriters: false
+      })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
+      const source = `<%= tag.div class: "px-4 bg-blue-500 text-white" do %><% end %>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(`<%= tag.div class: "bg-blue-500 px-4 text-white" do %>\n<% end %>`)
+
+    })
+
+    test("sorts classes in tag.div with single quotes", async () => {
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
+        baseDir: process.cwd(),
+        post: ["tailwind-class-sorter"],
+        loadCustomRewriters: false
+      })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
+      const source = `<%= tag.div class: 'px-4 bg-blue-500 text-white' do %><% end %>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(`<%= tag.div class: 'bg-blue-500 px-4 text-white' do %>\n<% end %>`)
+
+    })
+
+    test("sorts classes in content_tag with block", async () => {
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
+        baseDir: process.cwd(),
+        post: ["tailwind-class-sorter"],
+        loadCustomRewriters: false
+      })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
+      const source = `<%= content_tag :div, class: "px-4 bg-blue-500 text-white" do %><% end %>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(`<%= content_tag :div, class: "bg-blue-500 px-4 text-white" do %>\n<% end %>`)
+
+    })
+
+    test("sorts both HTML and Action View Tag Helper classes together", async () => {
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
+        baseDir: process.cwd(),
+        post: ["tailwind-class-sorter"],
+        loadCustomRewriters: false
+      })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
+
+      const source = dedent`
+        <div class="px-4 bg-blue-500">
+          <%= tag.div class: "text-white rounded px-2" do %>
+            <span>Content</span>
+          <% end %>
+        </div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="bg-blue-500 px-4">
+          <%= tag.div class: "rounded px-2 text-white" do %>
+            <span>Content</span>
+          <% end %>
+        </div>
+      `)
+    })
+
+    test("does not sort dynamic Action View Tag Helper class values", async () => {
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
+        baseDir: process.cwd(),
+        post: ["tailwind-class-sorter"],
+        loadCustomRewriters: false
+      })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
+      const source = `<%= tag.div class: dynamic_classes do %><% end %>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(`<%= tag.div class: dynamic_classes do %>\n<% end %>`)
+    })
   })
 })

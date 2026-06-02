@@ -3,28 +3,36 @@ import { beforeAll, expect } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import type { ASTRewriter, RewriteContext } from "../../src/index.js"
+import { ASTRewriter } from "../../src/ast-rewriter.js"
+import { StringRewriter } from "../../src/string-rewriter.js"
+
+import type { RewriteContext } from "../../src/index.js"
 import type { Node } from "@herb-tools/core"
+import type { ParseOptions } from "@herb-tools/core"
 
 interface RewriterTestOptions {
   context?: RewriteContext
+  parseOptions?: Partial<ParseOptions>
 }
 
 interface RewriterTestHelpers {
-  expectTransform: (input: string, expected: string, options?: RewriterTestOptions) => Promise<Node>
-  expectNoTransform: (input: string, options?: RewriterTestOptions) => Promise<Node>
+  expectTransform: (input: string, expected: string, options?: RewriterTestOptions) => Promise<Node | string>
+  expectNoTransform: (input: string, options?: RewriterTestOptions) => Promise<Node | string>
 }
 
 /**
  * Creates a test helper for rewriters that reduces boilerplate in tests.
  *
+ * Supports both ASTRewriter (parses input and rewrites the AST) and
+ * StringRewriter (passes the input string directly to the rewriter).
+ *
  * @param RewriterClass - The rewriter class to test
  * @returns Object with helper functions for testing
  */
 export function createRewriterTest(
-  RewriterClass: new () => ASTRewriter
+  RewriterClass: new () => ASTRewriter | StringRewriter
 ): RewriterTestHelpers {
-  let rewriter: ASTRewriter
+  let rewriter: ASTRewriter | StringRewriter
 
   beforeAll(async () => {
     await Herb.load()
@@ -36,9 +44,18 @@ export function createRewriterTest(
     input: string,
     expected: string,
     options?: RewriterTestOptions
-  ): Promise<Node> => {
+  ): Promise<Node | string> => {
     const context = options?.context ?? { baseDir: process.cwd() }
-    const parseResult = Herb.parse(input, { track_whitespace: true })
+
+    if (rewriter instanceof StringRewriter) {
+      const output = rewriter.rewrite(input, context)
+
+      expect(output).toBe(expected)
+
+      return output
+    }
+
+    const parseResult = Herb.parse(input, { track_whitespace: true, ...options?.parseOptions })
 
     if (parseResult.failed) {
       throw new Error(
@@ -48,7 +65,7 @@ export function createRewriterTest(
       )
     }
 
-    const node = rewriter.rewrite(parseResult.value, context)
+    const node = (rewriter as ASTRewriter).rewrite(parseResult.value, context)
     const output = IdentityPrinter.print(node)
 
     expect(output).toBe(expected)
@@ -59,7 +76,7 @@ export function createRewriterTest(
   const expectNoTransform = async (
     input: string,
     options?: RewriterTestOptions
-  ): Promise<Node> => {
+  ): Promise<Node | string> => {
     return await expectTransform(input, input, options)
   }
 
