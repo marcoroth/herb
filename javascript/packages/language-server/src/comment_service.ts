@@ -39,6 +39,13 @@ export class CommentService {
         continue
       }
 
+      if (this.lineIsInsideMultilineERBTag(document, line)) {
+        const context = lineText.trimStart().startsWith("#") ? "erb-comment" : "erb-tag"
+
+        lineInfos.push({ line, context, node: null })
+        continue
+      }
+
       const htmlCommentNode = collector.htmlCommentNodesPerLine.get(line)
       const info = collector.lineMap.get(line)
 
@@ -127,6 +134,10 @@ export class CommentService {
       return TextEdit.insert(Position.create(info.line, insertColumn), "#")
     }
 
+    if (info.context === "erb-tag" && erbNodes.length === 0) {
+      return TextEdit.replace(lineRange, `${indent}# ${content}`)
+    }
+
     const result = commentLineContent(content, erbNodes, strategy, this.parserService)
 
     return TextEdit.replace(lineRange, indent + result)
@@ -145,6 +156,37 @@ export class CommentService {
     return null
   }
 
+  private lineIsInsideMultilineERBTag(document: TextDocument, targetLine: number): boolean {
+    let insideERB = false
+
+    for (let line = 0; line <= targetLine; line++) {
+      const lineText = document.getText(Range.create(line, 0, line + 1, 0)).replace(/\n$/, "")
+      const insideAtStartOfLine = insideERB
+      let index = 0
+
+      while (index < lineText.length) {
+        const erbStart = lineText.indexOf("<%", index)
+        const erbEnd = lineText.indexOf("%>", index)
+
+        if (erbEnd !== -1 && (erbStart === -1 || erbEnd < erbStart)) {
+          insideERB = false
+          index = erbEnd + 2
+        } else if (erbStart !== -1) {
+          insideERB = true
+          index = erbStart + 2
+        } else {
+          break
+        }
+      }
+
+      if (line === targetLine) {
+        return insideAtStartOfLine && !lineText.trimStart().startsWith("%>")
+      }
+    }
+
+    return false
+  }
+
   private uncommentLine(info: LineInfo, lineText: string, collector: LineContextCollector): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
     const indent = this.getIndentation(lineText)
@@ -155,6 +197,10 @@ export class CommentService {
     }
 
     if (info.context === "erb-comment") {
+      if (!info.node) {
+        return this.uncommentRubyLine(lineText, info.line)
+      }
+
       const node = info.node as ERBContentNode
       if (!node?.tag_opening || !node?.tag_closing) return null
 
@@ -192,6 +238,10 @@ export class CommentService {
       return TextEdit.del(Range.create(info.line, hashColumn, info.line, hashColumn + 1))
     }
 
+    if (info.context === "erb-tag") {
+      return this.uncommentRubyLine(lineText, info.line)
+    }
+
     if (info.context === "html-comment") {
       const commentNode = info.node as HTMLCommentNode | null
 
@@ -207,6 +257,17 @@ export class CommentService {
     }
 
     return null
+  }
+
+  private uncommentRubyLine(lineText: string, line: number): TextEdit | null {
+    const content = lineText.trimStart()
+
+    if (!content.startsWith("#")) return null
+
+    const hashColumn = lineText.length - content.length
+    const deleteLength = content.startsWith("# ") ? 2 : 1
+
+    return TextEdit.del(Range.create(line, hashColumn, line, hashColumn + deleteLength))
   }
 
   private htmlCommentSpansLine(node: HTMLCommentNode, lineText: string): boolean {
