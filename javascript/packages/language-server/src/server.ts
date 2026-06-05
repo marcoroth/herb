@@ -15,6 +15,7 @@ import {
   FoldingRangeParams,
   DocumentHighlightParams,
   HoverParams,
+  CompletionParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
@@ -66,6 +67,9 @@ export class Server {
           foldingRangeProvider: true,
           documentHighlightProvider: true,
           hoverProvider: true,
+          completionProvider: {
+            triggerCharacters: [".", ":", "<", "&"],
+          },
         },
       }
 
@@ -184,6 +188,14 @@ export class Server {
       if (!document) return null
 
       return this.service.hoverService.getHover(document, params.position)
+    })
+
+    this.connection.onCompletion((params: CompletionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return null
+
+      return this.service.completionService.getCompletions(document, params.position)
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {
