@@ -81,7 +81,7 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
 
 export class A11ySvgHasAccessibleTextRule extends ParserRule {
   static ruleName = "a11y-svg-has-accessible-text"
-  static introducedIn = this.version("0.9.6")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
