@@ -1108,6 +1108,14 @@ describe("CommentService", () => {
         const startEdit = edits.find(edit => edit.newText.includes("<% if false %>"))
         expect(startEdit?.newText).toBe("  <% if false %>\n")
       })
+
+      it("comments an internal Ruby line inside a multiline ERB tag", () => {
+        const original = `<%\n  a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleBlockComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  # a\n%>`)
+      })
     })
 
     describe("round-trip", () => {
@@ -1131,6 +1139,19 @@ describe("CommentService", () => {
           <div>hello</div>
           <%= render "thing" %>
         `.trim())
+      })
+
+      it("round-trips an internal Ruby line inside a multiline ERB tag", () => {
+        const original = `<%\n  a\n%>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleBlockComment(document1, lineRange(1)))
+
+        expect(commented).toBe(`<%\n  # a\n%>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleBlockComment(document2, lineRange(1)))
+
+        expect(uncommented).toBe(original)
       })
     })
 

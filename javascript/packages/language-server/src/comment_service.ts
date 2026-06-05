@@ -96,6 +96,10 @@ export class CommentService {
     const startLine = range.start.line
     const endLine = range.end.line
 
+    if (this.selectionIsInsideMultilineERBTag(document, startLine, endLine)) {
+      return this.toggleRubyLineComments(document, startLine, endLine)
+    }
+
     const firstLineText = document.getText(Range.create(startLine, 0, startLine + 1, 0)).replace(/\n$/, "")
     const lastLineText = document.getText(Range.create(endLine, 0, endLine + 1, 0)).replace(/\n$/, "")
     const isWrapped = firstLineText.trim() === "<% if false %>" && lastLineText.trim() === "<% end %>"
@@ -185,6 +189,46 @@ export class CommentService {
     }
 
     return false
+  }
+
+  private selectionIsInsideMultilineERBTag(document: TextDocument, startLine: number, endLine: number): boolean {
+    let hasRubyLine = false
+
+    for (let line = startLine; line <= endLine; line++) {
+      const lineText = document.getText(Range.create(line, 0, line + 1, 0)).replace(/\n$/, "")
+
+      if (lineText.trim() === "") continue
+      if (!this.lineIsInsideMultilineERBTag(document, line)) return false
+
+      hasRubyLine = true
+    }
+
+    return hasRubyLine
+  }
+
+  private toggleRubyLineComments(document: TextDocument, startLine: number, endLine: number): TextEdit[] {
+    const lineTexts: { line: number, text: string }[] = []
+
+    for (let line = startLine; line <= endLine; line++) {
+      const text = document.getText(Range.create(line, 0, line + 1, 0)).replace(/\n$/, "")
+
+      if (text.trim() !== "") {
+        lineTexts.push({ line, text })
+      }
+    }
+
+    const allCommented = lineTexts.every(({ text }) => text.trimStart().startsWith("#"))
+
+    return lineTexts.map(({ line, text }) => {
+      if (allCommented) {
+        return this.uncommentRubyLine(text, line)!
+      }
+
+      const indent = this.getIndentation(text)
+      const content = text.trimStart()
+
+      return TextEdit.replace(Range.create(line, 0, line, text.length), `${indent}# ${content}`)
+    }).filter(edit => edit !== null)
   }
 
   private uncommentLine(info: LineInfo, lineText: string, collector: LineContextCollector): TextEdit | null {
