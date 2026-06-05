@@ -27,7 +27,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
       this.addOffense(
         `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
-        node.location,
+        node.tag_closing.location,
         {
           node,
           tagName,
