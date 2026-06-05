@@ -74,7 +74,8 @@ options: {action_view_helpers: true}
     │   │   │       │   │       └── tag_closing: "%>" (location: (5:9)-(5:11))
     │   │   │       │   │
     │   │   │       │   ├── is_void: false
-    │   │   │       │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │       │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │       │   └── escape_content: true
     │   │   │       │
     │   │   │       └── @ HTMLTextNode (location: (5:11)-(6:0))
     │   │   │           └── content: "\n"
@@ -130,7 +131,8 @@ options: {action_view_helpers: true}
     │   │           │   │       └── tag_closing: "%>" (location: (9:9)-(9:11))
     │   │           │   │
     │   │           │   ├── is_void: false
-    │   │           │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │           │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │           │   └── escape_content: true
     │   │           │
     │   │           └── @ HTMLTextNode (location: (9:11)-(10:0))
     │   │               └── content: "\n"

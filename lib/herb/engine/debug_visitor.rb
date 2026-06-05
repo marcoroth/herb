@@ -265,7 +265,7 @@ module Herb
         )
 
         Herb::AST::HTMLElementNode.new("HTMLElementNode", dummy_location, [], open_tag, tag_name_token, [erb_node], close_tag,
-                                       false, "Debug")
+                                       false, "Debug", false)
       end
 
       def determine_view_type

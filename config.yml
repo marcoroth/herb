@@ -617,6 +617,9 @@ nodes:
         - name: element_source
           type: element_source
 
+        - name: escape_content
+          type: boolean
+
     - name: HTMLConditionalElementNode
       fields:
         - name: condition

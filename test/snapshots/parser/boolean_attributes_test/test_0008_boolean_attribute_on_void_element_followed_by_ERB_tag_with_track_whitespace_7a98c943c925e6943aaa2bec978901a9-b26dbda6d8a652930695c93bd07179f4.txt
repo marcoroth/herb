@@ -32,7 +32,8 @@ options: {track_whitespace: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ ERBContentNode (location: (1:21)-(1:30))
         ├── tag_opening: "<%=" (location: (1:21)-(1:21))

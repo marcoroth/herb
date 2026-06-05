@@ -59,7 +59,8 @@ options: {track_whitespace: true}
     │   │       └── tag_closing: ">" (location: (2:27)-(2:28))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (2:28)-(3:0))
         └── content: "\n"

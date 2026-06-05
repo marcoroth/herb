@@ -83,4 +83,5 @@ input: "<div <% if odd? %> data-odd=true <% else %> data-odd=false <% end %>></d
         │       └── tag_closing: ">" (location: (1:74)-(1:75))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true
