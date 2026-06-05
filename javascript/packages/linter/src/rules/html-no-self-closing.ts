@@ -55,6 +55,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     return { action_view_helpers: true }
   }
 
+  private isIndentation(precedingNode: Node | null, node: Node): boolean {
+    return !!precedingNode &&
+      isWhitespaceNode(node) &&
+      isWhitespaceNode(precedingNode) &&
+      (precedingNode.value?.value?.includes("\n") || false)
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
     const visitor = new NoSelfClosingVisitor(this.ruleName, context)
 
@@ -76,8 +83,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (node.children && Array.isArray(node.children)) {
       const children = node.children as Node[]
 
-      if (children.length > 0 && isWhitespaceNode(children[children.length - 1])) {
-        node.children = children.slice(0, -1)
+      if (children.length > 0) {
+        const lastChild = children[children.length - 1]
+        const secondToLastChild = children[children.length - 2] ?? null
+
+        if (isWhitespaceNode(lastChild) && !this.isIndentation(secondToLastChild, lastChild)) {
+          node.children = children.slice(0, -1)
+        }
       }
     }
 
