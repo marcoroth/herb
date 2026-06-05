@@ -35,6 +35,7 @@ import {
   isHTMLAttributeValueNode,
   areAllOfType,
   filterLiteralNodes,
+  filterHTMLTextNodes,
   filterHTMLAttributeNodes
 } from "./node-type-guards.js"
 
@@ -150,6 +151,20 @@ export function getValidatableStaticContent(nodes: Node[]): string | null {
   }
 
   return filterLiteralNodes(nodes).map(node => node.content).join("")
+}
+
+/**
+ * Gets static text content from element body nodes (includes both LiteralNode and HTMLTextNode)
+ * Returns concatenated text content for validation, or null if contains output ERB
+ */
+export function getStaticBodyText(nodes: Node[]): string | null {
+  if (hasERBOutput(nodes)) {
+    return null
+  }
+
+  const textNodes = [...filterLiteralNodes(nodes), ...filterHTMLTextNodes(nodes)]
+
+  return textNodes.map(node => node.content).join("")
 }
 
 /**

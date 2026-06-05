@@ -76,4 +76,38 @@ describe("a11y-avoid-generic-link-text", () => {
 
     assertOffenses('<a href="github.com/about">  Learn more  </a>')
   })
+
+  test("fails for link_to with generic text", () => {
+    expectWarning('Avoid using generic link text such as "More". Screen reader users often navigate by links, and generic text like "Read more", "Learn more", "Click here", "More", "Link", or "Here" is not meaningful out of context.')
+
+    assertOffenses('<%= link_to "More", root_path %>')
+  })
+
+  test("fails for link_to with 'Click here'", () => {
+    expectWarning('Avoid using generic link text such as "Click here". Screen reader users often navigate by links, and generic text like "Read more", "Learn more", "Click here", "More", "Link", or "Here" is not meaningful out of context.')
+
+    assertOffenses('<%= link_to "Click here", "#" %>')
+  })
+
+  test("passes for link_to with descriptive text", () => {
+    expectNoOffenses('<%= link_to "Learn more about GitHub", root_path %>')
+  })
+
+  test("passes for link_to with aria-label string key", () => {
+    expectNoOffenses('<%= link_to "More", root_path, "aria-label": "Learn more about GitHub" %>')
+  })
+
+  test("passes for link_to with aria hash label", () => {
+    expectNoOffenses('<%= link_to "More", root_path, aria: { label: "Learn more about GitHub" } %>')
+  })
+
+  test("fails for link_to block form with generic text", () => {
+    expectWarning('Avoid using generic link text such as "Read more". Screen reader users often navigate by links, and generic text like "Read more", "Learn more", "Click here", "More", "Link", or "Here" is not meaningful out of context.')
+
+    assertOffenses('<%= link_to root_path do %>Read more<% end %>')
+  })
+
+  test("passes for link_to block form with descriptive text", () => {
+    expectNoOffenses('<%= link_to root_path do %>Read more about GitHub<% end %>')
+  })
 })

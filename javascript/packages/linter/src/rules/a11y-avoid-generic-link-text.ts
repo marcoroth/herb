@@ -1,9 +1,9 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { getTagLocalName, hasAttribute, isHTMLTextNode, isLiteralNode, isERBOutputNode } from "@herb-tools/core"
+import { getTagLocalName, hasAttribute, getStaticBodyText } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ParseResult, ParserOptions, Node } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 const BANNED_GENERIC_TEXT = [
   "read more",
@@ -43,7 +43,7 @@ class AvoidGenericLinkTextVisitor extends BaseRuleVisitor {
       return
     }
 
-    const textContent = this.getStaticTextContent(node)
+    const textContent = node.body ? getStaticBodyText(node.body) : ""
 
     if (textContent === null) {
       return
@@ -55,30 +55,6 @@ class AvoidGenericLinkTextVisitor extends BaseRuleVisitor {
         node.location,
       )
     }
-  }
-
-  private getStaticTextContent(node: HTMLElementNode): string | null {
-    if (!node.body || node.body.length === 0) {
-      return ""
-    }
-
-    return this.collectStaticText(node.body)
-  }
-
-  private collectStaticText(nodes: Node[]): string | null {
-    let text = ""
-
-    for (const child of nodes) {
-      if (isHTMLTextNode(child) || isLiteralNode(child)) {
-        text += child.content
-      } else if (isERBOutputNode(child)) {
-        return null
-      } else {
-        return null
-      }
-    }
-
-    return text
   }
 }
 
