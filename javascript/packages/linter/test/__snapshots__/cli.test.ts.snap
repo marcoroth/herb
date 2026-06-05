@@ -562,12 +562,12 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 [error] Use \`<img>\` instead of self-closing \`<img />\` for HTML compatibility. (html-no-self-closing) [Correctable]
 
-test/fixtures/multiple-rule-offenses.html.erb:4:2
+test/fixtures/multiple-rule-offenses.html.erb:4:7
 
       2 │ 
       3 │ <div id=test1 class='' data-value=bar>
   →   4 │   <img />
-        │   ~~~~~~~
+        │        ~~
       5 │   <a class="" class="">Link 1</a>
       6 │ </div>
 
