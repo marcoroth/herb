@@ -1,8 +1,8 @@
 import { describe, test } from "vitest"
-import { A11ySvgHasAccessibleTextRule } from "../../src/rules/a11y-svg-has-accessible-text.js"
+import { A11ySVGHasAccessibleTextRule } from "../../src/rules/a11y-svg-has-accessible-text.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(A11ySvgHasAccessibleTextRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(A11ySVGHasAccessibleTextRule)
 
 const offenseMessage = '`<svg>` must have accessible text. Set `aria-label`, or `aria-labelledby`, or nest a `<title>` element. If the `<svg>` is decorative, hide it with `aria-hidden="true"`.'
 

@@ -1,6 +1,9 @@
+export * from "./a11y-avoid-generic-link-text.js"
+export * from "./a11y-disabled-attribute.js"
 export * from "./a11y-no-accesskey-attribute.js"
 export * from "./a11y-no-aria-unsupported-elements.js"
 export * from "./a11y-no-autofocus-attribute.js"
+export * from "./a11y-no-redundant-image-alt.js"
 export * from "./a11y-svg-has-accessible-text.js"
 
 export * from "./rule-utils.js"
