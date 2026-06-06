@@ -18,22 +18,14 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
     if (tagName !== "svg") return
     if (this.hasAriaHidden(node)) return
 
-    if (this.hasAriaLabel(node) || this.hasAriaLabelledby(node) || this.hasDirectTitleChild(node)) {
-      return
-    }
+    if (hasAttribute(node, "aria-label")) return
+    if (hasAttribute(node, "aria-labelledby")) return
+    if (this.hasDirectTitleChild(node)) return
 
     this.addOffense(
       "`<svg>` must have accessible text. Set `aria-label`, or `aria-labelledby`, or nest a `<title>` element. If the `<svg>` is decorative, hide it with `aria-hidden=\"true\"`.",
       node.tag_name!.location,
     )
-  }
-
-  private hasAriaLabel(node: HTMLElementNode): boolean {
-    return hasAttribute(node, "aria-label")
-  }
-
-  private hasAriaLabelledby(node: HTMLElementNode): boolean {
-    return hasAttribute(node, "aria-labelledby")
   }
 
   private hasAriaHidden(node: HTMLElementNode): boolean {
@@ -46,20 +38,9 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   }
 
   private hasDirectTitleChild(node: HTMLElementNode): boolean {
-    if (!node.body) return false
-    if (node.body.length === 0) return false
+    const children = node.body ?? []
 
-    for (const child of node.body) {
-      if (isHTMLElementNode(child)) {
-        const childTagName = getTagLocalName(child)
-
-        if (childTagName === "title") {
-          return true
-        }
-      }
-    }
-
-    return false
+    return children.some(child => isHTMLElementNode(child) && getTagLocalName(child) === "title")
   }
 }
 
