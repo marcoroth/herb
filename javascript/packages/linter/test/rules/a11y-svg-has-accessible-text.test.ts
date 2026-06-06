@@ -51,4 +51,60 @@ describe("a11y-svg-has-accessible-text", () => {
   test("passes for svg with both aria-label and title", () => {
     expectNoOffenses('<svg aria-label="A circle"><title>A circle</title></svg>')
   })
+
+  test("passes for svg with dynamic aria-label", () => {
+    expectNoOffenses('<svg aria-label="<%= label %>"><path d="..." /></svg>')
+  })
+
+  test("passes for svg with dynamic aria-labelledby", () => {
+    expectNoOffenses('<svg aria-labelledby="<%= id %>"><path d="..." /></svg>')
+  })
+
+  test("passes for svg with dynamic aria-hidden=true", () => {
+    expectNoOffenses('<svg aria-hidden="<%= hidden %>"><path d="..." /></svg>')
+  })
+
+  test("passes for svg with ERB title child", () => {
+    expectNoOffenses('<svg><title><%= title_text %></title><path d="..." /></svg>')
+  })
+
+  test("fails for title nested inside a group", () => {
+    expectWarning(offenseMessage)
+    assertOffenses('<svg><g><title>Nested title</title></g></svg>')
+  })
+
+  test("passes for svg with aria-hidden boolean attribute", () => {
+    expectNoOffenses('<svg aria-hidden><path d="..." /></svg>')
+  })
+
+  test("fails for tag.svg without accessible text", () => {
+    expectWarning(offenseMessage)
+    assertOffenses('<%= tag.svg %>')
+  })
+
+  test("passes for tag.svg with aria-label", () => {
+    expectNoOffenses('<%= tag.svg aria_label: "Icon" %>')
+  })
+
+  test("passes for tag.svg with aria-hidden", () => {
+    expectNoOffenses('<%= tag.svg aria_hidden: true %>')
+  })
+
+  test("fails for content_tag :svg without accessible text", () => {
+    expectWarning(offenseMessage)
+    assertOffenses('<%= content_tag :svg %>')
+  })
+
+  test("passes for content_tag :svg with aria-label", () => {
+    expectNoOffenses('<%= content_tag :svg, nil, "aria-label": "Icon" %>')
+  })
+
+  test("passes for tag.svg with tag.title child", () => {
+    expectNoOffenses('<%= tag.svg do %><%= tag.title "Icon" %><% end %>')
+  })
+
+  test("fails for tag.svg with tag.title nested in tag.g", () => {
+    expectWarning(offenseMessage)
+    assertOffenses('<%= tag.svg do %><%= tag.g do %><%= tag.title "Icon" %><% end %><% end %>')
+  })
 })

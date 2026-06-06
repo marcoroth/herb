@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName, isHTMLElementNode } from "@herb-tools/core"
+import { hasAttribute, getStaticAttributeValue, getTagLocalName, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -39,12 +39,8 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   private hasAriaHidden(node: HTMLElementNode): boolean {
     if (!hasAttribute(node, "aria-hidden")) return false
 
-    const attributes = getAttributes(node)
-    const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
-
-    if (!ariaHiddenAttribute) return false
-
-    const value = getAttributeValue(ariaHiddenAttribute)
+    const value = getStaticAttributeValue(node, "aria-hidden")
+    if (value === null) return true
 
     return value === "true"
   }
