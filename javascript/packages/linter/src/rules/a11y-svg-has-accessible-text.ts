@@ -1,26 +1,22 @@
+import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
+
 import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName, isHTMLElementNode } from "@herb-tools/core"
 
-import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    this.checkSvgElement(node)
+    this.checkSVGElement(node)
     super.visitHTMLElementNode(node)
   }
 
-  private checkSvgElement(node: HTMLElementNode): void {
+  private checkSVGElement(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
-    if (tagName !== "svg") {
-      return
-    }
-
-    if (this.hasAriaHidden(node)) {
-      return
-    }
+    if (tagName !== "svg") return
+    if (this.hasAriaHidden(node)) return
 
     if (this.hasAriaLabel(node) || this.hasAriaLabelledby(node) || this.hasDirectTitleChild(node)) {
       return
@@ -33,37 +29,29 @@ class SvgHasAccessibleTextVisitor extends BaseRuleVisitor {
   }
 
   private hasAriaLabel(node: HTMLElementNode): boolean {
-    const openTag = node.open_tag as HTMLOpenTagNode
-    return hasAttribute(openTag, "aria-label")
+    return hasAttribute(node, "aria-label")
   }
 
   private hasAriaLabelledby(node: HTMLElementNode): boolean {
-    const openTag = node.open_tag as HTMLOpenTagNode
-    return hasAttribute(openTag, "aria-labelledby")
+    return hasAttribute(node, "aria-labelledby")
   }
 
   private hasAriaHidden(node: HTMLElementNode): boolean {
-    const openTag = node.open_tag as HTMLOpenTagNode
-    if (!hasAttribute(openTag, "aria-hidden")) {
-      return false
-    }
+    if (!hasAttribute(node, "aria-hidden")) return false
 
-    const attributes = getAttributes(openTag)
-    const ariaHiddenAttr = findAttributeByName(attributes, "aria-hidden")
+    const attributes = getAttributes(node)
+    const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
 
-    if (!ariaHiddenAttr) {
-      return false
-    }
+    if (!ariaHiddenAttribute) return false
 
-    const value = getAttributeValue(ariaHiddenAttr)
+    const value = getAttributeValue(ariaHiddenAttribute)
 
     return value === "true"
   }
 
   private hasDirectTitleChild(node: HTMLElementNode): boolean {
-    if (!node.body || node.body.length === 0) {
-      return false
-    }
+    if (!node.body) return false
+    if (node.body.length === 0) return false
 
     for (const child of node.body) {
       if (isHTMLElementNode(child)) {
@@ -91,12 +79,16 @@ export class A11ySVGHasAccessibleTextRule extends ParserRule {
   }
 
   get parserOptions(): Partial<ParserOptions> {
-    return { action_view_helpers: true }
+    return {
+      action_view_helpers: true
+    }
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new SvgHasAccessibleTextVisitor(this.ruleName, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
   }
 }
