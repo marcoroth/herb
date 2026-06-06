@@ -29,6 +29,7 @@ import {
   isHTMLCommentNode,
   isHTMLElementNode,
   isHTMLOpenTagNode,
+  isERBOpenTagNode,
   isHTMLTextNode,
   isWhitespaceNode,
   isHTMLAttributeNameNode,
@@ -279,12 +280,26 @@ export function getOpenTag(node: HTMLElementNode | HTMLOpenTagNode | null | unde
 }
 
 /**
+ * Gets the children array from an element's open tag, regardless of whether
+ * it's an HTMLOpenTagNode or ERBOpenTagNode (used by action view helpers).
+ */
+function getOpenTagChildren(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): Node[] {
+  if (!node) return []
+  if (isHTMLOpenTagNode(node)) return node.children
+
+  if (isHTMLElementNode(node) && node.open_tag) {
+    if (isHTMLOpenTagNode(node.open_tag)) return node.open_tag.children
+    if (isERBOpenTagNode(node.open_tag)) return node.open_tag.children
+  }
+
+  return []
+}
+
+/**
  * Gets attributes from an HTMLElementNode or HTMLOpenTagNode
  */
 export function getAttributes(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLAttributeNode[] {
-  const openTag = getOpenTag(node)
-
-  return openTag ? filterHTMLAttributeNodes(openTag.children) : []
+  return filterHTMLAttributeNodes(getOpenTagChildren(node))
 }
 
 /**
