@@ -13,6 +13,10 @@ describe("a11y-avoid-generic-link-text", () => {
     expectNoOffenses('<a aria-label="Learn more about GitHub" href="github.com/about">Learn more</a>')
   })
 
+  test("passes for link with dynamic aria-label", () => {
+    expectNoOffenses('<a aria-label="<%= label_text %>" href="github.com/about">Learn more</a>')
+  })
+
   test("passes for link with aria-labelledby", () => {
     expectNoOffenses('<a aria-labelledby="desc" href="github.com/about">Learn more</a>')
   })
@@ -99,6 +103,10 @@ describe("a11y-avoid-generic-link-text", () => {
 
   test("passes for link_to with aria hash label", () => {
     expectNoOffenses('<%= link_to "More", root_path, aria: { label: "Learn more about GitHub" } %>')
+  })
+
+  test("passes for link_to with dynamic aria-label", () => {
+    expectNoOffenses('<%= link_to "More", root_path, aria: { label: label_text } %>')
   })
 
   test("fails for link_to block form with generic text", () => {
