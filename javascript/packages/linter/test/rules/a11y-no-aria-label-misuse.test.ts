@@ -4,11 +4,9 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(A11yNoAriaLabelMisuseRule)
 
-const MESSAGE =
-  "`aria-label` and `aria-labelledby` usage are only reliably supported on interactive elements and a subset of ARIA roles."
+const MESSAGE = "`aria-label` and `aria-labelledby` usage are only reliably supported on interactive elements and a subset of ARIA roles."
 
 describe("a11y-no-aria-label-misuse", () => {
-  // Correct usage: interactive elements
   test("passes for button with aria-label", () => {
     expectNoOffenses('<button aria-label="Close"><svg></svg></button>')
   })
@@ -29,7 +27,6 @@ describe("a11y-no-aria-label-misuse", () => {
     expectNoOffenses('<textarea aria-label="Message"></textarea>')
   })
 
-  // Correct usage: elements without aria-label
   test("passes for span without aria-label", () => {
     expectNoOffenses("<span>Hello</span>")
   })
@@ -42,7 +39,6 @@ describe("a11y-no-aria-label-misuse", () => {
     expectNoOffenses("<h1>Page title</h1>")
   })
 
-  // Correct usage: generic elements with permitted role
   test("passes for div with role=dialog and aria-labelledby", () => {
     expectNoOffenses('<div role="dialog" aria-labelledby="dialogHeading"><h1 id="dialogHeading">Heading</h1></div>')
   })
@@ -55,7 +51,6 @@ describe("a11y-no-aria-label-misuse", () => {
     expectNoOffenses('<div role="alert" aria-label="Warning">Warning message</div>')
   })
 
-  // Incorrect usage: name-restricted elements
   test("fails for h1 with aria-label", () => {
     expectWarning(MESSAGE)
     assertOffenses('<h1 aria-label="Override">Page title</h1>')
@@ -111,7 +106,6 @@ describe("a11y-no-aria-label-misuse", () => {
     assertOffenses('<code aria-label="Override">Code</code>')
   })
 
-  // Incorrect usage: generic elements without role
   test("fails for span with aria-label and no role", () => {
     expectWarning(MESSAGE)
     assertOffenses('<span aria-label="Tooltip">Text</span>')
@@ -122,7 +116,6 @@ describe("a11y-no-aria-label-misuse", () => {
     assertOffenses('<div aria-labelledby="heading1">Content</div>')
   })
 
-  // Incorrect usage: generic elements with prohibited role
   test("fails for div with role=none and aria-label", () => {
     expectWarning(MESSAGE)
     assertOffenses('<div role="none" aria-label="Hidden">Content</div>')
@@ -136,5 +129,53 @@ describe("a11y-no-aria-label-misuse", () => {
   test("fails for div with role=paragraph and aria-label", () => {
     expectWarning(MESSAGE)
     assertOffenses('<div role="paragraph" aria-label="Override">Content</div>')
+  })
+
+  test("fails for p with aria-labelledby", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<p aria-labelledby="ref">Paragraph</p>')
+  })
+
+  test("fails for span with aria-labelledby and no role", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<span aria-labelledby="ref">Text</span>')
+  })
+
+  test("passes for div with dynamic role and aria-label", () => {
+    expectNoOffenses('<div role="<%= role %>" aria-label="Label">Content</div>')
+  })
+
+  test("passes for nav with aria-label", () => {
+    expectNoOffenses('<nav aria-label="Main navigation"><a href="/">Home</a></nav>')
+  })
+
+  test("passes for section with aria-labelledby", () => {
+    expectNoOffenses('<section aria-labelledby="heading"><h2 id="heading">Title</h2></section>')
+  })
+
+  test("passes for form with aria-label", () => {
+    expectNoOffenses('<form aria-label="Search form"><input type="text" /></form>')
+  })
+
+  test("passes for img with aria-label", () => {
+    expectNoOffenses('<img aria-label="Logo" src="logo.png" />')
+  })
+
+  test("fails for tag.h1 with aria-label", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<%= tag.h1 aria_label: "Override" %>')
+  })
+
+  test("fails for tag.span with aria-label and no role", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<%= tag.span aria_label: "Tooltip" %>')
+  })
+
+  test("passes for tag.div with permitted role and aria-label", () => {
+    expectNoOffenses('<%= tag.div role: "dialog", aria_label: "Modal" %>')
+  })
+
+  test("passes for tag.button with aria-label", () => {
+    expectNoOffenses('<%= tag.button aria_label: "Close" %>')
   })
 })
