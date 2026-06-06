@@ -16,6 +16,7 @@ const ROLES_WHICH_CANNOT_BE_NAMED = [
   "definition",
   "deletion",
   "emphasis",
+  "generic",
   "insertion",
   "mark",
   "none",
@@ -27,6 +28,7 @@ const ROLES_WHICH_CANNOT_BE_NAMED = [
   "superscript",
   "term",
   "time",
+  "tooltip",
 ]
 
 const MESSAGE = "`aria-label` and `aria-labelledby` usage are only reliably supported on interactive elements and a subset of ARIA roles."

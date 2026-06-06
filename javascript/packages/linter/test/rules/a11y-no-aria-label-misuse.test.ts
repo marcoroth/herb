@@ -178,4 +178,28 @@ describe("a11y-no-aria-label-misuse", () => {
   test("passes for tag.button with aria-label", () => {
     expectNoOffenses('<%= tag.button aria_label: "Close" %>')
   })
+
+  test("fails for div with role=generic and aria-label", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<div role="generic" aria-label="Label">Content</div>')
+  })
+
+  test("fails for span with role=tooltip and aria-label", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<span role="tooltip" aria-label="Hint">Content</span>')
+  })
+
+  test("passes for span with role=img and aria-label", () => {
+    expectNoOffenses('<span role="img" aria-label="Warning"></span>')
+  })
+
+  test("reports offense for both aria-label and aria-labelledby on same element", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<span aria-label="Tooltip" aria-labelledby="tooltip-label"></span>')
+  })
+
+  test("fails for hard-banned element even with dynamic role", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<p role="<%= role_name %>" aria-label="Description">Text</p>')
+  })
 })
