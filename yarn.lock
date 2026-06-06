@@ -2725,7 +2725,7 @@
     p-queue "^9.1.0"
     text-table "^0.2.0"
 
-"@yeoman/conflicter@^4.0.1":
+"@yeoman/conflicter@^4.1.0":
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@yeoman/conflicter/-/conflicter-4.1.0.tgz#ebc339af505936fab1340105ed2b2e26e332cd13"
   integrity sha512-Py62rJdWHf1zMpf801Ql7kg+sbUeVmvfmZf++mgA1SOk/uByLIfcXUMDzQPSHkW4Y7I2yVWLKZATRGjoczXVFQ==
@@ -2743,24 +2743,19 @@
     slash "^5.1.0"
     textextensions "^6.11.0"
 
-"@yeoman/namespace@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@yeoman/namespace/-/namespace-1.0.1.tgz#8034277c4a62bdf41e05e2d890bc674bc320eb99"
-  integrity sha512-XGdYL0HCoPvrzW7T8bxD6RbCY/B8uvR2jpOzJc/yEwTueKHwoVhjSLjVXkokQAO0LNl8nQFLVZ1aKfr2eFWZeA==
-
 "@yeoman/namespace@^2.1.0":
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/@yeoman/namespace/-/namespace-2.1.0.tgz#63d8e8524227f9603a386de8e7e9387a2b170025"
   integrity sha512-/BxsZlALPRp34juAzzh9QUr2hR9w9o+dBSw8sF/iv7NfUU/A/QI0xOyVtQJz2uCPuvtY6nkGDxYxZoKI/lnFQg==
 
-"@yeoman/transform@^2.1.0", "@yeoman/transform@^2.1.1":
+"@yeoman/transform@^2.1.1":
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/@yeoman/transform/-/transform-2.1.2.tgz#2e6ad351fbd9e963004ae9003e3168fe334d11ea"
   integrity sha512-LdPNm5Moc+Z8l2YeQ0IzsybXoV531o7RmGJB8lpFr8SjtqqGkT2bZYlS1LftPpCcPJ//yE0MbI/fPGh1WWlabg==
   dependencies:
     minimatch "^9.0.9"
 
-"@yeoman/types@^1.10.3":
+"@yeoman/types@^1.11.0":
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/@yeoman/types/-/types-1.11.1.tgz#00e9a3559e697d6f72d30fd6f3d7c782cfc1cbda"
   integrity sha512-27CI5hHQAHfq8ohYILmLNzClbdzBJzu+ny9AzUVV6naJO0l4/+t+67QDKlwQvt+TW3oE5j74I/Mh4Kn14rsVXA==
@@ -6242,7 +6237,7 @@ medium-zoom@^1.1.0:
   resolved "https://registry.yarnpkg.com/medium-zoom/-/medium-zoom-1.1.0.tgz#6efb6bbda861a02064ee71a2617a8dc4381ecc71"
   integrity sha512-ewyDsp7k4InCUp3jRmwHBRFGyjBimKps/AJLjRSox+2q/2H4p/PNpQf+pwONWlJiOudkBXtbdmVbFjqyybfTmQ==
 
-mem-fs-editor@^12.0.3, mem-fs-editor@^12.0.4:
+mem-fs-editor@^12.0.4:
   version "12.0.4"
   resolved "https://registry.yarnpkg.com/mem-fs-editor/-/mem-fs-editor-12.0.4.tgz#234bcb93109be2e36b45930a20e83a86a547ee9a"
   integrity sha512-gc8b4VlisaGp5W+ot2f4Xc8jUgKnMn5UR2mKsdm8UdbESYCdSiQKqioktPu8gJ0Uxd8gV/m/M16Pp5n1Ge8pjA==
@@ -10273,16 +10268,16 @@ yazl@^2.2.2:
   dependencies:
     buffer-crc32 "~0.2.3"
 
-yeoman-environment@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/yeoman-environment/-/yeoman-environment-6.0.1.tgz#fef33af4eedd77604155a9b219cfce78bee6079f"
-  integrity sha512-038Feg5aE77uOr7XKW5HYIV3Issw4aJBWAml6ndQotDeghomLuiFJxrZNoJohV+TJdhBy4KzlSsDB0gb4u3wSQ==
+yeoman-environment@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/yeoman-environment/-/yeoman-environment-6.1.0.tgz#751cc8348587e48d919a806b7e4c25c025a4b0ee"
+  integrity sha512-QSKMfrSx3js9fxbMDBa+sZG0ctF0NDxcO6VA5BnrWdo6wqhdalT2IUU/ZrNakQLZQ76E3B6b0lXHKEA7ivsWxA==
   dependencies:
     "@yeoman/adapter" "^4.0.2"
-    "@yeoman/conflicter" "^4.0.1"
-    "@yeoman/namespace" "^1.0.1"
-    "@yeoman/transform" "^2.1.0"
-    "@yeoman/types" "^1.10.3"
+    "@yeoman/conflicter" "^4.1.0"
+    "@yeoman/namespace" "^2.1.0"
+    "@yeoman/transform" "^2.1.1"
+    "@yeoman/types" "^1.11.0"
     arrify "^3.0.0"
     chalk "^5.6.2"
     commander "^14.0.3"
@@ -10294,7 +10289,7 @@ yeoman-environment@^6.0.1:
     locate-path "^8.0.0"
     lodash-es "^4.18.1"
     mem-fs "^4.1.4"
-    mem-fs-editor "^12.0.3"
+    mem-fs-editor "^12.0.4"
     semver "^7.7.4"
     slash "^5.1.0"
     untildify "^6.0.0"
