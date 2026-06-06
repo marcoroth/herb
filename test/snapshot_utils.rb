@@ -355,6 +355,7 @@ module SnapshotUtils
 
   def compare_with_actionview_erubi_evaluated(source, herb_result, locals, _options, enforce_equality: false)
     require "action_view"
+    require_erubi_silently
 
     begin
       erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
@@ -489,6 +490,7 @@ module SnapshotUtils
 
   def evaluate_actionview_source(source, locals)
     require "action_view"
+    require_erubi_silently
 
     erubi_engine = ActionView::Template::Handlers::ERB::Erubi.new(source, bufvar: "@output_buffer")
 
