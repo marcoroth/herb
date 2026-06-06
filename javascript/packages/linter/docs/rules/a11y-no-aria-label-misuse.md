@@ -10,7 +10,7 @@ Enforce that `aria-label` and `aria-labelledby` are only used on interactive ele
 
 `aria-label` and `aria-labelledby` support is only guaranteed on interactive elements like `button` or `a`, or on static elements like `div` and `span` with a permitted `role`. Using these attributes on non-interactive elements without a role, or on elements like headings, can lead to unexpected behavior with assistive technologies.
 
-This rule will allow `aria-label` and `aria-labelledby` usage on `div` and `span` elements if set to a role other than the ones listed in [W3C: roles which cannot be named](https://w3c.github.io/aria/#namefromprohibited). This rule will never permit usage on `h1`–`h6`, `strong`, `i`, `p`, `b`, or `code`.
+This rule will allow `aria-label` and `aria-labelledby` usage on `div` and `span` elements if set to a role other than the ones listed in [W3C: roles which cannot be named](https://w3c.github.io/aria/#namefromprohibited). This rule will never permit usage on `h1`–`h6`, `strong`, `em`, `i`, `p`, `b`, or `code`.
 
 ## Examples
 

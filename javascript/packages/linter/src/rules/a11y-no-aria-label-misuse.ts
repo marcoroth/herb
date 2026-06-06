@@ -7,7 +7,7 @@ import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/co
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 const GENERIC_ELEMENTS = ["span", "div"]
-const NAME_RESTRICTED_ELEMENTS = ["h1", "h2", "h3", "h4", "h5", "h6", "strong", "i", "p", "b", "code"]
+const NAME_RESTRICTED_ELEMENTS = ["h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "i", "p", "b", "code"]
 
 // https://w3c.github.io/aria/#namefromprohibited
 const ROLES_WHICH_CANNOT_BE_NAMED = [

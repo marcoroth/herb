@@ -202,4 +202,9 @@ describe("a11y-no-aria-label-misuse", () => {
     expectWarning(MESSAGE)
     assertOffenses('<p role="<%= role_name %>" aria-label="Description">Text</p>')
   })
+
+  test("fails for em with aria-label", () => {
+    expectWarning(MESSAGE)
+    assertOffenses('<em aria-label="Override">Emphasis text</em>')
+  })
 })
