@@ -1,5 +1,6 @@
 import type { RuleClass } from "./types.js"
 
+import { A11yAvoidGenericLinkTextRule } from "./rules/a11y-avoid-generic-link-text.js"
 import { A11yDisabledAttributeRule } from "./rules/a11y-disabled-attribute.js"
 import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
@@ -105,6 +106,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
+  A11yAvoidGenericLinkTextRule,
   A11yDisabledAttributeRule,
   A11yNoAccesskeyAttributeRule,
   A11yNoAriaUnsupportedElementsRule,
