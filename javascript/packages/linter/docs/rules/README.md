@@ -6,12 +6,14 @@ This page contains documentation for all Herb Linter rules.
 
 #### Accessibility
 
+- [`a11y-avoid-generic-link-text`](./a11y-avoid-generic-link-text.md) - Avoid generic link text like "Click here" or "Read more"
 - [`a11y-disabled-attribute`](./a11y-disabled-attribute.md) - Prevent usage of the `disabled` attribute on unsupported elements
 - [`a11y-no-accesskey-attribute`](./a11y-no-accesskey-attribute.md) - Prevent usage of the `accesskey` attribute
+- [`a11y-no-aria-label-misuse`](./a11y-no-aria-label-misuse.md) - Prevent `aria-label` and `aria-labelledby` on non-interactive elements
 - [`a11y-no-aria-unsupported-elements`](./a11y-no-aria-unsupported-elements.md) - Prevent usage of ARIA on unsupported elements
 - [`a11y-no-autofocus-attribute`](./a11y-no-autofocus-attribute.md) - Prevent usage of the `autofocus` attribute
 - [`a11y-no-redundant-image-alt`](./a11y-no-redundant-image-alt.md) - Prevent redundant words in `<img>` `alt` attributes
-
+- [`a11y-svg-has-accessible-text`](./a11y-svg-has-accessible-text.md) - Require accessible text on `<svg>` elements
 
 #### Action View
 

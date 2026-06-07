@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0013_link_to with aria hash label"
+input: "{source: \"<%= link_to \\\"More\\\", \\\"#\\\", aria: { label: \\\"Learn more about GitHub\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<a aria-label="Learn more about GitHub" href="#">More</a>
