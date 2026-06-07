@@ -227,6 +227,13 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 
   /**
+   * All ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestors(): readonly HTMLElementNode[] {
+    return this.elementStack
+  }
+
+  /**
    * The current nesting depth (number of ancestor HTML elements).
    */
   protected get elementDepth(): number {

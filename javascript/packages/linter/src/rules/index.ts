@@ -1,5 +1,6 @@
 export * from "./a11y-avoid-generic-link-text.js"
 export * from "./a11y-disabled-attribute.js"
+export * from "./a11y-nested-interactive-elements.js"
 export * from "./a11y-no-accesskey-attribute.js"
 export * from "./a11y-no-aria-label-misuse.js"
 export * from "./a11y-no-aria-unsupported-elements.js"

@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { A11yAvoidGenericLinkTextRule } from "./rules/a11y-avoid-generic-link-text.js"
 import { A11yDisabledAttributeRule } from "./rules/a11y-disabled-attribute.js"
+import { A11yNestedInteractiveElementsRule } from "./rules/a11y-nested-interactive-elements.js"
 import { A11yNoAccesskeyAttributeRule } from "./rules/a11y-no-accesskey-attribute.js"
 import { A11yNoAriaLabelMisuseRule } from "./rules/a11y-no-aria-label-misuse.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
@@ -110,6 +111,7 @@ import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.
 export const rules: RuleClass[] = [
   A11yAvoidGenericLinkTextRule,
   A11yDisabledAttributeRule,
+  A11yNestedInteractiveElementsRule,
   A11yNoAccesskeyAttributeRule,
   A11yNoAriaLabelMisuseRule,
   A11yNoAriaUnsupportedElementsRule,
