@@ -60,5 +60,6 @@ Nesting interactive elements produces invalid HTML, and assistive technologies, 
 ## References
 
 - [erblint-github: NestedInteractiveElements](https://github.com/github/erblint-github/blob/main/lib/erblint-github/linters/github/accessibility/nested_interactive_elements.rb)
-- [Deque University: nested-interactive](https://dequeuniversity.com/rules/axe/4.2/nested-interactive)
+- [erblint-github docs](https://github.com/github/erblint-github/blob/main/docs/rules/accessibility/nested-interactive-elements.md)
+- [Deque University: nested-interactive](https://dequeuniversity.com/rules/axe/4.8/nested-interactive)
 - [Accessibility Insights](https://accessibilityinsights.io/info-examples/web/nested-interactive/)

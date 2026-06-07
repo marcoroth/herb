@@ -38,16 +38,16 @@ class NestedInteractiveElementsVisitor extends ElementStackVisitor {
   }
 
   private findInteractiveAncestor(childTagName: string): string | null {
-    const ancestor = this.currentElement
+    for (const ancestor of this.ancestors) {
+      const ancestorTag = getTagLocalName(ancestor)
 
-    if (!ancestor) return null
+      if (!ancestorTag || !INTERACTIVE_ELEMENTS.has(ancestorTag)) continue
+      if (ancestorTag === "summary" && childTagName === "a") continue
 
-    const ancestorTag = getTagLocalName(ancestor)
-    if (!ancestorTag || !INTERACTIVE_ELEMENTS.has(ancestorTag)) return null
+      return ancestorTag
+    }
 
-    if (ancestorTag === "summary" && childTagName === "a") return null
-
-    return ancestorTag
+    return null
   }
 }
 
