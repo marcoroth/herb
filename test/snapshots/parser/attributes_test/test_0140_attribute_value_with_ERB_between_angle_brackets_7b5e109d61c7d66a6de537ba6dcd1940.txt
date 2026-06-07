@@ -53,4 +53,5 @@ input: "<div data-html=\"<<%= tag %>>\"></div>"
         │       └── tag_closing: ">" (location: (1:35)-(1:36))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

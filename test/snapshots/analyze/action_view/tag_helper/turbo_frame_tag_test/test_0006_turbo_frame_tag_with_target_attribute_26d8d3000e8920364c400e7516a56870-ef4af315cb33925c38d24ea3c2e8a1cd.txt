@@ -62,7 +62,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_name: "turbo-frame" (location: (1:4)-(1:19))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "Turbo::FramesHelper#turbo_frame_tag"
+    │   ├── element_source: "Turbo::FramesHelper#turbo_frame_tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:51)-(2:0))
         └── content: "\n"

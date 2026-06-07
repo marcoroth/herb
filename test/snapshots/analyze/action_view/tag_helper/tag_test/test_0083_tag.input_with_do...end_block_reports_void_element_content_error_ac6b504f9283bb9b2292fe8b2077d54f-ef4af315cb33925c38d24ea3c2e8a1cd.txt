@@ -31,7 +31,8 @@ options: {action_view_helpers: true}
     │   │
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (3:9)-(4:0))
         └── content: "\n"

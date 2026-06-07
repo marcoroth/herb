@@ -74,7 +74,8 @@ options: {render_nodes: true}
     │   │   │   │       │       └── tag_closing: ">" (location: (2:26)-(2:27))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── element_source: "HTML"
+    │   │   │   │       ├── element_source: "HTML"
+    │   │   │   │       └── escape_content: true
     │   │   │   │
     │   │   │   ├── close_tag:
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:27)-(2:32))
@@ -84,7 +85,8 @@ options: {render_nodes: true}
     │   │   │   │       └── tag_closing: ">" (location: (2:31)-(2:32))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:32)-(3:0))
     │   │       └── content: "\n"
