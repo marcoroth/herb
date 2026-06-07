@@ -364,3 +364,6 @@ jobs:
                 body: updatedComment
               });
             }
+
+      - run: npx nx fix-ci
+        if: always()
