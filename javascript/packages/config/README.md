@@ -28,11 +28,11 @@ bun add @herb-tools/config
 
 ## Usage
 
-### `.herb.yml`
+### `.herb.yaml`
 
-The configuration is stored in a `.herb.yml` file in the project root:
+The configuration is stored in a `.herb.yaml` file in the project root:
 
-```yaml [.herb.yml]
+```yaml [.herb.yaml]
 version: 0.10.1
 
 linter:
@@ -51,8 +51,8 @@ formatter:
 
 The Herb tools follow this configuration priority:
 
-1. **Project configuration** (`.herb.yml` file) - Highest priority
+1. **Project configuration** (`.herb.yaml` file) - Highest priority
 2. **Editor settings** (VS Code workspace/user settings)
 3. **Default settings** - Fallback when no other configuration exists
 
-This allows teams to share consistent settings via `.herb.yml` while still allowing individual developer preferences when no project configuration exists.
+This allows teams to share consistent settings via `.herb.yaml` while still allowing individual developer preferences when no project configuration exists.

@@ -36,7 +36,7 @@ The dev server consists of two parts:
 
   Herb:      0.10.1
   Project:   /path/to/project
-  Config:    .herb.yml
+  Config:    .herb.yaml
   Files:     453 templates indexed
   WebSocket: ws://localhost:8592
 

@@ -54,7 +54,7 @@
           "type": "boolean",
           "default": true,
           "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
-          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns.\n\n**Note**: This is a personal default. If a `.herb.yaml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.linter.fixOnSave": {
           "scope": "resource",
@@ -68,21 +68,21 @@
           "type": "boolean",
           "default": false,
           "description": "Enable/disable document formatting using the Herb Formatter (Experimental Preview). WARNING: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.",
-          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.\n\n**Note**: This is a personal default. If a `.herb.yaml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.formatter.indentWidth": {
           "scope": "resource",
           "type": "number",
           "default": 2,
           "description": "Number of spaces for each indentation level.",
-          "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+          "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yaml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
           "type": "number",
           "default": 80,
           "description": "Maximum line length before wrapping.",
-          "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+          "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yaml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -259,7 +259,7 @@
       },
       {
         "view": "herbConfiguration",
-        "contents": "Create a Herb configuration file to share Herb settings with your team.\n\n[Create .herb.yml](command:herb.createConfig)",
+        "contents": "Create a Herb configuration file to share Herb settings with your team.\n\n[Create .herb.yaml](command:herb.createConfig)",
         "when": "!herb.hasProjectConfig"
       }
     ]

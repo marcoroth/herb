@@ -163,7 +163,7 @@ export class SummaryReporter {
 
     console.log("")
     console.log(` ${colorize(`New rules available:`, "bold")}`)
-    console.log(`  Your ${colorize(".herb.yml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
+    console.log(`  Your ${colorize(".herb.yaml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
 
     if (configPath) {
       console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)

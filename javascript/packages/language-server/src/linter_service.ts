@@ -11,7 +11,7 @@ import { Project } from "./project"
 import { lintToDignosticSeverity, lintToDignosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
+const OPEN_CONFIG_ACTION = 'Open .herb.yaml'
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
@@ -105,7 +105,7 @@ export class LinterService {
     if (this.settings.hasShowDocumentCapability) {
       this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
         if (action?.title === OPEN_CONFIG_ACTION) {
-          const configPath = `${this.project.projectPath}/.herb.yml`
+          const configPath = Config.configPathFromProjectPath(this.project.projectPath)
           this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
         }
       })
@@ -117,7 +117,7 @@ export class LinterService {
   private shouldLintFile(uri: string): boolean {
     const filePath = uri.replace(/^file:\/\//, '')
 
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
 
     const config = this.settings.projectConfig
     if (!config) return true

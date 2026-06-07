@@ -50,7 +50,7 @@ In addition to Erubi options, `Herb::Engine` supports:
 
 ## Validators
 
-The engine runs validators on parsed templates to catch errors before compilation. Each validator can be enabled or disabled via [`.herb.yml` configuration](/configuration#engine-configuration) or per-instance overrides.
+The engine runs validators on parsed templates to catch errors before compilation. Each validator can be enabled or disabled via [`.herb.yaml` configuration](/configuration#engine-configuration) or per-instance overrides.
 
 | Validator | Description |
 |---|---|
@@ -63,7 +63,7 @@ Disable security validator for this template:
 Herb::Engine.new(source, validators: { security: false })
 ```
 
-See [Engine Configuration](/configuration#engine-configuration) for `.herb.yml` configuration.
+See [Engine Configuration](/configuration#engine-configuration) for `.herb.yaml` configuration.
 
 ## Validation Mode
 
@@ -77,4 +77,4 @@ Controls how the engine presents validation results:
 
 [ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It uses `validation_mode: :overlay` so validation errors appear as in-browser overlays during development instead of raising exceptions.
 
-Validator settings from `.herb.yml` are respected automatically — no ReActionView-specific configuration needed.
+Validator settings from `.herb.yaml` are respected automatically — no ReActionView-specific configuration needed.

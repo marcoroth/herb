@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
-import * as path from "path"
 import { promises as fs } from "fs"
+import { Config } from "@herb-tools/config"
 
 export interface EnvironmentInfo {
   extensionVersion: string
@@ -44,7 +44,7 @@ export async function getHerbSettings(): Promise<PersonalHerbSettings> {
   try {
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     if (workspaceRoot) {
-      const configPath = path.join(workspaceRoot, '.herb.yml')
+      const configPath = Config.configPathFromProjectPath(workspaceRoot)
       projectConfig = await fs.readFile(configPath, 'utf8')
     }
   } catch (_error) {
