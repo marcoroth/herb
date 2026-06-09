@@ -57,6 +57,10 @@ Style/AccessorGrouping:
 Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: diff_comma
 
+Metrics/BlockNesting:
+  Exclude:
+    - lib/herb/cli.rb
+
 Metrics/CyclomaticComplexity:
   Max: 15
   Exclude:
