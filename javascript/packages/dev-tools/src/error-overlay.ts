@@ -215,15 +215,9 @@ export class ErrorOverlay {
     this.detectValidationErrors();
     scanForOptimizationMismatches();
 
-    const hasParserErrors = document.querySelector('.herb-parser-error-overlay') !== null;
-
     if (this.getTotalErrorCount() > 0) {
       this.createOverlay();
       this.setupToggleHandler();
-    } else if (hasParserErrors) {
-      console.log('[ErrorOverlay] Parser error overlay already displayed');
-    } else {
-      console.log('[ErrorOverlay] No errors found, not creating overlay');
     }
   }
 
