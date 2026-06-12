@@ -2,7 +2,10 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "npmScope": "herb-tools",
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
@@ -18,26 +21,34 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build"],
+        "cacheableOperations": [
+          "build"
+        ],
         "packageManager": "yarn"
       }
     }
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "options": {
         "parallel": false
       }
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "clean": {
       "cache": false,
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx nx reset"],
+        "commands": [
+          "npx nx reset"
+        ],
         "parallel": true
       }
     }
@@ -64,5 +75,6 @@
       }
     }
   },
-  "analytics": false
+  "analytics": false,
+  "nxCloudId": "6a23d0b57587613bc81804d3"
 }
