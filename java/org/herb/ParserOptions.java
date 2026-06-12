@@ -14,6 +14,7 @@ public class ParserOptions {
   private boolean dotNotationTags = false;
   private boolean html = true;
   private int timeout = 1000;
+  private Integer maxErrors = 25;
 
   public ParserOptions() {}
 
@@ -132,6 +133,15 @@ public class ParserOptions {
 
   public int getTimeout() {
     return timeout;
+  }
+
+  public ParserOptions maxErrors(Integer value) {
+    this.maxErrors = value;
+    return this;
+  }
+
+  public Integer getMaxErrors() {
+    return maxErrors;
   }
 
   public static ParserOptions create() {

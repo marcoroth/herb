@@ -45,6 +45,9 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   if (options != NULL) { parser_options = *options; }
 
+  uint32_t error_count = 0;
+  parser_options.error_count = &error_count;
+
   parser_options_set_deadline(&parser_options);
 
   if (parser_options.start_line > 0) {

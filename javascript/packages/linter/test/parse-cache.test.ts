@@ -79,6 +79,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -100,6 +101,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -121,6 +123,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -142,6 +145,7 @@ describe("ParseCache", () => {
         transform_conditionals: false,
         html: true,
         timeout: 1000,
+        max_errors: 25,
       })
     })
   })

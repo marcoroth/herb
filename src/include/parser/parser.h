@@ -35,6 +35,8 @@ typedef struct PARSER_OPTIONS_STRUCT {
   uint32_t start_line;
   uint32_t start_column;
   uint32_t timeout_ms;
+  uint32_t max_errors;
+  uint32_t* error_count;
   uint64_t deadline_ms;
 } parser_options_T;
 
@@ -50,6 +52,17 @@ static inline bool parser_options_past_deadline(const parser_options_T* options)
   if (options == NULL || options->timeout_ms == 0) { return false; }
 
   return hb_monotonic_ms() >= options->deadline_ms;
+}
+
+static inline bool parser_options_errors_exceeded(const parser_options_T* options) {
+  if (options == NULL || options->error_count == NULL) { return false; }
+  if (options->max_errors == 0) { return false; }
+
+  return *options->error_count >= options->max_errors;
+}
+
+static inline void parser_options_increment_error_count(const parser_options_T* options) {
+  if (options != NULL && options->error_count != NULL) { (*options->error_count)++; }
 }
 
 static inline void parser_options_set_deadline(parser_options_T* options) {

@@ -12,6 +12,7 @@ export interface ParseOptions {
   dot_notation_tags?: boolean
   html?: boolean
   timeout?: number
+  max_errors?: number | null
 }
 
 export type SerializedParserOptions = Required<ParseOptions>
@@ -30,6 +31,7 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   dot_notation_tags: false,
   html: true,
   timeout: 1000,
+  max_errors: 25,
 }
 
 /**
@@ -75,6 +77,9 @@ export class ParserOptions {
   /** Parse timeout in milliseconds. 0 disables the timeout. */
   readonly timeout: number
 
+  /** Maximum number of errors to report. null means unlimited. */
+  readonly max_errors: number | null
+
   static from(options: SerializedParserOptions): ParserOptions {
     return new ParserOptions(options)
   }
@@ -93,5 +98,6 @@ export class ParserOptions {
     this.dot_notation_tags = options.dot_notation_tags ?? DEFAULT_PARSER_OPTIONS.dot_notation_tags
     this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
     this.timeout = options.timeout ?? DEFAULT_PARSER_OPTIONS.timeout
+    this.max_errors = options.max_errors ?? DEFAULT_PARSER_OPTIONS.max_errors
   }
 }
