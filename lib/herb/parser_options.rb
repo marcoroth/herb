@@ -41,7 +41,7 @@ module Herb
       @timeout = timeout
     end
 
-    #: () -> Hash[Symbol, bool]
+    #: () -> Hash[Symbol, (bool | Numeric)]
     def to_h
       {
         strict: @strict,

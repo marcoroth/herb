@@ -49,8 +49,8 @@ module Herb
     # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
     def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
 
-    # : () -> Hash[Symbol, bool]
-    def to_h: () -> Hash[Symbol, bool]
+    # : () -> Hash[Symbol, (bool | Numeric)]
+    def to_h: () -> Hash[Symbol, bool | Numeric]
 
     # : () -> String
     def inspect: () -> String
