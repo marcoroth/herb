@@ -22,6 +22,8 @@ module Herb
 
     attr_reader prism_nodes_deep: bool
 
+    attr_reader timeout: Numeric
+
     DEFAULT_STRICT: bool
 
     DEFAULT_TRACK_WHITESPACE: bool
@@ -42,8 +44,10 @@ module Herb
 
     DEFAULT_PRISM_NODES_DEEP: bool
 
-    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
-    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool) -> void
+    DEFAULT_TIMEOUT: Numeric
+
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
 
     # : () -> Hash[Symbol, bool]
     def to_h: () -> Hash[Symbol, bool]
