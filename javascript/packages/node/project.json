@@ -9,6 +9,7 @@
       "options": {
         "script": "build"
       },
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build"],
       "dependsOn": ["@herb-tools/core:build"]
     },
     "test": {

@@ -9,6 +9,7 @@
       "options": {
         "script": "build"
       },
+      "outputs": ["{projectRoot}/dist"],
       "dependsOn": [
         "@herb-tools/core:build",
         "@herb-tools/node-wasm:build",

@@ -68,19 +68,33 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
+      - name: Set NX SHAs
+        uses: nrwl/nx-set-shas@v4
+
       - name: Build tailwind-class-sorter package
         env:
           RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
         run: yarn nx build @herb-tools/tailwind-class-sorter
 
-      - name: Run `build` for all NX packages
+      - name: Build affected NX packages
+        if: github.event_name == 'pull_request'
         env:
-          RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: npx nx affected -t build --exclude=herb-language-server
+
+      - name: Build all NX packages
+        if: github.event_name != 'pull_request'
+        env:
+          RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
         run: yarn build
 
-      - name: Run `test` for all NX packages
+      - name: Test affected NX packages
+        if: github.event_name == 'pull_request'
+        run: npx nx affected -t test --exclude=herb-language-server
+
+      - name: Test all NX packages
+        if: github.event_name != 'pull_request'
         run: yarn test
 
       - name: Setup Deno
@@ -107,15 +121,6 @@ jobs:
           path: docs/.vitepress/dist
           if-no-files-found: error
           retention-days: 1
-
-      # NX is not able to properly detect affected changes if things change in C source or the WASM build
-      #
-      # - name: Set NX SHAs
-      #   uses: nrwl/nx-set-shas@v4
-      #
-      # # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
-      # - run: npx nx affected -t build
-      # - run: npx nx affected -t test
 
   publish:
     name: Publish packages to npm

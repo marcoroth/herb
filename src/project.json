@@ -6,14 +6,15 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "cache": true,
       "options": {
         "commands": [
           "bundle install",
           "make templates prism build/libherb.a"
         ],
       },
-      "inputs": ["{projectRoot}/**/*"],
-      "outputs": ["{workspaceRoot}/src/*.o", "{workspaceRoot}/src/libherb.a"],
+      "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/include/**/*"],
+      "outputs": ["{workspaceRoot}/build/libherb.a"],
       "dependsOn": ["templates:generate", "prism:build"]
     },
     "clean": {

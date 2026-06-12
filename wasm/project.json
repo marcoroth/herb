@@ -6,11 +6,17 @@
   "targets": {
     "build": {
       "executor": "nx:run-commands",
+      "cache": true,
       "options": {
         "command": "make all",
         "cwd": "wasm"
       },
       "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/src/**/*", "{workspaceRoot}/include/**/*"],
+      "outputs": [
+        "{projectRoot}/obj",
+        "{workspaceRoot}/javascript/packages/browser/build",
+        "{workspaceRoot}/javascript/packages/node-wasm/build"
+      ],
       "dependsOn": ["templates:generate"]
     },
     "clean": {

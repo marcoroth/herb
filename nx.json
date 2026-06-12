@@ -11,9 +11,7 @@
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
     ],
     "sharedGlobals": [
-      "{workspaceRoot}/.github/workflows/javascript.yml",
-      "{workspaceRoot}/src/**/*",
-      "{workspaceRoot}/wasm/**/*"
+      "{workspaceRoot}/.github/workflows/javascript.yml"
     ]
   },
   "plugins": [],
@@ -22,7 +20,8 @@
       "runner": "nx/tasks-runners/default",
       "options": {
         "cacheableOperations": [
-          "build"
+          "build",
+          "test"
         ],
         "packageManager": "yarn"
       }
