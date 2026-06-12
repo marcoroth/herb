@@ -25,7 +25,7 @@ module Parser
     end
 
     test "many unclosed tags of different names parses within timeout" do
-      tags = %w[div span p a section article header footer main nav].cycle.take(100_000)
+      tags = ["div", "span", "p", "a", "section", "article", "header", "footer", "main", "nav"].cycle.take(100_000)
       source = tags.map { |t| "<#{t}>" }.join
       result = Herb.parse(source, timeout: 1)
 
