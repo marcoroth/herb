@@ -18,6 +18,7 @@ pub struct ParserOptions {
   pub dot_notation_tags: bool,
   pub html: bool,
   pub timeout: u32,
+  pub max_errors: u32,
 }
 
 impl Default for ParserOptions {
@@ -36,6 +37,7 @@ impl Default for ParserOptions {
       dot_notation_tags: false,
       html: true,
       timeout: 1000,
+      max_errors: 25,
     }
   }
 }
@@ -123,6 +125,8 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       start_line: 0,
       start_column: 0,
       timeout_ms: options.timeout,
+      max_errors: options.max_errors,
+      error_count: std::ptr::null_mut(),
       deadline_ms: 0,
     };
 
@@ -345,6 +349,8 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       start_line: 0,
       start_column: 0,
       timeout_ms: 1000,
+      max_errors: 25,
+      error_count: std::ptr::null_mut(),
       deadline_ms: 0,
     };
 

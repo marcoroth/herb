@@ -103,6 +103,10 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("timeout")) {
       parser_options.timeout_ms = (uint32_t) options["timeout"].as<int>();
     }
+
+    if (options.hasOwnProperty("max_errors")) {
+      parser_options.max_errors = (uint32_t) options["max_errors"].as<int>();
+    }
   }
 
   hb_allocator_T allocator;

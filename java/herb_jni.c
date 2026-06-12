@@ -142,6 +142,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jint timeout = (*env)->CallIntMethod(env, options, getTimeout);
       parser_options.timeout_ms = (uint32_t) timeout;
     }
+
+    jmethodID getMaxErrors =
+        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()I");
+
+    if (getMaxErrors != NULL) {
+      jint maxErrors = (*env)->CallIntMethod(env, options, getMaxErrors);
+      parser_options.max_errors = (uint32_t) maxErrors;
+    }
   }
 
   hb_allocator_T allocator;

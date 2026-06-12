@@ -24,6 +24,8 @@ module Herb
 
     attr_reader timeout: Numeric
 
+    attr_reader max_errors: Integer
+
     DEFAULT_STRICT: bool
 
     DEFAULT_TRACK_WHITESPACE: bool
@@ -45,6 +47,8 @@ module Herb
     DEFAULT_PRISM_NODES_DEEP: bool
 
     DEFAULT_TIMEOUT: Numeric
+
+    DEFAULT_MAX_ERRORS: Integer
 
     # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
     def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
