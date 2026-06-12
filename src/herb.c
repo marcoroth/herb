@@ -1,6 +1,7 @@
 #include "include/herb.h"
 #include "include/analyze/analyze.h"
 #include "include/analyze/prism_annotate.h"
+#include "include/errors.h"
 #include "include/lexer/lexer.h"
 #include "include/lexer/token.h"
 #include "include/lib/hb_allocator.h"
@@ -44,6 +45,8 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   if (options != NULL) { parser_options = *options; }
 
+  parser_options_set_deadline(&parser_options);
+
   if (parser_options.start_line > 0) {
     lexer.current_line = parser_options.start_line;
     lexer.previous_line = parser_options.start_line;
@@ -70,6 +73,16 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
       parser_options.prism_nodes_deep,
       parser_options.prism_program,
       allocator
+    );
+  }
+
+  if (parser_options_past_deadline(&parser_options)) {
+    append_timeout_error(
+      parser_options.timeout_ms,
+      document->base.location.start,
+      document->base.location.end,
+      allocator,
+      document->base.errors
     );
   }
 

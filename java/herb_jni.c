@@ -134,6 +134,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
       parser_options.html = (html == JNI_TRUE);
     }
+
+    jmethodID getTimeout =
+        (*env)->GetMethodID(env, optionsClass, "getTimeout", "()I");
+
+    if (getTimeout != NULL) {
+      jint timeout = (*env)->CallIntMethod(env, options, getTimeout);
+      parser_options.timeout_ms = (uint32_t) timeout;
+    }
   }
 
   hb_allocator_T allocator;

@@ -4,35 +4,45 @@ require_relative "../test_helper"
 
 module Parser
   class PerformanceTest < Minitest::Spec
-    test "many unclosed tags parses without quadratic slowdown" do
+    test "many unclosed tags parses within timeout" do
       source = "<div>" * 100_000
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      result = Herb.parse(source)
-      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      result = Herb.parse(source, timeout: 1)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
-      assert elapsed < 5, "Parsing 100,000 unclosed tags took #{elapsed.round(2)}s, expected < 5s"
+
+      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      assert_empty timeout_errors
     end
 
-    test "many matched tags parses quickly" do
+    test "many matched tags parses within timeout" do
       source = "<div>x</div>" * 100_000
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      result = Herb.parse(source)
-      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      result = Herb.parse(source, timeout: 1)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
-      assert elapsed < 5, "Parsing 100,000 matched tags took #{elapsed.round(2)}s, expected < 5s"
+
+      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      assert_empty timeout_errors
     end
 
-    test "many unclosed tags of different names parses quickly" do
+    test "many unclosed tags of different names parses within timeout" do
       tags = ["div", "span", "p", "a", "section", "article", "header", "footer", "main", "nav"].cycle.take(100_000)
       source = tags.map { |t| "<#{t}>" }.join
-      start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      result = Herb.parse(source)
-      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+      result = Herb.parse(source, timeout: 1)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
-      assert elapsed < 5, "Parsing 100,000 mixed unclosed tags took #{elapsed.round(2)}s, expected < 5s"
+
+      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      assert_empty timeout_errors
+    end
+
+    test "tight timeout produces TimeoutError" do
+      source = "<div>" * 100_000
+      result = Herb.parse(source, timeout: 0.001)
+
+      assert_instance_of Herb::AST::DocumentNode, result.value
+
+      timeout_errors = result.errors.select { |e| e.is_a?(Herb::Errors::TimeoutError) }
+      refute_empty timeout_errors
     end
   end
 end
