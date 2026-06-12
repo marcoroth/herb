@@ -123,7 +123,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       start_line: 0,
       start_column: 0,
       timeout_ms: options.timeout,
-      deadline: crate::bindings::timespec { tv_sec: 0, tv_nsec: 0 },
+      deadline_ms: 0,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -344,8 +344,8 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       html: true,
       start_line: 0,
       start_column: 0,
-      timeout: 1000,
-      deadline: crate::bindings::timespec { tv_sec: 0, tv_nsec: 0 },
+      timeout_ms: 1000,
+      deadline_ms: 0,
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);

@@ -51,7 +51,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .start_line = 0,
                                                        .start_column = 0,
                                                        .timeout_ms = 1000,
-                                                       .deadline = { 0, 0 } };
+                                                       .deadline_ms = 0 };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
