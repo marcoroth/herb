@@ -55,7 +55,8 @@ static inline bool parser_options_past_deadline(const parser_options_T* options)
 }
 
 static inline bool parser_options_errors_exceeded(const parser_options_T* options) {
-  if (options == NULL || options->max_errors == 0 || options->error_count == NULL) { return false; }
+  if (options == NULL || options->error_count == NULL) { return false; }
+  if (options->max_errors == 0) { return false; }
 
   return *options->error_count >= options->max_errors;
 }

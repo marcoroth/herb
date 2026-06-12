@@ -24,7 +24,7 @@ module Herb
 
     attr_reader timeout: Numeric
 
-    attr_reader max_errors: Integer
+    attr_reader max_errors: Integer?
 
     DEFAULT_STRICT: bool
 

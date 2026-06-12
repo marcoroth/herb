@@ -12,7 +12,7 @@ export interface ParseOptions {
   dot_notation_tags?: boolean
   html?: boolean
   timeout?: number
-  max_errors?: number
+  max_errors?: number | null
 }
 
 export type SerializedParserOptions = Required<ParseOptions>
@@ -77,8 +77,8 @@ export class ParserOptions {
   /** Parse timeout in milliseconds. 0 disables the timeout. */
   readonly timeout: number
 
-  /** Maximum number of errors to report. 0 disables the limit. */
-  readonly max_errors: number
+  /** Maximum number of errors to report. null means unlimited. */
+  readonly max_errors: number | null
 
   static from(options: SerializedParserOptions): ParserOptions {
     return new ParserOptions(options)

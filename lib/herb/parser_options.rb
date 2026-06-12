@@ -13,7 +13,7 @@ module Herb
     attr_reader :prism_nodes #: bool
     attr_reader :prism_nodes_deep #: bool
     attr_reader :timeout #: Numeric
-    attr_reader :max_errors #: Integer
+    attr_reader :max_errors #: Integer?
 
     DEFAULT_STRICT = true #: bool
     DEFAULT_TRACK_WHITESPACE = false #: bool

@@ -144,11 +144,18 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     }
 
     jmethodID getMaxErrors =
-        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()I");
+        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()Ljava/lang/Integer;");
 
     if (getMaxErrors != NULL) {
-      jint maxErrors = (*env)->CallIntMethod(env, options, getMaxErrors);
-      parser_options.max_errors = (uint32_t) maxErrors;
+      jobject maxErrorsObj = (*env)->CallObjectMethod(env, options, getMaxErrors);
+
+      if (maxErrorsObj == NULL) {
+        parser_options.max_errors = 0;
+      } else {
+        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        jmethodID intValue = (*env)->GetMethodID(env, integerClass, "intValue", "()I");
+        parser_options.max_errors = (uint32_t) (*env)->CallIntMethod(env, maxErrorsObj, intValue);
+      }
     }
   }
 

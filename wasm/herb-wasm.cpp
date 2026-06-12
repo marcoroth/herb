@@ -105,7 +105,8 @@ val Herb_parse(const std::string& source, val options) {
     }
 
     if (options.hasOwnProperty("max_errors")) {
-      parser_options.max_errors = (uint32_t) options["max_errors"].as<int>();
+      val max_errors_val = options["max_errors"];
+      parser_options.max_errors = max_errors_val.isNull() ? 0 : (uint32_t) max_errors_val.as<int>();
     }
   }
 

@@ -178,9 +178,16 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(timeout)) { timeout = rb_hash_lookup(options, ID2SYM(rb_intern("timeout"))); }
     if (!NIL_P(timeout)) { parser_options.timeout_ms = (uint32_t) (NUM2DBL(timeout) * 1000); }
 
-    VALUE max_errors = rb_hash_lookup(options, rb_utf8_str_new_cstr("max_errors"));
-    if (NIL_P(max_errors)) { max_errors = rb_hash_lookup(options, ID2SYM(rb_intern("max_errors"))); }
-    if (!NIL_P(max_errors)) { parser_options.max_errors = (uint32_t) NUM2UINT(max_errors); }
+    VALUE max_errors_sentinel = ID2SYM(rb_intern("__not_set__"));
+    VALUE max_errors = rb_hash_lookup2(options, rb_utf8_str_new_cstr("max_errors"), max_errors_sentinel);
+
+    if (max_errors == max_errors_sentinel) {
+      max_errors = rb_hash_lookup2(options, ID2SYM(rb_intern("max_errors")), max_errors_sentinel);
+    }
+
+    if (max_errors != max_errors_sentinel) {
+      parser_options.max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
+    }
 
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
