@@ -44,7 +44,7 @@ module Herb
       @max_errors = max_errors
     end
 
-    #: () -> Hash[Symbol, (bool | Numeric)]
+    #: () -> Hash[Symbol, (bool | Numeric | nil)]
     def to_h
       {
         strict: @strict,
