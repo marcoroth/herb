@@ -78,6 +78,7 @@ describe("ParseCache", () => {
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        timeout: 1000,
       })
     })
 
@@ -98,6 +99,7 @@ describe("ParseCache", () => {
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        timeout: 1000,
       })
     })
 
@@ -118,6 +120,7 @@ describe("ParseCache", () => {
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        timeout: 1000,
       })
     })
 
@@ -138,6 +141,7 @@ describe("ParseCache", () => {
         dot_notation_tags: false,
         transform_conditionals: false,
         html: true,
+        timeout: 1000,
       })
     })
   })
