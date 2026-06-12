@@ -1655,6 +1655,35 @@ static hb_array_T* parser_build_elements_from_tags(
   hb_allocator_T* allocator
 );
 
+static bool has_close_tag_for_name(hb_array_T* close_tag_names, hb_string_T tag_name) {
+  for (size_t i = 0; i < hb_array_size(close_tag_names); i++) {
+    hb_string_T* name = (hb_string_T*) hb_array_get(close_tag_names, i);
+    if (name != NULL && hb_string_equals_case_insensitive(*name, tag_name)) { return true; }
+  }
+
+  return false;
+}
+
+static hb_array_T* collect_close_tag_names(hb_array_T* nodes, hb_allocator_T* allocator) {
+  hb_array_T* close_tag_names = hb_array_init(16, allocator);
+
+  for (size_t i = 0; i < hb_array_size(nodes); i++) {
+    AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
+    if (node == NULL || node->type != AST_HTML_CLOSE_TAG_NODE) { continue; }
+
+    AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
+    hb_string_T name = close_tag->tag_name->value;
+
+    if (!has_close_tag_for_name(close_tag_names, name)) {
+      hb_string_T* stored = hb_allocator_alloc(allocator, sizeof(hb_string_T));
+      *stored = name;
+      hb_array_append(close_tag_names, stored);
+    }
+  }
+
+  return close_tag_names;
+}
+
 static hb_array_T* parser_build_elements_from_tags(
   hb_array_T* nodes,
   hb_array_T* errors,
@@ -1663,6 +1692,7 @@ static hb_array_T* parser_build_elements_from_tags(
 ) {
   bool strict = options ? options->strict : false;
   hb_array_T* result = hb_array_init(hb_array_size(nodes), allocator);
+  hb_array_T* close_tag_names = collect_close_tag_names(nodes, allocator);
 
   for (size_t index = 0; index < hb_array_size(nodes); index++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, index);
@@ -1672,7 +1702,11 @@ static hb_array_T* parser_build_elements_from_tags(
       AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
       hb_string_T tag_name = open_tag->tag_name->value;
 
-      size_t close_index = find_matching_close_tag(nodes, index, tag_name);
+      size_t close_index = (size_t) -1;
+
+      if (has_close_tag_for_name(close_tag_names, tag_name)) {
+        close_index = find_matching_close_tag(nodes, index, tag_name);
+      }
 
       if (close_index == (size_t) -1) {
         size_t implicit_close_index = find_implicit_close_index(nodes, index, tag_name);
