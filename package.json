@@ -16,7 +16,7 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
     "@vitest/browser-playwright": "^4.1.8",
-    "@vitest/ui": "^4.0.0",
+    "@vitest/ui": "^4.1.8",
     "concurrently": "^10.0.3",
     "dedent": "^1.7.2",
     "esbuild-plugin-copy": "^2.1.1",
