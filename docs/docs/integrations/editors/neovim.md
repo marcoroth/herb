@@ -25,7 +25,7 @@ npm install -g @herb-tools/language-server
 ```
 
 ```bash [yarn]
-yarn global add @herb-tools/language-server
+yarn dlx @herb-tools/language-server --stdio
 ```
 
 ```bash [pnpm]
@@ -78,7 +78,7 @@ npm install -g @herb-tools/language-server
 ```
 
 ```bash [yarn]
-yarn global add @herb-tools/language-server
+yarn dlx @herb-tools/language-server --stdio
 ```
 
 ```bash [pnpm]
