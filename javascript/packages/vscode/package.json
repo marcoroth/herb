@@ -289,7 +289,7 @@
     "@herb-tools/linter": "0.10.1",
     "@herb-tools/node-wasm": "0.10.1",
     "@types/mocha": "^10.0.10",
-    "@types/node": "25.x",
+    "@types/node": "26.x",
     "@types/vscode": "^1.120.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^3.0.0",
