@@ -2,5 +2,5 @@
 source: "Engine::ERBTagVariationsTest#test_0014_<%# == expression %>"
 input: "{source: \"<%# == raw_html %>\", options: {}}"
 ---
-_buf = ::String.new;
+_buf = ::String.new; 
 _buf.to_s
