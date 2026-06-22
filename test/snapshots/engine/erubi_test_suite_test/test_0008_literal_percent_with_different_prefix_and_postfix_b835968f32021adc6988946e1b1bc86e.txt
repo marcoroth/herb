@@ -1,0 +1,9 @@
+---
+source: "Engine::ErubiTestSuiteTest#test_0008_literal percent with different prefix and postfix"
+input: "{source: \"<table>\\n  <%% for item in @items %>\\n  <tr>\\n  </tr>\\n  <%% end %>\\n  <%%= \\\"literal\\\" %>\\n</table>\", locals: {\"@items\": [2], i: 0}, options: {literal_prefix: \"{%\", literal_postfix: \"%}\"}}"
+---
+<table>
+  <tr>
+  </tr>
+  literal
+</table>
