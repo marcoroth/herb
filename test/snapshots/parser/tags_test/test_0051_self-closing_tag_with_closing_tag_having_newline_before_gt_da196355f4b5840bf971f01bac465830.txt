@@ -40,7 +40,8 @@ input: |2-
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     ├── @ HTMLTextNode (location: (1:23)-(2:0))
     │   └── content: "\n"
@@ -58,7 +59,8 @@ input: |2-
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     ├── @ HTMLCloseTagNode (location: (2:4)-(3:1))
     │   ├── errors: (1 error)

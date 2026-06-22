@@ -409,6 +409,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       (AST_NODE_T*) close_tag,
       false,
       hb_string("HTML"),
+      true,
       start_position,
       end_position,
       element_errors,

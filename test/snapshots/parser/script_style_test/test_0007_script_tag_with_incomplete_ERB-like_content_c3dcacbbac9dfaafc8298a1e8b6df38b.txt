@@ -44,4 +44,5 @@ input: "<script>console.log(\"<%= incomplete\");</script>"
         │
         ├── close_tag: ∅
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

@@ -102,7 +102,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (3:42)-(3:43))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (3:43)-(4:4))
     │   │   │   │   │   └── content: "\n    "
@@ -149,7 +150,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (4:34)-(4:35))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (4:35)-(5:2))
     │   │   │   │       └── content: "\n  "
@@ -209,7 +211,8 @@ input: |2-
     │   │   │   │           │   │       └── tag_closing: ">" (location: (6:39)-(6:40))
     │   │   │   │           │   │
     │   │   │   │           │   ├── is_void: false
-    │   │   │   │           │   └── element_source: "HTML"
+    │   │   │   │           │   ├── element_source: "HTML"
+    │   │   │   │           │   └── escape_content: true
     │   │   │   │           │
     │   │   │   │           ├── @ HTMLTextNode (location: (6:40)-(7:4))
     │   │   │   │           │   └── content: "\n    "
@@ -256,7 +259,8 @@ input: |2-
     │   │   │   │           │   │       └── tag_closing: ">" (location: (7:35)-(7:36))
     │   │   │   │           │   │
     │   │   │   │           │   ├── is_void: false
-    │   │   │   │           │   └── element_source: "HTML"
+    │   │   │   │           │   ├── element_source: "HTML"
+    │   │   │   │           │   └── escape_content: true
     │   │   │   │           │
     │   │   │   │           └── @ HTMLTextNode (location: (7:36)-(8:2))
     │   │   │   │               └── content: "\n  "
@@ -280,7 +284,8 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (9:5)-(9:6))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (9:6)-(10:0))
         └── content: "\n"
