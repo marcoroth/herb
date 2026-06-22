@@ -8,6 +8,8 @@ const external = [
   "url",
   "fs",
   "module",
+  "@herb-tools/node-wasm",
+  "@herb-tools/printer",
   "@herb-tools/tailwind-class-sorter",
   "tinyglobby"
 ]
