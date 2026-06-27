@@ -389,7 +389,8 @@ export const VALID_ARIA_ROLES = new Set([
   "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
   "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
   "treegrid", "treeitem",
-  "log", "marquee"
+  "log", "marquee",
+  "graphics-document", "graphics-object", "graphics-symbol"
 ]);
 
 /**
