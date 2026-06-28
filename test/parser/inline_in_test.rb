@@ -71,5 +71,15 @@ module Parser
         <%= (value in Integer) ? "yes" : "no" %>
       HTML
     end
+
+    test "one-line pattern match inside a block body" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each do |n| %>
+          <% if n in Integer %>
+            <%= n %>
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end
