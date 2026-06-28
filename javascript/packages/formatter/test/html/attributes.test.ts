@@ -58,16 +58,16 @@ describe("@herb-tools/formatter", () => {
 
   test("wraps attributes when they would exceed maxLineLength", () => {
     const source = dedent`
-      <div class="foo" id="bar" data-test="value" role="button" aria-label="example"></div>
+      <div class="foo-bar-baz" id="element-id" data-test="example-value" role="navigation" aria-label="main"></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div
-        class="foo"
-        id="bar"
-        data-test="value"
-        role="button"
-        aria-label="example"
+        class="foo-bar-baz"
+        id="element-id"
+        data-test="example-value"
+        role="navigation"
+        aria-label="main"
       ></div>
     `)
   })
