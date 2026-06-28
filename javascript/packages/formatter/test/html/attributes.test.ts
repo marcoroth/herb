@@ -46,9 +46,19 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("wraps 4+ attributes correctly", () => {
+  test("keeps 4+ attributes inline when they fit within maxLineLength", () => {
     const source = dedent`
       <div class="foo" id="bar" data-test="value" role="button"></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="foo" id="bar" data-test="value" role="button"></div>
+    `)
+  })
+
+  test("wraps attributes when they would exceed maxLineLength", () => {
+    const source = dedent`
+      <div class="foo" id="bar" data-test="value" role="button" aria-label="example"></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
@@ -57,11 +67,12 @@ describe("@herb-tools/formatter", () => {
         id="bar"
         data-test="value"
         role="button"
+        aria-label="example"
       ></div>
     `)
   })
 
-  test("keeps empty attribute values inline when ≤3 attributes", () => {
+  test("keeps empty attribute values inline", () => {
     const source = dedent`
       <div id=""></div>
     `
@@ -71,28 +82,13 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("keeps multiple empty attributes inline when <= 3 attributes", () => {
-    const source = dedent`
-      <div id="" class="" data-value=""></div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
-      <div id="" class="" data-value=""></div>
-    `)
-  })
-
-  test("splits multiple empty attributes inline when > 3 attributes", () => {
+  test("keeps multiple empty attributes inline when within maxLineLength", () => {
     const source = dedent`
       <div id="" class="" data-value="" another-value=""></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div
-        id=""
-        class=""
-        data-value=""
-        another-value=""
-      ></div>
+      <div id="" class="" data-value="" another-value=""></div>
     `)
   })
 
@@ -136,33 +132,39 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("formats self-closing input with 4+ attributes", () => {
+  test("keeps self-closing input with 4+ attributes inline when within maxLineLength", () => {
     const source = dedent`
       <input type="text" name="username" required readonly />
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <input
-        type="text"
-        name="username"
-        required
-        readonly
-      />
+      <input type="text" name="username" required readonly />
     `)
   })
 
-  test("formats input with 4+ attributes without closing slash", () => {
+  test("keeps input with 4+ attributes without closing slash inline when within maxLineLength", () => {
     const source = dedent`
       <input type="text" name="username" required readonly>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input type="text" name="username" required readonly>
+    `)
+  })
+
+  test("wraps self-closing input when attributes exceed maxLineLength", () => {
+    const source = dedent`
+      <input type="text" name="username" placeholder="Enter your username" required readonly />
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <input
         type="text"
         name="username"
+        placeholder="Enter your username"
         required
         readonly
-      >
+      />
     `)
   })
 
