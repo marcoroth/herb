@@ -1,0 +1,48 @@
+#include "parser_options_helpers.h"
+
+void herb_extract_parser_options(JNIEnv* env, jobject options, parser_options_T* parser_options) {
+  if (options == NULL) { return; }
+
+  jclass optionsClass = (*env)->GetObjectClass(env, options);
+
+<%- parser_options.fields.each do |field| -%>
+<%- if field.boolean? -%>
+  {
+    jmethodID method = (*env)->GetMethodID(env, optionsClass, "<%= field.java_getter %>", "<%= field.java_jni_signature %>");
+
+    if (method != NULL) {
+      jboolean val = (*env)->CallBooleanMethod(env, options, method);
+      parser_options-><%= field.c_name %> = (val == JNI_TRUE);
+    }
+  }
+
+<%- elsif field.nullable? -%>
+  {
+    jmethodID method = (*env)->GetMethodID(env, optionsClass, "<%= field.java_getter %>", "<%= field.java_jni_signature %>");
+
+    if (method != NULL) {
+      jobject val = (*env)->CallObjectMethod(env, options, method);
+
+      if (val == NULL) {
+        parser_options-><%= field.c_name %> = <%= field.null_sentinel %>;
+      } else {
+        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        jmethodID intValue = (*env)->GetMethodID(env, integerClass, "intValue", "()I");
+        parser_options-><%= field.c_name %> = (uint32_t) (*env)->CallIntMethod(env, val, intValue);
+      }
+    }
+  }
+
+<%- else -%>
+  {
+    jmethodID method = (*env)->GetMethodID(env, optionsClass, "<%= field.java_getter %>", "<%= field.java_jni_signature %>");
+
+    if (method != NULL) {
+      jint val = (*env)->CallIntMethod(env, options, method);
+      parser_options-><%= field.c_name %> = (uint32_t) val;
+    }
+  }
+
+<%- end -%>
+<%- end -%>
+}

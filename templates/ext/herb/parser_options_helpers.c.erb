@@ -1,0 +1,63 @@
+#include "parser_options_helpers.h"
+
+void herb_extract_parser_options(VALUE options, parser_options_T* parser_options) {
+  if (NIL_P(options)) { return; }
+
+<%- parser_options.fields.each do |field| -%>
+<%- if field.boolean? -%>
+  {
+    VALUE val = rb_hash_lookup(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"));
+    if (NIL_P(val)) { val = rb_hash_lookup(options, ID2SYM(rb_intern("<%= field.snake_case %>"))); }
+<%- if field.default == true -%>
+    if (!NIL_P(val) && !RTEST(val)) { parser_options-><%= field.c_name %> = false; }
+<%- else -%>
+    if (!NIL_P(val) && RTEST(val)) { parser_options-><%= field.c_name %> = true; }
+<%- end -%>
+  }
+
+<%- elsif field.ruby_unit == "seconds" -%>
+  {
+    VALUE val = rb_hash_lookup(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"));
+    if (NIL_P(val)) { val = rb_hash_lookup(options, ID2SYM(rb_intern("<%= field.snake_case %>"))); }
+    if (!NIL_P(val)) { parser_options-><%= field.c_name %> = (uint32_t) (NUM2DBL(val) * 1000); }
+  }
+
+<%- elsif field.nullable? -%>
+  {
+    VALUE sentinel = ID2SYM(rb_intern("__not_set__"));
+    VALUE val = rb_hash_lookup2(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"), sentinel);
+    if (val == sentinel) { val = rb_hash_lookup2(options, ID2SYM(rb_intern("<%= field.snake_case %>")), sentinel); }
+
+    if (val != sentinel) {
+      parser_options-><%= field.c_name %> = NIL_P(val) ? <%= field.null_sentinel %> : (uint32_t) NUM2UINT(val);
+    }
+  }
+
+<%- else -%>
+  {
+    VALUE val = rb_hash_lookup(options, rb_utf8_str_new_cstr("<%= field.snake_case %>"));
+    if (NIL_P(val)) { val = rb_hash_lookup(options, ID2SYM(rb_intern("<%= field.snake_case %>"))); }
+    if (!NIL_P(val)) { parser_options-><%= field.c_name %> = (uint32_t) NUM2UINT(val); }
+  }
+
+<%- end -%>
+<%- end -%>
+}
+
+VALUE herb_build_parser_options_hash(const parser_options_T* options) {
+  VALUE kwargs = rb_hash_new();
+
+<%- parser_options.fields.each do |field| -%>
+<%- if field.boolean? -%>
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), options-><%= field.c_name %> ? Qtrue : Qfalse);
+<%- elsif field.ruby_unit == "seconds" -%>
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), DBL2NUM((double) options-><%= field.c_name %> / 1000.0));
+<%- elsif field.nullable? -%>
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), options-><%= field.c_name %> == <%= field.null_sentinel %> ? Qnil : UINT2NUM(options-><%= field.c_name %>));
+<%- else -%>
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("<%= field.snake_case %>")), UINT2NUM(options-><%= field.c_name %>));
+<%- end -%>
+<%- end -%>
+
+  return kwargs;
+}

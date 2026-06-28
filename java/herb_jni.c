@@ -1,6 +1,7 @@
 #include "herb_jni.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
@@ -30,134 +31,7 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-
-  if (options != NULL) {
-    jclass optionsClass = (*env)->GetObjectClass(env, options);
-    jmethodID getTrackWhitespace =
-        (*env)->GetMethodID(env, optionsClass, "isTrackWhitespace", "()Z");
-
-    if (getTrackWhitespace != NULL) {
-      jboolean trackWhitespace = (*env)->CallBooleanMethod(env, options, getTrackWhitespace);
-
-      if (trackWhitespace == JNI_TRUE) {
-        parser_options.track_whitespace = true;
-      }
-    }
-
-    jmethodID getAnalyze =
-        (*env)->GetMethodID(env, optionsClass, "isAnalyze", "()Z");
-
-    if (getAnalyze != NULL) {
-      jboolean analyze = (*env)->CallBooleanMethod(env, options, getAnalyze);
-
-      if (analyze == JNI_FALSE) {
-        parser_options.analyze = false;
-      }
-    }
-
-    jmethodID getStrict =
-        (*env)->GetMethodID(env, optionsClass, "isStrict", "()Z");
-
-    if (getStrict != NULL) {
-      jboolean strict = (*env)->CallBooleanMethod(env, options, getStrict);
-      parser_options.strict = (strict == JNI_TRUE);
-    }
-
-    jmethodID getActionViewHelpers =
-        (*env)->GetMethodID(env, optionsClass, "isActionViewHelpers", "()Z");
-
-    if (getActionViewHelpers != NULL) {
-      jboolean actionViewHelpers = (*env)->CallBooleanMethod(env, options, getActionViewHelpers);
-      parser_options.action_view_helpers = (actionViewHelpers == JNI_TRUE);
-    }
-
-    jmethodID getTransformConditionals =
-        (*env)->GetMethodID(env, optionsClass, "isTransformConditionals", "()Z");
-
-    if (getTransformConditionals != NULL) {
-      jboolean transformConditionals = (*env)->CallBooleanMethod(env, options, getTransformConditionals);
-      parser_options.transform_conditionals = (transformConditionals == JNI_TRUE);
-    }
-
-    jmethodID getRenderNodes =
-        (*env)->GetMethodID(env, optionsClass, "isRenderNodes", "()Z");
-
-    if (getRenderNodes != NULL) {
-      jboolean renderNodes = (*env)->CallBooleanMethod(env, options, getRenderNodes);
-      parser_options.render_nodes = (renderNodes == JNI_TRUE);
-    }
-
-    jmethodID getStrictLocals =
-        (*env)->GetMethodID(env, optionsClass, "isStrictLocals", "()Z");
-
-    if (getStrictLocals != NULL) {
-      jboolean strictLocals = (*env)->CallBooleanMethod(env, options, getStrictLocals);
-      parser_options.strict_locals = (strictLocals == JNI_TRUE);
-    }
-
-    jmethodID getPrismNodes =
-        (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
-
-    if (getPrismNodes != NULL) {
-      jboolean prismNodes = (*env)->CallBooleanMethod(env, options, getPrismNodes);
-      parser_options.prism_nodes = (prismNodes == JNI_TRUE);
-    }
-
-    jmethodID getPrismNodesDeep =
-        (*env)->GetMethodID(env, optionsClass, "isPrismNodesDeep", "()Z");
-
-    if (getPrismNodesDeep != NULL) {
-      jboolean prismNodesDeep = (*env)->CallBooleanMethod(env, options, getPrismNodesDeep);
-      parser_options.prism_nodes_deep = (prismNodesDeep == JNI_TRUE);
-    }
-
-    jmethodID getPrismProgram =
-        (*env)->GetMethodID(env, optionsClass, "isPrismProgram", "()Z");
-
-    if (getPrismProgram != NULL) {
-      jboolean prismProgram = (*env)->CallBooleanMethod(env, options, getPrismProgram);
-      parser_options.prism_program = (prismProgram == JNI_TRUE);
-    }
-
-    jmethodID getDotNotationTags =
-        (*env)->GetMethodID(env, optionsClass, "isDotNotationTags", "()Z");
-
-    if (getDotNotationTags != NULL) {
-      jboolean dotNotationTags = (*env)->CallBooleanMethod(env, options, getDotNotationTags);
-      parser_options.dot_notation_tags = (dotNotationTags == JNI_TRUE);
-    }
-
-    jmethodID getHtml =
-        (*env)->GetMethodID(env, optionsClass, "isHtml", "()Z");
-
-    if (getHtml != NULL) {
-      jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
-      parser_options.html = (html == JNI_TRUE);
-    }
-
-    jmethodID getTimeout =
-        (*env)->GetMethodID(env, optionsClass, "getTimeout", "()I");
-
-    if (getTimeout != NULL) {
-      jint timeout = (*env)->CallIntMethod(env, options, getTimeout);
-      parser_options.timeout_ms = (uint32_t) timeout;
-    }
-
-    jmethodID getMaxErrors =
-        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()Ljava/lang/Integer;");
-
-    if (getMaxErrors != NULL) {
-      jobject maxErrorsObj = (*env)->CallObjectMethod(env, options, getMaxErrors);
-
-      if (maxErrorsObj == NULL) {
-        parser_options.max_errors = 0;
-      } else {
-        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
-        jmethodID intValue = (*env)->GetMethodID(env, integerClass, "intValue", "()I");
-        parser_options.max_errors = (uint32_t) (*env)->CallIntMethod(env, maxErrorsObj, intValue);
-      }
-    }
-  }
+  herb_extract_parser_options(env, options, &parser_options);
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
