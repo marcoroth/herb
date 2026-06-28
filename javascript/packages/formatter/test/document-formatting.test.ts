@@ -341,14 +341,16 @@ describe("Document-level formatting", () => {
     `)
   })
 
-  test("keeps regular HTML elements inline when attributes fit within maxLineLength", () => {
+  test("keeps opening tag inline when attributes fit within maxLineLength", () => {
     const source = dedent`
       <div id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
     `
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
+      <div id="element" class="bg-gray-300" another="attribute" final="one">
+        Content
+      </div>
     `)
   })
 
