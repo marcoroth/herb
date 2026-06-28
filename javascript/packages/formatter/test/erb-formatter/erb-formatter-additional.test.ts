@@ -223,14 +223,7 @@ describe("ERB Formatter Additional Tests", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(dedent`
-        <input
-          type="text"
-          required
-          disabled
-          readonly
-        />
-      `)
+      expect(result).toBe(`<input type="text" required disabled readonly />`)
     })
   })
 })
