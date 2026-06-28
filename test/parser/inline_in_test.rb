@@ -3,12 +3,7 @@
 require_relative "../test_helper"
 
 module Parser
-  # A one-line pattern match (`value in pattern`) is a complete boolean expression, not a
-  # `case`/`in` control flow clause. It shouldn't be treated as a case control flow block.
-  #
-  # See marcoroth/herb#1758.
-  #
-  class MatchPredicateTest < Minitest::Spec
+  class InlineInTest < Minitest::Spec
     include SnapshotUtils
 
     test "one-line pattern match against regexp as if condition" do
@@ -40,6 +35,40 @@ module Parser
     test "one-line pattern match as output expression" do
       assert_parsed_snapshot(<<~HTML)
         <%= value in [Integer] %>
+      HTML
+    end
+
+    test "one-line pattern match as elsif condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if value in Integer %>
+          <div>Integer</div>
+        <% elsif value in String %>
+          <div>String</div>
+        <% else %>
+          <div>Other</div>
+        <% end %>
+      HTML
+    end
+
+    test "one-line pattern match as while condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% while value in Integer %>
+          <%= value %>
+        <% end %>
+      HTML
+    end
+
+    test "one-line pattern match as until condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% until value in Done %>
+          <%= value %>
+        <% end %>
+      HTML
+    end
+
+    test "one-line pattern match in ternary expression" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= (value in Integer) ? "yes" : "no" %>
       HTML
     end
   end

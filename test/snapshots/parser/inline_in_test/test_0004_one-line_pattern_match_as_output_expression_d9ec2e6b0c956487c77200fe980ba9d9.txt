@@ -1,5 +1,5 @@
 ---
-source: "Parser::MatchPredicateTest#test_0004_one-line pattern match as output expression"
+source: "Parser::InlineInTest#test_0004_one-line pattern match as output expression"
 input: |2-
 <%= value in [Integer] %>
 ---

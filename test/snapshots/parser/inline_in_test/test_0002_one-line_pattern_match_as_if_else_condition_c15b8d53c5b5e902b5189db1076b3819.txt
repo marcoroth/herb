@@ -1,5 +1,5 @@
 ---
-source: "Parser::MatchPredicateTest#test_0002_one-line pattern match as if/else condition"
+source: "Parser::InlineInTest#test_0002_one-line pattern match as if/else condition"
 input: |2-
 <% if 1 in Numeric %>
   <div>Text1</div>

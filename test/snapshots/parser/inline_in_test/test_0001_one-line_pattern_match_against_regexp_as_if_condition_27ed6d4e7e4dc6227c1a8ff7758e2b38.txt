@@ -1,5 +1,5 @@
 ---
-source: "Parser::MatchPredicateTest#test_0001_one-line pattern match against regexp as if condition"
+source: "Parser::InlineInTest#test_0001_one-line pattern match against regexp as if condition"
 input: |2-
 <% if attribute in /...+/ %>
   <%= attribute %>
