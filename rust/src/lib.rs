@@ -5,6 +5,7 @@ pub mod errors;
 pub mod ffi;
 pub mod herb;
 pub mod lex_result;
+pub mod parser_options;
 pub mod location;
 pub mod nodes;
 pub mod parse_result;

@@ -500,6 +500,98 @@ warnings:
   fields: []
   types: []
 
+parser_options:
+  fields:
+    - name: track_whitespace
+      type: boolean
+      default: false
+      description: "Whether to track whitespace tokens during parsing."
+
+    - name: analyze
+      type: boolean
+      default: true
+      description: "Whether analysis is performed during parsing."
+
+    - name: strict
+      type: boolean
+      default: true
+      description: "Whether strict mode is enabled during parsing."
+
+    - name: action_view_helpers
+      type: boolean
+      default: false
+      description: "Whether ActionView tag helper transformation is enabled during parsing."
+
+    - name: transform_conditionals
+      type: boolean
+      default: false
+      description: "Whether postfix conditional transformation is enabled during parsing."
+
+    - name: render_nodes
+      type: boolean
+      default: false
+      description: "Whether ActionView render call detection is enabled during parsing."
+
+    - name: strict_locals
+      type: boolean
+      default: false
+      description: "Whether strict locals analysis is enabled during parsing."
+
+    - name: prism_program
+      type: boolean
+      default: false
+      description: "Whether the full Prism ProgramNode is serialized on the DocumentNode."
+
+    - name: prism_nodes
+      type: boolean
+      default: false
+      description: "Whether Prism node serialization is enabled during parsing."
+
+    - name: prism_nodes_deep
+      type: boolean
+      default: false
+      description: "Whether deep Prism node serialization is enabled during parsing."
+
+    - name: dot_notation_tags
+      type: boolean
+      default: false
+      description: "Whether dot-notation component tags (e.g. Dialog.Button) are parsed as HTML elements."
+
+    - name: html
+      type: boolean
+      default: true
+      description: "Whether HTML tag parsing is enabled. When false, HTML-like content is treated as literal text."
+
+    - name: timeout
+      type: uint32
+      c_name: timeout_ms
+      default_ms: 1000
+      ruby_unit: seconds
+      description: "Parse timeout."
+
+    - name: max_errors
+      type: uint32
+      default: 25
+      nullable: true
+      null_sentinel: 0
+      description: "Maximum number of errors to report. nil/null means unlimited."
+
+  internal_fields:
+    - name: start_line
+      type: uint32
+      default: 0
+
+    - name: start_column
+      type: uint32
+      default: 0
+
+    - name: error_count
+      type: pointer_uint32
+
+    - name: deadline_ms
+      type: uint64
+      default: 0
+
 nodes:
   # fields:
   #   - name: type
