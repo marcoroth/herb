@@ -3,20 +3,21 @@ source: "Parser::ParserOptionsTest#test_0002_html false reaches the parse result
 input: "Herb::ParserOptions.new(html: false)"
 ---
 #<Herb::ParserOptions
-  strict=true
   track_whitespace=false
-  track_locations=true
   analyze=true
+  strict=true
   action_view_helpers=false
   transform_conditionals=false
   render_nodes=false
   strict_locals=false
   herb_directives=false
   iteration_nodes=false
+  prism_program=false
   prism_nodes=false
   prism_nodes_deep=false
-  prism_program=false
+  dot_notation_tags=false
   html=false
+  track_locations=true
   erb_openers=[]
   timeout=1
   max_errors=25

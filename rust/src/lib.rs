@@ -10,6 +10,7 @@ pub mod locate;
 pub mod location;
 pub mod nodes;
 pub mod parse_result;
+pub mod parser_options;
 pub mod position;
 pub mod prism;
 pub mod range;

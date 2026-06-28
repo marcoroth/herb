@@ -1,0 +1,9 @@
+#include "include/parser/parser_options.h"
+
+#include <stddef.h>
+
+<%- entries = parser_options.all_c_fields.flat_map { |field| field.string_array? ? [[field.c_name, "NULL"], [field.count_name, "0"]] : [[field.c_name, field.pointer? ? "NULL" : field.c_default.to_s]] } -%>
+<%- prefix = "const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { " -%>
+<%- entries.each_with_index do |(name, value), index| -%>
+<%= index.zero? ? prefix : " " * prefix.length %>.<%= name %> = <%= value %><%= index < entries.length - 1 ? "," : " };" %>
+<%- end -%>
