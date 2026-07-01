@@ -8,7 +8,7 @@ import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
 import { version } from "../package.json"
 
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
+const OPEN_CONFIG_ACTION = 'Open .herb.yaml'
 
 export class FormattingService {
   private connection: Connection
@@ -171,7 +171,7 @@ export class FormattingService {
         if (this.settings.hasShowDocumentCapability) {
           this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
             if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
+              const configPath = Config.configPathFromProjectPath(this.project.projectPath)
               this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
             }
           })
@@ -207,7 +207,7 @@ export class FormattingService {
   }
 
   private shouldFormatFile(filePath: string): boolean {
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
     if (!this.config) return true
 
     const hasConfigFile = Config.exists(this.config.projectPath)
@@ -257,7 +257,7 @@ export class FormattingService {
         if (this.settings.hasShowDocumentCapability) {
           this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
             if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
+              const configPath = Config.configPathFromProjectPath(this.project.projectPath)
               this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
             }
           })
@@ -295,7 +295,7 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 
@@ -395,7 +395,7 @@ export class FormattingService {
   }
 
   async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 

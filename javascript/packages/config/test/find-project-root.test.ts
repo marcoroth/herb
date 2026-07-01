@@ -3,6 +3,28 @@ import { mkdirSync, writeFileSync, rmSync } from "fs"
 import { join } from "path"
 import { Config } from "../src/config.js"
 
+describe("findProjectRootSync with .herb.yaml", () => {
+  const tempDir = join(process.cwd(), "tmp-test-find-project-root-yaml")
+
+  beforeAll(() => {
+    mkdirSync(join(tempDir, "app", "views"), { recursive: true })
+
+    writeFileSync(join(tempDir, ".herb.yaml"), "linter:\n  enabled: true\n")
+    writeFileSync(join(tempDir, "app", "views", "index.html.erb"), "<div></div>\n")
+  })
+
+  afterAll(() => {
+    rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test("finds project root with .herb.yaml", () => {
+    const filePath = join(tempDir, "app", "views", "index.html.erb")
+    const projectRoot = Config.findProjectRootSync(filePath)
+
+    expect(projectRoot).toBe(tempDir)
+  })
+})
+
 describe("findProjectRootSync", () => {
   const tempDir = join(process.cwd(), "tmp-test-find-project-root")
 
