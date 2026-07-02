@@ -22,6 +22,7 @@ export class LineContextCollector extends Visitor {
     if (!node.tag_opening || !node.tag_closing) return
 
     const startLine = lspLine(node.tag_opening.location.start)
+    const endLine = lspLine(node.tag_closing.location.end)
 
     const nodes = this.erbNodesPerLine.get(startLine) || []
     nodes.push(node as ERBContentNode)
@@ -30,7 +31,9 @@ export class LineContextCollector extends Visitor {
     if (isERBCommentNode(node)) {
       this.setLine(startLine, "erb-comment", node)
     } else {
-      this.setLine(startLine, "erb-tag", node)
+      for (let line = startLine; line <= endLine; line++) {
+        this.setLine(line, "erb-tag", node)
+      }
     }
   }
 
