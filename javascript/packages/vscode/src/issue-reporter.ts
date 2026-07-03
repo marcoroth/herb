@@ -30,14 +30,14 @@ function createSettingsSection(settings: PersonalHerbSettings): string {
   `
   
   if (settings.projectConfig) {
-    section += `\n\n**Herb Configuration (.herb.yaml):**
+    section += `\n\n**Herb Configuration:**
     \`\`\`yaml
     ${settings.projectConfig}
     \`\`\`
     `
   } else {
-    section += `\n\n**Herb Configuration (.herb.yaml):**
-    No .herb.yaml file found in workspace.
+    section += `\n\n**Herb Configuration:**
+    No Herb config file found in workspace.
     `
   }
   

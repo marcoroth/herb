@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
@@ -46,8 +47,8 @@ async function updateConfigStatusBarItem() {
   try {
     await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
 
-    configStatusBarItem.text = '$(file-code) .herb.yaml (Project Settings)'
-    configStatusBarItem.tooltip = 'Herb configuration loaded from .herb.yaml (overrides VS Code settings)\n\nClick to view configuration details'
+    configStatusBarItem.text = `$(file-code) ${path.basename(configPath)} (Project Settings)`
+    configStatusBarItem.tooltip = `Herb configuration loaded from ${path.basename(configPath)} (overrides VS Code settings)\n\nClick to view configuration details`
     configStatusBarItem.command = 'herb.showConfigDetails'
 
     configStatusBarItem.show()

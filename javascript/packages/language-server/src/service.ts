@@ -1,3 +1,5 @@
+import * as path from "path"
+
 import { Connection, InitializeParams } from "vscode-languageserver/node"
 
 import { Settings, PersonalHerbSettings } from "./settings"
@@ -77,7 +79,7 @@ export class Service {
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
           `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yaml file.`
+          `Consider updating your ${path.basename(this.config.path)} file.`
         )
       }
     } catch (error) {
@@ -122,7 +124,7 @@ export class Service {
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
           `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yaml file.`
+          `Consider updating your ${path.basename(this.config.path)} file.`
         )
       }
     } catch (error) {

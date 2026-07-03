@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import { Config } from "@herb-tools/config"
 
 interface ConfigQuickPickItem extends vscode.QuickPickItem {
@@ -29,13 +30,13 @@ export async function showConfigDetails() {
   const configSourceItem: ConfigQuickPickItem = hasConfigFile
     ? {
         label: "$(file-code) Herb Configuration Source",
-        detail: ".herb.yaml (project configuration overrides VS Code settings)",
+        detail: `${path.basename(configPath!)} (project configuration overrides VS Code settings)`,
         description: ""
       }
     : {
         label: "$(settings-gear) Herb Configuration Source",
         detail: "VS Code Settings (personal settings)",
-        description: "no .herb.yaml"
+        description: "no Herb config file"
       }
 
   if (!hasConfigFile) {
@@ -110,7 +111,7 @@ export async function showConfigDetails() {
 
   if (hasConfigFile) {
     items.push({
-      label: "$(edit) Edit .herb.yaml",
+      label: `$(edit) Edit ${path.basename(configPath!)}`,
       description: "Open configuration file",
       action: async () => {
         const document = await vscode.workspace.openTextDocument(configPath!)

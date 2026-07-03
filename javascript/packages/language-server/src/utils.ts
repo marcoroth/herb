@@ -1,4 +1,9 @@
+import * as path from "path"
+
 import { DiagnosticSeverity, DiagnosticTag } from "vscode-languageserver/node"
+import { Config } from "@herb-tools/config"
+
+import type { Connection } from "vscode-languageserver/node"
 import type { LintSeverity } from "@herb-tools/linter"
 import type { DiagnosticSeverity as HerbDiagnosticSeverity, DiagnosticTag as HerbDiagnosticTag } from "@herb-tools/core"
 
@@ -21,6 +26,24 @@ export function lintToDignosticSeverity(severity: LintSeverity | HerbDiagnosticS
     case "info": return DiagnosticSeverity.Information
     case "hint": return DiagnosticSeverity.Hint
   }
+}
+
+export function showConfigWarningMessage(connection: Connection, message: string, projectPath: string, canShowDocument: boolean): void {
+  if (!canShowDocument) {
+    connection.window.showWarningMessage(message)
+
+    return
+  }
+
+  const openConfigAction = `Open ${path.basename(Config.configPathFromProjectPath(projectPath))}`
+
+  connection.window.showWarningMessage(message, { title: openConfigAction }).then(action => {
+    if (action?.title === openConfigAction) {
+      const configPath = Config.configPathFromProjectPath(projectPath)
+
+      connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
+    }
+  })
 }
 
 export function lintToDignosticTags(tags?: HerbDiagnosticTag[]): DiagnosticTag[] {
