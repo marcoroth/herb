@@ -1,6 +1,6 @@
 import path from "path"
 
-import { promises as fs } from "fs"
+import { promises as fs, existsSync } from "fs"
 import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
@@ -456,7 +456,7 @@ export class Config {
     for (const configPath of this.configPaths) {
       const candidate = path.join(projectPath, configPath)
 
-      if (require('fs').existsSync(candidate)) {
+      if (existsSync(candidate)) {
         return candidate
       }
     }
