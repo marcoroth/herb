@@ -1,7 +1,7 @@
 import dedent from "dedent"
 import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
-import { resolve, relative } from "path"
+import { resolve, relative, basename } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
@@ -196,15 +196,15 @@ export class CLI {
       const formatterConfig = config.formatter || {}
 
       if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
-        console.log("Formatter is disabled in .herb.yaml configuration.")
-        console.log("To enable formatting, set formatter.enabled: true in .herb.yaml")
+        console.log(`Formatter is disabled in ${basename(config.path)} configuration.`)
+        console.log(`To enable formatting, set formatter.enabled: true in ${basename(config.path)}`)
         console.log("Or use --force to format anyway.")
 
         process.exit(0)
       }
 
       if (isForceMode && hasConfigFile && formatterConfig.enabled === false) {
-        console.error("⚠️  Forcing formatter run (disabled in .herb.yaml)")
+        console.error(`⚠️  Forcing formatter run (disabled in ${basename(config.path)})`)
         console.error()
       }
 

@@ -1,3 +1,5 @@
+import { basename } from "path"
+
 import { colorize, hyperlink } from "@herb-tools/highlighter"
 import { UNRELEASED_VERSION, compareSemver } from "../semver.js"
 
@@ -156,18 +158,16 @@ export class SummaryReporter {
     const { rulesSkippedByVersion: skippedRules, configVersion, configPath, hasConfigFile, toolVersion } = data
 
     if (!skippedRules || skippedRules.length === 0) return
-    if (!hasConfigFile) return
+    if (!hasConfigFile || !configPath) return
 
     const ruleCount = skippedRules.length
     const suggestedVersion = toolVersion || configVersion || "latest"
 
     console.log("")
     console.log(` ${colorize(`New rules available:`, "bold")}`)
-    console.log(`  Your ${colorize(".herb.yaml", "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
+    console.log(`  Your ${colorize(basename(configPath), "cyan")} version is ${colorize(configVersion!, "cyan")}. ${colorize(String(ruleCount), "bold")} new ${this.pluralize(ruleCount, "rule")} ${ruleCount === 1 ? "is" : "are"} disabled to ease upgrades:`)
 
-    if (configPath) {
-      console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
-    }
+    console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
 
     console.log("")
 
