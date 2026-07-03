@@ -452,16 +452,14 @@ export class Config {
     return this.configPaths.some(name => pathOrFile.endsWith(name))
   }
 
+  static existingConfigPaths(directory: string): string[] {
+    return this.configPaths
+      .map(configPath => path.join(directory, configPath))
+      .filter(candidate => existsSync(candidate))
+  }
+
   static configPathFromProjectPath(projectPath: string) {
-    for (const configPath of this.configPaths) {
-      const candidate = path.join(projectPath, configPath)
-
-      if (existsSync(candidate)) {
-        return candidate
-      }
-    }
-
-    return path.join(projectPath, this.defaultConfigPath)
+    return this.existingConfigPaths(projectPath)[0] || path.join(projectPath, this.defaultConfigPath)
   }
 
   /**
@@ -1002,6 +1000,14 @@ export class Config {
 
     if (!silent) {
       console.error(`✓ Using Herb config file at ${configPath}`)
+
+      const ignoredNames = this.existingConfigPaths(projectRoot)
+        .filter(existingPath => path.resolve(existingPath) !== path.resolve(configPath))
+        .map(existingPath => path.basename(existingPath))
+
+      if (ignoredNames.length > 0) {
+        console.error(`⚠ Multiple Herb config files found: using ${path.basename(configPath)}, ignoring ${ignoredNames.join(", ")}`)
+      }
     }
 
     return config

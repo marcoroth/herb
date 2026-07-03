@@ -1,5 +1,5 @@
 import dedent from "dedent"
-import { describe, test, expect, beforeEach, afterEach } from "vitest"
+import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
@@ -87,6 +87,59 @@ describe("@herb-tools/config", () => {
 
       const configPath = Config.configPathFromProjectPath(testDir)
       expect(configPath).toBe(join(testDir, ".herb.yaml"))
+    })
+  })
+
+  describe("Config.existingConfigPaths", () => {
+    test("returns empty array when no config file exists", () => {
+      expect(Config.existingConfigPaths(testDir)).toEqual([])
+    })
+
+    test("returns single existing config file", () => {
+      writeFileSync(join(testDir, ".herb.yml"), "version: 0.10.1\n")
+
+      expect(Config.existingConfigPaths(testDir)).toEqual([join(testDir, ".herb.yml")])
+    })
+
+    test("returns both config files in precedence order when both exist", () => {
+      writeFileSync(join(testDir, ".herb.yaml"), "version: 0.10.1\n")
+      writeFileSync(join(testDir, ".herb.yml"), "version: 0.10.1\n")
+
+      expect(Config.existingConfigPaths(testDir)).toEqual([
+        join(testDir, ".herb.yaml"),
+        join(testDir, ".herb.yml")
+      ])
+    })
+  })
+
+  describe("Config.load with multiple config files", () => {
+    test("warns when both .herb.yaml and .herb.yml exist", async () => {
+      writeFileSync(join(testDir, ".herb.yaml"), "version: 0.10.1\n")
+      writeFileSync(join(testDir, ".herb.yml"), "version: 0.10.1\n")
+
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      try {
+        await Config.load(testDir)
+
+        expect(errorSpy).toHaveBeenCalledWith("⚠ Multiple Herb config files found: using .herb.yaml, ignoring .herb.yml")
+      } finally {
+        errorSpy.mockRestore()
+      }
+    })
+
+    test("does not warn when only one config file exists", async () => {
+      writeFileSync(join(testDir, ".herb.yaml"), "version: 0.10.1\n")
+
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      try {
+        await Config.load(testDir)
+
+        expect(errorSpy).not.toHaveBeenCalledWith(expect.stringContaining("Multiple Herb config files found"))
+      } finally {
+        errorSpy.mockRestore()
+      }
     })
   })
 
