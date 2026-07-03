@@ -486,6 +486,16 @@ errors:
         - name: segment
           type: token
 
+    - name: TimeoutError
+      message:
+        template: "Parsing timed out after %zu ms."
+        arguments:
+          - timeout_ms
+
+      fields:
+        - name: timeout_ms
+          type: size_t
+
 warnings:
   fields: []
   types: []

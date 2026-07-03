@@ -99,6 +99,15 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("html")) {
       parser_options.html = options["html"].as<bool>();
     }
+
+    if (options.hasOwnProperty("timeout")) {
+      parser_options.timeout_ms = (uint32_t) options["timeout"].as<int>();
+    }
+
+    if (options.hasOwnProperty("max_errors")) {
+      val max_errors_val = options["max_errors"];
+      parser_options.max_errors = max_errors_val.isNull() ? 0 : (uint32_t) max_errors_val.as<int>();
+    }
   }
 
   hb_allocator_T allocator;

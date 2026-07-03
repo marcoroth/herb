@@ -71,7 +71,7 @@ sorbet:
 rbs:
   - changed-files:
     - any-glob-to-any-file:
-      - 'sig/**/*.rbs'
+      - 'sig/**/*'
       - 'templates/sig/**/*'
 
 action-view-helpers:

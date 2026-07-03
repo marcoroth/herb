@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "action_view"
+require "erubi"
+
 module CompareHelpers
   def box_header(title, width = 80)
     padding = width - title.length - 2

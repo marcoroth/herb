@@ -535,7 +535,7 @@ export default class NoDivTagsRule extends ParserRule {
   static ruleName = "no-div-tags"
 
   check(result, context) {
-    const visitor = new NoDivTagsVisitor(this.name, context)
+    const visitor = new NoDivTagsVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }
@@ -569,7 +569,7 @@ export default class NoInlineStylesRule {
   static ruleName = "no-inline-styles"
 
   check(parseResult, context) {
-    const visitor = new NoInlineStylesVisitor(this.name, context)
+    const visitor = new NoInlineStylesVisitor(this.ruleName, context)
     visitor.visit(parseResult.value)
     return visitor.offenses
   }
