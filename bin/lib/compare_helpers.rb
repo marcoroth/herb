@@ -2,6 +2,7 @@
 
 require "action_view"
 require "erubi"
+require "rails-html-sanitizer"
 
 module CompareHelpers
   def box_header(title, width = 80)
