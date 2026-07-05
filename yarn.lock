@@ -9528,10 +9528,10 @@ tslib@2.8.1, tslib@^2.1.0, tslib@^2.2.0, tslib@^2.4.0, tslib@^2.6.2:
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz"
   integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
 
-tsx@^4.22.4:
-  version "4.22.4"
-  resolved "https://registry.yarnpkg.com/tsx/-/tsx-4.22.4.tgz#0ab3b7fb4ec7feeee74e5b1f26337caa71e44700"
-  integrity sha512-X8EX+XV4QR5xCsrgxaED954zTDfY8KqlDtskKEL0cHhyS/P8b4IFOvGDQpsC9Q1XnLq915wEfwwY/zzskCtmhg==
+tsx@^4.23.0:
+  version "4.23.0"
+  resolved "https://registry.yarnpkg.com/tsx/-/tsx-4.23.0.tgz#5393ae8bfce5a9c34db9c00d1353e3d8c3fd3de6"
+  integrity sha512-eUdUIaCr963q2h5u3+QwvYp0+eqPvn+egeqZUm0hwERCqqx1E3kK5ehbGCvqSE5MQAULr67ww0cA3jKc3YkM1w==
   dependencies:
     esbuild "~0.28.0"
   optionalDependencies:
