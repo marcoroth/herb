@@ -2,7 +2,6 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { IdentityPrinter } from "@herb-tools/printer"
 import { TailwindClassSorterRewriter } from "../../src/built-ins/tailwind-class-sorter.js"
 
 import { createRewriterTest } from "../helpers/rewriter-test-helper.js"
@@ -29,29 +28,24 @@ describe("tailwind-class-sorter", () => {
       await expect(rewriter.initialize({ baseDir: process.cwd() })).resolves.not.toThrow()
     })
 
-    test("returns original AST when sorter not initialized", async () => {
+    test("returns original string when sorter not initialized", async () => {
       const input = dedent`
         <div class="px-4 bg-blue-500"></div>
       `
 
       const rewriter = new TailwindClassSorterRewriter()
+      const output = rewriter.rewrite(input, { baseDir: process.cwd() })
 
-      const parseResult = Herb.parse(input, { track_whitespace: true })
-      const document = rewriter.rewrite(parseResult.value, { baseDir: process.cwd() })
-
-      expect(document).toBe(parseResult.value)
-
-      const output = IdentityPrinter.print(document)
       expect(output).toBe(input)
     })
 
-    test("returns rewritten AST for inspection", async () => {
-      const document = await expectTransform(
+    test("returns rewritten string", async () => {
+      const result = await expectTransform(
         `<div class="px-4 bg-blue-500"></div>`,
         `<div class="bg-blue-500 px-4"></div>`
       )
 
-      expect(document.type).toBe("AST_DOCUMENT_NODE")
+      expect(result).toBeDefined()
     })
   })
 
@@ -587,6 +581,78 @@ describe("tailwind-class-sorter", () => {
 
     test("handles class attribute with only whitespace", async () => {
       await expectNoTransform(`<div class="   "></div>`)
+    })
+  })
+
+  describe("Action View Tag Helper class attributes", () => {
+    describe("tag.div", () => {
+      test("sorts classes in tag.div with block (double quotes)", async () => {
+        await expectTransform(
+          `<%= tag.div class: "px-4 bg-blue-500 text-white" do %><% end %>`,
+          `<%= tag.div class: "bg-blue-500 px-4 text-white" do %><% end %>`
+        )
+      })
+
+      test("sorts classes in tag.div with block (single quotes)", async () => {
+        await expectTransform(
+          `<%= tag.div class: 'px-4 bg-blue-500 text-white' do %><% end %>`,
+          `<%= tag.div class: 'bg-blue-500 px-4 text-white' do %><% end %>`
+        )
+      })
+
+      test("sorts classes in inline tag.div (no block)", async () => {
+        await expectTransform(
+          `<%= tag.div class: "px-4 bg-blue-500 text-white" %>`,
+          `<%= tag.div class: "bg-blue-500 px-4 text-white" %>`
+        )
+      })
+
+      test("does not change already sorted classes", async () => {
+        await expectNoTransform(
+          `<%= tag.div class: "bg-blue-500 px-4 text-white" do %><% end %>`
+        )
+      })
+
+      test("does not sort dynamic class values (RubyLiteralNode)", async () => {
+        await expectNoTransform(
+          `<%= tag.div class: dynamic_classes do %><% end %>`
+        )
+      })
+
+      test("does not sort class_names() calls", async () => {
+        await expectNoTransform(
+          `<%= tag.div class: class_names("px-4 bg-blue-500") do %><% end %>`
+        )
+      })
+
+      test("sorts multiple attributes, only touches class", async () => {
+        await expectTransform(
+          `<%= tag.div id: "main", class: "px-4 bg-blue-500" do %><% end %>`,
+          `<%= tag.div id: "main", class: "bg-blue-500 px-4" do %><% end %>`
+        )
+      })
+    })
+
+    describe("content_tag", () => {
+      test("sorts classes in content_tag with block", async () => {
+        await expectTransform(
+          `<%= content_tag :div, class: "px-4 bg-blue-500 text-white" do %><% end %>`,
+          `<%= content_tag :div, class: "bg-blue-500 px-4 text-white" do %><% end %>`
+        )
+      })
+
+      test("sorts classes in inline content_tag (no content argument)", async () => {
+        await expectTransform(
+          `<%= content_tag :div, class: "px-4 bg-blue-500" %>`,
+          `<%= content_tag :div, class: "bg-blue-500 px-4" %>`
+        )
+      })
+
+      test("does not sort dynamic class values", async () => {
+        await expectNoTransform(
+          `<%= content_tag :div, class: some_classes do %><% end %>`
+        )
+      })
     })
   })
 })
