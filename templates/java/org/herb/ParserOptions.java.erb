@@ -1,0 +1,24 @@
+package org.herb;
+
+public class ParserOptions {
+<%- parser_options.fields.each do |field| -%>
+  private <%= field.java_type %> <%= field.camel_case %> = <%= field.java_default %>;
+<%- end -%>
+
+  public ParserOptions() {}
+
+<%- parser_options.fields.each do |field| -%>
+  public ParserOptions <%= field.camel_case %>(<%= field.java_type %> value) {
+    this.<%= field.camel_case %> = value;
+    return this;
+  }
+
+  public <%= field.java_type %> <%= field.java_getter %>() {
+    return <%= field.camel_case %>;
+  }
+
+<%- end -%>
+  public static ParserOptions create() {
+    return new ParserOptions();
+  }
+}

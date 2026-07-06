@@ -7,6 +7,7 @@
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 VALUE mHerb;
 VALUE cPosition;
@@ -116,79 +117,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   bool print_arena_stats = false;
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  herb_extract_parser_options(options, &parser_options);
 
   if (!NIL_P(options)) {
-    VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
-    if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
-
-    VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
-    if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
-    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
-
-    VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
-    if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
-    if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
-
-    VALUE action_view_helpers = rb_hash_lookup(options, rb_utf8_str_new_cstr("action_view_helpers"));
-    if (NIL_P(action_view_helpers)) {
-      action_view_helpers = rb_hash_lookup(options, ID2SYM(rb_intern("action_view_helpers")));
-    }
-    if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
-
-    VALUE transform_conditionals = rb_hash_lookup(options, rb_utf8_str_new_cstr("transform_conditionals"));
-    if (NIL_P(transform_conditionals)) {
-      transform_conditionals = rb_hash_lookup(options, ID2SYM(rb_intern("transform_conditionals")));
-    }
-    if (!NIL_P(transform_conditionals) && RTEST(transform_conditionals)) {
-      parser_options.transform_conditionals = true;
-    }
-
-    VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
-    if (NIL_P(dot_notation_tags)) {
-      dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
-    }
-    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
-
-    VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
-    if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
-    if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }
-
-    VALUE strict_locals = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict_locals"));
-    if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
-    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
-
-    VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
-    if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
-    if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
-
-    VALUE prism_nodes_deep = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes_deep"));
-    if (NIL_P(prism_nodes_deep)) { prism_nodes_deep = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes_deep"))); }
-    if (!NIL_P(prism_nodes_deep) && RTEST(prism_nodes_deep)) { parser_options.prism_nodes_deep = true; }
-
-    VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
-    if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
-    if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
-
-    VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
-    if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
-    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
-
-    VALUE timeout = rb_hash_lookup(options, rb_utf8_str_new_cstr("timeout"));
-    if (NIL_P(timeout)) { timeout = rb_hash_lookup(options, ID2SYM(rb_intern("timeout"))); }
-    if (!NIL_P(timeout)) { parser_options.timeout_ms = (uint32_t) (NUM2DBL(timeout) * 1000); }
-
-    VALUE max_errors_sentinel = ID2SYM(rb_intern("__not_set__"));
-    VALUE max_errors = rb_hash_lookup2(options, rb_utf8_str_new_cstr("max_errors"), max_errors_sentinel);
-
-    if (max_errors == max_errors_sentinel) {
-      max_errors = rb_hash_lookup2(options, ID2SYM(rb_intern("max_errors")), max_errors_sentinel);
-    }
-
-    if (max_errors != max_errors_sentinel) {
-      parser_options.max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
-    }
-
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }

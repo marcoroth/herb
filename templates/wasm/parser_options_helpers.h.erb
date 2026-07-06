@@ -1,0 +1,12 @@
+#ifndef HERB_WASM_PARSER_OPTIONS_HELPERS_H
+#define HERB_WASM_PARSER_OPTIONS_HELPERS_H
+
+#include <emscripten/val.h>
+
+extern "C" {
+#include "../src/include/parser/parser_options.h"
+}
+
+void herb_extract_parser_options(emscripten::val options, parser_options_T* parser_options);
+
+#endif
