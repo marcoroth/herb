@@ -13,6 +13,7 @@ import {
   ERBBeginNode,
   HTMLElementNode,
   HTMLOpenTagNode,
+  HTMLConditionalOpenTagNode,
   HTMLCloseTagNode,
   HTMLAttributeNode,
   HTMLAttributeNameNode,
@@ -29,12 +30,14 @@ import {
   isHTMLCommentNode,
   isHTMLElementNode,
   isHTMLOpenTagNode,
+  isERBOpenTagNode,
   isHTMLTextNode,
   isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
   areAllOfType,
   filterLiteralNodes,
+  filterHTMLTextNodes,
   filterHTMLAttributeNodes
 } from "./node-type-guards.js"
 
@@ -153,6 +156,20 @@ export function getValidatableStaticContent(nodes: Node[]): string | null {
 }
 
 /**
+ * Gets static text content from element body nodes (includes both LiteralNode and HTMLTextNode)
+ * Returns concatenated text content for validation, or null if contains output ERB
+ */
+export function getStaticBodyText(nodes: Node[]): string | null {
+  if (hasERBOutput(nodes)) {
+    return null
+  }
+
+  const textNodes = [...filterLiteralNodes(nodes), ...filterHTMLTextNodes(nodes)]
+
+  return textNodes.map(node => node.content).join("")
+}
+
+/**
  * Extracts a combined string from nodes, including ERB content
  * For ERB nodes, includes the full tag syntax (e.g., "<%= foo %>")
  * This is useful for debugging or displaying the full attribute name
@@ -255,21 +272,35 @@ export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentN
  * For conditional open tags, returns null.
  * If given an HTMLOpenTagNode directly, returns it as-is.
  */
-export function getOpenTag(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLOpenTagNode | null {
+export function getOpenTag(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined): HTMLOpenTagNode | null {
   if (!node) return null
   if (isHTMLOpenTagNode(node)) return node
-  if (isHTMLElementNode(node)) return isHTMLOpenTagNode(node.open_tag) ? node.open_tag : null
+  if (isHTMLElementNode(node) && isHTMLOpenTagNode(node.open_tag)) return node.open_tag
 
   return null
 }
 
 /**
+ * Gets the children array from an element's open tag, regardless of whether
+ * it's an HTMLOpenTagNode or ERBOpenTagNode (used by action view helpers).
+ */
+function getOpenTagChildren(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined): Node[] {
+  if (!node) return []
+  if (isHTMLOpenTagNode(node)) return node.children
+
+  if (isHTMLElementNode(node) && node.open_tag) {
+    if (isHTMLOpenTagNode(node.open_tag)) return node.open_tag.children
+    if (isERBOpenTagNode(node.open_tag)) return node.open_tag.children
+  }
+
+  return []
+}
+
+/**
  * Gets attributes from an HTMLElementNode or HTMLOpenTagNode
  */
-export function getAttributes(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLAttributeNode[] {
-  const openTag = getOpenTag(node)
-
-  return openTag ? filterHTMLAttributeNodes(openTag.children) : []
+export function getAttributes(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined): HTMLAttributeNode[] {
+  return filterHTMLAttributeNodes(getOpenTagChildren(node))
 }
 
 /**
@@ -292,10 +323,10 @@ export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = t
  * Returns false for null/undefined input.
  */
 export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): boolean
-export function hasStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean
-export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): boolean {
+export function hasStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName: string): boolean
+export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName?: string): boolean {
   const attributeNode = attributeName
-    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode, attributeName)
     : nodeOrAttribute as HTMLAttributeNode | null | undefined
 
   if (!attributeNode?.value?.children) return false
@@ -309,10 +340,10 @@ export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
  * Returns null for null/undefined input.
  */
 export function getStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): string | null
-export function getStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string | null
-export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string | null {
+export function getStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName: string): string | null
+export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName?: string): string | null {
   const attributeNode = attributeName
-    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode, attributeName)
     : nodeOrAttribute as HTMLAttributeNode | null | undefined
 
   if (!attributeNode) return null
@@ -337,10 +368,10 @@ export const TOKEN_LIST_ATTRIBUTES = new Set([
  * Returns an empty array for null/undefined/empty input.
  */
 export function getTokenList(value: string | null | undefined): string[]
-export function getTokenList(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string[]
-export function getTokenList(valueOrNode: string | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string[] {
+export function getTokenList(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName: string): string[]
+export function getTokenList(valueOrNode: string | HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName?: string): string[] {
   const value = attributeName
-    ? getStaticAttributeValue(valueOrNode as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    ? getStaticAttributeValue(valueOrNode as HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode, attributeName)
     : valueOrNode as string | null | undefined
 
   if (!value) return []
@@ -366,7 +397,7 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Gets a specific attribute from an HTMLElementNode or HTMLOpenTagNode by name
  */
-export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): HTMLAttributeNode | null {
+export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName: string): HTMLAttributeNode | null {
   const attributes = getAttributes(node)
 
   return findAttributeByName(attributes, attributeName)
@@ -375,7 +406,7 @@ export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | un
 /**
  * Checks if an element or open tag has a specific attribute
  */
-export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | HTMLConditionalOpenTagNode | null | undefined, attributeName: string): boolean {
   if (!node) return false
 
   return getAttribute(node, attributeName) !== null
