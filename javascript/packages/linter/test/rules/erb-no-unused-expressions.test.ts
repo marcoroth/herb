@@ -131,6 +131,13 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for breadcrumb", () => {
+      expectNoOffenses(dedent`
+        <% breadcrumb :page %>
+        <% breadcrumb :product, @product %>
+      `)
+    })
+
     test("passes for assert_valid_keys", () => {
       expectNoOffenses(dedent`
         <%

@@ -27,6 +27,7 @@ const MUTATION_METHODS = new Set([
 ])
 
 const SIDE_EFFECT_METHODS = new Set([
+  "breadcrumb",
   "content_for",
   "provide",
   "flush",
