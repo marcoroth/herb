@@ -37,12 +37,16 @@ describe("html-allowed-script-type", () => {
     expectNoOffenses('<script type="speculationrules"></script>')
   })
 
+  test("passes when type is application/ld+json", () => {
+    expectNoOffenses('<script type="application/ld+json"></script>')
+  })
+
   test("passes for script tag with ERB in type attribute", () => {
     expectNoOffenses('<script type="<%= script_type %>"></script>')
   })
 
   test("fails when type is not allowed", () => {
-    expectError('Avoid using `text/yavascript` as the `type` attribute for the `<script>` tag. Must be one of: `text/javascript`, `module`, `importmap`, `speculationrules` or blank.')
+    expectError('Avoid using `text/yavascript` as the `type` attribute for the `<script>` tag. Must be one of: `text/javascript`, `module`, `importmap`, `speculationrules`, `application/ld+json` or blank.')
 
     assertOffenses('<script type="text/yavascript"></script>')
   })
