@@ -6,7 +6,7 @@ import { lintToDignosticSeverity } from "./utils"
 import { version } from "../package.json"
 
 /**
- * Configuration service for validation of .herb.yml configuration files
+ * Configuration service for validation of .herb.yaml configuration files
  */
 export class ConfigService {
   private projectPath?: string
@@ -18,7 +18,7 @@ export class ConfigService {
   async validateDocument(document: TextDocument): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = []
 
-    if (!document.uri.endsWith('.herb.yml')) {
+    if (!Config.isConfigPath(document.uri)) {
       return diagnostics
     }
 

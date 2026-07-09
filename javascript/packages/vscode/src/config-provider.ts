@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import { Config } from "@herb-tools/config"
 
 export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
@@ -6,6 +7,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
   readonly onDidChangeTreeData: vscode.Event<ConfigItem | undefined | null | void> = this._onDidChangeTreeData.event
 
   private config: Config | null = null
+  private configPath: string | null = null
   private workspaceRoot: string | undefined
   private onConfigChangeCallback?: () => void | Promise<void>
   private extensionVersion: string
@@ -23,7 +25,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     })
 
     if (this.workspaceRoot) {
-      const herbYmlPattern = new vscode.RelativePattern(this.workspaceRoot, ".herb.yml")
+      const herbYmlPattern = new vscode.RelativePattern(this.workspaceRoot, ".herb.{yaml,yml}")
       const watcher = vscode.workspace.createFileSystemWatcher(herbYmlPattern)
 
       watcher.onDidCreate(() => void this.refresh())
@@ -35,7 +37,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
     context.subscriptions.push(
       vscode.workspace.onDidSaveTextDocument((document) => {
-        if (document.fileName.endsWith('.herb.yml')) {
+        if (Config.isConfigPath(document.fileName)) {
           void this.refresh()
         }
       })
@@ -78,6 +80,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
   private async loadConfig() {
     if (!this.workspaceRoot) {
       this.config = null
+      this.configPath = null
       this.configError = null
       return
     }
@@ -88,10 +91,13 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
     } catch {
       this.config = null
+      this.configPath = null
       this.configError = null
       vscode.commands.executeCommand('setContext', 'herb.hasProjectConfig', false)
       return
     }
+
+    this.configPath = configPath
 
     try {
       this.config = await Config.loadForEditor(configPath, this.extensionVersion)
@@ -113,6 +119,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       }
     } catch (error) {
       this.config = null
+      this.configPath = configPath
       this.configError = error instanceof Error ? error.message : String(error)
       vscode.commands.executeCommand('setContext', 'herb.hasProjectConfig', false)
     }
@@ -124,7 +131,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     if (this.config) {
       const configFileItem = new ConfigItem(
         "Project Settings",
-        "Configuration from .herb.yml",
+        `Configuration from ${path.basename(this.config.path)}`,
         vscode.TreeItemCollapsibleState.None,
         'configFile'
       )
@@ -181,7 +188,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     } else if (this.configError) {
       const errorItem = new ConfigItem(
         "Configuration has errors",
-        "Click to view and fix errors in .herb.yml",
+        `Click to view and fix errors in ${path.basename(this.configPath!)}`,
         vscode.TreeItemCollapsibleState.None,
         'configError'
       )
@@ -253,7 +260,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       items.push(formatterItem)
 
       const createConfigItem = new ConfigItem(
-        "Create .herb.yml",
+        "Create .herb.yaml",
         "Share settings with your project",
         vscode.TreeItemCollapsibleState.None,
         'createConfig'
@@ -281,7 +288,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
       await Config.mutateConfigFile(configPath, {})
 
-      vscode.window.showInformationMessage("Created Herb configuration file (.herb.yml)")
+      vscode.window.showInformationMessage("Created Herb configuration file (.herb.yaml)")
       await this.refresh()
 
       const document = await vscode.workspace.openTextDocument(configPath)
@@ -304,7 +311,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       await vscode.window.showTextDocument(document)
     } catch (_error) {
       const result = await vscode.window.showInformationMessage(
-        "Herb configuration file (.herb.yml) not found. Would you like to create one?",
+        "Herb configuration file (.herb.yaml) not found. Would you like to create one?",
         "Create Config",
         "Cancel"
       )

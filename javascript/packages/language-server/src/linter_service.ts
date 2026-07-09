@@ -8,10 +8,8 @@ import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { Project } from "./project"
-import { lintToDignosticSeverity, lintToDignosticTags } from "./utils"
+import { lintToDignosticSeverity, lintToDignosticTags, showConfigWarningMessage } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
-
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
@@ -102,22 +100,13 @@ export class LinterService {
       ? `Failed to load custom linter rules: ${failures[0][1]}`
       : `Failed to load custom linter rules:\n${failures.map(([_, error], i) => `${i + 1}. ${error}`).join('\n')}`
 
-    if (this.settings.hasShowDocumentCapability) {
-      this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
-        if (action?.title === OPEN_CONFIG_ACTION) {
-          const configPath = `${this.project.projectPath}/.herb.yml`
-          this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
-        }
-      })
-    } else {
-      this.connection.window.showWarningMessage(message)
-    }
+    showConfigWarningMessage(this.connection, message, this.project.projectPath, this.settings.hasShowDocumentCapability)
   }
 
   private shouldLintFile(uri: string): boolean {
     const filePath = uri.replace(/^file:\/\//, '')
 
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
 
     const config = this.settings.projectConfig
     if (!config) return true

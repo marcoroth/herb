@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
@@ -46,14 +47,14 @@ async function updateConfigStatusBarItem() {
   try {
     await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
 
-    configStatusBarItem.text = '$(file-code) .herb.yml (Project Settings)'
-    configStatusBarItem.tooltip = 'Herb configuration loaded from .herb.yml (overrides VS Code settings)\n\nClick to view configuration details'
+    configStatusBarItem.text = `$(file-code) ${path.basename(configPath)} (Project Settings)`
+    configStatusBarItem.tooltip = `Herb configuration loaded from ${path.basename(configPath)} (overrides VS Code settings)\n\nClick to view configuration details`
     configStatusBarItem.command = 'herb.showConfigDetails'
 
     configStatusBarItem.show()
   } catch (_error) {
     configStatusBarItem.text = '$(settings-gear) Herb (Personal Settings)'
-    configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yml'
+    configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yaml'
     configStatusBarItem.command = 'herb.showConfigDetails'
 
     configStatusBarItem.show()
@@ -196,7 +197,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(fileWatcher)
 
-  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.yml')
+  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.{yaml,yml}')
 
   configWatcher.onDidCreate(async () => {
     await updateConfigStatusBarItem()

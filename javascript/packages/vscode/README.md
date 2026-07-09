@@ -18,7 +18,7 @@ If you are looking to use Herb in another editor, check out the instructions on 
 
 ## Configuration
 
-The extension can be configured through VS Code settings or a `.herb.yml` file in your project root. Project configuration in `.herb.yml` takes precedence over VS Code settings.
+The extension can be configured through VS Code settings or a `.herb.yaml` file in your project root. Project configuration in `.herb.yaml` takes precedence over VS Code settings.
 
 See the [Configuration documentation](https://herb-tools.dev/configuration) for full details.
 

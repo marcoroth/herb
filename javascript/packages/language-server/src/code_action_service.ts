@@ -1,3 +1,5 @@
+import * as path from "path"
+
 import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
@@ -245,12 +247,12 @@ export class CodeActionService {
     const configUri = `file://${configPath}`
 
     const action: CodeAction = {
-      title: `Herb Linter: Disable \`${ruleName}\` in \`.herb.yml\``,
+      title: `Herb Linter: Disable \`${ruleName}\` in \`${path.basename(configPath)}\``,
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
       command: {
-        title: 'Open .herb.yml',
+        title: `Open ${path.basename(configPath)}`,
         command: 'vscode.open',
         arguments: [configUri]
       }

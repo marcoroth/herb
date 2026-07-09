@@ -110,14 +110,14 @@ npx @herb-tools/language-server --stdio
 
 ## Configuration
 
-The language server can be configured using a `.herb.yml` file in your project root. This configuration is shared across all Herb tools including the linter, formatter, and language server.
+The language server can be configured using a `.herb.yaml` file in your project root. This configuration is shared across all Herb tools including the linter, formatter, and language server.
 
 See the [Configuration documentation](https://herb-tools.dev/configuration) for full details.
 
 ### Example Configuration
 
 ```yaml
-# .herb.yml
+# .herb.yaml
 linter:
   enabled: true
 
@@ -127,4 +127,4 @@ formatter:
   maxLineLength: 80
 ```
 
-**Note**: VS Code users can also control settings through `languageServerHerb.*` settings in VS Code preferences. Project configuration in `.herb.yml` takes precedence over editor settings.
+**Note**: VS Code users can also control settings through `languageServerHerb.*` settings in VS Code preferences. Project configuration in `.herb.yaml` takes precedence over editor settings.

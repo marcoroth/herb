@@ -1,5 +1,6 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Connection, Diagnostic } from "vscode-languageserver/node"
+import { Config } from "@herb-tools/config"
 
 import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
@@ -31,7 +32,7 @@ export class Diagnostics {
   async validate(textDocument: TextDocument) {
     let allDiagnostics: Diagnostic[] = []
 
-    if (textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(textDocument.uri)) {
       allDiagnostics = await this.configService.validateDocument(textDocument)
     } else {
       const parseResult = this.parserService.parseDocument(textDocument)

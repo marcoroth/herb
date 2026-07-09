@@ -5,10 +5,9 @@ import { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
 import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
 import { Project } from "./project"
 import { Settings } from "./settings"
+import { showConfigWarningMessage } from "./utils"
 import { Config } from "@herb-tools/config"
 import { version } from "../package.json"
-
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
 export class FormattingService {
   private connection: Connection
@@ -168,16 +167,7 @@ export class FormattingService {
           ? `Herb Rewriter: ${warnings[0]}`
           : `Herb Rewriters (${warnings.length} failed):\n${warnings.map((w, i) => `${i + 1}. ${w}`).join('\n')}`
 
-        if (this.settings.hasShowDocumentCapability) {
-          this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
-            if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
-              this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
-            }
-          })
-        } else {
-          this.connection.window.showWarningMessage(message)
-        }
+        showConfigWarningMessage(this.connection, message, this.project.projectPath, this.settings.hasShowDocumentCapability)
       }
     } catch (error) {
       this.connection.console.error(`Failed to load rewriters: ${error}`)
@@ -207,7 +197,7 @@ export class FormattingService {
   }
 
   private shouldFormatFile(filePath: string): boolean {
-    if (filePath.endsWith('.herb.yml')) return false
+    if (Config.isConfigPath(filePath)) return false
     if (!this.config) return true
 
     const hasConfigFile = Config.exists(this.config.projectPath)
@@ -254,16 +244,7 @@ export class FormattingService {
           ? `Herb Rewriter "${failedList[0][0]}" is not available: ${failedList[0][1]}`
           : `Herb Rewriters (${failedList.length} not available):\n${failedList.map(([name, error], i) => `${i + 1}. ${name}: ${error}`).join('\n')}`
 
-        if (this.settings.hasShowDocumentCapability) {
-          this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
-            if (action?.title === OPEN_CONFIG_ACTION) {
-              const configPath = `${this.project.projectPath}/.herb.yml`
-              this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
-            }
-          })
-        } else {
-          this.connection.window.showWarningMessage(message)
-        }
+        showConfigWarningMessage(this.connection, message, this.project.projectPath, this.settings.hasShowDocumentCapability)
       }
 
       const formatter = Formatter.from(this.project.herbBackend, config, {
@@ -295,7 +276,7 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 
@@ -395,7 +376,7 @@ export class FormattingService {
   }
 
   async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (Config.isConfigPath(params.textDocument.uri)) {
       return []
     }
 

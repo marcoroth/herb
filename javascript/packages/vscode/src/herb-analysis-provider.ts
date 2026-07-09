@@ -4,6 +4,7 @@ import { AnalysisService } from './analysis-service'
 import { VersionService } from './version-service'
 
 import { workspace, window, commands, EventEmitter, ProgressLocation } from 'vscode'
+import * as path from 'path'
 
 import { Config } from "@herb-tools/config"
 
@@ -76,7 +77,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
         }
       } catch (_error) {
         window.showErrorMessage(
-          'Cannot run Herb analysis: Configuration file has errors. Please fix .herb.yml and try again.',
+          `Cannot run Herb analysis: Configuration file has errors. Please fix ${path.basename(Config.configPathFromProjectPath(workspaceRoot))} and try again.`,
           'Edit Config'
         ).then(selection => {
           if (selection === 'Edit Config') {
