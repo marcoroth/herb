@@ -156,6 +156,7 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
+      const isUsingStdin = (!file && !process.stdin.isTTY) || file === "-"
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
@@ -196,9 +197,13 @@ export class CLI {
       const formatterConfig = config.formatter || {}
 
       if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
-        console.log("Formatter is disabled in .herb.yml configuration.")
-        console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
-        console.log("Or use --force to format anyway.")
+        console.error("Formatter is disabled in .herb.yml configuration.")
+        console.error("To enable formatting, set formatter.enabled: true in .herb.yml")
+        console.error("Or use --force to format anyway.")
+
+        if (isUsingStdin) {
+          process.stdout.write(await this.readStdin())
+        }
 
         process.exit(0)
       }
