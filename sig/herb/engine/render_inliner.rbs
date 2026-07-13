@@ -1,0 +1,47 @@
+# Generated from lib/herb/engine/render_inliner.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class RenderInliner
+      def initialize: (untyped engine, ?untyped options) -> untyped
+
+      def can_inline?: (untyped node) -> untyped
+
+      def can_inline_collection?: (untyped node) -> untyped
+
+      def collection?: (untyped node) -> untyped
+
+      def collection_expression: (untyped node) -> untyped
+
+      def collection_item_name: (untyped node) -> untyped
+
+      def resolve_path: (untyped node) -> untyped
+
+      def optimizable_renders: (untyped ast) -> untyped
+
+      def local_assignments: (untyped node) -> untyped
+
+      def parse: (untyped source) -> untyped
+
+      def push: (untyped path) -> untyped
+
+      def pop: (untyped path) -> untyped
+
+      private
+
+      def safe_to_inline?: (untyped file_path) -> untyped
+
+      def find_view_root: () -> untyped
+
+      def find_source_directory: () -> untyped
+    end
+
+    class OptimizableRenderCollector < ::Herb::Visitor
+      attr_reader results: untyped
+
+      def initialize: (untyped inliner) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
+    end
+  end
+end
