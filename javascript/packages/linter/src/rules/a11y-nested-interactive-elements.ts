@@ -53,7 +53,7 @@ class NestedInteractiveElementsVisitor extends ElementStackVisitor {
 
 export class A11yNestedInteractiveElementsRule extends ParserRule {
   static ruleName = "a11y-nested-interactive-elements"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.10.2")
 
   get defaultConfig(): FullRuleConfig {
     return {
