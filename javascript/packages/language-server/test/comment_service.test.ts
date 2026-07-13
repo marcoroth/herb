@@ -1250,6 +1250,38 @@ describe("CommentService", () => {
       })
     })
 
+    describe("multiline ERB tag interior (intended behavior)", () => {
+      it("toggles off on a second call with the same selection (no nested `if false` blocks)", () => {
+        const original = `<%\n  a\n  b\n%>`
+        const range = lineRange(1, 2)
+
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleBlockComment(document1, range))
+
+        expect(commented).toBe(`<%\n  # a\n  # b\n%>`)
+
+        const document2 = createDocument(commented)
+        const toggledOff = applyEdits(commented, service.toggleBlockComment(document2, range))
+
+        expect(toggledOff).toBe(original)
+      })
+
+      it("comments only the selected lines when the selection covers the `if` but not the `end`", () => {
+        const original = `<%\n  if cond\n    a\n  end\n%>`
+        const range = lineRange(1, 2)
+
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleBlockComment(document1, range))
+
+        expect(commented).toBe(`<%\n  # if cond\n    # a\n  end\n%>`)
+
+        const document2 = createDocument(commented)
+        const toggledOff = applyEdits(commented, service.toggleBlockComment(document2, range))
+
+        expect(toggledOff).toBe(original)
+      })
+    })
+
     describe("round-trip", () => {
       it("round-trips block comment wrapping and unwrapping", () => {
         const wrapped = dedent`
