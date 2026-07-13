@@ -92,17 +92,16 @@ export class CommentService {
   }
 
   toggleBlockComment(document: TextDocument, range: Range): TextEdit[] {
-    const startLine = range.start.line
-    const endLine = range.end.line
-
     const parseResult = this.parserService.parseDocument(document)
     const collector = new LineContextCollector()
 
     collector.visit(parseResult.document)
 
-    if (this.selectionIsRubyLines(document, collector, startLine, endLine)) {
-      return this.toggleRubyLineComments(document, startLine, endLine)
+    if (this.selectionIsRubyLines(document, collector, range.start.line, range.end.line)) {
+      return this.toggleRubyLineComments(document, range.start.line, range.end.line)
     }
+
+    const { startLine, endLine } = this.expandAcrossMultilineTags(collector, range.start.line, range.end.line)
 
     const firstLineText = this.getLineText(document, startLine)
     const lastLineText = this.getLineText(document, endLine)
@@ -162,6 +161,23 @@ export class CommentService {
     }
 
     return null
+  }
+
+  private expandAcrossMultilineTags(collector: LineContextCollector, startLine: number, endLine: number): { startLine: number, endLine: number } {
+    const startInfo = collector.lineMap.get(startLine)
+    const endInfo = collector.lineMap.get(endLine)
+    const startNode = startInfo?.node as ERBContentNode | null
+    const endNode = endInfo?.node as ERBContentNode | null
+
+    if (startNode?.tag_opening && (startInfo!.context === "ruby" || startInfo!.context === "erb-comment")) {
+      startLine = Math.min(startLine, lspLine(startNode.tag_opening.location.start))
+    }
+
+    if (endNode?.tag_closing && (endInfo!.context === "ruby" || endInfo!.context === "erb-comment" || endInfo!.context === "erb-tag")) {
+      endLine = Math.max(endLine, lspLine(endNode.tag_closing.location.end))
+    }
+
+    return { startLine, endLine }
   }
 
   private selectionIsRubyLines(document: TextDocument, collector: LineContextCollector, startLine: number, endLine: number): boolean {

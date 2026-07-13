@@ -70,6 +70,12 @@ export function determineStrategy(erbNodes: ERBContentNode[], lineText: string):
     if (!node.tag_opening || !node.tag_closing) return "html-only"
 
     const nodeStart = node.tag_opening.location.start.column
+    const spansMultipleLines = node.tag_closing.location.end.line > node.tag_opening.location.start.line
+
+    if (spansMultipleLines) {
+      return lineText.substring(0, nodeStart).trim() === "" ? "single-erb" : "whole-line"
+    }
+
     const nodeEnd = node.tag_closing.location.end.column
     const isSoleContent = lineText.substring(0, nodeStart).trim() === "" && lineText.substring(nodeEnd).trim() === ""
 

@@ -250,6 +250,54 @@ describe("CommentService", () => {
         expect(applyEdits(original, edits)).toBe(`<%=\n  # a\n%>`)
       })
 
+      it("comments an internal Ruby line of a multiline trim tag", () => {
+        const original = `<%-\n  a\n-%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`<%-\n  # a\n-%>`)
+      })
+
+      it("comments the opening line of a multiline ERB tag with trailing code as an ERB comment", () => {
+        const original = `<% x = [1,\n  2,\n] %>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(0))
+
+        expect(applyEdits(original, edits)).toBe(`<%# x = [1,\n  2,\n] %>`)
+      })
+
+      it("comments internal Ruby lines around a blank line", () => {
+        const original = `<%\n  a\n\n  b\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1, 3))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  # a\n\n  # b\n%>`)
+      })
+
+      it("preserves indentation when commenting inside an indented multiline ERB tag", () => {
+        const original = `<div>\n  <%\n    a\n  %>\n</div>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(2))
+
+        expect(applyEdits(original, edits)).toBe(`<div>\n  <%\n    # a\n  %>\n</div>`)
+      })
+
+      it("comments a mixed selection of HTML and a multiline ERB tag", () => {
+        const original = `<div>hi</div>\n<%\n  a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(0, 2))
+
+        expect(applyEdits(original, edits)).toBe(`<!-- <div>hi</div> -->\n<%#\n  # a\n%>`)
+      })
+
+      it("comments the remaining uncommented Ruby lines in a partially commented selection", () => {
+        const original = `<%\n  # a\n  b\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1, 2))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  # a\n  # b\n%>`)
+      })
+
       it("comments multiple adjacent ERB output tags as all-erb", () => {
         const original = `<%= a %><%= b %><%= c %>`
         const document = createDocument(original)
@@ -413,6 +461,14 @@ describe("CommentService", () => {
 
       it("uncomments a commented Ruby line inside a multiline ERB tag", () => {
         const original = `<%\n  # a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  a\n%>`)
+      })
+
+      it("uncomments a Ruby line commented without a space after the hash", () => {
+        const original = `<%\n  #a\n%>`
         const document = createDocument(original)
         const edits = service.toggleLineComment(document, lineRange(1))
 
@@ -1067,6 +1123,34 @@ describe("CommentService", () => {
         expect(uncommented).toBe(original)
       })
 
+      it("round-trips the opening line of a multiline ERB tag with trailing code", () => {
+        const original = `<% x = [1,\n  2,\n] %>`
+        const range = lineRange(0)
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, range))
+
+        expect(commented).toBe(`<%# x = [1,\n  2,\n] %>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, range))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips a selection spanning two multiline ERB tags", () => {
+        const original = `<%\n  a\n%>\n<%\n  b\n%>`
+        const range = lineRange(1, 4)
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, range))
+
+        expect(commented).toBe(`<%\n  # a\n# %>\n<%#\n  # b\n%>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, range))
+
+        expect(uncommented).toBe(original)
+      })
+
       it("round-trips a real-world ERB template", () => {
         const original = dedent`
           <% @records.each do |record| %>
@@ -1147,6 +1231,22 @@ describe("CommentService", () => {
         const edits = service.toggleBlockComment(document, lineRange(1))
 
         expect(applyEdits(original, edits)).toBe(`<%\n  # a\n%>`)
+      })
+
+      it("comments multiple internal Ruby lines inside a multiline ERB tag", () => {
+        const original = `<%\n  a\n  b\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleBlockComment(document, lineRange(1, 2))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  # a\n  # b\n%>`)
+      })
+
+      it("expands a selection ending inside a multiline ERB tag to wrap the whole tag", () => {
+        const original = `<div>hi</div>\n<%\n  a\n%>\n`
+        const document = createDocument(original)
+        const edits = service.toggleBlockComment(document, lineRange(0, 2))
+
+        expect(applyEdits(original, edits)).toBe(`<% if false %>\n<div>hi</div>\n<%\n  a\n%>\n<% end %>\n`)
       })
     })
 
