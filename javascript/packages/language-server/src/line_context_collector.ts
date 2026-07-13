@@ -5,7 +5,7 @@ import { isERBCommentNode } from "@herb-tools/core"
 
 import type { Node, ERBNode, ERBContentNode, HTMLTextNode, HTMLElementNode } from "@herb-tools/core"
 
-export type LineContext = "erb-comment" | "html-comment" | "erb-tag" | "html-content" | "empty"
+export type LineContext = "erb-comment" | "html-comment" | "erb-tag" | "ruby" | "html-content" | "empty"
 
 export interface LineInfo {
   line: number
@@ -22,15 +22,18 @@ export class LineContextCollector extends Visitor {
     if (!node.tag_opening || !node.tag_closing) return
 
     const startLine = lspLine(node.tag_opening.location.start)
+    const endLine = lspLine(node.tag_closing.location.end)
 
     const nodes = this.erbNodesPerLine.get(startLine) || []
     nodes.push(node as ERBContentNode)
     this.erbNodesPerLine.set(startLine, nodes)
 
-    if (isERBCommentNode(node)) {
-      this.setLine(startLine, "erb-comment", node)
-    } else {
-      this.setLine(startLine, "erb-tag", node)
+    this.setLine(startLine, isERBCommentNode(node) ? "erb-comment" : "erb-tag", node)
+
+    const interiorContext = node.tag_opening.value === "<%#" ? "erb-comment" : "ruby"
+
+    for (let line = startLine + 1; line <= endLine; line++) {
+      this.setLine(line, interiorContext, node)
     }
   }
 
@@ -81,9 +84,9 @@ export class LineContextCollector extends Visitor {
     const existing = this.lineMap.get(line)
 
     if (existing) {
-      if (existing.context === "erb-comment" || existing.context === "erb-tag") return
+      if (existing.context === "erb-comment" || existing.context === "erb-tag" || existing.context === "ruby") return
 
-      if (context === "erb-comment" || context === "erb-tag") {
+      if (context === "erb-comment" || context === "erb-tag" || context === "ruby") {
         this.lineMap.set(line, { line, context, node })
 
         return
