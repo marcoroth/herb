@@ -22,17 +22,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: clippy
-
-      - name: Set up Rust Nightly (for rustfmt)
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly
-          components: rustfmt
+      - name: Set up Rust toolchains
+        id: rust-toolchains
+        background: true
+        run: |-
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup toolchain install nightly --profile minimal --component rustfmt
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -52,6 +47,9 @@ jobs:
 
       - name: Compile Herb
         run: bundle exec rake make
+
+      - name: Wait for Rust toolchains
+        wait: rust-toolchains
 
       - name: Check Rust formatting
         run: make format-check
