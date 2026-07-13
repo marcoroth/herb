@@ -234,6 +234,22 @@ describe("CommentService", () => {
         expect(applyEdits(original, edits)).toBe(`<%#\n  # a\n# %>`)
       })
 
+      it("does not treat a literal <%% escape as an open ERB tag", () => {
+        const original = `Use <%% to escape\n<div>hi</div>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`Use <%% to escape\n<!-- <div>hi</div> -->`)
+      })
+
+      it("comments an internal Ruby line of a multiline ERB output tag", () => {
+        const original = `<%=\n  a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`<%=\n  # a\n%>`)
+      })
+
       it("comments multiple adjacent ERB output tags as all-erb", () => {
         const original = `<%= a %><%= b %><%= c %>`
         const document = createDocument(original)
@@ -385,6 +401,22 @@ describe("CommentService", () => {
         const edits = service.toggleLineComment(document, lineRange(0))
 
         expect(applyEdits(original, edits)).toBe(`<% render "thing" %>`)
+      })
+
+      it("uncomments a multiline ERB comment tag selection back to a plain tag", () => {
+        const original = `<%#\n  a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(0, 2))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  a\n%>`)
+      })
+
+      it("uncomments a commented Ruby line inside a multiline ERB tag", () => {
+        const original = `<%\n  # a\n%>`
+        const document = createDocument(original)
+        const edits = service.toggleLineComment(document, lineRange(1))
+
+        expect(applyEdits(original, edits)).toBe(`<%\n  a\n%>`)
       })
 
       it("uncomments HTML wrapped in an HTML comment", () => {
