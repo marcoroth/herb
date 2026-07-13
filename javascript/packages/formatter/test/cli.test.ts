@@ -84,7 +84,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.10.1
+      version: 0.10.2
       formatter:
         enabled: false
     `)
