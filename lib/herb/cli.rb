@@ -422,6 +422,96 @@ class Herb::CLI
       end
 
       exit(0)
+    when "dependencies"
+      require_relative "action_view/template_dependencies"
+
+      path = @file || "."
+      path = File.expand_path(path)
+
+      if File.file?(path)
+        project_root = config.project_root&.to_s || File.dirname(path)
+        dep_analyzer = Herb::ActionView::TemplateDependencies.new(project_root)
+        dep_analyzer.scan_helpers!
+        result = dep_analyzer.analyze(path)
+        relative = Pathname.new(path).relative_path_from(project_root).to_s
+        is_entry_point = !File.basename(path).start_with?("_")
+
+        puts ""
+        puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+        puts ""
+        puts " #{cyan(relative)} #{dimmed(is_entry_point ? "(entry point)" : "(partial)")}"
+        puts ""
+
+        print_dependency_result(result)
+
+        if is_entry_point && result.instance_variables.any?
+          puts " #{bold("State flow")} #{dimmed("(which templates are affected by each state change)")}"
+          puts ""
+
+          result.instance_variables.each do |ivar|
+            affected = dep_analyzer.affected_templates(path, ivar)
+            short = affected.map { |f| Pathname.new(f).relative_path_from(project_root).to_s }
+
+            puts "   #{yellow(ivar)} #{dimmed("(#{short.size} #{short.size == 1 ? "template" : "templates"})")}"
+            short.each { |f| puts "     #{dimmed(f)}" }
+            puts ""
+          end
+
+          # Show node-level dependency index
+          index = dep_analyzer.dependency_index(path)
+
+          if index.any?
+            puts " #{bold("Node index")} #{dimmed("(which DOM nodes are affected by each state change)")}"
+            puts ""
+
+            index.each do |state, nodes|
+              puts "   #{yellow(state)} #{dimmed("(#{nodes.size} #{nodes.size == 1 ? "node" : "nodes"})")}"
+
+              nodes.each_with_index do |n, i|
+                connector = i == nodes.size - 1 ? "\u2514\u2500\u2500" : "\u251c\u2500\u2500"
+                attr = n[:attribute] ? " #{dimmed("attr=#{n[:attribute]}")}" : ""
+                puts "     #{connector} #{dimmed("[#{n[:node_path].join(",")}]")} #{n[:type]}#{attr} #{dimmed(n[:expression].to_s[0..60])}"
+              end
+
+              puts ""
+            end
+          end
+        end
+      elsif File.directory?(path)
+        require_relative "action_view/render_analyzer"
+
+        dep_analyzer = Herb::ActionView::TemplateDependencies.new(path)
+        dep_analyzer.scan_helpers!
+
+        render_analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+        erb_files = render_analyzer.send(:find_erb_files)
+
+        puts ""
+        puts " #{bold("Herb")} \u{1f33f} #{dimmed("v#{Herb::VERSION}")}"
+        puts ""
+        puts dimmed(" Analyzing dependencies in #{erb_files.size} files...")
+        puts ""
+
+        erb_files.each do |file|
+          result = dep_analyzer.analyze(file)
+          relative = Pathname.new(file).relative_path_from(path).to_s
+
+          next if result.instance_variables.empty? && result.constants.empty? && result.unknown_calls.empty?
+
+          puts " #{cyan(relative)}"
+          puts "   #{dimmed("state:")} #{result.instance_variables.join(", ")}" if result.instance_variables.any?
+          puts "   #{dimmed("constants:")} #{result.constants.join(", ")}" if result.constants.any?
+          puts "   #{dimmed("locals declared:")} #{result.locals_declared.join(", ")}" if result.locals_declared.any?
+          puts "   #{dimmed("locals received:")} #{result.locals_received.keys.join(", ")}" if result.locals_received.any?
+          puts "   #{dimmed("unknown:")} #{result.unknown_calls.join(", ")}" if result.unknown_calls.any?
+          puts ""
+        end
+      else
+        puts "Not a file or directory: '#{path}'."
+        exit(1)
+      end
+
+      exit(0)
     when "render"
       @file = @args[2]
       actionview_render
@@ -433,14 +523,17 @@ class Herb::CLI
           bundle exec herb actionview [subcommand] [options]
 
         Subcommands:
-          check [path]    Check if render calls resolve to valid partial files
-          graph [path]    Show render dependency graph for a project or file
-          render [file]   Render ERB template using ActionView helpers
+          check [path]          Check render calls and flag dependency warnings
+          graph [path]          Show render dependency graph for a project or file
+          dependencies [path]   Show template dependency manifest (state, locals, helpers)
+          render [file]         Render ERB template using ActionView helpers
 
         Examples:
           bundle exec herb actionview check
           bundle exec herb actionview graph
           bundle exec herb actionview graph app/views/posts/show.html.erb
+          bundle exec herb actionview dependencies app/views/posts/show.html.erb
+          bundle exec herb actionview dependencies
           bundle exec herb actionview render app/views/posts/show.html.erb
 
       HELP
@@ -450,6 +543,44 @@ class Herb::CLI
       puts "Run 'herb actionview help' for available subcommands."
       exit(1)
     end
+  end
+
+  def print_dependency_result(result)
+    if result.instance_variables.any?
+      puts " #{bold("Instance variables")} #{dimmed("(state)")}"
+      result.instance_variables.each { |v| puts "   #{v}" }
+      puts ""
+    end
+
+    if result.constants.any?
+      puts " #{bold("Constants")}"
+      result.constants.each { |c| puts "   #{c}" }
+      puts ""
+    end
+
+    if result.locals_declared.any?
+      puts " #{bold("Locals declared")} #{dimmed("(strict locals)")}"
+      result.locals_declared.each { |l| puts "   #{l}" }
+      puts ""
+    end
+
+    if result.locals_received.any?
+      puts " #{bold("Locals received")} #{dimmed("(from render calls)")}"
+      result.locals_received.each { |name, value| puts "   #{name} #{dimmed("\u2190")} #{value}" }
+      puts ""
+    end
+
+    if result.helper_calls.any?
+      puts " #{bold("Helper calls")} #{dimmed("(known)")}"
+      result.helper_calls.each { |h| puts "   #{dimmed(h)}" }
+      puts ""
+    end
+
+    return unless result.unknown_calls.any?
+
+    puts " #{bold("Unknown calls")}"
+    result.unknown_calls.each { |u| puts "   #{yellow(u)}" }
+    puts ""
   end
 
   def actionview_render
