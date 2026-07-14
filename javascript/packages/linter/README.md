@@ -21,7 +21,7 @@ pnpm add -g @herb-tools/linter
 ```
 
 ```shell [yarn]
-yarn global add @herb-tools/linter
+yarn dlx @herb-tools/linter
 ```
 
 ```shell [bun]

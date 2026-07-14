@@ -26,7 +26,7 @@ pnpm add -g @herb-tools/formatter
 ```
 
 ```shell [yarn]
-yarn global add @herb-tools/formatter
+yarn dlx @herb-tools/formatter
 ```
 
 ```shell [bun]

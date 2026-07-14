@@ -66,10 +66,10 @@ You can use the language server in any editor that supports the [Language Server
 npm install -g @herb-tools/language-server
 ```
 
-###### Yarn (Global)
+###### Yarn
 
 ```bash
-yarn global add @herb-tools/language-server
+yarn dlx @herb-tools/language-server
 ```
 
 ##### Preview Releases
