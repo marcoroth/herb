@@ -106,6 +106,7 @@ import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
+import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
@@ -215,5 +216,6 @@ export const rules: RuleClass[] = [
 
   SVGTagNameCapitalizationRule,
 
+  TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,
 ]
