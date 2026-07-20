@@ -719,6 +719,26 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     }
   }
 
+  /**
+   * Visit ERB control-flow statements (the body of an `if`, `each`, `case`, …).
+   *
+   * When the statements contain rendered output glued directly together with no
+   * whitespace between (e.g. `<%= user.name %>'s dog` or `<%= greeting %>,`),
+   * route them through the text-flow engine so the glued content isn't split
+   * onto separate lines — which would inject whitespace into the rendered HTML
+   * (#1729). When the statements are only ever separated by whitespace (e.g. a
+   * list of standalone `<%= … %>` outputs), or the gluing only involves a
+   * non-output `<% … %>` statement (which renders nothing), breaking across
+   * lines is rendering-safe, so we keep the existing per-node visiting that
+   * breaks at ERB boundaries.
+   */
+  private visitStatements(statements: Node[]) {
+    if (this.textFlow.hasGluedTextFlowBoundary(statements)) {
+      this.textFlow.visitTextFlowChildren(statements)
+    } else {
+      this.visitAll(statements)
+    }
+  }
 
   /**
    * Visit element children with intelligent spacing logic
@@ -1036,7 +1056,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBInNode(node: ERBInNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
     })
   }
 
@@ -1111,7 +1131,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         this.printERBNode(node)
 
         this.withIndent(() => {
-          this.visitAll(node.statements)
+          this.visitStatements(node.statements)
         })
 
         if (node.subsequent) this.visit(node.subsequent)
@@ -1126,13 +1146,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (this.inlineMode) {
       this.visitAll(node.statements)
     } else {
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
     }
   }
 
   visitERBWhenNode(node: ERBWhenNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBCaseNode(node: ERBCaseNode) {
@@ -1150,7 +1170,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBBeginNode(node: ERBBeginNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
       if (node.else_clause) this.visit(node.else_clause)
@@ -1162,7 +1182,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBWhileNode(node: ERBWhileNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1171,7 +1191,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBUntilNode(node: ERBUntilNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1180,7 +1200,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBForNode(node: ERBForNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1188,18 +1208,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   visitERBRescueNode(node: ERBRescueNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBEnsureNode(node: ERBEnsureNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBUnlessNode(node: ERBUnlessNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.else_clause) this.visit(node.else_clause)
       if (node.end_node) this.visit(node.end_node)
