@@ -88,11 +88,7 @@ export class AttributeRenderer {
       }
     }
 
-    if (totalAttributeCount > 3 || inlineLength + indentLength > maxLineLength) {
-      return false
-    }
-
-    return true
+    return inlineLength + indentLength <= maxLineLength
   }
 
   wouldClassAttributeBeMultiline(content: string, indentLength: number): boolean {
