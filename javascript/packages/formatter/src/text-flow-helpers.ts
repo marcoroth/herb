@@ -1,4 +1,4 @@
-import { isNode, getTagName } from "@herb-tools/core"
+import { isNode, getTagName, isERBOutputNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -112,6 +112,64 @@ export function isInTextFlowContext(children: Node[]): boolean {
   if (!allInline) return false
 
   return true
+}
+
+/**
+ * Check whether a node renders visible output that participates in text flow:
+ * non-empty text, an ERB *output* tag (`<%= %>` / `<%== %>`), or an inline
+ * element. Control-flow / non-output ERB (`<% ... %>`) renders nothing, so it
+ * never contributes rendered whitespace.
+ */
+function rendersVisibleOutput(node: Node): boolean {
+  if (isNode(node, HTMLTextNode)) return node.content.trim() !== ""
+  if (isERBOutputNode(node)) return true
+  if (isNode(node, HTMLElementNode)) return isInlineElement(getTagName(node))
+
+  return false
+}
+
+/**
+ * Check whether a list of statements/children contains a "glued" text-flow
+ * boundary: two adjacent nodes that both render visible output and touch
+ * without any whitespace between them, e.g. `<%= user.name %>'s dog`,
+ * `<%= greeting %>,` or `John<%= suffix %>`.
+ *
+ * Breaking such a boundary onto separate lines would inject whitespace into the
+ * rendered HTML that wasn't in the source (#1729). When nodes are separated by
+ * whitespace, or one side renders nothing (a `<% ... %>` control statement such
+ * as `<% i += 1 %>`), breaking across lines is rendering-safe, so this returns
+ * false and callers can keep their per-node visiting.
+ */
+export function hasGluedTextFlowBoundary(children: Node[]): boolean {
+  let previousNode: Node | null = null
+  let previousIndex = -1
+
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+
+    // Whitespace, and any node that renders nothing, breaks the glue chain:
+    // there is no rendered content on this side to be split apart.
+    if (!rendersVisibleOutput(child)) {
+      previousNode = null
+      previousIndex = -1
+
+      continue
+    }
+
+    if (previousNode) {
+      const separated =
+        hasWhitespaceBetween(children, previousIndex, index) ||
+        (isNode(previousNode, HTMLTextNode) && endsWithWhitespace(previousNode.content)) ||
+        (isNode(child, HTMLTextNode) && /^[ \t\n\r]/.test(child.content))
+
+      if (!separated) return true
+    }
+
+    previousNode = child
+    previousIndex = index
+  }
+
+  return false
 }
 
 /**
