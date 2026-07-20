@@ -150,5 +150,34 @@ describe("comment-helpers", () => {
         expect(result.contentLines).toEqual(["first line", "second line"])
       }
     })
+
+    describe("commented-out output tags (<%#=) — https://github.com/marcoroth/herb/issues/1754", () => {
+      test("does not insert a space between <%# and = on a single line", () => {
+        const result = formatERBCommentLines("<%#", "= tag.link rel: \"manifest\", href: pwa_manifest_path(format: :json) ", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%#= tag.link rel: \"manifest\", href: pwa_manifest_path(format: :json) %>"
+        })
+      })
+
+      test("does not insert a space when multiline content collapses to a single line starting with =", () => {
+        const result = formatERBCommentLines("<%#", "\n  = foo\n", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%#= foo %>"
+        })
+      })
+
+      test("preserves a genuine comment body that starts with = after a space", () => {
+        const result = formatERBCommentLines("<%#", " = foo", "%>")
+
+        expect(result).toEqual({
+          type: "single-line",
+          text: "<%# = foo %>"
+        })
+      })
+    })
   })
 })

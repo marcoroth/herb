@@ -108,13 +108,19 @@ export function formatERBCommentLines(open: string, content: string, close: stri
 
   if (contentLines.length === 1 && contentTrimmedLines.length === 1) {
     const startsWithSpace = content[0] === " "
-    const before = startsWithSpace ? "" : " "
+    // Keep `<%#=` intact — the `=` is the output tag, not comment content.
+    // See: https://github.com/marcoroth/herb/issues/1754
+    const startsWithEquals = content[0] === "="
+    const before = (startsWithSpace || startsWithEquals) ? "" : " "
 
     return { type: 'single-line', text: open + before + content.trimEnd() + ' ' + close }
   }
 
   if (contentTrimmedLines.length === 1) {
-    return { type: 'single-line', text: open + ' ' + content.trim() + ' ' + close }
+    const startsWithEquals = content.trim().startsWith("=")
+    const before = startsWithEquals ? "" : " "
+
+    return { type: 'single-line', text: open + before + content.trim() + ' ' + close }
   }
 
   const firstLineEmpty = contentLines[0].trim() === ""
