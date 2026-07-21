@@ -3,7 +3,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { PrismVisitor, PrismNodes } from "@herb-tools/core"
 
 import { isERBOutputNode } from "@herb-tools/core"
-import { locationFromOffset } from "./rule-utils.js"
+import { locationFromOffset, substringFromByteOffset } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -132,7 +132,7 @@ class ERBNoUnusedLiteralsVisitor extends BaseRuleVisitor {
 
     for (const literal of collector.literals) {
       const { startOffset, length } = literal.location
-      const literalSource = source.substring(startOffset, startOffset + length)
+      const literalSource = substringFromByteOffset(source, startOffset, length)
       const location = locationFromOffset(source, startOffset, length)
 
       this.addOffense(

@@ -45,6 +45,28 @@ export function deserializePrismParseResult(bytes: Uint8Array, source: string): 
 }
 
 /**
+ * Converts a UTF-8 byte offset (as reported by Prism node locations) into the
+ * corresponding UTF-16 string index into `source`.
+ *
+ * Prism reports all offsets/lengths as UTF-8 byte counts. This only matches a
+ * JS string's index/length when the source is entirely ASCII, so any offset
+ * coming from a Prism node must be converted before being used with
+ * `String#substring`/`String#slice` or compared against `string.length`.
+ *
+ * @param source - The original source string the byte offset is relative to
+ * @param byteOffset - A UTF-8 byte offset, e.g. from `node.location.startOffset`
+ * @returns The UTF-16 string index corresponding to `byteOffset`
+ */
+export function stringIndexFromByteOffset(source: string, byteOffset: number): number {
+  if (byteOffset <= 0) return 0
+
+  const bytes = new TextEncoder().encode(source)
+  const clampedOffset = Math.min(byteOffset, bytes.length)
+
+  return new TextDecoder().decode(bytes.subarray(0, clampedOffset)).length
+}
+
+/**
  * Deserialize a Prism node from the raw bytes produced by pm_serialize().
  * pm_serialize() serializes a single node subtree, so the ParseResult's
  * value is the Prism node directly (not wrapped in ProgramNode).

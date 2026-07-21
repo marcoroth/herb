@@ -4,7 +4,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
 import { isAssignmentNode, isDebugOutputCall, isCallOnLocal } from "./prism-rule-utils.js"
-import { locationFromOffset } from "./rule-utils.js"
+import { locationFromOffset, substringFromByteOffset } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBRenderNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -131,7 +131,7 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
 
     for (const expression of collector.expressions) {
       const { startOffset, length } = expression.location
-      const expressionSource = source.substring(startOffset, startOffset + length)
+      const expressionSource = substringFromByteOffset(source, startOffset, length)
       const location = locationFromOffset(source, startOffset, length)
 
       this.addOffense(
