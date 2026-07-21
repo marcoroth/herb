@@ -33,7 +33,8 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (2:26)-(2:27))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     ├── @ HTMLTextNode (location: (2:27)-(3:25))
     │   └── content: "\n  var str = \"String with "

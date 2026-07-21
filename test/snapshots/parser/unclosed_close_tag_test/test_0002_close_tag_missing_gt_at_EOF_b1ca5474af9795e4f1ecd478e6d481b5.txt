@@ -32,4 +32,5 @@ input: |2-
         │       └── tag_closing: ∅
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

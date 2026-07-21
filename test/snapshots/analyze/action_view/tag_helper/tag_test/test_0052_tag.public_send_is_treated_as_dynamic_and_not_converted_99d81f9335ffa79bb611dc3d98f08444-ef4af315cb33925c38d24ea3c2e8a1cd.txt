@@ -22,7 +22,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_name: ∅
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:28)-(2:0))
         └── content: "\n"
