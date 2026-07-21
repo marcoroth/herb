@@ -19,17 +19,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add LLVM apt Repo
+      - name: Install system dependencies
+        id: system-deps
+        background: true
         run: |-
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
           sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
           sudo apt update
-
-      - name: Install APT dependencies
-        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
-
-      - name: Install valgrind
-        run: |-
+          xargs sudo apt-get install -y --no-install-recommends < Aptfile
           sudo apt install -y libc6-dbg
           sudo snap install --classic valgrind
 
@@ -45,39 +42,49 @@ jobs:
         run: bundle exec rake templates
 
       - name: RuboCop
+        id: rubocop
+        background: true
         run: bundle exec rubocop
 
-      - name: clang-format version
-        run: clang-format-21 --version
+      - name: Sorbet
+        id: sorbet
+        background: true
+        run: bundle exec srb tc
 
-      - name: Lint
-        run: bin/lint
-
-      - name: RBS Validation
+      - name: RBS Validation, Steep and RBS Inline
+        id: rbs
+        background: true
         run: |-
           bundle exec rbs collection install --frozen
           bundle exec rbs -Isig validate
+          bundle exec steep check
+          bundle exec rake rbs_inline
 
-      - name: Steep
-        run: bundle exec steep check
+      - name: Wait for system dependencies
+        wait: system-deps
 
-      - name: Sorbet
-        run: bundle exec srb tc
-
-      - name: RBS Inline
-        run: bundle exec rake rbs_inline
-
-      - name: clang-tidy version
-        run: clang-tidy-21 --version
+      - name: Lint
+        id: lint
+        background: true
+        run: |-
+          clang-format-21 --version
+          bin/lint
 
       - name: Tidy
-        run: bin/tidy
+        id: tidy
+        background: true
+        run: |-
+          clang-tidy-21 --version
+          bin/tidy
 
       - name: Compile Herb
         run: bundle exec rake make
 
       - name: Compile Ruby extension
         run: bundle exec rake compile
+
+      - name: Wait for all checks
+        wait-all:
 
       - name: Run Ruby Tests
         run: bundle exec rake test:all
