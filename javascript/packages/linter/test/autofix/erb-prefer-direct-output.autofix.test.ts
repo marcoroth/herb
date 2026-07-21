@@ -152,4 +152,40 @@ describe("erb-prefer-direct-output autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
   })
+
+  test("fixes interpolated string with multiple expressions when preceded by a multi-byte character", () => {
+    const input = dedent`
+      <%# é %>
+      <%= "#{object.attribute}(#{data})" %>
+    `
+
+    const expected = dedent`
+      <%# é %>
+      <%= object.attribute %>(<%= data %>)
+    `
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("fixes interpolated string with multiple expressions when preceded by an emoji", () => {
+    const input = dedent`
+      <%# 😀 %>
+      <%= "#{object.attribute}(#{data})" %>
+    `
+
+    const expected = dedent`
+      <%# 😀 %>
+      <%= object.attribute %>(<%= data %>)
+    `
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
 })

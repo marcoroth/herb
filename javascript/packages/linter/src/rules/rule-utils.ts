@@ -13,6 +13,7 @@ import {
   getAttributeValue,
   getTagLocalName,
   forEachAttribute,
+  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
@@ -986,12 +987,32 @@ export function positionFromOffset(source: string, offset: number): Position {
 }
 
 /**
- * Creates a Location from a source string, a start offset, and a length.
+ * Creates a Location from a source string, a Prism byte offset, and a byte length.
+ *
+ * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
+ * to UTF-16 string indices before computing line/column positions.
  */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
+export function locationFromOffset(source: string, startByteOffset: number, byteLength: number): Location {
+  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
+  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
+
   const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
+  const end = positionFromOffset(source, endOffset)
+
   return Location.from(start.line, start.column, end.line, end.column)
+}
+
+/**
+ * Extracts the substring of `source` covered by a Prism byte offset and byte length.
+ *
+ * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
+ * to UTF-16 string indices before being used with `String#substring`.
+ */
+export function substringFromByteOffset(source: string, startByteOffset: number, byteLength: number): string {
+  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
+  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
+
+  return source.substring(startOffset, endOffset)
 }
 
 /**
