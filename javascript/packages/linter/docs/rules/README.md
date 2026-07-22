@@ -71,6 +71,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
 - [`erb-prefer-explicit-conditionals`](./erb-prefer-explicit-conditionals.md) - Prefer explicit `if`/`unless` blocks over inline conditions in ERB output tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
+- [`erb-prefer-pluralize-helper`](./erb-prefer-pluralize-helper.md) - Prefer the `pluralize` helper over `String#pluralize` for counts
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
