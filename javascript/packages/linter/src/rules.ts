@@ -47,6 +47,7 @@ import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
+import { ERBPreferPluralizeHelperRule } from "./rules/erb-prefer-pluralize-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
@@ -156,6 +157,7 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeScriptInterpolationRule,
   ERBPreferDirectOutputRule,
   ERBPreferImageTagHelperRule,
+  ERBPreferPluralizeHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
