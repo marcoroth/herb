@@ -60,6 +60,17 @@ const defaultSidebar = [
     ],
   },
   {
+    text: "CI Integrations",
+    collapsed: false,
+    items: [
+      { text: "Overview", link: "/integrations/ci" },
+      { text: "GitHub Actions", link: "/integrations/ci/github-actions" },
+      { text: "GitLab CI", link: "/integrations/ci/gitlab" },
+      { text: "Bitbucket Pipelines", link: "/integrations/ci/bitbucket" },
+      { text: "Reviewdog", link: "/integrations/ci/reviewdog" },
+    ],
+  },
+  {
     text: "Language Bindings",
     collapsed: false,
     items: [
