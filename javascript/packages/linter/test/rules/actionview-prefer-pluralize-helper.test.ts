@@ -1,12 +1,12 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 
-import { ERBPreferPluralizeHelperRule } from "../../src/rules/erb-prefer-pluralize-helper.js"
+import { ActionViewPreferPluralizeHelperRule } from "../../src/rules/actionview-prefer-pluralize-helper.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBPreferPluralizeHelperRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ActionViewPreferPluralizeHelperRule)
 
-describe("ERBPreferPluralizeHelperRule", () => {
+describe("ActionViewPreferPluralizeHelperRule", () => {
   describe("valid cases", () => {
     test("passes for the pluralize helper", () => {
       expectNoOffenses(dedent`
