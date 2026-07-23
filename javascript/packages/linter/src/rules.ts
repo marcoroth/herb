@@ -19,7 +19,7 @@ import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnec
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
-import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferPluralizeHelperRule } from "./rules/actionview-prefer-pluralize-helper.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -60,7 +60,6 @@ import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
 import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
 import { ERBPreferExplicitConditionalsRule } from "./rules/erb-prefer-explicit-conditionals.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
-import { ERBPreferPluralizeHelperRule } from "./rules/erb-prefer-pluralize-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
@@ -144,7 +143,7 @@ export const rules: RuleClass[] = [
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
-  ActionViewPreferCollectionRenderRule,
+  ActionViewPreferPluralizeHelperRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
@@ -185,7 +184,6 @@ export const rules: RuleClass[] = [
   ERBPreferEachOverMapRule,
   ERBPreferExplicitConditionalsRule,
   ERBPreferImageTagHelperRule,
-  ERBPreferPluralizeHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,

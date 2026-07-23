@@ -32,8 +32,8 @@ class StringPluralizeCallCollector extends PrismVisitor {
   }
 }
 
-export class ERBPreferPluralizeHelperRule extends ParserRule {
-  static ruleName = "erb-prefer-pluralize-helper"
+export class ActionViewPreferPluralizeHelperRule extends ParserRule {
+  static ruleName = "actionview-prefer-pluralize-helper"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {

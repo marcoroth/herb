@@ -1,6 +1,6 @@
 # Linter Rule: Prefer the `pluralize` helper over `String#pluralize` for counts
 
-**Rule:** `erb-prefer-pluralize-helper`
+**Rule:** `actionview-prefer-pluralize-helper`
 
 ## Description
 
