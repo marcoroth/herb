@@ -14,6 +14,7 @@ import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helpe
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
+import { ActionViewPreferPluralizeHelperRule } from "./rules/actionview-prefer-pluralize-helper.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -123,6 +124,7 @@ export const rules: RuleClass[] = [
   ActionViewNoSilentRenderRule,
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoVoidElementContentRule,
+  ActionViewPreferPluralizeHelperRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
