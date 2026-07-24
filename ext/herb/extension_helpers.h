@@ -18,6 +18,7 @@ extern bool herb_ext_track_locations;
 
 const char* check_string(VALUE value);
 VALUE rb_string_from_hb_string(hb_string_T string);
+VALUE rb_interned_string_from_hb_string(hb_string_T string);
 
 VALUE rb_position_from_c_struct(position_T position);
 VALUE rb_location_from_c_struct(location_T location);

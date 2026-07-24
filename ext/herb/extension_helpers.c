@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+#include <ruby/encoding.h>
+
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
@@ -22,6 +24,11 @@ const char* check_string(VALUE value) {
 
   return RSTRING_PTR(value);
 }
+
+// Maximum byte length of a token value we will intern. Structural tokens and
+// identifiers (delimiters, tag/attribute names) are short and highly repeated;
+// longer values are treated as unique text content and not interned.
+#define HERB_INTERN_VALUE_MAX_LENGTH 16
 
 // Whether to materialize source Location/Range/Position objects while building
 // the Ruby AST. For rendering (no validation, no debug), locations are never
@@ -96,16 +103,40 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
   return rb_utf8_str_new(string.data, string.length);
 }
 
+// Like rb_string_from_hb_string, but returns a deduplicated frozen (interned)
+// String. Use only for values drawn from a small fixed set — e.g. token/node
+// type identifiers — so the whole AST shares one String per distinct value
+// instead of allocating a fresh copy each time.
+VALUE rb_interned_string_from_hb_string(hb_string_T string) {
+  if (hb_string_is_null(string)) { return Qnil; }
+
+  return rb_enc_interned_str(string.data, string.length, rb_utf8_encoding());
+}
+
 VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
   init_ast_value_ivar_ids();
 
   VALUE obj = rb_obj_alloc(cToken);
-  rb_ivar_set(obj, id_value, rb_string_from_hb_string(token->value));
+  // Token values are overwhelmingly drawn from a tiny structural vocabulary
+  // ("\n", "%>", "<%", ">", " ", "\"", tag names, etc.) — in practice ~96% are
+  // duplicates. Intern short values so the whole token stream shares one frozen
+  // String per distinct value instead of allocating a fresh copy per token.
+  // Longer values (arbitrary text content) are left as ordinary strings: they
+  // rarely repeat, so interning them would only pollute the fstring table.
+  hb_string_T value = token->value;
+  if (!hb_string_is_null(value) && value.length <= HERB_INTERN_VALUE_MAX_LENGTH) {
+    rb_ivar_set(obj, id_value, rb_interned_string_from_hb_string(value));
+  } else {
+    rb_ivar_set(obj, id_value, rb_string_from_hb_string(value));
+  }
   rb_ivar_set(obj, id_range, rb_range_from_c_struct(token->range));
   rb_ivar_set(obj, id_location, rb_location_from_c_struct(token->location));
-  rb_ivar_set(obj, id_type, rb_string_from_hb_string(token_type_to_string(token->type)));
+  // A token's type is one of a small fixed set of identifier strings. Interning
+  // them (deduplicated frozen strings) means the whole token stream shares one
+  // String object per type instead of allocating a fresh copy per token.
+  rb_ivar_set(obj, id_type, rb_interned_string_from_hb_string(token_type_to_string(token->type)));
 
   return obj;
 }
