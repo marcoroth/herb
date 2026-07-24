@@ -23,6 +23,10 @@ const char* check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
+// Accumulates the number of errors attached to AST nodes during the current
+// parse's materialization (see rb_errors_array_from_c_array). Reset per parse.
+uint32_t herb_ext_error_count = 0;
+
 static ID id_line, id_column, id_start, id_end, id_from, id_to, id_value, id_range, id_location, id_type;
 static bool ast_value_ivar_ids_initialized = false;
 

@@ -24,6 +24,11 @@ module Herb
 
     #: () -> Array[Herb::Errors::Error]
     def errors
+      # The native extension records the total number of errors materialized
+      # onto the AST during parsing. When it is zero we can skip the recursive
+      # walk of every node entirely — the common case for valid templates.
+      return super if defined?(@total_error_count) && @total_error_count.zero?
+
       super + value.recursive_errors
     end
 
