@@ -4,6 +4,7 @@ module Herb
   class ParserOptions
     attr_reader :strict #: bool
     attr_reader :track_whitespace #: bool
+    attr_reader :track_locations #: bool
     attr_reader :analyze #: bool
     attr_reader :action_view_helpers #: bool
     attr_reader :transform_conditionals #: bool
@@ -18,6 +19,7 @@ module Herb
 
     DEFAULT_STRICT = true #: bool
     DEFAULT_TRACK_WHITESPACE = false #: bool
+    DEFAULT_TRACK_LOCATIONS = true #: bool
     DEFAULT_ANALYZE = true #: bool
     DEFAULT_ACTION_VIEW_HELPERS = false #: bool
     DEFAULT_TRANSFORM_CONDITIONALS = false #: bool
@@ -30,10 +32,11 @@ module Herb
     DEFAULT_TIMEOUT = 1 #: Numeric
     DEFAULT_MAX_ERRORS = 25 #: Integer
 
-    #: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
-    def initialize(strict: DEFAULT_STRICT, track_whitespace: DEFAULT_TRACK_WHITESPACE, analyze: DEFAULT_ANALYZE, action_view_helpers: DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: DEFAULT_TRANSFORM_CONDITIONALS, render_nodes: DEFAULT_RENDER_NODES, strict_locals: DEFAULT_STRICT_LOCALS, iteration_nodes: DEFAULT_ITERATION_NODES, prism_nodes: DEFAULT_PRISM_NODES, prism_nodes_deep: DEFAULT_PRISM_NODES_DEEP, prism_program: DEFAULT_PRISM_PROGRAM, timeout: DEFAULT_TIMEOUT, max_errors: DEFAULT_MAX_ERRORS)
+    #: (?strict: bool, ?track_whitespace: bool, ?track_locations: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
+    def initialize(strict: DEFAULT_STRICT, track_whitespace: DEFAULT_TRACK_WHITESPACE, track_locations: DEFAULT_TRACK_LOCATIONS, analyze: DEFAULT_ANALYZE, action_view_helpers: DEFAULT_ACTION_VIEW_HELPERS, transform_conditionals: DEFAULT_TRANSFORM_CONDITIONALS, render_nodes: DEFAULT_RENDER_NODES, strict_locals: DEFAULT_STRICT_LOCALS, iteration_nodes: DEFAULT_ITERATION_NODES, prism_nodes: DEFAULT_PRISM_NODES, prism_nodes_deep: DEFAULT_PRISM_NODES_DEEP, prism_program: DEFAULT_PRISM_PROGRAM, timeout: DEFAULT_TIMEOUT, max_errors: DEFAULT_MAX_ERRORS)
       @strict = strict
       @track_whitespace = track_whitespace
+      @track_locations = track_locations
       @analyze = analyze
       @action_view_helpers = action_view_helpers
       @transform_conditionals = transform_conditionals
@@ -52,6 +55,7 @@ module Herb
       {
         strict: @strict,
         track_whitespace: @track_whitespace,
+        track_locations: @track_locations,
         analyze: @analyze,
         action_view_helpers: @action_view_helpers,
         transform_conditionals: @transform_conditionals,
@@ -71,6 +75,7 @@ module Herb
       "#<#{self.class.name}\n  " \
         "strict=#{@strict}\n  " \
         "track_whitespace=#{@track_whitespace}\n  " \
+        "track_locations=#{@track_locations}\n  " \
         "analyze=#{@analyze}\n  " \
         "action_view_helpers=#{@action_view_helpers}\n  " \
         "transform_conditionals=#{@transform_conditionals}\n  " \

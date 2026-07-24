@@ -1,5 +1,7 @@
 #include <ruby.h>
 
+#include <stdbool.h>
+
 #include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
@@ -21,28 +23,58 @@ const char* check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
-VALUE rb_position_from_c_struct(position_T position) {
-  VALUE args[2];
-  args[0] = UINT2NUM(position.line);
-  args[1] = UINT2NUM(position.column);
+// Cached instance-variable IDs for the hot AST value objects (Position,
+// Location, Range, Token). Building these via rb_obj_alloc + rb_ivar_set sets
+// the ivars directly, mirroring the Ruby classes' initializers.
+static ID id_line, id_column, id_start, id_end, id_from, id_to;
+static ID id_value, id_range, id_location, id_type;
+static bool ast_value_ivar_ids_initialized = false;
 
-  return rb_class_new_instance(2, args, cPosition);
+static void init_ast_value_ivar_ids(void) {
+  if (ast_value_ivar_ids_initialized) { return; }
+
+  id_line = rb_intern("@line");
+  id_column = rb_intern("@column");
+  id_start = rb_intern("@start");
+  id_end = rb_intern("@end");
+  id_from = rb_intern("@from");
+  id_to = rb_intern("@to");
+  id_value = rb_intern("@value");
+  id_range = rb_intern("@range");
+  id_location = rb_intern("@location");
+  id_type = rb_intern("@type");
+
+  ast_value_ivar_ids_initialized = true;
+}
+
+VALUE rb_position_from_c_struct(position_T position) {
+  init_ast_value_ivar_ids();
+
+  VALUE obj = rb_obj_alloc(cPosition);
+  rb_ivar_set(obj, id_line, UINT2NUM(position.line));
+  rb_ivar_set(obj, id_column, UINT2NUM(position.column));
+
+  return obj;
 }
 
 VALUE rb_location_from_c_struct(location_T location) {
-  VALUE args[2];
-  args[0] = rb_position_from_c_struct(location.start);
-  args[1] = rb_position_from_c_struct(location.end);
+  init_ast_value_ivar_ids();
 
-  return rb_class_new_instance(2, args, cLocation);
+  VALUE obj = rb_obj_alloc(cLocation);
+  rb_ivar_set(obj, id_start, rb_position_from_c_struct(location.start));
+  rb_ivar_set(obj, id_end, rb_position_from_c_struct(location.end));
+
+  return obj;
 }
 
 VALUE rb_range_from_c_struct(range_T range) {
-  VALUE args[2];
-  args[0] = UINT2NUM(range.from);
-  args[1] = UINT2NUM(range.to);
+  init_ast_value_ivar_ids();
 
-  return rb_class_new_instance(2, args, cRange);
+  VALUE obj = rb_obj_alloc(cRange);
+  rb_ivar_set(obj, id_from, UINT2NUM(range.from));
+  rb_ivar_set(obj, id_to, UINT2NUM(range.to));
+
+  return obj;
 }
 
 VALUE rb_string_from_hb_string(hb_string_T string) {
@@ -51,17 +83,18 @@ VALUE rb_string_from_hb_string(hb_string_T string) {
   return rb_utf8_str_new(string.data, string.length);
 }
 
-VALUE rb_token_from_c_struct(token_T* token) {
+VALUE rb_token_from_c_struct(token_T* token, bool track_locations) {
   if (!token) { return Qnil; }
 
-  VALUE value = rb_string_from_hb_string(token->value);
-  VALUE range = rb_range_from_c_struct(token->range);
-  VALUE location = rb_location_from_c_struct(token->location);
-  VALUE type = rb_string_from_hb_string(token_type_to_string(token->type));
+  init_ast_value_ivar_ids();
 
-  VALUE args[4] = { value, range, location, type };
+  VALUE obj = rb_obj_alloc(cToken);
+  rb_ivar_set(obj, id_value, rb_string_from_hb_string(token->value));
+  rb_ivar_set(obj, id_range, track_locations ? rb_range_from_c_struct(token->range) : Qnil);
+  rb_ivar_set(obj, id_location, track_locations ? rb_location_from_c_struct(token->location) : Qnil);
+  rb_ivar_set(obj, id_type, rb_string_from_hb_string(token_type_to_string(token->type)));
 
-  return rb_class_new_instance(4, args, cToken);
+  return obj;
 }
 
 VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
@@ -71,7 +104,7 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     token_T* token = hb_array_get(tokens, i);
-    if (token != NULL) { rb_ary_push(value, rb_token_from_c_struct(token)); }
+    if (token != NULL) { rb_ary_push(value, rb_token_from_c_struct(token, true)); }
   }
 
   VALUE args[4] = { value, source, warnings, errors };
@@ -80,13 +113,14 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
 }
 
 VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_options_T* options) {
-  VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
+  VALUE value = rb_node_from_c_struct((AST_NODE_T*) root, options->track_locations);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
 
   VALUE kwargs = rb_hash_new();
   rb_hash_aset(kwargs, ID2SYM(rb_intern("strict")), options->strict ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_locations")), options->track_locations ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("action_view_helpers")), options->action_view_helpers ? Qtrue : Qfalse);
   rb_hash_aset(kwargs, ID2SYM(rb_intern("transform_conditionals")), options->transform_conditionals ? Qtrue : Qfalse);

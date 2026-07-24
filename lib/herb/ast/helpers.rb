@@ -71,7 +71,12 @@ module Herb
         content = node.content&.value || ""
         stripped = content.lstrip
 
-        stripped.start_with?("#") && node.location.start.line == node.location.end.line
+        # An inline `# comment` spans exactly one source line iff its Ruby
+        # content contains no newline. This is equivalent to comparing the
+        # node's start and end location lines, but does not depend on source
+        # locations being materialized, so it also works when the AST was built
+        # with `track_locations: false`.
+        stripped.start_with?("#") && !content.include?("\n")
       end
     end
   end

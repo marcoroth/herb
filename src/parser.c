@@ -47,6 +47,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .prism_program = false,
                                                        .dot_notation_tags = false,
                                                        .html = true,
+                                                       .track_locations = true,
                                                        .start_line = 0,
                                                        .start_column = 0,
                                                        .timeout_ms = 1000,

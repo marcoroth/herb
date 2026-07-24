@@ -18,6 +18,7 @@ pub struct ParserOptions {
   pub prism_program: bool,
   pub dot_notation_tags: bool,
   pub html: bool,
+  pub track_locations: bool,
   pub timeout: u32,
   pub max_errors: Option<u32>,
 }
@@ -38,6 +39,7 @@ impl Default for ParserOptions {
       prism_program: false,
       dot_notation_tags: false,
       html: true,
+      track_locations: true,
       timeout: 1000,
       max_errors: Some(25),
     }
@@ -125,6 +127,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       prism_nodes_deep: options.prism_nodes_deep,
       dot_notation_tags: options.dot_notation_tags,
       html: options.html,
+      track_locations: options.track_locations,
       start_line: 0,
       start_column: 0,
       timeout_ms: options.timeout,
@@ -361,6 +364,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       dot_notation_tags: false,
       transform_conditionals: false,
       html: true,
+      track_locations: true,
       start_line: 0,
       start_column: 0,
       timeout_ms: 1000,

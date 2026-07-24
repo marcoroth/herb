@@ -3,6 +3,8 @@
 
 #include <ruby.h>
 
+#include <stdbool.h>
+
 #include "../../src/include/herb.h"
 #include "../../src/include/lexer/token.h"
 #include "../../src/include/location/location.h"
@@ -15,7 +17,7 @@ VALUE rb_string_from_hb_string(hb_string_T string);
 VALUE rb_position_from_c_struct(position_T position);
 VALUE rb_location_from_c_struct(location_T location);
 
-VALUE rb_token_from_c_struct(token_T* token);
+VALUE rb_token_from_c_struct(token_T* token, bool track_locations);
 VALUE rb_range_from_c_struct(range_T range);
 
 VALUE create_lex_result(hb_array_T* tokens, VALUE source);

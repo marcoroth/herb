@@ -198,6 +198,21 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
   }
 
+  // Whether to materialize Location/Range/Position objects on the Ruby AST.
+  // Defaults to true. Callers that never read source locations (e.g. rendering
+  // with validation disabled) can pass `track_locations: false` to skip ~half
+  // of the parse's Ruby allocations. The native parse still computes locations
+  // (cheap value types the parser and analyzer rely on internally); this only
+  // gates the Ruby object materialization, which is threaded through the AST
+  // builders via parser_options.track_locations.
+  if (!NIL_P(options)) {
+    VALUE track_locations_opt = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_locations"));
+    if (NIL_P(track_locations_opt)) {
+      track_locations_opt = rb_hash_lookup(options, ID2SYM(rb_intern("track_locations")));
+    }
+    if (!NIL_P(track_locations_opt) && !RTEST(track_locations_opt)) { parser_options.track_locations = false; }
+  }
+
   parse_args_T args = { 0 };
   args.source = source;
   args.parser_options = &parser_options;
@@ -450,8 +465,8 @@ static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
     rb_ary_push(path_array, UINT2NUM(operation->path.indices[index]));
   }
 
-  VALUE old_node = operation->old_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node) : Qnil;
-  VALUE new_node = operation->new_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node) : Qnil;
+  VALUE old_node = operation->old_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->old_node, true) : Qnil;
+  VALUE new_node = operation->new_node != NULL ? rb_node_from_c_struct((AST_NODE_T*) operation->new_node, true) : Qnil;
 
   return rb_funcall(
     cDiffOperation,
