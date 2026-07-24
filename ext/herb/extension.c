@@ -45,7 +45,15 @@ static VALUE parse_convert_body(VALUE arg) {
   // the native parse released the GVL.
   herb_ext_track_locations = args->track_locations;
 
-  return create_parse_result(args->root, args->source, args->parser_options);
+  // Reset the per-parse error counter, then record the total on the result so
+  // Ruby can skip the recursive error walk when the template parsed cleanly.
+  herb_ext_error_count = 0;
+
+  VALUE result = create_parse_result(args->root, args->source, args->parser_options);
+
+  rb_ivar_set(result, rb_intern("@total_error_count"), UINT2NUM(herb_ext_error_count));
+
+  return result;
 }
 
 static VALUE parse_cleanup(VALUE arg) {

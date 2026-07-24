@@ -39,6 +39,10 @@ const char* check_string(VALUE value) {
 // the GVL, so no two parses materialize concurrently.
 bool herb_ext_track_locations = true;
 
+// Accumulates the number of errors attached to AST nodes during the current
+// parse's materialization (see rb_errors_array_from_c_array). Reset per parse.
+uint32_t herb_ext_error_count = 0;
+
 // Cached instance-variable IDs for the hot AST value objects (Position,
 // Location, Range, Token). Building these via rb_obj_alloc + rb_ivar_set sets
 // the ivars directly, mirroring the Ruby classes' initializers.
