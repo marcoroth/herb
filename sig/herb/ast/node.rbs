@@ -62,7 +62,7 @@ module Herb
       def compact_child_nodes: () -> Array[Herb::AST::Node]
 
       # : () -> Array[Herb::Errors::Error]
-      def recursive_errors: () -> Array[Herb::Errors::Error]
+      def recursive_errors: (?Array[Herb::Errors::Error] accumulator) -> Array[Herb::Errors::Error]
     end
   end
 end
