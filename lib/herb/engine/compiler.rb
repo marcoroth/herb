@@ -469,44 +469,58 @@ module Herb
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
 
-        compacted = compact_whitespace_tokens(tokens)
-
         optimized = [] #: Array[untyped]
-        current_text = ""
+        current_text = nil
         current_context = nil
 
-        compacted.each do |type, value, context, escaped|
+        # Single pass over the raw token stream. Whitespace tokens are resolved
+        # against their neighbours in the ORIGINAL stream (dropped, or turned
+        # into text) and consecutive text is merged into one buffer inline. This
+        # replaces the former two-pass approach (compact_whitespace_tokens built
+        # a whole intermediate array via map.with_index + compact, which this
+        # loop then re-scanned), saving an array allocation and a full pass per
+        # template.
+        tokens.each_with_index do |token, index|
+          type = token[0]
+
+          if type == :whitespace
+            next if adjacent_whitespace?(tokens, index)
+            next if whitespace_before_code_sequence?(tokens, index)
+
+            # Surviving whitespace becomes plain text and joins the text run.
+            type = :text
+          end
+
           if type == :text
-            current_text += value
-            current_context ||= context
+            value = token[1]
+
+            if current_text
+              # Mutate a single buffer instead of `current_text += value`, which
+              # reallocated and copied the whole accumulated string on every
+              # text token (quadratic for long runs of adjacent text).
+              current_text << value
+              current_context ||= token[2]
+            else
+              # Start a fresh buffer; dup so we never mutate the token's own
+              # (possibly frozen) value string.
+              current_text = value.dup
+              current_context = token[2]
+            end
           else
-            unless current_text.empty?
+            if current_text
               optimized << [:text, current_text, current_context]
 
-              current_text = ""
+              current_text = nil
               current_context = nil
             end
 
-            optimized << [type, value, context, escaped]
+            optimized << [type, token[1], token[2], token[3]]
           end
         end
 
-        optimized << [:text, current_text, current_context] unless current_text.empty?
+        optimized << [:text, current_text, current_context] if current_text
 
         optimized
-      end
-
-      def compact_whitespace_tokens(tokens)
-        return tokens if tokens.empty?
-
-        tokens.map.with_index { |token, index|
-          next token unless token[0] == :whitespace
-
-          next nil if adjacent_whitespace?(tokens, index)
-          next nil if whitespace_before_code_sequence?(tokens, index)
-
-          [:text, token[1], token[2]]
-        }.compact
       end
 
       def adjacent_whitespace?(tokens, index)
@@ -519,11 +533,11 @@ module Herb
       def trailing_whitespace?(token)
         return false unless token
 
-        token[0] == :whitespace || (token[0] == :text && token[1] =~ /\s\z/)
+        token[0] == :whitespace || (token[0] == :text && token[1].match?(/\s\z/))
       end
 
       def leading_whitespace?(token)
-        token && token[0] == :text && token[1] =~ /\A\s/
+        token && token[0] == :text && token[1].match?(/\A\s/)
       end
 
       def whitespace_before_code_sequence?(tokens, current_index)
@@ -589,7 +603,7 @@ module Herb
         last_value = @tokens.last[1]
 
         if last_type == :text
-          last_value.empty? || last_value.end_with?("\n") || (last_value =~ WHITESPACE_ONLY && preceding_token_ends_with_newline?) || last_value =~ TRAILING_INDENTATION
+          last_value.empty? || last_value.end_with?("\n") || (last_value.match?(WHITESPACE_ONLY) && preceding_token_ends_with_newline?) || last_value.match?(TRAILING_INDENTATION)
         elsif EXPRESSION_TOKEN_TYPES.include?(last_type)
           @last_trim_consumed_newline
         else
@@ -651,9 +665,9 @@ module Herb
 
         text = @tokens.last[1]
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
         end
 
@@ -698,10 +712,10 @@ module Herb
         text = token[1]
         removed = text[TRAILING_WHITESPACE] || ""
 
-        if text =~ TRAILING_INDENTATION
+        if text.match?(TRAILING_INDENTATION)
           text.sub!(TRAILING_WHITESPACE, "")
           token[1] = text
-        elsif text =~ WHITESPACE_ONLY
+        elsif text.match?(WHITESPACE_ONLY)
           text.replace("")
           token[1] = text
         end
