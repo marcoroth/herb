@@ -23,6 +23,7 @@ typedef struct {
   VALUE source;
   const parser_options_T* parser_options;
   hb_allocator_T allocator;
+  bool track_locations;
 } parse_args_T;
 
 typedef struct {
@@ -38,6 +39,11 @@ typedef struct {
 
 static VALUE parse_convert_body(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
+
+  // Apply here (rather than before the native parse) so the flag is set under
+  // the GVL immediately before Ruby AST materialization, independent of whether
+  // the native parse released the GVL.
+  herb_ext_track_locations = args->track_locations;
 
   return create_parse_result(args->root, args->source, args->parser_options);
 }
@@ -194,9 +200,23 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
   }
 
+  // Whether to materialize Location/Range/Position objects on the Ruby AST.
+  // Defaults to true. Callers that never read source locations (e.g. rendering
+  // with validation disabled) can pass `track_locations: false` to skip ~half
+  // of the parse's Ruby allocations. Tracked outside parser_options_T since it
+  // only affects Ruby materialization, not the native parse, and applied in
+  // parse_convert_body just before AST materialization.
+  bool track_locations = true;
+  if (!NIL_P(options)) {
+    VALUE track_locations_opt = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_locations"));
+    if (NIL_P(track_locations_opt)) { track_locations_opt = rb_hash_lookup(options, ID2SYM(rb_intern("track_locations"))); }
+    if (!NIL_P(track_locations_opt) && !RTEST(track_locations_opt)) { track_locations = false; }
+  }
+
   parse_args_T args = { 0 };
   args.source = source;
   args.parser_options = &parser_options;
+  args.track_locations = track_locations;
 
   if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
