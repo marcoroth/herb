@@ -6,6 +6,7 @@ target :lib do
   check "lib"
 
   library "delegate"
+  library "did_you_mean"
   library "digest"
   library "json"
   library "pathname"

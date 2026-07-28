@@ -70,7 +70,7 @@ fn main() {
 
     let mut build = cc::Build::new();
     build
-      .flag("-std=c99")
+      .flag("-std=gnu99")
       .flag("-Wall")
       .flag("-Wextra")
       .flag("-Wno-unused-parameter")

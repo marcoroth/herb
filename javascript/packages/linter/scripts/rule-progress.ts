@@ -1,7 +1,7 @@
 import { rules } from "../src/rules.js"
 
 async function main() {
-  const javascriptRuleNames = rules.map((RuleClass) => new RuleClass().name).sort()
+  const javascriptRuleNames = rules.map((RuleClass) => RuleClass.ruleName).sort()
 
   let nativeRuleNames: string[] = []
   let nativeAvailable = false

@@ -244,7 +244,7 @@ export class Linter {
       return this.herb.lintRuleNames()
     }
 
-    return this.rules.map(RuleClass => new RuleClass().name)
+    return this.rules.map(RuleClass => RuleClass.ruleName)
   }
 
   get supportsNativeLint(): boolean {

@@ -75,6 +75,9 @@ tmp/*
 # Bundler Config
 !/.bundle/config
 
+# RBS Collection files
+.gem_rbs_collection/*
+
 # Bundler
 vendor/*
 vendor/bundle/*

@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: Add LLVM apt Repo
@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: yarn install
@@ -131,7 +131,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
         uses: actions/download-artifact@v4
@@ -189,9 +189,13 @@ jobs:
       pull-requests: write
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
         uses: actions/download-artifact@v4
@@ -213,7 +217,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
         uses: actions/download-artifact@v4

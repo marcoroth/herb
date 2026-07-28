@@ -124,8 +124,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverrideO
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      const isPrimary = instance.name === ruleInstance.name
-      rulesConfig[instance.name] = isPrimary ? { ...instance.defaultConfig, enabled: true, ...ruleConfigOverride } : instance.defaultConfig
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary ? { ...instance.defaultConfig, enabled: true, ...ruleConfigOverride } : instance.defaultConfig
     })
 
     return Config.fromObject({

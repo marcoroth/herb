@@ -134,6 +134,29 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
       parser_options.html = (html == JNI_TRUE);
     }
+
+    jmethodID getTimeout =
+        (*env)->GetMethodID(env, optionsClass, "getTimeout", "()I");
+
+    if (getTimeout != NULL) {
+      jint timeout = (*env)->CallIntMethod(env, options, getTimeout);
+      parser_options.timeout_ms = (uint32_t) timeout;
+    }
+
+    jmethodID getMaxErrors =
+        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()Ljava/lang/Integer;");
+
+    if (getMaxErrors != NULL) {
+      jobject maxErrorsObj = (*env)->CallObjectMethod(env, options, getMaxErrors);
+
+      if (maxErrorsObj == NULL) {
+        parser_options.max_errors = 0;
+      } else {
+        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        jmethodID intValue = (*env)->GetMethodID(env, integerClass, "intValue", "()I");
+        parser_options.max_errors = (uint32_t) (*env)->CallIntMethod(env, maxErrorsObj, intValue);
+      }
+    }
   }
 
   hb_allocator_T allocator;

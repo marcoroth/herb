@@ -53,6 +53,11 @@ jobs:
       - name: Lint
         run: bin/lint
 
+      - name: RBS Validation
+        run: |-
+          bundle exec rbs collection install --frozen
+          bundle exec rbs -Isig validate
+
       - name: Steep
         run: bundle exec steep check
 

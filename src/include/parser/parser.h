@@ -5,6 +5,7 @@
 #include "../lexer/lexer.h"
 #include "../lib/hb_allocator.h"
 #include "../lib/hb_array.h"
+#include "../lib/hb_clock.h"
 
 #include <stdint.h>
 
@@ -33,6 +34,10 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool html;
   uint32_t start_line;
   uint32_t start_column;
+  uint32_t timeout_ms;
+  uint32_t max_errors;
+  uint32_t* error_count;
+  uint64_t deadline_ms;
 } parser_options_T;
 
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {
@@ -42,6 +47,29 @@ typedef struct MATCH_TAGS_CONTEXT_STRUCT {
 } match_tags_context_T;
 
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
+static inline bool parser_options_past_deadline(const parser_options_T* options) {
+  if (options == NULL || options->timeout_ms == 0) { return false; }
+
+  return hb_monotonic_ms() >= options->deadline_ms;
+}
+
+static inline bool parser_options_errors_exceeded(const parser_options_T* options) {
+  if (options == NULL || options->error_count == NULL) { return false; }
+  if (options->max_errors == 0) { return false; }
+
+  return *options->error_count >= options->max_errors;
+}
+
+static inline void parser_options_increment_error_count(const parser_options_T* options) {
+  if (options != NULL && options->error_count != NULL) { (*options->error_count)++; }
+}
+
+static inline void parser_options_set_deadline(parser_options_T* options) {
+  if (options->timeout_ms == 0) { return; }
+
+  options->deadline_ms = hb_monotonic_ms() + options->timeout_ms;
+}
 
 typedef struct PARSER_STRUCT {
   hb_allocator_T* allocator;

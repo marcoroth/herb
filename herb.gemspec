@@ -31,6 +31,7 @@ Gem::Specification.new do |spec|
     "lib/**/*.rb",
     "lib/**/*.yml",
     "sig/**/*.rbs",
+    "sig/manifest.yaml",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
     "templates/**/*.{rb,erb}",

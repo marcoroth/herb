@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class HerbLinterTest < Maxitest::Test
+class HerbLinterTest < Minitest::Test
   def test_version
     refute_nil Herb::Linter::VERSION
   end

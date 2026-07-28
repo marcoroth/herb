@@ -17,6 +17,8 @@ pub struct ParserOptions {
   pub prism_program: bool,
   pub dot_notation_tags: bool,
   pub html: bool,
+  pub timeout: u32,
+  pub max_errors: Option<u32>,
 }
 
 impl Default for ParserOptions {
@@ -34,6 +36,8 @@ impl Default for ParserOptions {
       prism_program: false,
       dot_notation_tags: false,
       html: true,
+      timeout: 1000,
+      max_errors: Some(25),
     }
   }
 }
@@ -120,6 +124,10 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       html: options.html,
       start_line: 0,
       start_column: 0,
+      timeout_ms: options.timeout,
+      max_errors: options.max_errors.unwrap_or(0),
+      error_count: std::ptr::null_mut(),
+      deadline_ms: 0,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
@@ -340,6 +348,10 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       html: true,
       start_line: 0,
       start_column: 0,
+      timeout_ms: 1000,
+      max_errors: 25,
+      error_count: std::ptr::null_mut(),
+      deadline_ms: 0,
     };
 
     let old_root = crate::ffi::herb_parse(old_c_source.as_ptr(), &parser_options, &mut old_allocator);
