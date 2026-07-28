@@ -151,7 +151,7 @@
             "../../../rust/herb-linter/include"
           ],
           "libraries": [
-            "-L../../../rust/target/debug",
+            "-L<(module_root_dir)/../../../rust/target/debug",
             "-lherb_linter"
           ]
         }]

@@ -2,7 +2,6 @@ import { Location } from "@herb-tools/core"
 import { BackendLintResult } from "@herb-tools/core"
 import picomatch from "picomatch"
 
-import { Location } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
