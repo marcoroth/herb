@@ -1,0 +1,129 @@
+name: Corpus
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Install the last released gem
+        id: release
+        run: |-
+          version=$(gem search '^herb$' --remote --no-prerelease | sed -n 's/^herb (\([0-9][0-9.]*\).*/\1/p')
+
+          if [ -z "$version" ]; then
+            echo "Could not resolve the latest released herb version" >&2
+            exit 1
+          fi
+
+          gem install herb -v "$version" --no-document
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Comparing against herb $version"
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Measure the last release
+        id: measure-release
+        background: true
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+        run: |-
+          corpus/bin/measure-herb \
+            --version "${{ steps.release.outputs.version }}" \
+            --label "released ${{ steps.release.outputs.version }}" \
+            --corpus corpus/erb \
+            --out corpus/runs/release.json
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: Compile Ruby extension
+        run: bundle exec rake compile
+
+      - name: Wait for the release measurement
+        wait-all:
+
+      - name: Measure this branch
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+        run: |-
+          corpus/bin/measure-herb \
+            --gem-path "$GITHUB_WORKSPACE" \
+            --label "this branch (${GITHUB_SHA::7})" \
+            --corpus corpus/erb \
+            --out corpus/runs/branch.json
+
+      - name: Compare
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set -o pipefail
+
+          corpus/bin/diff-runs \
+            corpus/runs/release.json \
+            corpus/runs/branch.json \
+            --fail-on-regression | tee comparison.txt
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Corpus: this branch vs herb ${{ steps.release.outputs.version }}"
+            echo
+            echo '```'
+            cat comparison.txt 2>/dev/null || echo "the comparison did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus-runs
+          path: corpus/runs/*.json
+          retention-days: 30
