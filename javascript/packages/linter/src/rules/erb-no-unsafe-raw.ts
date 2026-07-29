@@ -1,12 +1,9 @@
 import { ParserRule } from "../types.js"
 import { ElementStackVisitor } from "./rule-utils.js"
-import { isERBOutputNode } from "@herb-tools/core"
+import { PrismVisitor, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode } from "@herb-tools/core"
-
-const RAW_PATTERN = /\braw[\s(]/
-const HTML_SAFE_PATTERN = /\.html_safe\b/
+import type { ParseResult, ParserOptions, ERBContentNode, PrismNode } from "@herb-tools/core"
 
 const RAW_TEXT_ELEMENTS = new Set([
   "title",
@@ -21,21 +18,42 @@ const RAW_TEXT_ELEMENTS = new Set([
   "plaintext",
 ])
 
+class UnsafeRawCallDetector extends PrismVisitor {
+  public hasRawCall = false
+  public hasHtmlSafeCall = false
+
+  visitCallNode(node: PrismNode): void {
+    if (node.name === "raw" && !node.receiver) {
+      this.hasRawCall = true
+    }
+
+    if (node.name === "html_safe") {
+      this.hasHtmlSafeCall = true
+    }
+
+    this.visitChildNodes(node)
+  }
+}
+
 class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
   visitERBContentNode(node: ERBContentNode): void {
     if (this.isInsideElement(...RAW_TEXT_ELEMENTS)) return
     if (!isERBOutputNode(node)) return
 
-    const content = node.content?.value || ""
+    const prismNode = node.prismNode
+    if (!prismNode) return
 
-    if (RAW_PATTERN.test(content)) {
+    const detector = new UnsafeRawCallDetector()
+    detector.visit(prismNode)
+
+    if (detector.hasRawCall) {
       this.addOffense(
         "Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
         node.location,
       )
     }
 
-    if (HTML_SAFE_PATTERN.test(content)) {
+    if (detector.hasHtmlSafeCall) {
       this.addOffense(
         "Avoid `.html_safe` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
         node.location,
@@ -52,6 +70,12 @@ export class ERBNoUnsafeRawRule extends ParserRule {
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true,
     }
   }
 
