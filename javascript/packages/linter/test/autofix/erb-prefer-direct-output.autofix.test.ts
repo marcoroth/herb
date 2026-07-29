@@ -188,4 +188,15 @@ describe("erb-prefer-direct-output autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
   })
+
+  test("fixes interpolated string when the multi-byte characters surround the interpolation", () => {
+    const input = '<%= "→ #{label} ←" %>'
+    const expected = '→ <%= label %> ←'
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
 })

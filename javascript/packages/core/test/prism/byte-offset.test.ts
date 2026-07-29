@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import { stringIndexFromByteOffset } from "../../src/prism/index.js"
+import { stringIndexFromByteOffset, substringFromByteOffset } from "../../src/prism/index.js"
 
 describe("stringIndexFromByteOffset", () => {
   test("returns the same index as the byte offset for ASCII-only source", () => {
@@ -40,5 +40,19 @@ describe("stringIndexFromByteOffset", () => {
 
     expect(stringIndexFromByteOffset(source, 0)).toBe(0)
     expect(stringIndexFromByteOffset(source, -1)).toBe(0)
+  })
+})
+
+describe("substringFromByteOffset", () => {
+  test("slices using UTF-8 byte offsets", () => {
+    expect(substringFromByteOffset("é card_event", 3, 10)).toBe("card_event")
+  })
+
+  test("slices correctly past a surrogate pair", () => {
+    expect(substringFromByteOffset("😀 data", 5, 4)).toBe("data")
+  })
+
+  test("returns an empty string for a zero length", () => {
+    expect(substringFromByteOffset("é card_event", 3, 0)).toBe("")
   })
 })

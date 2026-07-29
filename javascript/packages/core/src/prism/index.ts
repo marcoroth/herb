@@ -1,3 +1,6 @@
+import { Location } from "../location.js"
+import { positionFromOffset } from "../position.js"
+
 import { deserialize } from "@ruby/prism/src/deserialize.js"
 import type { ParseResult as PrismParseResult } from "@ruby/prism/src/deserialize.js"
 
@@ -67,6 +70,24 @@ export function stringIndexFromByteOffset(source: string, byteOffset: number): n
 }
 
 /**
+ * Extracts the substring of `source` covered by a Prism byte offset and byte length.
+ *
+ * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
+ * to UTF-16 string indices before being used with `String#substring`.
+ *
+ * @param source - The original source string the byte offset is relative to
+ * @param startByteOffset - A UTF-8 byte offset, e.g. from `node.location.startOffset`
+ * @param byteLength - A UTF-8 byte length, e.g. from `node.location.length`
+ * @returns The substring of `source` spanned by the Prism location
+ */
+export function substringFromByteOffset(source: string, startByteOffset: number, byteLength: number): string {
+  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
+  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
+
+  return source.substring(startOffset, endOffset)
+}
+
+/**
  * Deserialize a Prism node from the raw bytes produced by pm_serialize().
  * pm_serialize() serializes a single node subtree, so the ParseResult's
  * value is the Prism node directly (not wrapped in ProgramNode).
@@ -83,4 +104,25 @@ export function deserializePrismNode(bytes: Uint8Array, source: string): PrismNo
   } catch {
     return null
   }
+}
+
+/**
+ * Creates a Location from a source string, a Prism byte offset, and a byte length.
+ *
+ * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
+ * to UTF-16 string indices before computing line/column positions.
+ *
+ * @param source - The original source string the byte offset is relative to
+ * @param startByteOffset - A UTF-8 byte offset, e.g. from `node.location.startOffset`
+ * @param byteLength - A UTF-8 byte length, e.g. from `node.location.length`
+ * @returns The Location spanning the Prism node
+ */
+export function locationFromByteOffset(source: string, startByteOffset: number, byteLength: number): Location {
+  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
+  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
+
+  const start = positionFromOffset(source, startOffset)
+  const end = positionFromOffset(source, endOffset)
+
+  return Location.from(start.line, start.column, end.line, end.column)
 }

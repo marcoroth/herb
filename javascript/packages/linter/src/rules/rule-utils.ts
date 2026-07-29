@@ -1,7 +1,6 @@
 import {
   Visitor,
   Location,
-  Position,
   hasERBOutput,
   isEffectivelyStatic,
   getValidatableStaticContent,
@@ -964,60 +963,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a Prism byte offset, and a byte length.
- *
- * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
- * to UTF-16 string indices before computing line/column positions.
- */
-export function locationFromOffset(source: string, startByteOffset: number, byteLength: number): Location {
-  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
-  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
-
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, endOffset)
-
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
- * Extracts the substring of `source` covered by a Prism byte offset and byte length.
- *
- * Prism reports `startOffset`/`length` as UTF-8 byte counts, so they're converted
- * to UTF-16 string indices before being used with `String#substring`.
- */
-export function substringFromByteOffset(source: string, startByteOffset: number, byteLength: number): string {
-  const startOffset = stringIndexFromByteOffset(source, startByteOffset)
-  const endOffset = stringIndexFromByteOffset(source, startByteOffset + byteLength)
-
-  return source.substring(startOffset, endOffset)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {

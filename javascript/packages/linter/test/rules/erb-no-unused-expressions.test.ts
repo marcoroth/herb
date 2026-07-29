@@ -397,5 +397,14 @@ describe("ERBNoUnusedExpressionsRule", () => {
         <% helper_method(arg) %>
       `)
     })
+
+    test("reports the correct message and location when the multi-byte character is on the same line", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `link_to('→ next', path)` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        [1, 6],
+      )
+
+      assertOffenses(`<p><% link_to('→ next', path) %></p>`)
+    })
   })
 })
