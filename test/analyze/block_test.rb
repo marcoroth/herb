@@ -451,5 +451,16 @@ module Analyze
         <% end %>
       HTML
     end
+
+    # https://github.com/marcoroth/herb/issues/1770
+    test "closed do/end block with yield in single tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          meth do
+            yield
+          end
+        %>
+      HTML
+    end
   end
 end
