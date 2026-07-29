@@ -1380,7 +1380,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
       if (fullInlineResult) {
-        return this.fitsOnCurrentLine(fullInlineResult)
+        return this.fitsOnCurrentLine(fullInlineResult) || this.contentIsGluedToTags(node)
       }
 
       return false
@@ -1454,6 +1454,20 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
 
   // --- Utility methods ---
+
+  private contentIsGluedToTags(node: HTMLElementNode): boolean {
+    const body = node.body
+
+    if (body.length === 0) return false
+
+    const first = body[0]
+    const last = body[body.length - 1]
+
+    const gluedStart = !isPureWhitespaceNode(first) && !(isNode(first, HTMLTextNode) && startsWithWhitespace(first.content))
+    const gluedEnd = !isPureWhitespaceNode(last) && !(isNode(last, HTMLTextNode) && endsWithWhitespace(last.content))
+
+    return gluedStart || gluedEnd
+  }
 
   private fitsOnCurrentLine(content: string): boolean {
     return this.indent.length + content.length <= this.maxLineLength
@@ -1628,11 +1642,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Try to render a complete element inline including opening tag, children, and closing tag
    */
   private tryRenderInlineFull(_node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
-    let result = `<${tagName}`
+    const openTagChildren = getOpenTagChildren(_node)
+    const inlineNodes = this.extractInlineNodes(openTagChildren)
 
-    this.attributeRenderer.indentLevel = this.indentLevel
-    result += this.attributeRenderer.renderAttributesString(attributes, tagName)
-    result += ">"
+    let result = this.renderInlineOpen(tagName, attributes, false, inlineNodes, openTagChildren)
 
     const childrenContent = this.tryRenderChildrenInline(children, tagName, _node)
 
