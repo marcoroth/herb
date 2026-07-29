@@ -5,9 +5,10 @@ import { resolve } from "node:path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
-import { Diagnostic } from "@herb-tools/core"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
+
+import type { SerializedDiagnostic } from "@herb-tools/core"
 
 export interface WorkerInput {
   files: string[]
@@ -21,7 +22,7 @@ export interface WorkerInput {
 
 export interface WorkerOffense {
   filename: string
-  offense: Diagnostic
+  offense: SerializedDiagnostic
   content: string
   autocorrectable: boolean
 }
