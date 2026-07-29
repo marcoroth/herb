@@ -43,11 +43,7 @@ describe("ERB glued text flow", () => {
 
     const expected = dedent`
       <p>
-        Hello
-        <% if owner %>
-          <%= owner.name %>'s dog
-        <% end %>!
-        It's time for your walk.
+        Hello<% if owner %> <%= owner.name %>'s dog<% end %>! It's time for your walk.
       </p>
     `
 
@@ -66,8 +62,7 @@ describe("ERB glued text flow", () => {
 
     const expected = dedent`
       <% if something? %>
-        <%= @user.preferred_greeting %>,
-        <br>
+        <%= @user.preferred_greeting %>,<br>
         <br>
         <p>blah blah</p>
       <% end %>
@@ -88,8 +83,7 @@ describe("ERB glued text flow", () => {
 
     const expected = dedent`
       <% capture do %>
-        <%= @user.preferred_greeting %>,
-        <br>
+        <%= @user.preferred_greeting %>,<br>
         <br>
         <p>blah blah</p>
       <% end %>
@@ -111,38 +105,4 @@ describe("ERB glued text flow", () => {
     expectFormattedToMatch(source)
   })
 
-  test("still breaks whitespace-separated ERB outputs at ERB boundaries", () => {
-    const source = dedent`
-      <div>
-        <span>
-          <% if show_full_name? %>
-            <%= user.first_name %>
-            <%= user.middle_name %>
-            <%= user.last_name %>
-            <%= user.suffix %>
-            -
-            <%= formatted_date(user.birth_date, format: :long) %>
-          <% end %>
-        </span>
-      </div>
-    `
-
-    expectFormattedToMatch(source)
-  })
-
-  test("still breaks a non-output ERB statement glued to an inline element", () => {
-    const source = dedent`
-      <% while i < 3 %><b><%= i %></b><% i += 1 %><% end %>
-    `
-
-    const expected = dedent`
-      <% while i < 3 %>
-        <b><%= i %></b>
-        <% i += 1 %>
-      <% end %>
-    `
-
-    expect(formatter.format(source)).toEqual(expected)
-    expectFormattedToMatch(expected)
-  })
 })

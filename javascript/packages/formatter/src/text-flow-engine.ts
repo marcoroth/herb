@@ -15,7 +15,6 @@ import {
 
 import {
   collectTextFlowRun as collectTextFlowRunHelper,
-  hasGluedTextFlowBoundary as hasGluedTextFlowBoundaryHelper,
   isInTextFlowContext as isInTextFlowContextHelper,
   isTextFlowNode as isTextFlowNodeHelper,
   tryMergePunctuationText as tryMergePunctuationTextHelper,
@@ -66,10 +65,6 @@ export class TextFlowEngine {
 
   isInTextFlowContext(children: Node[]): boolean {
     return isInTextFlowContextHelper(children)
-  }
-
-  hasGluedTextFlowBoundary(children: Node[]): boolean {
-    return hasGluedTextFlowBoundaryHelper(children)
   }
 
   collectTextFlowRun(body: Node[], startIndex: number): { nodes: Node[], endIndex: number } | null {

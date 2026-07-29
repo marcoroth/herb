@@ -1,4 +1,4 @@
-import { isNode, getTagName, isERBOutputNode } from "@herb-tools/core"
+import { isNode, getTagName, isERBNode, isERBOutputNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -10,14 +10,20 @@ import {
   normalizeAndSplitWords,
 } from "./format-helpers.js"
 
-
 /**
- * Check if a node participates in text flow
+ * Check if a node participates in text flow.
+ *
+ * When `children`/`index` are supplied, an ERB control-flow node also
+ * participates if it is glued to visible content, see
+ * {@link isGluedControlFlowNode}. Without that context it does not, which
+ * keeps the existing block layout for free-standing control flow.
  */
-export function isTextFlowNode(node: Node): boolean {
+export function isTextFlowNode(node: Node, children?: Node[], index?: number): boolean {
   if (isNode(node, ERBContentNode)) return true
   if (isNode(node, HTMLTextNode) && node.content.trim() !== "") return true
   if (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) return true
+
+  if (children && index !== undefined && isGluedControlFlowNode(children, index)) return true
 
   return false
 }
@@ -45,7 +51,7 @@ export function collectTextFlowRun(body: Node[], startIndex: number): { nodes: N
   while (index < body.length) {
     const child = body[index]
 
-    if (isTextFlowNode(child)) {
+    if (isTextFlowNode(child, body, index)) {
       nodes.push(child)
       textFlowCount++
       index++
@@ -53,7 +59,7 @@ export function collectTextFlowRun(body: Node[], startIndex: number): { nodes: N
       let hasMoreTextFlow = false
 
       for (let lookaheadIndex = index + 1; lookaheadIndex < body.length; lookaheadIndex++) {
-        if (isTextFlowNode(body[lookaheadIndex])) {
+        if (isTextFlowNode(body[lookaheadIndex], body, lookaheadIndex)) {
           hasMoreTextFlow = true
           break
         }
@@ -78,7 +84,11 @@ export function collectTextFlowRun(body: Node[], startIndex: number): { nodes: N
 
   if (textFlowCount >= 2) {
     const hasText = nodes.some(node => isNode(node, HTMLTextNode) && node.content.trim() !== "")
-    const hasAtomicContent = nodes.some(node => isNode(node, ERBContentNode) || (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))))
+    const hasAtomicContent = nodes.some((node, nodeIndex) =>
+      isNode(node, ERBContentNode) ||
+      (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) ||
+      isGluedControlFlowNode(nodes, nodeIndex)
+    )
 
     if (hasText && hasAtomicContent) {
       return { nodes, endIndex: index }
@@ -106,7 +116,7 @@ export function isInTextFlowContext(children: Node[]): boolean {
       return isInlineElement(getTagName(child))
     }
 
-    return false
+    return isGluedControlFlowNode(children, children.indexOf(child))
   })
 
   if (!allInline) return false
@@ -115,61 +125,68 @@ export function isInTextFlowContext(children: Node[]): boolean {
 }
 
 /**
- * Check whether a node renders visible output that participates in text flow:
- * non-empty text, an ERB *output* tag (`<%= %>` / `<%== %>`), or an inline
- * element. Control-flow / non-output ERB (`<% ... %>`) renders nothing, so it
- * never contributes rendered whitespace.
+ * How a node participates in the rendered character stream.
+ *
+ * - `visible`, emits characters: non-empty text, an ERB *output* tag
+ *   (`<%= %>` / `<%== %>`), or an inline element.
+ * - `transparent`, emits nothing *itself*, but does not separate its
+ *   neighbours either. A non-output ERB tag (`<% if %>`, `<% end %>`,
+ *   `<% i += 1 %>`) is zero-width, so the content on either side of it is
+ *   adjacent in the rendered output and a line break placed next to it is
+ *   still a rendered space.
+ * - `separator`, whitespace, or a block-level node that already forces a
+ *   break; there is nothing to glue across.
  */
-function rendersVisibleOutput(node: Node): boolean {
-  if (isNode(node, HTMLTextNode)) return node.content.trim() !== ""
-  if (isERBOutputNode(node)) return true
-  if (isNode(node, HTMLElementNode)) return isInlineElement(getTagName(node))
+type FlowRole = 'visible' | 'transparent' | 'separator'
 
-  return false
+function flowRole(node: Node): FlowRole {
+  if (isNode(node, HTMLTextNode)) {
+    return node.content.trim() !== "" ? 'visible' : 'separator'
+  }
+
+  if (isNode(node, WhitespaceNode)) return 'separator'
+  if (isERBOutputNode(node)) return 'visible'
+  if (isERBNode(node)) return 'transparent'
+
+  if (isNode(node, HTMLElementNode)) {
+    return isInlineElement(getTagName(node)) ? 'visible' : 'separator'
+  }
+
+  return 'separator'
 }
 
 /**
- * Check whether a list of statements/children contains a "glued" text-flow
- * boundary: two adjacent nodes that both render visible output and touch
- * without any whitespace between them, e.g. `<%= user.name %>'s dog`,
- * `<%= greeting %>,` or `John<%= suffix %>`.
+ * Check whether a control-flow ERB node touches visible content on either side
+ * with no whitespace in between, e.g. `Hello<% if owner %>` or
+ * `<% end %>!`.
  *
- * Breaking such a boundary onto separate lines would inject whitespace into the
- * rendered HTML that wasn't in the source (#1729). When nodes are separated by
- * whitespace, or one side renders nothing (a `<% ... %>` control statement such
- * as `<% i += 1 %>`), breaking across lines is rendering-safe, so this returns
- * false and callers can keep their per-node visiting.
+ * The `<% … %>` tags emit no characters, but that is precisely why they cannot
+ * keep their neighbours apart: in `dog<% end %>!` the `dog` and the `!` are
+ * adjacent in the rendered output, so putting a newline before the `<% end %>`
+ * still injects a space (#1729).
+ *
+ * When this holds, the control-flow node has to participate in text flow as an
+ * atomic unit rather than being laid out as a block.
  */
-export function hasGluedTextFlowBoundary(children: Node[]): boolean {
-  let previousNode: Node | null = null
-  let previousIndex = -1
+export function isGluedControlFlowNode(children: Node[], index: number): boolean {
+  const node = children[index]
 
-  for (let index = 0; index < children.length; index++) {
-    const child = children[index]
+  if (!isERBNode(node) || isERBOutputNode(node)) return false
 
-    // Whitespace, and any node that renders nothing, breaks the glue chain:
-    // there is no rendered content on this side to be split apart.
-    if (!rendersVisibleOutput(child)) {
-      previousNode = null
-      previousIndex = -1
+  const previous = children[index - 1]
+  const next = children[index + 1]
 
-      continue
-    }
+  const gluedBefore =
+    previous !== undefined &&
+    flowRole(previous) === 'visible' &&
+    !(isNode(previous, HTMLTextNode) && endsWithWhitespace(previous.content))
 
-    if (previousNode) {
-      const separated =
-        hasWhitespaceBetween(children, previousIndex, index) ||
-        (isNode(previousNode, HTMLTextNode) && endsWithWhitespace(previousNode.content)) ||
-        (isNode(child, HTMLTextNode) && /^[ \t\n\r]/.test(child.content))
+  const gluedAfter =
+    next !== undefined &&
+    flowRole(next) === 'visible' &&
+    !(isNode(next, HTMLTextNode) && /^[ \t\n\r]/.test(next.content))
 
-      if (!separated) return true
-    }
-
-    previousNode = child
-    previousIndex = index
-  }
-
-  return false
+  return gluedBefore || gluedAfter
 }
 
 /**
@@ -249,6 +266,31 @@ export function tryMergeAtomicAfterText(result: ContentUnitWithNode[], children:
     unit: { content: lastWord + atomicContent, type: atomicType, isAtomic: true, breaksFlow: false },
     node: atomicNode
   })
+
+  return true
+}
+
+/**
+ * Fuse an atomic unit (ERB / inline element) onto a preceding atomic unit when
+ * the two touch with no whitespace between them, e.g. `<%= greeting %>,<br>`.
+ *
+ * `tryMergeAtomicAfterText` only handles an atomic following *text*. When the
+ * predecessor is itself atomic the two stay separate tokens, and the wrapper's
+ * `needsSpaceBetween` then puts a space between them, injecting whitespace
+ * that was not in the source (#469).
+ *
+ * Returns true if the fuse was performed.
+ */
+export function tryFuseAdjacentAtomic(result: ContentUnitWithNode[], content: string): boolean {
+  if (result.length === 0) return false
+
+  const lastUnit = result[result.length - 1]
+
+  if (!lastUnit.unit.isAtomic) return false
+  if (lastUnit.unit.type !== 'erb' && lastUnit.unit.type !== 'inline') return false
+  if (endsWithWhitespace(lastUnit.unit.content)) return false
+
+  lastUnit.unit.content += content
 
   return true
 }
