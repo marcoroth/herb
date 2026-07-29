@@ -4,7 +4,7 @@ import { AttributeRenderer } from "./attribute-renderer.js"
 import { SpacingAnalyzer } from "./spacing-analyzer.js"
 import { HerbDisableCollector } from "./herb-disable-collector.js"
 
-import { isTextFlowNode } from "./text-flow-helpers.js"
+import { isTextFlowNode, hasFlowContentBefore, hasFlowContentAfter } from "./text-flow-helpers.js"
 import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
 
 import type { ERBNode } from "@herb-tools/core"
@@ -141,6 +141,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
   private nodeIsMultiline = new Map<Node, boolean>()
+  private inlineFlowContext = new Map<Node, { before: boolean, after: boolean }>()
   private stringLineCount: number = 0
   private textFlow: TextFlowEngine
   private attributeRenderer: AttributeRenderer
@@ -173,13 +174,59 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.indentLevel = 0
     this.stringLineCount = 0
     this.nodeIsMultiline.clear()
+    this.inlineFlowContext.clear()
     this.spacingAnalyzer.clear()
+
+    this.collectInlineFlowContext(node, false, false)
 
     this.visit(node)
 
     this.spliceHerbDisableComments()
 
     return this.lines.join("\n")
+  }
+
+  private inlineFlowChildren(node: Node): Node[] | null {
+    if (isNode(node, DocumentNode)) return node.children
+    if (isNode(node, HTMLElementNode)) return node.body
+    if (isERBControlFlowNode(node) && Array.isArray((node as any).statements)) return (node as any).statements
+    if (Array.isArray((node as any).body)) return (node as any).body
+
+    return null
+  }
+
+  private collectInlineFlowContext(node: Node, inheritedBefore: boolean, inheritedAfter: boolean): void {
+    const list = this.inlineFlowChildren(node)
+
+    if (!list) {
+      for (const child of node.compactChildNodes()) {
+        this.collectInlineFlowContext(child, false, false)
+      }
+
+      return
+    }
+
+    const firstIndex = list.findIndex(child => !isPureWhitespaceNode(child))
+    const lastIndex = list.reduce((found, child, index) => isPureWhitespaceNode(child) ? found : index, -1)
+
+    list.forEach((child, index) => {
+      const before = hasFlowContentBefore(list, index) || (firstIndex >= 0 && index <= firstIndex && inheritedBefore)
+      const after = hasFlowContentAfter(list, index) || (lastIndex >= 0 && index >= lastIndex && inheritedAfter)
+
+      this.inlineFlowContext.set(child, { before, after })
+
+      const staysInline =
+        (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) ||
+        isERBControlFlowNode(child)
+
+      this.collectInlineFlowContext(child, staysInline && before, staysInline && after)
+    })
+  }
+
+  private edgeWhitespaceIsRendered(node: Node | null): { before: boolean, after: boolean } {
+    if (!node) return { before: false, after: false }
+
+    return this.inlineFlowContext.get(node) ?? { before: false, after: false }
   }
 
   private spliceHerbDisableComments(): void {
@@ -720,9 +767,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     const content = lines.join('')
 
-    const inlineContent = shouldPreserveSpaces
-      ? (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content)
-      : (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ').trim() : content.trim())
+    let inlineContent: string
+
+    if (shouldPreserveSpaces) {
+      inlineContent = hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content
+    } else {
+      const normalized = hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content
+      const edge = this.edgeWhitespaceIsRendered(this.currentElement)
+
+      inlineContent = normalized
+        .replace(/^[ \t\n\r]+/, edge.before ? ' ' : '')
+        .replace(/[ \t\n\r]+$/, edge.after ? ' ' : '')
+    }
 
     if (inlineContent) {
       this.pushToLastLine(inlineContent)
@@ -904,7 +960,12 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitHTMLTextNode(node: HTMLTextNode) {
     if (this.inlineMode) {
       const collapsed = node.content.replace(ASCII_WHITESPACE, ' ')
-      const normalizedContent = this.preserveInlineWhitespace ? collapsed : collapsed.trim()
+      const edge = this.edgeWhitespaceIsRendered(node)
+      const normalizedContent = this.preserveInlineWhitespace
+        ? collapsed
+        : collapsed
+            .replace(/^ +/, edge.before ? ' ' : '')
+            .replace(/ +$/, edge.after ? ' ' : '')
 
       if (normalizedContent) {
         this.push(normalizedContent)
@@ -1574,7 +1635,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     result += this.attributeRenderer.renderAttributesString(attributes, tagName)
     result += ">"
 
-    const childrenContent = this.tryRenderChildrenInline(children, tagName)
+    const childrenContent = this.tryRenderChildrenInline(children, tagName, _node)
 
     if (!childrenContent) return null
 
@@ -1587,12 +1648,16 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   /**
    * Try to render just the children inline (without tags)
    */
-  private tryRenderChildrenInline(children: Node[], tagName?: string): string | null {
+  private tryRenderChildrenInline(children: Node[], tagName?: string, element?: Node): string | null {
     let result = ""
     let hasInternalWhitespace = false
 
     const hasOnlyTextContent = children.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
     const shouldPreserveSpaces = hasOnlyTextContent && tagName && isInlineElement(tagName)
+
+    const edge = this.edgeWhitespaceIsRendered(element ?? null)
+    const leadingWhitespaceIsRendered = edge.before
+    const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
       if (isNode(child, HTMLTextNode)) {
@@ -1620,6 +1685,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         if (result) {
           result += ' '
           hasInternalWhitespace = true
+        } else if (leadingWhitespaceIsRendered) {
+          result += ' '
         }
       } else if (isNode(child, HTMLElementNode)) {
         const tagName = getTagName(child)
@@ -1648,11 +1715,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return result
     }
 
-    if (hasInternalWhitespace) {
-      return result.trimEnd()
-    }
-
-    return result.trim()
+    return result
+      .replace(/^[ \t\n\r]+/, leadingWhitespaceIsRendered ? ' ' : '')
+      .replace(/[ \t\n\r]+$/, trailingWhitespaceIsRendered ? ' ' : '')
   }
 
   /**

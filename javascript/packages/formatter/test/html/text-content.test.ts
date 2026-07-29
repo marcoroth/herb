@@ -291,8 +291,18 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toEqual(dedent`
       <div>
-        Check <em>this</em>: it works!
+        Check <em>this</em> : it works!
       </div>
+    `)
+  })
+
+  test("punctuation glued to an inline element stays glued", () => {
+    const result = formatter.format(dedent`
+      <div>Check <em>this</em>: it works!</div>
+    `)
+
+    expect(result).toEqual(dedent`
+      <div>Check <em>this</em>: it works!</div>
     `)
   })
 

@@ -189,6 +189,45 @@ export function isGluedControlFlowNode(children: Node[], index: number): boolean
   return gluedBefore || gluedAfter
 }
 
+function endsInlineFlow(node: Node): boolean {
+  return isNode(node, HTMLElementNode) && !isInlineElement(getTagName(node))
+}
+
+export function hasFlowContentBefore(siblings: Node[], index: number): boolean {
+  for (let i = index - 1; i >= 0; i--) {
+    const sibling = siblings[i]
+
+    if (endsInlineFlow(sibling)) return false
+
+    const role = flowRole(sibling)
+
+    if (role === 'separator') return false
+
+    if (role === 'visible') {
+      return !(isNode(sibling, HTMLTextNode) && endsWithWhitespace(sibling.content))
+    }
+  }
+
+  return false
+}
+export function hasFlowContentAfter(siblings: Node[], index: number): boolean {
+  for (let i = index + 1; i < siblings.length; i++) {
+    const sibling = siblings[i]
+
+    if (endsInlineFlow(sibling)) return false
+
+    const role = flowRole(sibling)
+
+    if (role === 'separator') return false
+
+    if (role === 'visible') {
+      return !(isNode(sibling, HTMLTextNode) && /^[ \t\n\r]/.test(sibling.content))
+    }
+  }
+
+  return false
+}
+
 /**
  * Try to merge text that follows an atomic unit (ERB/inline) with no whitespace.
  * Merges the first word of the text into the preceding atomic unit.
@@ -216,7 +255,7 @@ export function tryMergeTextAfterAtomic(result: ContentUnitWithNode[], textNode:
   lastUnit.unit.content += firstWord
 
   if (words.length > 1) {
-    let remainingText = words.slice(1).join(' ')
+    let remainingText = ' ' + words.slice(1).join(' ')
 
     if (endsWithWhitespace(textNode.content)) {
       remainingText += ' '
@@ -254,7 +293,8 @@ export function tryMergeAtomicAfterText(result: ContentUnitWithNode[], children:
   result.pop()
 
   if (words.length > 1) {
-    const remainingText = words.slice(0, -1).join(' ')
+    const leading = /^[ \t\n\r]/.test(lastUnit.unit.content) ? ' ' : ''
+    const remainingText = leading + words.slice(0, -1).join(' ') + ' '
 
     result.push({
       unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },

@@ -231,13 +231,82 @@ describe("whitespace preservation around ERB control flow", () => {
     })
   })
 
-  describe("known gaps", () => {
-    test.fails("inline container keeps a leading space before an inline child", () => {
+  describe("#1883 — whitespace at the edges of an inline element", () => {
+    test("keeps edge whitespace when the element has inline neighbours", () => {
+      expectFormattedToMatch(`<p>x<span> <em>y</em> </span>z</p>`)
+    })
+
+    test("keeps a leading space before an inline child", () => {
       expectFormattedToMatch(`<p>D<span> <em>x</em>'s dog</span>!</p>`)
     })
 
-    test.fails("inline container keeps a leading space before ERB control flow", () => {
+    test("keeps a leading space after an adjacent inline element", () => {
+      expectFormattedToMatch(`<div><a href="/x">one</a><span> <em>two</em></span></div>`)
+    })
+
+    test("keeps a leading space before ERB control flow", () => {
       expectFormattedToMatch(`<span>Hello<% if owner %> <%= owner.name %>'s dog<% end %>!</span>`)
+    })
+
+    test("inherits edge context through an inline ancestor", () => {
+      expectFormattedToMatch(`<p>x<em><span> y </span></em>z</p>`)
+    })
+
+    test("drops edge whitespace at a block boundary, where it would collapse anyway", () => {
+      expect(formatter.format(`<div><span> <em>x</em> </span></div>`)).toEqual(
+        `<div><span><em>x</em></span></div>`
+      )
+    })
+
+    test("drops a redundant inner space when the outside already separates", () => {
+      expect(formatter.format(`<p>text <span> <em>x</em></span></p>`)).toEqual(
+        `<p>text <span><em>x</em></span></p>`
+      )
+    })
+  })
+
+  describe("space-separated punctuation keeps its space", () => {
+    test("colon in a control-flow body", () => {
+      expect(formatter.format(`<p><% if x %>Label <%= a %> : value<% end %></p>`)).toEqual(dedent`
+        <p>
+          <% if x %>
+            Label <%= a %> : value
+          <% end %>
+        </p>
+      `)
+    })
+
+    test("ruby ternary survives intact", () => {
+      const source = dedent`
+        <% if x %>
+          <%= f %>: this.<%= f %> ? this.<%= f %>.toJSON() : null,
+        <% end %>
+      `
+
+      expectFormattedToMatch(source)
+    })
+
+    test("punctuation glued in the source stays glued", () => {
+      expect(formatter.format(`<p><% if x %>Label <%= a %>: value<% end %></p>`)).toEqual(dedent`
+        <p>
+          <% if x %>
+            Label <%= a %>: value
+          <% end %>
+        </p>
+      `)
+    })
+
+    test("punctuation separated from an inline element keeps the space", () => {
+      expect(formatter.format(dedent`
+        <div>
+          Check <em>this</em>
+          : it works!
+        </div>
+      `)).toEqual(dedent`
+        <div>
+          Check <em>this</em> : it works!
+        </div>
+      `)
     })
   })
 })

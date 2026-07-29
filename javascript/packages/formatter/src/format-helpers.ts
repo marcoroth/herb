@@ -194,8 +194,6 @@ export function buildLineWithWord(currentLine: string, word: string): string {
   }
 
   if (isClosingPunctuation(word)) {
-    currentLine = currentLine.trimEnd()
-
     return `${currentLine}${word}`
   }
 
