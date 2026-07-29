@@ -128,4 +128,37 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
       <% end %>
     `, { fileName: "_toggle.html.erb" })
   })
+
+  describe("control flow @ruby/prism drops from traversal", () => {
+    test("reports instance variables inside a case/when branch", () => {
+      expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.")
+
+      assertOffenses(dedent`
+        <% case kind %>
+        <% when :admin %>
+          <%= @user %>
+        <% end %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("reports instance variables inside a case/in branch", () => {
+      expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.")
+
+      assertOffenses(dedent`
+        <% case [kind, active] %>
+        <% in [:admin, true] %>
+          <%= @user %>
+        <% end %>
+      `, { fileName: "_card.html.erb" })
+    })
+
+    test("reports instance variables assigned by a multiple assignment", () => {
+      expectError("Avoid setting instance variables in partials. Use a local variable instead of `@first`.")
+      expectError("Avoid setting instance variables in partials. Use a local variable instead of `@second`.")
+
+      assertOffenses(dedent`
+        <% @first, @second = 1, 2 %>
+      `, { fileName: "_card.html.erb" })
+    })
+  })
 })

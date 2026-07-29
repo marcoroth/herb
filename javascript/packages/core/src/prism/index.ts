@@ -8,7 +8,7 @@ import type * as PrismNodeTypes from "@ruby/prism/src/nodes.js"
 
 export * as PrismNodes from "@ruby/prism/src/nodes.js"
 
-export { Visitor as PrismVisitor, BasicVisitor as PrismBasicVisitor } from "@ruby/prism/src/visitor.js"
+export { PrismVisitor, PrismBasicVisitor } from "./visitor.js"
 
 export type PrismNode = any
 export type PrismLocation = { startOffset: number; length: number }
