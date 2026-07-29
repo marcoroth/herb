@@ -8,6 +8,7 @@ import {
   hasWhitespaceBetween,
   isInlineElement,
   normalizeAndSplitWords,
+  startsWithWhitespace,
 } from "./format-helpers.js"
 
 /**
@@ -184,9 +185,48 @@ export function isGluedControlFlowNode(children: Node[], index: number): boolean
   const gluedAfter =
     next !== undefined &&
     flowRole(next) === 'visible' &&
-    !(isNode(next, HTMLTextNode) && /^[ \t\n\r]/.test(next.content))
+    !(isNode(next, HTMLTextNode) && startsWithWhitespace(next.content))
 
   return gluedBefore || gluedAfter
+}
+
+function endsInlineFlow(node: Node): boolean {
+  return isNode(node, HTMLElementNode) && !isInlineElement(getTagName(node))
+}
+
+export function hasFlowContentBefore(siblings: Node[], index: number): boolean {
+  for (let i = index - 1; i >= 0; i--) {
+    const sibling = siblings[i]
+
+    if (endsInlineFlow(sibling)) return false
+
+    const role = flowRole(sibling)
+
+    if (role === 'separator') return false
+
+    if (role === 'visible') {
+      return !(isNode(sibling, HTMLTextNode) && endsWithWhitespace(sibling.content))
+    }
+  }
+
+  return false
+}
+export function hasFlowContentAfter(siblings: Node[], index: number): boolean {
+  for (let i = index + 1; i < siblings.length; i++) {
+    const sibling = siblings[i]
+
+    if (endsInlineFlow(sibling)) return false
+
+    const role = flowRole(sibling)
+
+    if (role === 'separator') return false
+
+    if (role === 'visible') {
+      return !(isNode(sibling, HTMLTextNode) && startsWithWhitespace(sibling.content))
+    }
+  }
+
+  return false
 }
 
 /**
@@ -216,7 +256,7 @@ export function tryMergeTextAfterAtomic(result: ContentUnitWithNode[], textNode:
   lastUnit.unit.content += firstWord
 
   if (words.length > 1) {
-    let remainingText = words.slice(1).join(' ')
+    let remainingText = ' ' + words.slice(1).join(' ')
 
     if (endsWithWhitespace(textNode.content)) {
       remainingText += ' '
@@ -254,7 +294,8 @@ export function tryMergeAtomicAfterText(result: ContentUnitWithNode[], children:
   result.pop()
 
   if (words.length > 1) {
-    const remainingText = words.slice(0, -1).join(' ')
+    const leading = startsWithWhitespace(lastUnit.unit.content) ? ' ' : ''
+    const remainingText = leading + words.slice(0, -1).join(' ') + ' '
 
     result.push({
       unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },
@@ -303,7 +344,7 @@ export function hasWhitespaceBeforeNode(children: Node[], lastProcessedIndex: nu
     return true
   }
 
-  if (isNode(currentNode, HTMLTextNode) && /^[ \t\n\r]/.test(currentNode.content)) {
+  if (isNode(currentNode, HTMLTextNode) && startsWithWhitespace(currentNode.content)) {
     return true
   }
 
