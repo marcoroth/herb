@@ -138,7 +138,7 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
 
 export class ActionViewNoHelperShadowingRule extends ParserRule {
   static ruleName = "actionview-no-helper-shadowing"
-  static introducedIn = this.version("0.10.2")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
