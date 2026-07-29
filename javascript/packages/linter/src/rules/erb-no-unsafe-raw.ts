@@ -1,9 +1,9 @@
 import { ParserRule } from "../types.js"
 import { ElementStackVisitor } from "./rule-utils.js"
-import { PrismVisitor, isERBOutputNode } from "@herb-tools/core"
+import { PrismVisitor, isERBOutputNode, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ParserOptions, ERBContentNode, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ParserOptions, ERBContentNode, PrismNode, Location } from "@herb-tools/core"
 
 const RAW_TEXT_ELEMENTS = new Set([
   "title",
@@ -18,17 +18,23 @@ const RAW_TEXT_ELEMENTS = new Set([
   "plaintext",
 ])
 
-class UnsafeRawCallDetector extends PrismVisitor {
-  public hasRawCall = false
-  public hasHtmlSafeCall = false
+class UnsafeRawCallCollector extends PrismVisitor {
+  public readonly rawCalls: PrismNode[] = []
+  public readonly htmlSafeCalls: PrismNode[] = []
+
+  override visit(node: PrismNode): void {
+    if (!node) return
+
+    super.visit(node)
+  }
 
   visitCallNode(node: PrismNode): void {
     if (node.name === "raw" && !node.receiver) {
-      this.hasRawCall = true
+      this.rawCalls.push(node)
     }
 
     if (node.name === "html_safe") {
-      this.hasHtmlSafeCall = true
+      this.htmlSafeCalls.push(node)
     }
 
     this.visitChildNodes(node)
@@ -41,24 +47,50 @@ class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
     if (!isERBOutputNode(node)) return
 
     const prismNode = node.prismNode
-    if (!prismNode) return
+    const source = node.source
+    if (!prismNode || !source) return
 
-    const detector = new UnsafeRawCallDetector()
-    detector.visit(prismNode)
+    const collector = new UnsafeRawCallCollector()
+    collector.visit(prismNode)
 
-    if (detector.hasRawCall) {
+    for (const call of collector.rawCalls) {
       this.addOffense(
         "Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
-        node.location,
+        this.callLocation(source, call, node.location),
       )
     }
 
-    if (detector.hasHtmlSafeCall) {
+    for (const call of collector.htmlSafeCalls) {
       this.addOffense(
         "Avoid `.html_safe` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
-        node.location,
+        this.htmlSafeLocation(source, call, node.location),
       )
     }
+  }
+
+  private callLocation(source: string, node: PrismNode, fallback: Location): Location {
+    const location = node.location
+    if (!location) return fallback
+
+    return locationFromByteOffset(source, location.startOffset, location.length)
+  }
+
+  private htmlSafeLocation(source: string, node: PrismNode, fallback: Location): Location {
+    const operatorLocation = node.callOperatorLoc
+    const messageLocation = node.messageLoc
+
+    if (operatorLocation && messageLocation) {
+      const startOffset = operatorLocation.startOffset
+      const length = messageLocation.startOffset + messageLocation.length - startOffset
+
+      return locationFromByteOffset(source, startOffset, length)
+    }
+
+    if (messageLocation) {
+      return locationFromByteOffset(source, messageLocation.startOffset, messageLocation.length)
+    }
+
+    return this.callLocation(source, node, fallback)
   }
 }
 

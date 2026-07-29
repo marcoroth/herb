@@ -29,10 +29,18 @@ describe("ERBNoUnsafeRawRule", () => {
     })
 
     test("raw() in text content is not allowed", () => {
-      expectError(RAW_MESSAGE)
+      expectError(RAW_MESSAGE, [1, 7])
 
       assertOffenses(dedent`
         <p><%= raw(user_input) %></p>
+      `)
+    })
+
+    test("raw() offense points at the `raw` call, not the ERB node", () => {
+      expectError(RAW_MESSAGE, [1, 23])
+
+      assertOffenses(dedent`
+        <%= ui_my_helper(:foo, raw("bar")) %>
       `)
     })
 
@@ -57,7 +65,7 @@ describe("ERBNoUnsafeRawRule", () => {
 
   describe(".html_safe", () => {
     test("html_safe in attribute value is not allowed", () => {
-      expectError(HTML_SAFE_MESSAGE)
+      expectError(HTML_SAFE_MESSAGE, [1, 26])
 
       assertOffenses(dedent`
         <div class="<%= user_input.html_safe %>"></div>
