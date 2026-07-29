@@ -117,4 +117,15 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
       <% end %>
     `, { fileName: "_toggle.html.erb" })
   })
+
+  test("reports the correct location when preceded by a multi-byte character", () => {
+    expectError("Avoid using instance variables in partials. Pass `@show` as a local variable instead.", [2, 6])
+
+    assertOffenses(dedent`
+      <%# é %>
+      <% if @show %>
+        <p>Visible</p>
+      <% end %>
+    `, { fileName: "_toggle.html.erb" })
+  })
 })
