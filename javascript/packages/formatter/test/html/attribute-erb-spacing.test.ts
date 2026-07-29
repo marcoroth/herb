@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("Attribute ERB Spacing", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("Attribute ERB Spacing", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   describe("TOKEN_LIST_ATTRIBUTES (should add spaces around ERB)", () => {
@@ -258,6 +262,35 @@ describe("Attribute ERB Spacing", () => {
           Content
         </div>
       `)
+    })
+  })
+
+  describe("ERB in attribute position on an inline element (#1771)", () => {
+    test("keeps the ERB when the element is followed by text", () => {
+      expectFormattedToMatch(`<span <%= call(:me) %>>Foo</span> / Bar`)
+    })
+
+    test("keeps the ERB alongside a static attribute", () => {
+      expectFormattedToMatch(`<strong class="swole" <%= call(:me) %>>Bar</strong> / Baz`)
+    })
+
+    test("keeps the ERB for several inline elements in the same text flow", () => {
+      expectFormattedToMatch(dedent`
+        <span <%= call(:me) %>>Foo</span> / Bar
+        <strong class="swole" <%= call(:me) %>>Bar</strong> / Baz
+      `)
+    })
+
+    test("keeps the ERB when the element is followed by a block element", () => {
+      expectFormattedToMatch(dedent`
+        <strong <%= call(:me) %>>0</strong>
+        / 2048 character limit
+        <div></div>
+      `)
+    })
+
+    test("keeps the ERB when the element is nested in a block element", () => {
+      expectFormattedToMatch(`<p><span <%= call(:me) %>>Foo</span> / Bar</p>`)
     })
   })
 })
