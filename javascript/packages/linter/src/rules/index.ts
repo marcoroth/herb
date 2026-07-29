@@ -15,6 +15,7 @@ export * from "./string-utils.js"
 export * from "./action-view-utils.js"
 export * from "./herb-disable-comment-base.js"
 
+export * from "./actionview-no-helper-shadowing.js"
 export * from "./actionview-no-silent-helper.js"
 export * from "./actionview-no-silent-render.js"
 export * from "./actionview-no-unnecessary-tag-attributes.js"
