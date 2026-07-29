@@ -10,6 +10,7 @@ import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
+import { Location } from "@herb-tools/core"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
@@ -363,7 +364,7 @@ export class FileProcessor {
       for (const offense of result.offenses) {
         allOffenses.push({
           filename: offense.filename,
-          offense: offense.offense,
+          offense: { ...offense.offense, location: Location.from(offense.offense.location) },
           content: offense.content,
           autocorrectable: offense.autocorrectable
         })
