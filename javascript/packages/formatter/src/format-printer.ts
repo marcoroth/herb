@@ -135,6 +135,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
+  private preserveInlineWhitespace: boolean = false
   private inContentPreservingContext: boolean = false
   private inConditionalOpenTagContext: boolean = false
   private elementStack: HTMLElementNode[] = []
@@ -404,6 +405,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     return result
   }
 
+  private withPreservedInlineWhitespace<T>(callback: () => T): T {
+    const was = this.preserveInlineWhitespace
+    this.preserveInlineWhitespace = true
+    const result = callback()
+    this.preserveInlineWhitespace = was
+
+    return result
+  }
+
   private withContentPreserving<T>(callback: () => T): T {
     const was = this.inContentPreservingContext
     this.inContentPreservingContext = true
@@ -667,7 +677,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private visitInlineElementBody(body: Node[], tagName: string, hasTextFlow: boolean, children: Node[]) {
     if (children.length === 0) return
 
-    const nodesToRender = hasTextFlow ? body : children
+    const nodesToRender = hasTextFlow || isInlineElement(tagName) ? body : children
 
     const hasOnlyTextContent = nodesToRender.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
     const shouldPreserveSpaces = hasOnlyTextContent && isInlineElement(tagName)
@@ -719,13 +729,30 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     }
   }
 
+  /**
+   * Visit ERB control-flow statements (the body of an `if`, `while`, `when`, …).
+   *
+   * These go through the same path as element bodies so that they get the
+   * whitespace-preserving machinery, `shouldAppendToLastLine` and text-flow
+   * runs, which plain `visitAll` skipped, letting line breaks land on glued
+   * content and inject whitespace into the rendered output (#1729).
+   *
+   * Blank-line insertion stays off: the "rule of three" spacing is a layout
+   * choice for sibling *elements*, and applying it inside a control-flow body
+   * would start inserting blank lines into ERB that never had them.
+   */
+  private visitStatements(statements: Node[]) {
+    this.visitElementChildren(statements, null, { allowBlankLines: false })
+  }
 
   /**
    * Visit element children with intelligent spacing logic
    *
    * Tracks line positions and immediately splices blank lines after rendering each child.
    */
-  private visitElementChildren(body: Node[], parentElement: HTMLElementNode | null) {
+  private visitElementChildren(body: Node[], parentElement: HTMLElementNode | null, options: { allowBlankLines?: boolean } = {}) {
+    const { allowBlankLines = true } = options
+
     let lastMeaningfulNode: Node | null = null
     let hasHandledSpacing = false
 
@@ -768,7 +795,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const childStartLine = this.stringLineCount
       this.visit(child)
 
-      if (lastMeaningfulNode && !hasHandledSpacing) {
+      if (allowBlankLines && lastMeaningfulNode && !hasHandledSpacing) {
         const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
 
         if (shouldAddSpacing) {
@@ -876,7 +903,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   visitHTMLTextNode(node: HTMLTextNode) {
     if (this.inlineMode) {
-      const normalizedContent = node.content.replace(ASCII_WHITESPACE, ' ').trim()
+      const collapsed = node.content.replace(ASCII_WHITESPACE, ' ')
+      const normalizedContent = this.preserveInlineWhitespace ? collapsed : collapsed.trim()
 
       if (normalizedContent) {
         this.push(normalizedContent)
@@ -1036,7 +1064,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBInNode(node: ERBInNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
     })
   }
 
@@ -1111,7 +1139,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         this.printERBNode(node)
 
         this.withIndent(() => {
-          this.visitAll(node.statements)
+          this.visitStatements(node.statements)
         })
 
         if (node.subsequent) this.visit(node.subsequent)
@@ -1126,13 +1154,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (this.inlineMode) {
       this.visitAll(node.statements)
     } else {
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
     }
   }
 
   visitERBWhenNode(node: ERBWhenNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBCaseNode(node: ERBCaseNode) {
@@ -1150,7 +1178,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBBeginNode(node: ERBBeginNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
       if (node.else_clause) this.visit(node.else_clause)
@@ -1162,7 +1190,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBWhileNode(node: ERBWhileNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1171,7 +1199,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBUntilNode(node: ERBUntilNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1180,7 +1208,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBForNode(node: ERBForNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1188,18 +1216,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   visitERBRescueNode(node: ERBRescueNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBEnsureNode(node: ERBEnsureNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.withIndent(() => this.visitStatements(node.statements))
   }
 
   visitERBUnlessNode(node: ERBUnlessNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitAll(node.statements))
+      this.withIndent(() => this.visitStatements(node.statements))
 
       if (node.else_clause) this.visit(node.else_clause)
       if (node.end_node) this.visit(node.end_node)
@@ -1443,10 +1471,46 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   /**
+   * Render an ERB control-flow node (`<% if %> … <% end %>`) as a single
+   * atomic token for text flow, preserving every space that is significant in
+   * the rendered output.
+   *
+   * Returns null when the node cannot be represented on one line, it wraps a
+   * block-level element, or one of its ERB tags spans multiple lines, in
+   * which case the caller falls back to the normal block layout.
+   */
+  tryRenderControlFlowInline(node: Node): string | null {
+    const contained = this.captureNodes(() => this.visit(node))
+
+    const hasBlockContent = contained.some(child =>
+      isNode(child, HTMLElementNode) && !isInlineElement(getTagName(child))
+    )
+
+    if (hasBlockContent) return null
+
+    const hasMultilineERB = contained.some(child =>
+      isERBNode(child) && (child.content?.value ?? "").includes("\n")
+    )
+
+    if (hasMultilineERB) return null
+
+    const rendered = this.withInlineMode(() =>
+      this.withPreservedInlineWhitespace(() => this.capture(() => this.visit(node)).join(""))
+    )
+
+    return rendered.trim() ? rendered : null
+  }
+
+  /**
    * Try to render an inline element, returning the full inline string or null if it can't be inlined.
    */
   tryRenderInlineElement(element: HTMLElementNode): string | null {
     const tagName = getTagName(element)
+    const tagClosing = getOpenTagClosing(element)
+
+    if (element.is_void || tagClosing?.value === "/>") {
+      return this.renderInlineElementAsString(element)
+    }
 
     return this.tryRenderInlineFull(element, tagName, filterNodes(getOpenTagChildren(element), HTMLAttributeNode), element.body)
   }
