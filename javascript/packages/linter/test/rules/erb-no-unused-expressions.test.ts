@@ -198,6 +198,51 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for slot setters on a builder yielded by a nested slot block", () => {
+      expectNoOffenses(dedent`
+        <%= render ListComponent.new do |list| %>
+          <% list.with_item do |item| %>
+            <% item.with_icon("home") %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for deeply nested slot builders", () => {
+      expectNoOffenses(dedent`
+        <%= render(Ui::Page::Component.new(styles: "overflow-auto")) do |c| %>
+          <% c.with_header do |h| %>
+            <% h.with_title_content "Data Sources" %>
+            <% h.with_description_content "Manage your data sources" %>
+            <% h.with_action_button(text: "Integrations", url: integrations_path, variant: :secondary) %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a builder yielded by an assigned component", () => {
+      expectNoOffenses(dedent`
+        <% component = CardComponent.new %>
+        <% component.with_header do |header| %>
+          <% header.with_title("Hello") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot builder locals shadowing across sibling slot blocks", () => {
+      expectNoOffenses(dedent`
+        <%= render ListComponent.new do |list| %>
+          <% list.with_item do |item| %>
+            <% item.with_icon("home") %>
+          <% end %>
+
+          <% list.with_footer do |footer| %>
+            <% footer.with_link("More") %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
     test("passes for shovel operator", () => {
       expectNoOffenses(dedent`
         <% @items << item %>
@@ -382,6 +427,32 @@ describe("ERBNoUnusedExpressionsRule", () => {
       assertOffenses(dedent`
         <%= render BlogComponent.new do |component| %>
           <% component %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for calls on an arbitrary (non-slot) block local", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `x.slot_setter(\"d\")` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <% plain_method do |x| %>
+          <% x.slot_setter("d") %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for calls on a receiver other than a slot builder inside a slot block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `other_receiver.slot_setter(\"c\")` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render Outer.new do |outer| %>
+          <% outer.with_item do |item| %>
+            <% other_receiver.slot_setter("c") %>
+          <% end %>
         <% end %>
       `)
     })
