@@ -136,6 +136,35 @@ describe("ERBNoUnsafeRawRule", () => {
   })
 
   describe("safe usage", () => {
+    test("raw inside a Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= render SomeComponent.new(
+          columns: [
+            # This comment mentions the raw upstream value.
+            { title: "Name", value: ->(record) { record.name } }
+          ]
+        ) %>
+      `)
+    })
+
+    test("raw inside a trailing Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= user_input # raw was considered here %>
+      `)
+    })
+
+    test("html_safe inside a Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= user_input # avoid calling .html_safe here %>
+      `)
+    })
+
+    test("raw as part of a string literal is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= "raw text is fine" %></p>
+      `)
+    })
+
     test("safe ERB output in attribute value is allowed", () => {
       expectNoOffenses(dedent`
         <div class="<%= user_input %>"></div>
