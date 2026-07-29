@@ -8,6 +8,7 @@ import {
   hasWhitespaceBetween,
   isInlineElement,
   normalizeAndSplitWords,
+  startsWithWhitespace,
 } from "./format-helpers.js"
 
 /**
@@ -184,7 +185,7 @@ export function isGluedControlFlowNode(children: Node[], index: number): boolean
   const gluedAfter =
     next !== undefined &&
     flowRole(next) === 'visible' &&
-    !(isNode(next, HTMLTextNode) && /^[ \t\n\r]/.test(next.content))
+    !(isNode(next, HTMLTextNode) && startsWithWhitespace(next.content))
 
   return gluedBefore || gluedAfter
 }
@@ -221,7 +222,7 @@ export function hasFlowContentAfter(siblings: Node[], index: number): boolean {
     if (role === 'separator') return false
 
     if (role === 'visible') {
-      return !(isNode(sibling, HTMLTextNode) && /^[ \t\n\r]/.test(sibling.content))
+      return !(isNode(sibling, HTMLTextNode) && startsWithWhitespace(sibling.content))
     }
   }
 
@@ -293,7 +294,7 @@ export function tryMergeAtomicAfterText(result: ContentUnitWithNode[], children:
   result.pop()
 
   if (words.length > 1) {
-    const leading = /^[ \t\n\r]/.test(lastUnit.unit.content) ? ' ' : ''
+    const leading = startsWithWhitespace(lastUnit.unit.content) ? ' ' : ''
     const remainingText = leading + words.slice(0, -1).join(' ') + ' '
 
     result.push({
@@ -343,7 +344,7 @@ export function hasWhitespaceBeforeNode(children: Node[], lastProcessedIndex: nu
     return true
   }
 
-  if (isNode(currentNode, HTMLTextNode) && /^[ \t\n\r]/.test(currentNode.content)) {
+  if (isNode(currentNode, HTMLTextNode) && startsWithWhitespace(currentNode.content)) {
     return true
   }
 

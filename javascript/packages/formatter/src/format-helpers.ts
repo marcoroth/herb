@@ -462,15 +462,55 @@ export function isLineBreakingElement(node: Node): boolean {
  * Then split into words
  */
 export function normalizeAndSplitWords(text: string): string[] {
-  const normalized = text.replace(/\s+/g, ' ')
+  const normalized = text.replace(ASCII_WHITESPACE, ' ')
+
   return normalized.trim().split(' ')
+}
+
+/**
+ * Check if a character is ASCII whitespace.
+ *
+ * Deliberately not `\s`: Unicode whitespace such as NBSP (U+00A0) is content,
+ * not layout, and must survive formatting — the same reason
+ * {@link ASCII_WHITESPACE} exists.
+ */
+export function isAsciiWhitespace(character: string): boolean {
+  return character === " " || character === "\t" || character === "\n" || character === "\r"
+}
+
+/**
+ * Check if text starts with whitespace
+ */
+export function startsWithWhitespace(text: string): boolean {
+  return text.length > 0 && isAsciiWhitespace(text[0])
 }
 
 /**
  * Check if text ends with whitespace
  */
 export function endsWithWhitespace(text: string): boolean {
-  return /\s$/.test(text)
+  return text.length > 0 && isAsciiWhitespace(text[text.length - 1])
+}
+
+/**
+ * Collapse the whitespace runs at either end of `text` down to a single space
+ * when that edge is rendered, or remove them when it isn't.
+ */
+export function setEdgeWhitespace(text: string, keepLeading: boolean, keepTrailing: boolean): string {
+  let start = 0
+  let end = text.length
+
+  while (start < end && isAsciiWhitespace(text[start])) start++
+  while (end > start && isAsciiWhitespace(text[end - 1])) end--
+
+  if (start === end) {
+    return text.length > 0 && keepLeading && keepTrailing ? " " : ""
+  }
+
+  const leading = start > 0 && keepLeading ? " " : ""
+  const trailing = end < text.length && keepTrailing ? " " : ""
+
+  return leading + text.slice(start, end) + trailing
 }
 
 /**

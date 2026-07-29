@@ -42,8 +42,11 @@ import {
   hasMixedTextAndInlineContent,
   hasMultilineTextContent,
   isContentPreserving,
+  endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
+  setEdgeWhitespace,
+  startsWithWhitespace,
   isNonWhitespaceNode,
   shouldAppendToLastLine,
   shouldPreserveUserSpacing,
@@ -775,9 +778,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const normalized = hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content
       const edge = this.edgeWhitespaceIsRendered(this.currentElement)
 
-      inlineContent = normalized
-        .replace(/^[ \t\n\r]+/, edge.before ? ' ' : '')
-        .replace(/[ \t\n\r]+$/, edge.after ? ' ' : '')
+      inlineContent = setEdgeWhitespace(normalized, edge.before, edge.after)
     }
 
     if (inlineContent) {
@@ -963,9 +964,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const edge = this.edgeWhitespaceIsRendered(node)
       const normalizedContent = this.preserveInlineWhitespace
         ? collapsed
-        : collapsed
-            .replace(/^ +/, edge.before ? ' ' : '')
-            .replace(/ +$/, edge.after ? ' ' : '')
+        : setEdgeWhitespace(collapsed, edge.before, edge.after)
 
       if (normalizedContent) {
         this.push(normalizedContent)
@@ -1662,8 +1661,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     for (const child of children) {
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
-        const hasLeadingSpace = /^[ \t\n\r]/.test(child.content)
-        const hasTrailingSpace = /[ \t\n\r]$/.test(child.content)
+        const hasLeadingSpace = startsWithWhitespace(child.content)
+        const hasTrailingSpace = endsWithWhitespace(child.content)
         const trimmedContent = normalizedContent.trim()
 
         if (trimmedContent) {
@@ -1715,9 +1714,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return result
     }
 
-    return result
-      .replace(/^[ \t\n\r]+/, leadingWhitespaceIsRendered ? ' ' : '')
-      .replace(/[ \t\n\r]+$/, trailingWhitespaceIsRendered ? ' ' : '')
+    return setEdgeWhitespace(result, leadingWhitespaceIsRendered, trailingWhitespaceIsRendered)
   }
 
   /**
