@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: corpus-${{ github.ref }}
@@ -99,6 +100,7 @@ jobs:
             --out corpus/runs/branch.json
 
       - name: Compare
+        id: compare
         env:
           NO_COLOR: "1"
         run: |-
@@ -107,7 +109,25 @@ jobs:
           corpus/bin/diff-runs \
             corpus/runs/release.json \
             corpus/runs/branch.json \
+            --markdown comment.md \
             --fail-on-regression | tee comparison.txt
+
+      - name: Comment on the pull request
+        if: failure() && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |-
+          existing=$(gh api "repos/${{ github.repository }}/issues/$NUMBER/comments" \
+            --jq 'map(select(.body | contains("<!-- corpus-report -->"))) | .[0].id // empty')
+
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@comment.md >/dev/null
+            echo "Updated comment $existing."
+          else
+            gh pr comment "$NUMBER" --body-file comment.md
+            echo "Posted a new comment."
+          fi
 
       - name: Job summary
         if: always()
