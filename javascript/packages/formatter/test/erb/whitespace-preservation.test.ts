@@ -50,77 +50,101 @@ describe("whitespace preservation around ERB control flow", () => {
     test("keeps glue when only the opening tag is glued", () => {
       const source = `<p>Hello<% if x %> a <% end %></p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           Hello<% if x %> a <% end %>
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("keeps glue when only the closing tag is glued", () => {
       const source = `<p><% if x %>a<% end %>!</p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           <% if x %>a<% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("keeps glue on both sides with no inner whitespace", () => {
       const source = `<p>E<% if x %>xy<% end %>!</p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           E<% if x %>xy<% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("overflowing glued content stays on one line rather than breaking", () => {
       const source = `<p>Hello<% if owner %> <%= owner.name %>'s extremely long dog name here that overflows<% end %>!</p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           Hello<% if owner %> <%= owner.name %>'s extremely long dog name here that overflows<% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
   })
 
   describe("control-flow keywords other than if", () => {
     test("unless", () => {
-      expect(formatter.format(`<p>A<% unless x %>b<% end %>!</p>`)).toEqual(dedent`
+      const expected = dedent`
         <p>
           A<% unless x %>b<% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(`<p>A<% unless x %>b<% end %>!</p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("case/when", () => {
-      expect(formatter.format(`<p>A<% case x %><% when 1 %>one<% end %>!</p>`)).toEqual(dedent`
+      const expected = dedent`
         <p>
           A<% case x %><% when 1 %>one<% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(`<p>A<% case x %><% when 1 %>one<% end %>!</p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("nested control flow", () => {
-      expect(formatter.format(`<p>A<% if x %><% if y %>b<% end %><% end %>!</p>`)).toEqual(dedent`
+      const expected = dedent`
         <p>
           A<% if x %><% if y %>b<% end %><% end %>!
         </p>
-      `)
+      `
+
+      expect(formatter.format(`<p>A<% if x %><% if y %>b<% end %><% end %>!</p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("while loop keeps a glued trailing statement attached", () => {
       const source = `<% while i < 3 %><b><%= i %></b><% i += 1 %><% end %>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <% while i < 3 %>
           <b><%= i %></b><% i += 1 %>
         <% end %>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
   })
 
@@ -128,7 +152,7 @@ describe("whitespace preservation around ERB control flow", () => {
     test("spaces on both sides means breaking is safe", () => {
       const source = `<p>Hello <% if x %>a<% end %> there</p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           Hello
           <% if x %>
@@ -136,7 +160,10 @@ describe("whitespace preservation around ERB control flow", () => {
           <% end %>
           there
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("free-standing control flow keeps its block layout", () => {
@@ -154,7 +181,7 @@ describe("whitespace preservation around ERB control flow", () => {
     test("block element inside glued control flow", () => {
       const source = `<p>A<% if x %><div>b</div><% end %>!</p>`
 
-      expect(formatter.format(source)).toEqual(dedent`
+      const expected = dedent`
         <p>
           A
           <% if x %>
@@ -162,7 +189,10 @@ describe("whitespace preservation around ERB control flow", () => {
           <% end %>
           !
         </p>
-      `)
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
   })
 
@@ -205,7 +235,10 @@ describe("whitespace preservation around ERB control flow", () => {
         </span></div>
       `
 
-      expect(formatter.format(source)).toEqual(`<div><span><em>a</em> <em>b</em></span></div>`)
+      const expected = `<div><span><em>a</em> <em>b</em></span></div>`
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("keeps the space between two ERB outputs", () => {
@@ -216,7 +249,10 @@ describe("whitespace preservation around ERB control flow", () => {
         </label></div>
       `
 
-      expect(formatter.format(source)).toEqual(`<div><label><%= a %> <%= b %></label></div>`)
+      const expected = `<div><label><%= a %> <%= b %></label></div>`
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("keeps the space between text and an inline element", () => {
@@ -227,7 +263,10 @@ describe("whitespace preservation around ERB control flow", () => {
         </span></div>
       `
 
-      expect(formatter.format(source)).toEqual(`<div><span>text <em>x</em></span></div>`)
+      const expected = `<div><span>text <em>x</em></span></div>`
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
   })
 
@@ -253,27 +292,45 @@ describe("whitespace preservation around ERB control flow", () => {
     })
 
     test("drops edge whitespace at a block boundary, where it would collapse anyway", () => {
-      expect(formatter.format(`<div><span> <em>x</em> </span></div>`)).toEqual(
-        `<div><span><em>x</em></span></div>`
-      )
+      const expected = `<div><span><em>x</em></span></div>`
+
+      expect(formatter.format(`<div><span> <em>x</em> </span></div>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("drops a redundant inner space when the outside already separates", () => {
-      expect(formatter.format(`<p>text <span> <em>x</em></span></p>`)).toEqual(
-        `<p>text <span><em>x</em></span></p>`
-      )
+      const expected = `<p>text <span><em>x</em></span></p>`
+
+      expect(formatter.format(`<p>text <span> <em>x</em></span></p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
   })
 
   describe("space-separated punctuation keeps its space", () => {
     test("colon in a control-flow body", () => {
-      expect(formatter.format(`<p><% if x %>Label <%= a %> : value<% end %></p>`)).toEqual(dedent`
+      const expected = dedent`
         <p>
           <% if x %>
             Label <%= a %> : value
           <% end %>
         </p>
-      `)
+      `
+
+      expect(formatter.format(`<p><% if x %>Label <%= a %> : value<% end %></p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
+    })
+
+    test("question mark in a control-flow body", () => {
+      const expected = dedent`
+        <p>
+          <% if x %>
+            Ready <%= a %> ? yes
+          <% end %>
+        </p>
+      `
+
+      expect(formatter.format(`<p><% if x %>Ready <%= a %> ? yes<% end %></p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("ruby ternary survives intact", () => {
@@ -287,26 +344,17 @@ describe("whitespace preservation around ERB control flow", () => {
     })
 
     test("punctuation glued in the source stays glued", () => {
-      expect(formatter.format(`<p><% if x %>Label <%= a %>: value<% end %></p>`)).toEqual(dedent`
+      const expected = dedent`
         <p>
           <% if x %>
             Label <%= a %>: value
           <% end %>
         </p>
-      `)
+      `
+
+      expect(formatter.format(`<p><% if x %>Label <%= a %>: value<% end %></p>`)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
-    test("punctuation separated from an inline element keeps the space", () => {
-      expect(formatter.format(dedent`
-        <div>
-          Check <em>this</em>
-          : it works!
-        </div>
-      `)).toEqual(dedent`
-        <div>
-          Check <em>this</em> : it works!
-        </div>
-      `)
-    })
   })
 })

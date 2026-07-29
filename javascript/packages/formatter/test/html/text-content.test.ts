@@ -289,11 +289,14 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
 
-    expect(result).toEqual(dedent`
+    const expected = dedent`
       <div>
         Check <em>this</em> : it works!
       </div>
-    `)
+    `
+
+    expect(result).toEqual(expected)
+    expectFormattedToMatch(expected)
   })
 
   test("punctuation glued to an inline element stays glued", () => {
