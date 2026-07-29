@@ -199,4 +199,40 @@ describe("erb-prefer-direct-output autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
   })
+
+  test("fixes interpolated string when a multi-byte character appears in earlier markup (#1855)", () => {
+    const input = dedent`
+      <p>é</p>
+      <p><%= "#{@organisation.slug}.#{AppHost.base_host}" %></p>
+    `
+
+    const expected = dedent`
+      <p>é</p>
+      <p><%= @organisation.slug %>.<%= AppHost.base_host %></p>
+    `
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("fixes interpolated string when a three-byte character appears in an earlier comment (#1855)", () => {
+    const input = dedent`
+      <%# — %>
+      <strong><%= "#{@organisation.slug}.#{AppHost.base_host}" %></strong>
+    `
+
+    const expected = dedent`
+      <%# — %>
+      <strong><%= @organisation.slug %>.<%= AppHost.base_host %></strong>
+    `
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
 })
