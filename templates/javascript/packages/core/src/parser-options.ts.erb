@@ -1,0 +1,38 @@
+export interface ParseOptions {
+  <%- parser_options.fields.each do |field| -%>
+  <%- if field.nullable? -%>
+  /** <%= field.description %> */
+  <%= field.snake_case %>?: <%= field.typescript_type %>
+  <%- else -%>
+  <%= field.snake_case %>?: <%= field.typescript_type %>
+  <%- end -%>
+  <%- end -%>
+}
+
+export type SerializedParserOptions = Required<ParseOptions>
+
+export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
+<%- parser_options.fields.each do |field| -%>
+  <%= field.snake_case %>: <%= field.js_default %>,
+<%- end -%>
+}
+
+/**
+ * Represents the parser options used during parsing.
+ */
+export class ParserOptions {
+  <%- parser_options.fields.each do |field| -%>
+  /** <%= field.description %> */
+  readonly <%= field.snake_case %>: <%= field.typescript_type %>
+
+  <%- end -%>
+  static from(options: SerializedParserOptions): ParserOptions {
+    return new ParserOptions(options)
+  }
+
+  constructor(options: ParseOptions = {}) {
+  <%- parser_options.fields.each do |field| -%>
+    this.<%= field.snake_case %> = options.<%= field.snake_case %> ?? DEFAULT_PARSER_OPTIONS.<%= field.snake_case %>
+  <%- end -%>
+  }
+}

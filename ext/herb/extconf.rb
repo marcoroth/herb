@@ -101,7 +101,8 @@ core_src_files = [
   "extension.c",
   "nodes.c",
   "error_helpers.c",
-  "extension_helpers.c"
+  "extension_helpers.c",
+  "parser_options_helpers.c"
 ]
 
 $srcs = core_src_files + herb_src_files + prism_main_files + prism_util_files

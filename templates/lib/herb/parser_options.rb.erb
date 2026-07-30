@@ -1,0 +1,41 @@
+# frozen_string_literal: true
+
+module Herb
+  class ParserOptions
+  <%- parser_options.fields.each do |field| -%>
+    attr_reader :<%= field.snake_case %> #: <%= field.ruby_type %>
+  <%- end -%>
+
+  <%- parser_options.fields.each do |field| -%>
+    DEFAULT_<%= field.upper_snake %> = <%= field.ruby_default %> #: <%= field.ruby_type %>
+  <%- end -%>
+
+    #: (<%= parser_options.fields.map { |f| "?#{f.snake_case}: #{f.ruby_type}" }.join(", ") %>) -> void
+    def initialize(<%= parser_options.fields.map { |f| "#{f.snake_case}: DEFAULT_#{f.upper_snake}" }.join(", ") %>)
+    <%- parser_options.fields.each do |field| -%>
+      @<%= field.snake_case %> = <%= field.snake_case %>
+    <%- end -%>
+    end
+
+    #: () -> Hash[Symbol, (bool | Numeric | nil)]
+    def to_h
+      {
+      <%- parser_options.fields.each do |field| -%>
+        <%= field.snake_case %>: @<%= field.snake_case %>,
+      <%- end -%>
+      }
+    end
+
+    #: () -> String
+    def inspect
+      "#<#{self.class.name}\n  " \
+      <%- parser_options.fields.each_with_index do |field, index| -%>
+      <%- if index == parser_options.fields.length - 1 -%>
+        "<%= field.snake_case %>=#{@<%= field.snake_case %>}>"
+      <%- else -%>
+        "<%= field.snake_case %>=#{@<%= field.snake_case %>}\n  " \
+      <%- end -%>
+      <%- end -%>
+    end
+  end
+end

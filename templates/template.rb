@@ -872,7 +872,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, parser_options: parser_options })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -912,11 +912,169 @@ module Herb
       []
     end
 
+    class ParserOptionField
+      attr_reader :name, :type, :default, :description, :c_name, :nullable, :null_sentinel, :ruby_unit, :default_ms
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @type = config.fetch("type")
+        @default = config["default"]
+        @default_ms = config["default_ms"]
+        @description = config.fetch("description", "")
+        @c_name = config.fetch("c_name", @name)
+        @nullable = config.fetch("nullable", false)
+        @null_sentinel = config["null_sentinel"]
+        @ruby_unit = config["ruby_unit"]
+      end
+
+      def boolean?
+        @type == "boolean"
+      end
+
+      def uint32?
+        @type == "uint32"
+      end
+
+      def uint64?
+        @type == "uint64"
+      end
+
+      def pointer?
+        @type == "pointer_uint32"
+      end
+
+      def nullable?
+        @nullable
+      end
+
+      # Naming conventions
+      def snake_case
+        @name
+      end
+
+      def camel_case
+        @name.split("_").map.with_index { |w, i| i == 0 ? w : w.capitalize }.join
+      end
+
+      def pascal_case
+        @name.split("_").map(&:capitalize).join
+      end
+
+      def upper_snake
+        @name.upcase
+      end
+
+      def java_getter
+        prefix = boolean? ? "is" : "get"
+        "#{prefix}#{pascal_case}"
+      end
+
+      def java_jni_signature
+        return "()Z" if boolean?
+        return "()Ljava/lang/Integer;" if nullable?
+
+        "()I"
+      end
+
+      def ruby_default
+        return "nil" if nullable? && @default.nil?
+        return @default_ms.to_f / 1000 if @ruby_unit == "seconds" && @default_ms
+
+        @default
+      end
+
+      def c_default
+        return @null_sentinel if nullable? && @default.nil?
+        return @default_ms if @default_ms
+
+        @default
+      end
+
+      def js_default
+        return "null" if nullable? && @default.nil?
+
+        @default_ms || @default
+      end
+
+      def java_default
+        return "null" if nullable? && @default.nil?
+
+        @default_ms || @default
+      end
+
+      def rust_default
+        return "None" if nullable? && @default.nil?
+        value = @default_ms || @default
+
+        nullable? ? "Some(#{value})" : value
+      end
+
+      def c_type
+        return "bool" if boolean?
+        return "uint64_t" if uint64?
+        return "uint32_t*" if pointer?
+
+        "uint32_t"
+      end
+
+      def ruby_type
+        return "bool" if boolean?
+        return "Numeric" if @ruby_unit == "seconds"
+
+        nullable? ? "Integer?" : "Integer"
+      end
+
+      def typescript_type
+        return "boolean" if boolean?
+
+        nullable? ? "number | null" : "number"
+      end
+
+      def java_type
+        return "boolean" if boolean?
+
+        nullable? ? "Integer" : "int"
+      end
+
+      def rust_type
+        return "bool" if boolean?
+
+        nullable? ? "Option<u32>" : "u32"
+      end
+    end
+
+    class ParserOptionsConfig
+      attr_reader :fields, :internal_fields
+
+      def initialize(config)
+        @fields = (config.fetch("fields", []) || []).map { |f| ParserOptionField.new(f) }
+        @internal_fields = (config.fetch("internal_fields", []) || []).map { |f| ParserOptionField.new(f) }
+      end
+
+      def boolean_fields
+        @fields.select(&:boolean?)
+      end
+
+      def non_boolean_fields
+        @fields.reject(&:boolean?)
+      end
+
+      def all_c_fields
+        @fields + @internal_fields
+      end
+    end
+
+    def self.parser_options
+      config_data = config.dig("parser_options")
+      return nil unless config_data
+
+      ParserOptionsConfig.new(config_data)
+    end
+
     def self.nodes
       (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
     end
 
-    # Collect all unique union kinds from node fields
     def self.union_kinds
       union_kinds_set = Set.new
 

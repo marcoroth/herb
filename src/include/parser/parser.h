@@ -6,8 +6,7 @@
 #include "../lib/hb_allocator.h"
 #include "../lib/hb_array.h"
 #include "../lib/hb_clock.h"
-
-#include <stdint.h>
+#include "parser_options.h"
 
 typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
@@ -19,34 +18,11 @@ typedef enum {
 
 typedef enum { PARSER_STATE_DATA, PARSER_STATE_FOREIGN_CONTENT } parser_state_T;
 
-typedef struct PARSER_OPTIONS_STRUCT {
-  bool track_whitespace;
-  bool analyze;
-  bool strict;
-  bool action_view_helpers;
-  bool transform_conditionals;
-  bool render_nodes;
-  bool strict_locals;
-  bool prism_program;
-  bool prism_nodes;
-  bool prism_nodes_deep;
-  bool dot_notation_tags;
-  bool html;
-  uint32_t start_line;
-  uint32_t start_column;
-  uint32_t timeout_ms;
-  uint32_t max_errors;
-  uint32_t* error_count;
-  uint64_t deadline_ms;
-} parser_options_T;
-
 typedef struct MATCH_TAGS_CONTEXT_STRUCT {
   hb_array_T* errors;
   const parser_options_T* options;
   hb_allocator_T* allocator;
 } match_tags_context_T;
-
-extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
 
 static inline bool parser_options_past_deadline(const parser_options_T* options) {
   if (options == NULL || options->timeout_ms == 0) { return false; }

@@ -1,0 +1,13 @@
+#include "include/parser/parser_options.h"
+
+#include <stddef.h>
+
+const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = {
+<%- parser_options.all_c_fields.each_with_index do |field, index| -%>
+  <%- if field.pointer? -%>
+  .<%= field.c_name %> = NULL<%= index < parser_options.all_c_fields.length - 1 ? "," : "" %>
+  <%- else -%>
+  .<%= field.c_name %> = <%= field.c_default %><%= index < parser_options.all_c_fields.length - 1 ? "," : "" %>
+  <%- end -%>
+<%- end -%>
+};

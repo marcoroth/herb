@@ -1,0 +1,16 @@
+#[derive(Debug, Clone)]
+pub struct ParserOptions {
+  <%- parser_options.fields.each do |field| -%>
+  pub <%= field.snake_case %>: <%= field.rust_type %>,
+  <%- end -%>
+}
+
+impl Default for ParserOptions {
+  fn default() -> Self {
+    Self {
+      <%- parser_options.fields.each do |field| -%>
+      <%= field.snake_case %>: <%= field.rust_default %>,
+      <%- end -%>
+    }
+  }
+}

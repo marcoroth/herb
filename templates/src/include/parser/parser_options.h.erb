@@ -1,0 +1,15 @@
+#ifndef HERB_PARSER_OPTIONS_H
+#define HERB_PARSER_OPTIONS_H
+
+#include <stdbool.h>
+#include <stdint.h>
+
+typedef struct PARSER_OPTIONS_STRUCT {
+<%- parser_options.all_c_fields.each do |field| -%>
+  <%= field.c_type %> <%= field.c_name %>;
+<%- end -%>
+} parser_options_T;
+
+extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
+#endif

@@ -2,11 +2,11 @@
 
 module Herb
   class ParserOptions
-    attr_reader strict: bool
-
     attr_reader track_whitespace: bool
 
     attr_reader analyze: bool
+
+    attr_reader strict: bool
 
     attr_reader action_view_helpers: bool
 
@@ -22,15 +22,19 @@ module Herb
 
     attr_reader prism_nodes_deep: bool
 
+    attr_reader dot_notation_tags: bool
+
+    attr_reader html: bool
+
     attr_reader timeout: Numeric
 
     attr_reader max_errors: Integer?
 
-    DEFAULT_STRICT: bool
-
     DEFAULT_TRACK_WHITESPACE: bool
 
     DEFAULT_ANALYZE: bool
+
+    DEFAULT_STRICT: bool
 
     DEFAULT_ACTION_VIEW_HELPERS: bool
 
@@ -46,12 +50,16 @@ module Herb
 
     DEFAULT_PRISM_NODES_DEEP: bool
 
+    DEFAULT_DOT_NOTATION_TAGS: bool
+
+    DEFAULT_HTML: bool
+
     DEFAULT_TIMEOUT: Numeric
 
-    DEFAULT_MAX_ERRORS: Integer
+    DEFAULT_MAX_ERRORS: Integer?
 
-    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
-    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
+    # : (?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_program: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?dot_notation_tags: bool, ?html: bool, ?timeout: Numeric, ?max_errors: Integer?) -> void
+    def initialize: (?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_program: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?dot_notation_tags: bool, ?html: bool, ?timeout: Numeric, ?max_errors: Integer?) -> void
 
     # : () -> Hash[Symbol, (bool | Numeric | nil)]
     def to_h: () -> Hash[Symbol, bool | Numeric | nil]

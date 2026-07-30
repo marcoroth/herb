@@ -1,0 +1,25 @@
+#include "parser_options_helpers.h"
+
+void herb_extract_parser_options(emscripten::val options, parser_options_T* parser_options) {
+  if (options.isUndefined() || options.isNull() || options.typeOf().as<std::string>() != "object") { return; }
+
+  <%- parser_options.fields.each do |field| -%>
+  <%- if field.boolean? -%>
+  if (options.hasOwnProperty("<%= field.snake_case %>")) {
+    parser_options-><%= field.c_name %> = options["<%= field.snake_case %>"].as<bool>();
+  }
+
+  <%- elsif field.nullable? -%>
+  if (options.hasOwnProperty("<%= field.snake_case %>")) {
+    emscripten::val val = options["<%= field.snake_case %>"];
+    parser_options-><%= field.c_name %> = val.isNull() ? <%= field.null_sentinel %> : (uint32_t) val.as<int>();
+  }
+
+  <%- else -%>
+  if (options.hasOwnProperty("<%= field.snake_case %>")) {
+    parser_options-><%= field.c_name %> = (uint32_t) options["<%= field.snake_case %>"].as<int>();
+  }
+
+  <%- end -%>
+  <%- end -%>
+}

@@ -3,44 +3,7 @@ use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
 use std::ffi::{CStr, CString};
 
-#[derive(Debug, Clone)]
-pub struct ParserOptions {
-  pub track_whitespace: bool,
-  pub analyze: bool,
-  pub strict: bool,
-  pub action_view_helpers: bool,
-  pub transform_conditionals: bool,
-  pub render_nodes: bool,
-  pub strict_locals: bool,
-  pub prism_nodes: bool,
-  pub prism_nodes_deep: bool,
-  pub prism_program: bool,
-  pub dot_notation_tags: bool,
-  pub html: bool,
-  pub timeout: u32,
-  pub max_errors: Option<u32>,
-}
-
-impl Default for ParserOptions {
-  fn default() -> Self {
-    Self {
-      track_whitespace: false,
-      analyze: true,
-      strict: true,
-      action_view_helpers: false,
-      transform_conditionals: false,
-      render_nodes: false,
-      strict_locals: false,
-      prism_nodes: false,
-      prism_nodes_deep: false,
-      prism_program: false,
-      dot_notation_tags: false,
-      html: true,
-      timeout: 1000,
-      max_errors: Some(25),
-    }
-  }
-}
+pub use crate::parser_options::ParserOptions;
 
 #[derive(Debug, Clone)]
 pub struct ExtractRubyOptions {

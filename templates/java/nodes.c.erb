@@ -119,3 +119,7 @@ jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* <%= node.hu
 }
 
 <%- end -%>
+
+jobject CreateASTNode(JNIEnv* env, AST_NODE_T* node) {
+  return NodeFromCStruct(env, node);
+}

@@ -6,6 +6,7 @@
 
 #include "extension_helpers.h"
 #include "nodes.h"
+#include "parser_options_helpers.h"
 
 extern "C" {
 #include "../src/include/lib/hb_allocator.h"
@@ -44,71 +45,7 @@ val Herb_lex(const std::string& source) {
 
 val Herb_parse(const std::string& source, val options) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-
-  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
-    if (options.hasOwnProperty("track_whitespace")) {
-      bool track_whitespace = options["track_whitespace"].as<bool>();
-      if (track_whitespace) {
-        parser_options.track_whitespace = true;
-      }
-    }
-
-    if (options.hasOwnProperty("analyze")) {
-      bool analyze = options["analyze"].as<bool>();
-      if (!analyze) {
-        parser_options.analyze = false;
-      }
-    }
-
-    if (options.hasOwnProperty("strict")) {
-      parser_options.strict = options["strict"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("action_view_helpers")) {
-      parser_options.action_view_helpers = options["action_view_helpers"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("transform_conditionals")) {
-      parser_options.transform_conditionals = options["transform_conditionals"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("render_nodes")) {
-      parser_options.render_nodes = options["render_nodes"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("strict_locals")) {
-      parser_options.strict_locals = options["strict_locals"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("prism_nodes")) {
-      parser_options.prism_nodes = options["prism_nodes"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("prism_nodes_deep")) {
-      parser_options.prism_nodes_deep = options["prism_nodes_deep"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("prism_program")) {
-      parser_options.prism_program = options["prism_program"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("dot_notation_tags")) {
-      parser_options.dot_notation_tags = options["dot_notation_tags"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("html")) {
-      parser_options.html = options["html"].as<bool>();
-    }
-
-    if (options.hasOwnProperty("timeout")) {
-      parser_options.timeout_ms = (uint32_t) options["timeout"].as<int>();
-    }
-
-    if (options.hasOwnProperty("max_errors")) {
-      val max_errors_val = options["max_errors"];
-      parser_options.max_errors = max_errors_val.isNull() ? 0 : (uint32_t) max_errors_val.as<int>();
-    }
-  }
+  herb_extract_parser_options(options, &parser_options);
 
   hb_allocator_T allocator;
   if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {

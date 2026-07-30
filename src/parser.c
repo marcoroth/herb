@@ -34,24 +34,6 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser);
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children);
 static void parser_handle_whitespace_in_open_tag(parser_T* parser, hb_array_T* children);
 
-const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false,
-                                                       .analyze = true,
-                                                       .strict = true,
-                                                       .action_view_helpers = false,
-                                                       .transform_conditionals = false,
-                                                       .render_nodes = false,
-                                                       .strict_locals = false,
-                                                       .prism_nodes_deep = false,
-                                                       .prism_nodes = false,
-                                                       .prism_program = false,
-                                                       .dot_notation_tags = false,
-                                                       .html = true,
-                                                       .start_line = 0,
-                                                       .start_column = 0,
-                                                       .timeout_ms = 1000,
-                                                       .max_errors = 25,
-                                                       .deadline_ms = 0 };
-
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }

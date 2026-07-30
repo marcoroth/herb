@@ -1,0 +1,10 @@
+#ifndef HERB_RUBY_PARSER_OPTIONS_HELPERS_H
+#define HERB_RUBY_PARSER_OPTIONS_HELPERS_H
+
+#include <ruby.h>
+#include "../../src/include/parser/parser_options.h"
+
+void herb_extract_parser_options(VALUE options, parser_options_T* parser_options);
+VALUE herb_build_parser_options_hash(const parser_options_T* options);
+
+#endif
