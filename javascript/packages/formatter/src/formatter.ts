@@ -88,7 +88,7 @@ export class Formatter {
       }
     }
 
-    let formatted = new FormatPrinter(source, resolvedOptions).print(node)
+    let formatted = new FormatPrinter(source, resolvedOptions, this.herb).print(node)
 
     if (resolvedOptions.postRewriters.length > 0) {
       const context: RewriteContext = {

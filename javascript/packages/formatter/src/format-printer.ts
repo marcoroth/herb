@@ -7,7 +7,7 @@ import { HerbDisableCollector } from "./herb-disable-collector.js"
 import { isTextFlowNode, hasFlowContentBefore, hasFlowContentAfter } from "./text-flow-helpers.js"
 import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
 
-import type { ERBNode } from "@herb-tools/core"
+import type { ERBNode, HerbBackend } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 import type { TextFlowDelegate } from "./text-flow-engine.js"
 import type { CollectedHerbDisable } from "./herb-disable-collector.js"
@@ -33,6 +33,7 @@ import {
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
+  getHelper,
 } from "@herb-tools/core"
 
 import {
@@ -54,6 +55,7 @@ import {
 
 import {
   ASCII_WHITESPACE,
+  CONTENT_PRESERVING_ELEMENTS,
   SPACEABLE_CONTAINERS,
 } from "./format-helpers.js"
 
@@ -153,9 +155,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   public source: string
 
-  constructor(source: string, options: Required<FormatOptions>) {
+  private herb?: HerbBackend
+  private erbBlockTagNameCache = new Map<Node, string | null>()
+
+  constructor(source: string, options: Required<FormatOptions>, herb?: HerbBackend) {
     super()
 
+    this.herb = herb
     this.source = source
     this.indentWidth = options.indentWidth
     this.maxLineLength = options.maxLineLength
@@ -178,6 +184,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.stringLineCount = 0
     this.nodeIsMultiline.clear()
     this.inlineFlowContext.clear()
+    this.erbBlockTagNameCache.clear()
     this.spacingAnalyzer.clear()
 
     this.collectInlineFlowContext(node, false, false)
@@ -1144,21 +1151,89 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.trackBoundary(node, () => {
       this.printERBNode(node)
 
-      this.withIndent(() => {
-        const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
+      if (this.isContentPreservingBlock(node)) {
+        this.visitPreservedERBBlockBody(node)
+      } else {
+        this.withIndent(() => {
+          const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
 
-        if (hasTextFlow) {
-          this.textFlow.visitTextFlowChildren(node.body)
-        } else {
-          this.visitElementChildren(node.body, null)
-        }
-      })
+          if (hasTextFlow) {
+            this.textFlow.visitTextFlowChildren(node.body)
+          } else {
+            this.visitElementChildren(node.body, null)
+          }
+        })
+      }
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
       if (node.else_clause) this.visit(node.else_clause)
       if (node.ensure_clause) this.visit(node.ensure_clause)
       if (node.end_node) this.visit(node.end_node)
     })
+  }
+
+  private visitPreservedERBBlockBody(node: ERBBlockNode): void {
+    const raw = node.body.map(child => IdentityPrinter.print(child)).join("")
+    const lines = raw.split("\n")
+
+    if (lines.length > 0 && lines[0].trim() === "") lines.shift()
+    if (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop()
+
+    lines.forEach(line => this.push(line))
+  }
+
+  private isContentPreservingBlock(node: ERBBlockNode): boolean {
+    const tagName = this.resolveERBBlockTagName(node)
+
+    return tagName !== null && CONTENT_PRESERVING_ELEMENTS.has(tagName)
+  }
+
+  private resolveERBBlockTagName(node: ERBBlockNode): string | null {
+    if (this.erbBlockTagNameCache.has(node)) return this.erbBlockTagNameCache.get(node)!
+
+    const resolved = this.prismERBBlockTagName(node)
+    this.erbBlockTagNameCache.set(node, resolved)
+
+    return resolved
+  }
+
+  private prismERBBlockTagName(node: ERBBlockNode): string | null {
+    if (!this.herb) return null
+
+    const content = node.content?.value ?? ""
+
+    try {
+      const result = this.herb.parse(`<%${content}%><% end %>`, { prism_nodes: true })
+      const block = result.value.children.find(child => isNode(child, ERBBlockNode)) as ERBBlockNode | undefined
+      const call = block?.prismNode
+
+      if (!call) return null
+
+      if (call.receiver) {
+        const receiver = call.receiver
+
+        if (receiver.name === "tag" && !receiver.receiver && typeof call.name === "string") {
+          return call.name.toLowerCase()
+        }
+
+        return null
+      }
+
+      const helper = getHelper(call.name)
+
+      if (helper?.supportsBlock && helper.tagName) return helper.tagName.toLowerCase()
+
+      if (call.name === "content_tag") {
+        const first = call.arguments_?.arguments_?.[0]
+        const value = first?.unescaped?.value
+
+        return typeof value === "string" ? value.toLowerCase() : null
+      }
+    } catch {
+      return null
+    }
+
+    return null
   }
 
   visitERBIfNode(node: ERBIfNode) {
