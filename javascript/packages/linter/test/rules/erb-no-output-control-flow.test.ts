@@ -135,4 +135,36 @@ describe("erb-no-output-control-flow", () => {
 
     expectNoOffenses(html)
   })
+
+  it("should not report on a complete if expression inside one output tag", () => {
+    const html = dedent`
+      <%= if render_result_view?
+        render(Search::ResultViewSelect::Component.new(result_view: @result_view))
+      end %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should not report on a complete if/else expression inside one output tag", () => {
+    const html = dedent`
+      <%= if admin?
+        "admin"
+      else
+        "user"
+      end %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should not report on a complete unless expression inside one output tag", () => {
+    const html = dedent`
+      <%= unless hidden?
+        render(Thing.new)
+      end %>
+    `
+
+    expectNoOffenses(html)
+  })
 })
