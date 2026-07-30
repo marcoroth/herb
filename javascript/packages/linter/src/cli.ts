@@ -403,6 +403,10 @@ export class CLI {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
+      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+        console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
+      }
+
       let processingConfig = config
 
       if (force && explicitFiles.length > 0) {
