@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { SVGTagNameCapitalizationRule } from "../../src/rules/svg-tag-name-capitalization.js"
 
 describe("svg-tag-name-capitalization autofix", () => {
+  const { autofix } = createAutofixTest(SVGTagNameCapitalizationRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -12,8 +14,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><lineargradient></lineargradient></svg>`
     const expected = `<svg><linearGradient></linearGradient></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -24,8 +25,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><lineargradient></lineargradient><radialgradient></radialgradient></svg>`
     const expected = `<svg><linearGradient></linearGradient><radialGradient></radialGradient></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(4)
@@ -35,8 +35,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><clippath></clippath></svg>`
     const expected = `<svg><clipPath></clipPath></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -46,8 +45,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><textpath></textpath></svg>`
     const expected = `<svg><textPath></textPath></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -57,8 +55,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><defs><lineargradient id="grad"><stop /></lineargradient></defs></svg>`
     const expected = `<svg><defs><linearGradient id="grad"><stop /></linearGradient></defs></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -68,8 +65,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><linearGradient></linearGradient></svg>`
     const expected = `<svg><linearGradient></linearGradient></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -79,8 +75,7 @@ describe("svg-tag-name-capitalization autofix", () => {
     const input = `<svg><LineArGrAdIeNt></LineArGrAdIeNt></svg>`
     const expected = `<svg><linearGradient></linearGradient></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -89,8 +84,7 @@ describe("svg-tag-name-capitalization autofix", () => {
   test("does not autofix ERB tag helpers", () => {
     const input = `<svg><%= tag.lineargradient id: "grad1" do %><stop offset="0%" /><% end %></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -100,8 +94,7 @@ describe("svg-tag-name-capitalization autofix", () => {
   test("does not autofix content_tag helpers", () => {
     const input = `<svg><%= content_tag :lineargradient, id: "grad1" do %><stop offset="0%" /><% end %></svg>`
 
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

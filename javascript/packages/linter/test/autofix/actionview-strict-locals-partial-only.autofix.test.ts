@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "../../src/rules/actionview-strict-locals-partial-only.js"
 
 describe("actionview-strict-locals-partial-only autofix", () => {
+  const { unsafeAutofix } = createAutofixTest(ActionViewStrictLocalsPartialOnlyRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -17,8 +19,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
     `
     const expected = `<div><%= user.name %></div>`
 
-    const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "show.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "show.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -32,8 +33,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
       <div><%= user.name %></div>
     `
 
-    const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "show.html.erb" })
+    const result = autofix(input, { fileName: "show.html.erb" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -47,8 +47,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
       <div><%= user.name %></div>
     `
 
-    const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "_partial.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "_partial.html.erb" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -69,8 +68,7 @@ describe("actionview-strict-locals-partial-only autofix", () => {
       </html>
     `
 
-    const linter = new Linter(Herb, [ActionViewStrictLocalsPartialOnlyRule])
-    const result = linter.autofix(input, { fileName: "application.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "application.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

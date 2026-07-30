@@ -432,139 +432,231 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
 
   let _ = offense;
 
-  let printed_at = |branch: &[AnyNode], index: usize| identity_print(source, branch[index].location());
-
-  let mut prefix_hoistable = 0;
+  let mut state = HoistState::default();
 
   for index in 0..prefix_count {
-    let first = printed_at(&significant[0], index);
+    let elements: Vec<AnyNode> = significant.iter().map(|branch| branch[index].clone()).collect();
 
-    if significant.iter().all(|branch| printed_at(branch, index) == first) {
-      prefix_hoistable += 1;
-    } else {
-      break;
-    }
+    hoist_element(conditional, &elements, Position::Before, &mut state, source);
   }
 
-  let equal_lengths = significant.iter().all(|branch| branch.len() == significant[0].len());
-  let mut suffix_hoistable = 0;
+  for offset in 0..suffix_count {
+    let elements: Vec<AnyNode> = significant.iter().map(|branch| branch[branch.len() - 1 - offset].clone()).collect();
 
-  if equal_lengths {
-    for offset in 0..suffix_count {
-      let first = printed_at(&significant[0], significant[0].len() - 1 - offset);
+    hoist_element(conditional, &elements, Position::After, &mut state, source);
+  }
 
-      if significant.iter().all(|branch| printed_at(branch, branch.len() - 1 - offset) == first) {
-        suffix_hoistable += 1;
-      } else {
-        break;
+  if !state.has_wrapped && state.hoisted_before {
+    let remaining: Vec<Vec<AnyNode>> = branch_slices(conditional)?.iter().map(|branch| significant_owned(branch)).collect();
+
+    if remaining.iter().all(|branch| branch.len() == 1) {
+      let nodes: Vec<Option<&AnyNode>> = remaining.iter().map(|branch| branch.first()).collect();
+
+      if all_equivalent_elements(&nodes) {
+        let elements: Vec<AnyNode> = remaining.iter().map(|branch| branch[0].clone()).collect();
+
+        if !bodies_match(&elements, source) && elements.iter().all(|element| element_body_len(element) > 0) {
+          if let Some(template) = wrap_into(conditional, &elements) {
+            state.wrapper = Some(template);
+            state.inner_before.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+            state.inner_after.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+            state.has_wrapped = true;
+            state.did_mutate = true;
+          }
+        }
       }
     }
   }
 
-  let mut before: Vec<AnyNode> = Vec::new();
-  let mut after: Vec<AnyNode> = Vec::new();
-
-  for index in 0..prefix_hoistable {
-    before.push(significant[0][index].clone());
-    before.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
-  }
-
-  for offset in (0..suffix_hoistable).rev() {
-    after.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
-    after.push(significant[0][significant[0].len() - 1 - offset].clone());
-  }
-
-  if prefix_hoistable > 0 || suffix_hoistable > 0 {
-    let mut branch_arrays = conditional_branches_mut(conditional)?;
-
-    for branch in branch_arrays.iter_mut() {
-      for _ in 0..prefix_hoistable {
-        remove_significant(branch, 0);
-      }
-
-      for _ in 0..suffix_hoistable {
-        let last = significant_indices(branch).len().checked_sub(1)?;
-
-        remove_significant(branch, last);
-      }
-    }
-  }
-
-  let remaining: Vec<Vec<AnyNode>> = branch_slices(conditional)?.iter().map(|branch| significant_owned(branch)).collect();
-
-  let wrapped = if remaining.iter().all(|branch| branch.len() == 1) {
-    wrap_single_elements(conditional, &remaining, source)
-  } else {
-    None
-  };
-
-  if wrapped.is_none() && prefix_hoistable == 0 && suffix_hoistable == 0 {
+  if !state.did_mutate {
     return None;
   }
 
-  let mut replacements = before;
+  let node = match state.wrapper {
+    Some(template) => {
+      let mut inner = state.inner_before;
 
-  replacements.push(wrapped.unwrap_or_else(|| conditional.clone()));
-  replacements.extend(after);
+      inner.push(conditional.clone());
+      inner.extend(state.inner_after);
+
+      AnyNode::HTMLElementNode(Box::new(wrapper_element(&template, inner)))
+    }
+
+    None => conditional.clone(),
+  };
+
+  let mut replacements = state.outer_before;
+  replacements.push(node);
+  replacements.extend(state.outer_after);
 
   Some(replacements)
 }
 
-fn wrap_single_elements(conditional: &mut AnyNode, remaining: &[Vec<AnyNode>], source: &str) -> Option<AnyNode> {
-  let elements: Vec<HTMLElementNode> = remaining
+#[derive(Clone, Copy, PartialEq)]
+enum Position {
+  Before,
+  After,
+}
+
+#[derive(Default)]
+struct HoistState {
+  outer_before: Vec<AnyNode>,
+  outer_after: Vec<AnyNode>,
+  inner_before: Vec<AnyNode>,
+  inner_after: Vec<AnyNode>,
+  wrapper: Option<HTMLElementNode>,
+  has_wrapped: bool,
+  did_mutate: bool,
+  failed_to_hoist_prefix: bool,
+  hoisted_before: bool,
+}
+
+fn bodies_match(elements: &[AnyNode], source: &str) -> bool {
+  elements
     .iter()
-    .filter_map(|branch| match &branch[0] {
-      AnyNode::HTMLElementNode(element) => Some(element.as_ref().clone()),
-      _ => None,
-    })
-    .collect();
+    .all(|element| identity_print(source, element.location()) == identity_print(source, elements[0].location()))
+}
 
-  if elements.len() != remaining.len() {
-    return None;
+fn element_body_len(node: &AnyNode) -> usize {
+  match node {
+    AnyNode::HTMLElementNode(element) => element.body.len(),
+    _ => 0,
+  }
+}
+
+fn same_location(left: &herb::Location, right: &herb::Location) -> bool {
+  left.start.line == right.start.line && left.start.column == right.start.column && left.end.line == right.end.line && left.end.column == right.end.column
+}
+
+fn remove_by_location(branch: &mut Vec<AnyNode>, location: &herb::Location) -> bool {
+  let index = match branch.iter().position(|node| same_location(node.location(), location)) {
+    Some(index) => index,
+    None => return false,
+  };
+
+  if index > 0 && is_pure_whitespace_node(&branch[index - 1]) {
+    branch.drain(index - 1..=index);
+  } else {
+    branch.remove(index);
   }
 
-  let bodies_match = elements
-    .iter()
-    .all(|element| printed_element(element, source) == printed_element(&elements[0], source));
+  true
+}
 
-  if bodies_match || elements.iter().any(|element| element.body.is_empty()) {
-    return None;
-  }
-
-  let nodes: Vec<Option<&AnyNode>> = remaining.iter().map(|branch| branch.first()).collect();
-
-  if !all_equivalent_elements(&nodes) {
-    return None;
-  }
+fn wrap_into(conditional: &mut AnyNode, elements: &[AnyNode]) -> Option<HTMLElementNode> {
+  let template = match &elements[0] {
+    AnyNode::HTMLElementNode(element) => element.as_ref().clone(),
+    _ => return None,
+  };
 
   let mut branch_arrays = conditional_branches_mut(conditional)?;
 
-  for branch in branch_arrays.iter_mut() {
-    let replacement = branch
-      .iter()
-      .find_map(|node| match node {
-        AnyNode::HTMLElementNode(element) => Some(element.body.clone()),
-        _ => None,
-      })
-      .unwrap_or_default();
+  for (branch, element) in branch_arrays.iter_mut().zip(elements.iter()) {
+    let index = branch.iter().position(|node| same_location(node.location(), element.location()))?;
 
-    let position = branch.iter().position(|node| matches!(node, AnyNode::HTMLElementNode(_)))?;
+    let body = match element {
+      AnyNode::HTMLElementNode(element) => element.body.clone(),
+      _ => return None,
+    };
 
-    branch.splice(position..position + 1, replacement);
+    branch.splice(index..index + 1, body);
   }
 
-  drop(branch_arrays);
+  Some(template)
+}
 
-  let wrapper = wrapper_element(
-    &elements[0],
-    vec![
-      AnyNode::LiteralNode(Box::new(literal_node("\n"))),
-      conditional.clone(),
-      AnyNode::LiteralNode(Box::new(literal_node("\n"))),
-    ],
-  );
+fn hoist_element(conditional: &mut AnyNode, elements: &[AnyNode], position: Position, state: &mut HoistState, source: &str) {
+  let actual = if position == Position::Before && state.failed_to_hoist_prefix {
+    Position::After
+  } else {
+    position
+  };
 
-  Some(AnyNode::HTMLElementNode(Box::new(wrapper)))
+  if bodies_match(elements, source) {
+    let current: Vec<Vec<AnyNode>> = match branch_slices(conditional) {
+      Some(branches) => branches.iter().map(|branch| significant_owned(branch)).collect(),
+      None => return,
+    };
+
+    if actual == Position::After && current.iter().any(|branch| branch.len() != current[0].len()) {
+      return;
+    }
+
+    if actual == Position::After && position == Position::Before {
+      let at_end = current
+        .iter()
+        .zip(elements.iter())
+        .all(|(branch, element)| branch.last().map(|last| same_location(last.location(), element.location())).unwrap_or(false));
+
+      if !at_end {
+        return;
+      }
+    }
+
+    {
+      let mut branch_arrays = match conditional_branches_mut(conditional) {
+        Some(arrays) => arrays,
+        None => return,
+      };
+
+      for (branch, element) in branch_arrays.iter_mut().zip(elements.iter()) {
+        remove_by_location(branch, element.location());
+      }
+    }
+
+    let newline = || AnyNode::LiteralNode(Box::new(literal_node("\n")));
+
+    if actual == Position::Before {
+      let target = if state.has_wrapped {
+        &mut state.inner_before
+      } else {
+        &mut state.outer_before
+      };
+
+      target.push(elements[0].clone());
+      target.push(newline());
+
+      state.hoisted_before = true;
+    } else {
+      let target = if state.has_wrapped { &mut state.inner_after } else { &mut state.outer_after };
+
+      target.splice(0..0, vec![newline(), elements[0].clone()]);
+    }
+
+    state.did_mutate = true;
+
+    return;
+  }
+
+  if state.has_wrapped {
+    return;
+  }
+
+  let current: Vec<Vec<AnyNode>> = match branch_slices(conditional) {
+    Some(branches) => branches.iter().map(|branch| significant_owned(branch)).collect(),
+    None => return,
+  };
+
+  let can_wrap = current
+    .iter()
+    .zip(elements.iter())
+    .all(|(branch, element)| branch.len() == 1 && same_location(branch[0].location(), element.location()));
+
+  if !can_wrap {
+    if position == Position::Before {
+      state.failed_to_hoist_prefix = true;
+    }
+
+    return;
+  }
+
+  if let Some(template) = wrap_into(conditional, elements) {
+    state.wrapper = Some(template);
+    state.inner_before.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+    state.inner_after.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+    state.has_wrapped = true;
+    state.did_mutate = true;
+  }
 }
 
 fn significant_indices(branch: &[AnyNode]) -> Vec<usize> {

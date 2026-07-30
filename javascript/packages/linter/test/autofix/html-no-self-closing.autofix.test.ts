@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLNoSelfClosingRule } from "../../src/rules/html-no-self-closing.js"
 
 describe("html-no-self-closing autofix", () => {
+  const { autofix } = createAutofixTest(HTMLNoSelfClosingRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<br />'
     const expected = '<br>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<div />'
     const expected = '<div></div>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -36,8 +36,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<br /><hr /><img />'
     const expected = '<br><hr><img>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)
@@ -47,8 +46,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<div class="test" id="main" />'
     const expected = '<div class="test" id="main"></div>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -58,8 +56,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<input type="text" />'
     const expected = '<input type="text">'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -69,8 +66,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<div><br /><span /></div>'
     const expected = '<div><br><span></span></div>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -80,8 +76,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<input type="text" />'
     const expected = '<input type="text">'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -103,8 +98,7 @@ describe("html-no-self-closing autofix", () => {
         >
       </figure>`
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -114,8 +108,7 @@ describe("html-no-self-closing autofix", () => {
     const input = '<img class="x"\n/>'
     const expected = '<img class="x">'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -124,8 +117,7 @@ describe("html-no-self-closing autofix", () => {
   test("does not affect SVG elements", () => {
     const input = '<svg><circle cx="50" cy="50" r="40" /></svg>'
 
-    const linter = new Linter(Herb, [HTMLNoSelfClosingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

@@ -1,11 +1,13 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 
 import { HTMLNoSpaceInTagRule } from "../../src/rules/html-no-space-in-tag.js"
 
 describe("html-no-space-in-tag autofix", () => {
+  const { autofix } = createAutofixTest(HTMLNoSpaceInTagRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -14,8 +16,7 @@ describe("html-no-space-in-tag autofix", () => {
     test("void tag", () => {
       const input = `<img />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -25,8 +26,7 @@ describe("html-no-space-in-tag autofix", () => {
     test("plain tag with attribute", () => {
       const input = `<div class="foo"></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -36,8 +36,7 @@ describe("html-no-space-in-tag autofix", () => {
     test("between attributes", () => {
       const input = `<input class="foo" name="bar">`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -52,8 +51,7 @@ describe("html-no-space-in-tag autofix", () => {
         >
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -63,8 +61,7 @@ describe("html-no-space-in-tag autofix", () => {
     test("tag with erb", () => {
       const input = dedent`<input <%= attributes %>>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -80,8 +77,7 @@ describe("html-no-space-in-tag autofix", () => {
         >
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
       expect(result.unfixed).toHaveLength(0)
@@ -98,8 +94,7 @@ describe("html-no-space-in-tag autofix", () => {
         </div>
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(input)
       expect(result.fixed).toHaveLength(0)
@@ -112,8 +107,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div   ></div>`
       const expected = dedent`<div></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -124,8 +118,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<   div></div>`
       const expected = dedent`<   div></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
@@ -136,8 +129,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div><   /div>`
       const expected = dedent`<div><   /div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
@@ -148,8 +140,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div></   div>`
       const expected = dedent`<div></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -160,8 +151,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div><div /   >`
       const expected = dedent`<div><div /   >`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
@@ -174,8 +164,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div foo='foo'bar='bar'></div>`
       const expected = dedent`<div foo='foo'bar='bar'></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
@@ -186,8 +175,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div foo='bar'/>`
       const expected = dedent`<div foo='bar' />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -198,8 +186,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = `<div/>`
       const expected = `<div />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -212,8 +199,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div  ></div>`
       const expected = dedent`<div></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -224,8 +210,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<img   class="hide">`
       const expected = dedent`<img class="hide">`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -236,8 +221,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<br   />`
       const expected = dedent`<br />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -248,8 +232,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<br class="hide"   />`
       const expected = dedent`<br class="hide" />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -260,8 +243,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<img class="hide"    >`
       const expected = dedent`<img class="hide">`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -272,8 +254,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = dedent`<div foo='foo'      bar='bar'></div>`
       const expected = dedent`<div foo='foo' bar='bar'></div>`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -291,8 +272,7 @@ describe("html-no-space-in-tag autofix", () => {
           type="password" />
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(2)
@@ -310,8 +290,7 @@ describe("html-no-space-in-tag autofix", () => {
         />
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(2)
@@ -331,8 +310,7 @@ describe("html-no-space-in-tag autofix", () => {
           class="foo" />
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(2)
@@ -353,8 +331,7 @@ describe("html-no-space-in-tag autofix", () => {
         />
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -375,8 +352,7 @@ describe("html-no-space-in-tag autofix", () => {
         >
       `
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(1)
@@ -387,8 +363,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = `<input/class="hide" />`
       const expected = `<input/class="hide" />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
@@ -399,8 +374,7 @@ describe("html-no-space-in-tag autofix", () => {
       const input = `<input class="hide"/name="foo" />`
       const expected = `<input class="hide"/name="foo" />`
 
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+      const result = autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)

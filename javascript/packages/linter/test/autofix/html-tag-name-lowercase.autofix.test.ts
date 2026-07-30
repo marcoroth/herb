@@ -1,10 +1,13 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { Linter } from "../../src/linter.js"
 import { HTMLTagNameLowercaseRule } from "../../src/rules/html-tag-name-lowercase.js"
 
 describe("html-tag-name-lowercase autofix", () => {
+  const { autofix } = createAutofixTest(HTMLTagNameLowercaseRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +16,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<DIV>Hello</DIV>`
     const expected = `<div>Hello</div>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -25,8 +27,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<Div><Span>Text</Span></Div>`
     const expected = `<div><span>Text</span></div>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(4)
@@ -36,8 +37,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<BR />`
     const expected = `<br />`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -47,8 +47,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<DIV><UL><LI>Item 1</LI><LI>Item 2</LI></UL></DIV>`
     const expected = `<div><ul><li>Item 1</li><li>Item 2</li></ul></div>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(8)
@@ -58,8 +57,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<DIV class="container" id="main">Content</DIV>`
     const expected = `<div class="container" id="main">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -78,8 +76,7 @@ describe("html-tag-name-lowercase autofix", () => {
       <p>Third</p>
     `
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(6)
@@ -89,8 +86,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<FORM><INPUT type="text"><BUTTON>Submit</BUTTON></FORM>`
     const expected = `<form><input type="text"><button>Submit</button></form>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(5)
@@ -100,8 +96,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<svg><linearGradient></linearGradient></svg>`
     const expected = `<svg><linearGradient></linearGradient></svg>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -111,8 +106,7 @@ describe("html-tag-name-lowercase autofix", () => {
     const input = `<SVG><linearGradient></linearGradient></SVG>`
     const expected = `<svg><linearGradient></linearGradient></svg>`
 
-    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

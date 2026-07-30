@@ -1,12 +1,15 @@
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Config } from "@herb-tools/config"
 import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
+import { Config } from "@herb-tools/config"
 
 import { SourceIndentationRule } from "../../src/rules/source-indentation.js"
 
 describe("source-indentation autofix", () => {
+  const { autofix } = createAutofixTest(SourceIndentationRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -15,8 +18,7 @@ describe("source-indentation autofix", () => {
     const input = "\tthis is a line\n\tanother line\n"
     const expected = "  this is a line\n  another line\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -27,8 +29,7 @@ describe("source-indentation autofix", () => {
     const input = "\t\tthis is a line\n"
     const expected = "    this is a line\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -39,8 +40,7 @@ describe("source-indentation autofix", () => {
     const input = "  \t    this is a line\n  \t  another line\n"
     const expected = "        this is a line\n      another line\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -50,8 +50,7 @@ describe("source-indentation autofix", () => {
   test("ignores space-only indentation", () => {
     const input = "   this is a line\n   another line\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -61,8 +60,7 @@ describe("source-indentation autofix", () => {
   test("ignores lines without indentation", () => {
     const input = "this is a line\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -72,8 +70,7 @@ describe("source-indentation autofix", () => {
   test("ignores tabs in the middle of a line", () => {
     const input = "hello\tworld\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -84,8 +81,7 @@ describe("source-indentation autofix", () => {
     const input = "<div>\n\t<p>hello</p>\n</div>\n"
     const expected = "<div>\n  <p>hello</p>\n</div>\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -96,8 +92,7 @@ describe("source-indentation autofix", () => {
     const input = "\tthis is a line\n\t\tindented twice\n"
     const expected = "    this is a line\n        indented twice\n"
 
-    const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input, { indentWidth: 4 })
+    const result = autofix(input, { indentWidth: 4 })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

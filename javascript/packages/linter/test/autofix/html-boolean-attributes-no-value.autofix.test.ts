@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLBooleanAttributesNoValueRule } from "../../src/rules/html-boolean-attributes-no-value.js"
 
 describe("html-boolean-attributes-no-value autofix", () => {
+  const { autofix } = createAutofixTest(HTMLBooleanAttributesNoValueRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<input type="checkbox" checked="checked">'
     const expected = '<input type="checkbox" checked>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<input type="checkbox" checked="checked" disabled="disabled">'
     const expected = '<input type="checkbox" checked disabled>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -37,8 +37,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<button disabled="true">Submit</button>'
     const expected = '<button disabled>Submit</button>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -48,8 +47,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<input type="checkbox" checked="checked" required="true" />'
     const expected = '<input type="checkbox" checked required />'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -68,8 +66,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
       <video controls autoplay></video>
     `
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(4)
@@ -79,8 +76,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<input type="text" value="test" checked="checked">'
     const expected = '<input type="text" value="test" checked>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -90,8 +86,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<video controls="controls" autoplay="autoplay" loop="loop" muted="muted"></video>'
     const expected = '<video controls autoplay loop muted></video>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(4)
@@ -101,8 +96,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<select multiple="multiple"><option selected="selected">Option</option></select>'
     const expected = '<select multiple><option selected>Option</option></select>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -112,8 +106,7 @@ describe("html-boolean-attributes-no-value autofix", () => {
     const input = '<video controls="something-else"></video>'
     const expected = '<video controls></video>'
 
-    const linter = new Linter(Herb, [HTMLBooleanAttributesNoValueRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

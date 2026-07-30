@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "../../src/rules/actionview-no-unnecessary-tag-attributes.js"
 
 describe("actionview-no-unnecessary-tag-attributes autofix", () => {
+  const { autofix } = createAutofixTest(ActionViewNoUnnecessaryTagAttributesRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
     const input = `<input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>`
     const expected = `<%= tag.input(type: :text, aria: { label: "Search" }) %>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
     const input = `<img <%= tag.attributes(src: image_path("logo.png"), alt: "Logo") %>>`
     const expected = `<%= tag.img(src: image_path("logo.png"), alt: "Logo") %>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -46,8 +46,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
       <% end %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -58,8 +57,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
     const input = `<div <%= tag.attributes(id: "container", class: "wrapper") %>></div>`
     const expected = `<%= tag.div(id: "container", class: "wrapper") %>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -70,8 +68,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
     const input = `<div <%= tag.attributes(id: "container", class: "wrapper") %>>   </div>`
     const expected = `<%= tag.div(id: "container", class: "wrapper") do %>   <% end %>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -82,8 +79,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
     const input = `<br <%= tag.attributes(class: "spacer") %>>`
     const expected = `<%= tag.br(class: "spacer") %>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -93,8 +89,7 @@ describe("actionview-no-unnecessary-tag-attributes autofix", () => {
   test("does not autofix when tag.attributes is mixed with HTML attributes", () => {
     const input = `<button class="primary" <%= tag.attributes(id: "cta") %>>Click</button>`
 
-    const linter = new Linter(Herb, [ActionViewNoUnnecessaryTagAttributesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

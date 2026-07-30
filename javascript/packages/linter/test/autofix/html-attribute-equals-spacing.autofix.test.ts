@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLAttributeEqualsSpacingRule } from "../../src/rules/html-attribute-equals-spacing.js"
 
 describe("html-attribute-equals-spacing autofix", () => {
+  const { autofix } = createAutofixTest(HTMLAttributeEqualsSpacingRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -12,8 +14,7 @@ describe("html-attribute-equals-spacing autofix", () => {
     const input = `<div class ="container">Content</div>`
     const expected = `<div class="container">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeEqualsSpacingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -24,8 +25,7 @@ describe("html-attribute-equals-spacing autofix", () => {
     const input = `<div class= "container">Content</div>`
     const expected = `<div class="container">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeEqualsSpacingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -35,8 +35,7 @@ describe("html-attribute-equals-spacing autofix", () => {
     const input = `<div class = "container">Content</div>`
     const expected = `<div class="container">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeEqualsSpacingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -46,8 +45,7 @@ describe("html-attribute-equals-spacing autofix", () => {
     const input = `<div class ="outer" id= "main">Content</div>`
     const expected = `<div class="outer" id="main">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeEqualsSpacingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed.length).toBeGreaterThanOrEqual(2)
@@ -57,8 +55,7 @@ describe("html-attribute-equals-spacing autofix", () => {
     const input = `<div class ="outer"><span id= "inner">Text</span></div>`
     const expected = `<div class="outer"><span id="inner">Text</span></div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeEqualsSpacingRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

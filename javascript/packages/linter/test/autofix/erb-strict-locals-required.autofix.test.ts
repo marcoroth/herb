@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBStrictLocalsRequiredRule } from "../../src/rules/erb-strict-locals-required.js"
 
 describe("erb-strict-locals-required autofix", () => {
+  const { unsafeAutofix } = createAutofixTest(ERBStrictLocalsRequiredRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -12,8 +14,7 @@ describe("erb-strict-locals-required autofix", () => {
   test("does not apply unsafe fix by default", () => {
     const input = '<div>Content</div>'
 
-    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' })
+    const result = autofix(input, { fileName: '_partial.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -24,8 +25,7 @@ describe("erb-strict-locals-required autofix", () => {
     const input = '<div>Content</div>'
     const expected = '<%# locals: () %>\n\n<div>Content</div>'
 
-    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: '_partial.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -38,8 +38,7 @@ describe("erb-strict-locals-required autofix", () => {
       <div><%= user.name %></div>
     `
 
-    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_partial.html.erb' }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: '_partial.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -49,8 +48,7 @@ describe("erb-strict-locals-required autofix", () => {
   test("does not modify non-partial files", () => {
     const input = '<div>Content</div>'
 
-    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: 'show.html.erb' }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: 'show.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -67,8 +65,7 @@ describe("erb-strict-locals-required autofix", () => {
 
     const expected = `<%# locals: () %>\n\n${input}`
 
-    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
-    const result = linter.autofix(input, { fileName: '_card.html.erb' }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: '_card.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

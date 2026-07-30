@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBPreferDirectOutputRule } from "../../src/rules/erb-prefer-direct-output.js"
 
 describe("erb-prefer-direct-output autofix", () => {
+  const { autofix } = createAutofixTest(ERBPreferDirectOutputRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "Title" %>'
     const expected = "Title"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = "<%= 'Title' %>"
     const expected = "Title"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -36,8 +36,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "" %>'
     const expected = ""
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -47,8 +46,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "#{key}" %>'
     const expected = "<%= key %>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -58,8 +56,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "#{key} (#{participants.size})" %>'
     const expected = "<%= key %> (<%= participants.size %>)"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -69,8 +66,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "#{key}#{value}" %>'
     const expected = "<%= key %><%= value %>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -80,8 +76,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "Hello #{name}" %>'
     const expected = "Hello <%= name %>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -91,8 +86,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "#{name}!" %>'
     const expected = "<%= name %>!"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -102,8 +96,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%== "#{key}" %>'
     const expected = "<%== key %>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -113,8 +106,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<h1><%= "Title" %></h1>'
     const expected = "<h1>Title</h1>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -135,8 +127,7 @@ describe("erb-prefer-direct-output autofix", () => {
       </div>
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -146,8 +137,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<span><%= "#{count} items" %></span>'
     const expected = "<span><%= count %> items</span>"
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -164,8 +154,7 @@ describe("erb-prefer-direct-output autofix", () => {
       <%= object.attribute %>(<%= data %>)
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -182,8 +171,7 @@ describe("erb-prefer-direct-output autofix", () => {
       <%= object.attribute %>(<%= data %>)
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -193,8 +181,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "→ #{label} ←" %>'
     const expected = '→ <%= label %> ←'
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -211,8 +198,7 @@ describe("erb-prefer-direct-output autofix", () => {
       <p><%= @organisation.slug %>.<%= AppHost.base_host %></p>
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -229,8 +215,7 @@ describe("erb-prefer-direct-output autofix", () => {
       <strong><%= @organisation.slug %>.<%= AppHost.base_host %></strong>
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -240,8 +225,7 @@ describe("erb-prefer-direct-output autofix", () => {
     const input = '<%= "#{first}  – " %>\n<%= "#{second} - " %>'
     const expected = '<%= first %>  – \n<%= second %> - '
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -260,8 +244,7 @@ describe("erb-prefer-direct-output autofix", () => {
       <%= c %> - ok
     `
 
-    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)

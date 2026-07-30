@@ -3,11 +3,13 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 
 import { ERBNoExtraNewLineRule } from "../../src/rules/erb-no-extra-newline.js"
 
 describe("erb-no-extra-newline autofix", () => {
+  const { autofix } = createAutofixTest(ERBNoExtraNewLineRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -27,8 +29,7 @@ describe("erb-no-extra-newline autofix", () => {
 
       line 2
     `
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -47,8 +48,7 @@ describe("erb-no-extra-newline autofix", () => {
       line 2
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -69,8 +69,7 @@ describe("erb-no-extra-newline autofix", () => {
       line 2
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -100,8 +99,7 @@ describe("erb-no-extra-newline autofix", () => {
       line 3
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -125,8 +123,7 @@ describe("erb-no-extra-newline autofix", () => {
       line 2
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -149,8 +146,7 @@ describe("erb-no-extra-newline autofix", () => {
       <div>World</div>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -173,8 +169,7 @@ describe("erb-no-extra-newline autofix", () => {
       <%= other_content %>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -194,8 +189,7 @@ describe("erb-no-extra-newline autofix", () => {
       line 3
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -206,8 +200,7 @@ describe("erb-no-extra-newline autofix", () => {
     const input = ''
     const expected = ''
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -218,8 +211,7 @@ describe("erb-no-extra-newline autofix", () => {
     const input = '\n\n\n\n\n'
     const expected = '\n\n\n'
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -246,8 +238,7 @@ describe("erb-no-extra-newline autofix", () => {
       </div>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -273,8 +264,7 @@ describe("erb-no-extra-newline autofix", () => {
       </div>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)

@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import dedent from "dedent"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBCommentSyntax } from "../../src/rules/erb-comment-syntax.js"
 
 describe("erb-comment-syntax autofix", () => {
+  const { autofix } = createAutofixTest(ERBCommentSyntax)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<% # bad comment %>'
     const expected = '<%# bad comment %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%= # bad comment %>'
     const expected = '<%# bad comment %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -44,8 +44,7 @@ describe("erb-comment-syntax autofix", () => {
       <%# second bad comment %>
     `
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -56,8 +55,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<DIV></DIV><% # herb:disable html-tag-name-lowercase %>'
     const expected = '<DIV></DIV><%# herb:disable html-tag-name-lowercase %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -68,8 +66,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<DIV></DIV><% # herb:disable all %>'
     const expected = '<DIV></DIV><%# herb:disable all %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -80,8 +77,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<DIV></DIV><%  #  herb:disable html-tag-name-lowercase %>'
     const expected = '<DIV></DIV><%#  herb:disable html-tag-name-lowercase %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -92,8 +88,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%# good comment %>'
     const expected = '<%# good comment %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -113,8 +108,7 @@ describe("erb-comment-syntax autofix", () => {
       %>
     `
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -138,8 +132,7 @@ describe("erb-comment-syntax autofix", () => {
       </div>
     `
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -150,8 +143,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%== # escaped output comment %>'
     const expected = '<%# escaped output comment %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -162,8 +154,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%=   # comment with multiple spaces %>'
     const expected = '<%# comment with multiple spaces %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -174,8 +165,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%-  # trim tag comment %>'
     const expected = '<%# trim tag comment %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -186,8 +176,7 @@ describe("erb-comment-syntax autofix", () => {
     const input = '<%    # comment with many spaces %>'
     const expected = '<%# comment with many spaces %>'
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -213,8 +202,7 @@ describe("erb-comment-syntax autofix", () => {
       <%# many spaces %>
     `
 
-    const linter = new Linter(Herb, [ERBCommentSyntax])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(6)

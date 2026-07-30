@@ -1,10 +1,12 @@
 import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLAttributeDoubleQuotesRule } from "../../src/rules/html-attribute-double-quotes.js"
 
 describe("html-attribute-double-quotes autofix", () => {
+  const { autofix } = createAutofixTest(HTMLAttributeDoubleQuotesRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("html-attribute-double-quotes autofix", () => {
     const input = `<div class='container'>Content</div>`
     const expected = `<div class="container">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("html-attribute-double-quotes autofix", () => {
     const input = `<div class='container' id='main' data-value='test'>Content</div>`
     const expected = `<div class="container" id="main" data-value="test">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)
@@ -36,8 +36,7 @@ describe("html-attribute-double-quotes autofix", () => {
     const input = `<div class='outer'><span class='inner'>Text</span></div>`
     const expected = `<div class="outer"><span class="inner">Text</span></div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -47,8 +46,7 @@ describe("html-attribute-double-quotes autofix", () => {
     const input = `<div data-text='Hello, World!'>Content</div>`
     const expected = `<div data-text="Hello, World!">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -67,8 +65,7 @@ describe("html-attribute-double-quotes autofix", () => {
         </div>
     `
 
-    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

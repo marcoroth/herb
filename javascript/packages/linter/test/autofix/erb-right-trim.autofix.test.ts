@@ -3,11 +3,13 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 
 import { ERBRightTrimRule } from "../../src/rules/erb-right-trim.js"
 
 describe("erb-right-trim autofix", () => {
+  const { autofix } = createAutofixTest(ERBRightTrimRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -19,8 +21,7 @@ describe("erb-right-trim autofix", () => {
       </h1>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -34,8 +35,7 @@ describe("erb-right-trim autofix", () => {
       </h1>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -55,8 +55,7 @@ describe("erb-right-trim autofix", () => {
       <% end -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -76,8 +75,7 @@ describe("erb-right-trim autofix", () => {
       </h1>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -97,8 +95,7 @@ describe("erb-right-trim autofix", () => {
       <% end -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -118,8 +115,7 @@ describe("erb-right-trim autofix", () => {
       <% end %>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -139,8 +135,7 @@ describe("erb-right-trim autofix", () => {
       <%= third -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)
@@ -162,8 +157,7 @@ describe("erb-right-trim autofix", () => {
       <%= another_invalid -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -179,8 +173,7 @@ describe("erb-right-trim autofix", () => {
       <% silent_operation -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -204,8 +197,7 @@ describe("erb-right-trim autofix", () => {
       <% end %>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -217,8 +209,7 @@ describe("erb-right-trim autofix", () => {
       <%- something -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -232,8 +223,7 @@ describe("erb-right-trim autofix", () => {
       <%- end -%>
     `
 
-    const linter = new Linter(Herb, [ERBRightTrimRule])
-    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+    const result = autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)

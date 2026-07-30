@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "../../src/rules/html-attribute-values-require-quotes.js"
 
 describe("html-attribute-values-require-quotes autofix", () => {
+  const { autofix } = createAutofixTest(HTMLAttributeValuesRequireQuotesRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -12,8 +14,7 @@ describe("html-attribute-values-require-quotes autofix", () => {
     const input = `<div class=container>Content</div>`
     const expected = `<div class="container">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeValuesRequireQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -24,8 +25,7 @@ describe("html-attribute-values-require-quotes autofix", () => {
     const input = `<div class=container id=main data-value=test>Content</div>`
     const expected = `<div class="container" id="main" data-value="test">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeValuesRequireQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)
@@ -35,8 +35,7 @@ describe("html-attribute-values-require-quotes autofix", () => {
     const input = `<div class=outer><span id=inner>Text</span></div>`
     const expected = `<div class="outer"><span id="inner">Text</span></div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeValuesRequireQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -46,8 +45,7 @@ describe("html-attribute-values-require-quotes autofix", () => {
     const input = `<div class="quoted" id=unquoted>Content</div>`
     const expected = `<div class="quoted" id="unquoted">Content</div>`
 
-    const linter = new Linter(Herb, [HTMLAttributeValuesRequireQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -57,8 +55,7 @@ describe("html-attribute-values-require-quotes autofix", () => {
     const input = `<input type=text maxlength=100>`
     const expected = `<input type="text" maxlength="100">`
 
-    const linter = new Linter(Herb, [HTMLAttributeValuesRequireQuotesRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

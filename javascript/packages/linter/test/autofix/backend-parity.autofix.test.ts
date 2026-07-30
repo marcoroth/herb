@@ -1,8 +1,7 @@
-import dedent from "dedent"
 import { describe, test, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 
-import { expectAutofix } from "../helpers/autofix-test-helper.js"
+import { expectAutofix, expectUnsafeAutofix } from "../helpers/autofix-test-helper.js"
 
 import { ERBNoExtraNewLineRule } from "../../src/rules/erb-no-extra-newline.js"
 import { ERBRequireTrailingNewlineRule } from "../../src/rules/erb-require-trailing-newline.js"
@@ -91,16 +90,16 @@ describe("autofix backend parity", () => {
   })
 
   test("erb-strict-locals-required", () => {
-    expectAutofix(ERBStrictLocalsRequiredRule, `<div>a</div>\n`, `<%# locals: () %>\n\n<div>a</div>\n`, { fileName: "_partial.html.erb", includeUnsafe: true })
+    expectUnsafeAutofix(ERBStrictLocalsRequiredRule, `<div>a</div>\n`, `<%# locals: () %>\n\n<div>a</div>\n`, { fileName: "_partial.html.erb" })
   })
 
   test("actionview-strict-locals-partial-only", () => {
-    expectAutofix(ActionViewStrictLocalsPartialOnlyRule, `<%# locals: (a:) %>\n\n<div>a</div>\n`, `<div>a</div>\n`, { fileName: "page.html.erb", includeUnsafe: true })
+    expectUnsafeAutofix(ActionViewStrictLocalsPartialOnlyRule, `<%# locals: (a:) %>\n\n<div>a</div>\n`, `<div>a</div>\n`, { fileName: "page.html.erb" })
   })
 
   test("html-no-unescaped-entities", () => {
-    expectAutofix(HTMLNoUnescapedEntitiesRule, `<p>a & b</p>`, `<p>a &amp; b</p>`, { includeUnsafe: true })
-    expectAutofix(HTMLNoUnescapedEntitiesRule, `<p>a &amp; b</p>`, `<p>a &amp; b</p>`, { includeUnsafe: true })
+    expectUnsafeAutofix(HTMLNoUnescapedEntitiesRule, `<p>a & b</p>`, `<p>a &amp; b</p>`)
+    expectUnsafeAutofix(HTMLNoUnescapedEntitiesRule, `<p>a &amp; b</p>`, `<p>a &amp; b</p>`)
   })
 
   test("erb-no-trailing-whitespace", () => {

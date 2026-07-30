@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import dedent from "dedent"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBNoExtraWhitespaceRule } from "../../src/rules/erb-no-extra-whitespace-inside-tags.js"
 
 describe("erb-no-extra-whitespace-inside-tags autofix", () => {
+  const { autofix } = createAutofixTest(ERBNoExtraWhitespaceRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -13,8 +15,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%  if true %>\n<% end %>'
     const expected = '<% if true %>\n<% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -25,8 +26,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<% if admin  %>\n<% end %>'
     const expected = '<% if admin %>\n<% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -36,8 +36,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%  if true  %><% end %>'
     const expected = '<% if true %><% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -47,8 +46,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%=  user.name  %>'
     const expected = '<%= user.name %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -58,8 +56,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%#  This is a comment  %>'
     const expected = '<%# This is a comment %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -69,8 +66,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%#=  link_to "path", path  %>'
     const expected = '<%#= link_to "path", path %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -89,8 +85,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
       <% end %>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(6)
@@ -100,8 +95,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<% if admin %>\n  Hello\n<% end %>'
     const expected = '<% if admin %>\n  Hello\n<% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -111,8 +105,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%    if admin    %><% end %>'
     const expected = '<% if admin %><% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -122,8 +115,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%  if user %><% end %>'
     const expected = '<% if user %><% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -133,8 +125,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<% if admin  %><% end %>'
     const expected = '<% if admin %><% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -144,8 +135,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<% if admin %>\n  <%=  name  %>\n<% end %>'
     const expected = '<% if admin %>\n  <%= name %>\n<% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -155,8 +145,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%  \tif true %>\n<% end %>'
     const expected = '<% if true %>\n<% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -166,8 +155,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
     const input = '<%\n  if admin\n%><% end %>'
     const expected = '<%\n  if admin\n%><% end %>'
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
@@ -190,8 +178,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
       <%= user.email %>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(6)
@@ -206,8 +193,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
         %>
       </h3>
     `
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -232,8 +218,7 @@ describe("erb-no-extra-whitespace-inside-tags autofix", () => {
       </h3>
     `
 
-    const linter = new Linter(Herb, [ERBNoExtraWhitespaceRule])
-    const result = linter.autofix(input)
+    const result = autofix(input)
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

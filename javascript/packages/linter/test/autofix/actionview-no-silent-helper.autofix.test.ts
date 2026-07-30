@@ -3,11 +3,13 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 
 import { ActionViewNoSilentHelperRule } from "../../src/rules/actionview-no-silent-helper.js"
 
 describe("actionview-no-silent-helper autofix", () => {
+  const { unsafeAutofix } = createAutofixTest(ActionViewNoSilentHelperRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
@@ -17,8 +19,7 @@ describe("actionview-no-silent-helper autofix", () => {
       <%= link_to "Home", root_path %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -34,8 +35,7 @@ describe("actionview-no-silent-helper autofix", () => {
       <%= link_to "Home", root_path %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -51,8 +51,7 @@ describe("actionview-no-silent-helper autofix", () => {
       <%= content_tag :div, "Hello", class: "greeting" %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -68,8 +67,7 @@ describe("actionview-no-silent-helper autofix", () => {
       <%= link_to "Home", root_path %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -85,8 +83,7 @@ describe("actionview-no-silent-helper autofix", () => {
       <%= turbo_frame_tag "test" %>
     `
 
-    const linter = new Linter(Herb, [ActionViewNoSilentHelperRule])
-    const result = linter.autofix(input, { fileName: "test.html.erb" }, undefined, { includeUnsafe: true })
+    const result = unsafeAutofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

@@ -1,18 +1,15 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import dedent from "dedent"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
 import { ERBNoDuplicateBranchElementsRule } from "../../src/rules/erb-no-duplicate-branch-elements.js"
+import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 
 describe("erb-no-duplicate-branch-elements autofix", () => {
+  const { autofix } = createAutofixTest(ERBNoDuplicateBranchElementsRule)
+
   beforeAll(async () => {
     await Herb.load()
   })
-
-  function autofix(input: string) {
-    const linter = new Linter(Herb, [ERBNoDuplicateBranchElementsRule])
-    return linter.autofix(input)
-  }
 
   describe("wrapping element (bodies differ, single element per branch)", () => {
     test("basic if/else with same wrapping div", () => {
