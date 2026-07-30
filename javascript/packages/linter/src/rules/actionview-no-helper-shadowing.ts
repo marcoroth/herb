@@ -1,9 +1,11 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { PrismVisitor } from "@herb-tools/core"
 
-import { getHelperEntries, isRubyParameterNode, isPrismNodeType, PrismVisitor, locationFromByteOffset } from "@herb-tools/core"
+import { getHelperEntries, isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig, LintSeverity } from "../types.js"
+
 import type {
   ParseResult,
   ParserOptions,
@@ -14,13 +16,11 @@ import type {
   ERBForNode,
   Node,
   PrismNode,
+  Location,
 } from "@herb-tools/core"
 
-const SHADOWABLE_HELPER_NAMES = new Set(
-  getHelperEntries()
-    .filter(helper => helper.supported)
-    .flatMap(helper => [helper.name, ...helper.aliases])
-)
+const ALL_HELPER_NAMES = new Set(getHelperEntries().filter(helper => helper.visibility === "public").flatMap(helper => [helper.name, ...helper.aliases]))
+const TRANSFORMED_HELPER_NAMES = new Set(getHelperEntries().filter(helper => helper.supported).flatMap(helper => [helper.name, ...helper.aliases]))
 
 interface LocalBinding {
   name: string
@@ -86,6 +86,14 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
     this.visitChildNodes(node)
   }
 
+  private report(name: string, location: Location): void {
+    if (!ALL_HELPER_NAMES.has(name)) return
+
+    const severity: LintSeverity | undefined = TRANSFORMED_HELPER_NAMES.has(name) ? undefined : "hint"
+
+    this.addOffense(shadowingMessage(name), location, undefined, severity)
+  }
+
   private checkParameters(parameters: Node[] | null | undefined): void {
     if (!parameters) return
 
@@ -94,9 +102,7 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
 
       const name = parameter.name?.value
 
-      if (!name || !SHADOWABLE_HELPER_NAMES.has(name)) continue
-
-      this.addOffense(shadowingMessage(name), parameter.name!.location)
+      if (name) this.report(name, parameter.name!.location)
     }
   }
 
@@ -110,12 +116,7 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
     collector.visit(prismNode)
 
     for (const binding of collector.bindings) {
-      if (!SHADOWABLE_HELPER_NAMES.has(binding.name)) continue
-
-      this.addOffense(
-        shadowingMessage(binding.name),
-        locationFromByteOffset(source, binding.startOffset, binding.length),
-      )
+      this.report(binding.name, locationFromByteOffset(source, binding.startOffset, binding.length))
     }
   }
 
@@ -129,9 +130,7 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
     for (const rawTarget of match[1].split(",")) {
       const name = rawTarget.trim().replace(/^\*/, "")
 
-      if (!/^[A-Za-z_]\w*$/.test(name) || !SHADOWABLE_HELPER_NAMES.has(name)) continue
-
-      this.addOffense(shadowingMessage(name), content.location)
+      if (/^[A-Za-z_]\w*$/.test(name)) this.report(name, content.location)
     }
   }
 }
@@ -143,7 +142,7 @@ export class ActionViewNoHelperShadowingRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "warning"
+      severity: "error"
     }
   }
 
