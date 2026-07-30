@@ -148,7 +148,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, failOnBackendMismatch, failLevel, jobs } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -453,6 +453,10 @@ export class CLI {
       if (results.backendMismatches !== undefined) {
         const report = formatMismatchReport(results.backendMismatches, files.length)
         process.stderr.write(report + "\n")
+
+        if (failOnBackendMismatch && results.backendMismatches.length > 0) {
+          process.exit(2)
+        }
       }
 
       const effectiveFailLevel = failLevel || linterConfig.failLevel

@@ -147,3 +147,98 @@ jobs:
           name: corpus-runs
           path: corpus/runs/*.json
           retention-days: 30
+
+  linter-parity:
+    name: Linter Parity
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-emscripten
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build the Rust linter for WASM
+        run: cargo build -p herb-linter --release --target wasm32-unknown-emscripten
+        working-directory: rust
+
+      - name: Build the WASM backend
+        run: yarn build
+        working-directory: javascript/packages/node-wasm
+
+      - name: Build the linter
+        run: yarn build
+        working-directory: javascript/packages/linter
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Compare the JavaScript and Rust backends
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          javascript/packages/linter/bin/herb-lint corpus/erb \
+            --fail-on-backend-mismatch \
+            --no-timing \
+            --format simple 2>&1 | tee parity.txt
+
+          status=${PIPESTATUS[0]}
+
+          if [ "$status" -eq 2 ]; then
+            echo "::error::The JavaScript and Rust linter backends disagree on the corpus"
+            exit 1
+          fi
+
+          echo "No backend mismatches."
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Linter backend parity"
+            echo
+            echo '```'
+            tail -n 40 parity.txt 2>/dev/null || echo "the comparison did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
