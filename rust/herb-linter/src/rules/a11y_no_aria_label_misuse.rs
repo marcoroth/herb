@@ -36,7 +36,8 @@ define_parser_rule!(
   Warning,
   NoAriaLabelMisuseVisitor,
   enabled: false,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.10.2"
 );
 
 impl NoAriaLabelMisuseVisitor {

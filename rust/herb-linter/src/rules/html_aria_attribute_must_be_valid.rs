@@ -66,7 +66,8 @@ define_parser_rule!(
   HTMLAriaAttributeMustBeValidRule,
   "html-aria-attribute-must-be-valid",
   Warning,
-  AriaAttributeMustBeValidVisitor
+  AriaAttributeMustBeValidVisitor,
+  introduced_in: "0.4.1"
 );
 
 impl Visitor for AriaAttributeMustBeValidVisitor {

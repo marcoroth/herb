@@ -9,7 +9,8 @@ define_parser_rule!(
   "actionview-no-silent-render",
   Error,
   ActionViewNoSilentRenderVisitor,
-  parser_options: { render_nodes: true }
+  parser_options: { render_nodes: true },
+  introduced_in: "0.9.1"
 );
 
 impl Visitor for ActionViewNoSilentRenderVisitor {

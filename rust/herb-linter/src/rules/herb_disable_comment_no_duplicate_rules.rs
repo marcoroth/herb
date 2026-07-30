@@ -10,7 +10,8 @@ define_parser_rule!(
   HerbDisableCommentNoDuplicateRulesRule,
   "herb-disable-comment-no-duplicate-rules",
   Warning,
-  NoDuplicateRulesVisitor
+  NoDuplicateRulesVisitor,
+  introduced_in: "0.8.0"
 );
 
 impl Visitor for NoDuplicateRulesVisitor {

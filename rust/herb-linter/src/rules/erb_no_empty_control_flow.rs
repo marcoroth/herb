@@ -259,6 +259,10 @@ impl Rule for ERBNoEmptyControlFlowRule {
     "erb-no-empty-control-flow"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.9.1")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Hint)
   }

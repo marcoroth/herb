@@ -16,7 +16,8 @@ define_parser_rule!(
   Error,
   NoExtraWhitespaceInsideTagsVisitor,
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.8.0"
 );
 
 impl NoExtraWhitespaceInsideTagsVisitor {

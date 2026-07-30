@@ -11,7 +11,8 @@ define_parser_rule!(
   Warning,
   ERBNoSilentStatementVisitor,
   enabled: false,
-  parser_options: { prism_nodes: true }
+  parser_options: { prism_nodes: true },
+  introduced_in: "0.9.1"
 );
 
 impl Visitor for ERBNoSilentStatementVisitor {

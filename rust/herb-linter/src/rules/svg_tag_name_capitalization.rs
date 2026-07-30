@@ -147,6 +147,10 @@ impl Rule for SVGTagNameCapitalizationRule {
     "svg-tag-name-capitalization"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.4.2")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

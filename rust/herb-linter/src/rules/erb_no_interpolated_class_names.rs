@@ -10,7 +10,8 @@ define_parser_rule!(
   ERBNoInterpolatedClassNamesRule,
   "erb-no-interpolated-class-names",
   Warning,
-  ERBNoInterpolatedClassNamesVisitor
+  ERBNoInterpolatedClassNamesVisitor,
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for ERBNoInterpolatedClassNamesVisitor {

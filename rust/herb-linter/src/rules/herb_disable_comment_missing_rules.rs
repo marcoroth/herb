@@ -8,7 +8,8 @@ define_parser_rule!(
   HerbDisableCommentMissingRulesRule,
   "herb-disable-comment-missing-rules",
   Error,
-  MissingRulesVisitor
+  MissingRulesVisitor,
+  introduced_in: "0.8.0"
 );
 
 impl Visitor for MissingRulesVisitor {

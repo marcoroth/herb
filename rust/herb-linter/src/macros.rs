@@ -55,7 +55,8 @@ macro_rules! define_parser_rule {
    $(, autocorrectable: $autocorrectable:expr)?
    $(, unsafe_autocorrectable: $unsafe_autocorrectable:expr)?
    $(, reindent_after_autofix: $reindent:expr)?
-   $(, autofix: $autofix:path)?) => {
+   $(, autofix: $autofix:path)?
+   $(, introduced_in: $introduced_in:expr)?) => {
     pub struct $rule;
 
     impl $crate::rule::Rule for $rule {
@@ -66,6 +67,12 @@ macro_rules! define_parser_rule {
       fn default_severity(&self) -> herb_config::SeverityConfig {
         severity_config!($severity)
       }
+
+      $(
+        fn introduced_in(&self) -> Option<&'static str> {
+          Some($introduced_in)
+        }
+      )?
 
       $(
         fn default_enabled(&self) -> bool {
@@ -221,7 +228,8 @@ macro_rules! define_source_rule {
    $(, has_autofix: $has_autofix:expr)?
    $(, autocorrectable: $autocorrectable:expr)?
    $(, unsafe_autocorrectable: $unsafe_autocorrectable:expr)?
-   $(, reindent_after_autofix: $reindent:expr)?) => {
+   $(, reindent_after_autofix: $reindent:expr)?
+   $(, introduced_in: $introduced_in:expr)?) => {
     pub struct $rule;
 
     impl $crate::rule::Rule for $rule {
@@ -232,6 +240,12 @@ macro_rules! define_source_rule {
       fn default_severity(&self) -> herb_config::SeverityConfig {
         severity_config!($severity)
       }
+
+      $(
+        fn introduced_in(&self) -> Option<&'static str> {
+          Some($introduced_in)
+        }
+      )?
 
       $(
         fn default_enabled(&self) -> bool {

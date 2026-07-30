@@ -8,7 +8,8 @@ define_parser_rule!(
   "erb-no-then-in-control-flow",
   Warning,
   ERBNoThenInControlFlowVisitor,
-  parser_options: { strict: true }
+  parser_options: { strict: true },
+  introduced_in: "0.9.0"
 );
 
 impl ERBNoThenInControlFlowVisitor {

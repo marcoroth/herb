@@ -5,7 +5,9 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(AriaRoleMustBeValidVisitor);
-define_parser_rule!(HTMLAriaRoleMustBeValidRule, "html-aria-role-must-be-valid", Warning, AriaRoleMustBeValidVisitor);
+define_parser_rule!(HTMLAriaRoleMustBeValidRule, "html-aria-role-must-be-valid", Warning, AriaRoleMustBeValidVisitor,
+  introduced_in: "0.4.1"
+);
 
 impl Visitor for AriaRoleMustBeValidVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

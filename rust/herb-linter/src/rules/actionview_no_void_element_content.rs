@@ -11,6 +11,10 @@ impl Rule for ActionViewNoVoidElementContentRule {
     "actionview-no-void-element-content"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.9.3")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

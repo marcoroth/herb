@@ -4,7 +4,9 @@ use herb::nodes::ERBContentNode;
 use herb::Visitor;
 
 rule_visitor!(MalformedVisitor);
-define_parser_rule!(HerbDisableCommentMalformedRule, "herb-disable-comment-malformed", Error, MalformedVisitor);
+define_parser_rule!(HerbDisableCommentMalformedRule, "herb-disable-comment-malformed", Error, MalformedVisitor,
+  introduced_in: "0.8.0"
+);
 
 impl Visitor for MalformedVisitor {
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {

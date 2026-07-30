@@ -9,7 +9,8 @@ define_parser_rule!(
   "html-anchor-require-href",
   Error,
   AnchorRequireHrefVisitor,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.4.0"
 );
 
 impl AnchorRequireHrefVisitor {

@@ -18,14 +18,24 @@ unsafe fn parse_config(config_json: *const c_char) -> Config {
     Err(_) => return Config::default(),
   };
 
-  let options: HerbConfigOptions = match serde_json::from_str(json) {
+  let mut value: serde_json::Value = match serde_json::from_str(json) {
+    Ok(value) => value,
+    Err(_) => return Config::default(),
+  };
+
+  let config_version = value
+    .as_object_mut()
+    .and_then(|object| object.remove("version"))
+    .and_then(|version| version.as_str().map(String::from));
+
+  let options: HerbConfigOptions = match serde_json::from_value(value) {
     Ok(options) => options,
     Err(_) => return Config::default(),
   };
 
   let project_path = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
 
-  Config::from_object(&options, &project_path, None, None).unwrap_or_default()
+  Config::from_object(&options, &project_path, None, config_version).unwrap_or_default()
 }
 
 #[repr(C)]

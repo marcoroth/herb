@@ -9,7 +9,8 @@ define_parser_rule!(
   "html-details-has-summary",
   Warning,
   DetailsHasSummaryVisitor,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.9.0"
 );
 
 impl DetailsHasSummaryVisitor {

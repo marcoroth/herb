@@ -19,7 +19,8 @@ define_parser_rule!(
   exclude: ["**/views/**/*_mailer/**/*"],
   parser_options: { action_view_helpers: true },
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.6.0"
 );
 
 impl Visitor for NoSelfClosingVisitor {

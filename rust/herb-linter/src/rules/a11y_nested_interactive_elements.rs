@@ -68,6 +68,10 @@ impl Rule for A11yNestedInteractiveElementsRule {
     "a11y-nested-interactive-elements"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.10.2")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

@@ -18,7 +18,8 @@ define_parser_rule!(
   ActionViewNoUnnecessaryTagAttributesVisitor,
   parser_options: { prism_nodes: true },
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.9.3"
 );
 
 fn has_only_tag_attributes_children(open_tag: &HTMLOpenTagNode) -> bool {

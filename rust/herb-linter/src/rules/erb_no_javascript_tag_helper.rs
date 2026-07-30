@@ -10,7 +10,8 @@ define_parser_rule!(
   "erb-no-javascript-tag-helper",
   Warning,
   ERBNoJavascriptTagHelperVisitor,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.9.0"
 );
 
 fn javascript_tag_element_source() -> &'static str {

@@ -13,7 +13,8 @@ define_parser_rule!(
   Warning,
   NoUnknownTagVisitor,
   exclude: ["**/*.xml.erb"],
-  parser_options: { action_view_helpers: true, dot_notation_tags: true }
+  parser_options: { action_view_helpers: true, dot_notation_tags: true },
+  introduced_in: "0.9.3"
 );
 
 fn is_component_element(node: &HTMLElementNode) -> bool {

@@ -3,7 +3,9 @@ use crate::rule::{LintContext, Rule, SourceRule};
 
 use herb::Location;
 
-define_source_rule!(ERBRequireTrailingNewlineRule, "erb-require-trailing-newline", Error, has_autofix: true, autocorrectable: true);
+define_source_rule!(ERBRequireTrailingNewlineRule, "erb-require-trailing-newline", Error, has_autofix: true, autocorrectable: true,
+  introduced_in: "0.8.0"
+);
 
 fn create_end_of_file_location(source: &str) -> Location {
   let lines: Vec<&str> = source.split('\n').collect();

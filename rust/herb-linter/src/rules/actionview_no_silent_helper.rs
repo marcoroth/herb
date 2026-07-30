@@ -11,7 +11,8 @@ define_parser_rule!(
   "actionview-no-silent-helper",
   Error,
   ActionViewNoSilentHelperVisitor,
-  parser_options: { action_view_helpers: true, prism_nodes: true }
+  parser_options: { action_view_helpers: true, prism_nodes: true },
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for ActionViewNoSilentHelperVisitor {

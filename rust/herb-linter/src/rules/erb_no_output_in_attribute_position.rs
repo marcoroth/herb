@@ -10,7 +10,8 @@ define_parser_rule!(
   "erb-no-output-in-attribute-position",
   Error,
   ERBNoOutputInAttributePositionVisitor,
-  parser_options: { prism_nodes: true }
+  parser_options: { prism_nodes: true },
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for ERBNoOutputInAttributePositionVisitor {

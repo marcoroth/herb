@@ -4,7 +4,9 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(TurboPermanentRequireIdVisitor);
-define_parser_rule!(TurboPermanentRequireIdRule, "turbo-permanent-require-id", Error, TurboPermanentRequireIdVisitor);
+define_parser_rule!(TurboPermanentRequireIdRule, "turbo-permanent-require-id", Error, TurboPermanentRequireIdVisitor,
+  introduced_in: "0.9.0"
+);
 
 impl Visitor for TurboPermanentRequireIdVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

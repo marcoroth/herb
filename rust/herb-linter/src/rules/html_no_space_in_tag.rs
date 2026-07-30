@@ -8,7 +8,8 @@ use herb::Visitor;
 
 rule_visitor!(HTMLNoSpaceInTagVisitor);
 define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor, enabled: false,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.8.0"
 );
 
 const EXTRA_SPACE_NO_SPACE: &str = "Extra space detected where there should be no space.";

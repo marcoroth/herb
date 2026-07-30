@@ -8,7 +8,9 @@ use herb::union_types::ERBElseNodeOrERBIfNode;
 use herb::Visitor;
 
 rule_visitor!(NoEmptyHeadingsVisitor);
-define_parser_rule!(HTMLNoEmptyHeadingsRule, "html-no-empty-headings", Warning, NoEmptyHeadingsVisitor);
+define_parser_rule!(HTMLNoEmptyHeadingsRule, "html-no-empty-headings", Warning, NoEmptyHeadingsVisitor,
+  introduced_in: "0.4.0"
+);
 
 static HEADING_TAGS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["h1", "h2", "h3", "h4", "h5", "h6"].into_iter().collect());
 

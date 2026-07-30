@@ -2,7 +2,9 @@ use herb::nodes::ERBContentNode;
 use herb::Visitor;
 
 rule_visitor!(NoEmptyTagsVisitor);
-define_parser_rule!(ERBNoEmptyTagsRule, "erb-no-empty-tags", Error, NoEmptyTagsVisitor);
+define_parser_rule!(ERBNoEmptyTagsRule, "erb-no-empty-tags", Error, NoEmptyTagsVisitor,
+  introduced_in: "0.4.0"
+);
 
 impl Visitor for NoEmptyTagsVisitor {
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {

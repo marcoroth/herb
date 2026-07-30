@@ -11,7 +11,8 @@ define_parser_rule!(
   "a11y-disabled-attribute",
   Warning,
   DisabledAttributeVisitor,
-  enabled: false
+  enabled: false,
+  introduced_in: "0.10.2"
 );
 
 impl Visitor for DisabledAttributeVisitor {

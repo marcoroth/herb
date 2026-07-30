@@ -138,6 +138,10 @@ impl Rule for HTMLNoDuplicateIdsRule {
     "html-no-duplicate-ids"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.4.1")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

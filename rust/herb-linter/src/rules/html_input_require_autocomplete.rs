@@ -11,7 +11,8 @@ define_parser_rule!(
   HTMLInputRequireAutocompleteRule,
   "html-input-require-autocomplete",
   Warning,
-  InputRequireAutocompleteVisitor
+  InputRequireAutocompleteVisitor,
+  introduced_in: "0.8.0"
 );
 
 static INPUT_TYPES_REQUIRING_AUTOCOMPLETE: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {

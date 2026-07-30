@@ -8,7 +8,8 @@ use herb::Visitor;
 rule_visitor!(RightTrimVisitor);
 define_parser_rule!(ERBRightTrimRule, "erb-right-trim", Error, RightTrimVisitor,
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.7.5"
 );
 
 impl Visitor for RightTrimVisitor {

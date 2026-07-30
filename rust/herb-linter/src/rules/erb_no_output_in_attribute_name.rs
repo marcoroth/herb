@@ -8,7 +8,8 @@ define_parser_rule!(
   ERBNoOutputInAttributeNameRule,
   "erb-no-output-in-attribute-name",
   Error,
-  ERBNoOutputInAttributeNameVisitor
+  ERBNoOutputInAttributeNameVisitor,
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for ERBNoOutputInAttributeNameVisitor {

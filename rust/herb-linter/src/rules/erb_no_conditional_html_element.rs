@@ -6,7 +6,8 @@ define_parser_rule!(
   ERBNoConditionalHTMLElementRule,
   "erb-no-conditional-html-element",
   Error,
-  NoConditionalHTMLElementVisitor
+  NoConditionalHTMLElementVisitor,
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for NoConditionalHTMLElementVisitor {

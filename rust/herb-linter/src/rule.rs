@@ -27,6 +27,10 @@ pub trait Rule: Send + Sync {
   fn name(&self) -> &'static str;
   fn default_severity(&self) -> SeverityConfig;
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    None
+  }
+
   fn default_enabled(&self) -> bool {
     true
   }
@@ -114,6 +118,13 @@ impl Rule for AnyRule {
     match self {
       AnyRule::Parser(rule) => rule.parser_options(),
       AnyRule::Source(rule) => rule.parser_options(),
+    }
+  }
+
+  fn introduced_in(&self) -> Option<&'static str> {
+    match self {
+      AnyRule::Parser(rule) => rule.introduced_in(),
+      AnyRule::Source(rule) => rule.introduced_in(),
     }
   }
 

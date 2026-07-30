@@ -8,7 +8,8 @@ define_parser_rule!(
   HTMLNoUnderscoresInAttributeNamesRule,
   "html-no-underscores-in-attribute-names",
   Warning,
-  NoUnderscoresInAttributeNamesVisitor
+  NoUnderscoresInAttributeNamesVisitor,
+  introduced_in: "0.7.0"
 );
 
 impl Visitor for NoUnderscoresInAttributeNamesVisitor {

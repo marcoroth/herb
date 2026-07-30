@@ -11,7 +11,8 @@ define_parser_rule!(
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   "html-avoid-both-disabled-and-aria-disabled",
   Warning,
-  AvoidBothDisabledAndAriaDisabledVisitor
+  AvoidBothDisabledAndAriaDisabledVisitor,
+  introduced_in: "0.6.0"
 );
 
 static ELEMENTS_WITH_NATIVE_DISABLED: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {

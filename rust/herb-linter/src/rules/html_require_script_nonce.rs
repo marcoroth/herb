@@ -10,7 +10,8 @@ define_parser_rule!(
   "html-require-script-nonce",
   Error,
   RequireScriptNonceVisitor,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.9.3"
 );
 
 fn helpers_with_csp_nonce_support() -> [&'static str; 2] {

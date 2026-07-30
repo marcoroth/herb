@@ -151,4 +151,6 @@ impl Visitor for NoEmptyAttributesVisitor {
   }
 }
 
-define_parser_rule!(HTMLNoEmptyAttributesRule, "html-no-empty-attributes", Warning, NoEmptyAttributesVisitor);
+define_parser_rule!(HTMLNoEmptyAttributesRule, "html-no-empty-attributes", Warning, NoEmptyAttributesVisitor,
+  introduced_in: "0.7.0"
+);

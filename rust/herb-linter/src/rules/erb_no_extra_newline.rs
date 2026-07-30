@@ -5,7 +5,9 @@ use crate::utils::source_slice::offset_of;
 use herb::Location;
 use herb::Position;
 
-define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", Error, has_autofix: true, autocorrectable: true);
+define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", Error, has_autofix: true, autocorrectable: true,
+  introduced_in: "0.8.0"
+);
 
 fn position_from_offset(source: &str, offset: usize) -> Position {
   let mut line: u32 = 1;

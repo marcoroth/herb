@@ -25,6 +25,10 @@ impl Rule for ERBStrictLocalsRequiredRule {
     "erb-strict-locals-required"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.8.8")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

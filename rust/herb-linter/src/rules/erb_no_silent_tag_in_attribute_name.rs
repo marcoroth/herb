@@ -8,7 +8,8 @@ define_parser_rule!(
   ERBNoSilentTagInAttributeNameRule,
   "erb-no-silent-tag-in-attribute-name",
   Error,
-  NoSilentTagInAttributeNameVisitor
+  NoSilentTagInAttributeNameVisitor,
+  introduced_in: "0.6.0"
 );
 
 impl Visitor for NoSilentTagInAttributeNameVisitor {

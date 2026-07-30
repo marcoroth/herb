@@ -196,6 +196,10 @@ impl Rule for HTMLNoDuplicateMetaNamesRule {
     "html-no-duplicate-meta-names"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.8.0")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

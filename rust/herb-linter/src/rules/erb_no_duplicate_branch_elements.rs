@@ -293,6 +293,10 @@ impl Rule for ERBNoDuplicateBranchElementsRule {
     "erb-no-duplicate-branch-elements"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.9.0")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Warning)
   }

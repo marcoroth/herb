@@ -14,7 +14,8 @@ define_parser_rule!(
   Error,
   AttributeValuesRequireQuotesVisitor,
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.4.0"
 );
 
 impl Visitor for AttributeValuesRequireQuotesVisitor {

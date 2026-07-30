@@ -3,7 +3,9 @@ use crate::rule::{LintContext, Rule, SourceRule};
 
 use herb::{Location, Position};
 
-define_source_rule!(SourceIndentationRule, "source-indentation", Error, has_autofix: true, autocorrectable: true);
+define_source_rule!(SourceIndentationRule, "source-indentation", Error, has_autofix: true, autocorrectable: true,
+  introduced_in: "0.9.3"
+);
 
 fn tab_indentation_length(line: &str) -> Option<usize> {
   let mut length = 0;

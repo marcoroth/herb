@@ -62,6 +62,10 @@ impl Rule for HTMLHeadOnlyElementsRule {
     "html-head-only-elements"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.8.0")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

@@ -13,10 +13,10 @@ define_parser_rule!(
   Warning,
   NoAutofocusAttributeVisitor,
   enabled: false,
-  parser_options: { prism_nodes: true }
+  parser_options: { prism_nodes: true },
+  introduced_in: "0.9.3"
 );
 
-/// `FormTagHelper` helpers that render an `input`, `textarea` or `select`.
 fn is_form_tag_helper(name: &str) -> bool {
   herb::action_view_helpers::entries().iter().any(|entry| {
     let module = entry.source.split('#').next().unwrap_or("").rsplit("::").next().unwrap_or("");

@@ -8,7 +8,8 @@ define_parser_rule!(
   HerbDisableCommentNoRedundantAllRule,
   "herb-disable-comment-no-redundant-all",
   Warning,
-  NoRedundantAllVisitor
+  NoRedundantAllVisitor,
+  introduced_in: "0.8.0"
 );
 
 impl Visitor for NoRedundantAllVisitor {

@@ -39,7 +39,8 @@ define_parser_rule!(
   HTMLAriaLabelIsWellFormattedRule,
   "html-aria-label-is-well-formatted",
   Warning,
-  AriaLabelIsWellFormattedVisitor
+  AriaLabelIsWellFormattedVisitor,
+  introduced_in: "0.6.0"
 );
 
 impl Visitor for AriaLabelIsWellFormattedVisitor {

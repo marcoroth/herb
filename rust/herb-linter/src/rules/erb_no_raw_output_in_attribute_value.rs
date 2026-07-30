@@ -10,7 +10,8 @@ define_parser_rule!(
   ERBNoRawOutputInAttributeValueRule,
   "erb-no-raw-output-in-attribute-value",
   Error,
-  ERBNoRawOutputInAttributeValueVisitor
+  ERBNoRawOutputInAttributeValueVisitor,
+  introduced_in: "0.9.0"
 );
 
 impl ERBNoRawOutputInAttributeValueVisitor {

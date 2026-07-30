@@ -2,7 +2,9 @@ use herb::nodes::HTMLConditionalOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NoConditionalOpenTagVisitor);
-define_parser_rule!(ERBNoConditionalOpenTagRule, "erb-no-conditional-open-tag", Error, NoConditionalOpenTagVisitor);
+define_parser_rule!(ERBNoConditionalOpenTagRule, "erb-no-conditional-open-tag", Error, NoConditionalOpenTagVisitor,
+  introduced_in: "0.9.0"
+);
 
 impl Visitor for NoConditionalOpenTagVisitor {
   fn visit_html_conditional_open_tag_node(&mut self, node: &HTMLConditionalOpenTagNode) {

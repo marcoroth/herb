@@ -5,7 +5,9 @@ use herb::nodes::{AnyNode, HTMLElementNode};
 use herb::Visitor;
 
 rule_visitor!(ERBNoStatementInScriptVisitor);
-define_parser_rule!(ERBNoStatementInScriptRule, "erb-no-statement-in-script", Warning, ERBNoStatementInScriptVisitor);
+define_parser_rule!(ERBNoStatementInScriptRule, "erb-no-statement-in-script", Warning, ERBNoStatementInScriptVisitor,
+  introduced_in: "0.9.0"
+);
 
 /// Matches an ERB tag that only closes a block, e.g. `<% end %>`.
 fn is_end_statement(content: &str) -> bool {

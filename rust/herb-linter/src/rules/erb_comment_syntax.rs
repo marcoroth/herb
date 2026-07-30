@@ -8,7 +8,8 @@ use herb::Visitor;
 rule_visitor!(CommentSyntaxVisitor);
 define_parser_rule!(ERBCommentSyntaxRule, "erb-comment-syntax", Error, CommentSyntaxVisitor,
   autocorrectable: true,
-  autofix: autofix
+  autofix: autofix,
+  introduced_in: "0.7.5"
 );
 
 impl Visitor for CommentSyntaxVisitor {

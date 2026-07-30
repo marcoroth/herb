@@ -4,7 +4,9 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NoTitleAttributeVisitor);
-define_parser_rule!(HTMLNoTitleAttributeRule, "html-no-title-attribute", Warning, NoTitleAttributeVisitor, enabled: false);
+define_parser_rule!(HTMLNoTitleAttributeRule, "html-no-title-attribute", Warning, NoTitleAttributeVisitor, enabled: false,
+  introduced_in: "0.6.0"
+);
 
 impl Visitor for NoTitleAttributeVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

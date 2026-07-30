@@ -72,6 +72,10 @@ impl Rule for HTMLNoBlockInsideInlineRule {
     "html-no-block-inside-inline"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.4.0")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

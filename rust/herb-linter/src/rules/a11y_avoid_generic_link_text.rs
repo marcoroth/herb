@@ -12,7 +12,8 @@ define_parser_rule!(
   Warning,
   AvoidGenericLinkTextVisitor,
   enabled: false,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.10.2"
 );
 
 fn strip_text(text: &str) -> String {

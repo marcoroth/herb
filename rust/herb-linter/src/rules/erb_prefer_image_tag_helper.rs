@@ -4,7 +4,9 @@ use herb::nodes::*;
 use herb::Visitor;
 
 rule_visitor!(PreferImageTagHelperVisitor);
-define_parser_rule!(ERBPreferImageTagHelperRule, "erb-prefer-image-tag-helper", Warning, PreferImageTagHelperVisitor);
+define_parser_rule!(ERBPreferImageTagHelperRule, "erb-prefer-image-tag-helper", Warning, PreferImageTagHelperVisitor,
+  introduced_in: "0.4.3"
+);
 
 impl PreferImageTagHelperVisitor {
   fn contains_erb_content(value_node: &HTMLAttributeValueNode) -> bool {

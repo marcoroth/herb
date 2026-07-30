@@ -11,7 +11,8 @@ define_parser_rule!(
   HTMLNoAriaHiddenOnFocusableRule,
   "html-no-aria-hidden-on-focusable",
   Warning,
-  NoAriaHiddenOnFocusableVisitor
+  NoAriaHiddenOnFocusableVisitor,
+  introduced_in: "0.6.0"
 );
 
 static INTERACTIVE_ELEMENTS: LazyLock<HashSet<&'static str>> =

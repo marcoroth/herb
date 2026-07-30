@@ -9,7 +9,8 @@ define_parser_rule!(
   "html-img-require-alt",
   Warning,
   ImgRequireAltVisitor,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.4.0"
 );
 
 impl Visitor for ImgRequireAltVisitor {

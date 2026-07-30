@@ -97,7 +97,8 @@ define_parser_rule!(
   HTMLAriaLevelMustBeValidRule,
   "html-aria-level-must-be-valid",
   Warning,
-  AriaLevelMustBeValidVisitor
+  AriaLevelMustBeValidVisitor,
+  introduced_in: "0.4.3"
 );
 
 impl AriaLevelMustBeValidVisitor {

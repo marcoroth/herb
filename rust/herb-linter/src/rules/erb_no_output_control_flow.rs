@@ -2,7 +2,9 @@ use herb::nodes::{ERBElseNode, ERBEndNode, ERBIfNode, ERBUnlessNode};
 use herb::{Token, Visitor};
 
 rule_visitor!(NoOutputControlFlowVisitor);
-define_parser_rule!(ERBNoOutputControlFlowRule, "erb-no-output-control-flow", Error, NoOutputControlFlowVisitor);
+define_parser_rule!(ERBNoOutputControlFlowRule, "erb-no-output-control-flow", Error, NoOutputControlFlowVisitor,
+  introduced_in: "0.4.0"
+);
 
 impl NoOutputControlFlowVisitor {
   fn check_output_control_flow(&mut self, tag_opening: Option<&Token>, content: Option<&Token>, fallback: &str) {

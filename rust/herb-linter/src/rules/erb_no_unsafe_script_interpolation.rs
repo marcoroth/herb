@@ -15,7 +15,8 @@ define_parser_rule!(
   "erb-no-unsafe-script-interpolation",
   Error,
   ERBNoUnsafeScriptInterpolationVisitor,
-  parser_options: { prism_nodes: true }
+  parser_options: { prism_nodes: true },
+  introduced_in: "0.9.0"
 );
 
 #[derive(Default)]

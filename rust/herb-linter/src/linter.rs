@@ -459,9 +459,26 @@ impl Linter {
   }
 
   fn filter_rule_by_config(&self, rule: &AnyRule) -> bool {
-    match self.config.get_rule_config(rule.name()) {
-      Some(_) => !self.config.is_rule_disabled(rule.name()),
-      None => rule.default_enabled(),
+    if self.config.get_rule_config(rule.name()).is_some() {
+      return !self.config.is_rule_disabled(rule.name());
+    }
+
+    if self.is_gated_by_version(rule) {
+      return false;
+    }
+
+    rule.default_enabled()
+  }
+
+  fn is_gated_by_version(&self, rule: &AnyRule) -> bool {
+    let config_version = match self.config.config_version.as_deref() {
+      Some(version) => version,
+      None => return false,
+    };
+
+    match rule.introduced_in() {
+      Some(introduced_in) => crate::semver::semver_greater_than(introduced_in, config_version),
+      None => false,
     }
   }
 

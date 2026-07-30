@@ -8,7 +8,8 @@ define_parser_rule!(
   "erb-no-inline-case-conditions",
   Warning,
   ERBNoInlineCaseConditionsVisitor,
-  parser_options: { strict: false }
+  parser_options: { strict: false },
+  introduced_in: "0.9.0"
 );
 
 impl ERBNoInlineCaseConditionsVisitor {

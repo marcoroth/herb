@@ -5,7 +5,9 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NoAbstractRolesVisitor);
-define_parser_rule!(HTMLNoAbstractRolesRule, "html-no-abstract-roles", Warning, NoAbstractRolesVisitor);
+define_parser_rule!(HTMLNoAbstractRolesRule, "html-no-abstract-roles", Warning, NoAbstractRolesVisitor,
+  introduced_in: "0.9.0"
+);
 
 impl Visitor for NoAbstractRolesVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

@@ -445,6 +445,10 @@ impl Rule for ERBStrictLocalsCommentSyntaxRule {
     "erb-strict-locals-comment-syntax"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.8.8")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }

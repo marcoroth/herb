@@ -13,6 +13,10 @@ impl Rule for ERBNoDebugOutputRule {
     "erb-no-debug-output"
   }
 
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.9.3")
+  }
+
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::PerMode {
       cli: Severity::Error,

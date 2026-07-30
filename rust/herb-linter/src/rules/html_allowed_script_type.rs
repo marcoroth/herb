@@ -9,7 +9,9 @@ const ALLOW_BLANK: bool = true;
 const ALLOWED_TYPES: &[&str] = &["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"];
 
 rule_visitor!(AllowedScriptTypeVisitor);
-define_parser_rule!(HTMLAllowedScriptTypeRule, "html-allowed-script-type", Error, AllowedScriptTypeVisitor);
+define_parser_rule!(HTMLAllowedScriptTypeRule, "html-allowed-script-type", Error, AllowedScriptTypeVisitor,
+  introduced_in: "0.9.0"
+);
 
 impl Visitor for AllowedScriptTypeVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

@@ -7,5 +7,6 @@ pub mod herb_disable;
 pub mod linter;
 pub mod offense;
 pub mod rule;
+pub mod semver;
 pub mod rules;
 pub mod utils;

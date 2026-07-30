@@ -8,7 +8,8 @@ define_parser_rule!(
   HTMLAriaRoleHeadingRequiresLevelRule,
   "html-aria-role-heading-requires-level",
   Warning,
-  AriaRoleHeadingRequiresLevelVisitor
+  AriaRoleHeadingRequiresLevelVisitor,
+  introduced_in: "0.4.0"
 );
 
 impl Visitor for AriaRoleHeadingRequiresLevelVisitor {

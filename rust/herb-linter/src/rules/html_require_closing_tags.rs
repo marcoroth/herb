@@ -7,7 +7,8 @@ define_parser_rule!(
   "html-require-closing-tags",
   Error,
   RequireClosingTagsVisitor,
-  parser_options: { strict: false }
+  parser_options: { strict: false },
+  introduced_in: "0.9.0"
 );
 
 impl Visitor for RequireClosingTagsVisitor {

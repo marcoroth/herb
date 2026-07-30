@@ -6,7 +6,9 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(ERBNoUnsafeJSAttributeVisitor);
-define_parser_rule!(ERBNoUnsafeJSAttributeRule, "erb-no-unsafe-js-attribute", Error, ERBNoUnsafeJSAttributeVisitor);
+define_parser_rule!(ERBNoUnsafeJSAttributeRule, "erb-no-unsafe-js-attribute", Error, ERBNoUnsafeJSAttributeVisitor,
+  introduced_in: "0.9.0"
+);
 
 /// Mirrors `/\.to_json\s*$|\bj\s*[\s(]|\bescape_javascript\s*[\s(]/`.
 fn is_safely_encoded(content: &str) -> bool {

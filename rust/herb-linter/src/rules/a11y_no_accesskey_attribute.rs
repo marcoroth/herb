@@ -10,7 +10,8 @@ define_parser_rule!(
   Warning,
   NoAccesskeyAttributeVisitor,
   enabled: false,
-  parser_options: { action_view_helpers: true }
+  parser_options: { action_view_helpers: true },
+  introduced_in: "0.9.3"
 );
 
 impl Visitor for NoAccesskeyAttributeVisitor {
