@@ -40,6 +40,7 @@ export interface ProcessingContext {
   loadCustomRules?: boolean
   compareBackends?: boolean
   backend?: "javascript" | "rust"
+  allRules?: boolean
   jobs?: number
 }
 
@@ -155,7 +156,11 @@ export class FileProcessor {
         }
       }
 
-      this.linter = Linter.from(Herb, context?.config, customRules)
+      const everyRule = customRules && customRules.length > 0 ? [...rules, ...customRules] : rules
+
+      this.linter = context?.allRules
+        ? new Linter(Herb, everyRule, context?.config, everyRule)
+        : Linter.from(Herb, context?.config, customRules)
 
       if (context?.backend) {
         this.linter.backendMode = context.backend
@@ -344,6 +349,7 @@ export class FileProcessor {
         ignoreDisableComments: context?.ignoreDisableComments || false,
         loadCustomRules: context?.loadCustomRules || false,
         backendMode: context?.backend,
+        allRules: context?.allRules || false,
       }
 
       const worker = new Worker(workerPath, { workerData })

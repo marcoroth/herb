@@ -20,6 +20,7 @@ export interface WorkerInput {
   ignoreDisableComments: boolean
   loadCustomRules: boolean
   backendMode?: "javascript" | "rust"
+  allRules: boolean
 }
 
 export interface WorkerOffense {

@@ -30,6 +30,7 @@ export interface ParsedArguments {
   disableFailing: boolean
   loadCustomRules: boolean
   compareBackends: boolean
+  allRules: boolean
   backend?: "javascript" | "rust"
   failOnBackendMismatch: boolean
   failLevel?: DiagnosticSeverity
@@ -65,6 +66,8 @@ export class ArgumentParser {
       --no-compare-backends         disable comparison between the WASM and Rust backends
       --backend <name>              force a linting backend (javascript|rust)
       --fail-on-backend-mismatch    exit with code 2 if the WASM and Rust backends disagree
+      --all-rules                   run every rule, ignoring disabled-by-default rules
+                                    and the version pinned in .herb.yml
       -j, --jobs <n>                number of parallel workers for linting files [default: auto]
                                     use "auto" to detect based on available CPU cores
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
@@ -103,6 +106,7 @@ export class ArgumentParser {
         "no-compare-backends": { type: "boolean" },
         backend: { type: "string" },
         "fail-on-backend-mismatch": { type: "boolean" },
+        "all-rules": { type: "boolean" },
         jobs: { type: "string", short: "j" }
       },
       allowPositionals: true
@@ -183,6 +187,7 @@ export class ArgumentParser {
 
     const compareBackends = !values["no-compare-backends"]
     const failOnBackendMismatch = Boolean(values["fail-on-backend-mismatch"])
+    const allRules = Boolean(values["all-rules"])
 
     let failLevel: DiagnosticSeverity | undefined
     if (values["fail-level"]) {
@@ -208,7 +213,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, backend, failOnBackendMismatch, failLevel, jobs }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, backend, allRules, failOnBackendMismatch, failLevel, jobs }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

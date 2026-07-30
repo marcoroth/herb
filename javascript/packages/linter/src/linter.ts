@@ -464,6 +464,7 @@ export class Linter {
 
     return JSON.stringify({
       ...(this.config?.options ?? {}),
+      ...(this.config?.configVersion !== undefined && { version: this.config.configVersion }),
       formatter: indentWidth !== undefined ? { ...formatter, indentWidth } : formatter,
       linter: {
         ...(this.config?.linter ?? {}),

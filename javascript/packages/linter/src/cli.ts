@@ -148,7 +148,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, backend, failOnBackendMismatch, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, backend, allRules, failOnBackendMismatch, failLevel, jobs } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -436,6 +436,7 @@ export class CLI {
         loadCustomRules,
         compareBackends,
         backend,
+        allRules,
         jobs
       }
 
