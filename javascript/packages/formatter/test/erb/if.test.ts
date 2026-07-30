@@ -373,7 +373,7 @@ describe("@herb-tools/formatter", () => {
       expect(output).toEqual(input)
     })
 
-    test("if with multiple consecutive ERB outputs - breaks at ERB boundaries", () => {
+    test("if with multiple consecutive ERB outputs wraps like any other body", () => {
       const input = dedent`
         <div>
           <span>
@@ -389,7 +389,17 @@ describe("@herb-tools/formatter", () => {
         </div>
       `
       const output = formatter.format(input)
-      expect(output).toEqual(input)
+
+      expect(output).toEqual(dedent`
+        <div>
+          <span>
+            <% if show_full_name? %>
+              <%= user.first_name %> <%= user.middle_name %> <%= user.last_name %>
+              <%= user.suffix %> - <%= formatted_date(user.birth_date, format: :long) %>
+            <% end %>
+          </span>
+        </div>
+      `)
     })
 
     test("if with mixed inline HTML elements - breaks at ERB boundaries", () => {

@@ -238,7 +238,15 @@ export class TextFlowEngine {
             }
           }
 
-          words.push(...trimmedText.split(' '))
+          const parts = trimmedText.split(' ')
+
+          for (let part = 1; part < parts.length; part++) {
+            if (isClosingPunctuation(parts[part]) && !parts[part - 1].endsWith(' ')) {
+              parts[part - 1] += ' '
+            }
+          }
+
+          words.push(...parts)
 
           if (hasTrailingSpace && words.length > 0) {
             const lastIndex = words.length - 1

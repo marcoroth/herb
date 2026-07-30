@@ -893,4 +893,26 @@ describe("CLI Output Formatting", () => {
       }
     })
   })
+
+  describe("parallel linting", () => {
+    test("emits JSON when the run is split across workers", () => {
+      const { output, exitCode } = runLinter("parallel", "--jobs", "4", "--json")
+      const result = JSON.parse(output)
+
+      expect(result.completed).toBe(true)
+      expect(result.message).toBeNull()
+      expect(result.offenses).toHaveLength(12)
+      expect(result.offenses[0].location.start).toEqual({ line: 2, column: 3 })
+      expect(exitCode).toBe(0)
+    })
+
+    test("produces the same JSON with and without workers", () => {
+      const parallel = JSON.parse(runLinter("parallel", "--jobs", "4", "--json").output)
+      const serial = JSON.parse(runLinter("parallel", "--jobs", "1", "--json").output)
+
+      const normalize = (result: any) => result.offenses.map((offense: any) => ({ ...offense, filename: offense.filename })).sort((a: any, b: any) => a.filename.localeCompare(b.filename))
+
+      expect(normalize(parallel)).toEqual(normalize(serial))
+    })
+  })
 })

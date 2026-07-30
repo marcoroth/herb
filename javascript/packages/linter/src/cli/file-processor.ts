@@ -11,6 +11,7 @@ import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
+import { deserializeDiagnostic } from "@herb-tools/core"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
@@ -388,7 +389,7 @@ export class FileProcessor {
       for (const offense of result.offenses) {
         allOffenses.push({
           filename: offense.filename,
-          offense: offense.offense,
+          offense: deserializeDiagnostic(offense.offense),
           content: offense.content,
           autocorrectable: offense.autocorrectable
         })

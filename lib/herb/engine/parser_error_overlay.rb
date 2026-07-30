@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module Herb
   class Engine
     class ParserErrorOverlay
