@@ -663,28 +663,6 @@ fn hoist_element(conditional: &mut AnyNode, elements: &[AnyNode], position: Posi
   }
 }
 
-fn significant_indices(branch: &[AnyNode]) -> Vec<usize> {
-  branch
-    .iter()
-    .enumerate()
-    .filter(|(_, node)| !is_pure_whitespace_node(node))
-    .map(|(index, _)| index)
-    .collect()
-}
-
-fn remove_significant(branch: &mut Vec<AnyNode>, nth: usize) {
-  let index = match significant_indices(branch).get(nth) {
-    Some(index) => *index,
-    None => return,
-  };
-
-  if index > 0 && is_pure_whitespace_node(&branch[index - 1]) {
-    branch.drain(index - 1..=index);
-  } else {
-    branch.remove(index);
-  }
-}
-
 fn branch_slices(node: &AnyNode) -> Option<Vec<Vec<AnyNode>>> {
   match node {
     AnyNode::ERBIfNode(node) => collect_branches_from_if(node).map(|b| b.into_iter().map(|s| s.to_vec()).collect()),
@@ -700,10 +678,6 @@ fn significant_owned(branch: &[AnyNode]) -> Vec<AnyNode> {
 
 fn printed(branch: &[AnyNode], source: &str) -> String {
   branch.iter().map(|node| identity_print(source, node.location())).collect()
-}
-
-fn printed_element(element: &HTMLElementNode, source: &str) -> String {
-  identity_print(source, &element.location)
 }
 
 fn common_counts(significant: &[Vec<AnyNode>]) -> (usize, usize) {
