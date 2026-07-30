@@ -5,7 +5,7 @@ import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBStrictLocalsRequiredRule } from "../../src/rules/erb-strict-locals-required.js"
 
 describe("erb-strict-locals-required autofix", () => {
-  const { unsafeAutofix } = createAutofixTest(ERBStrictLocalsRequiredRule)
+  const { autofix, unsafeAutofix } = createAutofixTest(ERBStrictLocalsRequiredRule)
 
   beforeAll(async () => {
     await Herb.load()

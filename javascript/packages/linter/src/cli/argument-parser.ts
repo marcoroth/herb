@@ -30,6 +30,7 @@ export interface ParsedArguments {
   disableFailing: boolean
   loadCustomRules: boolean
   compareBackends: boolean
+  backend?: "javascript" | "rust"
   failOnBackendMismatch: boolean
   failLevel?: DiagnosticSeverity
   jobs: number
@@ -62,6 +63,7 @@ export class ArgumentParser {
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
       --no-compare-backends         disable comparison between the WASM and Rust backends
+      --backend <name>              force a linting backend (javascript|rust)
       --fail-on-backend-mismatch    exit with code 2 if the WASM and Rust backends disagree
       -j, --jobs <n>                number of parallel workers for linting files [default: auto]
                                     use "auto" to detect based on available CPU cores
@@ -99,6 +101,7 @@ export class ArgumentParser {
         "truncate-lines": { type: "boolean" },
         "no-custom-rules": { type: "boolean" },
         "no-compare-backends": { type: "boolean" },
+        backend: { type: "string" },
         "fail-on-backend-mismatch": { type: "boolean" },
         jobs: { type: "string", short: "j" }
       },
@@ -170,6 +173,14 @@ export class ArgumentParser {
     const upgrade = values.upgrade || false
     const disableFailing = values["disable-failing"] || false
     const loadCustomRules = !values["no-custom-rules"]
+    const backendValue = values.backend as string | undefined
+
+    if (backendValue !== undefined && backendValue !== "javascript" && backendValue !== "rust") {
+      throw new Error(`Invalid --backend "${backendValue}". Expected "javascript" or "rust".`)
+    }
+
+    const backend = backendValue as "javascript" | "rust" | undefined
+
     const compareBackends = !values["no-compare-backends"]
     const failOnBackendMismatch = Boolean(values["fail-on-backend-mismatch"])
 
@@ -197,7 +208,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, failOnBackendMismatch, failLevel, jobs }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, compareBackends, backend, failOnBackendMismatch, failLevel, jobs }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

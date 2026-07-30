@@ -4,7 +4,7 @@ import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { HTMLNoUnescapedEntitiesRule } from "../../src/rules/html-no-unescaped-entities.js"
 
 describe("html-no-unescaped-entities autofix", () => {
-  const { unsafeAutofix } = createAutofixTest(HTMLNoUnescapedEntitiesRule)
+  const { autofix, unsafeAutofix } = createAutofixTest(HTMLNoUnescapedEntitiesRule)
 
   beforeAll(async () => {
     await Herb.load()

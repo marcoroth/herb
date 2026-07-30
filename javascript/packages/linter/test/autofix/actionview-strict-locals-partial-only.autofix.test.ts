@@ -5,7 +5,7 @@ import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "../../src/rules/actionview-strict-locals-partial-only.js"
 
 describe("actionview-strict-locals-partial-only autofix", () => {
-  const { unsafeAutofix } = createAutofixTest(ActionViewStrictLocalsPartialOnlyRule)
+  const { autofix, unsafeAutofix } = createAutofixTest(ActionViewStrictLocalsPartialOnlyRule)
 
   beforeAll(async () => {
     await Herb.load()

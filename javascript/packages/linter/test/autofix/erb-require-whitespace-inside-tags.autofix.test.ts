@@ -5,7 +5,7 @@ import { createAutofixTest } from "../helpers/autofix-test-helper.js"
 import { ERBRequireWhitespaceRule } from "../../src/rules/erb-require-whitespace-inside-tags.js"
 
 describe("erb-require-whitespace-inside-tags autofix", () => {
-  const { unsafeAutofix } = createAutofixTest(ERBRequireWhitespaceRule)
+  const { autofix, unsafeAutofix } = createAutofixTest(ERBRequireWhitespaceRule)
 
   beforeAll(async () => {
     await Herb.load()

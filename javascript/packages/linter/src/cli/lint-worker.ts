@@ -1,4 +1,5 @@
 import { workerData, parentPort } from "node:worker_threads"
+
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -18,6 +19,7 @@ export interface WorkerInput {
   fixUnsafe: boolean
   ignoreDisableComments: boolean
   loadCustomRules: boolean
+  backendMode?: "javascript" | "rust"
 }
 
 export interface WorkerOffense {
@@ -66,6 +68,10 @@ async function run() {
   }
 
   const linter = Linter.from(Herb, config, customRules)
+
+  if (data.backendMode) {
+    linter.backendMode = data.backendMode
+  }
 
   let totalErrors = 0
   let totalWarnings = 0

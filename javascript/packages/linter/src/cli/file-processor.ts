@@ -39,6 +39,7 @@ export interface ProcessingContext {
   hasConfigFile?: boolean
   loadCustomRules?: boolean
   compareBackends?: boolean
+  backend?: "javascript" | "rust"
   jobs?: number
 }
 
@@ -155,6 +156,10 @@ export class FileProcessor {
       }
 
       this.linter = Linter.from(Herb, context?.config, customRules)
+
+      if (context?.backend) {
+        this.linter.backendMode = context.backend
+      }
     }
 
     const shouldCompare = context?.compareBackends && Herb.supportsLint
@@ -338,6 +343,7 @@ export class FileProcessor {
         fixUnsafe: context?.fixUnsafe || false,
         ignoreDisableComments: context?.ignoreDisableComments || false,
         loadCustomRules: context?.loadCustomRules || false,
+        backendMode: context?.backend,
       }
 
       const worker = new Worker(workerPath, { workerData })
