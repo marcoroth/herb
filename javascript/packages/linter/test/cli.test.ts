@@ -343,6 +343,13 @@ describe("CLI Output Formatting", () => {
       expect(exitCode).toBe(0)
     })
 
+    test("prints a progress message when linting multiple files", () => {
+      const { output, exitCode } = runLinterMultiFile("clean-file.html.erb", "boolean-attribute.html.erb")
+
+      expect(output).toContain("Found 2 files, linting...")
+      expect(exitCode).toBe(0)
+    })
+
     test("lints multiple files with errors", () => {
       const { output, exitCode } = runLinterMultiFile("test-file-with-errors.html.erb", "bad-file.html.erb")
 
