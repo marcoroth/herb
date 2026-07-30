@@ -357,4 +357,44 @@ describe("whitespace preservation around ERB control flow", () => {
     })
 
   })
+
+  // https://github.com/marcoroth/herb/issues/1721
+  describe("#1721 — inline elements inside a control-flow body", () => {
+    test("keeps trailing punctuation attached to a closing tag", () => {
+      expectFormattedToMatch(dedent`
+        <% if condition %>
+          Created at <a href="<%= url %>">Acme</a>.
+        <% end %>
+      `)
+    })
+
+    test("keeps text following a closing tag on the same line", () => {
+      expectFormattedToMatch(dedent`
+        <% if condition %>
+          <em>name</em> created an account.
+        <% end %>
+      `)
+    })
+
+    test("keeps the run intact inside a block body", () => {
+      expectFormattedToMatch(dedent`
+        <% items.each do |item| %>
+          Created at <a href="<%= item %>">Acme</a>.
+        <% end %>
+      `)
+    })
+
+    test("keeps the run intact inside an unless body", () => {
+      expectFormattedToMatch(dedent`
+        <% unless condition %>
+          Created at <a href="<%= url %>">Acme</a>.
+        <% end %>
+      `)
+    })
+
+    test("behaves the same outside a control-flow body", () => {
+      expectFormattedToMatch(`<p>You are at <a href="/">Acme</a>.</p>`)
+      expectFormattedToMatch(`<p><em><%= name %></em> created an account.</p>`)
+    })
+  })
 })
