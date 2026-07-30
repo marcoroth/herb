@@ -1,6 +1,6 @@
 import { Location, type SerializedLocation } from "./location.js"
 
-import type { DiagnosticSeverity } from "./diagnostic.js"
+import type { DiagnosticSeverity, DiagnosticTag } from "./diagnostic.js"
 
 export interface SerializedLintOffense {
   rule: string
@@ -9,6 +9,13 @@ export interface SerializedLintOffense {
   message: string
   severity: DiagnosticSeverity
   location: SerializedLocation
+  tags?: DiagnosticTag[]
+}
+
+export interface SerializedAutofixResult {
+  source: string
+  fixed: SerializedLintOffense[]
+  unfixed: SerializedLintOffense[]
 }
 
 export interface SerializedLintResult {
@@ -27,6 +34,7 @@ export class BackendLintOffense {
   readonly message: string
   readonly severity: DiagnosticSeverity
   readonly location: Location
+  readonly tags?: DiagnosticTag[]
 
   constructor(
     rule: string,
@@ -35,6 +43,7 @@ export class BackendLintOffense {
     message: string,
     severity: DiagnosticSeverity,
     location: Location,
+    tags?: DiagnosticTag[],
   ) {
     this.rule = rule
     this.code = code
@@ -42,6 +51,7 @@ export class BackendLintOffense {
     this.message = message
     this.severity = severity
     this.location = location
+    this.tags = tags
   }
 
   static from(offense: SerializedLintOffense): BackendLintOffense {
@@ -52,6 +62,7 @@ export class BackendLintOffense {
       offense.message,
       offense.severity,
       Location.from(offense.location),
+      offense.tags,
     )
   }
 
@@ -79,6 +90,7 @@ export class BackendLintOffense {
       message: this.message,
       severity: this.severity,
       location: this.location.toHash(),
+      ...(this.tags ? { tags: this.tags } : {}),
     }
   }
 
@@ -161,5 +173,25 @@ export class BackendLintResult {
 
   toString(): string {
     return this.inspect()
+  }
+}
+
+export class BackendAutofixResult {
+  readonly source: string
+  readonly fixed: BackendLintOffense[]
+  readonly unfixed: BackendLintOffense[]
+
+  constructor(source: string, fixed: BackendLintOffense[], unfixed: BackendLintOffense[]) {
+    this.source = source
+    this.fixed = fixed
+    this.unfixed = unfixed
+  }
+
+  static from(result: SerializedAutofixResult): BackendAutofixResult {
+    return new BackendAutofixResult(
+      result.source,
+      (result.fixed ?? []).map(BackendLintOffense.from),
+      (result.unfixed ?? []).map(BackendLintOffense.from),
+    )
   }
 }

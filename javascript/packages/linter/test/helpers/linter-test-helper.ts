@@ -171,7 +171,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverrideO
   const validateParserErrors = (html: string, allowInvalidSyntax: boolean) => {
     if (isParserNoErrorsRule) return
 
-    const parseResult = testHerb.parse(html, { track_whitespace: true })
+    const parseResult = testHerb.parse(html, { track_whitespace: true, ...ruleParserOptions })
     const parserErrors = parseResult.recursiveErrors()
 
     if (allowInvalidSyntax && parserErrors.length === 0) {

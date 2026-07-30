@@ -17,7 +17,7 @@ import { semverGreaterThan } from "./semver.js"
 import { resolveSeverity } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
+import type { ParseResult, LexResult, HerbBackend, BackendLintOffense } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -436,15 +436,78 @@ export class Linter {
   }
 
   /**
+   * The backend runs every rule it knows about, so the linter's rule selection
+   * has to be sent along as explicit enable/disable flags.
+   */
+  protected backendRuleConfig(): Record<string, any> {
+    const enabled = new Set(this.rules.map(ruleClass => ruleClass.ruleName))
+    const configured = this.config?.linter?.rules ?? {}
+    const result: Record<string, any> = {}
+
+    for (const ruleClass of rules) {
+      result[ruleClass.ruleName] = {
+        ...(configured[ruleClass.ruleName] ?? {}),
+        enabled: enabled.has(ruleClass.ruleName),
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * The backend resolves file patterns and per-path rule filtering itself, so it
+   * needs the same `HerbConfigOptions` this linter was built with, with the rule
+   * selection folded into `linter.rules`.
+   */
+  protected backendConfigJSON(indentWidth?: number): string {
+    const formatter = this.config?.formatter ?? {}
+
+    return JSON.stringify({
+      ...(this.config?.options ?? {}),
+      formatter: indentWidth !== undefined ? { ...formatter, indentWidth } : formatter,
+      linter: {
+        ...(this.config?.linter ?? {}),
+        rules: this.backendRuleConfig(),
+      }
+    })
+  }
+
+  /**
+   * Apply autofixes using the native Rust linter backend.
+   * @param source - The source code to fix
+   * @param context - Optional context for linting
+   * @param includeUnsafe - Whether to apply fixes marked as unsafe
+   */
+  protected autofixWithBackend(source: string, context?: Partial<LintContext>, includeUnsafe: boolean = false): AutofixResult {
+    const configJson = this.backendConfigJSON(context?.indentWidth ?? this.config?.formatter?.indentWidth)
+
+    const result = this.herb.autofix(source, configJson, context?.fileName ?? undefined, includeUnsafe)
+
+    const toOffense = (offense: BackendLintOffense): LintOffense => ({
+      rule: offense.rule as LintOffense["rule"],
+      code: offense.code,
+      source: offense.source,
+      message: offense.message,
+      severity: offense.severity,
+      location: offense.location,
+      tags: offense.tags,
+    })
+
+    return {
+      source: result.source,
+      fixed: result.fixed.map(toOffense),
+      unfixed: result.unfixed.map(toOffense),
+    }
+  }
+
+  /**
    * Lint source code using the native Rust linter backend.
    * Delegates linting to the compiled Rust linter via the backend FFI.
    * @param source - The source code to lint
    * @param context - Optional context for linting
    */
   protected lintWithBackend(source: string, context?: Partial<LintContext>): LintResult {
-    const configJson = this.config?.linter?.rules
-      ? JSON.stringify({ rules: this.config.linter.rules })
-      : undefined
+    const configJson = this.backendConfigJSON()
 
     const fileName = context?.fileName ?? undefined
 
@@ -457,6 +520,7 @@ export class Linter {
       message: offense.message,
       severity: offense.severity,
       location: offense.location,
+      tags: offense.tags,
     }))
 
     return {
@@ -637,6 +701,10 @@ export class Linter {
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
     const includeUnsafe = options?.includeUnsafe ?? false
+
+    if (this.useNativeBackend) {
+      return this.autofixWithBackend(source, context, includeUnsafe)
+    }
 
     context = {
       ...context,
