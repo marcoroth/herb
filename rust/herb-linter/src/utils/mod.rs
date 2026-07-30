@@ -1,8 +1,15 @@
+pub mod action_view_utils;
 pub mod aria_data;
+pub mod attribute_visitor;
+pub mod class_grouping;
 pub mod control_flow_tracker;
 pub mod didyoumean;
 pub mod element_stack;
+pub mod erb_utils;
 pub mod file_utils;
+pub mod html_character_references;
 pub mod html_data;
 pub mod levenshtein;
+pub mod prism_utils;
+pub mod source_slice;
 pub mod tag_utils;

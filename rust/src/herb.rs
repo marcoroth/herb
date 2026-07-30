@@ -3,7 +3,7 @@ use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
 use std::ffi::{CStr, CString};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParserOptions {
   pub track_whitespace: bool,
   pub analyze: bool,

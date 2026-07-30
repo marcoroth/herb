@@ -4,7 +4,7 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NavigationHasLabelVisitor);
-define_parser_rule!(HTMLNavigationHasLabelRule, "html-navigation-has-label", Error, NavigationHasLabelVisitor, enabled: false);
+define_parser_rule!(HTMLNavigationHasLabelRule, "html-navigation-has-label", Warning, NavigationHasLabelVisitor, enabled: false);
 
 fn has_role_navigation(node: &HTMLOpenTagNode) -> bool {
   get_attribute(node, "role")

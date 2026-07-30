@@ -7,7 +7,7 @@ use crate::utils::tag_utils::{get_open_tag, get_tag_name_from_element, has_attri
 use herb::nodes::HTMLElementNode;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLHeadOnlyElementsRule;
 
@@ -62,8 +62,8 @@ impl Rule for HTMLHeadOnlyElementsRule {
     "html-head-only-elements"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 
   fn default_exclude(&self) -> &[&str] {

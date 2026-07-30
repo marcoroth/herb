@@ -1,24 +1,43 @@
+use crate::autofix::{for_each_erb_mut, location_matches};
+use crate::offense::Offense;
+use crate::rule::LintContext;
+use crate::utils::erb_utils::get_commented_tag_prefix;
+use herb::nodes::DocumentNode;
+
 use herb::nodes::ERBNode;
 use herb::Token;
 use herb::Visitor;
+use herb_config::Severity;
 
 rule_visitor!(RequireWhitespaceInsideTagsVisitor);
 define_parser_rule!(
   ERBRequireWhitespaceInsideTagsRule,
   "erb-require-whitespace-inside-tags",
   Error,
-  RequireWhitespaceInsideTagsVisitor
+  RequireWhitespaceInsideTagsVisitor,
+  autocorrectable: true,
+  autofix: autofix
 );
 
 impl RequireWhitespaceInsideTagsVisitor {
   fn check_comment_tag_whitespace(&mut self, open_tag: &Token, close_tag: &Token, content: &str) {
-    if !content.starts_with(' ') && !content.starts_with('\n') && !content.starts_with('=') {
-      self.add_offense(format!("Add whitespace after `{}`.", open_tag.value), open_tag.location.clone());
-    } else if content.starts_with('=') && content.len() > 1 {
-      let second_byte = content.as_bytes()[1];
+    match get_commented_tag_prefix(content) {
+      Some(prefix) => {
+        let after_prefix = &content[prefix.len()..];
 
-      if second_byte != b' ' && second_byte != b'\t' && second_byte != b'\n' && second_byte != b'\r' {
-        self.add_offense("Add whitespace after `<%#=`.".to_string(), open_tag.location.clone());
+        if !after_prefix.is_empty() && !after_prefix.starts_with(char::is_whitespace) {
+          self.add_unsafe_offense_with_severity(
+            format!("Add whitespace after `<%#{}`. This looks like a temporarily commented ERB tag.", prefix),
+            open_tag.location.clone(),
+            Severity::Info,
+          );
+        }
+      }
+
+      None => {
+        if !content.starts_with(' ') && !content.starts_with('\n') {
+          self.add_offense(format!("Add whitespace after `{}`.", open_tag.value), open_tag.location.clone());
+        }
       }
     }
 
@@ -68,4 +87,48 @@ impl Visitor for RequireWhitespaceInsideTagsVisitor {
       self.check_close_tag_whitespace(close_tag, content_value);
     }
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  for_each_erb_mut(document, &mut |tokens| {
+    let after_open = tokens
+      .tag_opening
+      .as_ref()
+      .map(|token| location_matches(&token.location, offense))
+      .unwrap_or(false);
+    let before_close = tokens
+      .tag_closing
+      .as_ref()
+      .map(|token| location_matches(&token.location, offense))
+      .unwrap_or(false);
+
+    if !after_open && !before_close {
+      return;
+    }
+
+    let is_comment = tokens.tag_opening.as_ref().map(|token| token.value == "<%#").unwrap_or(false);
+
+    let content = match tokens.content.as_mut() {
+      Some(content) => content,
+      None => return,
+    };
+
+    if before_close {
+      content.value = format!("{} ", content.value);
+      fixed = true;
+
+      return;
+    }
+
+    match get_commented_tag_prefix(&content.value).filter(|_| is_comment) {
+      Some(prefix) => content.value = format!("{} {}", prefix, &content.value[prefix.len()..]),
+      None => content.value = format!(" {}", content.value),
+    }
+
+    fixed = true;
+  });
+
+  fixed
 }

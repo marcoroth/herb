@@ -8,7 +8,7 @@ use crate::utils::tag_utils::get_attribute_name;
 use herb::nodes::*;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoDuplicateAttributesRule;
 
@@ -20,6 +20,11 @@ struct NoDuplicateAttributesVisitor {
 }
 
 impl NoDuplicateAttributesVisitor {
+  fn reset_attribute_sets(&mut self) {
+    self.tag_attributes = HashSet::new();
+    self.tracker.reset_values();
+  }
+
   fn handle_exit_control_flow(&mut self) {
     if let Some(exit_info) = self.tracker.exit_control_flow() {
       if exit_info.was_conditional {
@@ -112,9 +117,13 @@ impl NoDuplicateAttributesVisitor {
 
 impl Visitor for NoDuplicateAttributesVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
-    self.tag_attributes = HashSet::new();
-    self.tracker = ControlFlowTracker::new();
+    self.reset_attribute_sets();
     self.walk_html_open_tag_node(node);
+  }
+
+  fn visit_erb_open_tag_node(&mut self, node: &ERBOpenTagNode) {
+    self.reset_attribute_sets();
+    self.walk_erb_open_tag_node(node);
   }
 
   fn visit_html_attribute_node(&mut self, node: &HTMLAttributeNode) {
@@ -129,8 +138,15 @@ impl Rule for HTMLNoDuplicateAttributesRule {
     "html-no-duplicate-attributes"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
+  }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      action_view_helpers: true,
+      ..crate::rule::default_linter_parser_options()
+    }
   }
 }
 

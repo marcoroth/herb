@@ -2,7 +2,7 @@ import packageJSON from "../package.json" with { type: "json" }
 
 import { ensureString } from "./util.js"
 import { LexResult } from "./lex-result.js"
-import { BackendLintResult } from "./lint-result.js"
+import { BackendAutofixResult, BackendLintResult } from "./lint-result.js"
 import { ParseResult } from "./parse-result.js"
 import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
@@ -168,6 +168,22 @@ export abstract class HerbBackend {
     const backend = this.backend as LibHerbBackend & { lint: (source: string, configJson?: string, fileName?: string) => any }
 
     return BackendLintResult.from(backend.lint(ensureString(source), configJson, fileName))
+  }
+
+  /**
+   * Applies native autofixes and returns the corrected source plus the offenses
+   * that were and were not fixed.
+   * @throws Error if the backend is not loaded or does not support linting.
+   */
+  autofix(source: string, configJson?: string, fileName?: string, includeUnsafe: boolean = false): BackendAutofixResult {
+    this.ensureBackend()
+    this.ensureLinterBackend()
+
+    const backend = this.backend as LibHerbBackend & {
+      autofix: (source: string, configJson: string | undefined, fileName: string | undefined, includeUnsafe: boolean) => any
+    }
+
+    return BackendAutofixResult.from(backend.autofix(ensureString(source), configJson, fileName, includeUnsafe))
   }
 
   /**

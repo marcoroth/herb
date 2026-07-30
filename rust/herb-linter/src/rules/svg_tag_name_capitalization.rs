@@ -1,3 +1,5 @@
+use crate::offense::Offense;
+use herb::nodes::DocumentNode;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -9,7 +11,7 @@ use herb::union_types::*;
 use herb::ParseResult;
 use herb::Token;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct SVGTagNameCapitalizationRule;
 
@@ -105,6 +107,13 @@ impl Visitor for SVGTagNameCapitalizationVisitor {
               self.check_tag_name(tag_name_token, "Opening");
             }
           }
+
+          ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::ERBOpenTagNode(open) => {
+            if let Some(ref tag_name_token) = open.tag_name {
+              self.check_tag_name(tag_name_token, "ERB opening");
+            }
+          }
+
           _ => {}
         }
       }
@@ -126,16 +135,57 @@ impl Visitor for SVGTagNameCapitalizationVisitor {
 }
 
 impl Rule for SVGTagNameCapitalizationRule {
+  fn has_autofix(&self) -> bool {
+    true
+  }
+
+  fn autocorrectable(&self) -> bool {
+    true
+  }
+
   fn name(&self) -> &'static str {
     "svg-tag-name-capitalization"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
+  }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      action_view_helpers: true,
+      ..crate::rule::default_linter_parser_options()
+    }
   }
 }
 
 impl ParserRule for SVGTagNameCapitalizationRule {
+  fn autofix(&self, offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+    let mut fixed = false;
+
+    crate::autofix::walk_nodes_mut(&mut document.children, &mut |node| {
+      let tag_name = match node {
+        AnyNode::HTMLOpenTagNode(node) => node.tag_name.as_mut(),
+        AnyNode::HTMLCloseTagNode(node) => node.tag_name.as_mut(),
+        AnyNode::ERBOpenTagNode(node) => node.tag_name.as_mut(),
+        _ => None,
+      };
+
+      if let Some(token) = tag_name {
+        if !crate::autofix::location_matches(&token.location, offense) {
+          return;
+        }
+
+        if let Some(correct) = SVG_LOWERCASE_TO_CAMELCASE.get(&token.value.to_lowercase()) {
+          token.value = correct.to_string();
+          fixed = true;
+        }
+      }
+    });
+
+    fixed
+  }
+
   fn check(&self, result: &ParseResult, _context: &LintContext) -> Vec<UnboundOffense> {
     let mut visitor = SVGTagNameCapitalizationVisitor {
       rule_name: self.name(),

@@ -1,6 +1,6 @@
 [package]
 name = "herb-linter"
-version = "0.8.10"
+version = "0.10.2"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "HTML+ERB linter for validating HTML structure and enforcing best practices"
@@ -18,9 +18,10 @@ path = "src/main.rs"
 required-features = ["cli"]
 
 [features]
-cli = ["rayon"]
+cli = ["rayon", "herb-config/yerba"]
 
 [dependencies]
+herb-printer = { path = "../herb-printer" }
 herb = { path = ".." }
 herb-config = { path = "../herb-config" }
 serde = { version = "1", features = ["derive"] }

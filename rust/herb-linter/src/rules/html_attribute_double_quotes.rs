@@ -1,4 +1,8 @@
+use crate::autofix::{for_each_attribute_mut, location_matches};
+use crate::offense::Offense;
+use crate::rule::LintContext;
 use crate::utils::tag_utils::{get_attribute_name, get_attributes, get_static_attribute_value};
+use herb::nodes::DocumentNode;
 
 use herb::nodes::{AnyNode, HTMLOpenTagNode};
 use herb::Visitor;
@@ -8,7 +12,9 @@ define_parser_rule!(
   HTMLAttributeDoubleQuotesRule,
   "html-attribute-double-quotes",
   Warning,
-  AttributeDoubleQuotesVisitor
+  AttributeDoubleQuotesVisitor,
+  autocorrectable: true,
+  autofix: autofix
 );
 
 impl Visitor for AttributeDoubleQuotesVisitor {
@@ -87,4 +93,23 @@ impl Visitor for AttributeDoubleQuotesVisitor {
 
     self.walk_html_open_tag_node(node);
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  for_each_attribute_mut(document, &mut |attribute| {
+    let value = match attribute.value.as_mut() {
+      Some(value) if location_matches(&value.location, offense) => value,
+      _ => return,
+    };
+
+    if let (Some(open_quote), Some(close_quote)) = (value.open_quote.as_mut(), value.close_quote.as_mut()) {
+      open_quote.value = "\"".to_string();
+      close_quote.value = "\"".to_string();
+      fixed = true;
+    }
+  });
+
+  fixed
 }

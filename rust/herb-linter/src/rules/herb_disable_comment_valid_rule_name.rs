@@ -8,7 +8,7 @@ use crate::utils::didyoumean::didyoumean;
 use herb::nodes::ERBContentNode;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HerbDisableCommentValidRuleNameRule;
 
@@ -68,8 +68,8 @@ impl Rule for HerbDisableCommentValidRuleNameRule {
     "herb-disable-comment-valid-rule-name"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Warning
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Warning)
   }
 }
 

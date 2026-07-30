@@ -1,6 +1,7 @@
 #ifndef HERB_LINTER_H
 #define HERB_LINTER_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -18,6 +19,15 @@ typedef struct {
 
 herb_lint_result_T* herb_lint(const char* source, const char* config_json, const char* file_name);
 void herb_lint_result_free(herb_lint_result_T* result);
+
+typedef struct {
+  char* json;
+  size_t fixed_count;
+  size_t unfixed_count;
+} herb_autofix_result_T;
+
+herb_autofix_result_T* herb_autofix(const char* source, const char* config_json, const char* file_name, bool include_unsafe);
+void herb_autofix_result_free(herb_autofix_result_T* result);
 
 size_t herb_lint_rule_count(void);
 char** herb_lint_rule_names(size_t* count);

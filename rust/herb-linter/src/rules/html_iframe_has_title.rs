@@ -4,7 +4,7 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(IframeHasTitleVisitor);
-define_parser_rule!(HTMLIframeHasTitleRule, "html-iframe-has-title", Error, IframeHasTitleVisitor);
+define_parser_rule!(HTMLIframeHasTitleRule, "html-iframe-has-title", Warning, IframeHasTitleVisitor);
 
 impl Visitor for IframeHasTitleVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

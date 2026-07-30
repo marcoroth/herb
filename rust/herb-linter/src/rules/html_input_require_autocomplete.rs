@@ -10,7 +10,7 @@ rule_visitor!(InputRequireAutocompleteVisitor);
 define_parser_rule!(
   HTMLInputRequireAutocompleteRule,
   "html-input-require-autocomplete",
-  Error,
+  Warning,
   InputRequireAutocompleteVisitor
 );
 

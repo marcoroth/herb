@@ -1,3 +1,16 @@
+macro_rules! severity_config {
+  ({ cli: $cli:ident, editor: $editor:ident }) => {
+    herb_config::SeverityConfig::PerMode {
+      cli: herb_config::Severity::$cli,
+      editor: herb_config::Severity::$editor,
+    }
+  };
+
+  ($severity:ident) => {
+    herb_config::SeverityConfig::Severity(herb_config::Severity::$severity)
+  };
+}
+
 macro_rules! rule_visitor {
   ($name:ident) => {
     struct $name {
@@ -17,13 +30,32 @@ macro_rules! rule_visitor {
       fn add_offense(&mut self, message: impl Into<String>, location: herb::Location) {
         self.offenses.push($crate::offense::UnboundOffense::new(self.rule_name, message, location));
       }
+
+      #[allow(dead_code)]
+      fn add_offense_with_severity(&mut self, message: impl Into<String>, location: herb::Location, severity: herb_config::Severity) {
+        self
+          .offenses
+          .push($crate::offense::UnboundOffense::with_severity(self.rule_name, message, location, severity));
+      }
+
+      #[allow(dead_code)]
+      fn add_unsafe_offense_with_severity(&mut self, message: impl Into<String>, location: herb::Location, severity: herb_config::Severity) {
+        self
+          .offenses
+          .push($crate::offense::UnboundOffense::with_severity(self.rule_name, message, location, severity).unsafe_fix());
+      }
     }
   };
 }
 
 macro_rules! define_parser_rule {
-  ($rule:ident, $name:expr, $severity:ident, $visitor:ident
-   $(, enabled: $enabled:expr)? $(, exclude: [$($exclude:expr),* $(,)?])?) => {
+  ($rule:ident, $name:expr, $severity:tt, $visitor:ident
+   $(, enabled: $enabled:expr)? $(, exclude: [$($exclude:expr),* $(,)?])?
+   $(, parser_options: { $($option:ident: $value:expr),* $(,)? })?
+   $(, autocorrectable: $autocorrectable:expr)?
+   $(, unsafe_autocorrectable: $unsafe_autocorrectable:expr)?
+   $(, reindent_after_autofix: $reindent:expr)?
+   $(, autofix: $autofix:path)?) => {
     pub struct $rule;
 
     impl $crate::rule::Rule for $rule {
@@ -31,8 +63,8 @@ macro_rules! define_parser_rule {
         $name
       }
 
-      fn default_severity(&self) -> herb_config::Severity {
-        herb_config::Severity::$severity
+      fn default_severity(&self) -> herb_config::SeverityConfig {
+        severity_config!($severity)
       }
 
       $(
@@ -44,6 +76,41 @@ macro_rules! define_parser_rule {
       $(
         fn default_exclude(&self) -> &[&str] {
           &[$($exclude),*]
+        }
+      )?
+
+      $(
+        fn parser_options(&self) -> herb::ParserOptions {
+          herb::ParserOptions {
+            $($option: $value,)*
+            ..$crate::rule::default_linter_parser_options()
+          }
+        }
+      )?
+
+      $(
+        fn autocorrectable(&self) -> bool {
+          $autocorrectable
+        }
+      )?
+
+      $(
+        #[allow(unused)]
+        fn has_autofix(&self) -> bool {
+          let _ = $autofix;
+          true
+        }
+      )?
+
+      $(
+        fn unsafe_autocorrectable(&self) -> bool {
+          $unsafe_autocorrectable
+        }
+      )?
+
+      $(
+        fn reindent_after_autofix(&self) -> bool {
+          $reindent
         }
       )?
     }
@@ -58,6 +125,17 @@ macro_rules! define_parser_rule {
         visitor.visit_document_node(&result.value);
         visitor.offenses
       }
+
+      $(
+        fn autofix(
+          &self,
+          offense: &$crate::offense::Offense,
+          document: &mut herb::nodes::DocumentNode,
+          context: &$crate::rule::LintContext,
+        ) -> bool {
+          $autofix(offense, document, context)
+        }
+      )?
     }
   };
 }
@@ -137,8 +215,13 @@ macro_rules! impl_control_flow_visitor {
 }
 
 macro_rules! define_source_rule {
-  ($rule:ident, $name:expr, $severity:ident
-   $(, enabled: $enabled:expr)? $(, exclude: [$($exclude:expr),* $(,)?])?) => {
+  ($rule:ident, $name:expr, $severity:tt
+   $(, enabled: $enabled:expr)? $(, exclude: [$($exclude:expr),* $(,)?])?
+   $(, parser_options: { $($option:ident: $value:expr),* $(,)? })?
+   $(, has_autofix: $has_autofix:expr)?
+   $(, autocorrectable: $autocorrectable:expr)?
+   $(, unsafe_autocorrectable: $unsafe_autocorrectable:expr)?
+   $(, reindent_after_autofix: $reindent:expr)?) => {
     pub struct $rule;
 
     impl $crate::rule::Rule for $rule {
@@ -146,8 +229,8 @@ macro_rules! define_source_rule {
         $name
       }
 
-      fn default_severity(&self) -> herb_config::Severity {
-        herb_config::Severity::$severity
+      fn default_severity(&self) -> herb_config::SeverityConfig {
+        severity_config!($severity)
       }
 
       $(
@@ -159,6 +242,39 @@ macro_rules! define_source_rule {
       $(
         fn default_exclude(&self) -> &[&str] {
           &[$($exclude),*]
+        }
+      )?
+
+      $(
+        fn parser_options(&self) -> herb::ParserOptions {
+          herb::ParserOptions {
+            $($option: $value,)*
+            ..$crate::rule::default_linter_parser_options()
+          }
+        }
+      )?
+
+      $(
+        fn autocorrectable(&self) -> bool {
+          $autocorrectable
+        }
+      )?
+
+      $(
+        fn has_autofix(&self) -> bool {
+          $has_autofix
+        }
+      )?
+
+      $(
+        fn unsafe_autocorrectable(&self) -> bool {
+          $unsafe_autocorrectable
+        }
+      )?
+
+      $(
+        fn reindent_after_autofix(&self) -> bool {
+          $reindent
         }
       )?
     }

@@ -1,6 +1,6 @@
 import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
-import type { SerializedLintResult } from "./lint-result.js"
+import type { SerializedAutofixResult, SerializedLintResult } from "./lint-result.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { DiffResult } from "./diff-result.js"
@@ -24,6 +24,7 @@ interface LibHerbLinterBackendFunctions {
   lint: (source: string, configJson?: string, fileName?: string) => SerializedLintResult
   lintRuleCount: () => number
   lintRuleNames: () => string[]
+  autofix: (source: string, configJson: string | undefined, fileName: string | undefined, includeUnsafe: boolean) => SerializedAutofixResult
 }
 
 export type BackendPromise = () => Promise<LibHerbBackend>
@@ -42,6 +43,7 @@ const optionalLinterFunctions = [
   "lint",
   "lintRuleCount",
   "lintRuleNames",
+  "autofix",
 ] as const
 
 type LibHerbBackendFunctionName = (typeof expectedFunctions)[number]

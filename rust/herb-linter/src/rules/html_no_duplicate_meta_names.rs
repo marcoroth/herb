@@ -7,7 +7,7 @@ use crate::utils::tag_utils::{get_attribute, get_open_tag, get_static_attribute_
 use herb::nodes::*;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoDuplicateMetaNamesRule;
 
@@ -177,7 +177,7 @@ impl Visitor for NoDuplicateMetaNamesVisitor {
 
       if lowercase == "head" {
         self.document_metas.clear();
-        self.tracker = ControlFlowTracker::new();
+        self.tracker.reset_values();
       } else if lowercase == "meta" && self.element_stack.inside("head") {
         self.collect_and_check_meta_tag(node);
       }
@@ -196,8 +196,8 @@ impl Rule for HTMLNoDuplicateMetaNamesRule {
     "html-no-duplicate-meta-names"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 }
 

@@ -10,7 +10,7 @@ use crate::utils::tag_utils::get_tag_name_from_element;
 use herb::nodes::HTMLElementNode;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLBodyOnlyElementsRule;
 
@@ -58,8 +58,8 @@ impl Rule for HTMLBodyOnlyElementsRule {
     "html-body-only-elements"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 
   fn default_exclude(&self) -> &[&str] {

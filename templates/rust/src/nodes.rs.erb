@@ -322,6 +322,7 @@ pub struct <%= node.name %> {
   pub <%= field.name %>: Option<Vec<u8>>,
   <%- when Herb::Template::PrismNodeField -%>
   pub <%= field.name %>: Option<String>,
+  pub <%= field.name %>_ast: Option<crate::prism::PrismNode>,
   <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
   // no-op for <%= field.name %>
   <%- end -%>

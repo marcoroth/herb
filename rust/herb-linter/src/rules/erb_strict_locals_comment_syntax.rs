@@ -1,10 +1,10 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 
-use herb::nodes::ERBContentNode;
+use herb::nodes::{ERBContentNode, ERBStrictLocalsNode};
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct ERBStrictLocalsCommentSyntaxRule;
 
@@ -267,6 +267,31 @@ struct StrictLocalsCommentSyntaxVisitor<'rule> {
 }
 
 impl<'rule> Visitor for StrictLocalsCommentSyntaxVisitor<'rule> {
+  fn visit_erb_strict_locals_node(&mut self, node: &ERBStrictLocalsNode) {
+    if is_partial_file_opt(self.context.file_name.as_deref()) == Some(false) {
+      self.offenses.push(UnboundOffense::new(
+        self.rule_name,
+        "Strict locals (`locals:`) only work in partials (files starting with `_`). This declaration will be ignored.",
+        node.location.clone(),
+      ));
+    }
+
+    if !node.errors.is_empty() {
+      return;
+    }
+
+    let content = node.content.as_ref().map(|token| token.value.as_str()).unwrap_or("");
+    let after_locals = content.trim().get("locals:".len()..).unwrap_or("");
+
+    if !after_locals.is_empty() && !after_locals.starts_with(' ') {
+      self.offenses.push(UnboundOffense::new(
+        self.rule_name,
+        "Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.",
+        node.location.clone(),
+      ));
+    }
+  }
+
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
     let opening_tag = node.tag_opening.as_ref().map(|token| token.value.as_str()).unwrap_or("");
 
@@ -420,8 +445,15 @@ impl Rule for ERBStrictLocalsCommentSyntaxRule {
     "erb-strict-locals-comment-syntax"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
+  }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      strict_locals: true,
+      ..crate::rule::default_linter_parser_options()
+    }
   }
 }
 

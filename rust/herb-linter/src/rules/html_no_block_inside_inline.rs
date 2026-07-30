@@ -6,7 +6,7 @@ use herb::nodes::*;
 use herb::union_types::*;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoBlockInsideInlineRule;
 
@@ -72,8 +72,8 @@ impl Rule for HTMLNoBlockInsideInlineRule {
     "html-no-block-inside-inline"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 
   fn default_enabled(&self) -> bool {

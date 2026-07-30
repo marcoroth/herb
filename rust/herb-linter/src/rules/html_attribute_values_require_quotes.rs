@@ -1,4 +1,8 @@
+use crate::autofix::{for_each_attribute_mut, location_matches, quote_token};
+use crate::offense::Offense;
+use crate::rule::LintContext;
 use crate::utils::tag_utils::{get_attribute_name, get_attributes, get_static_attribute_value};
+use herb::nodes::DocumentNode;
 
 use herb::nodes::{AnyNode, HTMLOpenTagNode};
 use herb::Visitor;
@@ -8,7 +12,9 @@ define_parser_rule!(
   HTMLAttributeValuesRequireQuotesRule,
   "html-attribute-values-require-quotes",
   Error,
-  AttributeValuesRequireQuotesVisitor
+  AttributeValuesRequireQuotesVisitor,
+  autocorrectable: true,
+  autofix: autofix
 );
 
 impl Visitor for AttributeValuesRequireQuotesVisitor {
@@ -69,4 +75,30 @@ impl Visitor for AttributeValuesRequireQuotesVisitor {
 
     self.walk_html_open_tag_node(node);
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  for_each_attribute_mut(document, &mut |attribute| {
+    let value = match attribute.value.as_mut() {
+      Some(value) if location_matches(&value.location, offense) => value,
+      _ => return,
+    };
+
+    match value.open_quote.as_mut() {
+      Some(open_quote) => open_quote.value = "\"".to_string(),
+      None => value.open_quote = Some(quote_token()),
+    }
+
+    match value.close_quote.as_mut() {
+      Some(close_quote) => close_quote.value = "\"".to_string(),
+      None => value.close_quote = Some(quote_token()),
+    }
+
+    value.quoted = true;
+    fixed = true;
+  });
+
+  fixed
 }

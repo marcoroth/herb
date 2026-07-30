@@ -44,6 +44,37 @@ val Herb_lint(const std::string& source, val config, val fileName) {
   return parsed;
 }
 
+val Herb_autofix(const std::string& source, val config, val fileName, bool includeUnsafe) {
+  const char* config_c_string = nullptr;
+  std::string config_string;
+
+  if (!config.isUndefined() && !config.isNull() && config.typeOf().as<std::string>() == "string") {
+    config_string = config.as<std::string>();
+    config_c_string = config_string.c_str();
+  }
+
+  const char* file_name_c_string = nullptr;
+  std::string file_name_string;
+
+  if (!fileName.isUndefined() && !fileName.isNull() && fileName.typeOf().as<std::string>() == "string") {
+    file_name_string = fileName.as<std::string>();
+    file_name_c_string = file_name_string.c_str();
+  }
+
+  herb_autofix_result_T* result = herb_autofix(source.c_str(), config_c_string, file_name_c_string, includeUnsafe);
+
+  if (result == nullptr) {
+    return val::null();
+  }
+
+  val JSON = val::global("JSON");
+  val parsed = JSON.call<val>("parse", std::string(result->json));
+
+  herb_autofix_result_free(result);
+
+  return parsed;
+}
+
 size_t Herb_lint_rule_count() {
   return herb_lint_rule_count();
 }

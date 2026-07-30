@@ -5,7 +5,7 @@ use crate::utils::tag_utils::{get_open_tag, get_tag_name_from_element, get_tag_n
 use herb::nodes::{HTMLElementNode, HTMLOpenTagNode};
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoNestedLinksRule;
 
@@ -67,8 +67,8 @@ impl Rule for HTMLNoNestedLinksRule {
     "html-no-nested-links"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 }
 

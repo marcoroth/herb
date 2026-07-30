@@ -10,7 +10,7 @@ rule_visitor!(AvoidBothDisabledAndAriaDisabledVisitor);
 define_parser_rule!(
   HTMLAvoidBothDisabledAndAriaDisabledRule,
   "html-avoid-both-disabled-and-aria-disabled",
-  Error,
+  Warning,
   AvoidBothDisabledAndAriaDisabledVisitor
 );
 

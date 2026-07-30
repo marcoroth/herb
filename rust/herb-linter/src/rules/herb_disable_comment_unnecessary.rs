@@ -7,7 +7,7 @@ use crate::rule::{LintContext, ParserRule, Rule};
 use herb::nodes::ERBContentNode;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HerbDisableCommentUnnecessaryRule;
 
@@ -124,8 +124,8 @@ impl Rule for HerbDisableCommentUnnecessaryRule {
     "herb-disable-comment-unnecessary"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Warning
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Warning)
   }
 }
 

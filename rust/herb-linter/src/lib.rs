@@ -1,6 +1,7 @@
 #[macro_use]
 mod macros;
 
+pub mod autofix;
 pub mod ffi;
 pub mod herb_disable;
 pub mod linter;

@@ -232,21 +232,14 @@ pub(crate) unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode
         Some(std::slice::from_raw_parts((*c_node_pointer).<%= field.name %>.data, (*c_node_pointer).<%= field.name %>.length).to_vec())
       },
       <%- when Herb::Template::PrismNodeField -%>
-      <%= field.name %>: if (*c_node_pointer).<%= field.name %>.node.is_null() || (*c_node_pointer).<%= field.name %>.parser.is_null() {
-        None
-      } else {
-        let mut pm_buffer: crate::bindings::pm_buffer_t = std::mem::zeroed();
-        crate::bindings::pm_prettyprint(&mut pm_buffer, (*c_node_pointer).<%= field.name %>.parser, (*c_node_pointer).<%= field.name %>.node);
-
-        if pm_buffer.length > 0 && !pm_buffer.value.is_null() {
-          let s = std::str::from_utf8(std::slice::from_raw_parts(pm_buffer.value as *const u8, pm_buffer.length)).unwrap_or("").to_string();
-          crate::bindings::pm_buffer_free(&mut pm_buffer);
-          Some(s)
-        } else {
-          crate::bindings::pm_buffer_free(&mut pm_buffer);
-          None
-        }
-      },
+      <%= field.name %>: crate::prism::prettyprint(
+        (*c_node_pointer).<%= field.name %>.node,
+        (*c_node_pointer).<%= field.name %>.parser,
+      ),
+      <%= field.name %>_ast: crate::prism::convert_node(
+        (*c_node_pointer).<%= field.name %>.node,
+        (*c_node_pointer).<%= field.name %>.parser,
+      ),
       <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
       // skip internal field: <%= field.name %>
       <%- end -%>

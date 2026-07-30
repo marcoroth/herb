@@ -2,7 +2,7 @@ use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 
 use herb::ParseResult;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct ParserNoErrorsRule;
 
@@ -11,8 +11,8 @@ impl Rule for ParserNoErrorsRule {
     "parser-no-errors"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 }
 

@@ -1,8 +1,15 @@
+use crate::autofix::{for_each_erb_mut, location_matches};
+use crate::offense::Offense;
+use crate::rule::LintContext;
+use herb::nodes::DocumentNode;
 use herb::nodes::ERBContentNode;
 use herb::Visitor;
 
 rule_visitor!(CommentSyntaxVisitor);
-define_parser_rule!(ERBCommentSyntaxRule, "erb-comment-syntax", Error, CommentSyntaxVisitor);
+define_parser_rule!(ERBCommentSyntaxRule, "erb-comment-syntax", Error, CommentSyntaxVisitor,
+  autocorrectable: true,
+  autofix: autofix
+);
 
 impl Visitor for CommentSyntaxVisitor {
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
@@ -35,4 +42,38 @@ impl Visitor for CommentSyntaxVisitor {
 
     self.add_offense(message, node.location.clone());
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  for_each_erb_mut(document, &mut |tokens| {
+    if !location_matches(tokens.location, offense) {
+      return;
+    }
+
+    let opening = match tokens.tag_opening.as_mut() {
+      Some(opening) => opening,
+      None => return,
+    };
+
+    let content = match tokens.content.as_mut() {
+      Some(content) => content,
+      None => return,
+    };
+
+    opening.value = "<%#".to_string();
+
+    // strip a leading `  #` so `<% # foo %>` becomes `<%# foo %>`
+    let trimmed = content.value.trim_start_matches(' ');
+    let spaces = content.value.len() - trimmed.len();
+
+    if spaces > 0 && trimmed.starts_with('#') {
+      content.value = content.value[spaces + 1..].to_string();
+    }
+
+    fixed = true;
+  });
+
+  fixed
 }

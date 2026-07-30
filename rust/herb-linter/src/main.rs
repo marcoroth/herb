@@ -4,7 +4,7 @@ use std::time::Instant;
 
 use rayon::prelude::*;
 
-use herb_config::{HerbConfig, Severity};
+use herb_config::{Config, Severity, Tool};
 use herb_linter::linter::Linter;
 use herb_linter::offense::Offense;
 use herb_linter::rule::LintContext;
@@ -67,7 +67,12 @@ struct ProcessingResult {
   total_info: usize,
   total_hints: usize,
   files_with_offenses: usize,
+  total_ignored: usize,
+  total_would_be_ignored: usize,
   rule_count: usize,
+  rules_disabled_by_config: usize,
+  rules_not_enabled_by_default: usize,
+  autofixable_count: usize,
   rule_offenses: HashMap<String, RuleOffenseStats>,
 }
 
@@ -80,32 +85,39 @@ fn main() {
   }
 
   let current_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-  let (config, config_path) = HerbConfig::load(&current_directory, arguments.config_file.as_deref());
+  let project_path = determine_project_path(&arguments.patterns, &current_directory);
+
+  let load_path = match arguments.config_file {
+    Some(ref config_file) => PathBuf::from(config_file),
+    None => project_path.clone(),
+  };
+
+  let config = match Config::load(&load_path, None) {
+    Ok(config) => config,
+    Err(error) => {
+      eprintln!("Error: {}", error);
+      std::process::exit(1);
+    }
+  };
 
   if arguments.init {
-    init_command(&current_directory, config_path.as_deref());
+    init_command(
+      &current_directory,
+      Config::exists(&project_path).then(|| Config::config_path_from_project_path(&project_path)),
+    );
     return;
   }
 
-  if !config.linter.enabled && !arguments.force {
+  if !config.is_linter_enabled() && !arguments.force {
     output_info("Linting is disabled in .herb.yml configuration. Use --force to lint anyway.", &arguments);
     return;
-  }
-
-  if arguments.fix || arguments.fix_unsafe {
-    eprintln!("Warning: --fix is not yet supported in the Rust CLI, linting without autofix");
-  }
-
-  if arguments.patterns.is_empty() {
-    output_info("No files or directories specified. Run with --help for usage.", &arguments);
-    std::process::exit(1);
   }
 
   let start_time = Instant::now();
 
   let fail_level = if arguments.fail_level_explicit {
     arguments.fail_level.clone()
-  } else if let Some(config_level) = &config.linter.fail_level {
+  } else if let Some(config_level) = config.linter().and_then(|linter| linter.fail_level) {
     match config_level {
       Severity::Error => FailLevel::Error,
       Severity::Warning => FailLevel::Warning,
@@ -116,26 +128,60 @@ fn main() {
     arguments.fail_level.clone()
   };
 
-  let exclude_patterns = config.linter_exclude_patterns();
-  let include_patterns = config.linter_include_patterns();
+  let mut explicit_files: Vec<String> = Vec::new();
 
-  let mut all_files = Vec::new();
-  for pattern in &arguments.patterns {
-    let path = Path::new(pattern);
-    if !path.exists() {
-      output_error(&format!("Error: '{}' does not exist", pattern), &arguments);
-      std::process::exit(1);
+  let all_files = if arguments.patterns.is_empty() {
+    config.find_files_for_linter(Some(&project_path))
+  } else {
+    let mut collected: Vec<String> = Vec::new();
+
+    for pattern in &arguments.patterns {
+      let (pattern_files, explicit_file) = resolve_pattern_to_files(pattern, &config, &project_path, arguments.force, &arguments);
+
+      if pattern_files.is_empty() {
+        output_error(&format!("✗ No files found matching pattern: {}", pattern), &arguments);
+        std::process::exit(1);
+      }
+
+      for file in pattern_files {
+        if !collected.contains(&file) {
+          collected.push(file);
+        }
+      }
+
+      if let Some(explicit_file) = explicit_file {
+        explicit_files.push(explicit_file);
+      }
     }
-    all_files.extend(collect_files(path, &include_patterns, &exclude_patterns));
-  }
+
+    collected
+  };
 
   if all_files.is_empty() {
     output_info("No matching files found", &arguments);
     return;
   }
 
-  let linter_config = config.to_linter_config();
-  let result = lint_files(&all_files, &linter_config);
+  if all_files.len() > 1 {
+    output_progress(&format!("Found {} files, linting...", all_files.len()), &arguments);
+  }
+
+  let mut processing_config = config;
+
+  if arguments.force && !explicit_files.is_empty() {
+    if let Some(linter) = processing_config.config.linter.as_mut() {
+      linter.exclude = Some(Vec::new());
+    }
+  }
+
+  let result = lint_files(
+    &all_files,
+    &project_path,
+    &processing_config,
+    arguments.fix,
+    arguments.fix_unsafe,
+    arguments.ignore_disable_comments,
+  );
   let duration = start_time.elapsed();
 
   output_results(&result, &arguments, duration);
@@ -322,114 +368,84 @@ fn print_usage() {
   println!("  --no-timing                   hide timing information");
 }
 
-fn collect_files(path: &Path, include_patterns: &[String], exclude_patterns: &[String]) -> Vec<String> {
-  if path.is_file() {
-    return vec![path.to_string_lossy().into_owned()];
+fn determine_project_path(patterns: &[String], current_directory: &Path) -> PathBuf {
+  if let Some(pattern) = patterns.first() {
+    let resolved_pattern = current_directory.join(pattern);
+
+    if resolved_pattern.exists() {
+      return Config::find_project_root(&resolved_pattern);
+    }
   }
 
-  if !path.is_dir() {
-    return Vec::new();
-  }
-
-  let mut files = Vec::new();
-  collect_files_recursive(path, &mut files, include_patterns, exclude_patterns);
-  files.sort();
-  files
+  current_directory.to_path_buf()
 }
 
-fn collect_files_recursive(directory: &Path, files: &mut Vec<String>, include_patterns: &[String], exclude_patterns: &[String]) {
-  let entries = match std::fs::read_dir(directory) {
-    Ok(entries) => entries,
-    Err(error) => {
-      eprintln!("Error reading directory '{}': {}", directory.display(), error);
-      return;
+fn adjust_pattern(pattern: &str, config_glob_patterns: &[String], project_path: &Path, current_directory: &Path) -> Vec<String> {
+  let resolved_pattern = current_directory.join(pattern);
+
+  if resolved_pattern.exists() {
+    if resolved_pattern.is_dir() {
+      let relative_directory = relative_path(project_path, &resolved_pattern);
+
+      if relative_directory.is_empty() {
+        return config_glob_patterns.to_vec();
+      }
+
+      return config_glob_patterns
+        .iter()
+        .map(|config_pattern| format!("{}/{}", relative_directory, config_pattern))
+        .collect();
     }
+
+    if resolved_pattern.is_file() {
+      return vec![relative_path(project_path, &resolved_pattern)];
+    }
+  }
+
+  vec![pattern.to_string()]
+}
+
+fn relative_path(from: &Path, to: &Path) -> String {
+  let from = std::fs::canonicalize(from).unwrap_or_else(|_| from.to_path_buf());
+  let to = std::fs::canonicalize(to).unwrap_or_else(|_| to.to_path_buf());
+
+  to.strip_prefix(&from)
+    .map(|path| path.to_string_lossy().replace(std::path::MAIN_SEPARATOR, "/"))
+    .unwrap_or_else(|_| to.to_string_lossy().into_owned())
+}
+
+fn resolve_pattern_to_files(pattern: &str, config: &Config, project_path: &Path, force: bool, arguments: &CliArguments) -> (Vec<String>, Option<String>) {
+  let current_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+  let resolved_pattern = current_directory.join(pattern);
+
+  let explicit_file = if resolved_pattern.is_file() { Some(pattern.to_string()) } else { None };
+
+  let files_config = config.get_files_config_for_tool(Tool::Linter);
+
+  let config_glob_patterns = match files_config.include {
+    Some(ref include) if !include.is_empty() => include.clone(),
+    _ => vec!["**/*.html.erb".to_string()],
   };
 
-  for entry in entries.flatten() {
-    let path = entry.path();
+  let adjusted_patterns = adjust_pattern(pattern, &config_glob_patterns, project_path, &current_directory);
 
-    if path.is_dir() {
-      let name = entry.file_name();
-      let name_string = name.to_string_lossy();
+  let mut files = config.glob_files(&adjusted_patterns, project_path, &files_config.exclude.unwrap_or_default());
 
-      if name_string.starts_with('.') {
-        continue;
+  if let Some(ref explicit_file) = explicit_file {
+    if files.is_empty() {
+      if !force {
+        output_error(&format!("⚠️  File {} is excluded by configuration patterns.", explicit_file), arguments);
+        output_error("   Use --force to lint it anyway.\n", arguments);
+        std::process::exit(0);
       }
 
-      if is_path_excluded(&path, exclude_patterns) {
-        continue;
-      }
+      output_info(&format!("⚠️  Forcing linter on excluded file: {}", explicit_file), arguments);
 
-      collect_files_recursive(&path, files, include_patterns, exclude_patterns);
-    } else if is_file_included(&path, include_patterns) && !is_path_excluded(&path, exclude_patterns) {
-      files.push(path.to_string_lossy().into_owned());
-    }
-  }
-}
-
-fn is_file_included(path: &Path, include_patterns: &[String]) -> bool {
-  let path_string = path.to_string_lossy();
-
-  for pattern in include_patterns {
-    if let Some(extension) = extract_extension_from_glob(pattern) {
-      if path_string.ends_with(&extension) {
-        return true;
-      }
+      files = adjusted_patterns;
     }
   }
 
-  false
-}
-
-fn is_path_excluded(path: &Path, exclude_patterns: &[String]) -> bool {
-  let path_string = path.to_string_lossy();
-
-  for pattern in exclude_patterns {
-    if let Some(directory_prefix) = extract_dir_prefix_from_glob(pattern) {
-      for component in path.components() {
-        if let std::path::Component::Normal(name) = component {
-          if name.to_string_lossy() == directory_prefix {
-            return true;
-          }
-        }
-      }
-    }
-
-    if pattern_matches(&path_string, pattern) {
-      return true;
-    }
-  }
-
-  false
-}
-
-fn extract_extension_from_glob(pattern: &str) -> Option<String> {
-  if let Some(star_position) = pattern.rfind("*.") {
-    let extension = &pattern[star_position + 1..];
-    if extension.contains('*') {
-      return None;
-    }
-    return Some(extension.to_string());
-  }
-  None
-}
-
-fn extract_dir_prefix_from_glob(pattern: &str) -> Option<String> {
-  if let Some(slash_position) = pattern.find('/') {
-    let prefix = &pattern[..slash_position];
-    if !prefix.contains('*') && !prefix.contains('?') {
-      return Some(prefix.to_string());
-    }
-  }
-  None
-}
-
-fn pattern_matches(path: &str, pattern: &str) -> bool {
-  if let Some(directory_prefix) = extract_dir_prefix_from_glob(pattern) {
-    return path.contains(&format!("/{}/", directory_prefix)) || path.starts_with(&format!("{}/", directory_prefix));
-  }
-  false
+  (files, explicit_file)
 }
 
 struct FileLintResult {
@@ -439,16 +455,22 @@ struct FileLintResult {
   warnings: usize,
   info: usize,
   hints: usize,
+  ignored: usize,
+  would_be_ignored: usize,
 }
 
-fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> ProcessingResult {
-  let linter = Linter::new(linter_config.clone());
-  let rule_count = linter.rule_names().len();
+fn lint_files(files: &[String], project_path: &Path, config: &Config, fix: bool, fix_unsafe: bool, ignore_disable_comments: bool) -> ProcessingResult {
+  let linter = Linter::new(config.clone());
+  let rule_count = linter.rule_count();
+  let rules_disabled_by_config = linter.rules_disabled_by_config();
+  let rules_not_enabled_by_default = linter.rules_not_enabled_by_default();
 
   let file_results: Vec<FileLintResult> = files
     .par_iter()
     .filter_map(|file_path| {
-      let source = match std::fs::read_to_string(file_path) {
+      let resolved_path = project_path.join(file_path);
+
+      let source = match std::fs::read_to_string(&resolved_path) {
         Ok(content) => content,
         Err(error) => {
           eprintln!("Error reading file '{}': {}", file_path, error);
@@ -458,10 +480,23 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
 
       let context = LintContext {
         file_name: Some(file_path.clone()),
+        ignore_disable_comments,
         ..Default::default()
       };
 
-      let result = linter.lint(&source, &context);
+      let result = if fix || fix_unsafe {
+        let autofixed = linter.autofix(&source, &context, fix_unsafe);
+
+        if autofixed.source != source {
+          if let Err(error) = std::fs::write(&resolved_path, &autofixed.source) {
+            eprintln!("Error writing file '{}': {}", file_path, error);
+          }
+        }
+
+        linter.lint(&autofixed.source, &context)
+      } else {
+        linter.lint(&source, &context)
+      };
 
       Some(FileLintResult {
         file_path: file_path.clone(),
@@ -470,6 +505,8 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
         warnings: result.warnings,
         info: result.info,
         hints: result.hints,
+        ignored: result.ignored,
+        would_be_ignored: result.would_be_ignored,
       })
     })
     .collect();
@@ -480,6 +517,8 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
   let mut total_info = 0usize;
   let mut total_hints = 0usize;
   let mut files_with_offenses = 0usize;
+  let mut total_ignored = 0usize;
+  let mut total_would_be_ignored = 0usize;
   let mut rule_offenses: HashMap<String, RuleOffenseStats> = HashMap::new();
 
   for file_result in file_results {
@@ -491,6 +530,8 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
     total_warnings += file_result.warnings;
     total_info += file_result.info;
     total_hints += file_result.hints;
+    total_ignored += file_result.ignored;
+    total_would_be_ignored += file_result.would_be_ignored;
 
     for offense in file_result.offenses {
       let stats = rule_offenses.entry(offense.rule.clone()).or_insert_with(|| RuleOffenseStats {
@@ -507,6 +548,11 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
       });
     }
   }
+
+  let autofixable_count = all_offenses
+    .iter()
+    .filter(|processed| linter.is_rule_autocorrectable(&processed.offense.rule))
+    .count();
 
   all_offenses.sort_by(|a, b| {
     let file_comparison = a.filename.cmp(&b.filename);
@@ -532,7 +578,12 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
     total_info,
     total_hints,
     files_with_offenses,
+    total_ignored,
+    total_would_be_ignored,
     rule_count,
+    rules_disabled_by_config,
+    rules_not_enabled_by_default,
+    autofixable_count,
     rule_offenses,
   }
 }
@@ -585,6 +636,18 @@ fn output_info(message: &str, arguments: &CliArguments) {
     println!("{}", serde_json::to_string_pretty(&output).unwrap());
   } else {
     println!("{}", message);
+  }
+}
+
+fn output_progress(message: &str, arguments: &CliArguments) {
+  if arguments.github_actions || arguments.format == OutputFormat::Json {
+    return;
+  }
+
+  if std::env::var("NO_COLOR").is_ok() {
+    eprintln!("{}", message);
+  } else {
+    eprintln!("\x1b[90m{}\x1b[0m", message);
   }
 }
 
@@ -848,6 +911,14 @@ fn display_summary(result: &ProcessingResult, arguments: &CliArguments, duration
     }
   }
 
+  if result.total_ignored > 0 {
+    if no_color {
+      parts.push(format!("{} ignored", result.total_ignored));
+    } else {
+      parts.push(format!("\x1b[1m\x1b[90m{} ignored\x1b[0m", result.total_ignored));
+    }
+  }
+
   let offenses_summary = if parts.is_empty() {
     if no_color {
       "0 offenses".to_string()
@@ -883,25 +954,85 @@ fn display_summary(result: &ProcessingResult, arguments: &CliArguments, duration
     println!("  \x1b[90m{:<12}\x1b[0m {}", "Offenses", offenses_summary);
   }
 
-  let total_offenses = result.total_errors + result.total_warnings + result.total_info + result.total_hints;
-
-  if total_offenses > 0 {
-    let fixable_line = if no_color {
-      format!("{} {}", total_offenses, pluralize(total_offenses, "offense"))
-    } else {
-      format!("\x1b[1m\x1b[91m{} {}\x1b[0m", total_offenses, pluralize(total_offenses, "offense"))
-    };
+  if arguments.ignore_disable_comments && result.total_would_be_ignored > 0 {
+    let note = format!(
+      "{} additional {} reported (would have been ignored)",
+      result.total_would_be_ignored,
+      pluralize(result.total_would_be_ignored, "offense")
+    );
 
     if no_color {
-      println!("  {:<12} {}", "Fixable", fixable_line);
+      println!("  {:<12} {}", "Note", note);
     } else {
-      println!("  \x1b[90m{:<12}\x1b[0m {}", "Fixable", fixable_line);
+      println!("  \x1b[90m{:<12}\x1b[0m \x1b[1m\x1b[96m{}\x1b[0m", "Note", note);
     }
+  }
+
+  let total_offenses = result.total_errors + result.total_warnings + result.total_info + result.total_hints;
+
+  let autofixable_count = result.autofixable_count;
+
+  let fixable_line = if autofixable_count > 0 {
+    if no_color {
+      format!(
+        "{} {} | {} autocorrectable using `--fix`",
+        total_offenses,
+        pluralize(total_offenses, "offense"),
+        autofixable_count
+      )
+    } else {
+      format!(
+        "\x1b[1m\x1b[91m{} {}\x1b[0m | \x1b[1m\x1b[32m{} autocorrectable using `--fix`\x1b[0m",
+        total_offenses,
+        pluralize(total_offenses, "offense"),
+        autofixable_count
+      )
+    }
+  } else if no_color {
+    format!("{} {}", autofixable_count, pluralize(autofixable_count, "offense"))
+  } else {
+    format!("\x1b[1m\x1b[90m{} {}\x1b[0m", autofixable_count, pluralize(autofixable_count, "offense"))
+  };
+
+  if no_color {
+    println!("  {:<12} {}", "Fixable", fixable_line);
+  } else {
+    println!("  \x1b[90m{:<12}\x1b[0m {}", "Fixable", fixable_line);
+  }
+
+  let mut rules_parts = vec![if no_color {
+    format!("{} enabled", result.rule_count)
+  } else {
+    format!("\x1b[1m\x1b[32m{} enabled\x1b[0m", result.rule_count)
+  }];
+
+  if result.rules_not_enabled_by_default > 0 {
+    rules_parts.push(if no_color {
+      format!("{} not enabled", result.rules_not_enabled_by_default)
+    } else {
+      format!("\x1b[36m{} not enabled\x1b[0m", result.rules_not_enabled_by_default)
+    });
+  }
+
+  if result.rules_disabled_by_config > 0 {
+    rules_parts.push(if no_color {
+      format!("{} disabled", result.rules_disabled_by_config)
+    } else {
+      format!("\x1b[33m{} disabled\x1b[0m", result.rules_disabled_by_config)
+    });
+  }
+
+  let rules_line = rules_parts.join(" | ");
+
+  if no_color {
+    println!("  {:<12} {}", "Rules", rules_line);
+  } else {
+    println!("  \x1b[90m{:<12}\x1b[0m {}", "Rules", rules_line);
   }
 
   if arguments.show_timing {
     let duration_milliseconds = duration.as_millis();
-    let duration_text = format!("{}ms ({} {})", duration_milliseconds, result.rule_count, pluralize(result.rule_count, "rule"));
+    let duration_text = format!("{}ms", duration_milliseconds);
 
     if no_color {
       println!("  {:<12} {}", "Duration", duration_text);
@@ -1075,15 +1206,15 @@ fn display_most_violated_rules(result: &ProcessingResult) {
   }
 }
 
-fn init_command(current_directory: &Path, existing_config: Option<&Path>) {
+fn init_command(current_directory: &Path, existing_config: Option<PathBuf>) {
   if let Some(path) = existing_config {
     eprintln!("\n\u{2717} Configuration file already exists at {}", path.display());
     eprintln!("  Use --config-file to specify a different location.\n");
     std::process::exit(1);
   }
 
-  let project_root = HerbConfig::find_project_root(current_directory);
-  let config_path = project_root.join(".herb.yml");
+  let project_root = Config::find_project_root(current_directory);
+  let config_path = Config::config_path_from_project_path(&project_root);
 
   if config_path.exists() {
     eprintln!("\n\u{2717} Configuration file already exists at {}", config_path.display());
@@ -1091,7 +1222,13 @@ fn init_command(current_directory: &Path, existing_config: Option<&Path>) {
     std::process::exit(1);
   }
 
-  let template = HerbConfig::default_template();
+  let template = match herb_config::create_config_yaml_string(&herb_config::HerbConfigOptions::default(), None) {
+    Ok(template) => template,
+    Err(error) => {
+      eprintln!("Error: Failed to render configuration template: {}", error);
+      std::process::exit(1);
+    }
+  };
 
   match std::fs::write(&config_path, template) {
     Ok(()) => {

@@ -7,7 +7,7 @@ rule_visitor!(AriaRoleHeadingRequiresLevelVisitor);
 define_parser_rule!(
   HTMLAriaRoleHeadingRequiresLevelRule,
   "html-aria-role-heading-requires-level",
-  Error,
+  Warning,
   AriaRoleHeadingRequiresLevelVisitor
 );
 

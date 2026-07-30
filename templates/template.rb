@@ -872,7 +872,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_character_references: html_character_references })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -939,6 +939,24 @@ module Herb
       Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
         HelperType.new(YAML.load_file(file))
       end
+    end
+
+    HTML_ENTITIES_PATH = "javascript/packages/core/src/html-entities.json"
+
+    def self.html_character_references
+      unless File.exist?(HTML_ENTITIES_PATH)
+        raise <<~MESSAGE
+          Missing #{HTML_ENTITIES_PATH}, the shared source for named HTML character
+          references, so the Rust and JavaScript linters recognize the same set.
+
+          Restore it with:
+            bundle exec rake html_entities:download
+        MESSAGE
+      end
+
+      require "json"
+
+      JSON.parse(File.read(HTML_ENTITIES_PATH)).keys.sort
     end
 
     def self.config

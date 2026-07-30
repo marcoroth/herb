@@ -9,6 +9,7 @@
 emscripten::val Herb_lint(const std::string& source, emscripten::val config, emscripten::val fileName);
 size_t Herb_lint_rule_count();
 emscripten::val Herb_lint_rule_names();
+emscripten::val Herb_autofix(const std::string& source, emscripten::val config, emscripten::val fileName, bool includeUnsafe);
 
 #endif
 

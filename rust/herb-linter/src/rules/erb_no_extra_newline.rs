@@ -1,10 +1,11 @@
-use crate::offense::UnboundOffense;
+use crate::offense::{Offense, UnboundOffense};
 use crate::rule::{LintContext, Rule, SourceRule};
+use crate::utils::source_slice::offset_of;
 
 use herb::Location;
 use herb::Position;
 
-define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", Error);
+define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", Error, has_autofix: true, autocorrectable: true);
 
 fn position_from_offset(source: &str, offset: usize) -> Position {
   let mut line: u32 = 1;
@@ -72,5 +73,15 @@ impl SourceRule for ERBNoExtraNewlineRule {
     }
 
     offenses
+  }
+  fn autofix(&self, offense: &Offense, source: &str, _context: &LintContext) -> Option<String> {
+    let start = offset_of(source, offense.location.start.line, offense.location.start.column)?;
+    let end = offset_of(source, offense.location.end.line, offense.location.end.column)?;
+
+    if start > end || end > source.len() {
+      return None;
+    }
+
+    Some(format!("{}{}", &source[..start], &source[end..]))
   }
 }

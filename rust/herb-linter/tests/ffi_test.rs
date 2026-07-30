@@ -10,7 +10,7 @@ fn test_ffi_herb_lint() {
 
     let lint_result = &*result;
     assert!(lint_result.offense_count > 0);
-    assert!(lint_result.error_count > 0);
+    assert!(lint_result.warning_count > 0);
     assert!(!lint_result.json.is_null());
 
     let json_string = std::ffi::CStr::from_ptr(lint_result.json).to_str().unwrap();
@@ -48,7 +48,7 @@ fn test_ffi_herb_lint_null_source() {
 #[test]
 fn test_ffi_herb_lint_with_config() {
   let source = CString::new("<img src=\"photo.jpg\">").unwrap();
-  let config = CString::new(r#"{"rules":{"html-img-require-alt":{"enabled":false}}}"#).unwrap();
+  let config = CString::new(r#"{"linter":{"rules":{"html-img-require-alt":{"enabled":false}}}}"#).unwrap();
 
   unsafe {
     let result = herb_linter::ffi::herb_lint(source.as_ptr(), config.as_ptr(), std::ptr::null());
@@ -68,7 +68,7 @@ fn test_ffi_herb_lint_with_config() {
 #[test]
 fn test_ffi_rule_count() {
   let count = herb_linter::ffi::herb_lint_rule_count();
-  assert_eq!(count, 58);
+  assert_eq!(count, 99);
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn test_ffi_rule_names() {
   unsafe {
     let mut count: usize = 0;
     let names = herb_linter::ffi::herb_lint_rule_names(&mut count);
-    assert_eq!(count, 58);
+    assert_eq!(count, 99);
     assert!(!names.is_null());
 
     let name_strings: Vec<String> = (0..count)

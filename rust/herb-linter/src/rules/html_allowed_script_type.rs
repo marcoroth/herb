@@ -3,8 +3,10 @@ use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag
 use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
-const ALLOWED_TYPES: &[&str] = &["text/javascript"];
+// NOTE: Rules are not configurable for now, keep some sane defaults
+//   See https://github.com/marcoroth/herb/issues/1204
 const ALLOW_BLANK: bool = true;
+const ALLOWED_TYPES: &[&str] = &["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"];
 
 rule_visitor!(AllowedScriptTypeVisitor);
 define_parser_rule!(HTMLAllowedScriptTypeRule, "html-allowed-script-type", Error, AllowedScriptTypeVisitor);

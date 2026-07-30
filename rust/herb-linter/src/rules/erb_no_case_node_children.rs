@@ -6,7 +6,7 @@ use herb::Location;
 use herb::ParseResult;
 use herb::Token;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct ERBNoCaseNodeChildrenRule;
 
@@ -168,8 +168,8 @@ impl Rule for ERBNoCaseNodeChildrenRule {
     "erb-no-case-node-children"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 }
 

@@ -131,8 +131,20 @@ fn main() {
     .allowlist_type("prism_serialized_T")
     .allowlist_type("herb_prism_node_T")
     .allowlist_type("pm_buffer_t")
+    .allowlist_type("pm_node_t")
+    .allowlist_type("pm_node_type")
+    .allowlist_type("pm_node_list_t")
+    .allowlist_type("pm_location_t")
+    .allowlist_type("pm_constant_id_t")
+    .allowlist_type("pm_constant_pool_t")
+    .allowlist_type("pm_parser_t")
+    .allowlist_type("pm_.*_node_t")
     .allowlist_function("pm_prettyprint")
     .allowlist_function("pm_buffer_free")
+    .allowlist_function("pm_constant_pool_id_to_constant")
+    .allowlist_function("pm_visit_child_nodes")
+    .allowlist_function("pm_node_type_to_str")
+    .allowlist_var("PM_.*_NODE")
     .allowlist_var("AST_.*")
     .allowlist_var("ERROR_.*")
     .allowlist_var("ELEMENT_SOURCE_.*")
@@ -154,12 +166,80 @@ fn main() {
   }
 
   let bindings = builder.generate().expect("Unable to generate bindings");
-
   let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
   bindings.write_to_file(out_path.join("bindings.rs")).expect("Couldn't write bindings!");
+
+  generate_prism_name_fields(&prism_include, &out_path);
 
   println!("cargo:rerun-if-changed={}", include_dir.display());
   println!("cargo:rerun-if-changed=build.rs");
+}
+
+fn generate_prism_name_fields(prism_include: &Path, out_path: &Path) {
+  let config_path = prism_include.parent().map(|root| root.join("config.yml")).filter(|path| path.exists());
+
+  let mut arms = String::new();
+
+  if let Some(config_path) = config_path {
+    println!("cargo:rerun-if-changed={}", config_path.display());
+
+    let config: serde_yaml::Value =
+      serde_yaml::from_str(&std::fs::read_to_string(&config_path).expect("failed to read prism config.yml")).expect("failed to parse prism config.yml");
+
+    if let Some(nodes) = config.get("nodes").and_then(|nodes| nodes.as_sequence()) {
+      for node in nodes {
+        let node_name = match node.get("name").and_then(|name| name.as_str()) {
+          Some(name) => name,
+          None => continue,
+        };
+
+        let has_constant_name = node
+          .get("fields")
+          .and_then(|fields| fields.as_sequence())
+          .map(|fields| {
+            fields.iter().any(|field| {
+              let is_name = field.get("name").and_then(|name| name.as_str()) == Some("name");
+              let field_type = field.get("type").and_then(|field_type| field_type.as_str()).unwrap_or("");
+
+              is_name && (field_type == "constant" || field_type == "constant?")
+            })
+          })
+          .unwrap_or(false);
+
+        if !has_constant_name {
+          continue;
+        }
+
+        let screaming = screaming_snake_case(node_name);
+        let snake = screaming.to_lowercase();
+
+        arms.push_str(&format!("    PM_{screaming} => (*(node as *const pm_{snake}_t)).name,\n"));
+      }
+    }
+  }
+
+  let function = format!(
+    "unsafe fn node_name(node: *const pm_node_t, parser: *const pm_parser_t) -> Option<String> {{\n  \
+       let id = match (*node).type_ as u32 {{\n{arms}    _ => return None,\n  }};\n\n  \
+       constant_name(parser, id)\n}}\n"
+  );
+
+  std::fs::write(out_path.join("prism_name_fields.rs"), function).expect("failed to write prism_name_fields.rs");
+}
+
+fn screaming_snake_case(name: &str) -> String {
+  let mut result = String::new();
+
+  for (index, character) in name.char_indices() {
+    if character.is_uppercase() && index > 0 {
+      result.push('_');
+    }
+
+    result.push(character.to_ascii_uppercase());
+  }
+
+  result
 }
 
 fn get_prism_path(root_dir: &Path) -> PathBuf {

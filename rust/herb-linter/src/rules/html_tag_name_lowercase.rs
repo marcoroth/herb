@@ -1,11 +1,15 @@
+use crate::autofix::{close_tag_name, for_each_element_mut, location_matches};
+use crate::offense::Offense;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::utils::tag_utils::get_open_tag;
 use crate::utils::tag_utils::{get_tag_name_from_open_tag, tag_name_location};
+use herb::union_types::*;
 
 use herb::nodes::*;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 struct XMLDeclarationChecker {
   has_xml_declaration: bool,
@@ -80,12 +84,20 @@ impl Visitor for TagNameLowercaseVisitor {
 pub struct HTMLTagNameLowercaseRule;
 
 impl Rule for HTMLTagNameLowercaseRule {
+  fn has_autofix(&self) -> bool {
+    true
+  }
+
+  fn autocorrectable(&self) -> bool {
+    true
+  }
+
   fn name(&self) -> &'static str {
     "html-tag-name-lowercase"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
   }
 
   fn default_exclude(&self) -> &[&str] {
@@ -105,5 +117,50 @@ impl ParserRule for HTMLTagNameLowercaseRule {
     let mut visitor = TagNameLowercaseVisitor::new(self.name());
     visitor.visit_document_node(&result.value);
     visitor.offenses
+  }
+  fn autofix(&self, offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+    let mut fixed = false;
+
+    for_each_element_mut(document, &mut |element| {
+      let open_matches = get_open_tag(element)
+        .and_then(|open_tag| open_tag.tag_name.as_ref())
+        .map(|token| location_matches(&token.location, offense))
+        .unwrap_or(false);
+
+      let close_matches = close_tag_name(element).map(|token| location_matches(&token.location, offense)).unwrap_or(false);
+
+      if !open_matches && !close_matches {
+        return;
+      }
+
+      let corrected = if open_matches {
+        get_open_tag(element)
+          .and_then(|tag| tag.tag_name.as_ref())
+          .map(|token| token.value.to_lowercase())
+      } else {
+        close_tag_name(element).map(|token| token.value.to_lowercase())
+      };
+
+      let corrected = match corrected {
+        Some(corrected) => corrected,
+        None => return,
+      };
+
+      if let Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(open_tag)) = element.open_tag.as_mut() {
+        if let Some(token) = open_tag.tag_name.as_mut() {
+          token.value = corrected.clone();
+        }
+      }
+
+      if let Some(ERBEndNodeOrHTMLCloseTagNodeOrHTMLOmittedCloseTagNodeOrHTMLVirtualCloseTagNode::HTMLCloseTagNode(close_tag)) = element.close_tag.as_mut() {
+        if let Some(token) = close_tag.tag_name.as_mut() {
+          token.value = corrected;
+        }
+      }
+
+      fixed = true;
+    });
+
+    fixed
   }
 }

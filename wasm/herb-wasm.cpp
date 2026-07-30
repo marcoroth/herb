@@ -303,5 +303,6 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("lint", &Herb_lint);
   function("lintRuleCount", &Herb_lint_rule_count);
   function("lintRuleNames", &Herb_lint_rule_names);
+  function("autofix", &Herb_autofix);
 #endif
 }

@@ -4,7 +4,7 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NoAriaHiddenOnBodyVisitor);
-define_parser_rule!(HTMLNoAriaHiddenOnBodyRule, "html-no-aria-hidden-on-body", Error, NoAriaHiddenOnBodyVisitor);
+define_parser_rule!(HTMLNoAriaHiddenOnBodyRule, "html-no-aria-hidden-on-body", Warning, NoAriaHiddenOnBodyVisitor);
 
 impl Visitor for NoAriaHiddenOnBodyVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

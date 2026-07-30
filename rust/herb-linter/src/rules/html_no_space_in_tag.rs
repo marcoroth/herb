@@ -1,9 +1,15 @@
+use crate::autofix::location_matches;
+use crate::offense::Offense;
+use crate::rule::LintContext;
+use herb::nodes::DocumentNode;
 use herb::nodes::*;
 use herb::Token;
 use herb::Visitor;
 
 rule_visitor!(HTMLNoSpaceInTagVisitor);
-define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor, enabled: false);
+define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor, enabled: false,
+  autofix: autofix
+);
 
 const EXTRA_SPACE_NO_SPACE: &str = "Extra space detected where there should be no space.";
 const EXTRA_SPACE_SINGLE_SPACE: &str = "Extra space detected where there should be a single space.";
@@ -154,4 +160,100 @@ impl Visitor for HTMLNoSpaceInTagVisitor {
       }
     }
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  crate::autofix::for_each_open_tag_mut(document, &mut |open_tag| {
+    let self_closing = open_tag.tag_closing.as_ref().map(|token| token.value == "/>").unwrap_or(false);
+
+    // no whitespace before `/>`: append one
+    if offense.message == NO_SPACE_SINGLE_SPACE {
+      let matches_tag = open_tag
+        .tag_name
+        .as_ref()
+        .map(|token| location_matches(&token.location, offense))
+        .unwrap_or(false)
+        || open_tag
+          .tag_closing
+          .as_ref()
+          .map(|token| location_matches(&token.location, offense))
+          .unwrap_or(false)
+        || location_matches(&open_tag.location, offense)
+        || open_tag
+          .children
+          .iter()
+          .rev()
+          .find(|child| !matches!(child, AnyNode::WhitespaceNode(_)))
+          .map(|child| location_matches(child.location(), offense))
+          .unwrap_or(false);
+
+      if matches_tag {
+        open_tag.children.push(AnyNode::WhitespaceNode(Box::new(crate::autofix::whitespace_node(" "))));
+        fixed = true;
+      }
+
+      return;
+    }
+
+    for child in open_tag.children.iter_mut() {
+      let whitespace = match child {
+        AnyNode::WhitespaceNode(whitespace) => whitespace,
+        _ => continue,
+      };
+
+      if !location_matches(&whitespace.location, offense) {
+        continue;
+      }
+
+      let beginning_of_line = whitespace.location.start.column == 0;
+
+      let value = match whitespace.value.as_mut() {
+        Some(value) => value,
+        None => continue,
+      };
+
+      if offense.message == EXTRA_SPACE_NO_SPACE {
+        value.value = if self_closing && !beginning_of_line { " ".to_string() } else { String::new() };
+        fixed = true;
+      } else if offense.message == EXTRA_SPACE_SINGLE_BREAK {
+        value.value = if value.value.contains('\n') { String::new() } else { " ".to_string() };
+        fixed = true;
+      } else if offense.message == EXTRA_SPACE_SINGLE_SPACE {
+        value.value = " ".to_string();
+        fixed = true;
+      }
+    }
+  });
+
+  crate::autofix::walk_nodes_mut(&mut document.children, &mut |node| {
+    let close_tag = match node {
+      AnyNode::HTMLCloseTagNode(close_tag) => close_tag,
+      _ => return,
+    };
+
+    for child in close_tag.children.iter_mut() {
+      let whitespace = match child {
+        AnyNode::WhitespaceNode(whitespace) => whitespace,
+        _ => continue,
+      };
+
+      if !location_matches(&whitespace.location, offense) {
+        continue;
+      }
+
+      let value = match whitespace.value.as_mut() {
+        Some(value) => value,
+        None => continue,
+      };
+
+      if offense.message == EXTRA_SPACE_NO_SPACE {
+        value.value = String::new();
+        fixed = true;
+      }
+    }
+  });
+
+  fixed
 }

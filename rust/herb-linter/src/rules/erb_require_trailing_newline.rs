@@ -1,9 +1,9 @@
-use crate::offense::UnboundOffense;
+use crate::offense::{Offense, UnboundOffense};
 use crate::rule::{LintContext, Rule, SourceRule};
 
 use herb::Location;
 
-define_source_rule!(ERBRequireTrailingNewlineRule, "erb-require-trailing-newline", Error);
+define_source_rule!(ERBRequireTrailingNewlineRule, "erb-require-trailing-newline", Error, has_autofix: true, autocorrectable: true);
 
 fn create_end_of_file_location(source: &str) -> Location {
   let lines: Vec<&str> = source.split('\n').collect();
@@ -42,5 +42,8 @@ impl SourceRule for ERBRequireTrailingNewlineRule {
     }
 
     Vec::new()
+  }
+  fn autofix(&self, _offense: &Offense, source: &str, _context: &LintContext) -> Option<String> {
+    Some(format!("{}\n", source.trim_end()))
   }
 }

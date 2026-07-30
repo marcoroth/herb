@@ -1,0 +1,25 @@
+static NAMED_CHARACTER_REFERENCES: &[&str] = &[
+<%- html_character_references.each do |name| -%>
+  <%= name.inspect %>,
+<%- end -%>
+];
+
+pub fn is_named_character_reference(name: &str) -> bool {
+  NAMED_CHARACTER_REFERENCES.binary_search(&name).is_ok()
+}
+
+pub fn is_valid_character_reference(text: &str) -> bool {
+  if !text.starts_with('&') || !text.ends_with(';') {
+    return false;
+  }
+
+  if let Some(rest) = text.strip_prefix("&#x").and_then(|rest| rest.strip_suffix(';')) {
+    return !rest.is_empty() && rest.chars().all(|character| character.is_ascii_hexdigit());
+  }
+
+  if let Some(rest) = text.strip_prefix("&#").and_then(|rest| rest.strip_suffix(';')) {
+    return !rest.is_empty() && rest.chars().all(|character| character.is_ascii_digit());
+  }
+
+  is_named_character_reference(&text[1..text.len() - 1])
+}

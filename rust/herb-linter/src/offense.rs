@@ -9,6 +9,10 @@ pub struct UnboundOffense {
   pub code: String,
   pub message: String,
   pub location: Location,
+  pub severity: Option<Severity>,
+  pub tags: Vec<String>,
+  pub unsafe_fix: bool,
+  pub autofixable: bool,
 }
 
 impl UnboundOffense {
@@ -18,7 +22,35 @@ impl UnboundOffense {
       code: rule.to_string(),
       message: message.into(),
       location,
+      severity: None,
+      tags: Vec::new(),
+      unsafe_fix: false,
+      autofixable: true,
     }
+  }
+
+  pub fn with_severity(rule: &str, message: impl Into<String>, location: Location, severity: Severity) -> Self {
+    Self {
+      severity: Some(severity),
+      ..Self::new(rule, message, location)
+    }
+  }
+
+  pub fn with_tags(rule: &str, message: impl Into<String>, location: Location, tags: Vec<String>) -> Self {
+    Self {
+      tags,
+      ..Self::new(rule, message, location)
+    }
+  }
+
+  pub fn unsafe_fix(mut self) -> Self {
+    self.unsafe_fix = true;
+    self
+  }
+
+  pub fn not_autofixable(mut self) -> Self {
+    self.autofixable = false;
+    self
   }
 }
 
@@ -30,6 +62,12 @@ pub struct Offense {
   pub message: String,
   pub severity: Severity,
   pub location: OffenseLocation,
+  #[serde(skip_serializing_if = "Vec::is_empty")]
+  pub tags: Vec<String>,
+  #[serde(skip)]
+  pub unsafe_fix: bool,
+  #[serde(skip)]
+  pub autofixable: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -67,6 +105,12 @@ pub struct LintResult {
   pub info: usize,
   pub hints: usize,
   pub ignored: usize,
+  #[serde(skip_serializing_if = "is_zero")]
+  pub would_be_ignored: usize,
+}
+
+fn is_zero(value: &usize) -> bool {
+  *value == 0
 }
 
 impl LintResult {
@@ -75,6 +119,10 @@ impl LintResult {
   }
 
   pub fn new_with_ignored(offenses: Vec<Offense>, ignored: usize) -> Self {
+    Self::new_with_counts(offenses, ignored, 0)
+  }
+
+  pub fn new_with_counts(offenses: Vec<Offense>, ignored: usize, would_be_ignored: usize) -> Self {
     let errors = offenses.iter().filter(|offense| offense.severity == Severity::Error).count();
     let warnings = offenses.iter().filter(|offense| offense.severity == Severity::Warning).count();
     let info = offenses.iter().filter(|offense| offense.severity == Severity::Info).count();
@@ -87,6 +135,7 @@ impl LintResult {
       info,
       hints,
       ignored,
+      would_be_ignored,
     }
   }
 
@@ -98,6 +147,7 @@ impl LintResult {
       info: 0,
       hints: 0,
       ignored: 0,
+      would_be_ignored: 0,
     }
   }
 }

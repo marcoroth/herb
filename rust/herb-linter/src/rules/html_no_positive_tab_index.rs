@@ -4,7 +4,7 @@ use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
 rule_visitor!(NoPositiveTabIndexVisitor);
-define_parser_rule!(HTMLNoPositiveTabIndexRule, "html-no-positive-tab-index", Error, NoPositiveTabIndexVisitor);
+define_parser_rule!(HTMLNoPositiveTabIndexRule, "html-no-positive-tab-index", Warning, NoPositiveTabIndexVisitor);
 
 impl Visitor for NoPositiveTabIndexVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {

@@ -3,54 +3,42 @@ use crate::utils::tag_utils::{get_attribute, get_static_attribute_value};
 use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
 
-fn looks_like_id(text: &str) -> bool {
-  if text.contains(' ') {
+/// Mirrors the JavaScript `/^[a-z]+([A-Z][a-z]*)*$/` test.
+fn is_camel_case(text: &str) -> bool {
+  let mut characters = text.chars().peekable();
+  let mut leading = 0;
+
+  while characters.peek().map(char::is_ascii_lowercase).unwrap_or(false) {
+    characters.next();
+    leading += 1;
+  }
+
+  if leading == 0 {
     return false;
   }
 
-  if text.contains('_') || text.contains('-') {
-    return true;
-  }
-
-  let chars: Vec<char> = text.chars().collect();
-
-  if chars.is_empty() {
-    return false;
-  }
-
-  if !chars[0].is_ascii_lowercase() {
-    return false;
-  }
-
-  let has_uppercase = chars.iter().skip(1).any(|character| character.is_ascii_uppercase());
-
-  if !has_uppercase {
-    return false;
-  }
-
-  let mut expecting_upper_start = false;
-
-  for character in chars.iter().skip(1) {
-    if expecting_upper_start {
-      if !character.is_ascii_uppercase() {
-        return false;
-      }
-      expecting_upper_start = false;
-    } else if character.is_ascii_uppercase() {
-      // Start of new camelCase segment
-    } else if !character.is_ascii_lowercase() {
+  while let Some(character) = characters.next() {
+    if !character.is_ascii_uppercase() {
       return false;
+    }
+
+    while characters.peek().map(char::is_ascii_lowercase).unwrap_or(false) {
+      characters.next();
     }
   }
 
   true
 }
 
+fn looks_like_id(text: &str) -> bool {
+  (text.contains('_') || text.contains('-') || is_camel_case(text)) && !text.contains(' ')
+}
+
 rule_visitor!(AriaLabelIsWellFormattedVisitor);
 define_parser_rule!(
   HTMLAriaLabelIsWellFormattedRule,
   "html-aria-label-is-well-formatted",
-  Error,
+  Warning,
   AriaLabelIsWellFormattedVisitor
 );
 

@@ -154,6 +154,22 @@ task :templates do
   Herb::Bootstrap.generate_templates
 end
 
+namespace :html_entities do
+  ENTITIES_PATH = "javascript/packages/core/src/html-entities.json"
+
+  desc "Download the HTML named character references if they are missing"
+  task :download do
+    sh "yarn --cwd javascript/packages/core download-html-entities"
+  end
+
+  desc "Re-download the HTML named character references from the WHATWG spec"
+  task :update do
+    rm_f ENTITIES_PATH
+
+    Rake::Task["html_entities:download"].execute
+  end
+end
+
 namespace :prism do
   desc "Setup and vendor Prism"
   task :vendor do

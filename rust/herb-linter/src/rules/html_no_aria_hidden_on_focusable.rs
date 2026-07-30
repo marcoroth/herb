@@ -10,7 +10,7 @@ rule_visitor!(NoAriaHiddenOnFocusableVisitor);
 define_parser_rule!(
   HTMLNoAriaHiddenOnFocusableRule,
   "html-no-aria-hidden-on-focusable",
-  Error,
+  Warning,
   NoAriaHiddenOnFocusableVisitor
 );
 

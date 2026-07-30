@@ -1,4 +1,4 @@
-use herb_config::LinterConfig;
+use herb_config::{Config, HerbConfigOptions, LinterConfig, RuleConfig};
 use herb_linter::linter::Linter;
 use herb_linter::rule::LintContext;
 
@@ -168,7 +168,7 @@ fn test_trailing_newline_no_file_name() {
 #[test]
 fn test_linter_rule_count() {
   let linter = Linter::default();
-  assert_eq!(linter.rule_count(), 53);
+  assert_eq!(linter.rule_count(), 83);
 }
 
 #[test]
@@ -184,11 +184,10 @@ fn test_linter_rule_names() {
 
 #[test]
 fn test_linter_config_disable_rule() {
-  let mut config = LinterConfig::new();
-  config.rules.insert(
-    "html-img-require-alt".to_string(),
-    herb_config::RuleConfig {
-      enabled: false,
+  let config = config_with_rule(
+    "html-img-require-alt",
+    RuleConfig {
+      enabled: Some(false),
       ..Default::default()
     },
   );
@@ -203,12 +202,11 @@ fn test_linter_config_disable_rule() {
 
 #[test]
 fn test_linter_config_severity_override() {
-  let mut config = LinterConfig::new();
-  config.rules.insert(
-    "html-img-require-alt".to_string(),
-    herb_config::RuleConfig {
-      enabled: true,
-      severity: Some(herb_config::Severity::Warning),
+  let config = config_with_rule(
+    "html-img-require-alt",
+    RuleConfig {
+      enabled: Some(true),
+      severity: Some(herb_config::Severity::Warning.into()),
       ..Default::default()
     },
   );
@@ -231,6 +229,20 @@ fn test_empty_source() {
 #[test]
 fn test_multiple_issues() {
   let result = lint("<IMG src=\"photo.jpg\"><BR />");
-  // Should have: uppercase IMG, missing alt, uppercase BR, self-closing BR
   assert!(result.offenses.len() >= 3);
+}
+
+fn config_with_rule(rule_name: &str, rule_config: RuleConfig) -> Config {
+  let mut rules = std::collections::HashMap::new();
+  rules.insert(rule_name.to_string(), rule_config);
+
+  let options = HerbConfigOptions {
+    linter: Some(LinterConfig {
+      rules: Some(rules),
+      ..Default::default()
+    }),
+    ..Default::default()
+  };
+
+  Config::from_object(&options, std::path::Path::new("."), None, None).unwrap()
 }

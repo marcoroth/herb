@@ -6,7 +6,27 @@ use crate::linter::Linter;
 use crate::rule::{LintContext, Rule};
 use crate::rules;
 
-use herb_config::LinterConfig;
+use herb_config::{Config, HerbConfigOptions};
+
+unsafe fn parse_config(config_json: *const c_char) -> Config {
+  if config_json.is_null() {
+    return Config::default();
+  }
+
+  let json = match CStr::from_ptr(config_json).to_str() {
+    Ok(json) => json,
+    Err(_) => return Config::default(),
+  };
+
+  let options: HerbConfigOptions = match serde_json::from_str(json) {
+    Ok(options) => options,
+    Err(_) => return Config::default(),
+  };
+
+  let project_path = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+
+  Config::from_object(&options, &project_path, None, None).unwrap_or_default()
+}
 
 #[repr(C)]
 pub struct HerbLintResultT {
@@ -35,14 +55,7 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
     Err(_) => return ptr::null_mut(),
   };
 
-  let config = if config_json.is_null() {
-    LinterConfig::new()
-  } else {
-    match CStr::from_ptr(config_json).to_str() {
-      Ok(json) => serde_json::from_str(json).unwrap_or_default(),
-      Err(_) => LinterConfig::new(),
-    }
-  };
+  let config = parse_config(config_json);
 
   let file_name_string = if file_name.is_null() {
     None
@@ -50,9 +63,12 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
     CStr::from_ptr(file_name).to_str().ok().map(String::from)
   };
 
+  let indent_width = config.formatter().and_then(|formatter| formatter.indent_width);
+
   let linter = Linter::new(config);
   let context = LintContext {
     file_name: file_name_string,
+    indent_width,
     ..Default::default()
   };
 
@@ -71,6 +87,86 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
   });
 
   Box::into_raw(ffi_result)
+}
+
+#[repr(C)]
+pub struct HerbAutofixResultT {
+  pub json: *mut c_char,
+  pub fixed_count: usize,
+  pub unfixed_count: usize,
+}
+
+/// # Safety
+///
+/// - `source` must be a valid null-terminated UTF-8 C string.
+/// - `config_json` may be null or a valid null-terminated UTF-8 C string.
+/// - `file_name` may be null or a valid null-terminated UTF-8 C string.
+/// - The returned pointer must be freed with `herb_autofix_result_free`.
+#[no_mangle]
+pub unsafe extern "C" fn herb_autofix(
+  source: *const c_char,
+  config_json: *const c_char,
+  file_name: *const c_char,
+  include_unsafe: bool,
+) -> *mut HerbAutofixResultT {
+  if source.is_null() {
+    return ptr::null_mut();
+  }
+
+  let source_string = match CStr::from_ptr(source).to_str() {
+    Ok(value) => value,
+    Err(_) => return ptr::null_mut(),
+  };
+
+  let config = parse_config(config_json);
+
+  let file_name_string = if file_name.is_null() {
+    None
+  } else {
+    CStr::from_ptr(file_name).to_str().ok().map(String::from)
+  };
+
+  let indent_width = config.formatter().and_then(|formatter| formatter.indent_width);
+
+  let linter = Linter::new(config);
+  let context = LintContext {
+    file_name: file_name_string,
+    indent_width,
+    ..Default::default()
+  };
+
+  let result = linter.autofix(source_string, &context, include_unsafe);
+
+  let payload = serde_json::json!({
+    "source": result.source,
+    "fixed": result.fixed,
+    "unfixed": result.unfixed,
+  });
+
+  let json = serde_json::to_string(&payload).unwrap_or_else(|_| "{}".to_string());
+  let json_cstring = CString::new(json).unwrap_or_default();
+
+  Box::into_raw(Box::new(HerbAutofixResultT {
+    json: json_cstring.into_raw(),
+    fixed_count: result.fixed.len(),
+    unfixed_count: result.unfixed.len(),
+  }))
+}
+
+/// # Safety
+///
+/// `result` must be a pointer returned by `herb_autofix`, or null.
+#[no_mangle]
+pub unsafe extern "C" fn herb_autofix_result_free(result: *mut HerbAutofixResultT) {
+  if result.is_null() {
+    return;
+  }
+
+  let result = Box::from_raw(result);
+
+  if !result.json.is_null() {
+    drop(CString::from_raw(result.json));
+  }
 }
 
 /// # Safety

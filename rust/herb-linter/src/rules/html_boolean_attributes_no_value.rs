@@ -1,5 +1,9 @@
+use crate::autofix::{for_each_attribute_mut, location_matches};
+use crate::offense::Offense;
+use crate::rule::LintContext;
 use crate::utils::html_data::is_boolean_attribute;
 use crate::utils::tag_utils::{get_attribute_name, get_attributes, print_attribute, print_attribute_name};
+use herb::nodes::DocumentNode;
 
 use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
@@ -9,14 +13,16 @@ define_parser_rule!(
   HTMLBooleanAttributesNoValueRule,
   "html-boolean-attributes-no-value",
   Error,
-  BooleanAttributesNoValueVisitor
+  BooleanAttributesNoValueVisitor,
+  autocorrectable: true,
+  autofix: autofix
 );
 
 impl Visitor for BooleanAttributesNoValueVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
     for attribute in get_attributes(node) {
       if let Some(attribute_name) = get_attribute_name(attribute) {
-        if !is_boolean_attribute(attribute_name) {
+        if !is_boolean_attribute(&attribute_name) {
           continue;
         }
 
@@ -41,4 +47,24 @@ impl Visitor for BooleanAttributesNoValueVisitor {
 
     self.walk_html_open_tag_node(node);
   }
+}
+
+fn autofix(offense: &Offense, document: &mut DocumentNode, _context: &LintContext) -> bool {
+  let mut fixed = false;
+
+  for_each_attribute_mut(document, &mut |attribute| {
+    let matches = attribute
+      .value
+      .as_ref()
+      .map(|value| location_matches(&value.location, offense))
+      .unwrap_or(false);
+
+    if matches {
+      attribute.equals = None;
+      attribute.value = None;
+      fixed = true;
+    }
+  });
+
+  fixed
 }

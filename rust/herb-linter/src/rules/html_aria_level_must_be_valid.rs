@@ -96,7 +96,7 @@ rule_visitor!(AriaLevelMustBeValidVisitor);
 define_parser_rule!(
   HTMLAriaLevelMustBeValidRule,
   "html-aria-level-must-be-valid",
-  Error,
+  Warning,
   AriaLevelMustBeValidVisitor
 );
 

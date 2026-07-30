@@ -118,6 +118,7 @@ lib/herb/action_view/helper_registry.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 lib/herb/visitor.rb
+rust/herb-linter/src/utils/html_character_references.rs
 rust/herb-printer/src/printing_visitor.rs
 rust/src/action_view_helpers.rs
 rust/src/ast/nodes.rs

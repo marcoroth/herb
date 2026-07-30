@@ -3,12 +3,12 @@ use std::collections::HashSet;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::control_flow_tracker::{ControlFlowTracker, ControlFlowType};
-use crate::utils::tag_utils::{get_attribute_name, get_static_attribute_value};
+use crate::utils::tag_utils::{get_static_attribute_name, get_validatable_static_content, has_erb_output, is_effectively_static, print_output_content};
 
 use herb::nodes::*;
 use herb::ParseResult;
 use herb::Visitor;
-use herb_config::Severity;
+use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoDuplicateIdsRule;
 
@@ -38,138 +38,90 @@ impl NoDuplicateIdsVisitor {
   }
 
   fn is_static_id(&self, attribute: &HTMLAttributeNode) -> bool {
-    if let Some(ref value_node) = attribute.value {
-      return value_node.children.iter().all(|child| matches!(child, AnyNode::LiteralNode(_)));
-    }
+    let children = match attribute.value.as_ref() {
+      Some(value_node) => &value_node.children,
+      None => return true,
+    };
 
-    true
+    let is_completely_static = children.iter().all(|child| matches!(child, AnyNode::LiteralNode(_)));
+
+    is_completely_static || is_effectively_static(children)
+  }
+
+  fn add_offense(&mut self, message: String, location: herb::Location) {
+    self.offenses.push(UnboundOffense::new(self.rule_name, message, location));
   }
 
   fn check_attribute(&mut self, attribute: &HTMLAttributeNode) {
-    let name = match get_attribute_name(attribute) {
-      Some(name) => name,
-      None => return,
-    };
-
-    if name.to_lowercase() != "id" {
+    if attribute.value.is_none() || get_static_attribute_name(attribute).as_deref() != Some("id") {
       return;
     }
 
-    let identifier = match get_static_attribute_value(attribute) {
-      Some(value) => value,
-      None => {
-        if let Some(ref value_node) = attribute.value {
-          let has_output_erb = value_node.children.iter().any(|child| {
-            if let AnyNode::ERBContentNode(erb) = child {
-              if let Some(ref opening) = erb.tag_opening {
-                return opening.value.starts_with("<%=");
-              }
-            }
+    let children = &attribute.value.as_ref().unwrap().children;
+    let is_dynamic = has_erb_output(children);
 
-            false
-          });
-
-          if has_output_erb && self.tracker.is_in_control_flow && self.tracker.current_control_flow_type == Some(ControlFlowType::Loop) {
-            return;
-          }
-
-          // TODO: use IdentityPrinter from herb-printer to print the attribute value node
-          let mut result = String::new();
-
-          for child in &value_node.children {
-            match child {
-              AnyNode::LiteralNode(literal) => result.push_str(&literal.content),
-              AnyNode::ERBContentNode(erb) => {
-                if let Some(ref opening) = erb.tag_opening {
-                  if opening.value.starts_with("<%=") {
-                    result.push_str(&opening.value);
-
-                    if let Some(ref content) = erb.content {
-                      result.push_str(&content.value);
-                    }
-
-                    if let Some(ref closing) = erb.tag_closing {
-                      result.push_str(&closing.value);
-                    }
-                  }
-                }
-              }
-              _ => {}
-            }
-          }
-
-          if result.is_empty() {
-            return;
-          }
-
-          result
-        } else {
-          return;
-        }
-      }
-    };
-
-    if !identifier.is_empty() && identifier.trim().is_empty() {
+    if is_dynamic && self.tracker.is_in_control_flow && self.tracker.current_control_flow_type == Some(ControlFlowType::Loop) {
       return;
     }
 
-    if self.tracker.is_in_control_flow {
-      if self.tracker.current_control_flow_type == Some(ControlFlowType::Loop) {
-        let is_static = self.is_static_id(attribute);
-
-        if is_static {
-          self.offenses.push(UnboundOffense::new(
-            self.rule_name,
-            format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier),
-            attribute.location.clone(),
-          ));
-
-          return;
-        }
-
-        if self.tracker.current_branch_values.contains(&identifier) {
-          self.offenses.push(UnboundOffense::new(
-            self.rule_name,
-            format!(
-              "Duplicate ID `{}` found within the same loop iteration. IDs must be unique within the same loop iteration.",
-              identifier
-            ),
-            attribute.location.clone(),
-          ));
-        }
-      } else {
-        if self.tracker.current_branch_values.contains(&identifier) {
-          self.offenses.push(UnboundOffense::new(
-            self.rule_name,
-            format!(
-              "Duplicate ID `{}` found within the same control flow branch. IDs must be unique within the same control flow branch.",
-              identifier
-            ),
-            attribute.location.clone(),
-          ));
-        } else if self.document_ids.contains(&identifier) {
-          self.offenses.push(UnboundOffense::new(
-            self.rule_name,
-            format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier),
-            attribute.location.clone(),
-          ));
-        }
-
-        self.tracker.control_flow_values.insert(identifier.clone());
+    let identifier = if is_effectively_static(children) {
+      match get_validatable_static_content(children) {
+        Some(value) => value,
+        None => return,
       }
-
-      self.tracker.current_branch_values.insert(identifier);
     } else {
+      print_output_content(children)
+    };
+
+    if identifier.is_empty() {
+      return;
+    }
+
+    if identifier.trim().is_empty() {
+      return;
+    }
+
+    let location = attribute.location.clone();
+
+    if !self.tracker.is_in_control_flow {
       if self.document_ids.contains(&identifier) {
-        self.offenses.push(UnboundOffense::new(
-          self.rule_name,
-          format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier),
-          attribute.location.clone(),
-        ));
+        self.add_offense(format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier), location);
       } else {
         self.document_ids.insert(identifier);
       }
+
+      return;
     }
+
+    if self.tracker.current_control_flow_type == Some(ControlFlowType::Loop) {
+      if self.is_static_id(attribute) {
+        self.add_offense(format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier), location);
+      } else if self.tracker.current_branch_values.contains(&identifier) {
+        self.add_offense(
+          format!(
+            "Duplicate ID `{}` found within the same loop iteration. IDs must be unique within the same loop iteration.",
+            identifier
+          ),
+          location,
+        );
+      }
+    } else if self.tracker.current_branch_values.contains(&identifier) {
+      self.add_offense(
+        format!(
+          "Duplicate ID `{}` found within the same control flow branch. IDs must be unique within the same control flow branch.",
+          identifier
+        ),
+        location,
+      );
+    } else if !is_dynamic {
+      if self.document_ids.contains(&identifier) {
+        self.add_offense(format!("Duplicate ID `{}` found. IDs must be unique within a document.", identifier), location);
+      } else {
+        self.tracker.control_flow_values.insert(identifier.clone());
+      }
+    }
+
+    self.tracker.current_branch_values.insert(identifier);
   }
 }
 
@@ -186,8 +138,15 @@ impl Rule for HTMLNoDuplicateIdsRule {
     "html-no-duplicate-ids"
   }
 
-  fn default_severity(&self) -> Severity {
-    Severity::Error
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
+  }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      action_view_helpers: true,
+      ..crate::rule::default_linter_parser_options()
+    }
   }
 }
 
