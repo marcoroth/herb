@@ -98,6 +98,43 @@ describe("ActionViewNoHelperShadowingRule", () => {
       `)
     })
 
+    test("and-assignment named tag is flagged", () => {
+      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+
+      assertOffenses(dedent`
+        <% tag &&= @default_tag %>
+        <%= tag.name %>
+      `)
+    })
+
+    test("operator-assignment named tag is flagged", () => {
+      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+
+      assertOffenses(dedent`
+        <% tag += @extra %>
+        <%= tag %>
+      `)
+    })
+
+    test("for-loop with multiple targets flags only the shadowing target", () => {
+      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+
+      assertOffenses(dedent`
+        <% for first, tag in @pairs %>
+          <%= tag.name %>
+        <% end %>
+      `)
+    })
+
+    test("self-assignment flags the written variable once", () => {
+      expectError("Local variable `link_to` shadows the Action View `link_to` helper. Rename it to avoid confusion (for example `link_to_item`).")
+
+      assertOffenses(dedent`
+        <% link_to = link_to("Home", root_path) %>
+        <%= link_to %>
+      `)
+    })
+
     test("strict local named tag is flagged", () => {
       expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
 
@@ -133,6 +170,18 @@ describe("ActionViewNoHelperShadowingRule", () => {
     test("calling a method named link_to on an object is allowed", () => {
       expectNoOffenses(dedent`
         <%= record.link_to %>
+      `)
+    })
+
+    test("using the real link_to helper is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= link_to "Home", root_path %>
+      `)
+    })
+
+    test("using the real content_tag helper is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= content_tag :div, "Hello" %>
       `)
     })
 

@@ -77,12 +77,17 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
-    this.checkLocalBindings(node)
+    this.collectLocalBindings(node.prismNode, node.source)
     this.visitChildNodes(node)
   }
 
   visitERBForNode(node: ERBForNode): void {
-    this.checkForLoopTargets(node)
+    const { prismNode } = node
+
+    if (prismNode && isPrismNodeType(prismNode, "ForNode")) {
+      this.collectLocalBindings(prismNode.index, node.source)
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -106,10 +111,7 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkLocalBindings(node: ERBContentNode): void {
-    const prismNode = node.prismNode
-    const source = node.source
-
+  private collectLocalBindings(prismNode: PrismNode | null, source: string | null): void {
     if (!prismNode || !source) return
 
     const collector = new LocalBindingCollector()
@@ -117,20 +119,6 @@ class NoHelperShadowingVisitor extends BaseRuleVisitor {
 
     for (const binding of collector.bindings) {
       this.report(binding.name, locationFromByteOffset(source, binding.startOffset, binding.length))
-    }
-  }
-
-  private checkForLoopTargets(node: ERBForNode): void {
-    const content = node.content
-    if (!content) return
-
-    const match = content.value.match(/\bfor\b([\s\S]+?)\bin\b/)
-    if (!match) return
-
-    for (const rawTarget of match[1].split(",")) {
-      const name = rawTarget.trim().replace(/^\*/, "")
-
-      if (/^[A-Za-z_]\w*$/.test(name)) this.report(name, content.location)
     }
   }
 }
