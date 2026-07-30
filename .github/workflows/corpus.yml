@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Clone corpus
         id: corpus
@@ -142,7 +142,7 @@ jobs:
 
       - name: Upload runs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: corpus-runs
           path: corpus/runs/*.json
