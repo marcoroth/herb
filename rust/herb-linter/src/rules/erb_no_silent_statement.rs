@@ -1,5 +1,5 @@
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::is_assignment_node;
+use crate::utils::prism_utils::{is_assignment_node, is_control_flow_node, is_side_effect_call, unwrap_modifier_statement};
 
 use herb::nodes::ERBContentNode;
 use herb::Visitor;
@@ -28,6 +28,12 @@ impl Visitor for ERBNoSilentStatementVisitor {
     };
 
     if is_assignment_node(prism_node) {
+      return;
+    }
+
+    let statement = unwrap_modifier_statement(prism_node);
+
+    if is_control_flow_node(statement) || is_side_effect_call(statement) {
       return;
     }
 

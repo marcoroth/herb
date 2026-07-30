@@ -15,9 +15,6 @@ export interface AutofixExpectation {
 /**
  * Runs autofix through both the JavaScript and Rust backends and asserts they
  * produce the same corrected source and the same fixed/unfixed counts.
- *
- * Rust rules that have no autofix yet report everything as unfixed, so the
- * comparison is skipped for those until they are ported.
  */
 export function expectAutofix(
   rules: RuleClass | RuleClass[],
@@ -51,9 +48,13 @@ export function expectAutofix(
 
   const rust = run("rust")
 
+  const ruleName = ruleClasses[0].ruleName
+
   if (rust.fixed.length === 0 && javascript.fixed.length > 0) {
-    // rule not yet autofixable in Rust
-    return
+    throw new Error(
+      `Rust applied no autofix for "${ruleName}" while JavaScript fixed ${javascript.fixed.length}.\n\n` +
+      `Input:\n${input}`
+    )
   }
 
   expect(rust.source, `Rust autofix produced different source than JavaScript`).toBe(javascript.source)

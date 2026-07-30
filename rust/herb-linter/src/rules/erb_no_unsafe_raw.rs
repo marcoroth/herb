@@ -2,6 +2,8 @@ use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
 use crate::utils::erb_utils::is_output_tag_opening;
+use crate::utils::prism_utils::walk_prism;
+use crate::utils::source_slice::location_from_offset;
 use crate::utils::tag_utils::get_tag_local_name;
 
 use herb::nodes::{ERBContentNode, HTMLElementNode};
@@ -24,53 +26,14 @@ const RAW_TEXT_ELEMENTS: &[&str] = &[
 
 pub struct ERBNoUnsafeRawRule;
 
-struct ERBNoUnsafeRawVisitor {
+struct ERBNoUnsafeRawVisitor<'rule> {
   rule_name: &'static str,
   offenses: Vec<UnboundOffense>,
   element_stack: ElementStack,
+  source: &'rule str,
 }
 
-/// Matches `/\braw[\s(]/`.
-fn has_raw_call(content: &str) -> bool {
-  let bytes = content.as_bytes();
-  let mut start = 0;
-
-  while let Some(offset) = content[start..].find("raw") {
-    let index = start + offset;
-    let rest = &content[index + 3..];
-
-    let boundary_before = index == 0 || !(bytes[index - 1].is_ascii_alphanumeric() || bytes[index - 1] == b'_');
-    let followed_by_call = rest.starts_with(char::is_whitespace) || rest.starts_with('(');
-
-    if boundary_before && followed_by_call {
-      return true;
-    }
-
-    start = index + 1;
-  }
-
-  false
-}
-
-/// Matches `/\.html_safe\b/`.
-fn has_html_safe_call(content: &str) -> bool {
-  let mut start = 0;
-
-  while let Some(offset) = content[start..].find(".html_safe") {
-    let index = start + offset;
-    let rest = &content[index + ".html_safe".len()..];
-
-    if !rest.starts_with(|c: char| c.is_alphanumeric() || c == '_') {
-      return true;
-    }
-
-    start = index + 1;
-  }
-
-  false
-}
-
-impl Visitor for ERBNoUnsafeRawVisitor {
+impl<'rule> Visitor for ERBNoUnsafeRawVisitor<'rule> {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     self.element_stack.push_optional(get_tag_local_name(node));
     self.walk_html_element_node(node);
@@ -88,21 +51,49 @@ impl Visitor for ERBNoUnsafeRawVisitor {
       return;
     }
 
-    let content = node.content.as_ref().map(|token| token.value.as_str()).unwrap_or("");
+    let prism_node = match node.prism_node_ast {
+      Some(ref prism_node) => prism_node,
+      None => return,
+    };
 
-    if has_raw_call(content) {
+    if self.source.is_empty() {
+      return;
+    }
+
+    let mut raw_calls: Vec<(usize, usize)> = Vec::new();
+    let mut html_safe_calls: Vec<(usize, usize)> = Vec::new();
+
+    walk_prism(prism_node, &mut |candidate| {
+      if candidate.is("CallNode") {
+        match candidate.name.as_deref() {
+          Some("raw") if candidate.receiver().is_none() => raw_calls.push((candidate.start_offset, candidate.end_offset)),
+
+          Some("html_safe") => {
+            let start_offset = candidate.receiver().map(|receiver| receiver.end_offset).unwrap_or(candidate.start_offset);
+
+            html_safe_calls.push((start_offset, candidate.end_offset));
+          }
+
+          _ => {}
+        }
+      }
+
+      true
+    });
+
+    for (start_offset, end_offset) in raw_calls {
       self.offenses.push(UnboundOffense::new(
         self.rule_name,
         "Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
-        node.location.clone(),
+        location_from_offset(self.source, start_offset, end_offset),
       ));
     }
 
-    if has_html_safe_call(content) {
+    for (start_offset, end_offset) in html_safe_calls {
       self.offenses.push(UnboundOffense::new(
         self.rule_name,
         "Avoid `.html_safe` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.",
-        node.location.clone(),
+        location_from_offset(self.source, start_offset, end_offset),
       ));
     }
   }
@@ -116,14 +107,24 @@ impl Rule for ERBNoUnsafeRawRule {
   fn default_severity(&self) -> SeverityConfig {
     SeverityConfig::Severity(Severity::Error)
   }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      prism_nodes: true,
+      ..crate::rule::default_linter_parser_options()
+    }
+  }
 }
 
 impl ParserRule for ERBNoUnsafeRawRule {
-  fn check(&self, result: &ParseResult, _context: &LintContext) -> Vec<UnboundOffense> {
+  fn check(&self, result: &ParseResult, context: &LintContext) -> Vec<UnboundOffense> {
+    let source = if context.source.is_empty() { &result.source } else { &context.source };
+
     let mut visitor = ERBNoUnsafeRawVisitor {
       rule_name: self.name(),
       offenses: Vec::new(),
       element_stack: ElementStack::new(),
+      source,
     };
 
     visitor.visit_document_node(&result.value);

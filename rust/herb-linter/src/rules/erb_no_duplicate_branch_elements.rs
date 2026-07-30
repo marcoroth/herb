@@ -42,7 +42,6 @@ fn as_element(node: &AnyNode) -> Option<&HTMLElementNode> {
   }
 }
 
-/// Whether every node is an element structurally equivalent to the first.
 fn all_equivalent_elements(nodes: &[Option<&AnyNode>]) -> bool {
   if nodes.len() < 2 {
     return false;
@@ -406,8 +405,6 @@ fn conditional_covers(node: &AnyNode, offense: &Offense) -> bool {
     && (location.end.line > start.line || (location.end.line == start.line && location.end.column >= start.column))
 }
 
-/// Hoists elements shared by every branch out of the conditional, returning the
-/// nodes that replace it.
 fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<Vec<AnyNode>> {
   let identical = {
     let branches = branch_slices(conditional)?;
@@ -421,16 +418,13 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
     return Some(trim_whitespace_nodes(&branches[0]));
   }
 
-  let (prefix_count, suffix_count) = {
-    let branches = branch_slices(conditional)?;
-    let significant: Vec<Vec<AnyNode>> = branches.iter().map(|branch| significant_owned(branch)).collect();
+  let significant: Vec<Vec<AnyNode>> = branch_slices(conditional)?.iter().map(|branch| significant_owned(branch)).collect();
 
-    if significant.iter().any(|branch| branch.is_empty()) {
-      return None;
-    }
+  if significant.iter().any(|branch| branch.is_empty()) {
+    return None;
+  }
 
-    common_counts(&significant)
-  };
+  let (prefix_count, suffix_count) = common_counts(&significant);
 
   if prefix_count == 0 && suffix_count == 0 {
     return None;
@@ -438,16 +432,86 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
 
   let _ = offense;
 
-  // only the "wrap the whole conditional" shape is expressible without the
-  // element-identity bookkeeping the JavaScript rule relies on
-  let branches = branch_slices(conditional)?;
-  let significant: Vec<Vec<AnyNode>> = branches.iter().map(|branch| significant_owned(branch)).collect();
+  let printed_at = |branch: &[AnyNode], index: usize| identity_print(source, branch[index].location());
 
-  if !significant.iter().all(|branch| branch.len() == 1) {
+  let mut prefix_hoistable = 0;
+
+  for index in 0..prefix_count {
+    let first = printed_at(&significant[0], index);
+
+    if significant.iter().all(|branch| printed_at(branch, index) == first) {
+      prefix_hoistable += 1;
+    } else {
+      break;
+    }
+  }
+
+  let equal_lengths = significant.iter().all(|branch| branch.len() == significant[0].len());
+  let mut suffix_hoistable = 0;
+
+  if equal_lengths {
+    for offset in 0..suffix_count {
+      let first = printed_at(&significant[0], significant[0].len() - 1 - offset);
+
+      if significant.iter().all(|branch| printed_at(branch, branch.len() - 1 - offset) == first) {
+        suffix_hoistable += 1;
+      } else {
+        break;
+      }
+    }
+  }
+
+  let mut before: Vec<AnyNode> = Vec::new();
+  let mut after: Vec<AnyNode> = Vec::new();
+
+  for index in 0..prefix_hoistable {
+    before.push(significant[0][index].clone());
+    before.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+  }
+
+  for offset in (0..suffix_hoistable).rev() {
+    after.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
+    after.push(significant[0][significant[0].len() - 1 - offset].clone());
+  }
+
+  if prefix_hoistable > 0 || suffix_hoistable > 0 {
+    let mut branch_arrays = conditional_branches_mut(conditional)?;
+
+    for branch in branch_arrays.iter_mut() {
+      for _ in 0..prefix_hoistable {
+        remove_significant(branch, 0);
+      }
+
+      for _ in 0..suffix_hoistable {
+        let last = significant_indices(branch).len().checked_sub(1)?;
+
+        remove_significant(branch, last);
+      }
+    }
+  }
+
+  let remaining: Vec<Vec<AnyNode>> = branch_slices(conditional)?.iter().map(|branch| significant_owned(branch)).collect();
+
+  let wrapped = if remaining.iter().all(|branch| branch.len() == 1) {
+    wrap_single_elements(conditional, &remaining, source)
+  } else {
+    None
+  };
+
+  if wrapped.is_none() && prefix_hoistable == 0 && suffix_hoistable == 0 {
     return None;
   }
 
-  let elements: Vec<HTMLElementNode> = significant
+  let mut replacements = before;
+
+  replacements.push(wrapped.unwrap_or_else(|| conditional.clone()));
+  replacements.extend(after);
+
+  Some(replacements)
+}
+
+fn wrap_single_elements(conditional: &mut AnyNode, remaining: &[Vec<AnyNode>], source: &str) -> Option<AnyNode> {
+  let elements: Vec<HTMLElementNode> = remaining
     .iter()
     .filter_map(|branch| match &branch[0] {
       AnyNode::HTMLElementNode(element) => Some(element.as_ref().clone()),
@@ -455,7 +519,7 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
     })
     .collect();
 
-  if elements.len() != significant.len() {
+  if elements.len() != remaining.len() {
     return None;
   }
 
@@ -464,6 +528,12 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
     .all(|element| printed_element(element, source) == printed_element(&elements[0], source));
 
   if bodies_match || elements.iter().any(|element| element.body.is_empty()) {
+    return None;
+  }
+
+  let nodes: Vec<Option<&AnyNode>> = remaining.iter().map(|branch| branch.first()).collect();
+
+  if !all_equivalent_elements(&nodes) {
     return None;
   }
 
@@ -483,6 +553,8 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
     branch.splice(position..position + 1, replacement);
   }
 
+  drop(branch_arrays);
+
   let wrapper = wrapper_element(
     &elements[0],
     vec![
@@ -492,7 +564,29 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
     ],
   );
 
-  Some(vec![AnyNode::HTMLElementNode(Box::new(wrapper))])
+  Some(AnyNode::HTMLElementNode(Box::new(wrapper)))
+}
+
+fn significant_indices(branch: &[AnyNode]) -> Vec<usize> {
+  branch
+    .iter()
+    .enumerate()
+    .filter(|(_, node)| !is_pure_whitespace_node(node))
+    .map(|(index, _)| index)
+    .collect()
+}
+
+fn remove_significant(branch: &mut Vec<AnyNode>, nth: usize) {
+  let index = match significant_indices(branch).get(nth) {
+    Some(index) => *index,
+    None => return,
+  };
+
+  if index > 0 && is_pure_whitespace_node(&branch[index - 1]) {
+    branch.drain(index - 1..=index);
+  } else {
+    branch.remove(index);
+  }
 }
 
 fn branch_slices(node: &AnyNode) -> Option<Vec<Vec<AnyNode>>> {

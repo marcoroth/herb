@@ -221,12 +221,9 @@ impl ParserRule for HTMLNoUnescapedEntitiesRule {
         return;
       }
 
-      let escaped = escape_bare_ampersands(&text.content).replace('<', "&lt;").replace('>', "&gt;");
+      text.content = escape_bare_ampersands(&text.content).replace('<', "&lt;").replace('>', "&gt;");
 
-      if escaped != text.content {
-        text.content = escaped;
-        fixed = true;
-      }
+      fixed = true;
     });
 
     fixed

@@ -1,10 +1,12 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call};
-use crate::utils::source_slice::location_from_offset;
+use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call};
 
-use herb::nodes::{AnyNode, ERBContentNode, ERBRenderNode};
+use crate::utils::source_slice::location_from_offset;
+use herb::prism::PrismNode as PrismNodeRef;
+
+use herb::nodes::{AnyNode, ERBBlockNode, ERBContentNode, ERBRenderNode};
 use herb::prism::PrismNode;
 use herb::{ParseResult, Visitor};
 use herb_config::{Severity, SeverityConfig};
@@ -24,16 +26,6 @@ const MUTATION_METHODS: &[&str] = &[
   "insert",
   "concat",
   "assert_valid_keys",
-];
-
-const SIDE_EFFECT_METHODS: &[&str] = &[
-  "content_for",
-  "provide",
-  "flush",
-  "turbo_refreshes_with",
-  "turbo_exempts_page_from_cache",
-  "turbo_exempts_page_from_preview",
-  "turbo_page_requires_reload",
 ];
 
 const READ_NODES: &[&str] = &[
@@ -78,17 +70,9 @@ impl<'node> UnusedExpressionCollector<'node> {
     }
   }
 
-  fn is_side_effect_call(node: &PrismNode) -> bool {
-    if node.receiver().is_some() {
-      return false;
-    }
-
-    node.name.as_deref().map(|name| SIDE_EFFECT_METHODS.contains(&name)).unwrap_or(false)
-  }
-
   fn is_unused_expression(&self, node: &PrismNode) -> bool {
     if node.is("CallNode") {
-      if node.has_block || Self::is_mutation_call(node) || Self::is_side_effect_call(node) || is_debug_output_call(node) {
+      if node.has_block || Self::is_mutation_call(node) || is_side_effect_call(node) || is_debug_output_call(node) {
         return false;
       }
 
@@ -107,24 +91,52 @@ struct ERBNoUnusedExpressionsVisitor<'rule> {
   rule_name: &'static str,
   offenses: Vec<UnboundOffense>,
   source: &'rule str,
-  render_block_local_names: Vec<String>,
+  exempt_local_names: Vec<String>,
 }
 
-impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
-  fn visit_erb_render_node(&mut self, node: &ERBRenderNode) {
-    let previous = self.render_block_local_names.clone();
+impl<'rule> ERBNoUnusedExpressionsVisitor<'rule> {
+  fn collect_block_arguments(&mut self, block_arguments: &[AnyNode]) -> Vec<String> {
+    let previous = self.exempt_local_names.clone();
 
-    for argument in &node.block_arguments {
+    for argument in block_arguments {
       if let AnyNode::RubyParameterNode(parameter) = argument {
         if let Some(ref name) = parameter.name {
-          self.render_block_local_names.push(name.value.clone());
+          self.exempt_local_names.push(name.value.clone());
         }
       }
     }
 
+    previous
+  }
+}
+
+fn is_slot_setter_call(node: &PrismNodeRef) -> bool {
+  node.is("CallNode") && node.receiver().is_some() && node.name.as_deref().map(|name| name.starts_with("with_")).unwrap_or(false)
+}
+
+impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
+  fn visit_erb_render_node(&mut self, node: &ERBRenderNode) {
+    let previous = self.collect_block_arguments(&node.block_arguments);
+
     self.walk_erb_render_node(node);
 
-    self.render_block_local_names = previous;
+    self.exempt_local_names = previous;
+  }
+
+  fn visit_erb_block_node(&mut self, node: &ERBBlockNode) {
+    let is_slot_setter = node.prism_node_ast.as_ref().map(is_slot_setter_call).unwrap_or(false);
+
+    if !is_slot_setter {
+      self.walk_erb_block_node(node);
+
+      return;
+    }
+
+    let previous = self.collect_block_arguments(&node.block_arguments);
+
+    self.walk_erb_block_node(node);
+
+    self.exempt_local_names = previous;
   }
 
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
@@ -145,7 +157,7 @@ impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
 
     let mut collector = UnusedExpressionCollector {
       expressions: Vec::new(),
-      block_local_names: self.render_block_local_names.clone(),
+      block_local_names: self.exempt_local_names.clone(),
     };
 
     collector.visit(prism_node);
@@ -195,7 +207,7 @@ impl ParserRule for ERBNoUnusedExpressionsRule {
       rule_name: self.name(),
       offenses: Vec::new(),
       source,
-      render_block_local_names: Vec::new(),
+      exempt_local_names: Vec::new(),
     };
 
     visitor.visit_document_node(&result.value);

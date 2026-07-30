@@ -702,7 +702,7 @@ export class Linter {
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
     const includeUnsafe = options?.includeUnsafe ?? false
 
-    if (this.useNativeBackend) {
+    if (this.useNativeBackend && offensesToFix === undefined) {
       return this.autofixWithBackend(source, context, includeUnsafe)
     }
 
