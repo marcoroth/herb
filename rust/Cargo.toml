@@ -2,7 +2,8 @@
 members = [
   ".",
   "herb-config",
-  "herb-linter"
+  "herb-linter",
+  "herb-printer"
 ]
 
 [package]
