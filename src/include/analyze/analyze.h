@@ -11,6 +11,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
+  hb_array_T* tag_helper_locals;
   hb_allocator_T* allocator;
   const char* source;
   bool found_strict_locals;

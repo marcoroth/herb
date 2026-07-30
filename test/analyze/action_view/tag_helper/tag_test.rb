@@ -609,5 +609,40 @@ module Analyze::ActionView::TagHelper
         <%= tag.div(cond ? "yes" : "no") %>
       HTML
     end
+
+    test "tag shadowed by block argument is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by block argument with method chain is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name.upcase %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by nested block argument is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @groups.each do |tag| %>
+          <% tag.items.each do |item| %>
+            <%= tag.name %>
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "real tag helper is still transformed outside the shadowing block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+        <%= tag.hr %>
+      HTML
+    end
   end
 end

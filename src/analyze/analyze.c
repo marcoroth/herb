@@ -1027,6 +1027,7 @@ void herb_analyze_parse_tree(
     .document = document,
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
+    .tag_helper_locals = hb_array_init(8, allocator),
     .allocator = allocator,
     .source = source,
   };
@@ -1063,5 +1064,11 @@ void herb_analyze_parse_tree(
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 
+  for (size_t index = hb_array_size(context.tag_helper_locals); index > 0; index--) {
+    char* local_name = hb_array_get(context.tag_helper_locals, index - 1);
+    if (local_name) { hb_allocator_dealloc(allocator, local_name); }
+  }
+
+  hb_array_free(&context.tag_helper_locals);
   hb_array_free(&context.ruby_context_stack);
 }

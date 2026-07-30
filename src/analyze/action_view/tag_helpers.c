@@ -47,10 +47,33 @@ typedef struct {
   size_t erb_content_offset;
 } tag_helper_parse_context_T;
 
+static bool build_scope_options_from_context(analyze_ruby_context_T* context, pm_options_t* options) {
+  size_t locals_count = context && context->tag_helper_locals ? hb_array_size(context->tag_helper_locals) : 0;
+
+  if (locals_count == 0) { return false; }
+
+  if (!pm_options_scopes_init(options, 1)) { return false; }
+
+  pm_options_scope_t* scope = &options->scopes[0];
+
+  if (!pm_options_scope_init(scope, locals_count)) {
+    pm_options_free(options);
+    return false;
+  }
+
+  for (size_t index = 0; index < locals_count; index++) {
+    const char* local_name = hb_array_get(context->tag_helper_locals, index);
+    pm_string_constant_init(&scope->locals[index], local_name, strlen(local_name));
+  }
+
+  return true;
+}
+
 static tag_helper_parse_context_T* parse_tag_helper_content(
   const char* content_string,
   const char* original_source,
   size_t erb_content_offset,
+  analyze_ruby_context_T* context,
   hb_allocator_T* allocator
 ) {
   if (!content_string) { return NULL; }
@@ -63,8 +86,18 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
   parse_context->original_source = original_source;
   parse_context->erb_content_offset = erb_content_offset;
 
-  pm_parser_init(&parse_context->parser, parse_context->prism_source, strlen(parse_context->content_string), NULL);
+  pm_options_t options = { 0 };
+  bool has_scope_options = build_scope_options_from_context(context, &options);
+
+  pm_parser_init(
+    &parse_context->parser,
+    parse_context->prism_source,
+    strlen(parse_context->content_string),
+    has_scope_options ? &options : NULL
+  );
   parse_context->root = pm_parse(&parse_context->parser);
+
+  if (has_scope_options) { pm_options_free(&options); }
 
   if (!parse_context->root) {
     pm_parser_free(&parse_context->parser);
@@ -1442,7 +1475,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
         }
 
         tag_helper_parse_context_T* parse_context =
-          parse_tag_helper_content(block_string, context->source, erb_content_offset, context->allocator);
+          parse_tag_helper_content(block_string, context->source, erb_content_offset, context, context->allocator);
 
         if (parse_context) {
           replacement = transform_erb_block_to_tag_helper(block_node, context, parse_context);
@@ -1473,7 +1506,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
         }
 
         tag_helper_parse_context_T* parse_context =
-          parse_tag_helper_content(erb_string, context->source, erb_content_offset, context->allocator);
+          parse_tag_helper_content(erb_string, context->source, erb_content_offset, context, context->allocator);
 
         if (parse_context) {
           if (strcmp(parse_context->matched_handler->name, "javascript_include_tag") == 0
@@ -1568,7 +1601,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
             }
 
             tag_helper_parse_context_T* parse_context =
-              parse_tag_helper_content(erb_string, context->source, erb_content_offset, context->allocator);
+              parse_tag_helper_content(erb_string, context->source, erb_content_offset, context, context->allocator);
 
             if (parse_context && string_equals(parse_context->matched_handler->name, "tag")
                 && parse_context->info->tag_name && string_equals(parse_context->info->tag_name, "attributes")) {
@@ -1732,12 +1765,67 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
   }
 }
 
+static size_t push_tag_helper_local_scope(const AST_NODE_T* node, analyze_ruby_context_T* context) {
+  if (!node || !context || !context->tag_helper_locals) { return 0; }
+
+  hb_array_T* block_arguments = NULL;
+
+  if (node->type == AST_ERB_BLOCK_NODE) {
+    block_arguments = ((AST_ERB_BLOCK_NODE_T*) node)->block_arguments;
+  } else if (node->type == AST_ERB_RENDER_NODE) {
+    block_arguments = ((AST_ERB_RENDER_NODE_T*) node)->block_arguments;
+  }
+
+  if (!block_arguments) { return 0; }
+
+  size_t pushed = 0;
+
+  for (size_t index = 0; index < hb_array_size(block_arguments); index++) {
+    AST_NODE_T* argument = hb_array_get(block_arguments, index);
+
+    if (!argument || argument->type != AST_RUBY_PARAMETER_NODE) { continue; }
+
+    AST_RUBY_PARAMETER_NODE_T* parameter = (AST_RUBY_PARAMETER_NODE_T*) argument;
+
+    if (!parameter->name || hb_string_is_empty(parameter->name->value)) { continue; }
+
+    char* name = hb_allocator_strndup(context->allocator, parameter->name->value.data, parameter->name->value.length);
+
+    if (name && hb_array_append(context->tag_helper_locals, name)) {
+      pushed++;
+    } else if (name) {
+      hb_allocator_dealloc(context->allocator, name);
+    }
+  }
+
+  return pushed;
+}
+
+static void pop_tag_helper_local_scope(analyze_ruby_context_T* context, size_t count) {
+  if (!context || !context->tag_helper_locals) { return; }
+
+  for (size_t index = 0; index < count; index++) {
+    size_t size = hb_array_size(context->tag_helper_locals);
+
+    if (size == 0) { break; }
+
+    char* name = hb_array_get(context->tag_helper_locals, size - 1);
+    hb_array_remove(context->tag_helper_locals, size - 1);
+
+    if (name) { hb_allocator_dealloc(context->allocator, name); }
+  }
+}
+
 bool transform_tag_helper_nodes(const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
+
+  size_t pushed_locals = push_tag_helper_local_scope(node, context);
 
   transform_tag_helper_blocks(node, context);
 
   herb_visit_child_nodes(node, transform_tag_helper_nodes, data);
+
+  pop_tag_helper_local_scope(context, pushed_locals);
 
   return false;
 }
