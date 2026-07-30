@@ -212,25 +212,43 @@ jobs:
       - name: Wait for the corpus clone
         wait: [corpus]
 
-      - name: Compare the JavaScript and Rust backends
-        env:
-          NO_COLOR: "1"
-        run: |-
-          set +e
+      - parallel:
+        - name: Compare the backends on the default rule set
+          env:
+            NO_COLOR: "1"
+          run: |-
+            set +e
 
-          javascript/packages/linter/bin/herb-lint corpus/erb \
-            --fail-on-backend-mismatch \
-            --no-timing \
-            --format simple 2>&1 | tee parity.txt
+            javascript/packages/linter/bin/herb-lint corpus/erb \
+              --fail-on-backend-mismatch \
+              --no-timing \
+              --format simple 2>&1 | tee parity-defaults.txt
 
-          status=${PIPESTATUS[0]}
+            status=${PIPESTATUS[0]}
 
-          if [ "$status" -eq 2 ]; then
-            echo "::error::The JavaScript and Rust linter backends disagree on the corpus"
-            exit 1
-          fi
+            if [ "$status" -eq 2 ]; then
+              echo "::error::The backends disagree on the default rule set"
+              exit 1
+            fi
 
-          echo "No backend mismatches."
+        - name: Compare the backends with every rule enabled
+          env:
+            NO_COLOR: "1"
+          run: |-
+            set +e
+
+            javascript/packages/linter/bin/herb-lint corpus/erb \
+              --all-rules \
+              --fail-on-backend-mismatch \
+              --no-timing \
+              --format simple 2>&1 | tee parity-all-rules.txt
+
+            status=${PIPESTATUS[0]}
+
+            if [ "$status" -eq 2 ]; then
+              echo "::error::The backends disagree with every rule enabled"
+              exit 1
+            fi
 
       - name: Job summary
         if: always()
@@ -238,7 +256,10 @@ jobs:
           {
             echo "### Linter backend parity"
             echo
-            echo '```'
-            tail -n 40 parity.txt 2>/dev/null || echo "the comparison did not run"
-            echo '```'
+            for run in defaults all-rules; do
+              echo "#### $run"
+              echo '```'
+              tail -n 30 "parity-$run.txt" 2>/dev/null || echo "the $run comparison did not run"
+              echo '```'
+            done
           } >> "$GITHUB_STEP_SUMMARY"
