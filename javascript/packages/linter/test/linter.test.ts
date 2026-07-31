@@ -849,6 +849,23 @@ describe("@herb-tools/linter", () => {
       expect(linter.allRules).toBe(true)
       expect(result.offenses.map(offense => offense.rule)).toContain("html-tag-name-lowercase")
     })
+
+    test("Linter.from() ignores rule-level path patterns", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: { "html-tag-name-lowercase": { exclude: ["**/*.html.erb"] } }
+        }
+      })
+
+      const withoutAllRules = Linter.from(Herb, config)
+      expect(withoutAllRules.lint("<DIV></DIV>", { fileName: "template.html.erb" }).offenses.map(offense => offense.rule)).not.toContain("html-tag-name-lowercase")
+
+      const linter = Linter.from(Herb, config, undefined, { all: true })
+      const result = linter.lint("<DIV></DIV>", { fileName: "template.html.erb" })
+
+      expect(result.offenses.map(offense => offense.rule)).toContain("html-tag-name-lowercase")
+    })
   })
 
   describe("Version-gated rule filtering", () => {

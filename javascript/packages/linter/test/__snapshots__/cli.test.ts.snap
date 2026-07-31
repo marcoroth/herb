@@ -1,5 +1,46 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+test/fixtures/all-rules.html.erb:
+  2:2  ⚠ Avoid using generic link text such as "click here". Screen reader users often navigate by links, and generic text like "Read more", "Learn more", "Click here", "More", "Link", or "Here" is not meaningful out of context. (a11y-avoid-generic-link-text)
+  2:18 ⚠ Avoid using the \`accesskey\` attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screen readers and keyboard-only users create accessibility complications. (a11y-no-accesskey-attribute)
+  6:1  ⚠ Avoid using the \`autofocus\` attribute. It reduces accessibility by moving users to an element without warning and context. (a11y-no-autofocus-attribute)
+  5:20 ⚠ \`<img>\` \`alt\` prop should not contain "image" or "picture" as screen readers already announce the element as an image. (a11y-no-redundant-image-alt)
+  1:1  ⚠ The navigation landmark should have a unique accessible name via \`aria-label\` or \`aria-labelledby\`. Remember that the name does not need to include "navigation" or "nav" since it will already be announced. (html-navigation-has-label)
+  2:3  ⚠ The \`title\` attribute should never be used as it is inaccessible for several groups of users. Use \`aria-label\` or \`aria-describedby\` instead. Exceptions are provided for \`<iframe>\` and \`<link>\` elements. (html-no-title-attribute)
+
+
+ Most frequent rule offenses:
+  a11y-avoid-generic-link-text (1 offense in 1 file)
+  a11y-no-accesskey-attribute (1 offense in 1 file)
+  a11y-no-autofocus-attribute (1 offense in 1 file)
+  a11y-no-redundant-image-alt (1 offense in 1 file)
+  html-navigation-has-label (1 offense in 1 file)
+
+  ...and 1 more rule with 1 offense
+
+
+ Summary:
+  Checked      1 file
+  Offenses     6 warnings (6 offenses across 1 file)
+  Fixable      0 offenses
+  Rules        100 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+✓ test/fixtures/all-rules.html.erb - No issues found
+
+
+ Summary:
+  Checked      1 file
+  Offenses     0 offenses
+  Fixable      0 offenses
+  Rules        85 enabled | 15 not enabled"
+`;
+
 exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
 

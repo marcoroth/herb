@@ -868,6 +868,20 @@ describe("CLI Output Formatting", () => {
     const { writeFileSync, unlinkSync } = require("fs")
     const configPath = "test/fixtures/.herb.yml"
 
+    test("reports nothing for the fixture with the default rule set", () => {
+      const { output, exitCode } = runLinter("all-rules.html.erb", "--simple", "--no-wrap-lines")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(0)
+    })
+
+    test("reports every offense for the fixture with --all-rules", () => {
+      const { output, exitCode } = runLinter("all-rules.html.erb", "--simple", "--no-wrap-lines", "--all-rules")
+
+      expect(output).toMatchSnapshot()
+      expect(exitCode).toBe(0)
+    })
+
     test("runs rules that are not enabled by default", () => {
       const fixturePath = "test/fixtures/all-rules-not-enabled-by-default.html.erb"
 
