@@ -65,6 +65,31 @@ The same dynamic expression repeated within the same scope (same document level,
 
 Hints do not fail a lint run unless you opt in with `failLevel: hint` (or `--fail-level hint`), which is how you enforce potential duplicates in CI when you know your IDs are deterministic.
 
+## `<template>` elements
+
+A `<template>` is an inert document fragment — its contents only enter the document once the template is cloned/inflated. Each `<template>` body therefore gets its **own ID context**: IDs inside it don't compete with IDs elsewhere in the document, or with IDs in other templates.
+
+```erb
+<div id="thing">Rendered on load</div>
+
+<template id="thing-template">
+  <div id="thing"></div>
+</template>
+```
+
+Two things are still reported:
+
+- **Duplicates within the same template.** Cloning a template materializes all of its contents at once, so IDs repeated inside one template are a genuine collision:
+
+  ```erb
+  <template>
+    <div id="thing">One</div>
+    <div id="thing">Two</div> <%# Duplicate ID `thing` %>
+  </template>
+  ```
+
+- **The template element's own `id`.** `thing-template` above lives in the surrounding document, so duplicates between template elements — or between a template element and an outside element — are reported as usual.
+
 ## References
 * [W3 org - The id attribute](https://www.w3.org/TR/2011/WD-html5-20110525/elements.html#the-id-attribute)
 * [Rails `ActionView::RecordIdentifier#dom_id`](https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html#method-i-dom_id)

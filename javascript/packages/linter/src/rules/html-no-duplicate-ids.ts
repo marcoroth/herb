@@ -3,9 +3,9 @@ import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { LiteralNode } from "@herb-tools/core"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode } from "@herb-tools/core"
+import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode, getTagLocalName } from "@herb-tools/core"
 
-import type { ParseResult, HTMLAttributeNode, ERBContentNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLElementNode, ERBContentNode, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
@@ -34,8 +34,40 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   private currentBranchIds: Set<string> = new Set<string>()
   private controlFlowIds: Set<string> = new Set<string>()
 
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (getTagLocalName(node) === "template") {
+      this.visitTemplateElementNode(node)
+
+      return
+    }
+
+    super.visitHTMLElementNode(node)
+  }
+
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     this.checkAttribute(node)
+  }
+
+  private visitTemplateElementNode(node: HTMLElementNode): void {
+    if (node.open_tag) this.visit(node.open_tag)
+
+    const previousDocumentIds = this.documentIds
+    const previousBranchIds = this.currentBranchIds
+    const previousControlFlowIds = this.controlFlowIds
+
+    this.documentIds = new Set<string>()
+    this.currentBranchIds = new Set<string>()
+    this.controlFlowIds = new Set<string>()
+
+    for (const child of node.body) {
+      this.visit(child)
+    }
+
+    this.documentIds = previousDocumentIds
+    this.currentBranchIds = previousBranchIds
+    this.controlFlowIds = previousControlFlowIds
+
+    if (node.close_tag) this.visit(node.close_tag)
   }
 
   protected onEnterControlFlow(_controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean): ControlFlowState {
