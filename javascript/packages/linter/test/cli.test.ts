@@ -664,6 +664,77 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    test("leaves autocorrectable offenses of other rules untouched", () => {
+      const fixturePath = "test/fixtures/only-fix-other-rules.html.erb"
+      const { readFileSync } = require("fs")
+
+      try {
+        writeFileSync(fixturePath, dedent`
+          <DIV>
+            <img src='test.jpg' alt='test'>
+          </DIV>
+        ` + "\n")
+
+        const { output } = runLinter("only-fix-other-rules.html.erb", "--simple", "--fix", "--only", "html-tag-name-lowercase")
+        const fixedContent = readFileSync(fixturePath, "utf-8")
+
+        expect(output).toContain("Fixed 2 offenses")
+        expect(fixedContent).toContain("<div>")
+        expect(fixedContent).toContain(`<img src='test.jpg' alt='test'>`)
+
+        runLinter("only-fix-other-rules.html.erb", "--simple", "--fix")
+
+        expect(readFileSync(fixturePath, "utf-8")).toContain(`<img src="test.jpg" alt="test">`)
+      } finally {
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("fixes rules that are disabled in .herb.yml", () => {
+      const fixturePath = "test/fixtures/only-fix-disabled.html.erb"
+      const { readFileSync } = require("fs")
+
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        writeFileSync(fixturePath, `<DIV>test</DIV>\n`)
+
+        const { output } = runLinter("only-fix-disabled.html.erb", "--simple", "--fix", "--only", "html-tag-name-lowercase")
+
+        expect(output).toContain("Fixed 2 offenses")
+        expect(readFileSync(fixturePath, "utf-8")).toBe("<div>test</div>\n")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("applies unsafe fixes with --fix-unsafely", () => {
+      const fixturePath = "test/fixtures/only-fix-unsafely.html.erb"
+      const { readFileSync } = require("fs")
+
+      try {
+        writeFileSync(fixturePath, `<div>Tom & Jerry</div>\n`)
+
+        const safe = runLinter("only-fix-unsafely.html.erb", "--simple", "--fix", "--only", "html-no-unescaped-entities")
+
+        expect(safe.output).not.toContain("Fixed")
+        expect(readFileSync(fixturePath, "utf-8")).toBe("<div>Tom & Jerry</div>\n")
+
+        const unsafe = runLinter("only-fix-unsafely.html.erb", "--simple", "--fix-unsafely", "--only", "html-no-unescaped-entities")
+
+        expect(unsafe.output).toContain("Fixed 1 offense")
+        expect(readFileSync(fixturePath, "utf-8")).toBe("<div>Tom &amp; Jerry</div>\n")
+      } finally {
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
     test("exits with an error for unknown rule names", () => {
       const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-img-require-altt")
 

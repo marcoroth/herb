@@ -78,7 +78,7 @@ herb-format --force --check app/views/
 
 When using `--force` on an explicitly specified file that is excluded by configuration patterns, the CLI will show a warning but proceed with processing the file.
 
-The linter CLI also supports an `--only` flag to run a specific set of rules, ignoring the rule configuration in `.herb.yml`.
+The linter CLI also supports an `--only` flag <Badge type="info" text="^0.10.3" /> to run a specific set of rules, ignoring the rule configuration in `.herb.yml`.
 
 Only run the given rules, regardless of how they are configured:
 ```bash

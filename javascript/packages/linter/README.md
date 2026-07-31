@@ -214,7 +214,7 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
-**Running Specific Rules:**
+**Running Specific Rules:** <Badge type="info" text="^0.10.3" />
 
 Only run a single rule:
 ```bash
