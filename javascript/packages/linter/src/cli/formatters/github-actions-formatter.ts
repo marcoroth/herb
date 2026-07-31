@@ -1,4 +1,5 @@
 import { Highlighter } from "@herb-tools/highlighter"
+import { readFileSync } from "node:fs"
 
 import { BaseFormatter } from "./base-formatter.js"
 import { name, version } from "../../../package.json"
@@ -44,7 +45,17 @@ export class GitHubActionsFormatter extends BaseFormatter {
       await this.highlighter.initialize()
     }
 
-    for (const { filename, offense, content } of allDiagnostics) {
+    for (const { filename, offense, content: providedContent } of allDiagnostics) {
+      let content = providedContent
+
+      if (content === undefined) {
+        try {
+          content = readFileSync(filename, "utf-8")
+        } catch {
+          content = ""
+        }
+      }
+
       const originalNoColor = process.env.NO_COLOR
       process.env.NO_COLOR = "1"
 

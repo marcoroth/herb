@@ -30,7 +30,6 @@ export interface WorkerInput {
 export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
-  content: string
   autocorrectable: boolean
 }
 
@@ -141,7 +140,6 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 
@@ -163,7 +161,6 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 

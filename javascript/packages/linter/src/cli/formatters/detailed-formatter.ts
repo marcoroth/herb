@@ -1,4 +1,5 @@
 import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-tools/highlighter"
+import { readFileSync } from "node:fs"
 
 import { BaseFormatter } from "./base-formatter.js"
 import { LineWrapper } from "@herb-tools/highlighter"
@@ -35,7 +36,8 @@ export class DetailedFormatter extends BaseFormatter {
     )
 
     if (isSingleFile) {
-      const { filename, content } = allOffenses[0]
+      const { filename } = allOffenses[0]
+      const content = readSource(allOffenses[0])
       const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
@@ -54,7 +56,8 @@ export class DetailedFormatter extends BaseFormatter {
       const totalMessageCount = allOffenses.length
 
       for (let i = 0; i < allOffenses.length; i++) {
-        const { filename, offense, content, autocorrectable } = allOffenses[i]
+        const { filename, offense, autocorrectable } = allOffenses[i]
+        const content = readSource(allOffenses[i])
 
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
         const suffix = autocorrectable ? correctableTag : undefined
@@ -84,5 +87,15 @@ export class DetailedFormatter extends BaseFormatter {
 
   formatFile(_filename: string, _offenses: Diagnostic[]): void {
     throw new Error("formatFile is not implemented for DetailedFormatter")
+  }
+}
+
+function readSource(file: { filename: string, content?: string }): string {
+  if (file.content !== undefined) return file.content
+
+  try {
+    return readFileSync(file.filename, "utf-8")
+  } catch {
+    return ""
   }
 }

@@ -23,7 +23,7 @@ import type { VersionSkippedRule } from "../linter.js"
 export interface ProcessedFile {
   filename: string
   offense: Diagnostic
-  content: string
+  content?: string
   autocorrectable?: boolean
 }
 
@@ -439,7 +439,6 @@ export class FileProcessor {
         allOffenses.push({
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
-          content: offense.content,
           autocorrectable: offense.autocorrectable
         })
       }
