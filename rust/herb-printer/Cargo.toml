@@ -1,0 +1,20 @@
+[package]
+name = "herb-printer"
+version = "0.10.2"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "Printers for reconstructing source from a Herb AST"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+
+[lib]
+name = "herb_printer"
+path = "src/lib.rs"
+
+[[bin]]
+name = "herb-print"
+path = "src/bin/herb_print.rs"
+
+[dependencies]
+herb = { path = ".." }
+herb-config = { path = "../herb-config" }
