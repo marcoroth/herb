@@ -202,45 +202,42 @@ jobs:
       - name: Build the linter
         run: yarn nx build @herb-tools/linter
 
-      - parallel:
-        - name: Compare the backends on the default rule set
-          env:
-            NO_COLOR: "1"
-          run: |-
-            set +e
+      - name: Compare the backends on the default rule set
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
 
-            javascript/packages/linter/bin/herb-lint corpus/erb \
-              --fail-on-backend-mismatch \
-              --jobs "$(( $(nproc) / 2 ))" \
-              --no-timing \
-              --format simple 2>&1 | tee parity-defaults.txt
+          javascript/packages/linter/bin/herb-lint corpus/erb \
+            --fail-on-backend-mismatch \
+            --no-timing \
+            --format simple 2>&1 | tee parity-defaults.txt
 
-            status=${PIPESTATUS[0]}
+          status=${PIPESTATUS[0]}
 
-            if [ "$status" -eq 2 ]; then
-              echo "::error::The backends disagree on the default rule set"
-              exit 1
-            fi
+          if [ "$status" -eq 2 ]; then
+            echo "::error::The backends disagree on the default rule set"
+            exit 1
+          fi
 
-        - name: Compare the backends with every rule enabled
-          env:
-            NO_COLOR: "1"
-          run: |-
-            set +e
+      - name: Compare the backends with every rule enabled
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
 
-            javascript/packages/linter/bin/herb-lint corpus/erb \
-              --all-rules \
-              --fail-on-backend-mismatch \
-              --jobs "$(( $(nproc) / 2 ))" \
-              --no-timing \
-              --format simple 2>&1 | tee parity-all-rules.txt
+          javascript/packages/linter/bin/herb-lint corpus/erb \
+            --all-rules \
+            --fail-on-backend-mismatch \
+            --no-timing \
+            --format simple 2>&1 | tee parity-all-rules.txt
 
-            status=${PIPESTATUS[0]}
+          status=${PIPESTATUS[0]}
 
-            if [ "$status" -eq 2 ]; then
-              echo "::error::The backends disagree with every rule enabled"
-              exit 1
-            fi
+          if [ "$status" -eq 2 ]; then
+            echo "::error::The backends disagree with every rule enabled"
+            exit 1
+          fi
 
       - name: Job summary
         if: always()
