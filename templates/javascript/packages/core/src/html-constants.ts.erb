@@ -1,0 +1,16 @@
+// https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
+export const HTML_BOOLEAN_ATTRIBUTES = new Set([
+<%- html["attributes"]["boolean"].each do |attribute| -%>
+  "<%= attribute %>",
+<%- end -%>
+])
+
+export function isBooleanAttribute(attributeName: string): boolean {
+  return HTML_BOOLEAN_ATTRIBUTES.has(attributeName.toLowerCase())
+}
+
+export const TOKEN_LIST_ATTRIBUTES = new Set<string>([
+<%- html["attributes"]["token_list"].each do |attribute| -%>
+  "<%= attribute %>",
+<%- end -%>
+])

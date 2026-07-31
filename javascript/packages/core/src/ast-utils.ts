@@ -22,6 +22,8 @@ import {
   WhitespaceNode
 } from "./nodes.js"
 
+import { TOKEN_LIST_ATTRIBUTES } from "./html-constants.js"
+
 import {
   isAnyOf,
   isLiteralNode,
@@ -354,13 +356,6 @@ export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
 
   return filterLiteralNodes(valueNode.children).map(child => child.content).join("") || ""
 }
-
-/**
- * Attributes whose values are space-separated token lists.
- */
-export const TOKEN_LIST_ATTRIBUTES = new Set([
-  "class", "data-controller", "data-action",
-])
 
 /**
  * Splits a space-separated attribute value into individual tokens.

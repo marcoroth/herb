@@ -1,3 +1,4 @@
+use crate::utils::html_data::NON_ESCAPING_ELEMENTS;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
@@ -10,19 +11,6 @@ use herb::nodes::{ERBContentNode, HTMLElementNode};
 use herb::ParseResult;
 use herb::Visitor;
 use herb_config::{Severity, SeverityConfig};
-
-const RAW_TEXT_ELEMENTS: &[&str] = &[
-  "title",
-  "textarea",
-  "script",
-  "style",
-  "xmp",
-  "iframe",
-  "noembed",
-  "noframes",
-  "listing",
-  "plaintext",
-];
 
 pub struct ERBNoUnsafeRawRule;
 
@@ -41,7 +29,7 @@ impl<'rule> Visitor for ERBNoUnsafeRawVisitor<'rule> {
   }
 
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
-    if self.element_stack.inside_any(RAW_TEXT_ELEMENTS) {
+    if self.element_stack.inside_any(NON_ESCAPING_ELEMENTS) {
       return;
     }
 

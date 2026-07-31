@@ -1,11 +1,10 @@
 import { ParserRule } from "../types.js"
+import { FOREIGN_CONTENT_TAGS } from "./html-data.js"
 import { BaseRuleVisitor, isKnownHTMLElement, isKnownSVGElement, isKnownMathMLElement, isCustomElement } from "./rule-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
-
-const FOREIGN_CONTENT_TAGS = new Set(["svg", "math"])
 
 function isComponentElement(node: HTMLElementNode): boolean {
   if (!isHTMLOpenTagNode(node.open_tag)) return false

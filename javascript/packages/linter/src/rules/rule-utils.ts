@@ -25,6 +25,19 @@ import type {
   Node
 } from "@herb-tools/core"
 
+import {
+  HTML_INLINE_ELEMENTS,
+  HTML_BLOCK_ELEMENTS,
+  HTML_VOID_ELEMENTS,
+  HTML_KNOWN_ELEMENTS,
+  DOCUMENT_ONLY_TAG_NAMES,
+  HTML_ONLY_TAG_NAMES,
+  HEAD_ONLY_TAG_NAMES,
+  HEAD_AND_BODY_TAG_NAMES,
+  MATHML_KNOWN_ELEMENTS,
+  SVG_KNOWN_ELEMENTS,
+} from "./html-data.js"
+
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
@@ -166,7 +179,6 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   protected abstract onExitBranch(stateToRestore: TBranchState): void
 }
 
-
 /**
  * Mixin that tracks the current HTML element stack during AST traversal.
  * Provides convenient access to the current element, tag name, parent element,
@@ -241,54 +253,10 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 }
 
-/**
- * Common HTML element categorization
- */
-export const HTML_INLINE_ELEMENTS = new Set([
-  "a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code",
-  "dfn", "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
-  "q", "samp", "script", "select", "small", "span", "strong", "sub", "sup",
-  "textarea", "time", "tt", "var"
-])
-
-export const HTML_BLOCK_ELEMENTS = new Set([
-  "address", "article", "aside", "blockquote", "canvas", "dd", "div", "dl",
-  "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2",
-  "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "noscript",
-  "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
-])
-
-export const HTML_VOID_ELEMENTS = new Set([
-  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
-  "param", "source", "track", "wbr",
-])
+export * from "./html-data.js"
+export * from "./aria-data.js"
 
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
-
-export const HTML_KNOWN_ELEMENTS = new Set([
-  "html", "head", "body",
-  "base", "link", "meta", "style", "title",
-  "script", "noscript", "template", "slot", "selectedcontent",
-  "address", "article", "aside", "footer", "header", "hgroup",
-  "main", "nav", "section", "search",
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "blockquote", "dd", "details", "dialog", "div", "dl", "dt",
-  "figcaption", "figure", "hr", "li", "menu", "ol", "p", "pre",
-  "summary", "ul",
-  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
-  "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
-  "s", "samp", "small", "span", "strong", "sub", "sup", "time",
-  "u", "var", "wbr",
-  "del", "ins",
-  "area", "audio", "canvas", "embed", "iframe", "img", "map",
-  "math", "object", "param", "picture", "source", "svg", "track", "video",
-  "caption", "col", "colgroup", "table", "tbody", "td", "tfoot",
-  "th", "thead", "tr",
-  "button", "datalist", "fieldset", "form", "input", "label",
-  "legend", "meter", "optgroup", "option", "output", "progress",
-  "select", "textarea",
-  "acronym", "big", "tt",
-])
 
 export function isKnownHTMLElement(tagName: string): boolean {
   return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
@@ -298,120 +266,13 @@ export function isCustomElement(tagName: string): boolean {
   return tagName.includes("-")
 }
 
-export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
-
-/**
- * SVG elements that use camelCase naming
- */
-export const SVG_CAMEL_CASE_ELEMENTS = new Set([
-  "animateMotion",
-  "animateTransform",
-  "clipPath",
-  "feBlend",
-  "feColorMatrix",
-  "feComponentTransfer",
-  "feComposite",
-  "feConvolveMatrix",
-  "feDiffuseLighting",
-  "feDisplacementMap",
-  "feDistantLight",
-  "feDropShadow",
-  "feFlood",
-  "feFuncA",
-  "feFuncB",
-  "feFuncG",
-  "feFuncR",
-  "feGaussianBlur",
-  "feImage",
-  "feMerge",
-  "feMergeNode",
-  "feMorphology",
-  "feOffset",
-  "fePointLight",
-  "feSpecularLighting",
-  "feSpotLight",
-  "feTile",
-  "feTurbulence",
-  "foreignObject",
-  "glyphRef",
-  "linearGradient",
-  "radialGradient",
-  "textPath"
-])
-
-/**
- * Mapping from lowercase SVG element names to their correct camelCase versions
- * Generated dynamically from SVG_CAMEL_CASE_ELEMENTS
- */
-export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
-  Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
-)
-
-/**
- * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
- */
-export const SVG_KNOWN_ELEMENTS = new Set([
-  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
-  "a", "animate", "circle", "defs", "desc", "ellipse", "g", "image", "line",
-  "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
-  "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
-  "filter", "set", "style",
-])
-
 export function isKnownSVGElement(tagName: string): boolean {
   return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
 }
 
-/**
- * All known MathML elements
- */
-export const MATHML_KNOWN_ELEMENTS = new Set([
-  "annotation", "annotation-xml",
-  "maction", "math", "menclose", "merror", "mfenced", "mfrac",
-  "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo",
-  "mover", "mpadded", "mphantom", "mprescripts", "mroot", "mrow",
-  "ms", "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup",
-  "mtable", "mtd", "mtext", "mtr", "munder", "munderover",
-  "none", "semantics",
-])
-
 export function isKnownMathMLElement(tagName: string): boolean {
   return MATHML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
 }
-
-export const VALID_ARIA_ROLES = new Set([
-  "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
-  "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",
-  "group", "heading", "img", "list", "listitem", "math", "none", "note", "presentation",
-  "row", "rowgroup", "rowheader", "separator", "table", "term", "tooltip",
-  "alert", "alertdialog", "button", "checkbox", "combobox", "dialog", "grid", "gridcell", "link",
-  "listbox", "menu", "menubar", "menuitem", "menuitemcheckbox", "menuitemradio", "option",
-  "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
-  "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
-  "treegrid", "treeitem",
-  "log", "marquee",
-  "graphics-document", "graphics-object", "graphics-symbol"
-]);
-
-/**
- * Abstract ARIA roles used to support the WAI-ARIA Roles Model.
- * Authors MUST NOT use abstract roles in content.
- * @see https://www.w3.org/TR/wai-aria-1.0/roles#abstract_roles
- */
-export const ABSTRACT_ARIA_ROLES = new Set([
-  "command",
-  "composite",
-  "input",
-  "landmark",
-  "range",
-  "roletype",
-  "section",
-  "sectionhead",
-  "select",
-  "structure",
-  "widget",
-  "window"
-]);
 
 /**
  * Parameter types for AttributeVisitorMixin methods
@@ -449,57 +310,6 @@ export interface DynamicAttributeDynamicValueParams {
   combinedName?: string
   combinedValue?: string | null
 }
-
-export const ARIA_ATTRIBUTES =  new Set([
-  'aria-activedescendant',
-  'aria-atomic',
-  'aria-autocomplete',
-  'aria-busy',
-  'aria-checked',
-  'aria-colcount',
-  'aria-colindex',
-  'aria-colspan',
-  'aria-controls',
-  'aria-current',
-  'aria-describedby',
-  'aria-details',
-  'aria-disabled',
-  'aria-dropeffect',
-  'aria-errormessage',
-  'aria-expanded',
-  'aria-flowto',
-  'aria-grabbed',
-  'aria-haspopup',
-  'aria-hidden',
-  'aria-invalid',
-  'aria-keyshortcuts',
-  'aria-label',
-  'aria-labelledby',
-  'aria-level',
-  'aria-live',
-  'aria-modal',
-  'aria-multiline',
-  'aria-multiselectable',
-  'aria-orientation',
-  'aria-owns',
-  'aria-placeholder',
-  'aria-posinset',
-  'aria-pressed',
-  'aria-readonly',
-  'aria-relevant',
-  'aria-required',
-  'aria-roledescription',
-  'aria-rowcount',
-  'aria-rowindex',
-  'aria-rowspan',
-  'aria-selected',
-  'aria-setsize',
-  'aria-sort',
-  'aria-valuemax',
-  'aria-valuemin',
-  'aria-valuenow',
-  'aria-valuetext',
-])
 
 /**
  * Helper function to create a location at the end of the source with a 1-character range
@@ -893,28 +703,6 @@ export function findParent(root: Node, target: Node): Node | null {
 
   return parentNode
 }
-
-export const DOCUMENT_ONLY_TAG_NAMES = new Set<string>([
-  "html"
-])
-
-export const HTML_ONLY_TAG_NAMES = new Set<string>([
-  "head", "body"
-])
-
-export const HEAD_ONLY_TAG_NAMES = new Set<string>([
-  "base",
-  "title",
-  "style",
-  "meta",
-  "link",
-])
-
-export const HEAD_AND_BODY_TAG_NAMES = new Set<string>([
-  "script",
-  "noscript",
-  "template",
-])
 
 export function isDocumentOnlyTag(tagName: string): boolean {
   return DOCUMENT_ONLY_TAG_NAMES.has(tagName.toLowerCase())

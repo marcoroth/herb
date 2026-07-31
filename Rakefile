@@ -148,7 +148,7 @@ rescue LoadError => e
 end
 
 desc "Render out template files"
-task :templates do
+task templates: "html_entities:download" do
   require_relative "lib/herb/bootstrap"
 
   Herb::Bootstrap.generate_templates
@@ -156,10 +156,34 @@ end
 
 namespace :html_entities do
   ENTITIES_PATH = "javascript/packages/core/src/html-entities.json"
+  ENTITIES_URL = "https://html.spec.whatwg.org/entities.json"
 
   desc "Download the HTML named character references if they are missing"
   task :download do
-    sh "yarn --cwd javascript/packages/core download-html-entities"
+    if File.exist?(ENTITIES_PATH)
+      puts "[unchanged] #{ENTITIES_PATH}"
+    else
+      require "net/http"
+      require "uri"
+      require "json"
+
+      puts "Downloading #{ENTITIES_URL}"
+
+      body = Net::HTTP.get(URI(ENTITIES_URL))
+
+      raise "Downloaded #{ENTITIES_PATH} is empty" if body.strip.empty?
+
+      entities = JSON.parse(body).sort.each_with_object({}) do |(key, value), result|
+        next unless key.end_with?(";")
+
+        result[key[1..-2]] = { "characters" => value["characters"], "codepoints" => value["codepoints"] }
+      end
+
+      mkdir_p File.dirname(ENTITIES_PATH)
+      File.write(ENTITIES_PATH, JSON.pretty_generate(entities) + "\n")
+
+      puts "Wrote #{entities.size} named character references to #{ENTITIES_PATH}"
+    end
   end
 
   desc "Re-download the HTML named character references from the WHATWG spec"

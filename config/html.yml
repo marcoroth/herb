@@ -1,0 +1,477 @@
+elements:
+  # Elements written without a closing tag.
+  void:
+    - area
+    - base
+    - br
+    - col
+    - embed
+    - hr
+    - img
+    - input
+    - link
+    - meta
+    - param
+    - source
+    - track
+    - wbr
+
+  inline:
+    - a
+    - abbr
+    - acronym
+    - b
+    - bdo
+    - big
+    - br
+    - button
+    - cite
+    - code
+    - dfn
+    - em
+    - i
+    - img
+    - input
+    - kbd
+    - label
+    - map
+    - object
+    - output
+    - q
+    - samp
+    - script
+    - select
+    - small
+    - span
+    - strong
+    - sub
+    - sup
+    - textarea
+    - time
+    - tt
+    - var
+
+  block:
+    - address
+    - article
+    - aside
+    - blockquote
+    - canvas
+    - dd
+    - div
+    - dl
+    - dt
+    - fieldset
+    - figcaption
+    - figure
+    - footer
+    - form
+    - h1
+    - h2
+    - h3
+    - h4
+    - h5
+    - h6
+    - header
+    - hr
+    - li
+    - main
+    - nav
+    - noscript
+    - ol
+    - p
+    - pre
+    - section
+    - table
+    - tfoot
+    - ul
+    - video
+
+  # Where an element is allowed to appear in the document structure.
+  document_only:
+    - html
+
+  html_only:
+    - body
+    - head
+
+  # Elements that only belong inside `<head>`.
+  head_only:
+    - base
+    - link
+    - meta
+    - style
+    - title
+
+  head_and_body:
+    - noscript
+    - script
+    - template
+
+  # Heading elements.
+  headings:
+    - h1
+    - h2
+    - h3
+    - h4
+    - h5
+    - h6
+
+  # Elements that are natively focusable and interactive.
+  interactive:
+    - a
+    - button
+    - input
+    - select
+    - summary
+    - textarea
+
+  # Elements whose subtree is parsed as a foreign (non-HTML) namespace.
+  foreign_content:
+    - math
+    - svg
+
+  # Elements with no semantics of their own.
+  generic:
+    - div
+    - span
+
+  # Elements whose accessible name must come from their content.
+  name_restricted:
+    - b
+    - code
+    - em
+    - h1
+    - h2
+    - h3
+    - h4
+    - h5
+    - h6
+    - i
+    - p
+    - strong
+
+  # Elements that support the `disabled` attribute. This order is user-visible:
+  # `a11y-disabled-attribute` lists it verbatim in its message.
+  disableable:
+    - button
+    - fieldset
+    - input
+    - optgroup
+    - option
+    - select
+    - textarea
+    - task-lists
+
+  # Elements whose content is raw text rather than markup.
+  raw_text:
+    - script
+    - style
+
+  # Elements whose content is never HTML-escaped, including legacy elements.
+  non_escaping:
+    - iframe
+    - listing
+    - noembed
+    - noframes
+    - plaintext
+    - script
+    - style
+    - textarea
+    - title
+    - xmp
+
+  # Every element in the HTML specification, used to detect unknown tags.
+  known:
+    - a
+    - abbr
+    - acronym
+    - address
+    - area
+    - article
+    - aside
+    - audio
+    - b
+    - base
+    - bdi
+    - bdo
+    - big
+    - blockquote
+    - body
+    - br
+    - button
+    - canvas
+    - caption
+    - cite
+    - code
+    - col
+    - colgroup
+    - data
+    - datalist
+    - dd
+    - del
+    - details
+    - dfn
+    - dialog
+    - div
+    - dl
+    - dt
+    - em
+    - embed
+    - fieldset
+    - figcaption
+    - figure
+    - footer
+    - form
+    - h1
+    - h2
+    - h3
+    - h4
+    - h5
+    - h6
+    - head
+    - header
+    - hgroup
+    - hr
+    - html
+    - i
+    - iframe
+    - img
+    - input
+    - ins
+    - kbd
+    - label
+    - legend
+    - li
+    - link
+    - main
+    - map
+    - mark
+    - math
+    - menu
+    - meta
+    - meter
+    - nav
+    - noscript
+    - object
+    - ol
+    - optgroup
+    - option
+    - output
+    - p
+    - param
+    - picture
+    - pre
+    - progress
+    - q
+    - rp
+    - rt
+    - ruby
+    - s
+    - samp
+    - script
+    - search
+    - section
+    - select
+    - selectedcontent
+    - slot
+    - small
+    - source
+    - span
+    - strong
+    - style
+    - sub
+    - summary
+    - sup
+    - svg
+    - table
+    - tbody
+    - td
+    - template
+    - textarea
+    - tfoot
+    - th
+    - thead
+    - time
+    - title
+    - tr
+    - track
+    - tt
+    - u
+    - ul
+    - var
+    - video
+    - wbr
+
+svg:
+  # SVG elements whose specified name is camelCase rather than lowercase.
+  camel_case:
+    - animateMotion
+    - animateTransform
+    - clipPath
+    - feBlend
+    - feColorMatrix
+    - feComponentTransfer
+    - feComposite
+    - feConvolveMatrix
+    - feDiffuseLighting
+    - feDisplacementMap
+    - feDistantLight
+    - feDropShadow
+    - feFlood
+    - feFuncA
+    - feFuncB
+    - feFuncG
+    - feFuncR
+    - feGaussianBlur
+    - feImage
+    - feMerge
+    - feMergeNode
+    - feMorphology
+    - feOffset
+    - fePointLight
+    - feSpecularLighting
+    - feSpotLight
+    - feTile
+    - feTurbulence
+    - foreignObject
+    - glyphRef
+    - linearGradient
+    - radialGradient
+    - textPath
+
+  # The remaining SVG elements, which are lowercase already. The full set of
+  # known SVG elements is this list plus the lowercased `camel_case` names.
+  known:
+    - a
+    - animate
+    - circle
+    - defs
+    - desc
+    - ellipse
+    - filter
+    - g
+    - image
+    - line
+    - marker
+    - mask
+    - metadata
+    - path
+    - pattern
+    - polygon
+    - polyline
+    - rect
+    - set
+    - stop
+    - style
+    - switch
+    - symbol
+    - text
+    - title
+    - tspan
+    - use
+
+mathml:
+  known:
+    - annotation
+    - annotation-xml
+    - maction
+    - math
+    - menclose
+    - merror
+    - mfenced
+    - mfrac
+    - mglyph
+    - mi
+    - mlabeledtr
+    - mmultiscripts
+    - mn
+    - mo
+    - mover
+    - mpadded
+    - mphantom
+    - mprescripts
+    - mroot
+    - mrow
+    - ms
+    - mspace
+    - msqrt
+    - mstyle
+    - msub
+    - msubsup
+    - msup
+    - mtable
+    - mtd
+    - mtext
+    - mtr
+    - munder
+    - munderover
+    - none
+    - semantics
+
+attributes:
+  # Attributes that carry a space-separated list of tokens.
+  token_list:
+    - class
+    - data-action
+    - data-controller
+
+  # Attributes that are meaningless when empty.
+  restricted_when_empty:
+    - class
+    - data
+    - for
+    - href
+    - id
+    - name
+    - role
+    - src
+    - title
+
+  # Attributes whose presence alone is meaningful, so they take no value.
+  boolean:
+    - allowfullscreen
+    - async
+    - autofocus
+    - autoplay
+    - checked
+    - compact
+    - controls
+    - declare
+    - default
+    - defer
+    - disabled
+    - formnovalidate
+    - hidden
+    - inert
+    - ismap
+    - itemscope
+    - loop
+    - multiple
+    - muted
+    - nohref
+    - nomodule
+    - noresize
+    - noshade
+    - novalidate
+    - nowrap
+    - open
+    - playsinline
+    - readonly
+    - required
+    - reversed
+    - scoped
+    - seamless
+    - selected
+    - sortable
+    - truespeed
+    - typemustmatch
+
+script:
+  # Values accepted by the `type` attribute of a `<script>` element.
+  allowed_types:
+    - text/javascript
+    - module
+    - importmap
+    - speculationrules
+    - application/ld+json

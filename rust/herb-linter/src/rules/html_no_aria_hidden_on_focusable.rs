@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::sync::LazyLock;
+use crate::utils::html_data::INTERACTIVE_ELEMENTS;
 
 use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag, has_aria_hidden_true, has_attribute, tag_name_location};
 
@@ -14,9 +13,6 @@ define_parser_rule!(
   NoAriaHiddenOnFocusableVisitor,
   introduced_in: "0.6.0"
 );
-
-static INTERACTIVE_ELEMENTS: LazyLock<HashSet<&'static str>> =
-  LazyLock::new(|| ["button", "summary", "input", "select", "textarea", "a"].into_iter().collect());
 
 fn get_tab_index_value(node: &HTMLOpenTagNode) -> Option<i32> {
   get_attribute(node, "tabindex")

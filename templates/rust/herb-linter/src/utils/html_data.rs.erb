@@ -1,0 +1,101 @@
+<%
+  svg_camel_case = html["svg"]["camel_case"]
+  svg_known = (svg_camel_case.map(&:downcase) + html["svg"]["known"]).uniq.sort
+
+  sets = {
+    "HTML_VOID_ELEMENTS" => html["elements"]["void"],
+    "HTML_INLINE_ELEMENTS" => html["elements"]["inline"],
+    "HTML_BLOCK_ELEMENTS" => html["elements"]["block"],
+    "HTML_BOOLEAN_ATTRIBUTES" => html["attributes"]["boolean"],
+    "DOCUMENT_ONLY_TAG_NAMES" => html["elements"]["document_only"],
+    "HTML_ONLY_TAG_NAMES" => html["elements"]["html_only"],
+    "HEAD_ONLY_TAG_NAMES" => html["elements"]["head_only"],
+    "HEAD_AND_BODY_TAG_NAMES" => html["elements"]["head_and_body"],
+    "HEADING_TAGS" => html["elements"]["headings"],
+    "INTERACTIVE_ELEMENTS" => html["elements"]["interactive"],
+    "RESTRICTED_ATTRIBUTES" => html["attributes"]["restricted_when_empty"],
+  }
+
+  slices = {
+    "FOREIGN_CONTENT_TAGS" => html["elements"]["foreign_content"],
+    "GENERIC_ELEMENTS" => html["elements"]["generic"],
+    "NAME_RESTRICTED_ELEMENTS" => html["elements"]["name_restricted"],
+    "DISABLEABLE_ELEMENTS" => html["elements"]["disableable"],
+    "RAW_TEXT_ELEMENTS" => html["elements"]["raw_text"],
+    "NON_ESCAPING_ELEMENTS" => html["elements"]["non_escaping"],
+    "TOKEN_LIST_ATTRIBUTES" => html["attributes"]["token_list"],
+    "ALLOWED_SCRIPT_TYPES" => html["script"]["allowed_types"],
+    "HTML_KNOWN_ELEMENTS" => html["elements"]["known"],
+    "SVG_KNOWN_ELEMENTS" => svg_known,
+    "MATHML_KNOWN_ELEMENTS" => html["mathml"]["known"],
+  }
+-%>
+use std::collections::{HashMap, HashSet};
+use std::sync::LazyLock;
+
+<%- sets.each do |name, values| -%>
+pub static <%= name %>: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
+  [
+<%- values.each do |value| -%>
+    "<%= value %>",
+<%- end -%>
+  ]
+  .into_iter()
+  .collect()
+});
+
+<%- end -%>
+pub fn is_head_only_element(tag_name: &str) -> bool {
+  HEAD_ONLY_TAG_NAMES.contains(tag_name.to_lowercase().as_str())
+}
+
+pub fn is_void_element(tag_name: &str) -> bool {
+  HTML_VOID_ELEMENTS.contains(tag_name.to_lowercase().as_str())
+}
+
+pub fn is_inline_element(tag_name: &str) -> bool {
+  HTML_INLINE_ELEMENTS.contains(tag_name.to_lowercase().as_str())
+}
+
+pub fn is_block_element(tag_name: &str) -> bool {
+  HTML_BLOCK_ELEMENTS.contains(tag_name.to_lowercase().as_str())
+}
+
+pub fn is_boolean_attribute(attribute_name: &str) -> bool {
+  HTML_BOOLEAN_ATTRIBUTES.contains(attribute_name.to_lowercase().as_str())
+}
+
+pub static SVG_CAMEL_CASE_ELEMENTS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+  vec![
+<%- svg_camel_case.each do |element| -%>
+    "<%= element %>",
+<%- end -%>
+  ]
+});
+
+pub static SVG_LOWERCASE_TO_CAMELCASE: LazyLock<HashMap<String, &'static str>> =
+  LazyLock::new(|| SVG_CAMEL_CASE_ELEMENTS.iter().map(|element| (element.to_lowercase(), *element)).collect());
+
+<%- slices.each do |name, values| -%>
+pub const <%= name %>: &[&str] = &[
+<%- values.each do |value| -%>
+  "<%= value %>",
+<%- end -%>
+];
+
+<%- end -%>
+pub fn is_known_html_element(tag_name: &str) -> bool {
+  HTML_KNOWN_ELEMENTS.contains(&tag_name.to_lowercase().as_str())
+}
+
+pub fn is_known_svg_element(tag_name: &str) -> bool {
+  SVG_KNOWN_ELEMENTS.contains(&tag_name.to_lowercase().as_str())
+}
+
+pub fn is_known_mathml_element(tag_name: &str) -> bool {
+  MATHML_KNOWN_ELEMENTS.contains(&tag_name.to_lowercase().as_str())
+}
+
+pub fn is_custom_element(tag_name: &str) -> bool {
+  tag_name.contains('-')
+}

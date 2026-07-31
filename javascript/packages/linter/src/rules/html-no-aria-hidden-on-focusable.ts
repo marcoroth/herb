@@ -1,13 +1,10 @@
 import { ParserRule } from "../types.js"
+import { INTERACTIVE_ELEMENTS } from "./html-data.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
-
-const INTERACTIVE_ELEMENTS = new Set([
-  "button", "summary", "input", "select", "textarea", "a"
-])
 
 class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {

@@ -872,7 +872,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_character_references: html_character_references })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_character_references: html_character_references, aria: aria, html: html })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -957,6 +957,14 @@ module Herb
       require "json"
 
       JSON.parse(File.read(HTML_ENTITIES_PATH)).keys.sort
+    end
+
+    def self.aria
+      YAML.load_file("config/aria.yml")
+    end
+
+    def self.html
+      YAML.load_file("config/html.yml")
     end
 
     def self.config

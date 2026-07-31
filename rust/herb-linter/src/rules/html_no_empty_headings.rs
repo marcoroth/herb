@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::sync::LazyLock;
+use crate::utils::html_data::HEADING_TAGS;
 
 use crate::utils::tag_utils::{get_attribute, get_open_tag, get_static_attribute_value, get_tag_name_from_element};
 
@@ -11,8 +10,6 @@ rule_visitor!(NoEmptyHeadingsVisitor);
 define_parser_rule!(HTMLNoEmptyHeadingsRule, "html-no-empty-headings", Warning, NoEmptyHeadingsVisitor,
   introduced_in: "0.4.0"
 );
-
-static HEADING_TAGS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["h1", "h2", "h3", "h4", "h5", "h6"].into_iter().collect());
 
 impl NoEmptyHeadingsVisitor {
   fn has_heading_role(&self, open_tag: &HTMLOpenTagNode) -> bool {

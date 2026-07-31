@@ -1,13 +1,9 @@
-use std::collections::HashSet;
-use std::sync::LazyLock;
+use crate::utils::html_data::RESTRICTED_ATTRIBUTES;
 
 use crate::utils::tag_utils::{get_attribute_name_literal_content, get_attributes, get_static_attribute_value, print_attribute, print_attribute_name};
 
 use herb::nodes::{HTMLAttributeNode, HTMLOpenTagNode};
 use herb::Visitor;
-
-static RESTRICTED_ATTRIBUTES: LazyLock<HashSet<&'static str>> =
-  LazyLock::new(|| ["id", "class", "name", "for", "src", "href", "title", "data", "role"].into_iter().collect());
 
 fn is_restricted_attribute(attribute_name: &str) -> bool {
   if RESTRICTED_ATTRIBUTES.contains(attribute_name) {

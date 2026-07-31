@@ -1,3 +1,4 @@
+use crate::utils::html_data::INTERACTIVE_ELEMENTS;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
@@ -7,8 +8,6 @@ use herb::nodes::HTMLElementNode;
 use herb::ParseResult;
 use herb::Visitor;
 use herb_config::{Severity, SeverityConfig};
-
-const INTERACTIVE_ELEMENTS: &[&str] = &["a", "button", "input", "select", "summary", "textarea"];
 
 pub struct A11yNestedInteractiveElementsRule;
 

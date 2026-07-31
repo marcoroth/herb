@@ -1,13 +1,10 @@
 import { hasAttribute, getTagLocalName } from "@herb-tools/core"
+import { DISABLEABLE_ELEMENTS } from "./html-data.js"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
-
-const VALID_DISABLED_TAGS = new Set([
-  "button", "fieldset", "input", "optgroup", "option", "select", "textarea", "task-lists"
-])
 
 class DisabledAttributeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -20,10 +17,10 @@ class DisabledAttributeVisitor extends BaseRuleVisitor {
 
     const tagName = getTagLocalName(node)
     if (!tagName) return
-    if (VALID_DISABLED_TAGS.has(tagName)) return
+    if (DISABLEABLE_ELEMENTS.has(tagName)) return
 
     this.addOffense(
-      `The \`disabled\` attribute is only valid on ${[...VALID_DISABLED_TAGS].join(", ")}.`,
+      `The \`disabled\` attribute is only valid on ${[...DISABLEABLE_ELEMENTS].join(", ")}.`,
       node.tag_name!.location,
     )
   }

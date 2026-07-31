@@ -1,18 +1,10 @@
 import { ElementStackVisitor } from "./rule-utils.js"
+import { INTERACTIVE_ELEMENTS } from "./html-data.js"
 import { getTagLocalName, getStaticAttributeValue } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
-
-const INTERACTIVE_ELEMENTS = new Set([
-  "a",
-  "button",
-  "input",
-  "select",
-  "summary",
-  "textarea",
-])
 
 class NestedInteractiveElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {

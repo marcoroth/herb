@@ -1,0 +1,35 @@
+<%
+  sets = {
+    "VALID_ARIA_ROLES" => aria["roles"]["valid"],
+    "ABSTRACT_ARIA_ROLES" => aria["roles"]["abstract"],
+    "ARIA_ATTRIBUTES" => aria["attributes"],
+  }
+
+  slices = {
+    "ROLES_WHICH_CANNOT_BE_NAMED" => aria["roles"]["cannot_be_named"],
+    "LABEL_ATTRIBUTES" => aria["label_attributes"],
+  }
+-%>
+use std::collections::HashSet;
+use std::sync::LazyLock;
+
+<%- sets.each do |name, values| -%>
+pub static <%= name %>: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
+  [
+<%- values.each do |value| -%>
+    "<%= value %>",
+<%- end -%>
+  ]
+  .into_iter()
+  .collect()
+});
+
+<%- end -%>
+<%- slices.each do |name, values| -%>
+pub const <%= name %>: &[&str] = &[
+<%- values.each do |value| -%>
+  "<%= value %>",
+<%- end -%>
+];
+
+<%- end -%>

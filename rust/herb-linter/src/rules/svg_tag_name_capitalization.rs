@@ -1,7 +1,6 @@
 use crate::offense::Offense;
+use crate::utils::html_data::{SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE};
 use herb::nodes::DocumentNode;
-use std::collections::HashMap;
-use std::sync::LazyLock;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
@@ -14,47 +13,6 @@ use herb::Visitor;
 use herb_config::{Severity, SeverityConfig};
 
 pub struct SVGTagNameCapitalizationRule;
-
-static SVG_CAMEL_CASE_ELEMENTS: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
-  vec![
-    "animateMotion",
-    "animateTransform",
-    "clipPath",
-    "feBlend",
-    "feColorMatrix",
-    "feComponentTransfer",
-    "feComposite",
-    "feConvolveMatrix",
-    "feDiffuseLighting",
-    "feDisplacementMap",
-    "feDistantLight",
-    "feDropShadow",
-    "feFlood",
-    "feFuncA",
-    "feFuncB",
-    "feFuncG",
-    "feFuncR",
-    "feGaussianBlur",
-    "feImage",
-    "feMerge",
-    "feMergeNode",
-    "feMorphology",
-    "feOffset",
-    "fePointLight",
-    "feSpecularLighting",
-    "feSpotLight",
-    "feTile",
-    "feTurbulence",
-    "foreignObject",
-    "glyphRef",
-    "linearGradient",
-    "radialGradient",
-    "textPath",
-  ]
-});
-
-static SVG_LOWERCASE_TO_CAMELCASE: LazyLock<HashMap<String, &'static str>> =
-  LazyLock::new(|| SVG_CAMEL_CASE_ELEMENTS.iter().map(|element| (element.to_lowercase(), *element)).collect());
 
 struct SVGTagNameCapitalizationVisitor {
   rule_name: &'static str,

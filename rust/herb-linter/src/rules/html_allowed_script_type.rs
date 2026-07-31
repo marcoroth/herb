@@ -1,3 +1,4 @@
+use crate::utils::html_data::ALLOWED_SCRIPT_TYPES;
 use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag};
 
 use herb::nodes::HTMLOpenTagNode;
@@ -6,8 +7,6 @@ use herb::Visitor;
 // NOTE: Rules are not configurable for now, keep some sane defaults
 //   See https://github.com/marcoroth/herb/issues/1204
 const ALLOW_BLANK: bool = true;
-const ALLOWED_TYPES: &[&str] = &["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"];
-
 rule_visitor!(AllowedScriptTypeVisitor);
 define_parser_rule!(HTMLAllowedScriptTypeRule, "html-allowed-script-type", Error, AllowedScriptTypeVisitor,
   introduced_in: "0.9.0"
@@ -61,11 +60,11 @@ impl AllowedScriptTypeVisitor {
       return;
     }
 
-    if ALLOWED_TYPES.contains(&type_value.as_str()) {
+    if ALLOWED_SCRIPT_TYPES.contains(&type_value.as_str()) {
       return;
     }
 
-    let allowed_list = ALLOWED_TYPES.iter().map(|type_name| format!("`{}`", type_name)).collect::<Vec<_>>().join(", ");
+    let allowed_list = ALLOWED_SCRIPT_TYPES.iter().map(|type_name| format!("`{}`", type_name)).collect::<Vec<_>>().join(", ");
 
     let blank_suffix = if ALLOW_BLANK { " or blank" } else { "" };
 

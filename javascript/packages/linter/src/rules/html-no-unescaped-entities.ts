@@ -1,4 +1,5 @@
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
+import { RAW_TEXT_ELEMENTS } from "./html-data.js"
 import { BaseRuleVisitor, locationFromContentOffset } from "./rule-utils.js"
 import { getTagLocalName, isValidCharacterReference } from "@herb-tools/core"
 
@@ -70,8 +71,6 @@ function findUnescapedOccurrences(value: string): UnescapedOccurrence[] {
 
   return occurrences
 }
-
-const RAW_TEXT_ELEMENTS = new Set(["script", "style"])
 
 // Per the HTML5 spec (§13.2.5.36, §13.2.5.37), no characters are parse errors
 // in quoted attribute values. Entity checks only apply to text content.

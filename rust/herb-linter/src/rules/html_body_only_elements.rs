@@ -1,10 +1,7 @@
-use std::collections::HashSet;
-use std::sync::LazyLock;
-
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
-use crate::utils::html_data::HEAD_ONLY_TAG_NAMES;
+use crate::utils::html_data::{DOCUMENT_ONLY_TAG_NAMES, HEAD_AND_BODY_TAG_NAMES, HEAD_ONLY_TAG_NAMES, HTML_ONLY_TAG_NAMES};
 use crate::utils::tag_utils::get_tag_name_from_element;
 
 use herb::nodes::HTMLElementNode;
@@ -13,10 +10,6 @@ use herb::Visitor;
 use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLBodyOnlyElementsRule;
-
-static DOCUMENT_ONLY_TAG_NAMES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["html"].into_iter().collect());
-static HTML_ONLY_TAG_NAMES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["head", "body"].into_iter().collect());
-static HEAD_AND_BODY_TAG_NAMES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["script", "noscript", "template"].into_iter().collect());
 
 fn is_body_only_tag(tag_name: &str) -> bool {
   let tag = tag_name.to_lowercase();

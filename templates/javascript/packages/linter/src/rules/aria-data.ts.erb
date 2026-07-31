@@ -1,0 +1,37 @@
+export const VALID_ARIA_ROLES = new Set<string>([
+<%- aria["roles"]["valid"].each do |role| -%>
+  "<%= role %>",
+<%- end -%>
+])
+
+/**
+ * Abstract ARIA roles used to support the WAI-ARIA Roles Model.
+ * Authors MUST NOT use abstract roles in content.
+ * @see https://www.w3.org/TR/wai-aria-1.0/roles#abstract_roles
+ */
+export const ABSTRACT_ARIA_ROLES = new Set<string>([
+<%- aria["roles"]["abstract"].each do |role| -%>
+  "<%= role %>",
+<%- end -%>
+])
+
+export const ARIA_ATTRIBUTES = new Set<string>([
+<%- aria["attributes"].each do |attribute| -%>
+  "<%= attribute %>",
+<%- end -%>
+])
+
+/**
+ * Roles whose accessible name must come from their content.
+ */
+export const ROLES_WHICH_CANNOT_BE_NAMED = new Set<string>([
+<%- aria["roles"]["cannot_be_named"].each do |role| -%>
+  "<%= role %>",
+<%- end -%>
+])
+
+export const LABEL_ATTRIBUTES = [
+<%- aria["label_attributes"].each do |attribute| -%>
+  "<%= attribute %>",
+<%- end -%>
+] as const

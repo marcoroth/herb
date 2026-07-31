@@ -1,4 +1,5 @@
 import { ParserRule } from "../types.js"
+import { ALLOWED_SCRIPT_TYPES } from "./html-data.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue } from "@herb-tools/core"
 
@@ -8,7 +9,6 @@ import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tool
 // NOTE: Rules are not configurable for now, keep some sane defaults
 //   See https://github.com/marcoroth/herb/issues/1204
 const ALLOW_BLANK = true
-const ALLOWED_TYPES = ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"]
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -53,11 +53,11 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
       return
     }
 
-    if (ALLOWED_TYPES.includes(typeValue)) return
+    if (ALLOWED_SCRIPT_TYPES.includes(typeValue)) return
 
     this.addOffense(
       `Avoid using \`${typeValue}\` as the \`type\` attribute for the \`<script>\` tag. ` +
-      `Must be one of: ${ALLOWED_TYPES.map(t => `\`${t}\``).join(", ")}` +
+      `Must be one of: ${ALLOWED_SCRIPT_TYPES.map(t => `\`${t}\``).join(", ")}` +
       `${ALLOW_BLANK ? " or blank" : ""}.`,
       typeAttribute.location
     )

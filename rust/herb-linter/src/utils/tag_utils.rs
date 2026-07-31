@@ -1,3 +1,4 @@
+use crate::utils::html_data::TOKEN_LIST_ATTRIBUTES;
 use herb::nodes::*;
 use herb::union_types::*;
 use herb::Location;
@@ -386,8 +387,6 @@ pub fn get_attribute_value(attribute: &HTMLAttributeNode) -> Option<String> {
 pub fn get_element_static_attribute_value(element: &HTMLElementNode, attribute_name: &str) -> Option<String> {
   get_static_attribute_value(get_element_attribute(element, attribute_name)?)
 }
-
-const TOKEN_LIST_ATTRIBUTES: &[&str] = &["class", "data-controller", "data-action"];
 
 fn token_list(value: Option<&str>) -> Vec<&str> {
   value.map(|value| value.split_whitespace().collect()).unwrap_or_default()

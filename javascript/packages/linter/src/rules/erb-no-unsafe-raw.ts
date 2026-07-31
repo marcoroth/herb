@@ -1,22 +1,10 @@
 import { ParserRule } from "../types.js"
+import { NON_ESCAPING_ELEMENTS } from "./html-data.js"
 import { ElementStackVisitor } from "./rule-utils.js"
 import { PrismVisitor, isERBOutputNode, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, ERBContentNode, PrismNode, Location } from "@herb-tools/core"
-
-const RAW_TEXT_ELEMENTS = new Set([
-  "title",
-  "textarea",
-  "script",
-  "style",
-  "xmp",
-  "iframe",
-  "noembed",
-  "noframes",
-  "listing",
-  "plaintext",
-])
 
 class UnsafeRawCallCollector extends PrismVisitor {
   public readonly rawCalls: PrismNode[] = []
@@ -43,7 +31,7 @@ class UnsafeRawCallCollector extends PrismVisitor {
 
 class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
   visitERBContentNode(node: ERBContentNode): void {
-    if (this.isInsideElement(...RAW_TEXT_ELEMENTS)) return
+    if (this.isInsideElement(...NON_ESCAPING_ELEMENTS)) return
     if (!isERBOutputNode(node)) return
 
     const prismNode = node.prismNode

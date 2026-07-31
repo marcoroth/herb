@@ -1,10 +1,9 @@
+use crate::utils::html_data::FOREIGN_CONTENT_TAGS;
 use crate::utils::html_data::{is_custom_element, is_known_html_element, is_known_mathml_element, is_known_svg_element};
 use crate::utils::tag_utils::{get_open_tag, get_open_tag_name_token, get_tag_local_name};
 
 use herb::nodes::HTMLElementNode;
 use herb::Visitor;
-
-const FOREIGN_CONTENT_TAGS: &[&str] = &["svg", "math"];
 
 rule_visitor!(NoUnknownTagVisitor);
 define_parser_rule!(

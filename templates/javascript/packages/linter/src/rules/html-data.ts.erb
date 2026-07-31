@@ -1,0 +1,68 @@
+<%
+  sets = {
+    "HTML_INLINE_ELEMENTS" => html["elements"]["inline"],
+    "HTML_BLOCK_ELEMENTS" => html["elements"]["block"],
+    "HTML_VOID_ELEMENTS" => html["elements"]["void"],
+    "HTML_KNOWN_ELEMENTS" => html["elements"]["known"],
+    "DOCUMENT_ONLY_TAG_NAMES" => html["elements"]["document_only"],
+    "HTML_ONLY_TAG_NAMES" => html["elements"]["html_only"],
+    "HEAD_ONLY_TAG_NAMES" => html["elements"]["head_only"],
+    "HEAD_AND_BODY_TAG_NAMES" => html["elements"]["head_and_body"],
+    "MATHML_KNOWN_ELEMENTS" => html["mathml"]["known"],
+    "HEADING_TAGS" => html["elements"]["headings"],
+    "INTERACTIVE_ELEMENTS" => html["elements"]["interactive"],
+    "FOREIGN_CONTENT_TAGS" => html["elements"]["foreign_content"],
+    "GENERIC_ELEMENTS" => html["elements"]["generic"],
+    "NAME_RESTRICTED_ELEMENTS" => html["elements"]["name_restricted"],
+    "DISABLEABLE_ELEMENTS" => html["elements"]["disableable"],
+    "RAW_TEXT_ELEMENTS" => html["elements"]["raw_text"],
+    "NON_ESCAPING_ELEMENTS" => html["elements"]["non_escaping"],
+    "RESTRICTED_ATTRIBUTES" => html["attributes"]["restricted_when_empty"],
+  }
+
+  arrays = {
+    "ALLOWED_SCRIPT_TYPES" => html["script"]["allowed_types"],
+  }
+-%>
+<%- arrays.each do |name, values| -%>
+export const <%= name %> = [
+<%- values.each do |value| -%>
+  "<%= value %>",
+<%- end -%>
+]
+
+<%- end -%>
+<%- sets.each do |name, values| -%>
+export const <%= name %> = new Set<string>([
+<%- values.each do |value| -%>
+  "<%= value %>",
+<%- end -%>
+])
+
+<%- end -%>
+/**
+ * SVG elements that use camelCase naming
+ */
+export const SVG_CAMEL_CASE_ELEMENTS = new Set([
+<%- html["svg"]["camel_case"].each do |element| -%>
+  "<%= element %>",
+<%- end -%>
+])
+
+/**
+ * Mapping from lowercase SVG element names to their correct camelCase versions
+ * Generated dynamically from SVG_CAMEL_CASE_ELEMENTS
+ */
+export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
+  Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
+)
+
+/**
+ * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
+ */
+export const SVG_KNOWN_ELEMENTS = new Set<string>([
+  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
+<%- html["svg"]["known"].each do |element| -%>
+  "<%= element %>",
+<%- end -%>
+])

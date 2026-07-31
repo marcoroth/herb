@@ -1,22 +1,11 @@
 import { ParserRule } from "../types.js"
+import { RESTRICTED_ATTRIBUTES } from "./html-data.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { Visitor, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
-
-const RESTRICTED_ATTRIBUTES = new Set([
-  'id',
-  'class',
-  'name',
-  'for',
-  'src',
-  'href',
-  'title',
-  'data',
-  'role'
-])
 
 function isRestrictedAttribute(attributeName: string): boolean {
   if (RESTRICTED_ATTRIBUTES.has(attributeName)) {
@@ -72,7 +61,6 @@ class ContainsOutputContentVisitor extends Visitor {
   }
 }
 
-
 function containsOutputContent(node: Node): boolean {
   const visitor = new ContainsOutputContentVisitor()
 
@@ -80,7 +68,6 @@ function containsOutputContent(node: Node): boolean {
 
   return visitor.hasOutputContent
 }
-
 
 class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {

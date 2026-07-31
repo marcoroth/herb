@@ -1,3 +1,4 @@
+use crate::utils::html_data::RAW_TEXT_ELEMENTS;
 use crate::offense::Offense;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
@@ -9,8 +10,6 @@ use herb::nodes::{AnyNode, DocumentNode};
 use herb::nodes::{HTMLElementNode, HTMLTextNode};
 use herb::{Location, ParseResult, Position, Visitor};
 use herb_config::{Severity, SeverityConfig};
-
-const RAW_TEXT_ELEMENTS: &[&str] = &["script", "style"];
 
 pub struct HTMLNoUnescapedEntitiesRule;
 
