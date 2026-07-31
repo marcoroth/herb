@@ -18,7 +18,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
@@ -150,46 +150,44 @@ jobs:
 
   linter-parity:
     name: Linter Parity
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Clone corpus
-        id: corpus
-        background: true
-        run: |-
-          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+      - parallel:
+        - name: Clone corpus
+          run: |-
+            git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
 
-      - name: Add LLVM apt Repo
-        run: |-
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
-          sudo apt update
+        - name: Add LLVM apt Repo
+          run: |-
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+            sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+            sudo apt update
+            xargs sudo apt-get install -y --no-install-recommends < Aptfile
 
-      - name: Install APT dependencies
-        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+        - name: Set up Ruby
+          uses: ruby/setup-ruby@v1
+          with:
+            bundler-cache: true
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+        - name: Set up Node
+          uses: actions/setup-node@v4
+          with:
+            node-version: 22
+            cache: yarn
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
+        - name: Set up Rust
+          uses: dtolnay/rust-toolchain@stable
+          with:
+            targets: wasm32-unknown-emscripten
 
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-emscripten
+        - name: Set up Emscripten
+          uses: mymindstorm/setup-emsdk@v14
 
-      - name: Set up Emscripten
-        uses: mymindstorm/setup-emsdk@v14
 
       - name: Render Templates
         run: bundle exec rake templates
@@ -204,9 +202,6 @@ jobs:
       - name: Build the linter
         run: yarn nx build @herb-tools/linter
 
-      - name: Wait for the corpus clone
-        wait: [corpus]
-
       - parallel:
         - name: Compare the backends on the default rule set
           env:
@@ -216,6 +211,7 @@ jobs:
 
             javascript/packages/linter/bin/herb-lint corpus/erb \
               --fail-on-backend-mismatch \
+              --jobs "$(( $(nproc) / 2 ))" \
               --no-timing \
               --format simple 2>&1 | tee parity-defaults.txt
 
@@ -235,6 +231,7 @@ jobs:
             javascript/packages/linter/bin/herb-lint corpus/erb \
               --all-rules \
               --fail-on-backend-mismatch \
+              --jobs "$(( $(nproc) / 2 ))" \
               --no-timing \
               --format simple 2>&1 | tee parity-all-rules.txt
 
