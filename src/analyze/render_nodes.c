@@ -5,6 +5,7 @@
 #include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
+#include "../include/lexer/token.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_string.h"
@@ -811,6 +812,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_content_node(
 ) {
   if (!erb_node->analyzed_ruby || !erb_node->analyzed_ruby->valid || !erb_node->analyzed_ruby->parsed) { return NULL; }
   if (is_erb_comment_tag(erb_node->tag_opening)) { return NULL; }
+  if (token_is_escaped_erb_tag_opening(erb_node->tag_opening)) { return NULL; }
 
   pm_call_node_t* render_call = find_render_call(erb_node->analyzed_ruby->root, &erb_node->analyzed_ruby->parser);
   if (!render_call) { return NULL; }
@@ -840,6 +842,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   analyze_ruby_context_T* context
 ) {
   if (!block_node->content || hb_string_is_empty(block_node->content->value)) { return NULL; }
+  if (token_is_escaped_erb_tag_opening(block_node->tag_opening)) { return NULL; }
 
   const char* ruby_source = block_node->content->value.data;
   size_t ruby_length = block_node->content->value.length;
