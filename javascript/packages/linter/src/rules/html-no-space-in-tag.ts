@@ -178,11 +178,12 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-no-space-in-tag"
-  static introducedIn = this.version("0.8.0")
+  // Initially introduced in 0.8.0 (#559)
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
-      enabled: false,
+      enabled: true,
       severity: "error"
     }
   }
