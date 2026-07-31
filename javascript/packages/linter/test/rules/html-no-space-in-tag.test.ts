@@ -69,6 +69,24 @@ describe("HTMLNoSpaceInTagRule", () => {
         </div>
       `)
     })
+
+    test("multi line tag with first attribute on the opening line (hanging indent) - #695", () => {
+      expectNoOffenses(dedent`
+        <div data-a="foo"
+             data-b="bar">
+          lorem
+        </div>
+      `)
+    })
+
+    test("multi line tag with attributes aligned to a non-default indentation", () => {
+      expectNoOffenses(dedent`
+        <div class="a"
+             id="b"
+             data-c="c">
+        </div>
+      `)
+    })
   })
 
   describe("when no space should be present", () => {
@@ -144,7 +162,6 @@ describe("HTMLNoSpaceInTagRule", () => {
 
     test("extra newline between name and first attribute", () => {
       expectError("Extra space detected where there should be a single space or a single line break.")
-      expectError("Extra space detected where there should be no space.")
 
       assertOffenses(dedent`
         <input
@@ -166,7 +183,6 @@ describe("HTMLNoSpaceInTagRule", () => {
 
     test("extra newline between attributes", () => {
       expectError("Extra space detected where there should be a single space or a single line break.")
-      expectError("Extra space detected where there should be no space.")
 
       assertOffenses(dedent`
         <input
@@ -204,6 +220,48 @@ describe("HTMLNoSpaceInTagRule", () => {
 
     test("non-space detected between attributes", () => {
       expectNoOffenses(`<input class="hide"/name="foo" />`, { allowInvalidSyntax: true })
+    })
+
+    test("extra space between name and first attribute on the opening line of a multiline tag", () => {
+      expectError("Extra space detected where there should be a single space.")
+
+      assertOffenses(dedent`
+        <div  data-a="foo"
+          data-b="bar">
+        </div>
+      `)
+    })
+
+    test("extra space between attributes on a continuation line", () => {
+      expectError("Extra space detected where there should be a single space.")
+
+      assertOffenses(dedent`
+        <div
+          data-a="foo"  data-b="bar">
+        </div>
+      `)
+    })
+
+    test("extra space before the closing bracket on an attribute line", () => {
+      expectError("Extra space detected where there should be no space.")
+
+      assertOffenses(dedent`
+        <div
+          data-a="foo" >
+        </div>
+      `)
+    })
+
+    test("closing bracket over-indented in a nested tag", () => {
+      expectError("Extra space detected where there should be no space.")
+
+      assertOffenses(dedent`
+        <div>
+          <input
+            type="password"
+              >
+        </div>
+      `)
     })
   })
 })
