@@ -61,12 +61,17 @@ export interface FilterRulesResult {
   notEnabledByDefault: number
 }
 
+export interface FilterRulesOptions {
+  only?: string[]
+}
+
 export class Linter {
   public rules: RuleClass[]
   public rulesSkippedByVersion: VersionSkippedRule[] = []
   public rulesDisabledByConfig: number = 0
   public rulesNotEnabledByDefault: number = 0
   public mode: LinterMode = "cli"
+  public onlyRules?: string[]
 
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
@@ -80,17 +85,19 @@ export class Linter {
    * @param herb - The Herb backend instance for parsing and lexing
    * @param config - Optional full Config instance for rule filtering, severity overrides, and path-based filtering
    * @param customRules - Optional array of custom rules to include alongside built-in rules
+   * @param options - Optional filtering options, like restricting the linter to a set of rules via `only`
    * @returns A configured Linter instance
    */
-  static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[]): Linter {
+  static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[], options?: FilterRulesOptions): Linter {
     const allRules = customRules ? [...rules, ...customRules] : rules
     const configVersion = config?.configVersion
-    const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion)
+    const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion, options)
 
     const linter = new Linter(herb, filterResult.enabled, config, allRules)
     linter.rulesSkippedByVersion = filterResult.skippedByVersion
     linter.rulesDisabledByConfig = filterResult.disabledByConfig
     linter.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
+    linter.onlyRules = Linter.normalizeOnlyRules(options?.only)
 
     return linter
   }
@@ -123,16 +130,32 @@ export class Linter {
    * 2. Version gating (if rule.introducedIn > configVersion, skip unless explicitly enabled)
    * 3. Default config from rule's defaultConfig getter
    *
+   * When `options.only` is provided all of the above is bypassed and exactly the
+   * requested rules are enabled, regardless of the user configuration.
+   *
    * @param allRules - All available rule classes to filter from
    * @param userRulesConfig - Optional user configuration for rules
    * @param configVersion - Optional version from the user's .herb.yml for version-gated filtering
+   * @param options - Optional filtering options, like restricting the linter to a set of rules via `only`
    * @returns Object with enabled rules and rules skipped due to version gating
    */
   static filterRulesByConfig(
     allRules: RuleClass[],
     userRulesConfig?: Record<string, RuleConfig>,
-    configVersion?: string
+    configVersion?: string,
+    options?: FilterRulesOptions
   ): FilterRulesResult {
+    const onlyRules = Linter.normalizeOnlyRules(options?.only)
+
+    if (onlyRules) {
+      return {
+        enabled: allRules.filter(ruleClass => onlyRules.includes(ruleClass.ruleName)),
+        skippedByVersion: [],
+        disabledByConfig: 0,
+        notEnabledByDefault: 0
+      }
+    }
+
     const enabled: RuleClass[] = []
     const skippedByVersion: VersionSkippedRule[] = []
     let disabledByConfig = 0
@@ -176,6 +199,17 @@ export class Linter {
     }
 
     return { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault }
+  }
+
+  /**
+   * Normalizes a list of rule names for `only` filtering.
+   * @param only - Optional list of rule names
+   * @returns Deduplicated list of rule names, or undefined when no rules were requested
+   */
+  protected static normalizeOnlyRules(only?: string[]): string[] | undefined {
+    if (!only || only.length === 0) return undefined
+
+    return [...new Set(only)]
   }
 
   /**
@@ -256,7 +290,7 @@ export class Linter {
   ): UnboundLintOffense[] {
     const ruleName = rule.ruleName
 
-    if (this.config && context?.fileName) {
+    if (this.config && context?.fileName && !this.onlyRules) {
       if (!this.config.isRuleEnabledForPath(ruleName, context.fileName)) {
         return []
       }

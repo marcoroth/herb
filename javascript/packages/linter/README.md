@@ -214,6 +214,41 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
+**Running Specific Rules:**
+
+Only run a single rule:
+```bash
+npx @herb-tools/linter --only html-img-require-alt
+```
+
+Only run multiple rules (comma-separated):
+```bash
+npx @herb-tools/linter --only html-img-require-alt,html-tag-name-lowercase
+```
+
+The flag can also be passed multiple times:
+```bash
+npx @herb-tools/linter --only html-img-require-alt --only html-tag-name-lowercase
+```
+
+Combine it with `--fix` to only autocorrect a specific rule:
+```bash
+npx @herb-tools/linter --fix --only html-tag-name-lowercase
+```
+
+The `--only` option runs exactly the given rules and ignores the rule configuration in `.herb.yml`. This means rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for rolling out a single rule across a codebase, or for checking what a rule would report before enabling it in `.herb.yml`.
+
+Everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Passing an unknown rule name exits with an error, so typos won't silently lint nothing.
+
 **Autofix:**
 
 Automatically fix auto-correctable offenses:

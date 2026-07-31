@@ -28,6 +28,7 @@ export interface SummaryData {
   configPath?: string
   hasConfigFile?: boolean
   toolVersion?: string
+  only?: string[]
 }
 
 export class SummaryReporter {
@@ -130,6 +131,7 @@ export class SummaryReporter {
     const skippedCount = data.rulesSkippedByVersion?.length ?? 0
     const rulesParts = [colorize(colorize(`${ruleCount} enabled`, "green"), "bold")]
 
+    if (data.only && data.only.length > 0) rulesParts.push(colorize(`filtered by --only`, "cyan"))
     if (notEnabledCount > 0) rulesParts.push(colorize(`${notEnabledCount} not enabled`, "cyan"))
     if (disabledCount > 0) rulesParts.push(colorize(`${disabledCount} disabled`, "yellow"))
     if (skippedCount > 0) rulesParts.push(colorize(`${skippedCount} skipped (version)`, "gray"))
