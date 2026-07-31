@@ -78,7 +78,7 @@ impl ParserRule for ERBNoInstanceVariablesInPartialsRule {
         ));
       }
 
-      true
+      !is_write
     });
 
     offenses

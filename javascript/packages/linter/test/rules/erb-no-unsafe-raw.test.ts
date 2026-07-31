@@ -191,4 +191,10 @@ describe("ERBNoUnsafeRawRule", () => {
       `)
     })
   })
+
+  test("reports unsafe output in a file with a leading byte-order mark", () => {
+    expectError("Avoid `.html_safe` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.")
+
+    assertOffenses("\ufeff<%= user_input.html_safe %>")
+  })
 })

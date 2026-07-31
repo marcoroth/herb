@@ -110,4 +110,13 @@ describe("ERBCommentSyntax", () => {
       <%    # comment with many spaces %>
     `)
   })
+
+  test("does not report a comment on a later line of a multi-line tag", () => {
+    expectNoOffenses(dedent`
+      <% 
+        # Get the dashboard class name
+        name = page.resource_name
+      %>
+    `)
+  })
 })

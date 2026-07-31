@@ -135,4 +135,11 @@ describe("html-tag-name-lowercase autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(3)
   })
+
+  test("fixes a file with a leading byte-order mark and preserves the mark", () => {
+    const result = autofix("\ufeff<DIV>Hello</DIV>")
+
+    expect(result.source).toBe("\ufeff<div>Hello</div>")
+    expect(result.fixed).toHaveLength(2)
+  })
 })

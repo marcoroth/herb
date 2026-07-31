@@ -71,6 +71,16 @@ export interface FilterRulesResult {
 }
 
 
+/**
+ * A leading byte-order mark is stripped from `node.source` but still counted in
+ * the Prism byte offsets, so slicing the Ruby out lands three bytes late and
+ * node names come back mangled. Dropping it keeps both backends on the same
+ * input.
+ */
+function stripByteOrderMark(source: string): string {
+  return source.charCodeAt(0) === 0xfeff ? source.slice(1) : source
+}
+
 export class Linter {
   public rules: RuleClass[]
   public rulesSkippedByVersion: VersionSkippedRule[] = []
@@ -420,6 +430,8 @@ export class Linter {
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
+    source = stripByteOrderMark(source)
+
     if (this.backendMode === "rust") {
       return this.lintWithBackend(source, context)
     }
@@ -712,6 +724,10 @@ export class Linter {
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
     }
 
+    const byteOrderMark = source.charCodeAt(0) === 0xfeff ? "\ufeff" : ""
+
+    source = stripByteOrderMark(source)
+
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
 
     const parserOffenses: LintOffense[] = []
@@ -847,7 +863,7 @@ export class Linter {
     }
 
     return {
-      source: currentSource,
+      source: byteOrderMark + currentSource,
       fixed,
       unfixed
     }

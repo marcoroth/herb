@@ -70,7 +70,15 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private hasAccessibleContentInControlFlow(node: Node): boolean {
-    const nodeWithStatements = node as { statements?: Node[], body?: Node[], subsequent?: Node }
+    const nodeWithStatements = node as { statements?: Node[], body?: Node[], subsequent?: Node, conditions?: Node[], else_clause?: Node }
+
+    if (nodeWithStatements.conditions?.some(condition => this.hasAccessibleContentInControlFlow(condition))) {
+      return true
+    }
+
+    if (nodeWithStatements.else_clause && this.hasAccessibleContentInControlFlow(nodeWithStatements.else_clause)) {
+      return true
+    }
 
     if (nodeWithStatements.statements && this.hasAccessibleContent(nodeWithStatements.statements)) {
       return true

@@ -19,11 +19,7 @@ impl Visitor for CommentSyntaxVisitor {
       None => return,
     };
 
-    if !content.starts_with(' ') {
-      return;
-    }
-
-    if !content.trim_start().starts_with('#') {
+    if !content.starts_with(' ') || !content.trim_start_matches(' ').starts_with('#') {
       return;
     }
 

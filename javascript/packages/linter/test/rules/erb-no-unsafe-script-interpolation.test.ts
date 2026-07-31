@@ -42,6 +42,17 @@ describe("ERBNoUnsafeScriptInterpolationRule", () => {
       `)
     })
 
+    test("ERB block output in script tag is not allowed", () => {
+      expectError(MESSAGE)
+
+      assertOffenses(dedent`
+        <script type="text/x-tmpl">
+          <%= form_tag "/x" do %>
+          <% end %>
+        </script>
+      `)
+    })
+
     test("html_safe without to_json in script tag is not allowed", () => {
       expectError(MESSAGE)
 

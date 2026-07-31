@@ -54,10 +54,20 @@ impl NoEmptyHeadingsVisitor {
         }
 
         AnyNode::ERBContentNode(erb) => {
-          if let Some(ref tag_opening) = erb.tag_opening {
-            if tag_opening.value == "<%=" || tag_opening.value == "<%==" {
-              return true;
-            }
+          if is_erb_output_tag(erb.tag_opening.as_ref()) {
+            return true;
+          }
+        }
+
+        AnyNode::ERBYieldNode(erb) => {
+          if is_erb_output_tag(erb.tag_opening.as_ref()) {
+            return true;
+          }
+        }
+
+        AnyNode::ERBRenderNode(erb) => {
+          if is_erb_output_tag(erb.tag_opening.as_ref()) {
+            return true;
           }
         }
 
@@ -163,6 +173,10 @@ impl NoEmptyHeadingsVisitor {
 
     self.has_accessible_content(&node.body)
   }
+}
+
+fn is_erb_output_tag(tag_opening: Option<&herb::Token>) -> bool {
+  matches!(tag_opening.map(|token| token.value.as_str()), Some("<%=") | Some("<%=="))
 }
 
 impl Visitor for NoEmptyHeadingsVisitor {

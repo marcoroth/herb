@@ -22,4 +22,16 @@ describe("html-aria-role-must-be-valid", () => {
   it("should not show an error for static and ERB content", () => {
     expectNoOffenses(`<div role="invalid-role-<%= role %>"></div>`)
   })
+
+  it("allows WAI-ARIA Graphics module roles", () => {
+    expectNoOffenses('<div role="graphics-symbol"></div>')
+    expectNoOffenses('<div role="graphics-document"></div>')
+    expectNoOffenses('<div role="graphics-object"></div>')
+  })
+
+  it("rejects abstract roles that may not be used directly", () => {
+    expectWarning("The `role` attribute must be a valid ARIA role. Role `roletype` is not recognized.")
+
+    assertOffenses('<div role="roletype"></div>')
+  })
 })

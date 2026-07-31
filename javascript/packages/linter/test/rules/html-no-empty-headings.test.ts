@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLNoEmptyHeadingsRule } from "../../src/rules/html-no-empty-headings.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -192,5 +193,32 @@ describe("html-no-empty-headings", () => {
     expectWarning("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
 
     assertOffenses('<h1><%# this is a comment %></h1>')
+  })
+
+  test("does not report a heading whose content comes from yield or render", () => {
+    expectNoOffenses(dedent`
+      <h1>
+        <%= yield(:title) %>
+      </h1>
+    `)
+
+    expectNoOffenses(dedent`
+      <h1>
+        <%= render "title" %>
+      </h1>
+    `)
+  })
+
+  test("does not report a heading whose text comes from a case branch", () => {
+    expectNoOffenses(dedent`
+      <h1>
+        <% case kind %>
+        <% when "a" %>
+          <%= t("a") %>
+        <% else %>
+          <%= t("b") %>
+        <% end %>
+      </h1>
+    `)
   })
 })

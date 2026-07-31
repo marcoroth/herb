@@ -52,19 +52,22 @@ impl SafeCallDetector {
 impl ERBNoUnsafeScriptInterpolationVisitor {
   fn check_nodes_for_unsafe_output(&mut self, nodes: &[AnyNode]) {
     for child in nodes {
-      let erb = match child {
-        AnyNode::ERBContentNode(erb) => erb,
+      let (tag_opening_token, location, prism_node) = match child {
+        AnyNode::ERBContentNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
+        AnyNode::ERBBlockNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
+        AnyNode::ERBRenderNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
+        AnyNode::ERBYieldNode(erb) => (erb.tag_opening.as_ref(), &erb.location, None),
         _ => continue,
       };
 
-      let tag_opening = erb.tag_opening.as_ref().map(|token| token.value.as_str()).unwrap_or("");
+      let tag_opening = tag_opening_token.map(|token| token.value.as_str()).unwrap_or("");
 
       if !is_output_tag_opening(tag_opening) {
         continue;
       }
 
-      let detector = match erb.prism_node_ast {
-        Some(ref prism_node) => SafeCallDetector::detect(prism_node),
+      let detector = match prism_node {
+        Some(prism_node) => SafeCallDetector::detect(prism_node),
         None => SafeCallDetector::default(),
       };
 
@@ -75,7 +78,7 @@ impl ERBNoUnsafeScriptInterpolationVisitor {
       if detector.has_escape_javascript_call {
         self.add_offense(
           "Avoid `j()` / `escape_javascript()` in `<script>` tags. It is only safe inside quoted string literals. Use `.to_json` instead, which is safe in any position.",
-          erb.location.clone(),
+          location.clone(),
         );
 
         continue;
@@ -83,7 +86,7 @@ impl ERBNoUnsafeScriptInterpolationVisitor {
 
       self.add_offense(
         "Unsafe ERB output in `<script>` tag. Use `.to_json` to safely serialize values into JavaScript.",
-        erb.location.clone(),
+        location.clone(),
       );
     }
   }
