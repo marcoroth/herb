@@ -3,7 +3,7 @@ import { describe, test } from "vitest"
 import { HTMLNoDuplicateIdsRule } from "../../src/rules/html-no-duplicate-ids.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoDuplicateIdsRule)
+const { expectNoOffenses, expectError, expectHint, assertOffenses } = createLinterTest(HTMLNoDuplicateIdsRule)
 
 describe("html-no-duplicate-ids", () => {
   test("passes for unique IDs", () => {
@@ -31,9 +31,9 @@ describe("html-no-duplicate-ids", () => {
     expectNoOffenses(`<div id="<%= user.id %>"></div>`)
   })
 
-  // TODO: this should also warn if it's in the same "context"
-  test.todo("fails for multiple duplicate IDs in ERB in the same context", () => {
-    expectError('Duplicate ID `<%= user.id %>` found. IDs must be unique within a document.')
+  test("hints for multiple duplicate IDs in ERB in the same context", () => {
+    expectHint('Potential duplicate ID `<%= user.id %>` found. If this expression evaluates to the same value, IDs must be unique within a document.')
+
     assertOffenses(`<div id="<%= user.id %>"></div><span id="<%= user.id %>"></span>`)
   })
 
@@ -273,8 +273,8 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("fails for duplicate output ERB IDs within same conditional branch", () => {
-    expectError('Duplicate ID `user-<%= user.id %>` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+  test("hints for duplicate output ERB IDs within same conditional branch", () => {
+    expectHint('Potential duplicate ID `user-<%= user.id %>` found within the same control flow branch. If this expression evaluates to the same value, IDs must be unique.')
     assertOffenses(dedent`
       <% if condition %>
         <div id="user-<%= user.id %>">User A</div>
@@ -333,8 +333,34 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("fails for duplicate dynamic IDs within same block", () => {
-    expectError('Duplicate ID `item-<%= item.id %>` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+  test("passes for bare output ERB ID reusing the same loop variable in separate each blocks (issue #481)", () => {
+    expectNoOffenses(dedent`
+      <% good, bad = (1..10).partition { rand > 0.5 } %>
+
+      <% good.each do |i| %>
+        <p id="<%= i %>"><%= i %></p>
+      <% end %>
+
+      <% bad.each do |i| %>
+        <p id="<%= i %>"><%= i %></p>
+      <% end %>
+    `)
+  })
+
+  test("passes for bare output ERB ID reusing the same variable in separate for loops (issue #481)", () => {
+    expectNoOffenses(dedent`
+      <% for i in good %>
+        <p id="<%= i %>"><%= i %></p>
+      <% end %>
+
+      <% for i in bad %>
+        <p id="<%= i %>"><%= i %></p>
+      <% end %>
+    `)
+  })
+
+  test("hints for duplicate dynamic IDs within same block", () => {
+    expectHint('Potential duplicate ID `item-<%= item.id %>` found within the same control flow branch. If this expression evaluates to the same value, IDs must be unique.')
 
     assertOffenses(dedent`
       <% items.each do |item| %>

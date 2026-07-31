@@ -119,7 +119,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     if (this.isInControlFlow) {
       this.handleControlFlowId(identifier, attributeNode, isDynamic)
     } else {
-      this.handleGlobalId(identifier, attributeNode)
+      this.handleGlobalId(identifier, attributeNode, isDynamic)
     }
   }
 
@@ -148,7 +148,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
   private handleConditionalId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
     if (this.currentBranchIds.has(identifier)) {
-      this.addSameBranchOffense(identifier, attributeNode.location)
+      this.addSameBranchOffense(identifier, attributeNode.location, isDynamic)
       return
     }
 
@@ -162,9 +162,13 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     }
   }
 
-  private handleGlobalId(identifier: string, attributeNode: HTMLAttributeNode): void {
+  private handleGlobalId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
     if (this.documentIds.has(identifier)) {
-      this.addDuplicateIdOffense(identifier, attributeNode.location)
+      if (isDynamic) {
+        this.addPotentialDuplicateIdOffense(identifier, attributeNode.location)
+      } else {
+        this.addDuplicateIdOffense(identifier, attributeNode.location)
+      }
       return
     }
 
@@ -193,10 +197,29 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     )
   }
 
-  private addSameBranchOffense(identifier: string, location: any): void {
+  private addSameBranchOffense(identifier: string, location: any, isDynamic: boolean): void {
+    if (isDynamic) {
+      this.addOffense(
+        `Potential duplicate ID \`${identifier}\` found within the same control flow branch. If this expression evaluates to the same value, IDs must be unique.`,
+        location,
+        undefined,
+        "hint",
+      )
+      return
+    }
+
     this.addOffense(
       `Duplicate ID \`${identifier}\` found within the same control flow branch. IDs must be unique within the same control flow branch.`,
       location,
+    )
+  }
+
+  private addPotentialDuplicateIdOffense(identifier: string, location: any): void {
+    this.addOffense(
+      `Potential duplicate ID \`${identifier}\` found. If this expression evaluates to the same value, IDs must be unique within a document.`,
+      location,
+      undefined,
+      "hint",
     )
   }
 }
