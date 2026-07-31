@@ -63,6 +63,7 @@ export interface FilterRulesResult {
 
 export interface FilterRulesOptions {
   only?: string[]
+  all?: boolean
 }
 
 export class Linter {
@@ -72,6 +73,7 @@ export class Linter {
   public rulesNotEnabledByDefault: number = 0
   public mode: LinterMode = "cli"
   public onlyRules?: string[]
+  public allRules: boolean = false
 
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
@@ -98,6 +100,7 @@ export class Linter {
     linter.rulesDisabledByConfig = filterResult.disabledByConfig
     linter.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
     linter.onlyRules = Linter.normalizeOnlyRules(options?.only)
+    linter.allRules = options?.all ?? false
 
     return linter
   }
@@ -133,6 +136,9 @@ export class Linter {
    * When `options.only` is provided all of the above is bypassed and exactly the
    * requested rules are enabled, regardless of the user configuration.
    *
+   * When `options.all` is provided all of the above is bypassed and every available
+   * rule is enabled, regardless of the user configuration.
+   *
    * @param allRules - All available rule classes to filter from
    * @param userRulesConfig - Optional user configuration for rules
    * @param configVersion - Optional version from the user's .herb.yml for version-gated filtering
@@ -150,6 +156,15 @@ export class Linter {
     if (onlyRules) {
       return {
         enabled: allRules.filter(ruleClass => onlyRules.includes(ruleClass.ruleName)),
+        skippedByVersion: [],
+        disabledByConfig: 0,
+        notEnabledByDefault: 0
+      }
+    }
+
+    if (options?.all) {
+      return {
+        enabled: [...allRules],
         skippedByVersion: [],
         disabledByConfig: 0,
         notEnabledByDefault: 0
@@ -290,7 +305,7 @@ export class Linter {
   ): UnboundLintOffense[] {
     const ruleName = rule.ruleName
 
-    if (this.config && context?.fileName && !this.onlyRules) {
+    if (this.config && context?.fileName && !this.onlyRules && !this.allRules) {
       if (!this.config.isRuleEnabledForPath(ruleName, context.fileName)) {
         return []
       }
