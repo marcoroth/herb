@@ -60,6 +60,7 @@ export const ParserOptionsSchema = z.object({
   strict: z.boolean().optional().describe("Enable strict parsing mode (default: true)"),
   render_nodes: z.boolean().optional().describe("Enable render node detection"),
   strict_locals: z.boolean().optional().describe("Enable strict locals detection"),
+  each_nodes: z.boolean().optional().describe("Enable each block node detection"),
 }).strict().optional()
 
 export const EngineConfigSchema = z.object({

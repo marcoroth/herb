@@ -6,6 +6,7 @@ import {
   ERBIfNode,
   ERBUnlessNode,
   ERBBlockNode,
+  ERBEachBlockNode,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBWhileNode,
@@ -100,7 +101,7 @@ export function isERBCommentNode(node: Node): node is ERBCommentNode {
  * Checks if a node is a non-output ERB node (control flow: <% %>)
  */
 export function isERBControlFlowNode(node: Node): node is ERBContentNode {
-  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
+  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBEachBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
 }
 
 /**

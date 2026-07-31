@@ -1,0 +1,85 @@
+---
+source: "Parser::EachBlockTest#test_0032_each block combined with action view helpers"
+input: |2-
+<% @users.each do |user| %>
+  <%= link_to "Profile", user_path(user) %>
+<% end %>
+options: {each_nodes: true, action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBEachBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @users.each do |user| " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── receiver: "@users" (location: (1:3)-(1:9))
+    │   ├── call_operator: "." (location: (1:9)-(1:10))
+    │   ├── message: "each" (location: (1:10)-(1:14))
+    │   ├── block_opening: "do" (location: (1:15)-(1:17))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:43))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ ERBOpenTagNode (location: (2:2)-(2:43))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   │       ├── content: " link_to "Profile", user_path(user) " (location: (2:5)-(2:41))
+    │   │   │   │       ├── tag_closing: "%>" (location: (2:41)-(2:43))
+    │   │   │   │       ├── tag_name: "a" (location: (2:6)-(2:13))
+    │   │   │   │       └── children: (1 item)
+    │   │   │   │           └── @ HTMLAttributeNode (location: (2:25)-(2:40))
+    │   │   │   │               ├── name:
+    │   │   │   │               │   └── @ HTMLAttributeNameNode (location: (2:25)-(2:40))
+    │   │   │   │               │       └── children: (1 item)
+    │   │   │   │               │           └── @ LiteralNode (location: (2:25)-(2:40))
+    │   │   │   │               │               └── content: "href"
+    │   │   │   │               │
+    │   │   │   │               │
+    │   │   │   │               ├── equals: ":" (location: (2:25)-(2:40))
+    │   │   │   │               └── value:
+    │   │   │   │                   └── @ HTMLAttributeValueNode (location: (2:25)-(2:40))
+    │   │   │   │                       ├── open_quote: ∅
+    │   │   │   │                       ├── children: (1 item)
+    │   │   │   │                       │   └── @ RubyLiteralNode (location: (2:25)-(2:40))
+    │   │   │   │                       │       └── content: "user_path(user)"
+    │   │   │   │                       │
+    │   │   │   │                       ├── close_quote: ∅
+    │   │   │   │                       └── quoted: true
+    │   │   │   │
+    │   │   │   │
+    │   │   │   │
+    │   │   │   ├── tag_name: "a" (location: (2:6)-(2:13))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:2)-(2:43))
+    │   │   │   │       └── content: "Profile"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLVirtualCloseTagNode (location: (2:43)-(2:43))
+    │   │   │   │       └── tag_name: "a" (location: (2:6)-(2:13))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:43)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:19)-(1:23))
+    │   │       ├── name: "user" (location: (1:19)-(1:23))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

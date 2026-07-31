@@ -1,0 +1,77 @@
+---
+source: "Parser::EachBlockTest#test_0022_each block used in an attribute value is not transformed"
+input: |2-
+<div class="<% @classes.each do |klass| %><%= klass %><% end %>"></div>
+options: {each_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:71))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:65))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:64)-(1:65))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:64))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:64))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ ERBBlockNode (location: (1:12)-(1:63))
+    │   │       │               │       ├── tag_opening: "<%" (location: (1:12)-(1:14))
+    │   │       │               │       ├── content: " @classes.each do |klass| " (location: (1:14)-(1:40))
+    │   │       │               │       ├── tag_closing: "%>" (location: (1:40)-(1:42))
+    │   │       │               │       ├── body: (1 item)
+    │   │       │               │       │   └── @ ERBContentNode (location: (1:42)-(1:54))
+    │   │       │               │       │       ├── tag_opening: "<%=" (location: (1:42)-(1:45))
+    │   │       │               │       │       ├── content: " klass " (location: (1:45)-(1:52))
+    │   │       │               │       │       ├── tag_closing: "%>" (location: (1:52)-(1:54))
+    │   │       │               │       │       ├── parsed: true
+    │   │       │               │       │       └── valid: true
+    │   │       │               │       │
+    │   │       │               │       ├── block_arguments: (1 item)
+    │   │       │               │       │   └── @ RubyParameterNode (location: (1:33)-(1:38))
+    │   │       │               │       │       ├── name: "klass" (location: (1:33)-(1:38))
+    │   │       │               │       │       ├── default_value: ∅
+    │   │       │               │       │       ├── kind: "positional"
+    │   │       │               │       │       └── required: true
+    │   │       │               │       │
+    │   │       │               │       ├── rescue_clause: ∅
+    │   │       │               │       ├── else_clause: ∅
+    │   │       │               │       ├── ensure_clause: ∅
+    │   │       │               │       └── end_node:
+    │   │       │               │           └── @ ERBEndNode (location: (1:54)-(1:63))
+    │   │       │               │               ├── tag_opening: "<%" (location: (1:54)-(1:56))
+    │   │       │               │               ├── content: " end " (location: (1:56)-(1:61))
+    │   │       │               │               └── tag_closing: "%>" (location: (1:61)-(1:63))
+    │   │       │               │
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:63)-(1:64))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:65)-(1:71))
+    │   │       ├── tag_opening: "</" (location: (1:65)-(1:67))
+    │   │       ├── tag_name: "div" (location: (1:67)-(1:70))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:70)-(1:71))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:71)-(2:0))
+        └── content: "\n"

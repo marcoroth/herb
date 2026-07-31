@@ -324,6 +324,10 @@ module Herb
         end
       end
 
+      def visit_erb_each_block_node(node)
+        visit_erb_block_node(node)
+      end
+
       def visit_erb_block_end_node(node, escaped: false)
         remove_trailing_whitespace_from_last_token! if left_trim?(node)
 

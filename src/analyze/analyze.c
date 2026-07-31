@@ -9,6 +9,7 @@
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
 #include "../include/analyze/postfix_conditionals.h"
+#include "../include/analyze/each_nodes.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
 #include "../include/analyze/ternary_conditionals.h"
@@ -953,6 +954,7 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
     case AST_DOCUMENT_NODE: return ((AST_DOCUMENT_NODE_T*) node)->children;
     case AST_HTML_ELEMENT_NODE: return ((AST_HTML_ELEMENT_NODE_T*) node)->body;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_EACH_BLOCK_NODE: return ((AST_ERB_EACH_BLOCK_NODE_T*) node)->body;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->statements;
     case AST_ERB_UNLESS_NODE: return ((AST_ERB_UNLESS_NODE_T*) node)->statements;
     case AST_ERB_ELSE_NODE: return ((AST_ERB_ELSE_NODE_T*) node)->statements;
@@ -1039,6 +1041,7 @@ void herb_analyze_parse_tree(
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 
   if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
+  if (options && options->each_nodes) { herb_visit_node((AST_NODE_T*) document, transform_each_nodes, &context); }
 
   if (options && options->strict_locals) {
     herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);

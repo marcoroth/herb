@@ -8,6 +8,7 @@ public class ParserOptions {
   private boolean transformConditionals = false;
   private boolean renderNodes = false;
   private boolean strictLocals = false;
+  private boolean eachNodes = false;
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
@@ -79,6 +80,15 @@ public class ParserOptions {
 
   public boolean isStrictLocals() {
     return strictLocals;
+  }
+
+  public ParserOptions eachNodes(boolean value) {
+    this.eachNodes = value;
+    return this;
+  }
+
+  public boolean isEachNodes() {
+    return eachNodes;
   }
 
   public ParserOptions prismNodes(boolean value) {

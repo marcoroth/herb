@@ -152,6 +152,11 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  // Classified the same way as ERBBlockNode so that enabling `each_nodes` doesn't change lint results.
+  visitERBEachBlockNode(node: Nodes.ERBEachBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBEachBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
