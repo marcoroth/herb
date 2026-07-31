@@ -279,8 +279,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
             return -1
           }
 
-          for (let forward = index + 1; forward < this.lines.length; forward++) {
-            if (this.lines[forward].trim() === ">") return forward
+          const analysis = this.elementFormattingAnalysis.get(entry.parentNode)
+          const openTagIsMultiline = analysis ? !analysis.openTagInline : true
+
+          if (openTagIsMultiline) {
+            for (let forward = index + 1; forward < this.lines.length; forward++) {
+              if (this.lines[forward].trim() === ">") return forward
+            }
           }
 
           return index

@@ -736,4 +736,49 @@ describe("herb:disable comment formatting", () => {
       </pre>
     `, { passes: 2 })
   })
+
+  test("keeps herb:disable on single-line opening tag when a descendant opening tag wraps (#1680)", () => {
+    expectFormattedToMatch(dedent`
+      <mjml> <%# herb:disable html-no-unknown-tag %>
+        <p
+          style="<%= some_very_long_helper_method_name %>"
+          class="<%= another_long_helper_method_name %>"
+          data-x="<%= yet_another_helper %>"
+        >
+          <span></span>
+        </p>
+      </mjml>
+    `)
+  })
+
+  test("keeps herb:disable on a deeply nested single-line ancestor when a descendant opening tag wraps (#1680)", () => {
+    expectFormattedToMatch(dedent`
+      <div> <%# herb:disable some-rule %>
+        <section>
+          <p
+            style="<%= some_very_long_helper_method_name %>"
+            class="<%= another_long_helper_method_name %>"
+          >
+            <span></span>
+          </p>
+        </section>
+      </div>
+    `)
+  })
+
+  test("keeps herb:disable after the element's own wrapped opening tag, not a descendant's (#1680)", () => {
+    expectFormattedToMatch(dedent`
+      <section
+        data-really-long-attribute-name="some-long-value-here-yes"
+        another-long-attribute-name="another-long-value-here-yes"
+      > <%# herb:disable some-rule %>
+        <p
+          style="<%= some_very_long_helper_method_name %>"
+          class="<%= another_long_helper_method_name %>"
+        >
+          <span></span>
+        </p>
+      </section>
+    `)
+  })
 })
