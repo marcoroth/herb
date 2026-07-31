@@ -397,4 +397,50 @@ describe("whitespace preservation around ERB control flow", () => {
       expectFormattedToMatch(`<p><em><%= name %></em> created an account.</p>`)
     })
   })
+
+  // https://github.com/marcoroth/herb/issues/1922
+  describe("#1922 — space before an output tag preceded by a sibling node", () => {
+    test("keeps the space when a control-flow node precedes the line", () => {
+      expectFormattedToMatch(dedent`
+        <% if @show_x %>
+          x
+        <% end %>
+        y and <%= @z %>
+      `)
+    })
+
+    test("keeps the space when an HTML element precedes the line", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %>
+      `)
+    })
+
+    test("keeps the space when an output tag precedes the line", () => {
+      expect(formatter.format(dedent`
+        <%= @x %>
+        y and <%= @z %>
+      `)).toEqual(`<%= @x %> y and <%= @z %>`)
+    })
+
+    test("keeps the space inside a block element", () => {
+      expectFormattedToMatch(dedent`
+        <section>
+          <div>x</div>
+          y and <%= @z %>
+        </section>
+      `)
+    })
+
+    test("keeps text glued to the output tag when the source has no space", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<%= @z %>
+      `)
+    })
+
+    test("keeps the space with no preceding sibling", () => {
+      expectFormattedToMatch(`y and <%= @z %>`)
+    })
+  })
 })
