@@ -113,7 +113,7 @@ jobs:
             --fail-on-regression | tee comparison.txt
 
       - name: Comment on the pull request
-        if: failure() && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
+        if: (!cancelled()) && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMBER: ${{ github.event.pull_request.number }}
@@ -124,6 +124,8 @@ jobs:
           if [ -n "$existing" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@comment.md >/dev/null
             echo "Updated comment $existing."
+          elif grep -q "<!-- corpus-no-changes -->" comment.md; then
+            echo "No outcome changes; not posting a comment."
           else
             gh pr comment "$NUMBER" --body-file comment.md
             echo "Posted a new comment."
