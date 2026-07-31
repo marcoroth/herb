@@ -330,9 +330,10 @@ export class FileProcessor {
     }
 
     const aggregated = this.aggregateWorkerResults(workerResults, formatOption, context)
-    aggregated.rulesSkippedByVersion = filterResult.skippedByVersion
-    aggregated.rulesDisabledByConfig = filterResult.disabledByConfig
-    aggregated.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
+
+    aggregated.rulesSkippedByVersion = context?.allRules ? [] : filterResult.skippedByVersion
+    aggregated.rulesDisabledByConfig = context?.allRules ? 0 : filterResult.disabledByConfig
+    aggregated.rulesNotEnabledByDefault = context?.allRules ? 0 : filterResult.notEnabledByDefault
 
     return aggregated
   }

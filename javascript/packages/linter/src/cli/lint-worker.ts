@@ -7,6 +7,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
 import { Linter } from "../linter.js"
+import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
 
 import { compareBackendOffenses } from "../backend-comparison.js"
@@ -72,7 +73,13 @@ async function run() {
     }
   }
 
-  const linter = Linter.from(Herb, config, customRules)
+  const everyRule = customRules && customRules.length > 0 ? [...rules, ...customRules] : rules
+
+  const buildLinter = () => data.allRules
+    ? new Linter(Herb, everyRule, config, everyRule)
+    : Linter.from(Herb, config, customRules)
+
+  const linter = buildLinter()
 
   if (data.backendMode) {
     linter.backendMode = data.backendMode
@@ -83,7 +90,7 @@ async function run() {
   let rustLinter: Linter | undefined
 
   if (shouldCompare) {
-    rustLinter = Linter.from(Herb, config, customRules)
+    rustLinter = buildLinter()
     rustLinter.backendMode = "rust"
   }
 
