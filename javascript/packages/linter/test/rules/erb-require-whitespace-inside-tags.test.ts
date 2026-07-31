@@ -171,4 +171,11 @@ describe("erb-require-whitespace-inside-tags", () => {
 
     expectNoOffenses(html)
   })
+
+  it("allows escaped comment tag without whitespace after the opening", () => {
+    expectNoOffenses(dedent`
+      <%%# locals: (user:) %>
+      <p><%%= user.name %></p>
+    `)
+  })
 })
