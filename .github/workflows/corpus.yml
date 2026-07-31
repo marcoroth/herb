@@ -248,18 +248,25 @@ jobs:
             --glob \
             --verify \
             --force \
-            "corpus/erb/**/*.erb" > roundtrip.txt 2>&1
+            "corpus/erb/**/*.erb" > summary.txt 2> failures.txt
 
-          status=$?
+          set -e
 
-          grep -E "Verification failed|Failed" roundtrip.txt | head -n 50
-          tail -n 6 roundtrip.txt
+          cat summary.txt
+          echo
 
-          if [ "$status" -ne 0 ]; then
-            echo "::error::The printer did not round-trip every file in the corpus"
+          mismatches=$(sed -n 's/.*Verifications:.*passed, \([0-9]*\) failed.*/\1/p' summary.txt)
+
+          if [ -z "$mismatches" ]; then
+            echo "::error::Could not read the verification count from herb-print"
+            exit 1
           fi
 
-          exit "$status"
+          if [ "$mismatches" -ne 0 ]; then
+            grep "Verification failed" failures.txt | head -n 100
+            echo "::error::The printer did not round-trip $mismatches file(s) that parsed cleanly"
+            exit 1
+          fi
 
       - name: Job summary
         if: always()
@@ -277,5 +284,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: printer-roundtrip
-          path: roundtrip.txt
+          path: |
+            summary.txt
+            failures.txt
           retention-days: 30

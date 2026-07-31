@@ -70,7 +70,7 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
   let exclude = files_config.exclude.clone().unwrap_or_default();
 
   let files = match &options.input {
-    Some(input) => config.glob_files(&[input.clone()], current_directory, &exclude),
+    Some(input) => config.glob_files(std::slice::from_ref(input), current_directory, &exclude),
     None => config.find_files_for_linter(Some(current_directory)),
   };
 
@@ -161,7 +161,7 @@ fn run_single(options: &CLIOptions, config: &Config, current_directory: &Path) -
 
   let files_config = config.get_files_config_for_tool(Tool::Linter);
   let exclude = files_config.exclude.clone().unwrap_or_default();
-  let matched = config.glob_files(&[input_arg.clone()], current_directory, &exclude);
+  let matched = config.glob_files(std::slice::from_ref(&input_arg), current_directory, &exclude);
 
   if matched.is_empty() && input_path.exists() {
     if !options.force {
