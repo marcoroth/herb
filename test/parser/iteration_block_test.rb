@@ -481,5 +481,113 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "iteration nodes are not transformed when analyze is disabled" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true, analyze: false)
+        <% @users.each do |user| %>
+          <%= user.id %>
+        <% end %>
+      HTML
+    end
+
+    test "each block in an ERB comment is not transformed" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%# @users.each do |user| %>
+      HTML
+    end
+
+    test "each block with trim tags" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <%- @users.each do |user| -%>
+          <%= user.id %>
+        <%- end -%>
+      HTML
+    end
+
+    test "each block with a receiver containing a do keyword in a string" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% "do end".chars.each do |char| %>
+          <%= char %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with an inline brace block in the receiver" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @users.map { |user| user.name }.each do |name| %>
+          <%= name %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with a hash literal receiver" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% { a: 1, b: 2 }.each do |key, value| %>
+          <%= key %>: <%= value %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with a multi-line receiver" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% [
+             1,
+             2
+           ].each do |number| %>
+          <%= number %>
+        <% end %>
+      HTML
+    end
+
+    test "each block using the implicit it parameter" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @users.each do %>
+          <%= it %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with anonymous block parameters" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @users.each do |first, *, **, &| %>
+          <%= first %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with every parameter kind at once" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @rows.each do |a, b = 1, *c, d, e:, f: 2, **g, &h| %>
+          <%= a %>
+        <% end %>
+      HTML
+    end
+
+    test "deeply nested each blocks" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% a.each do |x| %>
+          <% x.b.each do |y| %>
+            <% y.c.each do |z| %>
+              <%= z %>
+            <% end %>
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with an empty body" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true)
+        <% @users.each do |user| %><% end %>
+      HTML
+    end
+
+    test "each block combined with strict locals" do
+      assert_parsed_snapshot(<<~HTML, iteration_nodes: true, strict_locals: true)
+        <%# locals: (users:) %>
+        <% users.each do |user| %>
+          <%= user %>
+        <% end %>
+      HTML
+    end
   end
 end

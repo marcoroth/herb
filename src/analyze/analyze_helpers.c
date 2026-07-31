@@ -833,6 +833,17 @@ hb_array_T* extract_parameters_from_prism(
       );
 
       hb_allocator_dealloc(allocator, name);
+    } else {
+      append_parameter(
+        result,
+        NULL,
+        NULL,
+        "rest",
+        false,
+        prism_to_source_position(parameters->rest->location.start, prism_source_start, source_base_offset, source),
+        prism_to_source_position(parameters->rest->location.end, prism_source_start, source_base_offset, source),
+        allocator
+      );
     }
   }
 
@@ -995,6 +1006,17 @@ hb_array_T* extract_parameters_from_prism(
       );
 
       hb_allocator_dealloc(allocator, name);
+    } else {
+      append_parameter(
+        result,
+        NULL,
+        NULL,
+        "block",
+        false,
+        prism_to_source_position(block_param->base.location.start, prism_source_start, source_base_offset, source),
+        prism_to_source_position(block_param->base.location.end, prism_source_start, source_base_offset, source),
+        allocator
+      );
     }
   }
 
