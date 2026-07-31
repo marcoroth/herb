@@ -21,7 +21,7 @@ import type { VersionSkippedRule } from "../linter.js"
 export interface ProcessedFile {
   filename: string
   offense: Diagnostic
-  content: string
+  content?: string
   autocorrectable?: boolean
 }
 
@@ -153,7 +153,7 @@ export class FileProcessor {
 
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
-      let content = readFileSync(filePath, "utf-8")
+      const content = readFileSync(filePath, "utf-8")
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
@@ -180,13 +180,10 @@ export class FileProcessor {
           }
         }
 
-        content = autofixResult.source
-
         for (const offense of autofixResult.unfixed) {
           allOffenses.push({
             filename,
             offense: offense,
-            content,
             autocorrectable: this.isRuleAutocorrectable(offense.rule)
           })
 
@@ -212,7 +209,6 @@ export class FileProcessor {
           allOffenses.push({
             filename,
             offense: offense,
-            content,
             autocorrectable: this.isRuleAutocorrectable(offense.rule)
           })
 
@@ -365,7 +361,6 @@ export class FileProcessor {
         allOffenses.push({
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
-          content: offense.content,
           autocorrectable: offense.autocorrectable
         })
       }
