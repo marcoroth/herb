@@ -77,7 +77,7 @@ import {
   WhitespaceNode,
   ERBContentNode,
   ERBBlockNode,
-  ERBEachBlockNode,
+  ERBIterationBlockNode,
   ERBEndNode,
   ERBElseNode,
   ERBIfNode,
@@ -1153,11 +1153,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
   }
 
-  visitERBEachBlockNode(node: ERBEachBlockNode) {
+  visitERBIterationBlockNode(node: ERBIterationBlockNode) {
     this.visitERBBlockNode(node)
   }
 
-  visitERBBlockNode(node: ERBBlockNode | ERBEachBlockNode) {
+  visitERBBlockNode(node: ERBBlockNode | ERBIterationBlockNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
 
@@ -1182,7 +1182,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
   }
 
-  private visitPreservedERBBlockBody(node: ERBBlockNode | ERBEachBlockNode): void {
+  private visitPreservedERBBlockBody(node: ERBBlockNode | ERBIterationBlockNode): void {
     const raw = node.body.map(child => IdentityPrinter.print(child)).join("")
     const lines = raw.split("\n")
 
@@ -1192,13 +1192,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     lines.forEach(line => this.push(line))
   }
 
-  private isContentPreservingBlock(node: ERBBlockNode | ERBEachBlockNode): boolean {
+  private isContentPreservingBlock(node: ERBBlockNode | ERBIterationBlockNode): boolean {
     const tagName = this.resolveERBBlockTagName(node)
 
     return tagName !== null && CONTENT_PRESERVING_ELEMENTS.has(tagName)
   }
 
-  private resolveERBBlockTagName(node: ERBBlockNode | ERBEachBlockNode): string | null {
+  private resolveERBBlockTagName(node: ERBBlockNode | ERBIterationBlockNode): string | null {
     if (this.erbBlockTagNameCache.has(node)) return this.erbBlockTagNameCache.get(node)!
 
     const resolved = this.prismERBBlockTagName(node)
@@ -1207,7 +1207,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     return resolved
   }
 
-  private prismERBBlockTagName(node: ERBBlockNode | ERBEachBlockNode): string | null {
+  private prismERBBlockTagName(node: ERBBlockNode | ERBIterationBlockNode): string | null {
     if (!this.herb) return null
 
     const content = node.content?.value ?? ""

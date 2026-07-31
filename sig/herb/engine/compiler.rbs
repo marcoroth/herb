@@ -95,7 +95,7 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
-      def visit_erb_each_block_node: (untyped node) -> untyped
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
 
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 

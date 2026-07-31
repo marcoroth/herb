@@ -616,6 +616,122 @@ static void append_parameter(
   );
 }
 
+static void append_required_positional(
+  hb_array_T* result,
+  pm_node_t* node,
+  pm_parser_t* parser,
+  const char* source,
+  size_t source_base_offset,
+  const uint8_t* prism_source_start,
+  hb_allocator_T* allocator
+);
+
+static void append_multi_target_parameters(
+  hb_array_T* result,
+  pm_multi_target_node_t* multi_target,
+  pm_parser_t* parser,
+  const char* source,
+  size_t source_base_offset,
+  const uint8_t* prism_source_start,
+  hb_allocator_T* allocator
+) {
+  for (size_t index = 0; index < multi_target->lefts.size; index++) {
+    append_required_positional(
+      result,
+      multi_target->lefts.nodes[index],
+      parser,
+      source,
+      source_base_offset,
+      prism_source_start,
+      allocator
+    );
+  }
+
+  if (multi_target->rest && multi_target->rest->type == PM_SPLAT_NODE) {
+    pm_splat_node_t* splat = (pm_splat_node_t*) multi_target->rest;
+
+    if (splat->expression && splat->expression->type == PM_REQUIRED_PARAMETER_NODE) {
+      pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) splat->expression;
+      pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
+
+      if (constant) {
+        char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+        pm_node_t* node = splat->expression;
+
+        append_parameter(
+          result,
+          create_parameter_name_token(node->location, name, prism_source_start, source_base_offset, source, allocator),
+          NULL,
+          "rest",
+          false,
+          prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source),
+          prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source),
+          allocator
+        );
+
+        hb_allocator_dealloc(allocator, name);
+      }
+    }
+  }
+
+  for (size_t index = 0; index < multi_target->rights.size; index++) {
+    append_required_positional(
+      result,
+      multi_target->rights.nodes[index],
+      parser,
+      source,
+      source_base_offset,
+      prism_source_start,
+      allocator
+    );
+  }
+}
+
+static void append_required_positional(
+  hb_array_T* result,
+  pm_node_t* node,
+  pm_parser_t* parser,
+  const char* source,
+  size_t source_base_offset,
+  const uint8_t* prism_source_start,
+  hb_allocator_T* allocator
+) {
+  if (node->type == PM_MULTI_TARGET_NODE) {
+    append_multi_target_parameters(
+      result,
+      (pm_multi_target_node_t*) node,
+      parser,
+      source,
+      source_base_offset,
+      prism_source_start,
+      allocator
+    );
+
+    return;
+  }
+
+  if (node->type != PM_REQUIRED_PARAMETER_NODE) { return; }
+
+  pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) node;
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
+  if (!constant) { return; }
+
+  char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+
+  append_parameter(
+    result,
+    create_parameter_name_token(node->location, name, prism_source_start, source_base_offset, source, allocator),
+    NULL,
+    "positional",
+    true,
+    prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source),
+    prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source),
+    allocator
+  );
+
+  hb_allocator_dealloc(allocator, name);
+}
+
 hb_array_T* extract_parameters_from_prism(
   pm_parameters_node_t* parameters,
   pm_parser_t* parser,
@@ -633,31 +749,17 @@ hb_array_T* extract_parameters_from_prism(
 
   hb_array_T* result = hb_array_init(count, allocator);
 
-  // Required positional: |item|
+  // Required positional: |item|, including destructured |(key, value)|
   for (size_t index = 0; index < parameters->requireds.size; index++) {
-    pm_node_t* node = parameters->requireds.nodes[index];
-    if (node->type != PM_REQUIRED_PARAMETER_NODE) { continue; }
-
-    pm_required_parameter_node_t* required = (pm_required_parameter_node_t*) node;
-    pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, required->name);
-    if (!constant) { continue; }
-
-    char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
-    position_T start = prism_to_source_position(node->location.start, prism_source_start, source_base_offset, source);
-    position_T end = prism_to_source_position(node->location.end, prism_source_start, source_base_offset, source);
-
-    append_parameter(
+    append_required_positional(
       result,
-      create_parameter_name_token(node->location, name, prism_source_start, source_base_offset, source, allocator),
-      NULL,
-      "positional",
-      true,
-      start,
-      end,
+      parameters->requireds.nodes[index],
+      parser,
+      source,
+      source_base_offset,
+      prism_source_start,
       allocator
     );
-
-    hb_allocator_dealloc(allocator, name);
   }
 
   // Optional positional: |item = nil|
@@ -732,6 +834,19 @@ hb_array_T* extract_parameters_from_prism(
 
       hb_allocator_dealloc(allocator, name);
     }
+  }
+
+  // Post-rest positional: the |last| in |item, *rest, last|
+  for (size_t index = 0; index < parameters->posts.size; index++) {
+    append_required_positional(
+      result,
+      parameters->posts.nodes[index],
+      parser,
+      source,
+      source_base_offset,
+      prism_source_start,
+      allocator
+    );
   }
 
   // Keywords: |name:| or |title: "default"|

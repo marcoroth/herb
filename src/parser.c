@@ -41,7 +41,7 @@ const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false
                                                        .transform_conditionals = false,
                                                        .render_nodes = false,
                                                        .strict_locals = false,
-                                                       .each_nodes = false,
+                                                       .iteration_nodes = false,
                                                        .prism_nodes_deep = false,
                                                        .prism_nodes = false,
                                                        .prism_program = false,

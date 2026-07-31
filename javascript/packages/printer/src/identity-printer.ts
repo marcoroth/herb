@@ -274,7 +274,7 @@ export class IdentityPrinter extends Printer {
     }
   }
 
-  visitERBEachBlockNode(node: Nodes.ERBEachBlockNode): void {
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
     this.printERBNode(node)
 
     if (node.body) {

@@ -324,7 +324,7 @@ module Herb
         end
       end
 
-      def visit_erb_each_block_node(node)
+      def visit_erb_iteration_block_node(node)
         visit_erb_block_node(node)
       end
 

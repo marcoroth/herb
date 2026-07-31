@@ -917,7 +917,7 @@ nodes:
           type: node
           kind: ERBEndNode
 
-    - name: ERBEachBlockNode
+    - name: ERBIterationBlockNode
       fields:
         - name: tag_opening
           type: token
@@ -939,6 +939,11 @@ nodes:
 
         - name: message
           type: token
+
+        - name: arguments
+          type: array
+          kind:
+            - RubyLiteralNode
 
         - name: block_opening
           type: token

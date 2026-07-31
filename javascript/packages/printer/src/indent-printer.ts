@@ -121,7 +121,7 @@ export class IndentPrinter extends IdentityPrinter {
     }
   }
 
-  visitERBEachBlockNode(node: Nodes.ERBEachBlockNode): void {
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
     this.printERBNode(node)
 
     if (node.body) {

@@ -531,9 +531,9 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
       return false;
     }
 
-    case AST_ERB_EACH_BLOCK_NODE: {
-      AST_ERB_EACH_BLOCK_NODE_T* each_block_node = (AST_ERB_EACH_BLOCK_NODE_T*) node;
-      transform_conditional_open_tags_in_array(each_block_node->body, context);
+    case AST_ERB_ITERATION_BLOCK_NODE: {
+      AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node = (AST_ERB_ITERATION_BLOCK_NODE_T*) node;
+      transform_conditional_open_tags_in_array(iteration_block_node->body, context);
       return false;
     }
 
