@@ -19,6 +19,7 @@ export interface WorkerInput {
   ignoreDisableComments: boolean
   loadCustomRules: boolean
   only?: string[]
+  allRules: boolean
 }
 
 export interface WorkerOffense {
@@ -66,7 +67,7 @@ async function run() {
     }
   }
 
-  const linter = Linter.from(Herb, config, customRules, { only: data.only })
+  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
 
   let totalErrors = 0
   let totalWarnings = 0

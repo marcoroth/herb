@@ -32,6 +32,7 @@ export interface ParsedArguments {
   failLevel?: DiagnosticSeverity
   jobs: number
   only?: string[]
+  allRules: boolean
 }
 
 export class ArgumentParser {
@@ -53,6 +54,9 @@ export class ArgumentParser {
       --only <rules>                only run the given rules, ignoring the rule configuration in .herb.yml
                                     accepts a comma-separated list and can be passed multiple times
                                     (e.g., herb-lint --only html-img-require-alt,html-tag-name-lowercase)
+      --all-rules                   run every rule, ignoring the rule configuration in .herb.yml
+                                    including rules that are disabled, not enabled by default,
+                                    or introduced after the version in .herb.yml
       --fix                         automatically fix auto-correctable offenses
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
@@ -84,6 +88,7 @@ export class ArgumentParser {
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
         only: { type: "string", multiple: true },
+        "all-rules": { type: "boolean" },
         fix: { type: "boolean" },
         "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
@@ -170,6 +175,8 @@ export class ArgumentParser {
     const disableFailing = values["disable-failing"] || false
     const loadCustomRules = !values["no-custom-rules"]
 
+    const allRules = values["all-rules"] || false
+
     let only: string[] | undefined
 
     if (values.only) {
@@ -177,6 +184,11 @@ export class ArgumentParser {
 
       if (only.length === 0) {
         console.error(`Error: --only requires at least one rule name.`)
+        process.exit(1)
+      }
+
+      if (allRules) {
+        console.error(`Error: --only and --all-rules can't be combined.`)
         process.exit(1)
       }
     }
@@ -205,7 +217,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only, allRules }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

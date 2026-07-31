@@ -249,6 +249,26 @@ Everything else still applies: which files get linted is unchanged, severity ove
 
 Passing an unknown rule name exits with an error, so typos won't silently lint nothing.
 
+**Running Every Rule:** <Badge type="info" text="^0.10.3" />
+
+Run every available rule, regardless of how it is configured:
+```bash
+npx @herb-tools/linter --all-rules
+```
+
+`--all-rules` is the counterpart to `--only`: instead of narrowing the run down to a set of rules, it widens it to all of them. The same parts of the rule configuration in `.herb.yml` are ignored, so rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for seeing everything Herb could report about a codebase, without changing `.herb.yml` first.
+
+Just like with `--only`, everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
+
 **Autofix:**
 
 Automatically fix auto-correctable offenses:

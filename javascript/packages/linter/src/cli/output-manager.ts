@@ -68,6 +68,7 @@ export class OutputManager {
           hasConfigFile: context?.hasConfigFile,
           toolVersion: options.toolVersion,
           only: context?.only,
+          allRules: context?.allRules,
         })
       }
     } else if (options.formatOption === "json") {
@@ -136,6 +137,7 @@ export class OutputManager {
         hasConfigFile: context?.hasConfigFile,
         toolVersion: options.toolVersion,
         only: context?.only,
+        allRules: context?.allRules,
       })
     }
   }

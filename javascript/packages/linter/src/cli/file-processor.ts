@@ -39,6 +39,7 @@ export interface ProcessingContext {
   loadCustomRules?: boolean
   jobs?: number
   only?: string[]
+  allRules?: boolean
 }
 
 export interface UnknownRule {
@@ -198,7 +199,7 @@ export class FileProcessor {
     if (!this.linter) {
       const customRules = await this.loadCustomRulesOnce(context, formatOption)
 
-      this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only })
+      this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only, all: context?.allRules })
     }
 
     for (const filename of files) {
@@ -314,7 +315,7 @@ export class FileProcessor {
     const workerPath = this.resolveWorkerPath()
 
     const configVersion = context?.config?.configVersion
-    const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion, { only: context?.only })
+    const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion, { only: context?.only, all: context?.allRules })
 
     const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
     const workerResults = await Promise.all(workerPromises)
@@ -364,6 +365,7 @@ export class FileProcessor {
         ignoreDisableComments: context?.ignoreDisableComments || false,
         loadCustomRules: context?.loadCustomRules || false,
         only: context?.only,
+        allRules: context?.allRules || false,
       }
 
       const worker = new Worker(workerPath, { workerData })

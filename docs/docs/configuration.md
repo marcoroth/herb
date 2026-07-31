@@ -87,6 +87,15 @@ herb-lint --only html-img-require-alt,html-tag-name-lowercase app/views/
 
 Rules passed to `--only` run even when they are disabled, not enabled by default, gated by the `version` in your `.herb.yml`, or excluded through rule-level path patterns. Which files get linted and the configured severities are unaffected.
 
+The `--all-rules` flag <Badge type="info" text="^0.10.3" /> is the counterpart to `--only` and widens the run to every available rule, ignoring the same parts of the rule configuration in `.herb.yml`.
+
+Run every rule, regardless of how it is configured:
+```bash
+herb-lint --all-rules app/views/
+```
+
+Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
+
 ## Linter Configuration
 
 Configure the linter behavior and rules:

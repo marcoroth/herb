@@ -864,6 +864,137 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("--all-rules", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("runs rules that are not enabled by default", () => {
+      const fixturePath = "test/fixtures/all-rules-not-enabled-by-default.html.erb"
+
+      try {
+        writeFileSync(fixturePath, `<div disabled>Save</div>\n`)
+
+        const withoutAllRules = runLinter("all-rules-not-enabled-by-default.html.erb", "--simple")
+        expect(withoutAllRules.output).not.toContain("a11y-disabled-attribute")
+
+        const { output } = runLinter("all-rules-not-enabled-by-default.html.erb", "--simple", "--all-rules")
+
+        expect(output).toContain("a11y-disabled-attribute")
+        expect(output).toContain("all rules via --all-rules")
+      } finally {
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("runs rules that are disabled in .herb.yml", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const withoutAllRules = runLinter("test-file-with-errors.html.erb", "--simple")
+        expect(withoutAllRules.output).not.toContain("html-tag-name-lowercase")
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules")
+
+        expect(output).toContain("html-tag-name-lowercase")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("runs rules that are skipped by the version in .herb.yml", () => {
+      const fixturePath = "test/fixtures/all-rules-version-gated.html.erb"
+
+      try {
+        writeFileSync(configPath, dedent`
+          version: 0.4.0
+        `)
+
+        writeFileSync(fixturePath, dedent`
+          <div>
+            <foobar>hi</foobar>
+          </div>
+        ` + "\n")
+
+        const withoutAllRules = runLinter("all-rules-version-gated.html.erb", "--simple")
+        expect(withoutAllRules.output).toContain("New rules available")
+        expect(withoutAllRules.output).not.toContain("Unknown HTML tag")
+
+        const { output } = runLinter("all-rules-version-gated.html.erb", "--simple", "--all-rules")
+
+        expect(output).toContain("html-no-unknown-tag")
+        expect(output).not.toContain("New rules available")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("ignores rule-level exclude patterns from .herb.yml", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-tag-name-lowercase:
+                exclude:
+                  - '**/*.html.erb'
+        `)
+
+        const withoutAllRules = runLinter("test-file-with-errors.html.erb", "--simple")
+        expect(withoutAllRules.output).not.toContain("html-tag-name-lowercase")
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules")
+
+        expect(output).toContain("html-tag-name-lowercase")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("still respects herb:disable comments", () => {
+      const fixturePath = "test/fixtures/all-rules-disable-comment.html.erb"
+
+      try {
+        writeFileSync(fixturePath, dedent`
+          <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+        ` + "\n")
+
+        const { output } = runLinter("all-rules-disable-comment.html.erb", "--simple", "--all-rules")
+
+        expect(output).not.toContain("should be lowercase")
+        expect(output).toContain("2 ignored")
+
+        const ignoring = runLinter("all-rules-disable-comment.html.erb", "--simple", "--all-rules", "--ignore-disable-comments")
+
+        expect(ignoring.output).toContain("should be lowercase")
+      } finally {
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("applies when the run is split across workers", () => {
+      const withoutAllRules = JSON.parse(runLinter("parallel", "--jobs", "4", "--json").output)
+      const { output, exitCode } = runLinter("parallel", "--jobs", "4", "--json", "--all-rules")
+      const result = JSON.parse(output)
+
+      expect(result.summary.ruleCount).toBeGreaterThan(withoutAllRules.summary.ruleCount)
+      expect(exitCode).toBe(0)
+    })
+
+    test("can't be combined with --only", () => {
+      const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules", "--only", "html-tag-name-lowercase")
+
+      expect(output).toContain("--only and --all-rules can't be combined")
+      expect(exitCode).toBe(1)
+    })
+  })
+
   describe("Directory Scoping (issue #1045)", () => {
     const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
     const { join } = require("path")
