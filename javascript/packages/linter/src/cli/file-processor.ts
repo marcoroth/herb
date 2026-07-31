@@ -9,7 +9,7 @@ import { Worker } from "node:worker_threads"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { availableParallelism } from "node:os"
+import { availableParallelism, totalmem } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic } from "@herb-tools/core"
 
@@ -63,12 +63,21 @@ export interface ProcessingResult {
   context?: ProcessingContext
 }
 
-/**
- * Minimum number of files required to use parallel processing.
- * Below this threshold, sequential processing is faster due to
- * worker thread startup overhead (loading WASM, config, etc.).
- */
 const PARALLEL_FILE_THRESHOLD = 10
+const RESERVED_MEMORY_FRACTION = 0.3
+const MIN_WORKER_MEMORY_MB = 512
+const MAX_WORKER_MEMORY_MB = 8192
+
+export function workerMemoryLimitMb(workerCount: number, totalMemoryBytes: number = totalmem()): number {
+  const override = Number(process.env.HERB_WORKER_MEMORY_MB)
+
+  if (Number.isFinite(override) && override > 0) return Math.floor(override)
+
+  const totalMb = totalMemoryBytes / 1024 / 1024
+  const share = (totalMb * (1 - RESERVED_MEMORY_FRACTION)) / Math.max(1, workerCount)
+
+  return Math.max(MIN_WORKER_MEMORY_MB, Math.min(MAX_WORKER_MEMORY_MB, Math.floor(share)))
+}
 
 export class FileProcessor {
   private linter: Linter | null = null
@@ -308,7 +317,8 @@ export class FileProcessor {
     const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion)
 
     const progress = context?.compareBackends && Herb.supportsLint ? new ComparisonProgress(files.length) : undefined
-    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context, count => progress?.advance(count)))
+    const memoryLimitMb = workerMemoryLimitMb(workerCount)
+    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context, count => progress?.advance(count), memoryLimitMb))
     const workerResults = await Promise.all(workerPromises)
 
     progress?.finish()
@@ -347,7 +357,7 @@ export class FileProcessor {
     return chunks.filter(chunk => chunk.length > 0)
   }
 
-  private runWorker(workerPath: string, files: string[], context?: ProcessingContext, onProgress?: (count: number) => void): Promise<WorkerResult> {
+  private runWorker(workerPath: string, files: string[], context?: ProcessingContext, onProgress?: (count: number) => void, memoryLimitMb: number = workerMemoryLimitMb(1)): Promise<WorkerResult> {
     return new Promise((resolve, reject) => {
       const workerData: WorkerInput = {
         files,
@@ -362,7 +372,12 @@ export class FileProcessor {
         compareBackends: context?.compareBackends || false,
       }
 
-      const worker = new Worker(workerPath, { workerData })
+      const workerMemoryMb = Number(process.env.HERB_WORKER_MEMORY_MB) || 4096
+
+      const worker = new Worker(workerPath, {
+        workerData,
+        resourceLimits: { maxOldGenerationSizeMb: workerMemoryMb }
+      })
 
       worker.on("message", (message: WorkerResult | { progress: number }) => {
         if (typeof (message as { progress?: number }).progress === "number") {
