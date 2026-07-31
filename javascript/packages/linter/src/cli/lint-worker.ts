@@ -187,6 +187,8 @@ async function run() {
     }
 
     if (rustLinter) {
+      parentPort!.postMessage({ progress: 1 })
+
       const rustResult = rustLinter.lint(originalContent, {
         fileName: filename,
         ignoreDisableComments: data.ignoreDisableComments

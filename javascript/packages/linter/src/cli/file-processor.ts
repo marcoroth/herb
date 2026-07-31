@@ -2,7 +2,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
-import { compareBackendOffenses } from "../backend-comparison.js"
+import { compareBackendOffenses, ComparisonProgress } from "../backend-comparison.js"
 import { Config } from "@herb-tools/config"
 
 import { Worker } from "node:worker_threads"
@@ -168,6 +168,7 @@ export class FileProcessor {
     }
 
     const shouldCompare = context?.compareBackends && Herb.supportsLint
+    const progress = shouldCompare ? new ComparisonProgress(files.length) : undefined
     if (shouldCompare && !this.rustLinter) {
       this.rustLinter = Linter.from(Herb, context?.config)
       this.rustLinter.backendMode = "rust"
@@ -257,6 +258,8 @@ export class FileProcessor {
       }
 
       if (shouldCompare && this.rustLinter) {
+        progress?.advance()
+
         const rustResult = this.rustLinter.lint(originalContent, {
           fileName: filename,
           ignoreDisableComments: context?.ignoreDisableComments
@@ -268,6 +271,8 @@ export class FileProcessor {
         }
       }
     }
+
+    progress?.finish()
 
     const result: ProcessingResult = {
       totalErrors,
@@ -302,8 +307,11 @@ export class FileProcessor {
     const configVersion = context?.config?.configVersion
     const filterResult = Linter.filterRulesByConfig(rules, context?.config?.linter?.rules, configVersion)
 
-    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context))
+    const progress = context?.compareBackends && Herb.supportsLint ? new ComparisonProgress(files.length) : undefined
+    const workerPromises = chunks.map(chunk => this.runWorker(workerPath, chunk, context, count => progress?.advance(count)))
     const workerResults = await Promise.all(workerPromises)
+
+    progress?.finish()
 
     for (const result of workerResults) {
       if (result.error) {
@@ -339,7 +347,7 @@ export class FileProcessor {
     return chunks.filter(chunk => chunk.length > 0)
   }
 
-  private runWorker(workerPath: string, files: string[], context?: ProcessingContext): Promise<WorkerResult> {
+  private runWorker(workerPath: string, files: string[], context?: ProcessingContext, onProgress?: (count: number) => void): Promise<WorkerResult> {
     return new Promise((resolve, reject) => {
       const workerData: WorkerInput = {
         files,
@@ -356,8 +364,13 @@ export class FileProcessor {
 
       const worker = new Worker(workerPath, { workerData })
 
-      worker.on("message", (result: WorkerResult) => {
-        resolve(result)
+      worker.on("message", (message: WorkerResult | { progress: number }) => {
+        if (typeof (message as { progress?: number }).progress === "number") {
+          onProgress?.((message as { progress: number }).progress)
+          return
+        }
+
+        resolve(message as WorkerResult)
       })
 
       worker.on("error", (error) => {

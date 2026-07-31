@@ -1,5 +1,7 @@
 import { colorize } from "@herb-tools/highlighter"
 
+import { version } from "../package.json"
+
 import type { LintOffense } from "./types.js"
 
 export interface NormalizedOffense {
@@ -76,9 +78,9 @@ export function formatMismatchReport(mismatches: BackendMismatch[], totalFiles: 
 
   if (mismatches.length === 0) {
     lines.push("\n")
-    lines.push(` ${colorize("Backend comparison:", "bold")}`)
+    lines.push(` ${colorize("Backend comparison:", "bold")} ${colorize(`herb v${version}`, "gray")}`)
     lines.push(`  ${colorize(pad("Checked"), "gray")} ${colorize(`${totalFiles} ${pluralize(totalFiles, "file")}`, "cyan")}`)
-    lines.push(`  ${colorize(pad("Result"), "gray")} ${colorize(colorize("all files matched", "green"), "bold")}`)
+    lines.push(`  ${colorize(pad("Result"), "gray")} ${colorize(colorize("\u2713 all files matched", "brightGreen"), "bold")}`)
 
     return lines.join("\n")
   }
@@ -86,9 +88,9 @@ export function formatMismatchReport(mismatches: BackendMismatch[], totalFiles: 
   const matchedFiles = totalFiles - mismatches.length
 
   lines.push("\n")
-  lines.push(` ${colorize("Backend comparison:", "bold")}`)
+  lines.push(` ${colorize("Backend comparison:", "bold")} ${colorize(`herb v${version}`, "gray")}`)
   lines.push(`  ${colorize(pad("Checked"), "gray")} ${colorize(`${totalFiles} ${pluralize(totalFiles, "file")}`, "cyan")}`)
-  lines.push(`  ${colorize(pad("Result"), "gray")} ${colorize(colorize(`${mismatches.length} ${pluralize(mismatches.length, "file")} with differences`, "brightRed"), "bold")} | ${colorize(colorize(`${matchedFiles} matched`, "green"), "bold")} ${colorize(`(${totalFiles} total)`, "gray")}`)
+  lines.push(`  ${colorize(pad("Result"), "gray")} ${colorize(colorize(`\u2717 ${mismatches.length} ${pluralize(mismatches.length, "file")} with differences`, "brightRed"), "bold")} | ${colorize(colorize(`${matchedFiles} matched`, "green"), "bold")} ${colorize(`(${totalFiles} total)`, "gray")}`)
 
   lines.push("")
   lines.push(` ${colorize("Differences:", "bold")}`)
@@ -125,4 +127,82 @@ export function reproduceCommand(mismatches: BackendMismatch[]): string {
 
 function shellQuote(value: string): string {
   return /^[A-Za-z0-9._\/-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`
+}
+
+const SPINNER_FRAMES = ["\u280b", "\u2819", "\u2839", "\u2838", "\u283c", "\u2834", "\u2826", "\u2827", "\u2807", "\u280f"]
+const RENDER_INTERVAL_MS = 80
+const HERB = "\ud83c\udf3f"
+
+export class ComparisonProgress {
+  private processed = 0
+  private lastPercent = -1
+  private lastRenderedAt = 0
+  private frame = 0
+  private readonly startedAt = Date.now()
+  private readonly interactive: boolean
+
+  constructor(
+    private readonly total: number,
+    private readonly write: (text: string) => void = text => process.stderr.write(text),
+    interactive: boolean = Boolean(process.stderr.isTTY)
+  ) {
+    this.interactive = interactive
+  }
+
+  advance(count: number = 1): void {
+    this.processed += count
+
+    if (this.total <= 0) return
+
+    if (this.interactive) {
+      this.renderInteractive()
+      return
+    }
+
+    const percent = this.percent()
+
+    if (percent <= this.lastPercent) return
+
+    this.lastPercent = percent
+    this.write(`  [${this.processed}/${this.total} (${percent}%)] comparing backends\n`)
+  }
+
+  finish(): void {
+    if (!this.interactive) return
+
+    this.write("\r\u001b[K")
+  }
+
+  private percent(): number {
+    return Math.min(100, Math.floor((this.processed / this.total) * 100))
+  }
+
+  private renderInteractive(): void {
+    const now = Date.now()
+    const percent = this.percent()
+    const done = this.processed >= this.total
+    const advancedAPercent = percent > this.lastPercent
+
+    if (!done && !advancedAPercent && now - this.lastRenderedAt < RENDER_INTERVAL_MS) return
+
+    this.lastRenderedAt = now
+    this.lastPercent = percent
+    const spinner = SPINNER_FRAMES[this.frame++ % SPINNER_FRAMES.length]
+    const label = `${HERB} @herb-tools/linter v${version}`
+    const summary = `${percent}% ${this.processed}/${this.total} ${this.formatDuration(now - this.startedAt)}`
+    const columns = process.stderr.columns || 80
+    const barWidth = Math.max(0, Math.min(24, columns - summary.length - label.length - 26))
+    const filled = Math.round((percent / 100) * barWidth)
+    const bar = barWidth > 0
+      ? `${colorize("\u2588".repeat(filled), "brightGreen")}${colorize("\u2591".repeat(barWidth - filled), "gray")} `
+      : ""
+
+    this.write(`\r\u001b[K  ${label} ${colorize(spinner, "brightGreen")} ${bar}${colorize(summary, "gray")}`)
+  }
+
+  private formatDuration(milliseconds: number): string {
+    const seconds = Math.floor(milliseconds / 1000)
+
+    return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m${String(seconds % 60).padStart(2, "0")}s`
+  }
 }
