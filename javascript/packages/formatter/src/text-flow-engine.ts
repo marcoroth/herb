@@ -219,7 +219,11 @@ export class TextFlowEngine {
         this.flushWords(words)
 
         if (node) {
-          this.delegate.visit(node)
+          if (isNode(node, HTMLElementNode) && isLineBreakingElement(node)) {
+            this.delegate.pushWithIndent(this.delegate.renderInlineElementAsString(node))
+          } else {
+            this.delegate.visit(node)
+          }
         }
       } else if (unit.isAtomic) {
         words.push(unit.content)
