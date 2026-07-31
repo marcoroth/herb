@@ -121,6 +121,36 @@ describe("html-no-space-in-tag autofix", () => {
       expect(result.fixed).toHaveLength(0)
       expect(result.unfixed).toHaveLength(0)
     })
+
+    test("does not merge unindented attributes on separate lines", () => {
+      const input = dedent`
+        <a
+        href="https://example.com/path"
+        target="_blank">TOTP</a>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not merge unindented ERB attributes on separate lines", () => {
+      const input = dedent`
+        <div
+        data-base-path="<%= a %>"
+        data-available-locales="<%= b %>">z</div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
   })
 
   describe("when no space should be present", () => {
@@ -521,6 +551,27 @@ describe("html-no-space-in-tag autofix", () => {
             type="password"
           />
         </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes a genuine blank line between unindented attributes", () => {
+      const input = dedent`
+        <a
+        href="x"
+
+        target="_blank">y</a>
+      `
+      const expected = dedent`
+        <a
+        href="x"
+        target="_blank">y</a>
       `
 
       const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])

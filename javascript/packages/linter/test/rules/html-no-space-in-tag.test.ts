@@ -87,6 +87,22 @@ describe("HTMLNoSpaceInTagRule", () => {
         </div>
       `)
     })
+
+    test("multi line tag with unindented attributes on separate lines", () => {
+      expectNoOffenses(dedent`
+        <a
+        href="https://example.com/path"
+        target="_blank">TOTP</a>
+      `)
+    })
+
+    test("multi line tag with unindented ERB attributes on separate lines", () => {
+      expectNoOffenses(dedent`
+        <div
+        data-base-path="<%= a %>"
+        data-available-locales="<%= b %>">z</div>
+      `)
+    })
   })
 
   describe("when no space should be present", () => {
@@ -223,7 +239,7 @@ describe("HTMLNoSpaceInTagRule", () => {
     })
 
     test("extra space between name and first attribute on the opening line of a multiline tag", () => {
-      expectError("Extra space detected where there should be a single space.")
+      expectError("Extra space detected where there should be a single space.", [1, 4])
 
       assertOffenses(dedent`
         <div  data-a="foo"
@@ -233,7 +249,7 @@ describe("HTMLNoSpaceInTagRule", () => {
     })
 
     test("extra space between attributes on a continuation line", () => {
-      expectError("Extra space detected where there should be a single space.")
+      expectError("Extra space detected where there should be a single space.", [2, 14])
 
       assertOffenses(dedent`
         <div
@@ -243,7 +259,7 @@ describe("HTMLNoSpaceInTagRule", () => {
     })
 
     test("extra space before the closing bracket on an attribute line", () => {
-      expectError("Extra space detected where there should be no space.")
+      expectError("Extra space detected where there should be no space.", [2, 14])
 
       assertOffenses(dedent`
         <div
@@ -253,7 +269,7 @@ describe("HTMLNoSpaceInTagRule", () => {
     })
 
     test("closing bracket over-indented in a nested tag", () => {
-      expectError("Extra space detected where there should be no space.")
+      expectError("Extra space detected where there should be no space.", [4, 0])
 
       assertOffenses(dedent`
         <div>
@@ -261,6 +277,17 @@ describe("HTMLNoSpaceInTagRule", () => {
             type="password"
               >
         </div>
+      `)
+    })
+
+    test("blank line between unindented attributes on separate lines", () => {
+      expectError("Extra space detected where there should be a single space or a single line break.", [3, 0])
+
+      assertOffenses(dedent`
+        <a
+        href="x"
+
+        target="_blank">y</a>
       `)
     })
   })

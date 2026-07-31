@@ -80,20 +80,30 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
   private checkMultilineTag(node: HTMLOpenTagNode): void {
     const { children, tag_closing } = node
     const isSelfClosing = tag_closing ? this.isSelfClosing(tag_closing) : false
-    const whitespaceNodes = filterWhitespaceNodes(children)
     const lastChild = children[children.length - 1]
 
     let previousWhitespace: WhitespaceNode | null = null
 
-    whitespaceNodes.forEach((whitespace) => {
+    for (const child of children) {
+      if (!isWhitespaceNode(child)) {
+        previousWhitespace = null
+
+        continue
+      }
+
+      const whitespace = child as WhitespaceNode
       const content = this.getWhitespaceContent(whitespace)
-      if (!content) return
+      if (!content) {
+        previousWhitespace = whitespace
+
+        continue
+      }
 
       if (this.hasConsecutiveNewlines(content, previousWhitespace)) {
         this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_BREAK, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_BREAK })
         previousWhitespace = whitespace
 
-        return
+        continue
       }
 
       if (this.isNonNewlineWhitespace(content)) {
@@ -110,7 +120,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
       }
 
       previousWhitespace = whitespace
-    })
+    }
   }
 
   private checkClosingBracketIndentation(whitespace: WhitespaceNode, node: HTMLOpenTagNode): void {
