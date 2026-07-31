@@ -318,7 +318,7 @@ export function createEndOfFileLocation(source: string): Location {
   const lines = source.split('\n')
   const lastLineNumber = lines.length
   const lastLine = lines[lines.length - 1]
-  const lastColumnNumber = lastLine.length
+  const lastColumnNumber = [...lastLine].length
 
   const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
 
@@ -759,8 +759,8 @@ export function locationFromContentOffset(startLine: number, startColumn: number
   let line = startLine
   let column = startColumn
 
-  for (let index = 0; index < offset; index++) {
-    if (content[index] === "\n") {
+  for (const character of content.slice(0, offset)) {
+    if (character === "\n") {
       line++
       column = 0
     } else {

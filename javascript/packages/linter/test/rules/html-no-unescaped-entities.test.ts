@@ -209,4 +209,18 @@ describe("html-no-unescaped-entities", () => {
       assertOffenses('<title>Tom & Jerry</title>')
     })
   })
+
+  describe("multi-byte characters", () => {
+    it("counts an astral character as a single column", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.", { line: 1, column: 12 })
+
+      assertOffenses('<div>\u{1F600} Save & Continue</div>')
+    })
+
+    it("counts an astral character as a single column (literal)", () => {
+      expectWarning("Text content contains an unescaped `&` character. Use `&amp;` instead.", { line: 1, column: 12 })
+
+      assertOffenses('<div>😀 Save & Continue</div>')
+    })
+  })
 })

@@ -106,7 +106,23 @@ export function formatMismatchReport(mismatches: BackendMismatch[], totalFiles: 
   }
 
   lines.push("")
+  lines.push(` ${colorize("Reproduce:", "bold")}`)
+  lines.push(`  ${colorize("Re-check only the files above, without linting the whole project again:", "gray")}`)
+  lines.push("")
+  lines.push(`    ${colorize(reproduceCommand(mismatches), "cyan")}`)
+
+  lines.push("")
   lines.push(`  ${colorize("Please report this bug at https://github.com/marcoroth/herb/issues", "gray")}`)
 
   return lines.join("\n")
+}
+
+export function reproduceCommand(mismatches: BackendMismatch[]): string {
+  const filenames = mismatches.map(mismatch => shellQuote(mismatch.filename))
+
+  return `herb-lint ${filenames.join(" ")} --jobs 1 --fail-on-backend-mismatch --no-timing`
+}
+
+function shellQuote(value: string): string {
+  return /^[A-Za-z0-9._\/-]+$/.test(value) ? value : `'${value.replace(/'/g, `'\\''`)}'`
 }

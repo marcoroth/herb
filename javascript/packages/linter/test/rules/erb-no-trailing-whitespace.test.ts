@@ -332,4 +332,30 @@ describe("erb-no-trailing-whitespace", () => {
       expect(offenses[0].source).toBe("Herb Linter")
     })
   })
+
+  describe("multi-byte characters", () => {
+    test("reports the column in characters, not bytes", () => {
+      expectError("Extra whitespace detected at end of line.", { line: 1, column: 5 })
+
+      assertOffenses("\u53e6\u4e00\u5f20\u5de5\u5355 \n")
+    })
+
+    test("reports the column in characters, not bytes (literal)", () => {
+      expectError("Extra whitespace detected at end of line.", { line: 1, column: 5 })
+
+      assertOffenses("另一张工单 \n")
+    })
+
+    test("counts an astral character as a single column", () => {
+      expectError("Extra whitespace detected at end of line.", { line: 1, column: 2 })
+
+      assertOffenses("\u{1F600}\u{1F600} \n")
+    })
+
+    test("counts an astral character as a single column (literal)", () => {
+      expectError("Extra whitespace detected at end of line.", { line: 1, column: 2 })
+
+      assertOffenses("😀😀 \n")
+    })
+  })
 })

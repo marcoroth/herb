@@ -81,13 +81,16 @@ fn find_trailing_whitespace_candidates(lines: &[&str]) -> Vec<TrailingWhitespace
       .trim_end_matches(|character: char| {
         character == ' ' || character == '\t' || character == '\r' || character == '\x0B' || character == '\x0C' || character == '\u{00A0}'
       })
-      .len();
+      .chars()
+      .count();
 
-    if trimmed_length < line.len() {
+    let line_length = line.chars().count();
+
+    if trimmed_length < line_length {
       candidates.push(TrailingWhitespaceCandidate {
         line: (index + 1) as u32,
         column: trimmed_length as u32,
-        length: (line.len() - trimmed_length) as u32,
+        length: (line_length - trimmed_length) as u32,
       });
     }
   }

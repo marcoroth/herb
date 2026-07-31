@@ -108,8 +108,8 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
       if (match && match.index !== undefined) {
         candidates.push({
           line: i + 1,
-          column: match.index,
-          length: match[0].length
+          column: [...line.slice(0, match.index)].length,
+          length: [...match[0]].length
         })
       }
     }

@@ -154,4 +154,18 @@ describe("ERBRequireTrailingNewlineRule", () => {
 
     assertOffenses(`<div>Hello</div>\n\n\n\n\n\n`, { fileName: "template.html.erb" })
   })
+
+  describe("multi-byte characters", () => {
+    test("reports the end-of-file column in characters, not bytes", () => {
+      expectError("File must end with trailing newline.", { line: 1, column: 4 })
+
+      assertOffenses("\u53e6\u4e00\u5f20\u5de5\u5355", { fileName: "template.html.erb" })
+    })
+
+    test("reports the end-of-file column in characters, not bytes (literal)", () => {
+      expectError("File must end with trailing newline.", { line: 1, column: 4 })
+
+      assertOffenses("另一张工单", { fileName: "template.html.erb" })
+    })
+  })
 })

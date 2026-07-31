@@ -9,6 +9,9 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 
+import { compareBackendOffenses } from "../backend-comparison.js"
+
+import type { BackendMismatch } from "../backend-comparison.js"
 import type { SerializedDiagnostic } from "@herb-tools/core"
 
 export interface WorkerInput {
@@ -21,6 +24,7 @@ export interface WorkerInput {
   loadCustomRules: boolean
   backendMode?: "javascript" | "rust"
   allRules: boolean
+  compareBackends: boolean
 }
 
 export interface WorkerOffense {
@@ -43,6 +47,7 @@ export interface WorkerResult {
   offenses: WorkerOffense[]
   ruleOffenses: [string, { count: number, files: string[] }][]
   fixMessages: string[]
+  backendMismatches?: BackendMismatch[]
   error?: string
 }
 
@@ -74,6 +79,15 @@ async function run() {
     linter.backendMode = data.backendMode
   }
 
+  const shouldCompare = data.compareBackends && Herb.supportsLint
+  const backendMismatches: BackendMismatch[] = []
+  let rustLinter: Linter | undefined
+
+  if (shouldCompare) {
+    rustLinter = Linter.from(Herb, config, customRules)
+    rustLinter.backendMode = "rust"
+  }
+
   let totalErrors = 0
   let totalWarnings = 0
   let totalInfo = 0
@@ -102,6 +116,7 @@ async function run() {
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
     let content = readFileSync(filePath, "utf-8")
+    const originalContent = content
 
     const lintResult = linter.lint(content, {
       fileName: filename,
@@ -170,6 +185,19 @@ async function run() {
     if (lintResult.wouldBeIgnored) {
       totalWouldBeIgnored += lintResult.wouldBeIgnored
     }
+
+    if (rustLinter) {
+      const rustResult = rustLinter.lint(originalContent, {
+        fileName: filename,
+        ignoreDisableComments: data.ignoreDisableComments
+      })
+
+      const mismatch = compareBackendOffenses(filename, lintResult.offenses, rustResult.offenses)
+
+      if (mismatch) {
+        backendMismatches.push(mismatch)
+      }
+    }
   }
 
   const serializedRuleOffenses: [string, { count: number, files: string[] }][] =
@@ -189,7 +217,8 @@ async function run() {
     ruleCount,
     offenses: allOffenses,
     ruleOffenses: serializedRuleOffenses,
-    fixMessages
+    fixMessages,
+    backendMismatches: shouldCompare ? backendMismatches : undefined
   }
 
   parentPort!.postMessage(result)

@@ -176,6 +176,7 @@ export class FileProcessor {
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       let content = readFileSync(filePath, "utf-8")
+      const originalContent = content
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
@@ -256,7 +257,7 @@ export class FileProcessor {
       }
 
       if (shouldCompare && this.rustLinter) {
-        const rustResult = this.rustLinter.lint(content, {
+        const rustResult = this.rustLinter.lint(originalContent, {
           fileName: filename,
           ignoreDisableComments: context?.ignoreDisableComments
         })
@@ -350,6 +351,7 @@ export class FileProcessor {
         loadCustomRules: context?.loadCustomRules || false,
         backendMode: context?.backend,
         allRules: context?.allRules || false,
+        compareBackends: context?.compareBackends || false,
       }
 
       const worker = new Worker(workerPath, { workerData })
@@ -383,8 +385,15 @@ export class FileProcessor {
 
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
+    const backendMismatches: BackendMismatch[] = []
+    let comparedBackends = false
 
     for (const result of results) {
+      if (result.backendMismatches !== undefined) {
+        comparedBackends = true
+        backendMismatches.push(...result.backendMismatches)
+      }
+
       totalErrors += result.totalErrors
       totalWarnings += result.totalWarnings
       totalInfo += result.totalInfo
@@ -438,6 +447,7 @@ export class FileProcessor {
       ruleCount,
       allOffenses,
       ruleOffenses,
+      backendMismatches: comparedBackends ? backendMismatches : undefined,
       rulesSkippedByVersion: [],
       rulesDisabledByConfig: 0,
       rulesNotEnabledByDefault: 0,

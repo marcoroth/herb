@@ -11,7 +11,7 @@ fn create_end_of_file_location(source: &str) -> Location {
   let lines: Vec<&str> = source.split('\n').collect();
   let last_line_number = lines.len() as u32;
   let last_line = lines.last().unwrap_or(&"");
-  let last_column = last_line.len() as u32;
+  let last_column = last_line.chars().count() as u32;
   let start_column = if last_column > 0 { last_column - 1 } else { 0 };
 
   Location::from(last_line_number, start_column, last_line_number, last_column)
