@@ -274,9 +274,25 @@ jobs:
           {
             echo "### Printer Roundtrip"
             echo
-            echo '```'
-            tail -n 20 roundtrip.txt 2>/dev/null || echo "the roundtrip did not run"
-            echo '```'
+
+            if [ -s summary.txt ]; then
+              echo '```'
+              cat summary.txt
+              echo '```'
+            else
+              echo "the roundtrip did not run"
+            fi
+
+            if [ -s failures.txt ]; then
+              echo
+              echo "<details><summary>Files that did not round-trip or parse</summary>"
+              echo
+              echo '```'
+              head -n 100 failures.txt
+              echo '```'
+              echo
+              echo "</details>"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the roundtrip report

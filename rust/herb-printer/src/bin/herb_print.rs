@@ -2,17 +2,13 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use colored::Colorize;
 use herb::ParserOptions;
 use herb_config::{Config, Tool};
 use herb_printer::IdentityPrinter;
 use rayon::prelude::*;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const GREEN: &str = "\x1b[32m";
-const RED: &str = "\x1b[31m";
-const BOLD: &str = "\x1b[1m";
-const RESET: &str = "\x1b[0m";
 
 #[derive(Default)]
 struct CLIOptions {
@@ -104,12 +100,12 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
   for (file, outcome) in files.iter().zip(&outcomes) {
     match outcome {
       Outcome::ReadError(error) => {
-        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Error{RESET} - {error}");
+        eprintln!("{} {}: {} - {error}", "✗".red(), file.bold(), "Error".red().bold());
         failed_files += 1;
       }
 
       Outcome::PrintError(error) => {
-        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Failed{RESET} - {error}");
+        eprintln!("{} {}: {} - {error}", "✗".red(), file.bold(), "Failed".red().bold());
         failed_files += 1;
       }
 
@@ -120,14 +116,14 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
         if options.verify {
           if *matched {
             if options.verbose {
-              println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Perfect match{RESET}");
+              println!("{} {}: {}", "✓".green(), file.bold(), "Perfect match".green());
             }
           } else {
-            eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Verification failed{RESET} - differences detected");
+            eprintln!("{} {}: {} - differences detected", "✗".red(), file.bold(), "Verification failed".red().bold());
             verification_failures += 1;
           }
         } else if options.verbose {
-          println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Processed{RESET}");
+          println!("{} {}: {}", "✓".green(), file.bold(), "Processed".green());
         }
       }
     }
@@ -218,9 +214,9 @@ fn run_single(options: &CLIOptions, config: &Config, current_directory: &Path) -
 
   if options.verify {
     if input == output {
-      eprintln!("{GREEN}✓ Verification passed{RESET} - output matches input exactly");
+      eprintln!("{} - output matches input exactly", "✓ Verification passed".green());
     } else {
-      eprintln!("{RED}✗ Verification failed{RESET} - output differs from input");
+      eprintln!("{} - output differs from input", "✗ Verification failed".red());
 
       return 1;
     }
