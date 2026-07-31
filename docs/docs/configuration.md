@@ -39,13 +39,15 @@ If you're using Herb in a project with multiple developers, it's highly recommen
 
 ### Creating a Configuration File
 
-To create a `.herb.yml` configuration file in your project, run either CLI tool with the `--init` flag:
+To create a `.herb.yml` configuration file in your project, run either CLI tool with the `--init` flag.
 
+Create config using the linter:
 ```bash
-# Create config using the linter
 herb-lint --init
+```
 
-# Or create config using the formatter
+Or create config using the formatter:
+```bash
 herb-format --init
 ```
 
@@ -56,20 +58,34 @@ This will generate a configuration file with sensible defaults:
 
 ## Command Line Overrides
 
-The CLIs support a `--force` flag to override project configuration:
+The CLIs support a `--force` flag to override project configuration.
 
+
+Force linting even if disabled in `.herb.yml`:
 ```bash
-# Force linting even if disabled in .herb.yml
 herb-lint --force app/views/
+```
 
-# Force linting on a file excluded by configuration
+Force linting on a file excluded by configuration:
+```bash
 herb-lint --force app/views/excluded-file.html.erb
+```
 
-# Force formatting even if disabled in .herb.yml
+Force formatting even if disabled in `.herb.yml`:
+```bash
 herb-format --force --check app/views/
 ```
 
 When using `--force` on an explicitly specified file that is excluded by configuration patterns, the CLI will show a warning but proceed with processing the file.
+
+The linter CLI also supports an `--only` flag <Badge type="info" text="^0.10.3" /> to run a specific set of rules, ignoring the rule configuration in `.herb.yml`.
+
+Only run the given rules, regardless of how they are configured:
+```bash
+herb-lint --only html-img-require-alt,html-tag-name-lowercase app/views/
+```
+
+Rules passed to `--only` run even when they are disabled, not enabled by default, gated by the `version` in your `.herb.yml`, or excluded through rule-level path patterns. Which files get linted and the configured severities are unaffected.
 
 ## Linter Configuration
 

@@ -31,6 +31,7 @@ export interface ParsedArguments {
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
   jobs: number
+  only?: string[]
 }
 
 export class ArgumentParser {
@@ -49,6 +50,9 @@ export class ArgumentParser {
       --disable-failing             lint the codebase and disable all rules that have offenses in .herb.yml
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
+      --only <rules>                only run the given rules, ignoring the rule configuration in .herb.yml
+                                    accepts a comma-separated list and can be passed multiple times
+                                    (e.g., herb-lint --only html-img-require-alt,html-tag-name-lowercase)
       --fix                         automatically fix auto-correctable offenses
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
@@ -79,6 +83,7 @@ export class ArgumentParser {
         "disable-failing": { type: "boolean" },
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
+        only: { type: "string", multiple: true },
         fix: { type: "boolean" },
         "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
@@ -165,6 +170,17 @@ export class ArgumentParser {
     const disableFailing = values["disable-failing"] || false
     const loadCustomRules = !values["no-custom-rules"]
 
+    let only: string[] | undefined
+
+    if (values.only) {
+      only = [...new Set(values.only.flatMap(value => value.split(",")).map(ruleName => ruleName.trim()).filter(Boolean))]
+
+      if (only.length === 0) {
+        console.error(`Error: --only requires at least one rule name.`)
+        process.exit(1)
+      }
+    }
+
     let failLevel: DiagnosticSeverity | undefined
     if (values["fail-level"]) {
       const level = values["fail-level"]
@@ -189,7 +205,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only }
   }
 
   private getFilePatterns(positionals: string[]): string[] {
