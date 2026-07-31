@@ -1583,6 +1583,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         if (isPureWhitespaceNode(prevSibling) || isNode(prevSibling, WhitespaceNode)) {
           hasSpaceBefore = true
         }
+
+        if (isNode(prevSibling, HTMLTextNode) && endsWithWhitespace(prevSibling.content)) {
+          hasSpaceBefore = true
+        }
       }
 
       const inlineContent = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
