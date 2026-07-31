@@ -222,7 +222,9 @@ describe("html-no-duplicate-ids", () => {
   })
 
   test("fails for non-output ERB IDs in loops (same value repeated)", () => {
-    expectError('Duplicate ID `user-` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+    expectError('Duplicate ID `user-` found. IDs must be unique within a document.')
+    expectError('Duplicate ID `user-` found within the same loop iteration. IDs must be unique within the same loop iteration.')
+
     assertOffenses(dedent`
       <% users.each do |user| %>
         <div id="user-<% 'static' %>">User</div>
@@ -247,6 +249,7 @@ describe("html-no-duplicate-ids", () => {
 
   test("fails for static ID in while loops", () => {
     expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+
     assertOffenses(dedent`
       <% while condition %>
         <div id="static-id">Item</div>
@@ -256,6 +259,7 @@ describe("html-no-duplicate-ids", () => {
 
   test("fails for non-dynamic ID in until loops", () => {
     expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+
     assertOffenses(dedent`
       <% until condition %>
         <div id="static-id">Item</div>
@@ -275,6 +279,7 @@ describe("html-no-duplicate-ids", () => {
 
   test("hints for duplicate output ERB IDs within same conditional branch", () => {
     expectHint('Potential duplicate ID `user-<%= user.id %>` found within the same control flow branch. If this expression evaluates to the same value, IDs must be unique.')
+
     assertOffenses(dedent`
       <% if condition %>
         <div id="user-<%= user.id %>">User A</div>
@@ -304,8 +309,9 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test.todo("fails for static attribute in a loop context", () => {
+  test("fails for static attribute in a loop context", () => {
     expectError('Duplicate ID `user` found. IDs must be unique within a document.')
+
     assertOffenses(dedent`
       <% @users.each do |user| %>
         <div id="user"></div>
@@ -360,7 +366,7 @@ describe("html-no-duplicate-ids", () => {
   })
 
   test("hints for duplicate dynamic IDs within same block", () => {
-    expectHint('Potential duplicate ID `item-<%= item.id %>` found within the same control flow branch. If this expression evaluates to the same value, IDs must be unique.')
+    expectHint('Potential duplicate ID `item-<%= item.id %>` found within the same loop iteration. If this expression evaluates to the same value, IDs must be unique.')
 
     assertOffenses(dedent`
       <% items.each do |item| %>
@@ -386,8 +392,10 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("passes for dynamic ID in global scope and same dynamic ID in a block", () => {
-    expectNoOffenses(dedent`
+  test("fails for a dynamic ID in a block that does not reference the block argument", () => {
+    expectError('Duplicate ID `user-<%= user.id %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
       <div id="user-<%= user.id %>"></div>
 
       <% items.each do |item| %>
@@ -396,8 +404,10 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("passes for dynamic ID in a block and same dynamic ID in global scope", () => {
-    expectNoOffenses(dedent`
+  test("fails for a dynamic ID in a block that does not reference the block argument, block first", () => {
+    expectError('Duplicate ID `user-<%= user.id %>` found. IDs must be unique within a document.')
+
+    assertOffenses(dedent`
       <% items.each do |item| %>
         <div id="user-<%= user.id %>"></div>
       <% end %>
@@ -451,6 +461,7 @@ describe("html-no-duplicate-ids", () => {
   })
 
   test("fails for static IDs in separate each blocks", () => {
+    expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
     expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
     assertOffenses(dedent`
       <% first.each do |item| %>
@@ -1002,7 +1013,9 @@ describe("html-no-duplicate-ids", () => {
       })
 
       test("matches outside-template behavior for a static ID in a single block", () => {
-        expectNoOffenses(dedent`
+        expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
           <template>
             <% items.each do |item| %>
               <div id="static-id"></div>
@@ -1012,6 +1025,7 @@ describe("html-no-duplicate-ids", () => {
       })
 
       test("fails for static IDs in separate blocks inside one <template>", () => {
+        expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
         expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1027,8 +1041,11 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test("passes for static IDs in blocks in separate <template> elements", () => {
-        expectNoOffenses(dedent`
+      test("reports static IDs in blocks in separate <template> elements", () => {
+        expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+        expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
           <template>
             <% first.each do |item| %>
               <div id="static-id"></div>
@@ -1132,9 +1149,9 @@ describe("html-no-duplicate-ids", () => {
     })
   })
 
-  describe("pending: block iteration nodes (ERBBlockEachNode)", () => {
+  describe("block iteration nodes (ERBIterationBlockNode)", () => {
     describe("static IDs repeat once per iteration", () => {
-      test.todo("fails for a static ID in a single each block", () => {
+      test("fails for a static ID in a single each block", () => {
         expectError('Duplicate ID `item` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1144,7 +1161,27 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for a static ID in a map block", () => {
+      test("fails for a static ID in a times block", () => {
+        expectError('Duplicate ID `row` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% 3.times do |index| %>
+            <div id="row"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for a static ID in an upto block", () => {
+        expectError('Duplicate ID `row` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% 1.upto(5) do |index| %>
+            <div id="row"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for a static ID in a map block", () => {
         expectError('Duplicate ID `item` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1154,7 +1191,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for a static ID nested deep inside an each block", () => {
+      test("fails for a static ID nested deep inside an each block", () => {
         expectError('Duplicate ID `deep` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1166,7 +1203,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for an effectively-static ID in an each block", () => {
+      test("fails for an effectively-static ID in an each block", () => {
         expectError('Duplicate ID `item-` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1176,7 +1213,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for a static ID in an each block nested in an if branch", () => {
+      test("fails for a static ID in an each block nested in an if branch", () => {
         expectError('Duplicate ID `item` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1188,7 +1225,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for a static ID in nested each blocks", () => {
+      test("fails for a static ID in nested each blocks", () => {
         expectError('Duplicate ID `item` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1200,7 +1237,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("fails for a static ID in an each block inside a <template>", () => {
+      test("fails for a static ID in an each block inside a <template>", () => {
         expectError('Duplicate ID `item` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1214,7 +1251,7 @@ describe("html-no-duplicate-ids", () => {
     })
 
     describe("IDs that do not vary with the block argument", () => {
-      test.todo("fails for a dynamic ID that never references the block argument", () => {
+      test("fails for a dynamic ID that never references the block argument", () => {
         expectError('Duplicate ID `item-<%= unrelated.id %>` found. IDs must be unique within a document.')
 
         assertOffenses(dedent`
@@ -1232,6 +1269,72 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
+      test("passes for a dynamic ID referencing the implicit `it` parameter", () => {
+        expectNoOffenses(dedent`
+          <% items.each do %>
+            <div id="item-<%= it %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for a dynamic ID referencing a numbered block parameter", () => {
+        expectNoOffenses(dedent`
+          <% items.each do %>
+            <div id="item-<%= _1 %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for a dynamic ID referencing a destructured block argument", () => {
+        expectNoOffenses(dedent`
+          <% pairs.each do |(key, value)| %>
+            <div id="pair-<%= key %>-<%= value %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("passes for a dynamic ID referencing a splat block argument", () => {
+        expectNoOffenses(dedent`
+          <% rows.each do |*columns| %>
+            <div id="row-<%= columns.first %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails when the block argument name is only a prefix of the referenced name", () => {
+        expectError('Duplicate ID `item-<%= items_count %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% items.each do |item| %>
+            <div id="item-<%= items_count %>"></div>
+          <% end %>
+        `)
+      })
+
+      test("fails for an interpolated helper ID that never references the block argument", () => {
+        expectError('Duplicate ID `#{unrelated.name}-published` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% events.each do |event| %>
+            <%= link_to event["url"], id: "#{unrelated.name}-published" do %>
+              <div></div>
+            <% end %>
+          <% end %>
+        `)
+      })
+
+      test("fails for a dynamic ID referencing only the outer block argument", () => {
+        expectError('Duplicate ID `group-<%= group.id %>` found. IDs must be unique within a document.')
+
+        assertOffenses(dedent`
+          <% groups.each do |group| %>
+            <% group.items.each do |item| %>
+              <div id="group-<%= group.id %>"></div>
+            <% end %>
+          <% end %>
+        `)
+      })
+
       test("passes for a dynamic ID referencing a nested block argument", () => {
         expectNoOffenses(dedent`
           <% groups.each do |group| %>
@@ -1244,7 +1347,7 @@ describe("html-no-duplicate-ids", () => {
     })
 
     describe("regression guard: duplicates within one iteration", () => {
-      test.todo("still reports a duplicate dynamic ID within one each iteration", () => {
+      test("still reports a duplicate dynamic ID within one each iteration", () => {
         expectHint('Potential duplicate ID `item-<%= item.id %>` found within the same loop iteration. If this expression evaluates to the same value, IDs must be unique.')
 
         assertOffenses(dedent`
@@ -1255,7 +1358,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("still reports a duplicate dynamic ID within one each iteration inside a <template>", () => {
+      test("still reports a duplicate dynamic ID within one each iteration inside a <template>", () => {
         expectHint('Potential duplicate ID `item-<%= item.id %>` found within the same loop iteration. If this expression evaluates to the same value, IDs must be unique.')
 
         assertOffenses(dedent`
@@ -1268,7 +1371,7 @@ describe("html-no-duplicate-ids", () => {
         `)
       })
 
-      test.todo("keeps separate each blocks independent once they are loops", () => {
+      test("keeps separate each blocks independent once they are loops", () => {
         expectNoOffenses(dedent`
           <% first.each do |item| %>
             <div id="item-<%= item.id %>"></div>
