@@ -201,13 +201,8 @@ jobs:
         run: cargo build -p herb-linter --release --target wasm32-unknown-emscripten
         working-directory: rust
 
-      - name: Build the WASM backend
-        run: yarn build
-        working-directory: javascript/packages/node-wasm
-
-      - name: Build the linter
-        run: yarn build
-        working-directory: javascript/packages/linter
+      - name: Build the WASM backend and the linter
+        run: yarn nx run-many --target build --projects @herb-tools/node-wasm,@herb-tools/linter
 
       - name: Wait for the corpus clone
         wait: [corpus]
