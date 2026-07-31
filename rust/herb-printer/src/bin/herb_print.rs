@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use herb::ParserOptions;
 use herb_config::{Config, Tool};
 use herb_printer::IdentityPrinter;
+use rayon::prelude::*;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -23,6 +24,13 @@ struct CLIOptions {
   help: bool,
   glob: bool,
   force: bool,
+  verbose: bool,
+}
+
+enum Outcome {
+  ReadError(String),
+  PrintError(String),
+  Printed { matched: bool, bytes: usize },
 }
 
 fn main() {
@@ -79,36 +87,48 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
 
   println!("Processing {} files...\n", files.len());
 
-  for file in &files {
-    let input = match fs::read_to_string(file) {
-      Ok(input) => input,
-      Err(error) => {
+  let outcomes: Vec<Outcome> = files
+    .par_iter()
+    .map(|file| match fs::read_to_string(file) {
+      Err(error) => Outcome::ReadError(error.to_string()),
+      Ok(input) => match print_source(&input) {
+        Err(error) => Outcome::PrintError(error),
+        Ok(output) => Outcome::Printed {
+          matched: input == output,
+          bytes: input.len(),
+        },
+      },
+    })
+    .collect();
+
+  for (file, outcome) in files.iter().zip(&outcomes) {
+    match outcome {
+      Outcome::ReadError(error) => {
         eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Error{RESET} - {error}");
         failed_files += 1;
-        continue;
       }
-    };
 
-    match print_source(&input) {
-      Ok(output) => {
+      Outcome::PrintError(error) => {
+        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Failed{RESET} - {error}");
+        failed_files += 1;
+      }
+
+      Outcome::Printed { matched, bytes } => {
         total_files += 1;
-        total_bytes += input.len();
+        total_bytes += bytes;
 
         if options.verify {
-          if input == output {
-            println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Perfect match{RESET}");
+          if *matched {
+            if options.verbose {
+              println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Perfect match{RESET}");
+            }
           } else {
             eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Verification failed{RESET} - differences detected");
             verification_failures += 1;
           }
-        } else {
+        } else if options.verbose {
           println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Processed{RESET}");
         }
-      }
-
-      Err(error) => {
-        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Failed{RESET} - {error}");
-        failed_files += 1;
       }
     }
   }
@@ -228,7 +248,7 @@ fn print_source(input: &str) -> Result<String, String> {
 
   let parse_result = herb::parse_with_options(input, &options).map_err(|error| error.to_string())?;
 
-  if !parse_result.errors().is_empty() {
+  if !parse_result.recursive_errors().is_empty() {
     return Err("to parse".to_string());
   }
 
@@ -262,6 +282,7 @@ fn parse_args(args: Vec<String>) -> CLIOptions {
       "--stats" => options.stats = true,
       "--glob" => options.glob = true,
       "--force" => options.force = true,
+      "--verbose" => options.verbose = true,
       "-h" | "--help" => options.help = true,
 
       _ => {
@@ -297,6 +318,7 @@ Options:
   --stats                      Show parsing and printing statistics
   --glob                       Treat input as glob pattern
   --force                      Process files even if excluded by configuration
+  --verbose                    Print a line for every file, not just failures
   -h, --help                   Show this help message
 
 Examples:
