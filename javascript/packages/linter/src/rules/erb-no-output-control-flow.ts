@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-
-import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
+
+import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode, ERBIterationBlockNode, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
@@ -23,6 +23,29 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
   visitERBEndNode(node: ERBEndNode): void {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
+  }
+
+  visitERBIterationBlockNode(node: ERBIterationBlockNode): void {
+    this.checkOutputIterationBlock(node)
+    this.visitChildNodes(node)
+  }
+
+  private checkOutputIterationBlock(node: ERBIterationBlockNode): void {
+    const openTag = node.tag_opening
+
+    if (!openTag) return
+    if (openTag.value !== "<%=") return
+
+    const method = node.message?.value ?? "each"
+
+    const content = node.content?.value ?? " "
+    const tagClosing = node.tag_closing?.value ?? "%>"
+    const suggestion = `<%${content}${tagClosing}`.replace(/\s*\n\s*/g, " ")
+
+    this.addOffense(
+      `Iteration blocks like \`${method}\` should not be used with output tags, they return the collection instead of the rendered output. Use \`${suggestion}\` instead.`,
+      openTag.location,
+    )
   }
 
   private static readonly CONTROL_BLOCK_NAMES: Record<string, string> = {
@@ -57,6 +80,12 @@ export class ERBNoOutputControlFlowRule extends ParserRule {
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      iteration_nodes: true
     }
   }
 
