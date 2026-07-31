@@ -8,8 +8,8 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
-#include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/iteration_nodes.h"
+#include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
 #include "../include/analyze/ternary_conditionals.h"
@@ -1041,7 +1041,9 @@ void herb_analyze_parse_tree(
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 
   if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
-  if (options && options->iteration_nodes) { herb_visit_node((AST_NODE_T*) document, transform_iteration_nodes, &context); }
+  if (options && options->iteration_nodes) {
+    herb_visit_node((AST_NODE_T*) document, transform_iteration_nodes, &context);
+  }
 
   if (options && options->strict_locals) {
     herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
