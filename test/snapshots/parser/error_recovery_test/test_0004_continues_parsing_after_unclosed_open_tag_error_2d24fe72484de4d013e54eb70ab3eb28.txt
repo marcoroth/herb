@@ -62,7 +62,8 @@ input: "<a href=\"test\"<b>text</b></a>"
         │       │       └── tag_closing: ">" (location: (1:24)-(1:25))
         │       │
         │       ├── is_void: false
-        │       └── element_source: "HTML"
+        │       ├── element_source: "HTML"
+        │       └── escape_content: true
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:25)-(1:29))
@@ -72,4 +73,5 @@ input: "<a href=\"test\"<b>text</b></a>"
         │       └── tag_closing: ">" (location: (1:28)-(1:29))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

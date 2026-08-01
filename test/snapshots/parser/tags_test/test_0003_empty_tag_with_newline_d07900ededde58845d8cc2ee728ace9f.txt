@@ -28,4 +28,5 @@ input: |2-
         │       └── tag_closing: ">" (location: (2:6)-(2:7))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

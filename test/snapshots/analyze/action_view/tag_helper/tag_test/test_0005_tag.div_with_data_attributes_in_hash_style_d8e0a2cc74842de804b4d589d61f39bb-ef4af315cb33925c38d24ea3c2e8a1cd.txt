@@ -69,7 +69,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_closing: "%>" (location: (3:7)-(3:9))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (3:9)-(4:0))
         └── content: "\n"

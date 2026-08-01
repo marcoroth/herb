@@ -77,7 +77,8 @@ input: "<input :model=\"user\" :disabled=\"isDisabled\" :class=\"className\"></i
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLCloseTagNode (location: (1:63)-(1:71))
         ├── errors: (1 error)

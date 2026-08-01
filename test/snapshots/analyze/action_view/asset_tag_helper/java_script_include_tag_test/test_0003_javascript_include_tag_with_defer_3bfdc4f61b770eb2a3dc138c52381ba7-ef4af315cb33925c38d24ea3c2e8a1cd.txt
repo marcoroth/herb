@@ -53,7 +53,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_name: "script" (location: (1:4)-(1:26))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
+    │   ├── element_source: "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:56)-(2:0))
         └── content: "\n"

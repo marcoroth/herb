@@ -49,7 +49,8 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (3:12)-(3:13))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:13)-(4:0))
     │   │       └── content: "\n"
@@ -82,7 +83,8 @@ input: |2-
     │   │           │   │       └── tag_closing: ">" (location: (5:12)-(5:13))
     │   │           │   │
     │   │           │   ├── is_void: false
-    │   │           │   └── element_source: "HTML"
+    │   │           │   ├── element_source: "HTML"
+    │   │           │   └── escape_content: true
     │   │           │
     │   │           └── @ HTMLTextNode (location: (5:13)-(6:0))
     │   │               └── content: "\n"

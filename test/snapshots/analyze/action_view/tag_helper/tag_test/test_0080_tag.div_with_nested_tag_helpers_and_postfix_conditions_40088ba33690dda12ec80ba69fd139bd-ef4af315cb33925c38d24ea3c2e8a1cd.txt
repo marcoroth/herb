@@ -92,7 +92,8 @@ options: {action_view_helpers: true}
     │   │   │   │       │       └── tag_name: "div" (location: (2:10)-(2:13))
     │   │   │   │       │
     │   │   │   │       ├── is_void: false
-    │   │   │   │       └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │       ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │       └── escape_content: true
     │   │   │   │
     │   │   │   ├── subsequent: ∅
     │   │   │   └── end_node:
@@ -164,7 +165,8 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │       │       └── tag_name: "h3" (location: (5:12)-(5:14))
     │   │   │   │   │   │       │
     │   │   │   │   │   │       ├── is_void: false
-    │   │   │   │   │   │       └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │   │   │       ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │   │   │       └── escape_content: true
     │   │   │   │   │   │
     │   │   │   │   │   ├── subsequent: ∅
     │   │   │   │   │   └── end_node:
@@ -216,7 +218,8 @@ options: {action_view_helpers: true}
     │   │   │   │   │   │       └── tag_name: "p" (location: (6:12)-(6:13))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │   │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (6:49)-(7:2))
     │   │   │   │       └── content: "\n  "
@@ -228,7 +231,8 @@ options: {action_view_helpers: true}
     │   │   │   │       └── tag_closing: "%>" (location: (7:9)-(7:11))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (7:11)-(8:0))
     │   │       └── content: "\n"
@@ -240,7 +244,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_closing: "%>" (location: (8:7)-(8:9))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   ├── element_source: "ActionView::Helpers::TagHelper#tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (8:9)-(9:0))
         └── content: "\n"

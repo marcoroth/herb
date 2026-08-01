@@ -79,7 +79,8 @@ options: {action_view_helpers: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "ActionView::Helpers::AssetTagHelper#image_tag"
+    │   ├── element_source: "ActionView::Helpers::AssetTagHelper#image_tag"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:42)-(2:0))
         └── content: "\n"

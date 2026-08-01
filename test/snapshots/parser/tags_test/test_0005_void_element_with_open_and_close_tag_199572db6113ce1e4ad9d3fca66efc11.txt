@@ -17,7 +17,8 @@ input: "<br></br>"
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLCloseTagNode (location: (1:4)-(1:9))
         ├── errors: (1 error)

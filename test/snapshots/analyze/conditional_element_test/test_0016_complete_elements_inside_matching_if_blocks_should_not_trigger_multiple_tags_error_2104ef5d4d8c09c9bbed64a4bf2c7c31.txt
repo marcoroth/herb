@@ -62,7 +62,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (3:17)-(3:18))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (3:18)-(4:4))
     │   │   │   │   │   └── content: "\n    "
@@ -89,7 +90,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (4:21)-(4:22))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (4:22)-(5:2))
     │   │   │   │       └── content: "\n  "
@@ -102,7 +104,8 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (5:7)-(5:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (5:8)-(6:0))
     │   │       └── content: "\n"
@@ -163,7 +166,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (10:17)-(10:18))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (10:18)-(11:4))
     │   │   │   │   │   └── content: "\n    "
@@ -190,7 +194,8 @@ input: |2-
     │   │   │   │   │   │       └── tag_closing: ">" (location: (11:21)-(11:22))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── element_source: "HTML"
+    │   │   │   │   │   ├── element_source: "HTML"
+    │   │   │   │   │   └── escape_content: true
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (11:22)-(12:2))
     │   │   │   │       └── content: "\n  "
@@ -203,7 +208,8 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (12:7)-(12:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (12:8)-(13:0))
     │   │       └── content: "\n"

@@ -83,4 +83,5 @@ input: "<div id=\"app\" :class=\"dynamicClass\" data-test=\"static\"></div>"
         │       └── tag_closing: ">" (location: (1:60)-(1:61))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

@@ -54,7 +54,8 @@ input: |2-
     │   │           │   │       └── tag_closing: ">" (location: (3:15)-(3:16))
     │   │           │   │
     │   │           │   ├── is_void: false
-    │   │           │   └── element_source: "HTML"
+    │   │           │   ├── element_source: "HTML"
+    │   │           │   └── escape_content: true
     │   │           │
     │   │           └── @ HTMLTextNode (location: (3:16)-(4:0))
     │   │               └── content: "\n"
@@ -99,7 +100,8 @@ input: |2-
     │   │           │   │   │   │       └── tag_closing: ">" (location: (6:29)-(6:30))
     │   │           │   │   │   │
     │   │           │   │   │   ├── is_void: false
-    │   │           │   │   │   └── element_source: "HTML"
+    │   │           │   │   │   ├── element_source: "HTML"
+    │   │           │   │   │   └── escape_content: true
     │   │           │   │   │
     │   │           │   │   └── @ HTMLTextNode (location: (6:30)-(7:2))
     │   │           │   │       └── content: "\n  "
@@ -135,7 +137,8 @@ input: |2-
     │   │           │   │       │   │   │       └── tag_closing: ">" (location: (8:25)-(8:26))
     │   │           │   │       │   │   │
     │   │           │   │       │   │   ├── is_void: false
-    │   │           │   │       │   │   └── element_source: "HTML"
+    │   │           │   │       │   │   ├── element_source: "HTML"
+    │   │           │   │       │   │   └── escape_content: true
     │   │           │   │       │   │
     │   │           │   │       │   └── @ HTMLTextNode (location: (8:26)-(9:2))
     │   │           │   │       │       └── content: "\n  "

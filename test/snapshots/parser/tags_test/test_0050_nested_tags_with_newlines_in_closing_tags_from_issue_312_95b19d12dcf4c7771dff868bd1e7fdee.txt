@@ -130,7 +130,8 @@ input: |2-
     │   │   │   │       └── tag_closing: ">" (location: (9:2)-(9:3))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (9:3)-(10:0))
     │   │       └── content: "\n"
@@ -143,7 +144,8 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (10:5)-(10:6))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (10:6)-(11:0))
         └── content: "\n"

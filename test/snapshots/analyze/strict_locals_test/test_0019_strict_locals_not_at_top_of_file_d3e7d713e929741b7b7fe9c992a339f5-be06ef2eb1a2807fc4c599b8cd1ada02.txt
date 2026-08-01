@@ -76,7 +76,8 @@ options: {strict_locals: true}
     │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (4:6)-(5:0))
         └── content: "\n"

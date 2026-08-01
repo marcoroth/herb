@@ -43,4 +43,5 @@ input: "<iframe srcdoc='<base target=\"foo\">'></iframe>"
         │       └── tag_closing: ">" (location: (1:45)-(1:46))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

@@ -65,7 +65,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_name: "a" (location: (1:4)-(1:11))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │   ├── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:56)-(2:0))
         └── content: "\n"

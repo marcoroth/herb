@@ -46,7 +46,8 @@ input: "<Dialog.Button></Dialog.Button>"
     │   │       └── tag_closing: ∅
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:23)-(1:31))
         └── content: ".Button>"

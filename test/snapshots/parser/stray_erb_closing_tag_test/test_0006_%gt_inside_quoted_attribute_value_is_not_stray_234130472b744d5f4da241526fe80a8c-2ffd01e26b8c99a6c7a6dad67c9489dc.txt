@@ -48,7 +48,8 @@ options: {strict: false}
     │   │       └── tag_closing: ">" (location: (1:34)-(1:35))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:35)-(2:0))
         └── content: "\n"

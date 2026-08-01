@@ -23,7 +23,8 @@ input: "<div></div></div>"
     │   │       └── tag_closing: ">" (location: (1:10)-(1:11))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLCloseTagNode (location: (1:11)-(1:17))
         ├── errors: (1 error)

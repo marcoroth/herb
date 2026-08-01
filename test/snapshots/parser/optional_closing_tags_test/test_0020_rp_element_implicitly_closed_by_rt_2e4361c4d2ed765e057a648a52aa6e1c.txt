@@ -46,7 +46,8 @@ input: |2-
     │   │   │   │       └── tag_name: "rp" (location: (2:4)-(2:6))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLElementNode (location: (2:8)-(3:0))
     │   │       ├── errors: (1 error)
@@ -73,7 +74,8 @@ input: |2-
     │   │       │       └── tag_name: "rt" (location: (2:9)-(2:11))
     │   │       │
     │   │       ├── is_void: false
-    │   │       └── element_source: "HTML"
+    │   │       ├── element_source: "HTML"
+    │   │       └── escape_content: true
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:7))
@@ -83,7 +85,8 @@ input: |2-
     │   │       └── tag_closing: ">" (location: (3:6)-(3:7))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (3:7)-(4:0))
         └── content: "\n"

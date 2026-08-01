@@ -59,7 +59,8 @@ options: {action_view_helpers: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:69)-(2:0))
         └── content: "\n"

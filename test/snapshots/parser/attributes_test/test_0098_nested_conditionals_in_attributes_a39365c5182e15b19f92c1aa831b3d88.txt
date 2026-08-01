@@ -79,4 +79,5 @@ input: "<div <% if outer? %><% if inner? %>data-inner<% else %>data-outer<% end 
         │       └── tag_closing: ">" (location: (1:89)-(1:90))
         │
         ├── is_void: false
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

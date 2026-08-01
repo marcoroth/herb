@@ -85,7 +85,8 @@ options: {transform_conditionals: true}
     │   │       └── tag_closing: ">" (location: (1:76)-(1:77))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:77)-(2:0))
         └── content: "\n"

@@ -37,4 +37,5 @@ input: "<meta content=\"a=b=c=d\">"
         ├── body: []
         ├── close_tag: ∅
         ├── is_void: true
-        └── element_source: "HTML"
+        ├── element_source: "HTML"
+        └── escape_content: true

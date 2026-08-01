@@ -68,7 +68,8 @@ options: {action_view_helpers: true}
     │   │   │   │       └── tag_closing: ">" (location: (2:38)-(2:39))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── element_source: "HTML"
+    │   │   │   ├── element_source: "HTML"
+    │   │   │   └── escape_content: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:39)-(3:0))
     │   │       └── content: "\n"
@@ -80,7 +81,8 @@ options: {action_view_helpers: true}
     │   │       └── tag_closing: "%>" (location: (3:7)-(3:9))
     │   │
     │   ├── is_void: false
-    │   └── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │   ├── element_source: "ActionView::Helpers::UrlHelper#link_to"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (3:9)-(4:0))
         └── content: "\n"

@@ -36,7 +36,8 @@ options: {track_whitespace: true}
     │   ├── body: []
     │   ├── close_tag: ∅
     │   ├── is_void: true
-    │   └── element_source: "HTML"
+    │   ├── element_source: "HTML"
+    │   └── escape_content: true
     │
     └── @ HTMLTextNode (location: (1:23)-(2:0))
         └── content: "\n"
