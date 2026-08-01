@@ -1,5 +1,5 @@
-import { Visitor } from "@herb-tools/core"
-import type { ERBContentNode, ParseResult } from "@herb-tools/core"
+import { Visitor, isERBEscapedNode } from "@herb-tools/core"
+import type { ERBNode, ParseResult } from "@herb-tools/core"
 
 export const isScaffoldTemplate = (result: ParseResult): boolean => {
   const detector = new ScaffoldTemplateDetector()
@@ -17,17 +17,9 @@ export const isScaffoldTemplate = (result: ParseResult): boolean => {
 export class ScaffoldTemplateDetector extends Visitor {
   public hasEscapedERB = false
 
-  visitERBContentNode(node: ERBContentNode): void {
-    const opening = node.tag_opening?.value
-
-    if (opening && opening.startsWith("<%%")) {
+  visitERBNode(node: ERBNode): void {
+    if (isERBEscapedNode(node)) {
       this.hasEscapedERB = true
-
-      return
     }
-
-    if (this.hasEscapedERB) return
-
-    this.visitChildNodes(node)
   }
 }

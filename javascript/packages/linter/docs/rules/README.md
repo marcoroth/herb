@@ -18,6 +18,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
@@ -30,6 +31,7 @@ This page contains documentation for all Herb Linter rules.
 
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
+- [`erb-no-commented-out-output-tags`](./erb-no-commented-out-output-tags.md) - Disallow commented-out ERB output tags (`<%#=`, `<%# =`)
 - [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-conditional-open-tag`](./erb-no-conditional-open-tag.md) - Disallow conditional HTML open tags

@@ -66,10 +66,18 @@ You can use the language server in any editor that supports the [Language Server
 npm install -g @herb-tools/language-server
 ```
 
-###### Yarn (Global)
+###### Yarn 1 (Global)
 
 ```bash
 yarn global add @herb-tools/language-server
+```
+
+###### Yarn 4
+
+Yarn 4 removed global installs, use `yarn dlx` as the server command instead:
+
+```bash
+yarn dlx -q @herb-tools/language-server --stdio
 ```
 
 ##### Preview Releases

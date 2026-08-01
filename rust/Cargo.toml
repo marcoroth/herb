@@ -1,12 +1,13 @@
 [workspace]
 members = [
   ".",
-  "herb-config"
+  "herb-config",
+  "herb-printer"
 ]
 
 [package]
 name = "herb"
-version = "0.10.1"
+version = "0.10.3"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
@@ -34,7 +35,6 @@ name = "herb-rust"
 path = "src/main.rs"
 
 [dependencies]
-libc = "0.2"
 colored = "3"
 
 [dev-dependencies]

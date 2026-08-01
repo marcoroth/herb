@@ -1,0 +1,22 @@
+---
+source: "Analyze::BlockTest#test_0053_closed do/end block with yield in single tag"
+input: |2-
+<%
+  meth do
+    yield
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBYieldNode (location: (1:0)-(5:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     meth do
+    │       yield
+    │     end
+    │   " (location: (1:2)-(5:0))
+    │   └── tag_closing: "%>" (location: (5:0)-(5:2))
+    │
+    └── @ HTMLTextNode (location: (5:2)-(6:0))
+        └── content: "\n"

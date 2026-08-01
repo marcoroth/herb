@@ -171,14 +171,7 @@ describe("Quote normalization", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(dedent`
-        <input
-          type="checkbox"
-          checked
-          disabled
-          readonly
-        />
-      `)
+      expect(result).toBe(`<input type="checkbox" checked disabled readonly />`)
     })
 
     test("handles data attributes with complex JSON", () => {

@@ -1,7 +1,6 @@
 import {
   Visitor,
   Location,
-  Position,
   hasERBOutput,
   isEffectivelyStatic,
   getValidatableStaticContent,
@@ -13,6 +12,7 @@ import {
   getAttributeValue,
   getTagLocalName,
   forEachAttribute,
+  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
@@ -150,6 +150,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
 
   visitERBBlockNode(node: Nodes.ERBBlockNode): void {
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
+  }
+
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBIterationBlockNode(node))
   }
 
   visitERBElseNode(node: Nodes.ERBElseNode): void {
@@ -963,40 +967,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a start offset, and a length.
- */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {

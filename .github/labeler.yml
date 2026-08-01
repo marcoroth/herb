@@ -162,6 +162,7 @@ printer:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/printer/**/*'
+      - '**/rust/herb-printer/**/*'
 
 highlighter:
   - changed-files:
@@ -202,6 +203,7 @@ config:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/config/**/*'
+      - '**/rust/herb-config/**/*'
 
 tailwind-class-sorter:
   - changed-files:

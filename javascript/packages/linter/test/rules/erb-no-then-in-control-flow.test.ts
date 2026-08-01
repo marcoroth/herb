@@ -157,4 +157,16 @@ describe("ERBNoThenInControlFlowRule", () => {
       `)
     })
   })
+
+  describe("escaped ERB tags", () => {
+    test("reports then in escaped if", () => {
+      expectWarning("Avoid using `then` in `if` expressions inside ERB templates. Use the multiline block form instead.")
+
+      assertOffenses(dedent`
+        <%% if condition then %>
+          yes
+        <%% end %>
+      `)
+    })
+  })
 })

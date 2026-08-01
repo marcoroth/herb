@@ -95,6 +95,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.strict_locals = (strictLocals == JNI_TRUE);
     }
 
+    jmethodID getIterationNodes =
+        (*env)->GetMethodID(env, optionsClass, "isIterationNodes", "()Z");
+
+    if (getIterationNodes != NULL) {
+      jboolean iterationNodes = (*env)->CallBooleanMethod(env, options, getIterationNodes);
+      parser_options.iteration_nodes = (iterationNodes == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 

@@ -158,6 +158,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
     if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
 
+    VALUE iteration_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("iteration_nodes"));
+    if (NIL_P(iteration_nodes)) { iteration_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("iteration_nodes"))); }
+    if (!NIL_P(iteration_nodes) && RTEST(iteration_nodes)) { parser_options.iteration_nodes = true; }
+
     VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
     if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
     if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
