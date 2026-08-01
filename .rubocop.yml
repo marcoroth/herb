@@ -117,6 +117,7 @@ Metrics/ClassLength:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
+    - lib/herb/configuration/mutation.rb
     - lib/herb/dev/runner.rb
     - lib/herb/dev/server.rb
     - lib/herb/engine.rb

@@ -8,7 +8,9 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :file_timeout
+  CONFIG_SUBCOMMANDS = ["set", "unset", "add", "remove", "enable", "disable", "exclude", "include"].freeze
+
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :rule, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :file_timeout
 
   def initialize(args)
     @args = args
@@ -97,6 +99,14 @@ class Herb::CLI
         bundle exec herb analyze [path]             Analyze a project by passing a directory to the root of the project.
         bundle exec herb report [file]              Generate a Markdown bug report for a file.
         bundle exec herb config [path]              Show configuration and file patterns for a project.
+        bundle exec herb config set [key] [value]   Set a configuration value.
+        bundle exec herb config unset [key]         Remove a configuration value.
+        bundle exec herb config add [key] [value]   Add a value to a configuration list.
+        bundle exec herb config remove [key] [val]  Remove a value from a configuration list.
+        bundle exec herb config enable [target]     Enable a tool, linter rule or rewriter.
+        bundle exec herb config disable [target]    Disable a tool, linter rule or rewriter.
+        bundle exec herb config exclude [path]      Exclude a path (use --tool/--rule to scope it).
+        bundle exec herb config include [path]      Include a path (use --tool/--rule to scope it).
         bundle exec herb ruby [file]                Extract Ruby from a file.
         bundle exec herb html [file]                Extract HTML from a file.
         bundle exec herb diff [old] [new]           Diff two files and show the minimal set of AST differences.
@@ -164,7 +174,7 @@ class Herb::CLI
                   generate_report
                   exit(0)
                 when "config"
-                  show_config
+                  run_config
                   exit(0)
                 when "parse"
                   Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats, action_view_helpers: action_view_helpers || false)
@@ -334,8 +344,12 @@ class Herb::CLI
         self.optimize = true
       end
 
-      parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
+      parser.on("--tool TOOL", "Scope to a specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
+      end
+
+      parser.on("--rule RULE", "Scope to a specific linter rule (for config include/exclude)") do |r|
+        self.rule = r
       end
 
       parser.on("--arena-stats", "Print arena memory statistics (for lex/parse/analyze commands)") do
@@ -833,6 +847,16 @@ class Herb::CLI
     end
   end
 
+  def run_config
+    subcommand = @args[1]
+
+    if CONFIG_SUBCOMMANDS.include?(subcommand)
+      mutate_config(subcommand)
+    else
+      show_config
+    end
+  end
+
   def show_config
     path = @file || "."
     config = Herb::Configuration.load(path)
@@ -842,6 +866,153 @@ class Herb::CLI
     else
       show_general_config(config, path)
     end
+  end
+
+  def mutate_config(subcommand)
+    config = Herb::Configuration.load(".")
+    config_path = config.config_path
+
+    unless config_path
+      puts red("No #{Herb::Configuration::CONFIG_FILENAMES.first} found.")
+      puts
+      puts "Create one first:"
+      puts "  #{bold("bundle exec herb lint --init")}"
+
+      exit(1)
+    end
+
+    mutation = Herb::Configuration::Mutation.new(File.read(config_path))
+    described = send(:"config_#{subcommand}", mutation, config)
+
+    contents = mutation.to_yaml
+
+    if contents == File.read(config_path)
+      puts "#{yellow("=")} No change: #{described}"
+      exit(0)
+    end
+
+    mutation.save!(config_path)
+
+    puts "#{green("✓")} #{described} in #{cyan(relative_config_path(config_path))}"
+  rescue Herb::Configuration::Mutation::Error, Herb::Configuration::Target::UnknownTargetError => e
+    puts red(e.message)
+    exit(1)
+  end
+
+  def config_set(mutation, _config)
+    key, value = config_args(2, "set", "<key> <value>")
+
+    mutation.set(key, coerce_config_value(value))
+
+    "Set #{bold(key)} to #{bold(value)}"
+  end
+
+  def config_unset(mutation, _config)
+    key, = config_args(1, "unset", "<key>")
+
+    mutation.unset(key)
+
+    "Removed #{bold(key)}"
+  end
+
+  def config_add(mutation, _config)
+    key, value = config_args(2, "add", "<key> <value>")
+
+    mutation.append(key, value)
+
+    "Added #{bold(value)} to #{bold(key)}"
+  end
+
+  def config_remove(mutation, _config)
+    key, value = config_args(2, "remove", "<key> <value>")
+
+    mutation.remove(key, value)
+
+    "Removed #{bold(value)} from #{bold(key)}"
+  end
+
+  def config_enable(mutation, config)
+    config_toggle(mutation, config, true)
+  end
+
+  def config_disable(mutation, config)
+    config_toggle(mutation, config, false)
+  end
+
+  # Enabling a rewriter also enables the formatter: the formatter is off by
+  # default, so adding a rewriter on its own would silently do nothing.
+  def config_toggle(mutation, _config, enabled)
+    target, = config_args(1, enabled ? "enable" : "disable", "<target>")
+
+    if Herb::Configuration::Target.rewriter?(target)
+      path = Herb::Configuration::Target.rewriter_path(target)
+
+      if enabled
+        mutation.set("formatter.enabled", true)
+        mutation.append(path, target)
+
+        return "Enabled #{bold(target)} and the formatter"
+      end
+
+      mutation.remove(path, target)
+
+      return "Disabled #{bold(target)}"
+    end
+
+    path = Herb::Configuration::Target.toggle_path(target)
+    mutation.set(path, enabled)
+
+    "#{enabled ? "Enabled" : "Disabled"} #{bold(target)}"
+  end
+
+  def config_exclude(mutation, config)
+    config_pattern(mutation, config, "exclude")
+  end
+
+  def config_include(mutation, config)
+    config_pattern(mutation, config, "include")
+  end
+
+  def config_pattern(mutation, config, kind)
+    pattern, = config_args(1, kind, "<path>")
+
+    root = config.project_root&.to_s
+    normalized = Herb::Configuration::Target.normalize_pattern(pattern, root: root)
+    path = Herb::Configuration::Target.pattern_path(kind, tool: tool&.to_s, rule: rule)
+
+    mutation.append(path, normalized)
+
+    "Added #{bold(normalized)} to #{bold(path)}"
+  end
+
+  def config_args(count, subcommand, usage)
+    values = @args[2, count] || []
+
+    if values.compact.length < count
+      puts red("Missing arguments for `herb config #{subcommand}`.")
+      puts
+      puts "Usage:"
+      puts "  bundle exec herb config #{subcommand} #{usage}"
+
+      exit(1)
+    end
+
+    values
+  end
+
+  # Without a schema to consult, values are coerced by shape. Anything that isn't
+  # a boolean or an integer is written as a string.
+  def coerce_config_value(value)
+    case value
+    when "true" then true
+    when "false" then false
+    when /\A-?\d+\z/ then Integer(value)
+    else value
+    end
+  end
+
+  def relative_config_path(config_path)
+    config_path.to_s.sub("#{Dir.pwd}/", "")
   end
 
   def show_general_config(config, path)
