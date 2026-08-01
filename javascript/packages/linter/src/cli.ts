@@ -137,6 +137,10 @@ export class CLI {
     // Hook for subclasses to add custom output before processing
   }
 
+  protected additionalRuleNames(): string[] {
+    return []
+  }
+
   protected async afterProcess(_results: any, _outputOptions: any): Promise<void> {
     // Hook for subclasses to add custom output after processing
   }
@@ -147,7 +151,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -374,6 +378,20 @@ export class CLI {
         console.log()
       }
 
+      if (only) {
+        const unknownRules = await this.fileProcessor.findUnknownRules(only, { projectPath: this.projectPath, loadCustomRules }, formatOption, this.additionalRuleNames())
+
+        if (unknownRules.length > 0) {
+          const messages = unknownRules.map(({ name, suggestion }) => {
+            const suggestionText = suggestion ? ` Did you mean ${colorize(suggestion, "cyan")}?` : ""
+
+            return `✗ Unknown rule ${colorize(name, "cyan")} passed to --only.${suggestionText}`
+          })
+
+          this.exitWithError(messages.join("\n"), formatOption)
+        }
+      }
+
       let files: string[]
       const explicitFiles: string[] = []
 
@@ -437,7 +455,9 @@ export class CLI {
         config: processingConfig,
         hasConfigFile,
         loadCustomRules,
-        jobs
+        jobs,
+        only,
+        allRules
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)

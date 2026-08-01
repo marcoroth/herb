@@ -42,7 +42,7 @@ export default [
     },
     external: isExternal,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ exportConditions: ["node"] }),
       commonjs(),
       json(),
       typescript({

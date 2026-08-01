@@ -33,13 +33,13 @@ export class OutputManager {
     const autofixableCount = allOffenses.filter(offense => offense.autocorrectable).length
 
     if (options.useGitHubActions) {
-      const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines)
+      const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines, context?.projectPath)
       await githubFormatter.formatAnnotations(allOffenses)
 
       if (options.formatOption !== "json") {
         const regularFormatter = options.formatOption === "simple"
           ? new SimpleFormatter()
-          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
+          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
 
         await regularFormatter.format(allOffenses, files.length === 1)
 
@@ -67,6 +67,8 @@ export class OutputManager {
           configPath: context?.config?.path,
           hasConfigFile: context?.hasConfigFile,
           toolVersion: options.toolVersion,
+          only: context?.only,
+          allRules: context?.allRules,
         })
       }
     } else if (options.formatOption === "json") {
@@ -106,7 +108,7 @@ export class OutputManager {
     } else {
       const formatter = options.formatOption === "simple"
         ? new SimpleFormatter()
-        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
+        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
 
       await formatter.format(allOffenses, files.length === 1)
 
@@ -134,6 +136,8 @@ export class OutputManager {
         configPath: context?.config?.path,
         hasConfigFile: context?.hasConfigFile,
         toolVersion: options.toolVersion,
+        only: context?.only,
+        allRules: context?.allRules,
       })
     }
   }

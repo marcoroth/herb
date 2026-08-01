@@ -152,6 +152,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }

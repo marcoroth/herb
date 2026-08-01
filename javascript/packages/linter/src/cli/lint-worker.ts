@@ -18,12 +18,13 @@ export interface WorkerInput {
   fixUnsafe: boolean
   ignoreDisableComments: boolean
   loadCustomRules: boolean
+  only?: string[]
+  allRules: boolean
 }
 
 export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
-  content: string
   autocorrectable: boolean
 }
 
@@ -65,7 +66,7 @@ async function run() {
     }
   }
 
-  const linter = Linter.from(Herb, config, customRules)
+  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -94,7 +95,7 @@ async function run() {
 
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
-    let content = readFileSync(filePath, "utf-8")
+    const content = readFileSync(filePath, "utf-8")
 
     const lintResult = linter.lint(content, {
       fileName: filename,
@@ -113,13 +114,10 @@ async function run() {
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
 
-      content = autofixResult.source
-
       for (const offense of autofixResult.unfixed) {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 
@@ -141,7 +139,6 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 

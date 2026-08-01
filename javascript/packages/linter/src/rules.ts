@@ -10,6 +10,7 @@ import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribut
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
@@ -19,6 +20,7 @@ import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
 import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
@@ -119,6 +121,7 @@ export const rules: RuleClass[] = [
   A11yNoRedundantImageAltRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoHelperShadowingRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoUnnecessaryTagAttributesRule,
@@ -128,6 +131,7 @@ export const rules: RuleClass[] = [
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoCommentedOutOutputTagsRule,
   ERBNoDebugOutputRule,
   ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,

@@ -131,6 +131,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         parser_options.render_nodes = render_nodes_value;
       }
 
+      napi_value iteration_nodes_prop;
+      bool has_iteration_nodes_prop;
+      napi_has_named_property(env, args[1], "iteration_nodes", &has_iteration_nodes_prop);
+
+      if (has_iteration_nodes_prop) {
+        napi_get_named_property(env, args[1], "iteration_nodes", &iteration_nodes_prop);
+        bool iteration_nodes_value;
+        napi_get_value_bool(env, iteration_nodes_prop, &iteration_nodes_value);
+        parser_options.iteration_nodes = iteration_nodes_value;
+      }
+
       napi_value strict_locals_prop;
       bool has_strict_locals_prop;
       napi_has_named_property(env, args[1], "strict_locals", &has_strict_locals_prop);

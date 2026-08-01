@@ -7,6 +7,8 @@ import {
   isERBControlFlowNode,
   hasERBContent,
   hasERBOutput,
+  isDynamicOutputNode,
+  hasDynamicOutput,
   filterERBContentNodes,
   getStaticStringFromNodes,
   getStaticContentFromNodes,
@@ -22,7 +24,7 @@ import {
   HTMLAttributeNameNode
 } from "../src"
 
-import type { Node, LiteralNode, ERBContentNode } from "../src/nodes.js"
+import type { Node, LiteralNode, ERBContentNode, RubyLiteralNode } from "../src/nodes.js"
 
 describe("ast-utils", () => {
   const createLiteralNode = (content: string): LiteralNode => ({
@@ -36,6 +38,12 @@ describe("ast-utils", () => {
     tag_opening: { type: "AST_TOKEN", value: tagOpening, location: Location.from(1, 1, 1, 1) },
     content: content ? { type: "AST_TOKEN", value: content, location: Location.from(1, 1, 1, 1) } : undefined,
     tag_closing: { type: "AST_TOKEN", value: tagClosing, location: Location.from(1, 1, 1, 1) },
+    location: Location.from(1, 1, 1, 1)
+  })
+
+  const createRubyLiteralNode = (content: string): RubyLiteralNode => ({
+    type: "AST_RUBY_LITERAL_NODE",
+    content,
     location: Location.from(1, 1, 1, 1)
   })
 
@@ -178,6 +186,60 @@ describe("ast-utils", () => {
       const nodes = [createLiteralNode("hello"), createLiteralNode(" world")]
 
       expect(hasERBOutput(nodes)).toBe(false)
+    })
+
+    test("returns false for Ruby literals from Action View helper attributes", () => {
+      const nodes = [createRubyLiteralNode("user.name"), createLiteralNode("-pending")]
+
+      expect(hasERBOutput(nodes)).toBe(false)
+    })
+  })
+
+  describe("isDynamicOutputNode", () => {
+    test("returns true for output ERB nodes", () => {
+      expect(isDynamicOutputNode(createERBContentNode("<%=", "name"))).toBe(true)
+    })
+
+    test("returns true for Ruby literal nodes", () => {
+      expect(isDynamicOutputNode(createRubyLiteralNode("user.name"))).toBe(true)
+    })
+
+    test("returns false for control ERB nodes", () => {
+      expect(isDynamicOutputNode(createERBContentNode("<%", "if condition"))).toBe(false)
+    })
+
+    test("returns false for literal nodes", () => {
+      expect(isDynamicOutputNode(createLiteralNode("hello"))).toBe(false)
+    })
+  })
+
+  describe("hasDynamicOutput", () => {
+    test("returns true when array contains output ERB nodes", () => {
+      const nodes = [createLiteralNode("hello"), createERBContentNode("<%=", "name")]
+
+      expect(hasDynamicOutput(nodes)).toBe(true)
+    })
+
+    test("returns true when array contains Ruby literal nodes", () => {
+      const nodes = [createRubyLiteralNode("user.name"), createLiteralNode("-pending")]
+
+      expect(hasDynamicOutput(nodes)).toBe(true)
+    })
+
+    test("returns false when array contains only control ERB", () => {
+      const nodes = [createLiteralNode("hello"), createERBContentNode("<%", "if condition")]
+
+      expect(hasDynamicOutput(nodes)).toBe(false)
+    })
+
+    test("returns false when array contains only literals", () => {
+      const nodes = [createLiteralNode("hello"), createLiteralNode(" world")]
+
+      expect(hasDynamicOutput(nodes)).toBe(false)
+    })
+
+    test("returns false for empty array", () => {
+      expect(hasDynamicOutput([])).toBe(false)
     })
   })
 

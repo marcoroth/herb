@@ -20,8 +20,12 @@ npm install -g @herb-tools/linter
 pnpm add -g @herb-tools/linter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/linter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/linter template.html.erb
 ```
 
 ```shell [bun]
@@ -214,6 +218,61 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
+**Running Specific Rules:** <Badge type="info" text="^0.10.3" />
+
+Only run a single rule:
+```bash
+npx @herb-tools/linter --only html-img-require-alt
+```
+
+Only run multiple rules (comma-separated):
+```bash
+npx @herb-tools/linter --only html-img-require-alt,html-tag-name-lowercase
+```
+
+The flag can also be passed multiple times:
+```bash
+npx @herb-tools/linter --only html-img-require-alt --only html-tag-name-lowercase
+```
+
+Combine it with `--fix` to only autocorrect a specific rule:
+```bash
+npx @herb-tools/linter --fix --only html-tag-name-lowercase
+```
+
+The `--only` option runs exactly the given rules and ignores the rule configuration in `.herb.yml`. This means rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for rolling out a single rule across a codebase, or for checking what a rule would report before enabling it in `.herb.yml`.
+
+Everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Passing an unknown rule name exits with an error, so typos won't silently lint nothing.
+
+**Running Every Rule:** <Badge type="info" text="^0.10.3" />
+
+Run every available rule, regardless of how it is configured:
+```bash
+npx @herb-tools/linter --all-rules
+```
+
+`--all-rules` is the counterpart to `--only`: instead of narrowing the run down to a set of rules, it widens it to all of them. The same parts of the rule configuration in `.herb.yml` are ignored, so rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for seeing everything Herb could report about a codebase, without changing `.herb.yml` first.
+
+Just like with `--only`, everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
+
 **Autofix:**
 
 Automatically fix auto-correctable offenses:
@@ -267,7 +326,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -282,7 +341,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]

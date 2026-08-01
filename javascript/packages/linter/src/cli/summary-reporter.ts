@@ -1,5 +1,5 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
-import { UNRELEASED_VERSION, compareSemver } from "../semver.js"
+import { UNRELEASED_VERSION, compareSemver } from "@herb-tools/core"
 
 import { ruleDocumentationUrl } from "../urls.js"
 
@@ -28,6 +28,8 @@ export interface SummaryData {
   configPath?: string
   hasConfigFile?: boolean
   toolVersion?: string
+  only?: string[]
+  allRules?: boolean
 }
 
 export class SummaryReporter {
@@ -130,6 +132,8 @@ export class SummaryReporter {
     const skippedCount = data.rulesSkippedByVersion?.length ?? 0
     const rulesParts = [colorize(colorize(`${ruleCount} enabled`, "green"), "bold")]
 
+    if (data.only && data.only.length > 0) rulesParts.push(colorize(`filtered by --only`, "cyan"))
+    if (data.allRules) rulesParts.push(colorize(`all rules via --all-rules`, "cyan"))
     if (notEnabledCount > 0) rulesParts.push(colorize(`${notEnabledCount} not enabled`, "cyan"))
     if (disabledCount > 0) rulesParts.push(colorize(`${disabledCount} disabled`, "yellow"))
     if (skippedCount > 0) rulesParts.push(colorize(`${skippedCount} skipped (version)`, "gray"))

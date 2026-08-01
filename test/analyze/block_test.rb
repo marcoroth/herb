@@ -462,5 +462,21 @@ module Analyze
         %>
       HTML
     end
+
+    test "block with destructured block arguments" do
+      assert_parsed_snapshot(<<~HTML)
+        <% @pairs.each do |(key, value)| %>
+          <%= key %>: <%= value %>
+        <% end %>
+      HTML
+    end
+
+    test "block with post-rest block argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% @rows.each do |first, *middle, last| %>
+          <%= first %><%= middle %><%= last %>
+        <% end %>
+      HTML
+    end
   end
 end

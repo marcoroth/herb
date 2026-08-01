@@ -7,6 +7,7 @@ import {
   endsWithWhitespace,
   hasWhitespaceBetween,
   isInlineElement,
+  isMultilineERBComment,
   normalizeAndSplitWords,
   startsWithWhitespace,
 } from "./format-helpers.js"
@@ -20,7 +21,7 @@ import {
  * keeps the existing block layout for free-standing control flow.
  */
 export function isTextFlowNode(node: Node, children?: Node[], index?: number): boolean {
-  if (isNode(node, ERBContentNode)) return true
+  if (isNode(node, ERBContentNode)) return !isMultilineERBComment(node)
   if (isNode(node, HTMLTextNode) && node.content.trim() !== "") return true
   if (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) return true
 
