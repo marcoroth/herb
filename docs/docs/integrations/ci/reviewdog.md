@@ -10,6 +10,7 @@ The linter's `--format=simple` output is human-oriented (file on one line, then 
 
 ## GitHub Actions
 
+::: v-pre
 ```yaml [.github/workflows/herb-reviewdog.yml]
 name: Herb (reviewdog)
 
@@ -35,32 +36,48 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx --yes @herb-tools/linter --no-github --json \
-            | jq '{
-                source: { name: "herb-lint" },
-                diagnostics: [ .offenses[] | {
-                  message: .message,
-                  location: {
-                    path: .filename,
-                    range: {
-                      start: { line: .location.start.line, column: .location.start.column },
-                      end:   { line: .location.end.line,   column: .location.end.column }
-                    }
-                  },
-                  severity: (.severity | ascii_upcase),
-                  code: { value: .code }
-                }]
-              }' \
-            | reviewdog -f=rdjson -name="herb-lint" -reporter=github-pr-review -fail-level=error
+          { npx --yes @herb-tools/linter --no-github --json || true; } \
+            | jq -e '
+                if .completed != true then
+                  error(.message // "Herb linter failed")
+                else
+                  {
+                    source: { name: "herb-lint" },
+                    diagnostics: [ .offenses[] | {
+                      message: .message,
+                      location: {
+                        path: .filename,
+                        range: {
+                          start: { line: .location.start.line, column: .location.start.column },
+                          end:   { line: .location.end.line,   column: .location.end.column }
+                        }
+                      },
+                      severity: (
+                        if .severity == "error" then "ERROR"
+                        elif .severity == "warning" then "WARNING"
+                        else "INFO"
+                        end
+                      ),
+                      code: { value: .code }
+                    }]
+                  }
+                end
+              ' \
+            | reviewdog \
+                -f=rdjson \
+                -name="herb-lint" \
+                -reporter=github-pr-review \
+                -fail-level=error
 ```
+:::
 
 ::: tip
-The linter exits non-zero when offenses are found, but reviewdog's own `-fail-level` is what decides whether the CI step fails. Bash pipelines return the last command's exit code by default, so reviewdog's exit code wins.
+GitHub Actions enables Bash's `pipefail` option, so the command neutralizes the linter's offense exit status before passing its output to reviewdog. `jq -e` still fails the step if the linter did not produce a completed result. Reviewdog's `-fail-level` then decides whether reported diagnostics fail the step.
 :::
 
 ## Severity mapping
 
-The linter emits `error`, `warning`, `info`, and `hint` severities. Reviewdog's `rdjson` accepts `ERROR`, `WARNING`, and `INFO`. The jq snippet above uppercases the severity string directly, which works for `error`/`warning`/`info`; `hint` is not a valid rdjson severity and will be rejected. If you use hint-level rules, map them explicitly:
+The linter emits `error`, `warning`, `info`, and `hint` severities. Reviewdog's `rdjson` accepts `ERROR`, `WARNING`, and `INFO`, so the example maps Herb's `info` and `hint` severities to `INFO`:
 
 ```jq
 severity: (
