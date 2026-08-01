@@ -24,6 +24,7 @@ export * from "./actionview-strict-locals-partial-only.js"
 
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"
+export * from "./erb-no-commented-out-output-tags.js"
 export * from "./erb-no-debug-output.js"
 export * from "./erb-no-conditional-open-tag.js"
 export * from "./erb-no-duplicate-branch-elements.js"

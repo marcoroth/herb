@@ -231,7 +231,7 @@ describe("LinterService", () => {
       settings.projectConfig = {
         path: "/test/.herb.yml",
         config: {
-          version: "0.10.1",
+          version: "0.10.2",
           linter: {
             enabled: true,
             rules: {

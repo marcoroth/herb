@@ -1,7 +1,6 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor } from "@herb-tools/core"
+import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 
-import { locationFromOffset } from "./rule-utils.js"
 import { isDebugOutputCall } from "./prism-rule-utils.js"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -50,8 +49,8 @@ export class ERBNoDebugOutputRule extends ParserRule {
 
     return collector.calls.map(call => {
       const { startOffset, length } = call.location
-      const location = locationFromOffset(source, startOffset, length)
-      const callSource = source.substring(startOffset, startOffset + length)
+      const location = locationFromByteOffset(source, startOffset, length)
+      const callSource = substringFromByteOffset(source, startOffset, length)
 
       return this.createOffense(
         `Avoid using \`${callSource}\` in ERB templates. Remove the debug output or use \`<%= ... %>\` to display content.`,

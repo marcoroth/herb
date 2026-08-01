@@ -219,7 +219,11 @@ export class TextFlowEngine {
         this.flushWords(words)
 
         if (node) {
-          this.delegate.visit(node)
+          if (isNode(node, HTMLElementNode) && isLineBreakingElement(node)) {
+            this.delegate.pushWithIndent(this.delegate.renderInlineElementAsString(node))
+          } else {
+            this.delegate.visit(node)
+          }
         }
       } else if (unit.isAtomic) {
         words.push(unit.content)
@@ -238,7 +242,15 @@ export class TextFlowEngine {
             }
           }
 
-          words.push(...trimmedText.split(' '))
+          const parts = trimmedText.split(' ')
+
+          for (let part = 1; part < parts.length; part++) {
+            if (isClosingPunctuation(parts[part]) && !parts[part - 1].endsWith(' ')) {
+              parts[part - 1] += ' '
+            }
+          }
+
+          words.push(...parts)
 
           if (hasTrailingSpace && words.length > 0) {
             const lastIndex = words.length - 1

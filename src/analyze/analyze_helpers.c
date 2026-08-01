@@ -277,7 +277,13 @@ bool search_in_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
   if (node->type == PM_IN_NODE) { analyzed->in_node_count++; }
-  if (node->type == PM_MATCH_PREDICATE_NODE) { analyzed->in_node_count++; }
+  if (node->type == PM_CASE_MATCH_NODE) {
+    const pm_case_match_node_t* case_match_node = (const pm_case_match_node_t*) node;
+
+    if (case_match_node->predicate != NULL && case_match_node->predicate->type == PM_MATCH_PREDICATE_NODE) {
+      analyzed->in_node_count++;
+    }
+  }
 
   pm_visit_child_nodes(node, search_in_nodes, analyzed);
 

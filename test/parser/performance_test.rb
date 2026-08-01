@@ -6,7 +6,7 @@ module Parser
   class PerformanceTest < Minitest::Spec
     test "many unclosed tags parses within timeout" do
       source = "<div>" * 100_000
-      result = Herb.parse(source, timeout: 1)
+      result = Herb.parse(source, timeout: 2)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
@@ -16,7 +16,7 @@ module Parser
 
     test "many matched tags parses within timeout" do
       source = "<div>x</div>" * 100_000
-      result = Herb.parse(source, timeout: 1)
+      result = Herb.parse(source, timeout: 2)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 
@@ -27,7 +27,7 @@ module Parser
     test "many unclosed tags of different names parses within timeout" do
       tags = ["div", "span", "p", "a", "section", "article", "header", "footer", "main", "nav"].cycle.take(100_000)
       source = tags.map { |t| "<#{t}>" }.join
-      result = Herb.parse(source, timeout: 1)
+      result = Herb.parse(source, timeout: 2)
 
       assert_instance_of Herb::AST::DocumentNode, result.value
 

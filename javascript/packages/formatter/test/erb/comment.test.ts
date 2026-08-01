@@ -325,6 +325,20 @@ describe("@herb-tools/formatter", () => {
     expect(result100).toEqual(source100)
   })
 
+  test("preserves <%#= commented-out output tag (https://github.com/marcoroth/herb/issues/1754)", () => {
+    const source = '<%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>'
+    const result = formatter.format(source)
+
+    expect(result).toEqual('<%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>')
+  })
+
+  test("does not rewrite a genuine comment whose body starts with =", () => {
+    const source = '<%# = not an output tag %>'
+    const result = formatter.format(source)
+
+    expect(result).toEqual('<%# = not an output tag %>')
+  })
+
   test("preserve newline after ERB comment", () => {
     const source = dedent`
       <div>
