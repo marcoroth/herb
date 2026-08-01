@@ -6,6 +6,30 @@
 
 Prefer `render partial: "...", collection: ...` over calling `render` for a single partial inside an `each` loop.
 
+The reported message contains the exact replacement tag, built from the loop's receiver and the partial being rendered, so it can be pasted over the loop:
+
+```erb
+<% @users.each do |user| %>
+  <%= render "user", user: user %>
+<% end %>
+```
+
+```
+Prefer `<%= render partial: "user", collection: @users %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.
+```
+
+Rendering an object directly reports the shorthand collection form instead:
+
+```erb
+<% @users.each do |user| %>
+  <%= render user %>
+<% end %>
+```
+
+```
+Prefer `<%= render @users %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.
+```
+
 ## Rationale
 
 When a partial is rendered inside a loop, Action View looks the template up and sets up a fresh local scope on every iteration. Collection rendering does that work once and then reuses it for every element, so it is meaningfully faster for anything but the shortest collections.
