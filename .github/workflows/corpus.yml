@@ -1,0 +1,186 @@
+name: Corpus
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Install the last released gem
+        id: release
+        if: github.event_name != 'pull_request'
+        run: |-
+          version=$(gem search '^herb$' --remote --no-prerelease | sed -n 's/^herb (\([0-9][0-9.]*\).*/\1/p')
+
+          if [ -z "$version" ]; then
+            echo "Could not resolve the latest released herb version" >&2
+            exit 1
+          fi
+
+          gem install herb -v "$version" --no-document
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Comparing against herb $version"
+
+      - name: Check out the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          git fetch --depth 1 origin "$BASE_SHA"
+          git worktree add base "$BASE_SHA"
+
+      - name: Build the base branch
+        if: github.event_name == 'pull_request'
+        working-directory: base
+        run: |-
+          bundle install --jobs 4
+          bundle exec rake templates
+          bundle exec rake make
+          bundle exec rake compile
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Measure the last release
+        id: measure-release
+        if: github.event_name != 'pull_request'
+        background: true
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+        run: |-
+          corpus/bin/measure-herb \
+            --version "${{ steps.release.outputs.version }}" \
+            --label "released ${{ steps.release.outputs.version }}" \
+            --corpus corpus/erb \
+            --out corpus/runs/baseline.json
+
+      - name: Measure the base branch
+        id: measure-base
+        if: github.event_name == 'pull_request'
+        background: true
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          corpus/bin/measure-herb \
+            --gem-path base \
+            --label "$BASE_REF (${BASE_SHA::7})" \
+            --corpus corpus/erb \
+            --out corpus/runs/baseline.json
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: Compile Ruby extension
+        run: bundle exec rake compile
+
+      - name: Wait for the baseline measurement
+        wait-all:
+
+      - name: Measure this branch
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+        run: |-
+          corpus/bin/measure-herb \
+            --gem-path "$GITHUB_WORKSPACE" \
+            --label "this branch (${GITHUB_SHA::7})" \
+            --corpus corpus/erb \
+            --out corpus/runs/branch.json
+
+      - name: Compare
+        id: compare
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set -o pipefail
+
+          corpus/bin/diff-runs \
+            corpus/runs/baseline.json \
+            corpus/runs/branch.json \
+            --markdown comment.md \
+            --fail-on-regression | tee comparison.txt
+
+      - name: Comment on the pull request
+        if: (!cancelled()) && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |-
+          existing=$(gh api "repos/${{ github.repository }}/issues/$NUMBER/comments" \
+            --jq 'map(select(.body | contains("<!-- corpus-report -->"))) | .[0].id // empty')
+
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@comment.md >/dev/null
+            echo "Updated comment $existing."
+          elif grep -q "<!-- corpus-no-changes -->" comment.md; then
+            echo "No outcome changes; not posting a comment."
+          else
+            gh pr comment "$NUMBER" --body-file comment.md
+            echo "Posted a new comment."
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Corpus"
+            echo
+            echo '```'
+            cat comparison.txt 2>/dev/null || echo "the comparison did not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload runs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: corpus-runs
+          path: corpus/runs/*.json
+          retention-days: 30

@@ -91,12 +91,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
         const location = Location.from(candidate.line, candidate.column, candidate.line, candidate.column + candidate.length)
         const node = findNodeAtPosition(result.value, candidate.line, candidate.column, (n) => isHTMLTextNode(n) || isLiteralNode(n)) as HTMLTextNode | LiteralNode | null
 
-        offenses.push({
-          rule: this.ruleName,
-          message: "Extra whitespace detected at end of line.",
-          location,
-          autofixContext: node ? { node } : undefined
-        })
+        offenses.push(this.createOffense("Extra whitespace detected at end of line.", location, node ? { node } : undefined))
       }
     }
 

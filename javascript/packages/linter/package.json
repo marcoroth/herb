@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/linter",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",

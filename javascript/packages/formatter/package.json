@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/formatter",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",

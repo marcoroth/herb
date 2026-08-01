@@ -421,4 +421,16 @@ describe("ERBNoUnusedLiteralsRule", () => {
       <% "hello".freeze %>
     `)
   })
+
+  test("reports the correct message and location when preceded by a multi-byte character", () => {
+    expectError(
+      'Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.',
+      [2, 3],
+    )
+
+    assertOffenses(dedent`
+      <%# é %>
+      <% "hello".freeze %>
+    `)
+  })
 })

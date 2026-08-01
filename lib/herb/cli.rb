@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :file_timeout
 
   def initialize(args)
     @args = args
@@ -154,6 +154,7 @@ class Herb::CLI
                   project.silent = silent
                   project.verbose = verbose || ci?
                   project.isolate = isolate
+                  project.file_timeout = file_timeout if file_timeout
                   project.validate_ruby = true
                   project.arena_stats = arena_stats
                   project.leak_check = leak_check
@@ -267,6 +268,10 @@ class Herb::CLI
 
       parser.on("--isolate", "Fork each file into its own process for crash isolation (slower)") do
         self.isolate = true
+      end
+
+      parser.on("--timeout SECONDS", Float, "Per-file timeout for parse + compile (for analyze command) (default: #{Herb::Project::DEFAULT_FILE_TIMEOUT})") do |seconds|
+        self.file_timeout = seconds
       end
 
       parser.on("--log-file", "Enable log file generation") do

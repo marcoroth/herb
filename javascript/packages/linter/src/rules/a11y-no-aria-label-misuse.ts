@@ -81,7 +81,7 @@ class NoAriaLabelMisuseVisitor extends BaseRuleVisitor {
 
 export class A11yNoAriaLabelMisuseRule extends ParserRule {
   static ruleName = "a11y-no-aria-label-misuse"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.10.2")
 
   get defaultConfig(): FullRuleConfig {
     return {

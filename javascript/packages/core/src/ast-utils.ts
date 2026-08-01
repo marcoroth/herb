@@ -59,6 +59,12 @@ export type ERBCommentNode = ERBNode & {
   }
 }
 
+export type ERBEscapedNode = ERBNode & {
+  tag_opening: {
+    value: "<%%" | "<%%="
+  }
+}
+
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
@@ -67,6 +73,16 @@ export function isERBOutputNode(node: Node): node is ERBOutputNode {
   if (!node.tag_opening?.value) return false
 
   return ["<%=", "<%=="].includes(node.tag_opening?.value)
+}
+
+/**
+ * Checks if a node is an escaped ERB node (`<%%` or `<%%=`).
+ */
+export function isERBEscapedNode(node: Node): node is ERBEscapedNode {
+  if (!isERBNode(node)) return false
+  if (!node.tag_opening?.value) return false
+
+  return ["<%%", "<%%="].includes(node.tag_opening.value)
 }
 
 /**
