@@ -8,6 +8,7 @@ pub(crate) use passthrough::Colorize;
 mod passthrough {
   macro_rules! passthrough_colorize {
     ($($name:ident),* $(,)?) => {
+      #[allow(dead_code)]
       pub(crate) trait Colorize {
         $(fn $name(&self) -> String;)*
       }
