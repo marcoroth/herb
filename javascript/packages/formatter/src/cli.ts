@@ -1,5 +1,5 @@
 import dedent from "dedent"
-import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
+import { readFileSync, writeFileSync, statSync, existsSync, fstatSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
 
@@ -156,7 +156,7 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
-      const isUsingStdin = (!file && !process.stdin.isTTY) || file === "-"
+      const isUsingStdin = (!file && this.hasStdinInput()) || file === "-"
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
@@ -359,19 +359,7 @@ export class CLI {
 
       const formatter = Formatter.from(Herb, config, { preRewriters, postRewriters })
 
-      if (!file && !process.stdin.isTTY) {
-        if (isCheckMode) {
-          console.error("Error: --check mode is not supported with stdin")
-
-          process.exit(1)
-        }
-
-        const source = await this.readStdin()
-        const result = formatter.format(source)
-        const output = result.endsWith('\n') ? result : result + '\n'
-
-        process.stdout.write(output)
-      } else if (file === "-") {
+      if (isUsingStdin) {
         if (isCheckMode) {
           console.error("Error: --check mode is not supported with stdin")
 
@@ -514,6 +502,18 @@ export class CLI {
       console.error(error)
 
       process.exit(1)
+    }
+  }
+
+  private hasStdinInput(): boolean {
+    if (process.stdin.isTTY) return false
+
+    try {
+      const stats = fstatSync(0)
+
+      return stats.isFIFO() || stats.isSocket() || stats.isFile()
+    } catch {
+      return false
     }
   }
 

@@ -291,6 +291,42 @@ describe("CLI Binary", () => {
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
   })
 
+  it("should not treat a non-TTY stdin without piped input as stdin", async () => {
+    const directory = "test-non-tty-stdin"
+    const input = '<div><p>   Not formatted   </p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "unformatted.html.erb"), input)
+
+    try {
+      const result = await execBinary(["--check"], undefined, { cwd: directory, stdin: "ignore" })
+
+      expect(result.stderr).not.toContain("--check mode is not supported with stdin")
+      expectExitCode(result, 1)
+      expect(result.stdout).toContain("unformatted.html.erb")
+      expect(result.stdout).toContain("not formatted")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should pass --check with a non-TTY stdin when all files are formatted", async () => {
+    const directory = "test-non-tty-stdin-formatted"
+    const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "formatted.html.erb"), input)
+
+    try {
+      const result = await execBinary(["--check"], undefined, { cwd: directory, stdin: "ignore" })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("all files are properly formatted")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
   it("should pass --check when file is already formatted", async () => {
     const testFile = "test-formatted.html.erb"
     const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
