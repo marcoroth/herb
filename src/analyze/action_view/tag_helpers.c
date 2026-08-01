@@ -52,18 +52,19 @@ static bool build_scope_options_from_context(analyze_ruby_context_T* context, pm
   size_t locals_count = context && context->tag_helper_locals ? hb_array_size(context->tag_helper_locals) : 0;
 
   if (locals_count == 0) { return false; }
-
   if (!pm_options_scopes_init(options, 1)) { return false; }
 
   pm_options_scope_t* scope = &options->scopes[0];
 
   if (!pm_options_scope_init(scope, locals_count)) {
     pm_options_free(options);
+
     return false;
   }
 
   for (size_t index = 0; index < locals_count; index++) {
     const char* local_name = hb_array_get(context->tag_helper_locals, index);
+
     pm_string_constant_init(&scope->locals[index], local_name, strlen(local_name));
   }
 
