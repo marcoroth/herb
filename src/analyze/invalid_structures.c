@@ -21,7 +21,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   bool is_begin_node = (node->type == AST_ERB_BEGIN_NODE);
   bool is_loop_node =
     (node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE || node->type == AST_ERB_FOR_NODE
-     || node->type == AST_ERB_BLOCK_NODE);
+     || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ITERATION_BLOCK_NODE);
 
   if (is_loop_node) { context->loop_depth++; }
   if (is_begin_node) { context->rescue_depth++; }
@@ -162,13 +162,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     herb_visit_child_nodes(node, detect_invalid_erb_structures, context);
   }
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     check_erb_node_for_missing_end(node, context->allocator);
 
     if (is_loop_node) { context->loop_depth--; }

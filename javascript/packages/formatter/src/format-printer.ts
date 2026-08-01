@@ -7,7 +7,7 @@ import { HerbDisableCollector } from "./herb-disable-collector.js"
 import { isTextFlowNode, hasFlowContentBefore, hasFlowContentAfter } from "./text-flow-helpers.js"
 import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
 
-import type { ERBNode } from "@herb-tools/core"
+import type { ERBNode, HerbBackend } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 import type { TextFlowDelegate } from "./text-flow-engine.js"
 import type { CollectedHerbDisable } from "./herb-disable-collector.js"
@@ -33,6 +33,7 @@ import {
   isHTMLOpenTagNode,
   isPureWhitespaceNode,
   filterNodes,
+  getHelper,
 } from "@herb-tools/core"
 
 import {
@@ -45,6 +46,7 @@ import {
   endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
+  isMultilineERBComment,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -54,6 +56,7 @@ import {
 
 import {
   ASCII_WHITESPACE,
+  CONTENT_PRESERVING_ELEMENTS,
   SPACEABLE_CONTAINERS,
 } from "./format-helpers.js"
 
@@ -75,6 +78,7 @@ import {
   WhitespaceNode,
   ERBContentNode,
   ERBBlockNode,
+  ERBIterationBlockNode,
   ERBEndNode,
   ERBElseNode,
   ERBIfNode,
@@ -153,9 +157,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   public source: string
 
-  constructor(source: string, options: Required<FormatOptions>) {
+  private herb?: HerbBackend
+  private erbBlockTagNameCache = new Map<Node, string | null>()
+
+  constructor(source: string, options: Required<FormatOptions>, herb?: HerbBackend) {
     super()
 
+    this.herb = herb
     this.source = source
     this.indentWidth = options.indentWidth
     this.maxLineLength = options.maxLineLength
@@ -178,6 +186,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.stringLineCount = 0
     this.nodeIsMultiline.clear()
     this.inlineFlowContext.clear()
+    this.erbBlockTagNameCache.clear()
     this.spacingAnalyzer.clear()
 
     this.collectInlineFlowContext(node, false, false)
@@ -272,8 +281,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
             return -1
           }
 
-          for (let forward = index + 1; forward < this.lines.length; forward++) {
-            if (this.lines[forward].trim() === ">") return forward
+          const analysis = this.elementFormattingAnalysis.get(entry.parentNode)
+          const openTagIsMultiline = analysis ? !analysis.openTagInline : true
+
+          if (openTagIsMultiline) {
+            for (let forward = index + 1; forward < this.lines.length; forward++) {
+              if (this.lines[forward].trim() === ">") return forward
+            }
           }
 
           return index
@@ -578,46 +592,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return
     }
 
-    let lastMeaningfulNode: Node | null = null
-    let hasHandledSpacing = false
-
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-
-      if (shouldPreserveUserSpacing(child, children, i)) {
-        this.push("")
-        hasHandledSpacing = true
-        continue
-      }
-
-      if (isPureWhitespaceNode(child)) {
-        continue
-      }
-
-      if (shouldAppendToLastLine(child, children, i)) {
-        this.appendChildToLastLine(child, children, i)
-        lastMeaningfulNode = child
-        hasHandledSpacing = false
-        continue
-      }
-
-      if (!isNonWhitespaceNode(child)) continue
-
-      const childStartLine = this.stringLineCount
-      this.visit(child)
-
-      if (lastMeaningfulNode && !hasHandledSpacing) {
-        const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings( null, children, i)
-
-        if (shouldAddSpacing) {
-          this.lines.splice(childStartLine, 0, "")
-          this.stringLineCount++
-        }
-      }
-
-      lastMeaningfulNode = child
-      hasHandledSpacing = false
-    }
+    this.visitElementChildren(children, null)
   }
 
   visitHTMLElementNode(node: HTMLElementNode) {
@@ -816,19 +791,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     for (let index = 0; index < body.length; index++) {
       const child = body[index]
 
-      if (isNode(child, HTMLTextNode)) {
-        if (isPureWhitespaceNode(child)) {
-          const hasPreviousNonWhitespace = index > 0 && isNonWhitespaceNode(body[index - 1])
-          const hasNextNonWhitespace = index < body.length - 1 && isNonWhitespaceNode(body[index + 1])
-          const hasMultipleNewlines = child.content.includes('\n\n')
-
-          if (hasPreviousNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
-            this.push("")
-            hasHandledSpacing = true
-          }
-
-          continue
-        }
+      if (shouldPreserveUserSpacing(child, body, index)) {
+        this.push("")
+        hasHandledSpacing = true
+        continue
       }
 
       if (!isNonWhitespaceNode(child)) continue
@@ -1034,6 +1000,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       } else {
         this.pushWithIndent(result.text)
       }
+    } else if (this.inlineMode) {
+      const childIndent = " ".repeat(this.indentWidth)
+      const contentLines = result.contentLines.map(line => line.trim() === "" ? "" : childIndent + line)
+
+      this.push([result.header, ...contentLines, result.footer].join("\n"))
     } else {
       this.pushWithIndent(result.header)
 
@@ -1140,25 +1111,97 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
   }
 
-  visitERBBlockNode(node: ERBBlockNode) {
+  visitERBIterationBlockNode(node: ERBIterationBlockNode) {
+    this.visitERBBlockNode(node)
+  }
+
+  visitERBBlockNode(node: ERBBlockNode | ERBIterationBlockNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
 
-      this.withIndent(() => {
-        const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
+      if (this.isContentPreservingBlock(node)) {
+        this.visitPreservedERBBlockBody(node)
+      } else {
+        this.withIndent(() => {
+          const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
 
-        if (hasTextFlow) {
-          this.textFlow.visitTextFlowChildren(node.body)
-        } else {
-          this.visitElementChildren(node.body, null)
-        }
-      })
+          if (hasTextFlow) {
+            this.textFlow.visitTextFlowChildren(node.body)
+          } else {
+            this.visitElementChildren(node.body, null)
+          }
+        })
+      }
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
       if (node.else_clause) this.visit(node.else_clause)
       if (node.ensure_clause) this.visit(node.ensure_clause)
       if (node.end_node) this.visit(node.end_node)
     })
+  }
+
+  private visitPreservedERBBlockBody(node: ERBBlockNode | ERBIterationBlockNode): void {
+    const raw = node.body.map(child => IdentityPrinter.print(child)).join("")
+    const lines = raw.split("\n")
+
+    if (lines.length > 0 && lines[0].trim() === "") lines.shift()
+    if (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop()
+
+    lines.forEach(line => this.push(line))
+  }
+
+  private isContentPreservingBlock(node: ERBBlockNode | ERBIterationBlockNode): boolean {
+    const tagName = this.resolveERBBlockTagName(node)
+
+    return tagName !== null && CONTENT_PRESERVING_ELEMENTS.has(tagName)
+  }
+
+  private resolveERBBlockTagName(node: ERBBlockNode | ERBIterationBlockNode): string | null {
+    if (this.erbBlockTagNameCache.has(node)) return this.erbBlockTagNameCache.get(node)!
+
+    const resolved = this.prismERBBlockTagName(node)
+    this.erbBlockTagNameCache.set(node, resolved)
+
+    return resolved
+  }
+
+  private prismERBBlockTagName(node: ERBBlockNode | ERBIterationBlockNode): string | null {
+    if (!this.herb) return null
+
+    const content = node.content?.value ?? ""
+
+    try {
+      const result = this.herb.parse(`<%${content}%><% end %>`, { prism_nodes: true })
+      const block = result.value.children.find(child => isNode(child, ERBBlockNode)) as ERBBlockNode | undefined
+      const call = block?.prismNode
+
+      if (!call) return null
+
+      if (call.receiver) {
+        const receiver = call.receiver
+
+        if (receiver.name === "tag" && !receiver.receiver && typeof call.name === "string") {
+          return call.name.toLowerCase()
+        }
+
+        return null
+      }
+
+      const helper = getHelper(call.name)
+
+      if (helper?.supportsBlock && helper.tagName) return helper.tagName.toLowerCase()
+
+      if (call.name === "content_tag") {
+        const first = call.arguments_?.arguments_?.[0]
+        const value = first?.unescaped?.value
+
+        return typeof value === "string" ? value.toLowerCase() : null
+      }
+    } catch {
+      return null
+    }
+
+    return null
   }
 
   visitERBIfNode(node: ERBIfNode) {
@@ -1380,7 +1423,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
       if (fullInlineResult) {
-        return this.fitsOnCurrentLine(fullInlineResult)
+        return this.fitsOnCurrentLine(fullInlineResult) || this.contentIsGluedToTags(node)
       }
 
       return false
@@ -1455,6 +1498,20 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   // --- Utility methods ---
 
+  private contentIsGluedToTags(node: HTMLElementNode): boolean {
+    const body = node.body
+
+    if (body.length === 0) return false
+
+    const first = body[0]
+    const last = body[body.length - 1]
+
+    const gluedStart = !isPureWhitespaceNode(first) && !(isNode(first, HTMLTextNode) && startsWithWhitespace(first.content))
+    const gluedEnd = !isPureWhitespaceNode(last) && !(isNode(last, HTMLTextNode) && endsWithWhitespace(last.content))
+
+    return gluedStart || gluedEnd
+  }
+
   private fitsOnCurrentLine(content: string): boolean {
     return this.indent.length + content.length <= this.maxLineLength
   }
@@ -1487,6 +1544,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         const prevSibling = siblings[index - 1]
 
         if (isPureWhitespaceNode(prevSibling) || isNode(prevSibling, WhitespaceNode)) {
+          hasSpaceBefore = true
+        }
+
+        if (isNode(prevSibling, HTMLTextNode) && endsWithWhitespace(prevSibling.content)) {
           hasSpaceBefore = true
         }
       }
@@ -1628,11 +1689,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Try to render a complete element inline including opening tag, children, and closing tag
    */
   private tryRenderInlineFull(_node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
-    let result = `<${tagName}`
+    const openTagChildren = getOpenTagChildren(_node)
+    const inlineNodes = this.extractInlineNodes(openTagChildren)
 
-    this.attributeRenderer.indentLevel = this.indentLevel
-    result += this.attributeRenderer.renderAttributesString(attributes, tagName)
-    result += ">"
+    let result = this.renderInlineOpen(tagName, attributes, false, inlineNodes, openTagChildren)
 
     const childrenContent = this.tryRenderChildrenInline(children, tagName, _node)
 
@@ -1659,6 +1719,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
+      if (isMultilineERBComment(child)) {
+        return null
+      }
+
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = startsWithWhitespace(child.content)
@@ -1732,7 +1796,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        // ERB content nodes are allowed in inline rendering
+        if (isMultilineERBComment(child)) {
+          return null
+        }
       } else {
         return null
       }

@@ -235,4 +235,35 @@ describe("erb-prefer-direct-output autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
   })
+
+  test("fixes a later offence when an earlier one contains a multi-byte character (#1761)", () => {
+    const input = '<%= "#{first}  – " %>\n<%= "#{second} - " %>'
+    const expected = '<%= first %>  – \n<%= second %> - '
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
+  })
+
+  test("fixes every offence following a multi-byte character (#1761)", () => {
+    const input = dedent`
+      <%= "#{a} – ok" %>
+      <%= "#{b} - ok" %>
+      <%= "#{c} - ok" %>
+    `
+
+    const expected = dedent`
+      <%= a %> – ok
+      <%= b %> - ok
+      <%= c %> - ok
+    `
+
+    const linter = new Linter(Herb, [ERBPreferDirectOutputRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(3)
+  })
 })

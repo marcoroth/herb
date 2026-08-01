@@ -170,4 +170,10 @@ describe("html-no-empty-attributes", () => {
       </h1>
     `)
   })
+
+  test("passes for attribute containing an escaped ERB tag", () => {
+    expectNoOffenses(dedent`
+      <div class="<%%= form_class %>">Content</div>
+    `)
+  })
 })

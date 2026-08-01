@@ -917,6 +917,62 @@ nodes:
           type: node
           kind: ERBEndNode
 
+    - name: ERBIterationBlockNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: prism_node
+          type: prism_node
+
+        - name: receiver
+          type: token
+
+        - name: call_operator
+          type: token
+
+        - name: message
+          type: token
+
+        - name: arguments
+          type: array
+          kind:
+            - RubyLiteralNode
+
+        - name: block_opening
+          type: token
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: block_arguments
+          type: array
+          kind:
+            - RubyParameterNode
+
+        - name: rescue_clause
+          type: node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: node
+          kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
     - name: ERBWhenNode
       fields:
         - name: tag_opening

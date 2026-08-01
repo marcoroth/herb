@@ -76,6 +76,10 @@ val Herb_parse(const std::string& source, val options) {
       parser_options.render_nodes = options["render_nodes"].as<bool>();
     }
 
+    if (options.hasOwnProperty("iteration_nodes")) {
+      parser_options.iteration_nodes = options["iteration_nodes"].as<bool>();
+    }
+
     if (options.hasOwnProperty("strict_locals")) {
       parser_options.strict_locals = options["strict_locals"].as<bool>();
     }
