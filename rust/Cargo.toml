@@ -34,7 +34,6 @@ name = "herb-rust"
 path = "src/main.rs"
 
 [dependencies]
-libc = "0.2"
 colored = "3"
 
 [dev-dependencies]
