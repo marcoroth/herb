@@ -10,7 +10,6 @@ import type {
   ParseResult,
   ParserOptions,
   ERBBlockNode,
-  ERBIterationBlockNode,
   ERBRenderNode,
   ERBStrictLocalsNode,
   ERBContentNode,
@@ -63,11 +62,6 @@ function shadowingMessage(name: string): string {
 
 class NoHelperShadowingVisitor extends BaseRuleVisitor {
   visitERBBlockNode(node: ERBBlockNode): void {
-    this.checkParameters(node.block_arguments)
-    this.visitChildNodes(node)
-  }
-
-  visitERBIterationBlockNode(node: ERBIterationBlockNode): void {
     this.checkParameters(node.block_arguments)
     this.visitChildNodes(node)
   }
