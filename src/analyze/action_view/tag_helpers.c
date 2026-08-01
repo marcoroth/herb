@@ -1714,6 +1714,9 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
       transform_tag_helper_array(((AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node)->children, context);
       break;
     case AST_ERB_BLOCK_NODE: transform_tag_helper_array(((AST_ERB_BLOCK_NODE_T*) node)->body, context); break;
+    case AST_ERB_ITERATION_BLOCK_NODE:
+      transform_tag_helper_array(((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->body, context);
+      break;
     case AST_ERB_IF_NODE: transform_tag_helper_array(((AST_ERB_IF_NODE_T*) node)->statements, context); break;
     case AST_ERB_ELSE_NODE: transform_tag_helper_array(((AST_ERB_ELSE_NODE_T*) node)->statements, context); break;
     case AST_ERB_UNLESS_NODE: transform_tag_helper_array(((AST_ERB_UNLESS_NODE_T*) node)->statements, context); break;
