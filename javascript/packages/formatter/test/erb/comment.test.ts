@@ -357,4 +357,73 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
   })
+
+  test("keeps block layout for multi-line ERB comment after a preceding sibling in a single pass", () => {
+    const source = dedent`
+      <div>x</div>
+      y and <%# multi
+      line
+      comment %>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toEqual(dedent`
+      <div>x</div>
+      y and
+      <%#
+        multi
+        line
+        comment
+      %>
+    `)
+
+    expectFormattedToMatch(result, { passes: 2 })
+  })
+
+  test("keeps block layout for multi-line ERB comment in text flow in a single pass", () => {
+    const source = dedent`
+      hello <%# multi
+      line
+      comment %> world
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toEqual(dedent`
+      hello
+      <%#
+        multi
+        line
+        comment
+      %>
+      world
+    `)
+
+    expectFormattedToMatch(result, { passes: 2 })
+  })
+
+  test("keeps block layout for multi-line ERB comment inside an element in a single pass", () => {
+    const source = dedent`
+      <p>hello <%# multi
+      line
+      comment %> world</p>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toEqual(dedent`
+      <p>
+        hello
+        <%#
+          multi
+          line
+          comment
+        %>
+        world
+      </p>
+    `)
+
+    expectFormattedToMatch(result, { passes: 2 })
+  })
 })

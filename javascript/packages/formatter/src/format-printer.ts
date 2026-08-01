@@ -46,6 +46,7 @@ import {
   endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
+  isMultilineERBComment,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -998,6 +999,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       } else {
         this.pushWithIndent(result.text)
       }
+    } else if (this.inlineMode) {
+      const childIndent = " ".repeat(this.indentWidth)
+      const contentLines = result.contentLines.map(line => line.trim() === "" ? "" : childIndent + line)
+
+      this.push([result.header, ...contentLines, result.footer].join("\n"))
     } else {
       this.pushWithIndent(result.header)
 
@@ -1708,6 +1714,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
+      if (isMultilineERBComment(child)) {
+        return null
+      }
+
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = startsWithWhitespace(child.content)
@@ -1781,7 +1791,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        // ERB content nodes are allowed in inline rendering
+        if (isMultilineERBComment(child)) {
+          return null
+        }
       } else {
         return null
       }
