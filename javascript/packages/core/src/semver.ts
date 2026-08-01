@@ -4,7 +4,7 @@ export type RuleVersion = SemverVersion | "unreleased"
 export const UNRELEASED_VERSION: RuleVersion = "unreleased"
 
 export function parseSemver(version: string): [number, number, number] {
-  const parts = version.split(".")
+  const parts = version.trim().split("+")[0].split("-")[0].split(".")
 
   if (parts.length < 2 || parts.length > 3) {
     return [0, 0, 0]

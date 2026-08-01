@@ -5,10 +5,10 @@ import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
-import type { RuleVersion } from "./semver.js"
+import type { RuleVersion } from "@herb-tools/core"
 
 export type { Mutable } from "@herb-tools/rewriter"
-export type { RuleVersion } from "./semver.js"
+export type { RuleVersion } from "@herb-tools/core"
 export type { SeverityConfig, LinterMode } from "@herb-tools/config"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"

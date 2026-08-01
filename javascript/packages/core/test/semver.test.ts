@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest"
 
 import { parseSemver, compareSemver, semverGreaterThan, UNRELEASED_VERSION } from "../src/semver.js"
 
-describe("@herb-tools/linter", () => {
+describe("@herb-tools/core", () => {
   describe("parseSemver", () => {
     test("parses major.minor.patch", () => {
       expect(parseSemver("1.2.3")).toEqual([1, 2, 3])
@@ -34,6 +34,19 @@ describe("@herb-tools/linter", () => {
 
     test("returns [0,0,0] for non-numeric parts", () => {
       expect(parseSemver("a.b.c")).toEqual([0, 0, 0])
+    })
+
+    test("ignores pre-release suffixes", () => {
+      expect(parseSemver("0.11.0-beta.1")).toEqual([0, 11, 0])
+      expect(parseSemver("1.0.0-rc.2")).toEqual([1, 0, 0])
+    })
+
+    test("ignores build metadata", () => {
+      expect(parseSemver("0.11.0+20260801")).toEqual([0, 11, 0])
+    })
+
+    test("ignores surrounding whitespace", () => {
+      expect(parseSemver(" 0.10.3 ")).toEqual([0, 10, 3])
     })
   })
 
@@ -76,6 +89,26 @@ describe("@herb-tools/linter", () => {
 
     test("unreleased equals unreleased", () => {
       expect(compareSemver(UNRELEASED_VERSION, UNRELEASED_VERSION)).toBe(0)
+    })
+
+    test("compares components numerically instead of as strings", () => {
+      expect(compareSemver("0.10.3", "0.9.2")).toBeGreaterThan(0)
+      expect(compareSemver("0.9.2", "0.10.3")).toBeLessThan(0)
+    })
+
+    test("treats a missing patch as zero", () => {
+      expect(compareSemver("0.10", "0.10.0")).toBe(0)
+      expect(compareSemver("0.10.1", "0.10")).toBeGreaterThan(0)
+    })
+
+    test("treats a pre-release as its released version", () => {
+      expect(compareSemver("0.11.0-beta.1", "0.11.0")).toBe(0)
+      expect(compareSemver("0.11.0-beta.1", "0.10.3")).toBeGreaterThan(0)
+    })
+
+    test("sorts an unparseable version before every real one", () => {
+      expect(compareSemver("next", "0.10.3")).toBeLessThan(0)
+      expect(compareSemver("0.10.3", "next")).toBeGreaterThan(0)
     })
   })
 

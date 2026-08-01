@@ -1,6 +1,6 @@
 import picomatch from "picomatch"
 
-import { Location } from "@herb-tools/core"
+import { Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -12,7 +12,6 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { semverGreaterThan } from "./semver.js"
 import { resolveSeverity } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"

@@ -1419,6 +1419,72 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("version skew", () => {
+    const invalidForOlderVersions = dedent`
+      version: 0.10.3
+      unknown_key: value
+    `
+
+    test("explains the skew when the config declares a newer version than the one running", async () => {
+      createTestFile(testDir, ".herb.yml", invalidForOlderVersions)
+
+      await expect(
+        Config.load(testDir, { version: "0.9.2", silent: true })
+      ).rejects.toThrow('This configuration declares version 0.10.3, but Herb 0.9.2 is running')
+    })
+
+    test("suggests upgrading to the declared version", async () => {
+      createTestFile(testDir, ".herb.yml", invalidForOlderVersions)
+
+      await expect(
+        Config.load(testDir, { version: "0.9.2", silent: true })
+      ).rejects.toThrow('Upgrade Herb to 0.10.3 or newer')
+    })
+
+    test("keeps the underlying validation error", async () => {
+      createTestFile(testDir, ".herb.yml", invalidForOlderVersions)
+
+      await expect(
+        Config.load(testDir, { version: "0.9.2", silent: true })
+      ).rejects.toThrow('Configuration errors in')
+    })
+
+    test("doesn't explain the skew when the config declares an older version", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.9.2
+        unknown_key: value
+      `)
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow(/^(?!.*declares version)/s)
+    })
+
+    test("doesn't explain the skew when the versions match", async () => {
+      createTestFile(testDir, ".herb.yml", invalidForOlderVersions)
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow(/^(?!.*declares version)/s)
+    })
+
+    test("doesn't explain the skew when the config has no version", async () => {
+      createTestFile(testDir, ".herb.yml", "unknown_key: value\n")
+
+      await expect(
+        Config.load(testDir, { version: "0.9.2", silent: true })
+      ).rejects.toThrow(/^(?!.*declares version)/s)
+    })
+
+    test("doesn't report a skew for a valid config", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nlinter:\n  enabled: true\n")
+
+      const config = await Config.load(testDir, { version: "0.9.2", silent: true })
+
+      expect(config.configVersion).toBe("0.10.3")
+    })
+  })
+
   describe("Config upgrade workflow", () => {
     test("mutateConfigFile adds disabled rules", async () => {
       const configContent = dedent`
