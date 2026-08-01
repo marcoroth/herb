@@ -26,8 +26,12 @@ First, install the Herb Language Server globally:
 npm install -g @herb-tools/language-server
 ```
 
-```bash [yarn]
-yarn dlx @herb-tools/language-server
+```bash [yarn 1]
+yarn global add @herb-tools/language-server
+```
+
+```bash [yarn 4]
+yarn dlx -q @herb-tools/language-server --stdio
 ```
 
 ```bash [pnpm]
