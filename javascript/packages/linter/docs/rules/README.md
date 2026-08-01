@@ -18,6 +18,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
