@@ -442,7 +442,7 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
-    
+
     test "multi-line code block preserves line count parity with erubi" do
       template = "<%\n  x = 1\n  y = 2\n%>\n<%= x %>"
 
