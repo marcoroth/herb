@@ -108,55 +108,47 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
 
-static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
-  VALUE source, options;
-  rb_scan_args(argc, argv, "1:", &source, &options);
-
-  char* string = (char*) check_string(source);
-  bool print_arena_stats = false;
-
-  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-
+static void parse_parser_options(VALUE options, parser_options_T* parser_options, bool* print_arena_stats) {
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options->track_whitespace = true; }
 
     VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
     if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
-    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
+    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options->analyze = false; }
 
     VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
     if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
-    if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
+    if (!NIL_P(strict)) { parser_options->strict = RTEST(strict); }
 
     VALUE action_view_helpers = rb_hash_lookup(options, rb_utf8_str_new_cstr("action_view_helpers"));
     if (NIL_P(action_view_helpers)) {
       action_view_helpers = rb_hash_lookup(options, ID2SYM(rb_intern("action_view_helpers")));
     }
-    if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options.action_view_helpers = true; }
+    if (!NIL_P(action_view_helpers) && RTEST(action_view_helpers)) { parser_options->action_view_helpers = true; }
 
     VALUE transform_conditionals = rb_hash_lookup(options, rb_utf8_str_new_cstr("transform_conditionals"));
     if (NIL_P(transform_conditionals)) {
       transform_conditionals = rb_hash_lookup(options, ID2SYM(rb_intern("transform_conditionals")));
     }
     if (!NIL_P(transform_conditionals) && RTEST(transform_conditionals)) {
-      parser_options.transform_conditionals = true;
+      parser_options->transform_conditionals = true;
     }
 
     VALUE dot_notation_tags = rb_hash_lookup(options, rb_utf8_str_new_cstr("dot_notation_tags"));
     if (NIL_P(dot_notation_tags)) {
       dot_notation_tags = rb_hash_lookup(options, ID2SYM(rb_intern("dot_notation_tags")));
     }
-    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options.dot_notation_tags = true; }
+    if (!NIL_P(dot_notation_tags) && RTEST(dot_notation_tags)) { parser_options->dot_notation_tags = true; }
 
     VALUE render_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("render_nodes"));
     if (NIL_P(render_nodes)) { render_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("render_nodes"))); }
-    if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options.render_nodes = true; }
+    if (!NIL_P(render_nodes) && RTEST(render_nodes)) { parser_options->render_nodes = true; }
 
     VALUE strict_locals = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict_locals"));
     if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
-    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
+    if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options->strict_locals = true; }
 
     VALUE iteration_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("iteration_nodes"));
     if (NIL_P(iteration_nodes)) { iteration_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("iteration_nodes"))); }
@@ -164,23 +156,23 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
     VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
     if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
-    if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
+    if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options->prism_nodes = true; }
 
     VALUE prism_nodes_deep = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes_deep"));
     if (NIL_P(prism_nodes_deep)) { prism_nodes_deep = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes_deep"))); }
-    if (!NIL_P(prism_nodes_deep) && RTEST(prism_nodes_deep)) { parser_options.prism_nodes_deep = true; }
+    if (!NIL_P(prism_nodes_deep) && RTEST(prism_nodes_deep)) { parser_options->prism_nodes_deep = true; }
 
     VALUE prism_program = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_program"));
     if (NIL_P(prism_program)) { prism_program = rb_hash_lookup(options, ID2SYM(rb_intern("prism_program"))); }
-    if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options.prism_program = true; }
+    if (!NIL_P(prism_program) && RTEST(prism_program)) { parser_options->prism_program = true; }
 
     VALUE html = rb_hash_lookup(options, rb_utf8_str_new_cstr("html"));
     if (NIL_P(html)) { html = rb_hash_lookup(options, ID2SYM(rb_intern("html"))); }
-    if (!NIL_P(html) && !RTEST(html)) { parser_options.html = false; }
+    if (!NIL_P(html) && !RTEST(html)) { parser_options->html = false; }
 
     VALUE timeout = rb_hash_lookup(options, rb_utf8_str_new_cstr("timeout"));
     if (NIL_P(timeout)) { timeout = rb_hash_lookup(options, ID2SYM(rb_intern("timeout"))); }
-    if (!NIL_P(timeout)) { parser_options.timeout_ms = (uint32_t) (NUM2DBL(timeout) * 1000); }
+    if (!NIL_P(timeout)) { parser_options->timeout_ms = (uint32_t) (NUM2DBL(timeout) * 1000); }
 
     VALUE max_errors_sentinel = ID2SYM(rb_intern("__not_set__"));
     VALUE max_errors = rb_hash_lookup2(options, rb_utf8_str_new_cstr("max_errors"), max_errors_sentinel);
@@ -190,13 +182,25 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     }
 
     if (max_errors != max_errors_sentinel) {
-      parser_options.max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
+      parser_options->max_errors = NIL_P(max_errors) ? 0 : (uint32_t) NUM2UINT(max_errors);
     }
 
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
-    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { *print_arena_stats = true; }
   }
+}
+
+static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
+  char* string = (char*) check_string(source);
+  bool print_arena_stats = false;
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  parse_parser_options(options, &parser_options, &print_arena_stats);
 
   parse_args_T args = { 0 };
   args.source = source;
@@ -431,6 +435,9 @@ static VALUE Herb_version(VALUE self) {
 #endif
 }
 
+static bool rb_herb_diffable_tree_p(VALUE value);
+static AST_DOCUMENT_NODE_T* rb_herb_diffable_tree_root(VALUE value);
+
 typedef struct {
   AST_DOCUMENT_NODE_T* old_root;
   AST_DOCUMENT_NODE_T* new_root;
@@ -438,6 +445,8 @@ typedef struct {
   hb_allocator_T old_allocator;
   hb_allocator_T new_allocator;
   hb_allocator_T diff_allocator;
+  bool old_owned;
+  bool new_owned;
 } diff_args_T;
 
 static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
@@ -466,10 +475,7 @@ static VALUE rb_create_diff_operation(const herb_diff_operation_T* operation) {
   );
 }
 
-static VALUE diff_convert_body(VALUE arg) {
-  diff_args_T* args = (diff_args_T*) arg;
-  herb_diff_result_T* diff_result = args->diff_result;
-
+static VALUE diff_result_to_ruby(const herb_diff_result_T* diff_result) {
   VALUE cDiffResult = rb_const_get(mHerb, rb_intern("DiffResult"));
 
   size_t operation_count = herb_diff_operation_count(diff_result);
@@ -485,47 +491,70 @@ static VALUE diff_convert_body(VALUE arg) {
   return rb_class_new_instance(2, result_args, cDiffResult);
 }
 
+static VALUE diff_convert_body(VALUE arg) {
+  diff_args_T* args = (diff_args_T*) arg;
+
+  return diff_result_to_ruby(args->diff_result);
+}
+
 static VALUE diff_cleanup(VALUE arg) {
   diff_args_T* args = (diff_args_T*) arg;
 
-  if (args->old_root != NULL) { ast_node_free((AST_NODE_T*) args->old_root, &args->old_allocator); }
-  if (args->new_root != NULL) { ast_node_free((AST_NODE_T*) args->new_root, &args->new_allocator); }
+  if (args->old_owned) {
+    if (args->old_root != NULL) { ast_node_free((AST_NODE_T*) args->old_root, &args->old_allocator); }
+    hb_allocator_destroy(&args->old_allocator);
+  }
+
+  if (args->new_owned) {
+    if (args->new_root != NULL) { ast_node_free((AST_NODE_T*) args->new_root, &args->new_allocator); }
+    hb_allocator_destroy(&args->new_allocator);
+  }
 
   hb_allocator_destroy(&args->diff_allocator);
-  hb_allocator_destroy(&args->old_allocator);
-  hb_allocator_destroy(&args->new_allocator);
 
   return Qnil;
 }
 
 static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
-  VALUE old_source, new_source;
-  rb_scan_args(argc, argv, "2", &old_source, &new_source);
+  VALUE old_value, new_value;
+  rb_scan_args(argc, argv, "2", &old_value, &new_value);
 
-  char* old_string = (char*) check_string(old_source);
-  char* new_string = (char*) check_string(new_source);
+  bool old_is_tree = rb_herb_diffable_tree_p(old_value);
+  bool new_is_tree = rb_herb_diffable_tree_p(new_value);
+
+  char* old_string = old_is_tree ? NULL : (char*) check_string(old_value);
+  char* new_string = new_is_tree ? NULL : (char*) check_string(new_value);
 
   diff_args_T args = { 0 };
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
-  if (!hb_allocator_init(&args.old_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+  if (!old_is_tree) {
+    if (!hb_allocator_init(&args.old_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+    args.old_owned = true;
+  }
 
-  if (!hb_allocator_init(&args.new_allocator, HB_ALLOCATOR_ARENA)) {
-    hb_allocator_destroy(&args.old_allocator);
+  if (!new_is_tree) {
+    if (!hb_allocator_init(&args.new_allocator, HB_ALLOCATOR_ARENA)) {
+      if (args.old_owned) { hb_allocator_destroy(&args.old_allocator); }
 
-    return Qnil;
+      return Qnil;
+    }
+
+    args.new_owned = true;
   }
 
   if (!hb_allocator_init(&args.diff_allocator, HB_ALLOCATOR_ARENA)) {
-    hb_allocator_destroy(&args.old_allocator);
-    hb_allocator_destroy(&args.new_allocator);
+    if (args.old_owned) { hb_allocator_destroy(&args.old_allocator); }
+    if (args.new_owned) { hb_allocator_destroy(&args.new_allocator); }
 
     return Qnil;
   }
 
-  args.old_root = herb_parse(old_string, &parser_options, &args.old_allocator);
-  args.new_root = herb_parse(new_string, &parser_options, &args.new_allocator);
+  args.old_root = old_is_tree ? rb_herb_diffable_tree_root(old_value)
+                              : herb_parse(old_string, &parser_options, &args.old_allocator);
+  args.new_root = new_is_tree ? rb_herb_diffable_tree_root(new_value)
+                              : herb_parse(new_string, &parser_options, &args.new_allocator);
 
   if (args.old_root == NULL || args.new_root == NULL) {
     diff_cleanup((VALUE) &args);
@@ -535,7 +564,104 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
 
   args.diff_result = herb_diff(args.old_root, args.new_root, &args.diff_allocator);
 
-  return rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);
+  VALUE result = rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);
+
+  RB_GC_GUARD(old_value);
+  RB_GC_GUARD(new_value);
+
+  return result;
+}
+
+typedef struct {
+  AST_DOCUMENT_NODE_T* root;
+  hb_allocator_T allocator;
+  parser_options_T parser_options;
+} diffable_tree_T;
+
+static void diffable_tree_free(void* data) {
+  diffable_tree_T* tree = (diffable_tree_T*) data;
+
+  if (tree->root != NULL) { ast_node_free((AST_NODE_T*) tree->root, &tree->allocator); }
+  hb_allocator_destroy(&tree->allocator);
+
+  xfree(tree);
+}
+
+static size_t diffable_tree_memsize(const void* data) {
+  return sizeof(diffable_tree_T);
+}
+
+static const rb_data_type_t diffable_tree_data_type = {
+  .wrap_struct_name = "Herb::DiffableTree",
+  .function = {
+    .dfree = diffable_tree_free,
+    .dsize = diffable_tree_memsize,
+  },
+  .flags = RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static bool rb_herb_diffable_tree_p(VALUE value) {
+  return rb_typeddata_is_kind_of(value, &diffable_tree_data_type);
+}
+
+static diffable_tree_T* check_diffable_tree(VALUE value) {
+  diffable_tree_T* tree;
+  TypedData_Get_Struct(value, diffable_tree_T, &diffable_tree_data_type, tree);
+
+  if (tree->root == NULL) { rb_raise(rb_eArgError, "Herb::DiffableTree holds no tree"); }
+
+  return tree;
+}
+
+static AST_DOCUMENT_NODE_T* rb_herb_diffable_tree_root(VALUE value) {
+  return check_diffable_tree(value)->root;
+}
+
+static VALUE Herb_parse_diffable_tree(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
+  char* string = (char*) check_string(source);
+  bool print_arena_stats = false;
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  parse_parser_options(options, &parser_options, &print_arena_stats);
+
+  diffable_tree_T* tree = ALLOC(diffable_tree_T);
+  memset(tree, 0, sizeof(diffable_tree_T));
+
+  tree->parser_options = parser_options;
+
+  if (!hb_allocator_init(&tree->allocator, HB_ALLOCATOR_ARENA)) {
+    xfree(tree);
+
+    return Qnil;
+  }
+
+  tree->root = herb_parse(string, &tree->parser_options, &tree->allocator);
+
+  if (tree->root == NULL) {
+    hb_allocator_destroy(&tree->allocator);
+    xfree(tree);
+
+    return Qnil;
+  }
+
+  if (print_arena_stats) { hb_arena_print_stats((hb_arena_T*) tree->allocator.context); }
+
+  VALUE cDiffableTree = rb_const_get(mHerb, rb_intern("DiffableTree"));
+  VALUE tree_value = TypedData_Wrap_Struct(cDiffableTree, &diffable_tree_data_type, tree);
+
+  rb_iv_set(tree_value, "@source", source);
+
+  return tree_value;
+}
+
+static VALUE Herb_diffable_tree_parse_result(VALUE self, VALUE tree_value) {
+  diffable_tree_T* tree = check_diffable_tree(tree_value);
+
+  return create_parse_result(tree->root, rb_iv_get(tree_value, "@source"), &tree->parser_options);
 }
 
 __attribute__((__visibility__("default"))) void Init_herb(void) {
@@ -560,4 +686,6 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "leak_check", Herb_leak_check, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
   rb_define_singleton_method(mHerb, "diff", Herb_diff, -1);
+  rb_define_singleton_method(mHerb, "__parse_diffable_tree__", Herb_parse_diffable_tree, -1);
+  rb_define_singleton_method(mHerb, "__diffable_tree_parse_result__", Herb_diffable_tree_parse_result, 1);
 }

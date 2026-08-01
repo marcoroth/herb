@@ -7,4 +7,7 @@ module Herb
   def self.extract_ruby: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool) -> String
   def self.extract_html: (String source) -> String
   def self.version: () -> String
+  def self.diff: (String | DiffableTree old_value, String | DiffableTree new_value) -> DiffResult
+  def self.__parse_diffable_tree__: (String input, **untyped) -> DiffableTree
+  def self.__diffable_tree_parse_result__: (DiffableTree tree) -> ParseResult
 end

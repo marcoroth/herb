@@ -1,0 +1,40 @@
+# Generated from lib/herb/diffable_tree.rb with RBS::Inline
+
+module Herb
+  # A parsed template whose native syntax tree is retained for efficient,
+  # repeated diffing. `Herb.diff` accepts a DiffableTree in place of a source
+  # string on either side, skipping the parse for that side.
+  #
+  #   baseline = Herb::DiffableTree.parse(previous_html)
+  #   result   = Herb.diff(baseline, next_html)
+  class DiffableTree
+    attr_reader source: String
+
+    # : (String, **untyped) -> Herb::DiffableTree
+    def self.parse: (String, **untyped) -> Herb::DiffableTree
+
+    # : (Herb::DiffableTree | String other) -> Herb::DiffResult
+    def diff: (Herb::DiffableTree | String other) -> Herb::DiffResult
+
+    # : () -> Herb::ParseResult
+    def parse_result: () -> Herb::ParseResult
+
+    # : () -> Herb::AST::DocumentNode
+    def value: () -> Herb::AST::DocumentNode
+
+    # : () -> Array[Herb::Errors::Error]
+    def errors: () -> Array[Herb::Errors::Error]
+
+    # : () -> Array[Herb::Warnings::Warning]
+    def warnings: () -> Array[Herb::Warnings::Warning]
+
+    # : () -> bool
+    def failed?: () -> bool
+
+    # : () -> bool
+    def success?: () -> bool
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end
