@@ -1,5 +1,5 @@
 import dedent from "dedent"
-import { readFileSync, writeFileSync, statSync, existsSync, fstatSync } from "fs"
+import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
 
@@ -156,7 +156,7 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
-      const isUsingStdin = (!file && this.hasStdinInput()) || file === "-"
+      const isUsingStdin = (!file && !isCheckMode && !process.stdin.isTTY) || file === "-"
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
@@ -502,18 +502,6 @@ export class CLI {
       console.error(error)
 
       process.exit(1)
-    }
-  }
-
-  private hasStdinInput(): boolean {
-    if (process.stdin.isTTY) return false
-
-    try {
-      const stats = fstatSync(0)
-
-      return stats.isFIFO() || stats.isSocket() || stats.isFile()
-    } catch {
-      return false
     }
   }
 
