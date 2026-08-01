@@ -27,7 +27,7 @@
     "dedent": "^1.7.2",
     "express": "^5.2.1",
     "lz-string": "^1.5.0",
-    "monaco-editor": "^0.55.1",
+    "monaco-editor": "^0.56.0",
     "prismjs": "^1.30.0",
     "vite": "^8.2.0"
   },
