@@ -190,6 +190,18 @@ jobs:
     runs-on: ubicloud-standard-2
     timeout-minutes: 30
 
+    # Comparing the Rust and JavaScript printers against each other only needs
+    # this flag flipped to "true", nothing else.
+    #
+    # TODO: turn it on once the UTF-8 BOM fix for the WASM bindings has landed.
+    # Emscripten decodes strings coming out of WASM with a plain
+    # `new TextDecoder()`, which drops a leading BOM, so the JavaScript printer
+    # loses it on the seven corpus files that start with one while the Rust
+    # printer keeps it. Everything else already agrees, so the comparison only
+    # fails on those seven. It has been run against a patched build and passes.
+    env:
+      COMPARE_IMPLEMENTATIONS: "false"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -214,6 +226,13 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Set up Node
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
+
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -230,9 +249,17 @@ jobs:
       - name: Compile Herb
         run: bundle exec rake make
 
+      - name: yarn install
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn install --frozen-lockfile
+
       - name: Build herb-print
         run: cargo build --release -p herb-printer --features cli
         working-directory: rust
+
+      - name: Build the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn nx build @herb-tools/printer
 
       - name: Wait for the corpus clone
         wait: [corpus]
@@ -267,6 +294,52 @@ jobs:
             echo "::error::The printer did not round-trip $mismatches file(s) that parsed cleanly"
             exit 1
           fi
+
+      - name: Print the corpus with the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          node javascript/packages/printer/bin/herb-print \
+            --glob \
+            --verify \
+            --force \
+            "corpus/erb/**/*.erb" > javascript-summary.txt 2> javascript-failures.txt
+
+          exit 0
+
+      - name: Compare the Rust and JavaScript printers
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: |-
+          strip_ansi() { sed $'s/\033\[[0-9;]*m//g'; }
+
+          failing_files() {
+            strip_ansi < "$1" | grep '^✗' | sed 's/^✗ //; s/: .*//' | sort
+          }
+
+          totals() {
+            strip_ansi < "$1" | sed -n '/^Summary:/,$p'
+          }
+
+          failing_files failures.txt > rust-failed-files.txt
+          failing_files javascript-failures.txt > javascript-failed-files.txt
+
+          totals summary.txt > rust-totals.txt
+          totals javascript-summary.txt > javascript-totals.txt
+
+          if ! diff -u rust-totals.txt javascript-totals.txt; then
+            echo "::error::The Rust and JavaScript printers report different totals"
+            exit 1
+          fi
+
+          if ! diff -u rust-failed-files.txt javascript-failed-files.txt; then
+            echo "::error::The Rust and JavaScript printers disagree on which files fail"
+            exit 1
+          fi
+
+          echo "Both printers agree on all $(wc -l < rust-failed-files.txt | tr -d ' ') failing files and on every total."
 
       - name: Job summary
         if: always()
@@ -303,4 +376,7 @@ jobs:
           path: |
             summary.txt
             failures.txt
+            javascript-summary.txt
+            javascript-failures.txt
+          if-no-files-found: ignore
           retention-days: 30
