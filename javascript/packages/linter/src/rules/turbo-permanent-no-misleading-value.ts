@@ -1,9 +1,11 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { getAttribute, hasAttributeValue } from "@herb-tools/core"
-
+import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+
+import { findAttributeByName, hasAttributeValue, hasStaticAttributeValue } from "@herb-tools/core"
+
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLAttributeNode, HTMLOpenTagNode, ERBOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface TurboPermanentAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLAttributeNode>
@@ -11,22 +13,32 @@ interface TurboPermanentAutofixContext extends BaseAutofixContext {
 
 class TurboPermanentNoMisleadingValueVisitor extends BaseRuleVisitor<TurboPermanentAutofixContext> {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    this.checkTurboPermanentAttribute(node)
+    const attribute = findAttributeByName(node.children, "data-turbo-permanent")
+
+    if (attribute) {
+      this.checkTurboPermanentAttribute(attribute, { node: attribute })
+    }
+
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkTurboPermanentAttribute(node: HTMLOpenTagNode): void {
-    const attribute = getAttribute(node, "data-turbo-permanent")
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    const attribute = findAttributeByName(node.children, "data-turbo-permanent")
 
-    if (!attribute) return
+    if (attribute && hasStaticAttributeValue(attribute)) {
+      this.checkTurboPermanentAttribute(attribute, undefined)
+    }
+
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkTurboPermanentAttribute(attribute: HTMLAttributeNode, autofixContext: TurboPermanentAutofixContext | undefined): void {
     if (!hasAttributeValue(attribute)) return
 
     this.addOffense(
-      "Attribute `data-turbo-permanent` should not contain any value. Its presence alone enables the behavior, so values like `\"true\"` or `\"false\"` are misleading.",
+      `Attribute \`data-turbo-permanent\` should not have a value. \`${IdentityPrinter.print(attribute)}\` still makes the element permanent, because Turbo only checks whether the attribute is present. Use \`data-turbo-permanent\` instead.`,
       attribute.value!.location,
-      {
-        node: attribute
-      }
+      autofixContext
     )
   }
 }
@@ -40,6 +52,12 @@ export class TurboPermanentNoMisleadingValueRule extends ParserRule<TurboPermane
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

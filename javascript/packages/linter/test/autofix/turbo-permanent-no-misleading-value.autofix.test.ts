@@ -62,4 +62,15 @@ describe("turbo-permanent-no-misleading-value autofix", () => {
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
   })
+
+  test("reports but does not rewrite ActionView tag helpers", () => {
+    const input = '<%= tag.div id: "cart", data: { turbo_permanent: false } %>'
+
+    const linter = new Linter(Herb, [TurboPermanentNoMisleadingValueRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
 })
