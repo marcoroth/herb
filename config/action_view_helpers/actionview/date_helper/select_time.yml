@@ -1,0 +1,52 @@
+---
+name: select_time
+source: "ActionView::Helpers::DateHelper#select_time"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a set of HTML `<select>` tags (one for hour and minute). You can set `:time_separator` to format the output, and the `:include_seconds` option to include an input for seconds.
+signature: "select_time(datetime = Time.current, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_time"
+tag: null
+arguments:
+  - name: datetime
+    position: 1
+    type: [time, datetime]
+    optional: true
+    default: "Time.current"
+    description: "The time to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the time select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes applied to every `<select>` tag in the set."
+options:
+  - name: time_separator
+    type: string
+    description: "String to separate the time fields."
+  - name: include_seconds
+    type: boolean
+    description: "If `true`, includes a select for seconds."
+  - name: ampm
+    type: boolean
+    description: "If `true`, shows hours in AM/PM format."
+  - name: start_hour
+    type: integer
+    description: "The starting hour for the hour select."
+  - name: end_hour
+    type: integer
+    description: "The ending hour for the hour select."
+  - name: prompt
+    type: [boolean, string, hash]
+    description: "Set to `true` for generic prompts, a string for a custom prompt, or a hash for per-field prompts."
+special_behaviors: []

@@ -1,0 +1,40 @@
+---
+name: truncate
+source: "ActionView::Helpers::TextHelper#truncate"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Truncates text to a specified length and appends an omission string.
+signature: "truncate(text, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-truncate"
+tag: null
+arguments:
+  - name: text
+    position: 1
+    type: string
+    optional: false
+    description: "The text to truncate."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash."
+options:
+  - name: length
+    type: integer
+    description: "Maximum length. Defaults to 30."
+  - name: omission
+    type: string
+    description: |-
+      Omission string. Defaults to `"..."`.
+  - name: separator
+    type: string
+    description: "Truncate at a natural break near the length limit."
+  - name: escape
+    type: boolean
+    description: "Whether to HTML-escape the result. Defaults to `true`."
+special_behaviors: []

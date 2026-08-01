@@ -36,7 +36,7 @@ describe("RewriteCodeActionService", () => {
         <% end %>
       `
 
-      const actions = getCodeActions(content, 0, 0, 2, 8)
+      const actions = getCodeActions(content, 0, 0, 0, 17)
 
       const convertAction = actions.find(a => a.title.includes("Convert to"))
       expect(convertAction).toBeDefined()
@@ -51,7 +51,7 @@ describe("RewriteCodeActionService", () => {
         <% end %>
       `
 
-      const actions = getCodeActions(content, 0, 0, 2, 8)
+      const actions = getCodeActions(content, 0, 0, 0, 17)
 
       const convertAction = actions.find(a => a.title.includes("<div>"))
       expect(convertAction).toBeDefined()
@@ -61,6 +61,19 @@ describe("RewriteCodeActionService", () => {
       expect(changes).toHaveLength(1)
       expect(changes[0].newText).toContain("<div>")
       expect(changes[0].newText).toContain("</div>")
+    })
+
+    it("does not offer actions when cursor is on child content", () => {
+      const content = dedent`
+        <%= tag.div do %>
+          Content
+        <% end %>
+      `
+
+      const actions = getCodeActions(content, 1, 2, 1, 9)
+
+      const convertAction = actions.find(a => a.title.includes("<div>"))
+      expect(convertAction).toBeUndefined()
     })
 
     it("offers convert for tag.span", () => {
@@ -128,6 +141,19 @@ describe("RewriteCodeActionService", () => {
 
       const convertAction = actions.find(a => a.title.includes("tag.span"))
       expect(convertAction).toBeDefined()
+    })
+
+    it("does not offer actions when cursor is on child content", () => {
+      const content = dedent`
+        <div>
+          Content
+        </div>
+      `
+
+      const actions = getCodeActions(content, 1, 2, 1, 9)
+
+      const convertAction = actions.find(a => a.title.includes("tag.div"))
+      expect(convertAction).toBeUndefined()
     })
   })
 

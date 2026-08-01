@@ -1,0 +1,16 @@
+---
+name: utf8_enforcer_tag
+source: "ActionView::Helpers::FormTagHelper#utf8_enforcer_tag"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns a hidden `<input>` tag that enforces UTF-8 encoding for form submissions.
+signature: "utf8_enforcer_tag"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-utf8_enforcer_tag"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

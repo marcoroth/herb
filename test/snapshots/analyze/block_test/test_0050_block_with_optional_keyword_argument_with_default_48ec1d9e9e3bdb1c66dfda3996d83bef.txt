@@ -1,0 +1,49 @@
+---
+source: "Analyze::BlockTest#test_0050_block with optional keyword argument with default"
+input: |2-
+<% block do |title: "hello"| %>
+  <%= title %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " block do |title: "hello"| " (location: (1:2)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:31)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:14))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " title " (location: (2:5)-(2:12))
+    │   │   │   ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:14)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:13)-(1:27))
+    │   │       ├── name: "title" (location: (1:13)-(1:19))
+    │   │       ├── default_value:
+    │   │       │   └── @ RubyLiteralNode (location: (1:20)-(1:27))
+    │   │       │       └── content: "\"hello\""
+    │   │       │
+    │   │       ├── kind: "keyword"
+    │   │       └── required: false
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

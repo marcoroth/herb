@@ -1,0 +1,8 @@
+---
+name: assigns
+source: "ActionView::Base#assigns"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the hash of instance variables assigned from the controller.

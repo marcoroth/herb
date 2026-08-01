@@ -1,0 +1,11 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0037_deeply nested statement tags with inline content"
+input: "{source: \"<p>\\n  <% if true %><% if true %><% if true %>text<% end %><% end %><% end %>\\n</p>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>
+'.freeze;   if true 
+ if true 
+ _buf << '  '.freeze; if true 
+ _buf << 'text'.freeze; end; end; end; _buf << '
+</p>'.freeze;
+_buf.to_s

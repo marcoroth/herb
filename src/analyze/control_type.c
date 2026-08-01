@@ -110,11 +110,10 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
       if (call->block != NULL && call->block->type == PM_BLOCK_NODE) {
         pm_block_node_t* block_node = (pm_block_node_t*) call->block;
 
-        bool has_do_opening = is_do_block(block_node->opening_loc);
-        bool has_brace_opening = is_brace_block(block_node->opening_loc);
-        bool has_valid_brace_closing = is_closing_brace(block_node->closing_loc);
+        bool has_opening = is_do_block(block_node->opening_loc) || is_brace_block(block_node->opening_loc);
+        bool is_unclosed = !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc);
 
-        if (has_do_opening || (has_brace_opening && !has_valid_brace_closing)) {
+        if (has_opening && is_unclosed) {
           current_type = CONTROL_TYPE_BLOCK;
           keyword_offset = (uint32_t) (node->location.start - context->source_start);
         }
@@ -125,11 +124,10 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     case PM_LAMBDA_NODE: {
       pm_lambda_node_t* lambda = (pm_lambda_node_t*) node;
 
-      bool has_do_opening = is_do_block(lambda->opening_loc);
-      bool has_brace_opening = is_brace_block(lambda->opening_loc);
-      bool has_valid_brace_closing = is_closing_brace(lambda->closing_loc);
+      bool has_opening = is_do_block(lambda->opening_loc) || is_brace_block(lambda->opening_loc);
+      bool is_unclosed = !has_valid_block_closing(lambda->opening_loc, lambda->closing_loc);
 
-      if (has_do_opening || (has_brace_opening && !has_valid_brace_closing)) {
+      if (has_opening && is_unclosed) {
         current_type = CONTROL_TYPE_BLOCK;
         keyword_offset = (uint32_t) (node->location.start - context->source_start);
       }
@@ -213,6 +211,7 @@ bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {
     case CONTROL_TYPE_CASE:
     case CONTROL_TYPE_CASE_MATCH: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_BEGIN:
+    case CONTROL_TYPE_BLOCK:
       return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_ENSURE;
     case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE;
     case CONTROL_TYPE_UNLESS: return child_type == CONTROL_TYPE_ELSE;
@@ -227,7 +226,8 @@ bool is_terminator_type(control_type_t parent_type, control_type_t child_type) {
   switch (parent_type) {
     case CONTROL_TYPE_WHEN: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_IN: return child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_ELSE;
-    case CONTROL_TYPE_BLOCK: return child_type == CONTROL_TYPE_BLOCK_CLOSE;
+    case CONTROL_TYPE_BLOCK:
+      return child_type == CONTROL_TYPE_BLOCK_CLOSE || is_subsequent_type(parent_type, child_type);
 
     default: return is_subsequent_type(parent_type, child_type);
   }

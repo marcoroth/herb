@@ -1,0 +1,34 @@
+---
+name: turbo_stream_action_tag
+source: "Turbo::Streams::ActionHelper#turbo_stream_action_tag"
+gem: turbo-rails
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a `<turbo-stream>` element with the specified action. Accepts `target:` or `targets:` to identify the DOM element(s) to act on, and `template:` for the inner HTML content.
+signature: "turbo_stream_action_tag(action, target: nil, targets: nil, template: nil, **attributes)"
+documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/Streams/ActionHelper:turbo_stream_action_tag"
+tag:
+  name: turbo-stream
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: action
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "The Turbo Stream action (e.g. `\"remove\"`, `\"replace\"`, `\"append\"`)."
+options:
+  - name: target
+    type: [string, object]
+    description: "The DOM ID of the target element. Objects are passed through `dom_id`."
+  - name: targets
+    type: string
+    description: "A CSS selector to target multiple elements."
+  - name: template
+    type: string
+    description: "The inner HTML content wrapped in a `<template>` element."
+special_behaviors: []

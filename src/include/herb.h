@@ -2,6 +2,7 @@
 #define HERB_H
 
 #include "ast/ast_node.h"
+#include "diff/herb_diff.h"
 #include "extract.h"
 #include "lib/hb_allocator.h"
 #include "lib/hb_array.h"

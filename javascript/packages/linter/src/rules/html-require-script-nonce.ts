@@ -1,13 +1,13 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue, findAttributeByName, isERBOpenTagNode } from "@herb-tools/core"
+import { getTagLocalName, getAttribute, getStaticAttributeValue, hasAttributeValue, findAttributeByName, isERBOpenTagNode, HELPER_REGISTRY, HELPER_BY_SOURCE } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 
 const HELPERS_WITH_CSP_NONCE_SUPPORT = [
-  "ActionView::Helpers::AssetTagHelper#javascript_include_tag",
-  "ActionView::Helpers::JavaScriptHelper#javascript_tag",
+  HELPER_REGISTRY["javascript_include_tag"].source,
+  HELPER_REGISTRY["javascript_tag"].source,
 ]
 
 class RequireScriptNonceVisitor extends BaseRuleVisitor {
@@ -53,15 +53,17 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
   }
 
   private helperName(node: HTMLElementNode): string {
-    if (node.element_source === "ActionView::Helpers::TagHelper#content_tag") {
-      return "content_tag"
+    if (!node.element_source) return "unknown"
+
+    const helper = HELPER_BY_SOURCE[node.element_source]
+
+    if (!helper) return node.element_source
+
+    if (helper.name === "tag") {
+      return `tag.${node.tag_name?.value ?? "script"}`
     }
 
-    if (node.element_source === "ActionView::Helpers::TagHelper#tag") {
-      return "tag.script"
-    }
-
-    return node.element_source ?? "unknown"
+    return helper.name
   }
 
   private isJavaScriptTag(node: HTMLElementNode): boolean {
@@ -85,7 +87,7 @@ class RequireScriptNonceVisitor extends BaseRuleVisitor {
 
 export class HTMLRequireScriptNonceRule extends ParserRule {
   static ruleName = "html-require-script-nonce"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

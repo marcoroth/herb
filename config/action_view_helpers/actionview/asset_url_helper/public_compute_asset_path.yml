@@ -1,0 +1,16 @@
+---
+name: public_compute_asset_path
+source: "ActionView::Helpers::AssetUrlHelper#public_compute_asset_path"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Public alias for `compute_asset_path`. Computes the full asset path for a given source.
+signature: "public_compute_asset_path"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

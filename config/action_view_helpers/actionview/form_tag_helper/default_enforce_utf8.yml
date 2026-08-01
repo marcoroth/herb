@@ -1,0 +1,16 @@
+---
+name: default_enforce_utf8
+source: "ActionView::Helpers::FormTagHelper#default_enforce_utf8"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether forms include the hidden UTF-8 enforcer input field.
+signature: "default_enforce_utf8"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

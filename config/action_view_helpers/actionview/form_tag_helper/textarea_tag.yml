@@ -1,0 +1,43 @@
+---
+name: textarea_tag
+source: "ActionView::Helpers::FormTagHelper#textarea_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a text input area; use a textarea for longer text inputs such as blog posts or descriptions.
+signature: "textarea_tag(name, content = nil, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-textarea_tag"
+tag:
+  name: textarea
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the textarea."
+  - name: content
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Default content of the textarea."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: size
+    type: string
+    description: |-
+      Textarea dimensions as `"COLSxROWS"` (e.g. `"20x40"`).
+special_behaviors: []
+aliases:
+  - text_area_tag

@@ -1,0 +1,8 @@
+---
+name: view_flow
+source: "ActionView::Base#view_flow"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the view flow object used for `content_for` block storage.

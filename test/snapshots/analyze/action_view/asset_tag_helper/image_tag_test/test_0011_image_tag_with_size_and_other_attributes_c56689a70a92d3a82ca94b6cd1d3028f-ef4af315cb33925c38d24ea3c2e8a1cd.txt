@@ -1,0 +1,125 @@
+---
+source: "Analyze::ActionView::AssetTagHelper::ImageTagTest#test_0011_image_tag with size and other attributes"
+input: |2-
+<%= image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:72))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:72))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " image_tag "icon.png", size: "32x32", alt: "Icon", class: "avatar" " (location: (1:3)-(1:70))
+    │   │       ├── tag_closing: "%>" (location: (1:70)-(1:72))
+    │   │       ├── tag_name: "img" (location: (1:4)-(1:13))
+    │   │       └── children: (5 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:41)-(1:52))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:44))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:41)-(1:44))
+    │   │           │   │               └── content: "alt"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:44)-(1:46))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:46)-(1:52))
+    │   │           │           ├── open_quote: """ (location: (1:46)-(1:47))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:47)-(1:51))
+    │   │           │           │       └── content: "Icon"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:51)-(1:52))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           ├── @ HTMLAttributeNode (location: (1:54)-(1:69))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:54)-(1:59))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:54)-(1:59))
+    │   │           │   │               └── content: "class"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:59)-(1:61))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:61)-(1:69))
+    │   │           │           ├── open_quote: """ (location: (1:61)-(1:62))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:62)-(1:68))
+    │   │           │           │       └── content: "avatar"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:68)-(1:69))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:26))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │   │               └── content: "width"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:26)-(1:26))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
+    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │           │       └── content: "32"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:26)-(1:26))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:26))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:26))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │   │               └── content: "height"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:26)-(1:26))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:26))
+    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:26))
+    │   │           │           │       └── content: "32"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:26)-(1:26))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:14)-(1:24))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:24))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:14)-(1:24))
+    │   │               │               └── content: "src"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:14)-(1:24))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:14)-(1:24))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:14)-(1:24))
+    │   │                       │       └── content: "image_path(\"icon.png\")"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "img" (location: (1:4)-(1:13))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::AssetTagHelper#image_tag"
+    │
+    └── @ HTMLTextNode (location: (1:72)-(2:0))
+        └── content: "\n"

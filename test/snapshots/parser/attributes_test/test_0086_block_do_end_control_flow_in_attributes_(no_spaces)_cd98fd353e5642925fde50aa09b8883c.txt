@@ -27,6 +27,10 @@ input: "<div <%items.each do%>data-item<%end%>></div>"
         │       │       │       ├── equals: ∅
         │       │       │       └── value: ∅
         │       │       │
+        │       │       ├── block_arguments: []
+        │       │       ├── rescue_clause: ∅
+        │       │       ├── else_clause: ∅
+        │       │       ├── ensure_clause: ∅
         │       │       └── end_node:
         │       │           └── @ ERBEndNode (location: (1:31)-(1:38))
         │       │               ├── tag_opening: "<%" (location: (1:31)-(1:33))

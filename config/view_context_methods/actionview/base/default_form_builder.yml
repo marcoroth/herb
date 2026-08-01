@@ -1,0 +1,8 @@
+---
+name: default_form_builder
+source: "ActionView::Base#default_form_builder"
+gem: actionview
+category: base
+output: text
+description: |-
+  Returns the default form builder class used by `form_with` and `form_for`.

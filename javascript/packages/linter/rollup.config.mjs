@@ -77,7 +77,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       json(),
@@ -98,7 +98,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       commonjs(),

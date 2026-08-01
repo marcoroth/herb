@@ -2,6 +2,6 @@
 source: "Engine::ERBTagVariationsTest#test_0005_<%- code %>"
 input: "{source: \"  <%- x = 1 %>\\n<%= x %>\", options: {}}"
 ---
-_buf = ::String.new; x = 1 
+_buf = ::String.new;   x = 1 
  _buf << (x).to_s;
 _buf.to_s

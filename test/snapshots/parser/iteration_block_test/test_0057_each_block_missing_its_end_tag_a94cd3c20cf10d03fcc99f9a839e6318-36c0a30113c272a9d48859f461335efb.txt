@@ -1,0 +1,61 @@
+---
+source: "Parser::IterationBlockTest#test_0057_each block missing its end tag"
+input: |2-
+<% @users.each do |user| %>
+  <%= user.name %>
+options: {iteration_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(3:0))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (2:18)-(3:0))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:15)-(1:17))
+│       ├── message: "block_term_end: expected a block beginning with `do` to end with `end`"
+│       ├── error_message: "expected a block beginning with `do` to end with `end`"
+│       ├── diagnostic_id: "block_term_end"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBIterationBlockNode (location: (1:0)-(3:0))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:27))
+        │       ├── message: "ERB block started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "ERB block"
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " @users.each do |user| " (location: (1:2)-(1:25))
+        ├── tag_closing: "%>" (location: (1:25)-(1:27))
+        ├── receiver: "@users" (location: (1:3)-(1:9))
+        ├── call_operator: "." (location: (1:9)-(1:10))
+        ├── message: "each" (location: (1:10)-(1:14))
+        ├── arguments: []
+        ├── block_opening: "do" (location: (1:15)-(1:17))
+        ├── body: (3 items)
+        │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+        │   │   └── content: "\n  "
+        │   │
+        │   ├── @ ERBContentNode (location: (2:2)-(2:18))
+        │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+        │   │   ├── content: " user.name " (location: (2:5)-(2:16))
+        │   │   ├── tag_closing: "%>" (location: (2:16)-(2:18))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ HTMLTextNode (location: (2:18)-(3:0))
+        │       └── content: "\n"
+        │
+        ├── block_arguments: (1 item)
+        │   └── @ RubyParameterNode (location: (1:19)-(1:23))
+        │       ├── name: "user" (location: (1:19)-(1:23))
+        │       ├── default_value: ∅
+        │       ├── kind: "positional"
+        │       └── required: true
+        │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node: ∅

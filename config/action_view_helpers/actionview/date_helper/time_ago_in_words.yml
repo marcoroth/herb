@@ -1,0 +1,26 @@
+---
+name: time_ago_in_words
+source: "ActionView::Helpers::DateHelper#time_ago_in_words"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Like `distance_of_time_in_words` but where `to_time` is fixed to `Time.now`.
+signature: "time_ago_in_words(from_time, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-time_ago_in_words"
+tag: null
+arguments:
+  - name: from_time
+    position: 1
+    type: object
+    optional: false
+    description: "Starting time."
+options:
+  - name: include_seconds
+    type: boolean
+    description: "Include more detail for distances under 1 minute."
+special_behaviors: []
+aliases:
+  - distance_of_time_in_words_to_now

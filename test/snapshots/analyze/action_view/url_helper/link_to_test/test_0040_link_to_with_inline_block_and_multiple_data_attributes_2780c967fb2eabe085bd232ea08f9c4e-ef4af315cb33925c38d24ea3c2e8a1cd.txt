@@ -14,26 +14,6 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:95)-(1:97))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (3 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:12)-(1:22))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:22))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:12)-(1:22))
-    │   │           │   │               └── content: "href"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:12)-(1:22))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:22))
-    │   │           │           ├── open_quote: """ (location: (1:12)-(1:12))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:12)-(1:22))
-    │   │           │           │       └── content: "/profile"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:22)-(1:22))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
     │   │           ├── @ HTMLAttributeNode (location: (1:32)-(1:54))
     │   │           │   ├── name:
     │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:44))
@@ -54,23 +34,43 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:56)-(1:78))
+    │   │           ├── @ HTMLAttributeNode (location: (1:56)-(1:78))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:56)-(1:69))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:56)-(1:69))
+    │   │           │   │               └── content: "data-turbo-confirm"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:69)-(1:71))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:71)-(1:78))
+    │   │           │           ├── open_quote: """ (location: (1:71)-(1:72))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:72)-(1:77))
+    │   │           │           │       └── content: "Sure?"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:77)-(1:78))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:12)-(1:22))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:56)-(1:69))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:22))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:56)-(1:69))
-    │   │               │               └── content: "data-turbo-confirm"
+    │   │               │           └── @ LiteralNode (location: (1:12)-(1:22))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:69)-(1:71))
+    │   │               ├── equals: "=" (location: (1:12)-(1:22))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:71)-(1:78))
-    │   │                       ├── open_quote: """ (location: (1:71)-(1:72))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:12)-(1:22))
+    │   │                       ├── open_quote: """ (location: (1:12)-(1:12))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:72)-(1:77))
-    │   │                       │       └── content: "Sure?"
+    │   │                       │   └── @ LiteralNode (location: (1:12)-(1:22))
+    │   │                       │       └── content: "/profile"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:77)-(1:78))
+    │   │                       ├── close_quote: """ (location: (1:22)-(1:22))
     │   │                       └── quoted: true
     │   │
     │   │

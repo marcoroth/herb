@@ -53,7 +53,7 @@ production_flags = $(warning_flags) -O3 -march=native -flto
 shared_library_flags = -fPIC
 
 # Default build mode (change this as needed)
-flags = $(warning_flags) $(debug_flags) $(prism_flags) -std=c99
+flags = $(warning_flags) $(debug_flags) $(prism_flags) -std=gnu99
 
 # Separate test compilation flags
 test_flags = $(debug_flags) $(prism_flags) -std=gnu99

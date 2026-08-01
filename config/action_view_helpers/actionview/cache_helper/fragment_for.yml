@@ -1,0 +1,16 @@
+---
+name: fragment_for
+source: "ActionView::Helpers::CacheHelper#fragment_for"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: true
+description: |-
+  Reads or writes a fragment cache entry, yielding to the block on cache miss.
+signature: "fragment_for(name = {}, options = {}, &block)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

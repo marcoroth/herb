@@ -11,7 +11,7 @@ export class Client {
   private languageClientName = "Herb Language Server "
   private context: ExtensionContext
   private configurationListener?: Disposable
-  private outputChannel = window.createOutputChannel("Herb Language Server")
+  private outputChannel = window.createOutputChannel("Herb Language Server", { log: true })
 
   constructor(context: ExtensionContext) {
     this.context = context

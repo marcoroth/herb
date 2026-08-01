@@ -1,0 +1,23 @@
+---
+name: asset_url
+source: "ActionView::Helpers::AssetUrlHelper#asset_url"
+gem: actionview
+output: url
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Computes the full URL to an asset in the public assets directory.
+signature: "asset_url(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-asset_url"
+tag: null
+arguments:
+  - name: source
+    position: 1
+    type: string
+    optional: false
+    description: "Asset file name or path."
+options: []
+special_behaviors: []
+aliases:
+  - url_to_asset

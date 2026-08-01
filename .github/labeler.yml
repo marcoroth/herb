@@ -71,8 +71,20 @@ sorbet:
 rbs:
   - changed-files:
     - any-glob-to-any-file:
-      - 'sig/**/*.rbs'
+      - 'sig/**/*'
       - 'templates/sig/**/*'
+
+action-view-helpers:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'config/action_view_helpers/**/*'
+      - 'config/view_context_methods/**/*'
+      - 'templates/src/analyze/action_view/**/*'
+      - 'templates/javascript/packages/core/src/action-view-helpers.ts.erb'
+      - 'templates/lib/herb/action_view/**/*'
+      - 'templates/java/org/herb/ast/HelperRegistry.java.erb'
+      - 'templates/rust/src/action_view_helpers.rs.erb'
+      - 'src/analyze/action_view/**/*'
 
 parser:
   - changed-files:
@@ -129,6 +141,12 @@ linter-autofix:
     - any-glob-to-any-file:
       - '**/javascript/packages/linter/test/autofix/**/*'
 
+a11y:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/src/rules/**/a11y-*'
+      - '**/javascript/packages/linter/docs/rules/**/a11y-*'
+
 language-server:
   - changed-files:
     - any-glob-to-any-file:
@@ -165,6 +183,16 @@ vscode:
     - any-glob-to-any-file:
       - '**/javascript/packages/vscode/**/*'
 
+dev-client:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/client/**/*'
+
+dev-server:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/herb/dev/**/*'
+
 dev-tools:
   - changed-files:
     - any-glob-to-any-file:
@@ -174,6 +202,7 @@ config:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/config/**/*'
+      - '**/rust/herb-config/**/*'
 
 tailwind-class-sorter:
   - changed-files:

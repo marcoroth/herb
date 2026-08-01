@@ -1,0 +1,57 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0084_tag.hr with do...end block reports void element content error"
+input: |2-
+<%= tag.hr class: "divider" do %>
+  content
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ VoidElementContentError (location: (1:0)-(3:9))
+    │   │       ├── message: "Void element `hr` cannot have content. `tag.hr` does not accept a block for content."
+    │   │       ├── tag_name: "hr" (location: (1:8)-(1:10))
+    │   │       ├── helper_name: "tag.hr"
+    │   │       └── content_type: "a block"
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:33))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.hr class: "divider" do " (location: (1:3)-(1:31))
+    │   │       ├── tag_closing: "%>" (location: (1:31)-(1:33))
+    │   │       ├── tag_name: "hr" (location: (1:8)-(1:10))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:11)-(1:27))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:16))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:11)-(1:16))
+    │   │               │               └── content: "class"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:16)-(1:18))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:18)-(1:27))
+    │   │                       ├── open_quote: """ (location: (1:18)-(1:19))
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:19)-(1:26))
+    │   │                       │       └── content: "divider"
+    │   │                       │
+    │   │                       ├── close_quote: """ (location: (1:26)-(1:27))
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "hr" (location: (1:8)-(1:10))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:33)-(3:0))
+    │   │       └── content: "\n  content\n"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

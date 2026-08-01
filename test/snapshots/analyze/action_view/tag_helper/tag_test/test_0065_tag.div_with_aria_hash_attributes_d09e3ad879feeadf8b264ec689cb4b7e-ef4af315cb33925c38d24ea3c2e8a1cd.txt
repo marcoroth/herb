@@ -51,7 +51,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "true"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

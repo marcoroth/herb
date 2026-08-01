@@ -1,0 +1,45 @@
+---
+name: select_year
+source: "ActionView::Helpers::DateHelper#select_year"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the five years on each side of the current, which is selected. The five year radius can be changed using the `:start_year` and `:end_year` keys in the options. Both ascending and descending year lists are supported by making `:start_year` less than or greater than `:end_year`. Override the field name using the `:field_name` option, `"year"` by default.
+signature: "select_year(date, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_year"
+tag: null
+arguments:
+  - name: date
+    position: 1
+    type: [date, time, integer]
+    optional: false
+    description: "The date, time, or year number to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the year select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"year\"`."
+  - name: start_year
+    type: integer
+    description: "The start year for the year select."
+  - name: end_year
+    type: integer
+    description: "The end year for the year select."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

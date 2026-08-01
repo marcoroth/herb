@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0024_tag.div with variable attribute value"
+input: "{source: \"<%= tag.div class: class_name do %>Content<% end %>\", locals: {class_name: \"dynamic-class\"}, options: {action_view_helpers: true}}"
+---
+<div class="dynamic-class">Content</div>

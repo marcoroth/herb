@@ -1,0 +1,8 @@
+---
+name: field_error_proc
+source: "ActionView::Base#field_error_proc"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the proc used to wrap form fields that have validation errors.

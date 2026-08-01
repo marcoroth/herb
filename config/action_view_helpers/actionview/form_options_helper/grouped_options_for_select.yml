@@ -1,0 +1,39 @@
+---
+name: grouped_options_for_select
+source: "ActionView::Helpers::FormOptionsHelper#grouped_options_for_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a string of `<option>` tags, like `options_for_select`, but wraps them with `<optgroup>` tags. Accepts a nested array or hash of strings where the first value serves as the `<optgroup>` label and the second value must be an array of options.
+signature: "grouped_options_for_select(grouped_options, selected_key = nil, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormOptionsHelper.html#method-i-grouped_options_for_select"
+tag: null
+arguments:
+  - name: grouped_options
+    position: 1
+    type: [array, hash]
+    optional: false
+    description: "A nested array or hash of strings for grouped option tags."
+  - name: selected_key
+    position: 2
+    type: [string, array]
+    optional: true
+    default: "nil"
+    description: "The value(s) to be selected."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash."
+options:
+  - name: prompt
+    type: [boolean, string]
+    description: "Prepend an option with a generic prompt or the given prompt string."
+  - name: divider
+    type: string
+    description: "The divider string for option groups."
+special_behaviors: []

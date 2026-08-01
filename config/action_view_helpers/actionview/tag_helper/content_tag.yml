@@ -1,0 +1,64 @@
+---
+name: content_tag
+source: "ActionView::Helpers::TagHelper#content_tag"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: true
+description: |-
+  Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the `tag` method for the modern equivalent.
+signature: "content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag"
+tag:
+  name: null
+  is_void: false
+  preferred: false
+  detect_style: call_name
+content:
+  source: block_or_arg
+  arg_position: 2
+  skip_if_hash: true
+attributes_arg: 3
+transform_style: generic
+arguments:
+  - name: name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: |-
+      The HTML tag name (e.g. `:div`, `:span`, `"p"`).
+  - name: content_or_options_with_block
+    position: 2
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "Tag content string, or options hash when a block is given."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+  - name: escape
+    position: 4
+    type: boolean
+    optional: true
+    default: "true"
+    description: "Whether to HTML-escape the content."
+options:
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+  - name: id
+    type: string
+    description: "HTML id attribute."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+  - name: aria
+    type: hash
+    maps_to: aria-*
+    description: "Hash of `aria-*` attributes."
+special_behaviors: []

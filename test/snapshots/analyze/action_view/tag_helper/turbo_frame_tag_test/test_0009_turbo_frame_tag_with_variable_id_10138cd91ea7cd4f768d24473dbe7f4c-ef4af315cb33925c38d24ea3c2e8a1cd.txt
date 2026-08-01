@@ -33,7 +33,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "dom_id(post)"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

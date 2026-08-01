@@ -1,0 +1,21 @@
+---
+name: cdata_section
+source: "ActionView::Helpers::TagHelper#cdata_section"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a CDATA section with the given content.
+signature: "cdata_section(content)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-cdata_section"
+tag: null
+arguments:
+  - name: content
+    position: 1
+    type: string
+    optional: false
+    description: "Content for the CDATA section."
+options: []
+special_behaviors: []

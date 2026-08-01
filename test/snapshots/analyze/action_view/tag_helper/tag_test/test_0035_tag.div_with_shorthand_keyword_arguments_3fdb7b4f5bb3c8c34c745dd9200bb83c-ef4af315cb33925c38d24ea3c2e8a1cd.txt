@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │           │           │       └── content: "height"
     │   │           │           │
     │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
     │   │           └── @ HTMLAttributeNode (location: (1:21)-(1:21))
@@ -51,7 +51,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "width"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │
