@@ -54,7 +54,6 @@ describe("Unicode character handling", () => {
 
     expect(result).toBe(dedent`
       <p>This contains an em dash — here</p>
-
       <!-- HTML comment -->
     `)
   })
@@ -69,7 +68,6 @@ describe("Unicode character handling", () => {
 
     expect(result).toBe(dedent`
       <p>This contains a curly apostrophe: we’re testing</p>
-
       <!-- HTML comment -->
     `)
   })
@@ -109,7 +107,6 @@ describe("Unicode character handling", () => {
       <div title="Testing — em dash and 'quotes'" data-content="More – unicode">
         Content
       </div>
-
       <!-- Comment -->
     `)
   })
@@ -128,7 +125,6 @@ describe("Unicode character handling", () => {
       <p>
         <%= "Text with — dash" %> and 'quotes'
       </p>
-
       <%# ERB comment %>
     `)
   })
