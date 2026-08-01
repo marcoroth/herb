@@ -11,7 +11,7 @@ Run lint, format check, and analyzer as parallel steps.
 :::
 
 ```yaml [bitbucket-pipelines.yml]
-image: node:20
+image: node:24
 
 pipelines:
   default:
@@ -20,13 +20,15 @@ pipelines:
             name: Herb Lint
             script:
               - npx --yes @herb-tools/linter --fail-level warning
+
         - step:
             name: Herb Format Check
             script:
               - npx --yes @herb-tools/formatter --check app/views
+
         - step:
             name: Herb Analyze
-            image: ruby:3.3
+            image: ruby:4.0
             script:
               - gem install herb
               - herb analyze .

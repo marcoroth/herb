@@ -25,12 +25,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Lint HTML+ERB templates
         run: npx --yes @herb-tools/linter
 
       - name: Check HTML+ERB formatting
-        run: npx --yes @herb-tools/formatter --check app/views
+        run: npx --yes @herb-tools/formatter --check
 ```
 
 The formatter requires an explicit path in CI — without one it reads from stdin, which `--check` rejects. Adjust `app/views` to match where your templates live.
@@ -44,7 +43,7 @@ The formatter requires an explicit path in CI — without one it reads from stdi
 `--check` only passes on an already-formatted tree. Run the formatter once, commit the result in its own change, then enable the CI step:
 
 ```bash
-npx --yes @herb-tools/formatter app/views
+npx --yes @herb-tools/formatter
 ```
 
 Review the diff, commit it separately from unrelated changes, and only then add the `--check` step to your workflow.
@@ -72,11 +71,3 @@ Append these steps to the `herb` job above to also run the parser analyzer, or p
 - name: Analyze HTML+ERB templates
   run: bundle exec herb analyze .
 ```
-
-::: tip
-If your project doesn't have `herb` in its `Gemfile`, replace `bundle exec herb` with `gem install herb && herb analyze .`, and drop `bundler-cache: true` from `ruby/setup-ruby` unless another step in the job needs it.
-:::
-
-## See also
-
-- [Reviewdog](/integrations/ci/reviewdog) — post linter findings as inline PR review comments
