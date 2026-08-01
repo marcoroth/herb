@@ -3,20 +3,20 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isRubyLiteralNode, isRubyParameterNode } from "@herb-tools/core"
 
-import type { ERBIterationBlockNode, Node, ParseResult, ParserOptions } from "@herb-tools/core"
+import type { ERBBlockNode, Node, ParseResult } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
 const REPORTED_KINDS = ["positional", "rest"]
 
 class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
-  visitERBIterationBlockNode(node: ERBIterationBlockNode): void {
+  visitERBBlockNode(node: ERBBlockNode): void {
     this.checkBlockArguments(node)
 
     this.visitChildNodes(node)
   }
 
-  private checkBlockArguments(node: ERBIterationBlockNode): void {
+  private checkBlockArguments(node: ERBBlockNode): void {
     const parameters = node.block_arguments.filter(isRubyParameterNode)
     if (parameters.length === 0) return
 
@@ -37,7 +37,7 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     }
   }
 
-  private rubySourceInBody(node: ERBIterationBlockNode): string {
+  private rubySourceInBody(node: ERBBlockNode): string {
     const sources: string[] = []
 
     const collect = (current: Node | null | undefined): void => {
@@ -81,11 +81,6 @@ export class ERBNoUnusedBlockArgumentRule extends ParserRule {
     }
   }
 
-  get parserOptions(): Partial<ParserOptions> {
-    return {
-      iteration_nodes: true,
-    }
-  }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoUnusedBlockArgumentVisitor(this.ruleName, context)

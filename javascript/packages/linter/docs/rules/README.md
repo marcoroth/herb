@@ -56,7 +56,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
 - [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
-- [`erb-no-unused-block-argument`](./erb-no-unused-block-argument.md) - Disallow unused block arguments in ERB iteration blocks
+- [`erb-no-unused-block-argument`](./erb-no-unused-block-argument.md) - Disallow unused block arguments in ERB blocks
 - [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
 - [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
 - [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation

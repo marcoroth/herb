@@ -227,10 +227,32 @@ describe("erb-no-unused-block-argument", () => {
     `)
   })
 
-  it("does not flag builder blocks", () => {
-    expectNoOffenses(dedent`
+  it("flags an unused builder block argument", () => {
+    const html = dedent`
       <%= form_with model: @user do |form| %>
         <p>Nothing</p>
+      <% end %>
+    `
+
+    expectError('Block argument `form` is never used. Remove it, or prefix it with an underscore as `_form` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not flag a builder block argument that is used", () => {
+    expectNoOffenses(dedent`
+      <%= form_with model: @user do |form| %>
+        <%= form.text_field :name %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used in a nested builder block", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <%= form_with model: user do |form| %>
+          <%= form.text_field :name %>
+        <% end %>
       <% end %>
     `)
   })
