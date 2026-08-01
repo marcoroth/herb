@@ -77,6 +77,9 @@ module Herb
       # TODO: Rewrite using Prism Nodes once available
       def javascript_tag?: (untyped code) -> untyped
 
+      # TODO: Rewrite using Prism Nodes once available
+      def head_content_helper?: (untyped code) -> untyped
+
       def include_debug_disable_comment?: (untyped code) -> untyped
     end
   end
