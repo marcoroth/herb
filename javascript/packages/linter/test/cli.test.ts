@@ -1047,7 +1047,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)
@@ -1073,7 +1073,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)
@@ -1123,7 +1123,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)
@@ -1173,7 +1173,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)
@@ -1219,7 +1219,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)
@@ -1254,7 +1254,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.10.2
+          version: 0.10.3
           linter:
             enabled: true
         `)

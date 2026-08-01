@@ -11,7 +11,7 @@ fn load_reads_and_merges_with_defaults() {
   fs::write(
     &config_path,
     r#"
-version: 0.10.2
+version: 0.10.3
 linter:
   enabled: true
   rules:
@@ -27,7 +27,7 @@ formatter:
 
   let config = Config::load(dir.path(), None).unwrap();
 
-  assert_eq!(config.config_version, Some("0.10.2".into()));
+  assert_eq!(config.config_version, Some("0.10.3".into()));
   assert_eq!(config.version(), herb_config::DEFAULT_VERSION);
 
   assert!(config.is_linter_enabled());
@@ -98,7 +98,7 @@ fn find_config_file_finds_config_in_current_dir() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
 
-  fs::write(&config_path, "version: 0.10.2\n").unwrap();
+  fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
   let found = Config::find_config_file(dir.path());
 
@@ -111,7 +111,7 @@ fn find_config_file_walks_up_directory_tree() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
 
-  fs::write(&config_path, "version: 0.10.2\n").unwrap();
+  fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
   let sub_dir = dir.path().join("app").join("views");
   fs::create_dir_all(&sub_dir).unwrap();
