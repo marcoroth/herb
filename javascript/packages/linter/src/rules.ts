@@ -45,6 +45,7 @@ import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.
 import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
 import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
 import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script-interpolation.js"
+import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argument.js"
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
@@ -150,6 +151,7 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
   ERBNoSilentStatementRule,
+  ERBNoUnusedBlockArgumentRule,
   ERBNoUnusedExpressionsRule,
   ERBNoUnusedLiteralsRule,
   ERBNoSilentTagInAttributeNameRule,
