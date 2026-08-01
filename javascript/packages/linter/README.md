@@ -20,8 +20,12 @@ npm install -g @herb-tools/linter
 pnpm add -g @herb-tools/linter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/linter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/linter template.html.erb
 ```
 
 ```shell [bun]
