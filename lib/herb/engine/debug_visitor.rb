@@ -393,10 +393,6 @@ module Herb
         false
       end
 
-      # Helpers whose output belongs in <head>. Wrapping them in a <span>
-      # would implicitly close </head> in the browser, so they are never
-      # wrapped—even when rendered from a partial whose own AST has no
-      # <head> element for in_excluded_context? to detect.
       # TODO: Rewrite using Prism Nodes once available
       def head_content_helper?(code)
         cleaned_code = code.strip.gsub(/\s+/, " ")
