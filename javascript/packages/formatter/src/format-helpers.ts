@@ -234,12 +234,10 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
- * Check if a node is an ERB comment whose content spans multiple lines.
- * Multiline ERB comments keep their block layout (like multiline HTML comments)
- * and must never be rendered inline.
+ * Check if a node is an ERB comment that renders as a block.
  */
 export function isMultilineERBComment(node: Node): boolean {
-  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").includes("\n")
+  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
 }
 
 /**

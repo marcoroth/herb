@@ -426,4 +426,157 @@ describe("@herb-tools/formatter", () => {
 
     expectFormattedToMatch(result, { passes: 2 })
   })
+
+  describe("preserves deliberately formatted ERB comments", () => {
+    test("single-line comment on its own line", () => {
+      expectFormattedToMatch(dedent`
+        <%# a standalone comment %>
+      `, { passes: 2 })
+    })
+
+    test("single-line comment indented inside an element", () => {
+      expectFormattedToMatch(dedent`
+        <div>
+          <%# a comment inside a div %>
+          <span>content</span>
+        </div>
+      `, { passes: 2 })
+    })
+
+    test("single-line comment surrounded by text", () => {
+      expectFormattedToMatch(dedent`
+        hello <%# note %> world
+      `, { passes: 2 })
+    })
+
+    test("single-line comment inside an inline element", () => {
+      expectFormattedToMatch(dedent`
+        <p>hello <%# note %> world</p>
+      `, { passes: 2 })
+    })
+
+    test("single-line comment after a preceding sibling", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%# note %>
+      `, { passes: 2 })
+    })
+
+    test("single-line comment separated by blank lines", () => {
+      expectFormattedToMatch(dedent`
+        <div>a</div>
+
+        <%# section divider %>
+
+        <div>b</div>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment on its own lines", () => {
+      expectFormattedToMatch(dedent`
+        <%#
+          hello
+          this is a
+          multi-line ERB
+          comment
+        %>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment indented inside an element", () => {
+      expectFormattedToMatch(dedent`
+        <div>
+          <%#
+            hello
+            world
+          %>
+          <span>content</span>
+        </div>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment indented inside nested elements", () => {
+      expectFormattedToMatch(dedent`
+        <div>
+          <section>
+            <%#
+              hello
+              world
+            %>
+          </section>
+        </div>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment after a preceding sibling", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and
+        <%#
+          multi
+          line
+        %>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment between text", () => {
+      expectFormattedToMatch(dedent`
+        hello
+        <%#
+          multi
+          line
+        %>
+        world
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment inside an inline element", () => {
+      expectFormattedToMatch(dedent`
+        <p>
+          hello
+          <%#
+            multi
+            line
+          %>
+          world
+        </p>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment with relative indentation in its content", () => {
+      expectFormattedToMatch(dedent`
+        <%#
+          Options:
+            - first
+            - second
+        %>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment with a blank line in its content", () => {
+      expectFormattedToMatch(dedent`
+        <%#
+          first paragraph
+
+          second paragraph
+        %>
+      `, { passes: 2 })
+    })
+
+    test("multi-line comment wrapping a single line of content collapses and stays in the text flow", () => {
+      const source = dedent`
+        hello <%#
+          note
+        %> world
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        hello <%# note %> world
+      `)
+
+      expectFormattedToMatch(result, { passes: 2 })
+    })
+  })
 })
