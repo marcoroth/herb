@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("HTML comment", () => {
@@ -267,7 +271,6 @@ describe("@herb-tools/formatter", () => {
 
           <!-- Body comment -->
           <p>Content</p>
-
           <!-- Footer comment -->
         </div>
       `)
@@ -348,6 +351,73 @@ describe("@herb-tools/formatter", () => {
       const result = formatter.format(source)
       expect(result).toEqual(dedent`
         <span><!-- Even in inline elements --></span>
+      `)
+    })
+  })
+
+  describe("Trailing comments", () => {
+    test("does not insert a blank line before a closing comment", () => {
+      expectFormattedToMatch(dedent`
+        <!-- opening container -->
+        <div class="container">
+          blah blah blah
+        </div>
+        <!-- closing container -->
+      `)
+    })
+
+    test("does not insert a blank line before a closing ERB comment", () => {
+      expectFormattedToMatch(dedent`
+        <div class="container">
+          blah blah blah
+        </div>
+        <%# closing container %>
+      `)
+    })
+
+    test("does not insert a blank line before a closing comment inside an element", () => {
+      expectFormattedToMatch(dedent`
+        <section>
+          <div class="container">
+            blah blah blah
+          </div>
+          <!-- closing container -->
+        </section>
+      `)
+    })
+
+    test("keeps a blank line the author put before a closing comment", () => {
+      expectFormattedToMatch(dedent`
+        <div class="container">
+          blah blah blah
+        </div>
+
+        <!-- closing container -->
+      `)
+    })
+
+    test("still spaces a comment that introduces a following element", () => {
+      const source = dedent`
+        <div class="a">
+          one
+        </div>
+        <!-- section two -->
+        <div class="b">
+          two
+        </div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <div class="a">
+          one
+        </div>
+
+        <!-- section two -->
+        <div class="b">
+          two
+        </div>
       `)
     })
   })

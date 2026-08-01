@@ -598,7 +598,6 @@ describe("Spacing", () => {
 
           <!-- Body comment -->
           <p>Content</p>
-
           <!-- Footer comment -->
         </div>
       `)

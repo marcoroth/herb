@@ -102,6 +102,19 @@ export function findPreviousMeaningfulSibling(siblings: Node[], currentIndex: nu
 }
 
 /**
+ * Find the index of the next non-whitespace sibling, or -1 when there is none
+ */
+export function findNextMeaningfulSibling(siblings: Node[], currentIndex: number): number {
+  for (let i = currentIndex + 1; i < siblings.length; i++) {
+    if (isNonWhitespaceNode(siblings[i])) {
+      return i
+    }
+  }
+
+  return -1
+}
+
+/**
  * Check if there's whitespace between two indices in children array
  */
 export function hasWhitespaceBetween(children: Node[], startIndex: number, endIndex: number): boolean {
