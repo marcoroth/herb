@@ -46,11 +46,19 @@ export class HerbOverlay {
     }
   }
 
+  private syncConnectionDot() {
+    const herbClient = (window as any).__herbClient;
+    if (herbClient) {
+      herbClient.applyConnectionDot();
+    }
+  }
+
   private init() {
     this.loadProjectPath();
     this.loadDefaultEditor();
     this.loadSettings();
     this.injectMenu();
+    this.syncConnectionDot();
     this.setupMenuToggle();
     this.setupToggleSwitches();
     this.setupEditorDropdown();
@@ -148,10 +156,17 @@ export class HerbOverlay {
         <button class="herb-menu-trigger" id="herbMenuTrigger">
           <span class="herb-icon">🌿</span>
           <span class="herb-text">Herb</span>
+          <span id="herbConnectionDot" class="herb-connection-dot" data-herb-connection-dot></span>
         </button>
 
         <div class="herb-menu-panel" id="herbMenuPanel">
           <div class="herb-menu-header">Herb Debug Tools</div>
+
+          <div id="herbDevServerSection" class="herb-dev-server-section">
+            <span id="herbDevServerDot" class="herb-dev-server-dot"></span>
+            <span id="herbDevServerStatus" class="herb-dev-server-status">Dev Server</span>
+            <button id="herbDevServerRetry" class="herb-dev-server-retry">Retry</button>
+          </div>
 
           <div class="herb-toggle-item">
             <label class="herb-toggle-label">
@@ -295,6 +310,7 @@ export class HerbOverlay {
 
   private reinitializeAfterNavigation() {
     this.injectMenu();
+    this.syncConnectionDot();
     this.setupMenuToggle();
     this.setupToggleSwitches();
     this.setupEditorDropdown();

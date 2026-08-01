@@ -531,6 +531,12 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
       return false;
     }
 
+    case AST_ERB_ITERATION_BLOCK_NODE: {
+      AST_ERB_ITERATION_BLOCK_NODE_T* iteration_block_node = (AST_ERB_ITERATION_BLOCK_NODE_T*) node;
+      transform_conditional_open_tags_in_array(iteration_block_node->body, context);
+      return false;
+    }
+
     case AST_ERB_WHILE_NODE: {
       AST_ERB_WHILE_NODE_T* while_node = (AST_ERB_WHILE_NODE_T*) node;
       transform_conditional_open_tags_in_array(while_node->statements, context);

@@ -1,0 +1,39 @@
+---
+name: datetime_field_tag
+source: "ActionView::Helpers::FormTagHelper#datetime_field_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a text field of type `"datetime-local"`.
+signature: "datetime_field_tag(name, value = nil, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-datetime_field_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: name
+    position: 1
+    type: string
+    optional: false
+    description: "Name attribute for the input."
+  - name: value
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Default datetime value."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []
+aliases:
+  - datetime_local_field_tag

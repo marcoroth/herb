@@ -1,0 +1,21 @@
+---
+name: raw
+source: "ActionView::Helpers::OutputSafetyHelper#raw"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Marks a string as trusted safe, bypassing HTML escaping. Use with caution.
+signature: "raw(stringish)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-raw"
+tag: null
+arguments:
+  - name: stringish
+    position: 1
+    type: string
+    optional: false
+    description: "String to mark as safe."
+options: []
+special_behaviors: []

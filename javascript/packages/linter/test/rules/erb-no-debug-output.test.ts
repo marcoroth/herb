@@ -237,5 +237,17 @@ describe("ERBNoDebugOutputRule", () => {
         <% end %>
       `)
     })
+
+    test("reports the correct message and location when preceded by a multi-byte character", () => {
+      expectError(
+        "Avoid using `binding.pry` in ERB templates. Remove the debug output or use `<%= ... %>` to display content.",
+        [2, 3],
+      )
+
+      assertOffenses(dedent`
+        <%# é %>
+        <% binding.pry %>
+      `)
+    })
   })
 })

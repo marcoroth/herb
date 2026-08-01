@@ -1,0 +1,13 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0019_in as expression compilation"
+input: "{source: \"<h1>\\n  <% if 1 in Numeric %>\\n    <div>Text1</div>\\n  <% else %>\\n    <div>Text2</div>\\n  <% end %>\\n</h1>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << '<h1>
+'.freeze;   if 1 in Numeric 
+ _buf << '    <div>Text1</div>
+'.freeze;   else 
+ _buf << '    <div>Text2</div>
+'.freeze;   end 
+ _buf << '</h1>
+'.freeze;
+_buf.to_s

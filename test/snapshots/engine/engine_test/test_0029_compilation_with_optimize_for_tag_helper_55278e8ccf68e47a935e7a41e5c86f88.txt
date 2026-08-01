@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0029_compilation with optimize for tag helper"
+input: "{source: \"<%= tag.div class: \\\"container\\\" do %>Content<% end %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="container">Content</div>'.freeze;
+_buf.to_s

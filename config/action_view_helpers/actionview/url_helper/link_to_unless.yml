@@ -1,0 +1,42 @@
+---
+name: link_to_unless
+source: "ActionView::Helpers::UrlHelper#link_to_unless"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a link tag of the given name using a URL created by the set of options unless condition is true, in which case only the name is returned. To specialize the default behavior, you can pass a block.
+signature: "link_to_unless(condition, name, options = {}, html_options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to_unless"
+tag:
+  name: a
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: condition
+    position: 1
+    type: boolean
+    optional: false
+    description: "Condition to evaluate. Link is rendered only if falsy."
+  - name: name
+    position: 2
+    type: string
+    optional: false
+    description: "Link text."
+  - name: options
+    position: 3
+    type: [string, hash]
+    optional: true
+    default: "{}"
+    description: "URL string or `url_for` options hash."
+  - name: html_options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options: []
+special_behaviors: []

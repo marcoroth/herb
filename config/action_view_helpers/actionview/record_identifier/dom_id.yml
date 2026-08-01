@@ -1,0 +1,27 @@
+---
+name: dom_id
+source: "ActionView::RecordIdentifier#dom_id"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a unique DOM id for the record following the convention of the singular form with the id appended. If no id is found, prefixes with `"new_"` instead.
+signature: "dom_id(record_or_class, prefix = nil)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html#method-i-dom_id"
+tag: null
+arguments:
+  - name: record_or_class
+    position: 1
+    type: object
+    optional: false
+    description: "An Active Record instance or class."
+  - name: prefix
+    position: 2
+    type: symbol
+    optional: true
+    default: "nil"
+    description: "Optional prefix for the DOM id (e.g. `:edit`)."
+options: []
+special_behaviors: []

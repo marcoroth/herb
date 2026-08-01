@@ -1,0 +1,33 @@
+---
+name: fields_for
+source: "ActionView::Helpers::FormHelper#fields_for"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a scope around a specific model object, like `form_with`, but without building a `<form>` tag. Useful for specifying additional model objects in the same form.
+signature: "fields_for(record_name, record_object = nil, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-fields_for"
+tag: null
+arguments:
+  - name: record_name
+    position: 1
+    type: [string, symbol]
+    optional: false
+    description: "Name of the model object."
+  - name: record_object
+    position: 2
+    type: object
+    optional: true
+    default: "nil"
+    description: "The model object to scope fields to."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options hash."
+options: []
+special_behaviors: []

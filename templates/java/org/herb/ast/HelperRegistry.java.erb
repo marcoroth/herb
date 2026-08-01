@@ -1,0 +1,258 @@
+package org.herb.ast;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Type enum for all supported Action View tag helpers.
+ */
+public enum HelperType {
+<%- helpers.each_with_index do |helper, index| -%>
+  <%= helper.constant_name %>("<%= helper.name %>")<%= index < helpers.size - 1 ? "," : ";" %>
+<%- end -%>
+
+  private final String name;
+
+  HelperType(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public static HelperType fromName(String name) {
+    for (HelperType type : values()) {
+      if (type.name.equals(name)) {
+        return type;
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Argument metadata for a tag helper.
+ */
+class HelperArgument {
+  private final String name;
+  private final int position;
+  private final String type;
+  private final boolean optional;
+  private final String defaultValue;
+  private final boolean splat;
+  private final String description;
+
+  HelperArgument(String name, int position, String type, boolean optional, String defaultValue, boolean splat, String description) {
+    this.name = name;
+    this.position = position;
+    this.type = type;
+    this.optional = optional;
+    this.defaultValue = defaultValue;
+    this.splat = splat;
+    this.description = description;
+  }
+
+  public String getName() { return name; }
+  public int getPosition() { return position; }
+  public String getType() { return type; }
+  public boolean isOptional() { return optional; }
+  public String getDefaultValue() { return defaultValue; }
+  public boolean isSplat() { return splat; }
+  public String getDescription() { return description; }
+}
+
+/**
+ * Option metadata for a tag helper.
+ */
+class HelperOption {
+  private final String name;
+  private final String type;
+  private final String mapsTo;
+  private final String description;
+
+  HelperOption(String name, String type, String mapsTo, String description) {
+    this.name = name;
+    this.type = type;
+    this.mapsTo = mapsTo;
+    this.description = description;
+  }
+
+  public String getName() { return name; }
+  public String getType() { return type; }
+  public String getMapsTo() { return mapsTo; }
+  public String getDescription() { return description; }
+}
+
+/**
+ * Implicit attribute metadata for a tag helper.
+ */
+class HelperImplicitAttribute {
+  private final String name;
+  private final String source;
+  private final String sourceWithBlock;
+  private final String wrapper;
+
+  HelperImplicitAttribute(String name, String source, String sourceWithBlock, String wrapper) {
+    this.name = name;
+    this.source = source;
+    this.sourceWithBlock = sourceWithBlock;
+    this.wrapper = wrapper;
+  }
+
+  public String getName() { return name; }
+  public String getSource() { return source; }
+  public String getSourceWithBlock() { return sourceWithBlock; }
+  public String getWrapper() { return wrapper; }
+}
+
+/**
+ * Registry entry containing all metadata for a single tag helper.
+ */
+class HelperEntry {
+  private final String name;
+  private final HelperType type;
+  private final String source;
+  private final String gem;
+  private final String output;
+  private final String visibility;
+  private final String tagName;
+  private final boolean isVoid;
+  private final boolean supportsBlock;
+  private final boolean preferredForTag;
+  private final boolean supported;
+  private final String detectStyle;
+  private final String description;
+  private final String signature;
+  private final String documentationUrl;
+  private final HelperImplicitAttribute implicitAttribute;
+  private final List<HelperArgument> arguments;
+  private final List<HelperOption> options;
+  private final List<String> specialBehaviors;
+  private final List<String> aliases;
+
+  HelperEntry(
+    String name, HelperType type, String source, String gem, String output, String visibility, String tagName,
+    boolean isVoid, boolean supportsBlock, boolean preferredForTag, boolean supported, String detectStyle, String description,
+    String signature, String documentationUrl, HelperImplicitAttribute implicitAttribute,
+    List<HelperArgument> arguments, List<HelperOption> options, List<String> specialBehaviors, List<String> aliases
+  ) {
+    this.name = name;
+    this.type = type;
+    this.source = source;
+    this.gem = gem;
+    this.output = output;
+    this.visibility = visibility;
+    this.tagName = tagName;
+    this.isVoid = isVoid;
+    this.supportsBlock = supportsBlock;
+    this.preferredForTag = preferredForTag;
+    this.supported = supported;
+    this.detectStyle = detectStyle;
+    this.description = description;
+    this.signature = signature;
+    this.documentationUrl = documentationUrl;
+    this.implicitAttribute = implicitAttribute;
+    this.arguments = arguments;
+    this.options = options;
+    this.specialBehaviors = specialBehaviors;
+    this.aliases = aliases;
+  }
+
+  public String getName() { return name; }
+  public HelperType getType() { return type; }
+  public String getSource() { return source; }
+  public String getGem() { return gem; }
+  public String getOutput() { return output; }
+  public String getVisibility() { return visibility; }
+  public String getTagName() { return tagName; }
+  public boolean isVoid() { return isVoid; }
+  public boolean supportsBlock() { return supportsBlock; }
+  public boolean isPreferredForTag() { return preferredForTag; }
+  public boolean isSupported() { return supported; }
+  public String getDetectStyle() { return detectStyle; }
+  public String getDescription() { return description; }
+  public String getSignature() { return signature; }
+  public String getDocumentationUrl() { return documentationUrl; }
+  public HelperImplicitAttribute getImplicitAttribute() { return implicitAttribute; }
+  public List<HelperArgument> getArguments() { return arguments; }
+  public List<HelperOption> getOptions() { return options; }
+  public List<String> getSpecialBehaviors() { return specialBehaviors; }
+  public List<String> getAliases() { return aliases; }
+}
+
+/**
+ * Global registry of all supported Action View tag helpers.
+ *
+ * <p>Usage:
+ * <pre>
+ *   HelperEntry entry = HelperRegistry.get("link_to");
+ *   entry.supportsBlock();  // true
+ *   entry.getTagName();   // "a"
+ * </pre>
+ */
+public final class HelperRegistry {
+  private static final Map<String, HelperEntry> BY_NAME;
+  private static final Map<String, HelperEntry> BY_SOURCE;
+
+  static {
+    Map<String, HelperEntry> byName = new LinkedHashMap<>();
+    Map<String, HelperEntry> bySource = new LinkedHashMap<>();
+
+<%- helpers.each do |helper| -%>
+    {
+      HelperEntry entry = new HelperEntry(
+        "<%= helper.name %>",
+        HelperType.<%= helper.constant_name %>,
+        "<%= helper.source %>",
+        "<%= helper.gem %>",
+        "<%= helper.output %>",
+        "<%= helper.visibility %>",
+        <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
+        <%= helper.void? %>,
+        <%= helper.supports_block %>,
+        <%= helper.preferred_for_tag %>,
+        <%= helper.supported %>,
+        "<%= helper.detect_style || "call_name" %>",
+        "<%= helper.escaped_description %>",
+        "<%= helper.escaped_signature %>",
+        "<%= helper.documentation_url %>",
+<%- if helper.implicit_attribute? -%>
+        new HelperImplicitAttribute("<%= helper.implicit_attribute.name %>", "<%= helper.implicit_attribute.source %>", <%= helper.implicit_attribute.source_with_block ? "\"#{helper.implicit_attribute.source_with_block}\"" : "null" %>, "<%= helper.implicit_attribute.wrapper %>"),
+<%- else -%>
+        null,
+<%- end -%>
+        List.of(<%= helper.arguments.map { |arg| "new HelperArgument(\"#{arg.name}\", #{arg.position}, \"#{arg.type_display}\", #{arg.optional}, #{arg.default ? "\"#{arg.escaped_default}\"" : "null"}, #{arg.splat}, \"#{arg.escaped_description}\")" }.join(", ") %>),
+        List.of(<%= helper.options.map { |opt| "new HelperOption(\"#{opt.name}\", \"#{opt.type_display}\", #{opt.maps_to ? "\"#{opt.maps_to}\"" : "null"}, \"#{opt.escaped_description}\")" }.join(", ") %>),
+        List.of(<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>),
+        List.of(<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>)
+      );
+      byName.put("<%= helper.name %>", entry);
+      bySource.put("<%= helper.source %>", entry);
+    }
+
+<%- end -%>
+    BY_NAME = Collections.unmodifiableMap(byName);
+    BY_SOURCE = Collections.unmodifiableMap(bySource);
+  }
+
+  private HelperRegistry() {}
+
+  public static HelperEntry get(String name) {
+    return BY_NAME.get(name);
+  }
+
+  public static HelperEntry findBySource(String source) {
+    return BY_SOURCE.get(source);
+  }
+
+  public static List<HelperEntry> entries() {
+    return List.copyOf(BY_NAME.values());
+  }
+
+  public static int count() {
+    return BY_NAME.size();
+  }
+}

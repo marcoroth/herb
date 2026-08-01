@@ -1,0 +1,55 @@
+---
+name: video_tag
+source: "ActionView::Helpers::AssetTagHelper#video_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns an HTML `<video>` tag for the sources. If sources is a string, a single `<video>` tag will be returned. If sources is an array, a `<video>` tag with nested `<source>` tags for each source will be returned. The sources can be full paths, files in your public videos directory, or Active Storage attachments.
+signature: "video_tag(*sources, **options)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-video_tag"
+tag:
+  name: video
+  is_void: false
+  preferred: true
+  detect_style: call_name
+  implicit_attribute:
+    name: src
+    source: first_arg
+    wrapper: video_path
+    skip_wrapping_for:
+      - url
+arguments:
+  - name: sources
+    position: 1
+    type: string
+    optional: false
+    splat: true
+    description: "One or more video file paths or URLs."
+options:
+  - name: poster
+    type: string
+    description: "Image to display before video plays."
+  - name: size
+    type: string
+    description: |-
+      Video dimensions as `"WxH"`.
+  - name: controls
+    type: boolean
+    description: "Whether to show playback controls."
+  - name: autoplay
+    type: boolean
+    description: "Whether to start playing automatically."
+  - name: muted
+    type: boolean
+    description: "Whether video is muted."
+  - name: loop
+    type: boolean
+    description: "Whether video loops."
+  - name: preload
+    type: string
+    description: |-
+      Preload behavior (`"auto"`, `"metadata"`, `"none"`).
+special_behaviors: []

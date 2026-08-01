@@ -1,0 +1,58 @@
+---
+name: select_datetime
+source: "ActionView::Helpers::DateHelper#select_datetime"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a set of HTML `<select>` tags (one for year, month, day, hour, minute, and second) pre-selected with the `datetime`. It is possible to explicitly set the order of the tags using the `:order` option with an array of symbols `:year`, `:month`, and `:day` in the desired order.
+signature: "select_datetime(datetime = Time.current, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_datetime"
+tag: null
+arguments:
+  - name: datetime
+    position: 1
+    type: [time, datetime]
+    optional: true
+    default: "Time.current"
+    description: "The datetime to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the datetime select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes applied to every `<select>` tag in the set."
+options:
+  - name: order
+    type: array
+    description: "Array containing `:year`, `:month`, and `:day` to customize the order of select fields."
+  - name: date_separator
+    type: string
+    description: "String to separate the date fields."
+  - name: time_separator
+    type: string
+    description: "String to separate the time fields."
+  - name: datetime_separator
+    type: string
+    description: "String to separate the date and time fields."
+  - name: discard_type
+    type: boolean
+    description: "If `true`, discards the type part of the select name."
+  - name: ampm
+    type: boolean
+    description: "If `true`, shows hours in AM/PM format."
+  - name: prefix
+    type: string
+    description: "Overwrites the default prefix of `\"date\"` used for the select names."
+  - name: prompt
+    type: [boolean, string, hash]
+    description: "Set to `true` for generic prompts, a string for a custom prompt, or a hash for per-field prompts."
+special_behaviors: []

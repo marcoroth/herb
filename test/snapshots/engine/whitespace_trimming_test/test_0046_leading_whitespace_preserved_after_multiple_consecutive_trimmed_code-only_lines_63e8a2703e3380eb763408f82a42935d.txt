@@ -1,0 +1,14 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0046_leading whitespace preserved after multiple consecutive trimmed code-only lines"
+input: "{source: \"<div>\\n  <% if true %>\\n    <% if true %>\\n      <strong>inner</strong>\\n    <% end %>\\n  <% end %>\\n  <% if true %><%= \\\"output\\\" %><% end %>\\n</div>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div>
+'.freeze;   if true 
+     if true 
+ _buf << '      <strong>inner</strong>
+'.freeze;     end 
+   end 
+ _buf << '  '.freeze;   if true 
+ _buf << ("output").to_s; end; _buf << '
+</div>'.freeze;
+_buf.to_s

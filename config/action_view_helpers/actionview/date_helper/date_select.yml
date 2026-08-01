@@ -1,0 +1,71 @@
+---
+name: date_select
+source: "ActionView::Helpers::DateHelper#date_select"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a set of `<select>` tags (one for year, month, and day) pre-selected for accessing a specified date-based attribute (identified by `method`) on an object assigned to the template (identified by `object`).
+signature: "date_select(object_name, method, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-date_select"
+tag: null
+arguments:
+  - name: object_name
+    position: 1
+    type: string
+    optional: false
+    description: "The name of the object."
+  - name: method
+    position: 2
+    type: string
+    optional: false
+    description: "The attribute name on the object."
+  - name: options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the date select behavior."
+  - name: html_options
+    position: 4
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes applied to every `<select>` tag in the set."
+options:
+  - name: order
+    type: array
+    description: "Array containing `:day`, `:month`, and `:year` to customize the order of select fields."
+  - name: include_blank
+    type: boolean
+    description: "Include a blank option in every select field."
+  - name: discard_day
+    type: boolean
+    description: "If `true`, the day select is replaced with a hidden field."
+  - name: discard_month
+    type: boolean
+    description: "If `true`, the month select is replaced with a hidden field."
+  - name: discard_year
+    type: boolean
+    description: "If `true`, the year select is replaced with a hidden field."
+  - name: start_year
+    type: integer
+    description: "The start year for the year select."
+  - name: end_year
+    type: integer
+    description: "The end year for the year select."
+  - name: prompt
+    type: [boolean, string, hash]
+    description: "Set to `true` for generic prompts, a string for a custom prompt, or a hash for per-field prompts."
+  - name: selected
+    type: date
+    description: "A date that overrides the actual value."
+  - name: default
+    type: [date, hash]
+    description: "Set a default date if the affected date is not set or is `nil`."
+  - name: disabled
+    type: boolean
+    description: "If `true`, the select fields are disabled."
+special_behaviors: []

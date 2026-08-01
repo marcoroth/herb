@@ -1,0 +1,29 @@
+---
+name: picture_tag
+source: "ActionView::Helpers::AssetTagHelper#picture_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns an HTML `<picture>` tag for the sources. The last element provided will be used for the `<img>` tag. For complete control, a block can be passed which will populate the contents of the tag accordingly.
+signature: "picture_tag(*sources, **options, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-picture_tag"
+tag:
+  name: picture
+  is_void: false
+  preferred: true
+  detect_style: call_name
+arguments:
+  - name: sources
+    position: 1
+    type: string
+    optional: false
+    splat: true
+    description: "One or more image sources for the picture element."
+options:
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+special_behaviors: []

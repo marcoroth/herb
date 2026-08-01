@@ -1,4 +1,4 @@
-import { Visitor, isERBOutputNode, createLiteral, createERBOutputNode, findParentArray } from "@herb-tools/core"
+import { Visitor, isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType, stringIndexFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 
@@ -102,9 +102,7 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
   }
 
   static isStringOutputNode(prismNode: PrismNode): boolean {
-    const nodeType = prismNode.constructor.name
-
-    return nodeType === STRING_NODE_TYPE || nodeType === INTERPOLATED_STRING_NODE_TYPE
+    return isPrismNodeType(prismNode, STRING_NODE_TYPE) || isPrismNodeType(prismNode, INTERPOLATED_STRING_NODE_TYPE)
   }
 
   static extractStringContent(stringNode: PrismNode, source: string): string {
@@ -117,7 +115,7 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
     const location = stringNode.contentLoc
 
     if (location) {
-      return source.substring(location.startOffset, location.startOffset + location.length)
+      return substringFromByteOffset(source, location.startOffset, location.length)
     }
 
     return ""
@@ -129,21 +127,19 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
 
     if (!openingLocation || !closingLocation) return null
 
-    const expressionStart = openingLocation.startOffset + openingLocation.length
-    const expressionEnd = closingLocation.startOffset
+    const expressionStart = stringIndexFromByteOffset(source, openingLocation.startOffset + openingLocation.length)
+    const expressionEnd = stringIndexFromByteOffset(source, closingLocation.startOffset)
 
     return source.substring(expressionStart, expressionEnd)
   }
 
   static extractReplacementParts(prismNode: PrismNode, source: string): ReplacementPart[] | null {
-    const nodeType = prismNode.constructor.name
-
-    if (nodeType === STRING_NODE_TYPE) {
+    if (isPrismNodeType(prismNode, STRING_NODE_TYPE)) {
       const textContent = this.extractStringContent(prismNode, source)
       return [{ type: "text", content: textContent }]
     }
 
-    if (nodeType === INTERPOLATED_STRING_NODE_TYPE) {
+    if (isPrismNodeType(prismNode, INTERPOLATED_STRING_NODE_TYPE)) {
       const parts = prismNode.parts
 
       if (!parts || parts.length === 0) return null
@@ -151,15 +147,13 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
       const replacementParts: ReplacementPart[] = []
 
       for (const part of parts) {
-        const partType = part.constructor.name
-
-        if (partType === STRING_NODE_TYPE) {
+        if (isPrismNodeType(part, STRING_NODE_TYPE)) {
           const textContent = this.extractStringContent(part, source)
 
           if (textContent) {
             replacementParts.push({ type: "text", content: textContent })
           }
-        } else if (partType === EMBEDDED_STATEMENTS_NODE_TYPE) {
+        } else if (isPrismNodeType(part, EMBEDDED_STATEMENTS_NODE_TYPE)) {
           const expression = this.extractExpressionSource(part, source)
 
           if (expression) {

@@ -22,13 +22,13 @@ jobs:
     runs-on: ubicloud-standard-2
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: Add LLVM apt Repo
@@ -57,9 +57,9 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: yarn install
@@ -92,16 +92,17 @@ jobs:
         run: deno run --allow-read --allow-env javascript/packages/node-wasm/test/deno_smoke.ts
 
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-packages
           path: javascript/packages/*/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
       - name: Upload docs artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs-preview
           path: docs/.vitepress/dist
@@ -129,32 +130,53 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
 
-      - name: Publish packages with provenance
+      - name: Publish packages
         run: |
+          failed=()
+
           for package_dir in javascript/packages/*; do
-            if [ -d "$package_dir" ] && [ -f "$package_dir/package.json" ]; then
-              package=$(basename "$package_dir")
+            [ -f "$package_dir/package.json" ] || continue
 
-              if [ "$package" = "vscode" ]; then
-                echo "Skipping vscode package..."
-                continue
-              fi
+            name=$(jq -r '.name' "$package_dir/package.json")
+            version=$(jq -r '.version' "$package_dir/package.json")
 
-              echo "Publishing $package..."
-              (cd "$package_dir" && npm publish --provenance --access public --ignore-scripts)
+            if [ "$(jq -r '.private // false' "$package_dir/package.json")" = "true" ]; then
+              echo "Skipping $name (private)"
+              continue
             fi
+
+            if npm view "$name@$version" version > /dev/null 2>&1; then
+              echo "Skipping $name@$version (already published)"
+              continue
+            fi
+
+            echo "::group::Publishing $name@$version"
+
+            if (cd "$package_dir" && npm publish --access public --ignore-scripts); then
+              echo "Published $name@$version"
+            else
+              failed+=("$name@$version")
+            fi
+
+            echo "::endgroup::"
           done
+
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Failed to publish: ${failed[*]}"
+            exit 1
+          fi
 
   preview-check:
     if: |
@@ -190,12 +212,16 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
         with:
-          node-version: 20
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
@@ -212,12 +238,14 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
 
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: javascript/packages/
@@ -251,7 +279,7 @@ jobs:
 
     steps:
       - name: Download docs artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: docs-preview
           path: dist
@@ -267,7 +295,7 @@ jobs:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add comment with preview URL
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const previewUrl = '${{ steps.deploy.outputs.url }}';
@@ -342,7 +370,7 @@ jobs:
           fi
 
       - name: Update PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: comments } = await github.rest.issues.listComments({

@@ -1,6 +1,9 @@
 import dedent from "dedent"
-import { describe, test } from "vitest"
+import { describe, test, expect } from "vitest"
 
+import { Herb } from "@herb-tools/node-wasm"
+
+import { Linter } from "../../src/linter.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { ERBNoTrailingWhitespaceRule } from "../../src/rules/erb-no-trailing-whitespace.js"
 
@@ -313,6 +316,20 @@ describe("erb-no-trailing-whitespace", () => {
       expectError("Extra whitespace detected at end of line.", [2, 8])
 
       assertOffenses("<!--  \n comment  \n -->")
+    })
+  })
+
+  describe("offense metadata", () => {
+    test("populates code and source like every other rule", async () => {
+      await Herb.load()
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const { offenses } = linter.lint("<div> \n</div>\n", { fileName: "index.html.erb" })
+
+      expect(offenses).toHaveLength(1)
+      expect(offenses[0].rule).toBe("erb-no-trailing-whitespace")
+      expect(offenses[0].code).toBe("erb-no-trailing-whitespace")
+      expect(offenses[0].source).toBe("Herb Linter")
     })
   })
 })

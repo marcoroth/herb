@@ -343,6 +343,37 @@ describe("ERBNoUnusedLiteralsRule", () => {
     `)
   })
 
+  test("passes for return with literal value", () => {
+    expectNoOffenses(dedent`
+      <% return "" unless versions.length > 1 %>
+      <% return nil %>
+      <% return 0 %>
+      <% return false %>
+      <% return [] %>
+      <% return "default" %>
+    `)
+  })
+
+  test("passes for break with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% break "" %>
+        <% break nil %>
+        <% break 0 %>
+      <% end %>
+    `)
+  })
+
+  test("passes for next with literal value", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <% next "" %>
+        <% next nil %>
+        <% next 0 %>
+      <% end %>
+    `)
+  })
+
   test("passes for method calls without literal receiver", () => {
     expectNoOffenses(dedent`
       <% some_method.call %>
@@ -387,6 +418,18 @@ describe("ERBNoUnusedLiteralsRule", () => {
     expectError('Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.')
 
     assertOffenses(dedent`
+      <% "hello".freeze %>
+    `)
+  })
+
+  test("reports the correct message and location when preceded by a multi-byte character", () => {
+    expectError(
+      'Avoid using silent ERB tags for literals. `"hello"` is evaluated but never used or output.',
+      [2, 3],
+    )
+
+    assertOffenses(dedent`
+      <%# é %>
       <% "hello".freeze %>
     `)
   })

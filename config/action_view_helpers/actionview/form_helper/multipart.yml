@@ -1,0 +1,16 @@
+---
+name: multipart
+source: "ActionView::Helpers::FormHelper#multipart"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether the form builder has been set to use `multipart/form-data` encoding.
+signature: "multipart"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

@@ -1,0 +1,16 @@
+---
+name: form_with_generates_ids
+source: "ActionView::Helpers::FormHelper#form_with_generates_ids"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether `form_with` generates `id` attributes on form elements by default.
+signature: "form_with_generates_ids"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

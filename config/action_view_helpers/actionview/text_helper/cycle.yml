@@ -1,0 +1,31 @@
+---
+name: cycle
+source: "ActionView::Helpers::TextHelper#cycle"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a Cycle object whose `to_s` method cycles through elements of an array every time it is called.
+signature: "cycle(first_value, *values)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-cycle"
+tag: null
+arguments:
+  - name: first_value
+    position: 1
+    type: string
+    optional: false
+    description: "First value in the cycle."
+  - name: values
+    position: 2
+    type: string
+    optional: true
+    splat: true
+    description: "Additional values to cycle through."
+options:
+  - name: name
+    type: string
+    description: |-
+      Name for the cycle. Defaults to `"default"`.
+special_behaviors: []

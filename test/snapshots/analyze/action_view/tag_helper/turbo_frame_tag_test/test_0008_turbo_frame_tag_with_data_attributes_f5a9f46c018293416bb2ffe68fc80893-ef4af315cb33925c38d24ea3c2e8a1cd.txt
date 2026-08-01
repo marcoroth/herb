@@ -16,26 +16,6 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:90)-(1:92))
     │   │       ├── tag_name: "turbo-frame" (location: (1:4)-(1:19))
     │   │       └── children: (3 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:20)-(1:26))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:26))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:20)-(1:26))
-    │   │           │   │               └── content: "id"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:20)-(1:26))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:20)-(1:26))
-    │   │           │           ├── open_quote: """ (location: (1:20)-(1:20))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:20)-(1:26))
-    │   │           │           │       └── content: "tray"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:26)-(1:26))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
     │   │           ├── @ HTMLAttributeNode (location: (1:36)-(1:55))
     │   │           │   ├── name:
     │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:36)-(1:46))
@@ -56,23 +36,43 @@ options: {action_view_helpers: true}
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:57)-(1:84))
+    │   │           ├── @ HTMLAttributeNode (location: (1:57)-(1:84))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:57)-(1:63))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:57)-(1:63))
+    │   │           │   │               └── content: "data-action"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:63)-(1:65))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:65)-(1:84))
+    │   │           │           ├── open_quote: """ (location: (1:65)-(1:66))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:66)-(1:83))
+    │   │           │           │       └── content: "click->frame#load"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:83)-(1:84))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:20)-(1:26))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:57)-(1:63))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:26))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:57)-(1:63))
-    │   │               │               └── content: "data-action"
+    │   │               │           └── @ LiteralNode (location: (1:20)-(1:26))
+    │   │               │               └── content: "id"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:63)-(1:65))
+    │   │               ├── equals: "=" (location: (1:20)-(1:26))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:65)-(1:84))
-    │   │                       ├── open_quote: """ (location: (1:65)-(1:66))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:20)-(1:26))
+    │   │                       ├── open_quote: """ (location: (1:20)-(1:20))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:66)-(1:83))
-    │   │                       │       └── content: "click->frame#load"
+    │   │                       │   └── @ LiteralNode (location: (1:20)-(1:26))
+    │   │                       │       └── content: "tray"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:83)-(1:84))
+    │   │                       ├── close_quote: """ (location: (1:26)-(1:26))
     │   │                       └── quoted: true
     │   │
     │   │

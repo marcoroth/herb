@@ -52,6 +52,16 @@ export interface SerializedDiagnostic {
   tags?: DiagnosticTag[]
 }
 
+/**
+ * Rebuilds a `Diagnostic` from its serialized form.
+ *
+ * @param diagnostic - The serialized diagnostic to rebuild
+ * @returns The diagnostic with its `Location` restored
+ */
+export function deserializeDiagnostic(diagnostic: SerializedDiagnostic): Diagnostic {
+  return { ...diagnostic, location: Location.from(diagnostic.location) }
+}
+
 export type MonacoSeverity = "error" | "warning" | "info"
 
 /**

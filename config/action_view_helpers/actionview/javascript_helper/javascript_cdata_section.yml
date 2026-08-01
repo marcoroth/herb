@@ -1,0 +1,16 @@
+---
+name: javascript_cdata_section
+source: "ActionView::Helpers::JavaScriptHelper#javascript_cdata_section"
+gem: actionview
+output: html
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns a CDATA section wrapping the given JavaScript content for XHTML compatibility.
+signature: "javascript_cdata_section(content)"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

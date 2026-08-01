@@ -1,0 +1,23 @@
+---
+name: csrf_meta_tags
+source: "ActionView::Helpers::CsrfHelper#csrf_meta_tags"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns `<meta>` tags `"csrf-param"` and `"csrf-token"` with the name of the cross-site request forgery protection parameter and token, respectively. These are used to generate dynamic forms that implement non-remote links with `:method`. Not needed for regular forms as they generate their own hidden fields.
+signature: "csrf_meta_tags"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CsrfHelper.html#method-i-csrf_meta_tags"
+tag:
+  name: meta
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments: []
+options: []
+special_behaviors:
+  - produces_multiple_elements
+aliases:
+  - csrf_meta_tag

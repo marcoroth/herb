@@ -1,0 +1,21 @@
+---
+name: provide
+source: "ActionView::Helpers::CaptureHelper#provide"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Same as `content_for` but flushes content straight back to the layout. Use this in streaming scenarios.
+signature: "provide(name, content = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CaptureHelper.html#method-i-provide"
+tag: null
+arguments:
+  - name: name
+    position: 1
+    type: symbol
+    optional: false
+    description: "Identifier for the content block."
+options: []
+special_behaviors: []

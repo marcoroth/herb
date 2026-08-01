@@ -1,13 +1,12 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor } from "@herb-tools/core"
+import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { isERBOutputNode } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall } from "./prism-rule-utils.js"
-import { locationFromOffset } from "./rule-utils.js"
+import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
+import { isAssignmentNode, isDebugOutputCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ERBRenderNode, ERBBlockNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 const MUTATION_METHODS = new Set([
   "<<",
@@ -23,24 +22,30 @@ const MUTATION_METHODS = new Set([
   "replace",
   "insert",
   "concat",
+  "assert_valid_keys",
 ])
 
 class UnusedExpressionCollector extends PrismVisitor {
   public readonly expressions: PrismNode[] = []
+  private readonly blockLocalNames: Set<string>
+
+  constructor(blockLocalNames: Set<string> = new Set()) {
+    super()
+
+    this.blockLocalNames = blockLocalNames
+  }
 
   override visit(node: PrismNode): void {
     if (!node) return
 
-    const type: string = node.constructor?.name ?? ""
-
-    if (type === "ProgramNode" || type === "StatementsNode") {
+    if (isPrismNodeType(node, "ProgramNode") || isPrismNodeType(node, "StatementsNode")) {
       super.visit(node)
       return
     }
 
     if (isAssignmentNode(node)) return
 
-    if (this.isUnusedExpression(node, type)) {
+    if (this.isUnusedExpression(node)) {
       this.expressions.push(node)
     }
   }
@@ -51,27 +56,74 @@ class UnusedExpressionCollector extends PrismVisitor {
     return MUTATION_METHODS.has(node.name)
   }
 
-  private isUnusedExpression(node: PrismNode, type: string): boolean {
-    if (type === "CallNode") {
+  private isSideEffectCall(node: PrismNode): boolean {
+    if (node.receiver) return false
+
+    return SIDE_EFFECT_METHODS.has(node.name)
+  }
+
+  private isUnusedExpression(node: PrismNode): boolean {
+    if (isPrismNodeType(node, "CallNode")) {
       if (node.block) return false
       if (this.isMutationCall(node)) return false
+      if (this.isSideEffectCall(node)) return false
       if (isDebugOutputCall(node)) return false
+      if (this.blockLocalNames.size > 0 && isCallOnLocal(node, this.blockLocalNames)) return false
 
       return true
     }
 
     return (
-      type === "InstanceVariableReadNode" ||
-      type === "ClassVariableReadNode" ||
-      type === "GlobalVariableReadNode" ||
-      type === "LocalVariableReadNode" ||
-      type === "ConstantReadNode" ||
-      type === "ConstantPathNode"
+      isPrismNodeType(node, "InstanceVariableReadNode") ||
+      isPrismNodeType(node, "ClassVariableReadNode") ||
+      isPrismNodeType(node, "GlobalVariableReadNode") ||
+      isPrismNodeType(node, "LocalVariableReadNode") ||
+      isPrismNodeType(node, "ConstantReadNode") ||
+      isPrismNodeType(node, "ConstantPathNode")
     )
   }
 }
 
 class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
+  private exemptLocalNames: Set<string> = new Set()
+
+  visitERBRenderNode(node: ERBRenderNode): void {
+    this.visitExemptingBlockArguments(node)
+  }
+
+  visitERBBlockNode(node: ERBBlockNode): void {
+    const prismNode = node.prismNode
+
+    if (prismNode && this.isSlotSetterCall(prismNode)) {
+      this.visitExemptingBlockArguments(node)
+    } else {
+      this.visitChildNodes(node)
+    }
+  }
+
+  private isSlotSetterCall(node: PrismNode): boolean {
+    return isPrismNodeType(node, "CallNode") && Boolean(node.receiver) && node.name.startsWith("with_")
+  }
+
+  private visitExemptingBlockArguments(node: ERBRenderNode | ERBBlockNode): void {
+    const previousLocalNames = this.exemptLocalNames
+    const localNames = new Set(previousLocalNames)
+
+    for (const argument of node.block_arguments) {
+      if (isRubyParameterNode(argument)) {
+        const name = argument.name?.value
+
+        if (name) {
+          localNames.add(name)
+        }
+      }
+    }
+
+    this.exemptLocalNames = localNames
+    this.visitChildNodes(node)
+    this.exemptLocalNames = previousLocalNames
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     if (isERBOutputNode(node)) return
 
@@ -81,13 +133,13 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const source = node.source
     if (!source) return
 
-    const collector = new UnusedExpressionCollector()
+    const collector = new UnusedExpressionCollector(this.exemptLocalNames)
     collector.visit(prismNode)
 
     for (const expression of collector.expressions) {
       const { startOffset, length } = expression.location
-      const expressionSource = source.substring(startOffset, startOffset + length)
-      const location = locationFromOffset(source, startOffset, length)
+      const expressionSource = substringFromByteOffset(source, startOffset, length)
+      const location = locationFromByteOffset(source, startOffset, length)
 
       this.addOffense(
         `Avoid unused expressions in silent ERB tags. \`${expressionSource}\` is evaluated but its return value is discarded. Use \`<%= ... %>\` to output the value or remove the expression.`,

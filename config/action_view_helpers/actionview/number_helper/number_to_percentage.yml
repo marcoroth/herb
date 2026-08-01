@@ -1,0 +1,24 @@
+---
+name: number_to_percentage
+source: "ActionView::Helpers::NumberHelper#number_to_percentage"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Formats a number as a percentage string.
+signature: "number_to_percentage(number, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/NumberHelper.html#method-i-number_to_percentage"
+tag: null
+arguments:
+  - name: number
+    position: 1
+    type: [integer, float]
+    optional: false
+    description: "The number to format."
+options:
+  - name: precision
+    type: integer
+    description: "Number of decimal places. Defaults to 3."
+special_behaviors: []

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::PostfixConditionalTest#test_0005_content_tag with postfix unless condition"
+input: "{source: \"<%= content_tag(:p, \\\"Notice\\\", class: \\\"alert\\\") unless condition %>\", locals: {condition: false}, options: {action_view_helpers: true}}"
+---
+<p class="alert">Notice</p>

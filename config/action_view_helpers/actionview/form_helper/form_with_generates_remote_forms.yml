@@ -1,0 +1,16 @@
+---
+name: form_with_generates_remote_forms
+source: "ActionView::Helpers::FormHelper#form_with_generates_remote_forms"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether `form_with` generates `data-remote` forms by default.
+signature: "form_with_generates_remote_forms"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

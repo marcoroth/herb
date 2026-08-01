@@ -1,0 +1,27 @@
+---
+name: number_with_precision
+source: "ActionView::Helpers::NumberHelper#number_with_precision"
+gem: actionview
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Formats a number with the specified level of precision.
+signature: "number_with_precision(number, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/NumberHelper.html#method-i-number_with_precision"
+tag: null
+arguments:
+  - name: number
+    position: 1
+    type: [integer, float]
+    optional: false
+    description: "The number to format."
+options:
+  - name: precision
+    type: integer
+    description: "Number of decimal places. Defaults to 3."
+  - name: significant
+    type: boolean
+    description: "Whether precision means significant digits."
+special_behaviors: []

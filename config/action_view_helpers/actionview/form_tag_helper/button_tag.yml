@@ -1,0 +1,39 @@
+---
+name: button_tag
+source: "ActionView::Helpers::FormTagHelper#button_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a button element that defines a submit button, reset button, or a generic button which can be used in JavaScript.
+signature: "button_tag(content_or_options = nil, options = nil, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-button_tag"
+tag:
+  name: button
+  is_void: false
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: content_or_options
+    position: 1
+    type: [string, hash]
+    optional: true
+    default: "nil"
+    description: "Button text, or options hash when block is given."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "nil"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the button is disabled."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

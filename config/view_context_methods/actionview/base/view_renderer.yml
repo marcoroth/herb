@@ -1,0 +1,8 @@
+---
+name: view_renderer
+source: "ActionView::Base#view_renderer"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the `ActionView::Renderer` instance used for rendering templates.

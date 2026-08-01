@@ -1,0 +1,42 @@
+---
+name: select_minute
+source: "ActionView::Helpers::DateHelper#select_minute"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns a `<select>` tag with options for each of the minutes 0 through 59 with the current minute selected. Also can return a select tag with options by `minute_step` from 0 through 59 with the 00 minute selected. The `datetime` can be either a `Time` or `DateTime` object or an integer. Override the field name using the `:field_name` option, `"minute"` by default.
+signature: "select_minute(datetime, options = {}, html_options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-select_minute"
+tag: null
+arguments:
+  - name: datetime
+    position: 1
+    type: [time, datetime, integer]
+    optional: false
+    description: "The time, datetime, or integer to pre-select."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "Options for customizing the minute select behavior."
+  - name: html_options
+    position: 3
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes for the `<select>` tag."
+options:
+  - name: field_name
+    type: string
+    description: "Override the field name, defaults to `\"minute\"`."
+  - name: minute_step
+    type: integer
+    description: "Step value for the minute select."
+  - name: prompt
+    type: [boolean, string]
+    description: "Set to `true` for a generic prompt or a string for a custom prompt."
+special_behaviors: []

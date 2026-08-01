@@ -8,8 +8,11 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
+#include "../include/analyze/iteration_nodes.h"
+#include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
+#include "../include/analyze/ternary_conditionals.h"
 #include "../include/ast/ast_node.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
@@ -75,8 +78,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     hb_string_T opening = erb_content_node->tag_opening->value;
 
-    if (!hb_string_equals(opening, hb_string("<%%")) && !hb_string_equals(opening, hb_string("<%%="))
-        && !hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
+    if (!hb_string_equals(opening, hb_string("<%#")) && !hb_string_equals(opening, hb_string("<%graphql"))) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       erb_content_node->parsed = true;
@@ -737,12 +739,32 @@ static size_t process_block_structure(
   hb_array_T* block_errors = erb_node->base.errors;
   erb_node->base.errors = NULL;
 
+  // Filter out "incomplete block" Prism errors since we've matched the block with its end tag.
+  if (block_errors) {
+    for (size_t error_index = hb_array_size(block_errors); error_index > 0; error_index--) {
+      ERROR_T* error = hb_array_get(block_errors, error_index - 1);
+      if (!error || error->type != RUBY_PARSE_ERROR) { continue; }
+
+      RUBY_PARSE_ERROR_T* parse_error = (RUBY_PARSE_ERROR_T*) error;
+
+      if (string_equals(parse_error->diagnostic_id.data, "block_term_end")
+          || string_equals(parse_error->diagnostic_id.data, "block_term_brace")
+          || string_equals(parse_error->diagnostic_id.data, "unexpected_token_close_context")) {
+        hb_array_remove(block_errors, error_index - 1);
+      }
+    }
+  }
+
+  hb_array_T* block_arguments =
+    extract_block_arguments_from_erb_node(erb_node, context->source, block_errors, allocator);
+
   AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
     erb_node->tag_opening,
     erb_node->content,
     erb_node->tag_closing,
     HERB_PRISM_NODE_EMPTY,
     children,
+    block_arguments,
     rescue_clause,
     else_clause,
     ensure_clause,
@@ -932,6 +954,7 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
     case AST_DOCUMENT_NODE: return ((AST_DOCUMENT_NODE_T*) node)->children;
     case AST_HTML_ELEMENT_NODE: return ((AST_HTML_ELEMENT_NODE_T*) node)->body;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->body;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->statements;
     case AST_ERB_UNLESS_NODE: return ((AST_ERB_UNLESS_NODE_T*) node)->statements;
     case AST_ERB_ELSE_NODE: return ((AST_ERB_ELSE_NODE_T*) node)->statements;
@@ -943,6 +966,7 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
     case AST_ERB_ENSURE_NODE: return ((AST_ERB_ENSURE_NODE_T*) node)->statements;
     case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->children;
     case AST_ERB_WHEN_NODE: return ((AST_ERB_WHEN_NODE_T*) node)->statements;
+    case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->body;
     default: return NULL;
   }
 }
@@ -1009,9 +1033,17 @@ void herb_analyze_parse_tree(
     .source = source,
   };
 
+  if (options && (options->transform_conditionals || options->action_view_helpers)) {
+    herb_visit_node((AST_NODE_T*) document, transform_conditional_nodes, &context);
+    herb_visit_node((AST_NODE_T*) document, transform_ternary_conditional_nodes, &context);
+  }
+
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 
   if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
+  if (options && options->iteration_nodes) {
+    herb_visit_node((AST_NODE_T*) document, transform_iteration_nodes, &context);
+  }
 
   if (options && options->strict_locals) {
     herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
@@ -1032,7 +1064,7 @@ void herb_analyze_parse_tree(
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, &invalid_context);
 
-  herb_analyze_parse_errors(document, source, allocator);
+  herb_analyze_parse_errors(document, source, options, allocator);
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 

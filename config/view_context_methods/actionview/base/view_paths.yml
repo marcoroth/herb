@@ -1,0 +1,8 @@
+---
+name: view_paths
+source: "ActionView::Base#view_paths"
+gem: actionview
+category: base
+output: object
+description: |-
+  Returns the paths where templates are looked up.

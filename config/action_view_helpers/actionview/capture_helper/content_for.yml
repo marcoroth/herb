@@ -1,0 +1,24 @@
+---
+name: content_for
+source: "ActionView::Helpers::CaptureHelper#content_for"
+gem: actionview
+output: void
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Stores a block of markup in an identifier for later use. Call `content_for` with the same identifier to retrieve stored content.
+signature: "content_for(name, content = nil, options = {}, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CaptureHelper.html#method-i-content_for"
+tag: null
+arguments:
+  - name: name
+    position: 1
+    type: symbol
+    optional: false
+    description: "Identifier for the content block."
+options:
+  - name: flush
+    type: boolean
+    description: "If `true`, replaces any existing content instead of appending."
+special_behaviors: []

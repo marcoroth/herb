@@ -1,0 +1,16 @@
+---
+name: content_security_policy_nonce
+source: "ActionController::ContentSecurityPolicy#content_security_policy_nonce"
+gem: actionpack
+output: text
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Returns the Content-Security-Policy nonce for the current request. This nonce value is used in `<script>` and `<style>` tags to allow inline content when a CSP is configured with a nonce source.
+signature: "content_security_policy_nonce"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

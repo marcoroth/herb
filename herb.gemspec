@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"
 
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.2.0"
   spec.require_paths = ["lib"]
 
   spec.files = Dir[
@@ -27,9 +27,11 @@ Gem::Specification.new do |spec|
     "Rakefile",
     "README.md",
     "config.yml",
+    "config/**/*.yml",
     "lib/**/*.rb",
     "lib/**/*.yml",
     "sig/**/*.rbs",
+    "sig/manifest.yaml",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
     "templates/**/*.{rb,erb}",

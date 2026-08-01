@@ -603,5 +603,11 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "tag.div with ternary argument is not unwrapped" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true, transform_conditionals: true)
+        <%= tag.div(cond ? "yes" : "no") %>
+      HTML
+    end
   end
 end

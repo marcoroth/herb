@@ -1,9 +1,10 @@
 import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-tools/highlighter"
 
-import { BaseFormatter } from "./base-formatter.js"
-import { LineWrapper } from "@herb-tools/highlighter"
 import { ruleDocumentationUrl } from "../../urls.js"
 import { fileUrl } from "../file-url.js"
+
+import { BaseFormatter } from "./base-formatter.js"
+import { LineWrapper } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -14,8 +15,9 @@ export class DetailedFormatter extends BaseFormatter {
   private wrapLines: boolean
   private truncateLines: boolean
 
-  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false) {
-    super()
+  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string) {
+    super(projectPath)
+
     this.theme = theme
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
@@ -35,7 +37,8 @@ export class DetailedFormatter extends BaseFormatter {
     )
 
     if (isSingleFile) {
-      const { filename, content } = allOffenses[0]
+      const { filename } = allOffenses[0]
+      const content = this.contentFor(allOffenses[0])
       const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
@@ -54,10 +57,11 @@ export class DetailedFormatter extends BaseFormatter {
       const totalMessageCount = allOffenses.length
 
       for (let i = 0; i < allOffenses.length; i++) {
-        const { filename, offense, content, autocorrectable } = allOffenses[i]
-
+        const { filename, offense, autocorrectable } = allOffenses[i]
+        const content = this.contentFor(allOffenses[i])
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
         const suffix = autocorrectable ? correctableTag : undefined
+
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
@@ -66,6 +70,7 @@ export class DetailedFormatter extends BaseFormatter {
           fileUrl: fileUrl(filename),
           suffix,
         })
+
         console.log(`\n${formatted}`)
 
         const width = LineWrapper.getTerminalWidth()

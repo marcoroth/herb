@@ -1,0 +1,39 @@
+---
+name: submit_tag
+source: "ActionView::Helpers::FormTagHelper#submit_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: false
+description: |-
+  Creates a submit button with the text value as the caption.
+signature: "submit_tag(value = \"Save changes\", options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-submit_tag"
+tag:
+  name: input
+  is_void: true
+  preferred: false
+  detect_style: call_name
+arguments:
+  - name: value
+    position: 1
+    type: string
+    optional: true
+    default: "Save changes"
+    description: "Caption text for the submit button."
+  - name: options
+    position: 2
+    type: hash
+    optional: true
+    default: "{}"
+    description: "HTML attributes hash."
+options:
+  - name: disabled
+    type: boolean
+    description: "If `true`, the button is disabled."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+special_behaviors: []

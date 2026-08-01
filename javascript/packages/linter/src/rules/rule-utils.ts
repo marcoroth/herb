@@ -1,7 +1,6 @@
 import {
   Visitor,
   Location,
-  Position,
   hasERBOutput,
   isEffectivelyStatic,
   getValidatableStaticContent,
@@ -13,6 +12,7 @@ import {
   getAttributeValue,
   getTagLocalName,
   forEachAttribute,
+  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
@@ -152,6 +152,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
@@ -224,6 +228,13 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
       const name = getTagLocalName(element)
       return name !== null && tagNames.includes(name)
     })
+  }
+
+  /**
+   * All ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestors(): readonly HTMLElementNode[] {
+    return this.elementStack
   }
 
   /**
@@ -340,6 +351,38 @@ export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
   Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
 )
 
+/**
+ * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
+ */
+export const SVG_KNOWN_ELEMENTS = new Set([
+  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
+  "a", "animate", "circle", "defs", "desc", "ellipse", "g", "image", "line",
+  "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
+  "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
+  "filter", "set", "style",
+])
+
+export function isKnownSVGElement(tagName: string): boolean {
+  return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * All known MathML elements
+ */
+export const MATHML_KNOWN_ELEMENTS = new Set([
+  "annotation", "annotation-xml",
+  "maction", "math", "menclose", "merror", "mfenced", "mfrac",
+  "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo",
+  "mover", "mpadded", "mphantom", "mprescripts", "mroot", "mrow",
+  "ms", "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup",
+  "mtable", "mtd", "mtext", "mtr", "munder", "munderover",
+  "none", "semantics",
+])
+
+export function isKnownMathMLElement(tagName: string): boolean {
+  return MATHML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
 export const VALID_ARIA_ROLES = new Set([
   "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
   "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",
@@ -350,7 +393,8 @@ export const VALID_ARIA_ROLES = new Set([
   "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
   "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
   "treegrid", "treeitem",
-  "log", "marquee"
+  "log", "marquee",
+  "graphics-document", "graphics-object", "graphics-symbol"
 ]);
 
 /**
@@ -923,40 +967,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a start offset, and a length.
- */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {

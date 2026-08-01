@@ -1,0 +1,16 @@
+---
+name: cookies
+source: "ActionView::Helpers::ControllerHelper#cookies"
+gem: actionview
+output: object
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns the cookies for the current request. Delegated to the controller. See `ActionDispatch::Cookies`.
+signature: "cookies"
+documentation_url: ""
+tag: null
+arguments: []
+options: []
+special_behaviors: []

@@ -2,7 +2,7 @@
 # This file is manually maintained - not generated
 
 module Herb
-  def self.parse: (String input, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?arena_stats: bool) -> ParseResult
+  def self.parse: (String input, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?dot_notation_tags: bool, ?render_nodes: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?html: bool, ?arena_stats: bool) -> ParseResult
   def self.lex: (String input, ?arena_stats: bool) -> LexResult
   def self.extract_ruby: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool) -> String
   def self.extract_html: (String source) -> String

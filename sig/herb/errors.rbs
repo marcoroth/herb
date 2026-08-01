@@ -694,5 +694,23 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class TimeoutError < Error
+      include Colors
+
+      attr_reader timeout_ms: Integer?
+
+      # : (String, Location?, String, Integer) -> void
+      def initialize: (String, Location?, String, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_timeout_error
+      def to_hash: () -> serialized_timeout_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

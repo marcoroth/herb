@@ -1,0 +1,16 @@
+---
+name: prepend_content_exfiltration_prevention
+source: "ActionView::Helpers::ContentExfiltrationPreventionHelper#prepend_content_exfiltration_prevention"
+gem: actionview
+output: boolean
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Returns whether content exfiltration prevention markup is prepended to HTML output.
+signature: "prepend_content_exfiltration_prevention"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/ContentExfiltrationPreventionHelper.html"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

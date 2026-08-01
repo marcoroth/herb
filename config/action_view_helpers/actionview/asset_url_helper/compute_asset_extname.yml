@@ -1,0 +1,16 @@
+---
+name: compute_asset_extname
+source: "ActionView::Helpers::AssetUrlHelper#compute_asset_extname"
+gem: actionview
+output: text
+visibility: internal
+supported: false
+supports_block: false
+description: |-
+  Computes the file extension to append to asset paths based on the MIME type.
+signature: "compute_asset_extname(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-compute_asset_extname"
+tag: null
+arguments: []
+options: []
+special_behaviors: []

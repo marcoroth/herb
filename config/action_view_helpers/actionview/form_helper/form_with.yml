@@ -1,0 +1,42 @@
+---
+name: form_with
+source: "ActionView::Helpers::FormHelper#form_with"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Creates a `<form>` tag based on mixing URLs, scopes, or models. Using just a URL, adding a scope, or passing a model object are all supported. An existing model makes an update form and fills out field values. The preferred way to create forms in modern Rails.
+signature: "form_with(model: nil, scope: nil, url: nil, format: nil, **options, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormHelper.html#method-i-form_with"
+tag:
+  name: form
+  is_void: false
+  preferred: true
+  detect_style: call_name
+arguments: []
+options:
+  - name: model
+    type: object
+    description: "A model object to infer URL and scope from."
+  - name: scope
+    type: [string, symbol]
+    description: "Scope to prefix input field names with."
+  - name: url
+    type: [string, hash]
+    description: "URL the form submits to."
+  - name: method
+    type: symbol
+    description: "HTTP method for the form (`:get`, `:post`, `:patch`, `:delete`)."
+  - name: local
+    type: boolean
+    description: "If `true`, disables remote form submission."
+  - name: data
+    type: hash
+    maps_to: data-*
+    description: "Hash of `data-*` attributes."
+  - name: class
+    type: string
+    description: "CSS class name(s)."
+special_behaviors: []

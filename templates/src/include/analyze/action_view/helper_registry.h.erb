@@ -1,0 +1,82 @@
+#ifndef HELPER_REGISTRY_H
+#define HELPER_REGISTRY_H
+
+#include "../../lib/hb_string.h"
+
+#include <stdbool.h>
+#include <stddef.h>
+
+typedef enum {
+<%- helpers.each do |helper| -%>
+  HELPER_<%= helper.constant_name %>,
+<%- end -%>
+} helper_type_T;
+
+#define HELPER_COUNT <%= helpers.size %>
+
+typedef enum {
+  HELPER_DETECT_CALL_NAME,
+  HELPER_DETECT_RECEIVER_CALL,
+} helper_detect_style_T;
+
+typedef struct {
+  const char* name;
+  const char* type;
+  const char* description;
+} helper_argument_T;
+
+typedef struct {
+  const char* name;
+  const char* type;
+  const char* maps_to;
+  const char* description;
+} helper_option_T;
+
+typedef struct {
+  const char* name;
+  const char* source;
+  const char* source_with_block;
+  const char* wrapper;
+} helper_implicit_attribute_T;
+
+typedef enum {
+  HELPER_OUTPUT_HTML,
+  HELPER_OUTPUT_TEXT,
+  HELPER_OUTPUT_URL,
+  HELPER_OUTPUT_BOOLEAN,
+  HELPER_OUTPUT_VOID,
+  HELPER_OUTPUT_OBJECT,
+} helper_output_T;
+
+typedef struct {
+  helper_type_T type;
+  const char* name;
+  size_t name_length;
+  hb_string_T source;
+  const char* gem;
+  helper_output_T output;
+  const char* visibility;
+  const char* tag_name;
+  bool is_void;
+  bool supports_block;
+  bool preferred_for_tag;
+  bool supported;
+  helper_detect_style_T detect_style;
+  const char* description;
+  const char* signature;
+  const char* documentation_url;
+  const helper_implicit_attribute_T* implicit_attribute;
+  const helper_argument_T* arguments;
+  size_t arguments_count;
+  const helper_option_T* options;
+  size_t options_count;
+} helper_registry_entry_T;
+
+const helper_registry_entry_T* helper_registry_get(helper_type_T type);
+const helper_registry_entry_T* helper_registry_find_by_name(const char* name, size_t length);
+const helper_registry_entry_T* helper_registry_find_by_source(const char* source);
+const helper_registry_entry_T* helper_registry_find_preferred_for_tag(const char* tag_name);
+const helper_registry_entry_T* helper_registry_entries(void);
+size_t helper_registry_count(void);
+
+#endif

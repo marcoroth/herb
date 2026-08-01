@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0033_tag.div with script tag in attribute value"
+input: "{source: \"<%= tag.div data: { value: user_input } %>\", options: {optimize: true, locals: {user_input: \"<script>alert(\\\"xss\\\")</script>\"}}}"
+---
+_buf = ::String.new; _buf << '<div data-value="'.freeze; _buf << ::Herb::Engine.attr((::Herb::Engine.nested_attribute_value(user_input))); _buf << '"></div>'.freeze;
+_buf.to_s

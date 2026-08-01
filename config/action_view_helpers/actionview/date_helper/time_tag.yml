@@ -1,0 +1,37 @@
+---
+name: time_tag
+source: "ActionView::Helpers::DateHelper#time_tag"
+gem: actionview
+output: html
+visibility: public
+supported: false
+supports_block: true
+description: |-
+  Returns an HTML `<time>` tag for the given date or time. The datetime attribute is set to the ISO 8601 representation. Content defaults to a localized long format string.
+signature: "time_tag(date_or_time, *args, &block)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/DateHelper.html#method-i-time_tag"
+tag:
+  name: time
+  is_void: false
+  preferred: true
+  detect_style: call_name
+arguments:
+  - name: date_or_time
+    position: 1
+    type: object
+    optional: false
+    description: "A Date, Time, or DateTime object."
+  - name: content
+    position: 2
+    type: string
+    optional: true
+    default: "nil"
+    description: "Display text. Defaults to `I18n.l(date_or_time, format: :long)`."
+options:
+  - name: format
+    type: symbol
+    description: "`I18n` date/time format to use. Defaults to `:long`."
+  - name: datetime
+    type: string
+    description: "Override the datetime attribute value."
+special_behaviors: []

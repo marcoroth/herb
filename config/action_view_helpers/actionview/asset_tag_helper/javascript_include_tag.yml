@@ -1,0 +1,59 @@
+---
+name: javascript_include_tag
+source: "ActionView::Helpers::AssetTagHelper#javascript_include_tag"
+gem: actionview
+output: html
+visibility: public
+supported: true
+supports_block: false
+description: |-
+  Returns an HTML `<script>` tag for each of the sources provided. Sources may be paths to JavaScript files. Relative paths are assumed to be relative to assets/javascripts. The `".js"` extension is optional unless `extname: false` is set.
+signature: "javascript_include_tag(*sources)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html#method-i-javascript_include_tag"
+tag:
+  name: script
+  is_void: false
+  preferred: false
+  detect_style: call_name
+  implicit_attribute:
+    name: src
+    source: first_arg
+    wrapper: javascript_path
+    wrapper_quotes_arg: true
+    skip_wrapping_for:
+      - url
+content: null
+attributes_arg: keywords
+transform_style: generic
+arguments:
+  - name: sources
+    position: 1
+    type: string
+    optional: false
+    splat: true
+    description: "One or more JavaScript file paths or URLs."
+options:
+  - name: nonce
+    type: [boolean, string]
+    description: "CSP nonce value. When `true`, uses the Rails-generated nonce."
+  - name: extname
+    type: [string, false]
+    description: |-
+      File extension to append. Defaults to `".js"`. Pass `false` to omit.
+  - name: async
+    type: boolean
+    description: "Adds the `async` HTML attribute, allowing the script to be fetched in parallel."
+  - name: defer
+    type: boolean
+    description: "Adds the `defer` HTML attribute, indicating the script should execute after the document has been parsed."
+  - name: skip_pipeline
+    type: boolean
+    description: "Bypass the asset pipeline when set to `true`."
+  - name: nopush
+    type: boolean
+    description: "Specify if the use of server push is not desired. Defaults to `true`."
+special_behaviors:
+  - type: multiple_elements
+    source: splat_args
+  - type: remove_non_html_options
+    options: [extname, host, protocol, skip_pipeline, nopush]
