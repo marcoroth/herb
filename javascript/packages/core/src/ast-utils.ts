@@ -35,6 +35,7 @@ import {
   isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
+  isRubyLiteralNode,
   areAllOfType,
   filterLiteralNodes,
   filterHTMLTextNodes,
@@ -59,6 +60,12 @@ export type ERBCommentNode = ERBNode & {
   }
 }
 
+export type ERBEscapedNode = ERBNode & {
+  tag_opening: {
+    value: "<%%" | "<%%="
+  }
+}
+
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
@@ -67,6 +74,16 @@ export function isERBOutputNode(node: Node): node is ERBOutputNode {
   if (!node.tag_opening?.value) return false
 
   return ["<%=", "<%=="].includes(node.tag_opening?.value)
+}
+
+/**
+ * Checks if a node is an escaped ERB node (`<%%` or `<%%=`).
+ */
+export function isERBEscapedNode(node: Node): node is ERBEscapedNode {
+  if (!isERBNode(node)) return false
+  if (!node.tag_opening?.value) return false
+
+  return ["<%%", "<%%="].includes(node.tag_opening.value)
 }
 
 /**
@@ -99,6 +116,24 @@ export function hasERBContent(nodes: Node[]): boolean {
  */
 export function hasERBOutput(nodes: Node[]): boolean {
   return nodes.some(isERBOutputNode)
+}
+
+/**
+ * Checks if a node outputs a dynamic value
+ *
+ * Covers both ERB output (`<%= %>`) and the Ruby expressions that Action View
+ * helper attribute values are made of, where `id: "#{user.name}-pending"`
+ * becomes a `RubyLiteralNode` next to a `LiteralNode` instead of an ERB node.
+ */
+export function isDynamicOutputNode(node: Node): boolean {
+  return isERBOutputNode(node) || isRubyLiteralNode(node)
+}
+
+/**
+ * Checks if an array of nodes contains any dynamic output nodes
+ */
+export function hasDynamicOutput(nodes: Node[]): boolean {
+  return nodes.some(isDynamicOutputNode)
 }
 
 

@@ -1,13 +1,12 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor } from "@herb-tools/core"
+import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall, isCallOnLocal } from "./prism-rule-utils.js"
-import { locationFromOffset } from "./rule-utils.js"
+import { isAssignmentNode, isDebugOutputCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBContentNode, ERBRenderNode, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ERBRenderNode, ERBBlockNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
 const MUTATION_METHODS = new Set([
   "<<",
@@ -24,16 +23,6 @@ const MUTATION_METHODS = new Set([
   "insert",
   "concat",
   "assert_valid_keys",
-])
-
-const SIDE_EFFECT_METHODS = new Set([
-  "content_for",
-  "provide",
-  "flush",
-  "turbo_refreshes_with",
-  "turbo_exempts_page_from_cache",
-  "turbo_exempts_page_from_preview",
-  "turbo_page_requires_reload",
 ])
 
 class UnusedExpressionCollector extends PrismVisitor {
@@ -96,10 +85,28 @@ class UnusedExpressionCollector extends PrismVisitor {
 }
 
 class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
-  private renderBlockLocalNames: Set<string> = new Set()
+  private exemptLocalNames: Set<string> = new Set()
 
   visitERBRenderNode(node: ERBRenderNode): void {
-    const previousLocalNames = this.renderBlockLocalNames
+    this.visitExemptingBlockArguments(node)
+  }
+
+  visitERBBlockNode(node: ERBBlockNode): void {
+    const prismNode = node.prismNode
+
+    if (prismNode && this.isSlotSetterCall(prismNode)) {
+      this.visitExemptingBlockArguments(node)
+    } else {
+      this.visitChildNodes(node)
+    }
+  }
+
+  private isSlotSetterCall(node: PrismNode): boolean {
+    return isPrismNodeType(node, "CallNode") && Boolean(node.receiver) && node.name.startsWith("with_")
+  }
+
+  private visitExemptingBlockArguments(node: ERBRenderNode | ERBBlockNode): void {
+    const previousLocalNames = this.exemptLocalNames
     const localNames = new Set(previousLocalNames)
 
     for (const argument of node.block_arguments) {
@@ -112,9 +119,9 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
       }
     }
 
-    this.renderBlockLocalNames = localNames
+    this.exemptLocalNames = localNames
     this.visitChildNodes(node)
-    this.renderBlockLocalNames = previousLocalNames
+    this.exemptLocalNames = previousLocalNames
   }
 
   visitERBContentNode(node: ERBContentNode): void {
@@ -126,13 +133,13 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const source = node.source
     if (!source) return
 
-    const collector = new UnusedExpressionCollector(this.renderBlockLocalNames)
+    const collector = new UnusedExpressionCollector(this.exemptLocalNames)
     collector.visit(prismNode)
 
     for (const expression of collector.expressions) {
       const { startOffset, length } = expression.location
-      const expressionSource = source.substring(startOffset, startOffset + length)
-      const location = locationFromOffset(source, startOffset, length)
+      const expressionSource = substringFromByteOffset(source, startOffset, length)
+      const location = locationFromByteOffset(source, startOffset, length)
 
       this.addOffense(
         `Avoid unused expressions in silent ERB tags. \`${expressionSource}\` is evaluated but its return value is discarded. Use \`<%= ... %>\` to output the value or remove the expression.`,

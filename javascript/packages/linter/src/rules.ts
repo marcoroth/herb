@@ -19,6 +19,7 @@ import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
 import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
@@ -128,6 +129,7 @@ export const rules: RuleClass[] = [
 
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoCommentedOutOutputTagsRule,
   ERBNoDebugOutputRule,
   ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,

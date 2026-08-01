@@ -8,7 +8,7 @@ import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tool
 // NOTE: Rules are not configurable for now, keep some sane defaults
 //   See https://github.com/marcoroth/herb/issues/1204
 const ALLOW_BLANK = true
-const ALLOWED_TYPES = ["text/javascript", "module", "importmap", "speculationrules"]
+const ALLOWED_TYPES = ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"]
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {

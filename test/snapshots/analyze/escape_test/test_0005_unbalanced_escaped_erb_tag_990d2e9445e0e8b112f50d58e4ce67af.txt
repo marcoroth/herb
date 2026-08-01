@@ -1,0 +1,17 @@
+---
+source: "Analyze::EscapeTest#test_0005_unbalanced escaped erb tag"
+input: "<%% elsif other %>"
+---
+@ DocumentNode (location: (1:0)-(1:18))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:18))
+        ├── errors: (1 error)
+        │   └── @ ERBControlFlowScopeError (location: (1:0)-(1:18))
+        │       ├── message: "`<% elsif %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+        │       └── keyword: "`<% elsif %>`"
+        │
+        ├── tag_opening: "<%%" (location: (1:0)-(1:3))
+        ├── content: " elsif other " (location: (1:3)-(1:16))
+        ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        ├── parsed: true
+        └── valid: false

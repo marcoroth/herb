@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { Visitor, isERBOutputNode } from "@herb-tools/core"
+import { Visitor, isERBOutputNode, isERBEscapedNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
@@ -62,7 +62,7 @@ class ContainsOutputContentVisitor extends Visitor {
   visitERBContentNode(node: ERBContentNode): void {
     if (this.hasOutputContent) return
 
-    if (isERBOutputNode(node)) {
+    if (isERBOutputNode(node) || isERBEscapedNode(node)) {
       this.hasOutputContent = true
 
       return

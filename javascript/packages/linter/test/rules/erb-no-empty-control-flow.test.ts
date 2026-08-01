@@ -454,4 +454,32 @@ describe("ERBNoEmptyControlFlowRule", () => {
       `)
     })
   })
+
+  describe("escaped ERB tags", () => {
+    test("detects empty escaped if block", () => {
+      expectHint("Empty if block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <%% if condition %>
+        <%% end %>
+      `)
+    })
+
+    test("detects empty escaped do block", () => {
+      expectHint("Empty do block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <%% items.each do |item| %>
+        <%% end %>
+      `)
+    })
+
+    test("does not flag escaped block with content", () => {
+      expectNoOffenses(dedent`
+        <%% items.each do |item| %>
+          <p>Content</p>
+        <%% end %>
+      `)
+    })
+  })
 })
