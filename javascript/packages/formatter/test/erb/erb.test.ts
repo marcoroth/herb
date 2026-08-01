@@ -843,7 +843,6 @@ describe("@herb-tools/formatter", () => {
                     data-column="<%= column[:name] %>"
                     <%= 'checked' if column[:default_visible] %>
                   >
-
                   <span class="label-text text-muted-foreground">
                     <%= column[:label] %>
                   </span>

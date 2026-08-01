@@ -389,6 +389,132 @@ describe("Spacing", () => {
     })
   })
 
+  describe("Text-level container Tests", () => {
+    test("does not space ERB output from a following ERB block inside a heading", () => {
+      const source = dedent`
+        <h3>
+          <%= pluralize(events.count, "event") %>
+          <% if channels.any? %>
+            - <%= channels.join(", ") %>
+          <% end %>
+        </h3>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <h3>
+          <%= pluralize(events.count, "event") %>
+          <% if channels.any? %>
+            - <%= channels.join(", ") %>
+          <% end %>
+        </h3>
+      `)
+    })
+
+    test("does not space children of a paragraph", () => {
+      const source = dedent`
+        <p>
+          <%= user.name %>
+          <% if user.admin? %>
+            (admin)
+          <% end %>
+        </p>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <p>
+          <%= user.name %>
+          <% if user.admin? %>
+            (admin)
+          <% end %>
+        </p>
+      `)
+    })
+
+    test("does not space an input from its text inside a label", () => {
+      const source = dedent`
+        <label>
+          <input type="checkbox" name="agree">
+          <span class="label-text">
+            <%= label %>
+          </span>
+        </label>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <label>
+          <input type="checkbox" name="agree">
+          <span class="label-text">
+            <%= label %>
+          </span>
+        </label>
+      `)
+    })
+
+    test("still spaces block-level siblings inside a container", () => {
+      const source = dedent`
+        <div>
+          <p>one</p>
+          <% if channels.any? %>
+            <p>two</p>
+          <% end %>
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <p>one</p>
+
+          <% if channels.any? %>
+            <p>two</p>
+          <% end %>
+        </div>
+      `)
+    })
+
+    test("still separates ERB code from ERB output inside a container", () => {
+      const source = dedent`
+        <div>
+          <% user = current_user %>
+          <% time = Time.now %>
+          <%= user.name %>
+          <%= time.strftime("%Y") %>
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <% user = current_user %>
+          <% time = Time.now %>
+
+          <%= user.name %>
+          <%= time.strftime("%Y") %>
+        </div>
+      `)
+    })
+
+    test("keeps a blank line the author put inside a heading", () => {
+      const source = dedent`
+        <h3>
+          <%= pluralize(events.count, "event") %>
+
+          <% if channels.any? %>
+            - <%= channels.join(", ") %>
+          <% end %>
+        </h3>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <h3>
+          <%= pluralize(events.count, "event") %>
+
+          <% if channels.any? %>
+            - <%= channels.join(", ") %>
+          <% end %>
+        </h3>
+      `)
+    })
+  })
+
   describe("Inline Element Tests", () => {
     test("inline elements (span, em, strong) don't get spaced", () => {
       const source = dedent`
@@ -406,7 +532,6 @@ describe("Spacing", () => {
           <span>Span 1</span>
           <span>Span 2</span>
           <span>Span 3</span>
-
           <em>Emphasis</em>
           <strong>Strong</strong>
         </p>

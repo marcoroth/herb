@@ -77,6 +77,15 @@ export const SPACEABLE_CONTAINERS = new Set([
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
 
+/**
+ * Elements whose content is a run of phrasing content rather than a list of
+ * blocks. Their children render as one continuous piece of text, so a blank
+ * line between them would split a single sentence in the source.
+ */
+export const TEXT_LEVEL_CONTAINERS = new Set([
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'
+])
+
 
 // --- Node Utility Functions ---
 
@@ -225,6 +234,16 @@ export function isInlineOrERBNode(node: Node): boolean {
  */
 export function isInlineElement(tagName: string): boolean {
   return INLINE_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * Check if an element holds phrasing content, so its children render as one
+ * continuous run of text and must not be split apart by blank lines.
+ */
+export function isTextLevelContainer(tagName: string): boolean {
+  const normalized = tagName.toLowerCase()
+
+  return TEXT_LEVEL_CONTAINERS.has(normalized) || INLINE_ELEMENTS.has(normalized)
 }
 
 /**
