@@ -209,4 +209,44 @@ describe("ActionViewNoHelperShadowingRule", () => {
       `)
     })
   })
+
+  describe("iteration blocks", () => {
+    test("iteration block argument named tag is flagged as an error", () => {
+      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+
+      assertOffenses(dedent`
+        <% @tags.map do |tag| %>
+          <%= tag.name %>
+        <% end %>
+      `)
+    })
+
+    test("iteration block argument named label is flagged as a hint", () => {
+      expectHint("Local variable `label` shadows the Action View `label` helper. Rename it to avoid confusion (for example `label_item`).")
+
+      assertOffenses(dedent`
+        <% @labels.each do |label| %>
+          <%= label %>
+        <% end %>
+      `)
+    })
+
+    test("only the shadowing target is flagged in a multi-argument iteration block", () => {
+      expectError("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")
+
+      assertOffenses(dedent`
+        <% @tags.each_with_index do |tag, index| %>
+          <%= tag.name %>
+        <% end %>
+      `)
+    })
+
+    test("iteration block with a non-shadowing argument is allowed", () => {
+      expectNoOffenses(dedent`
+        <% @tags.each do |item| %>
+          <%= item.name %>
+        <% end %>
+      `)
+    })
+  })
 })
