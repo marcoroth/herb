@@ -616,5 +616,56 @@ module Engine
         <title><%= @page_title %></title>
       ERB
     end
+
+    test "head helpers in a partial do NOT get debug spans" do
+      template = <<~ERB
+        <%= csrf_meta_tags %>
+        <%= javascript_include_tag "application", defer: true %>
+        <%= stylesheet_link_tag "application" %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "_head.html.erb")
+    end
+
+    test "more head helpers in a partial do NOT get debug spans" do
+      template = <<~ERB
+        <%= csp_meta_tag %>
+        <%= viewport_meta_tag %>
+        <%= javascript_importmap_tags %>
+        <%= stylesheet_import_tag "application" %>
+        <%= favicon_link_tag %>
+        <%= auto_discovery_link_tag(:rss, articles_url) %>
+        <%= preload_link_tag "fonts/inter.woff2" %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "_head.html.erb")
+    end
+
+    test "tag helper head elements in a partial do NOT get debug spans" do
+      template = <<~ERB
+        <%= tag.meta charset: "utf-8" %>
+        <%= tag.title %>
+        <%= tag.link rel: "canonical", href: canonical_url %>
+        <%= tag.base href: "/" %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "_head.html.erb")
+    end
+
+    test "standalone meta link and base content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <meta name="description" content="<%= @description %>">
+        <link rel="canonical" href="<%= canonical_url %>">
+        <base href="<%= base_href %>">
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "ordinary body output in a partial still gets debug span" do
+      template = "<div><%= @name %></div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "_card.html.erb")
+    end
   end
 end

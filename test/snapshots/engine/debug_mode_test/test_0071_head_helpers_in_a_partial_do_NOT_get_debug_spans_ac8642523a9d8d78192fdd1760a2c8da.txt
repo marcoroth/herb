@@ -1,0 +1,9 @@
+---
+source: "Engine::DebugModeTest#test_0071_head helpers in a partial do NOT get debug spans"
+input: "{source: \"<%= csrf_meta_tags %>\\n<%= javascript_include_tag \\\"application\\\", defer: true %>\\n<%= stylesheet_link_tag \\\"application\\\" %>\\n\", options: {debug: true, filename: \"_head.html.erb\"}}"
+---
+_buf = ::String.new; _buf << (csrf_meta_tags).to_s; _buf << '
+'.freeze; _buf << (javascript_include_tag "application", defer: true).to_s; _buf << '
+'.freeze; _buf << (stylesheet_link_tag "application").to_s; _buf << '
+'.freeze;
+_buf.to_s

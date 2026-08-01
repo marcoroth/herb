@@ -76,7 +76,7 @@ module Herb
         if !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
-          @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
+          @erb_nodes_to_wrap << node unless complex_rails_helper?(code) || head_content_helper?(code)
         end
 
         super
@@ -214,7 +214,7 @@ module Herb
         code = erb_node.content.value.strip
         erb_code = "#{opening} #{code} %>"
 
-        return erb_node if complex_rails_helper?(code)
+        return erb_node if complex_rails_helper?(code) || head_content_helper?(code)
 
         line = erb_node.location&.start&.line
         column = erb_node.location&.start&.column
@@ -336,7 +336,7 @@ module Herb
       end
 
       def in_excluded_context?
-        excluded_tags = ["script", "style", "head", "title", "textarea", "pre", "svg", "math"]
+        excluded_tags = ["script", "style", "head", "title", "meta", "link", "base", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
         if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) || include_debug_disable_comment?(node.content.value.strip) }
@@ -389,6 +389,34 @@ module Herb
                        cleaned_code.match?(/\bjavascript_tag\s.*\{\s*$/) ||
                        cleaned_code.match?(/\bjavascript_tag\(.*do\s*$/) ||
                        cleaned_code.match?(/\bjavascript_tag\(.*\{\s*$/)
+
+        false
+      end
+
+      # Helpers whose output belongs in <head>. Wrapping them in a <span>
+      # would implicitly close </head> in the browser, so they are never
+      # wrapped—even when rendered from a partial whose own AST has no
+      # <head> element for in_excluded_context? to detect.
+      # TODO: Rewrite using Prism Nodes once available
+      def head_content_helper?(code)
+        cleaned_code = code.strip.gsub(/\s+/, " ")
+
+        head_helpers = [
+          "csrf_meta_tags",
+          "csp_meta_tag",
+          "viewport_meta_tag",
+          "javascript_include_tag",
+          "javascript_importmap_tags",
+          "stylesheet_link_tag",
+          "stylesheet_import_tag",
+          "favicon_link_tag",
+          "auto_discovery_link_tag",
+          "preload_link_tag"
+        ]
+
+        return true if cleaned_code.match?(/\b(?:#{head_helpers.join("|")})\b/)
+
+        return true if cleaned_code.match?(/\btag\.(?:meta|link|title|base)\b/)
 
         false
       end
