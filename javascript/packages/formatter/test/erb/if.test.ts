@@ -273,7 +273,13 @@ describe("@herb-tools/formatter", () => {
       `
 
       const expected = dedent`
-        <span><% if valid? %>Valid<% else %>Invalid<% end %></span>
+        <span>
+          <% if valid? %>
+            Valid
+          <% else %>
+            Invalid
+          <% end %>
+        </span>
       `
 
       const output = formatter.format(input)
@@ -321,7 +327,13 @@ describe("@herb-tools/formatter", () => {
       `
 
       const expected = dedent`
-        <span><% if valid? %>Valid<% elsif invalid? %>Invalid<% end %></span>
+        <span>
+          <% if valid? %>
+            Valid
+          <% elsif invalid? %>
+            Invalid
+          <% end %>
+        </span>
       `
 
       const output = formatter.format(input)
