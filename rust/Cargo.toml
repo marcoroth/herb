@@ -1,6 +1,7 @@
 [workspace]
 members = [
   ".",
+  "herb-analysis",
   "herb-config"
 ]
 

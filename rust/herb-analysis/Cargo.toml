@@ -1,0 +1,25 @@
+[package]
+name = "herb-analysis"
+version = "0.10.2"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "Exploratory static-analysis spike over rubydex"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+publish = false
+
+[lib]
+name = "herb_analysis"
+path = "src/lib.rs"
+
+[[bin]]
+name = "herb-analysis"
+path = "src/bin/herb_analysis.rs"
+
+[dependencies]
+colored = "3"
+herb = { path = ".." }
+rubydex = "=0.2.5"
+
+[dev-dependencies]
+insta = "1.40"

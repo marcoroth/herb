@@ -1,3 +1,4 @@
+pub mod action_view_helpers;
 pub mod ast;
 pub mod bindings;
 pub mod convert;

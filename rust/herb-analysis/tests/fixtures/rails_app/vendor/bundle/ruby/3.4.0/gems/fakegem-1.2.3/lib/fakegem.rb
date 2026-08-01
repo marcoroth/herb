@@ -1,0 +1,1 @@
+module Fakegem; end
