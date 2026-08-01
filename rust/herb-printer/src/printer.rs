@@ -360,6 +360,17 @@ pub trait Printer: Visitor + Default {
     self.emit_end_node(&node.end_node);
   }
 
+  fn emit_erb_iteration_block(&mut self, node: &ERBIterationBlockNode) {
+    self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
+    self.enter_indent();
+    self.visit_all(&node.body);
+    self.exit_indent();
+    self.emit_rescue_clause(&node.rescue_clause);
+    self.emit_else_clause(&node.else_clause);
+    self.emit_ensure_clause(&node.ensure_clause);
+    self.emit_end_node(&node.end_node);
+  }
+
   fn emit_erb_when(&mut self, node: &ERBWhenNode) {
     self.emit_erb(&node.tag_opening, &node.content, &node.tag_closing);
     self.enter_indent();
