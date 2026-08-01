@@ -30,10 +30,10 @@
       "default": "./dist/herb-core.esm.js"
     }
   },
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "@ruby/prism": "^1.9.0"
   },
+  "devDependencies": {},
   "files": [
     "package.json",
     "README.md",
