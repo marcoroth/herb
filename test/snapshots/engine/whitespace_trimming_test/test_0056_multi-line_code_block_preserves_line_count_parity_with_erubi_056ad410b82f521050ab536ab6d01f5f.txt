@@ -1,5 +1,5 @@
 ---
-source: "Engine::WhitespaceTrimmingTest#test_0045_multi-line code block preserves line count parity with erubi"
+source: "Engine::WhitespaceTrimmingTest#test_0056_multi-line code block preserves line count parity with erubi"
 input: "{source: \"<%\\n  x = 1\\n  y = 2\\n%>\\n<%= x %>\", options: {}}"
 ---
 _buf = ::String.new; 
