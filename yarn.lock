@@ -2323,7 +2323,7 @@
     "@types/expect" "^1.20.4"
     "@types/node" "*"
 
-"@types/vscode@^1.125.0":
+"@types/vscode@^1.100.0":
   version "1.125.0"
   resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.125.0.tgz#944755fe16fcaf15060899bf214556c7549e4cd6"
   integrity sha512-0icm/ZQAaism87P0ekHqi4/Ju9du+Tm0RUW+y7vqRsxY2cY0FNRX1nAnaW7nT6npPt2tfHiheZ55Zm9UhqonFA==
