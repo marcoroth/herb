@@ -25,7 +25,6 @@ export interface WorkerInput {
 export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
-  content: string
   autocorrectable: boolean
 }
 
@@ -96,7 +95,7 @@ async function run() {
 
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
-    let content = readFileSync(filePath, "utf-8")
+    const content = readFileSync(filePath, "utf-8")
 
     const lintResult = linter.lint(content, {
       fileName: filename,
@@ -115,13 +114,10 @@ async function run() {
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
 
-      content = autofixResult.source
-
       for (const offense of autofixResult.unfixed) {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 
@@ -143,7 +139,6 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
           autocorrectable: isRuleAutocorrectable(offense.rule)
         })
 

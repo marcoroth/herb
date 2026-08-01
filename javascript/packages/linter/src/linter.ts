@@ -429,13 +429,13 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    this.parseCache.clear()
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
     const parseResult = this.parseCache.get(source)
 
-    // Check for file-level ignore directive using visitor
     if (hasLinterIgnoreDirective(parseResult)) {
       return {
         offenses: [],
@@ -446,6 +446,7 @@ export class Linter {
         ignored: 0
       }
     }
+
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
     const sourceLines = source.split("\n")
@@ -458,6 +459,7 @@ export class Linter {
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
         const offenses = rule.check(parseResult)
+
         this.offenses.push(...offenses)
       }
     }
@@ -485,8 +487,6 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
-      // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
@@ -588,6 +588,8 @@ export class Linter {
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    this.parseCache.clear()
+
     const includeUnsafe = options?.includeUnsafe ?? false
 
     context = {
