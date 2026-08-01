@@ -1,11 +1,10 @@
 import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
-import { LiteralNode } from "@herb-tools/core"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode, getTagLocalName } from "@herb-tools/core"
+import { hasDynamicOutput, getValidatableStaticContent, getStaticAttributeName, isERBOutputNode, getTagLocalName } from "@herb-tools/core"
 
-import type { ParseResult, HTMLAttributeNode, HTMLElementNode, ERBContentNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLElementNode, LiteralNode, ERBContentNode, RubyLiteralNode, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
@@ -26,6 +25,10 @@ class OutputPrinter extends Printer {
     if (isERBOutputNode(node)) {
       this.write(IdentityPrinter.print(node))
     }
+  }
+
+  visitRubyLiteralNode(node: RubyLiteralNode) {
+    this.write(`#{${IdentityPrinter.print(node)}}`)
   }
 }
 
@@ -127,13 +130,13 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
   private extractIdValue(attributeNode: HTMLAttributeNode): { identifier: string; shouldTrackDuplicates: boolean; isDynamic: boolean } | null {
     const valueNodes = attributeNode.value?.children || []
-    const isDynamic = hasERBOutput(valueNodes)
+    const isDynamic = hasDynamicOutput(valueNodes)
 
     if (isDynamic && this.isInControlFlow && this.currentControlFlowType === ControlFlowType.LOOP) {
       return null
     }
 
-    const identifier = isEffectivelyStatic(valueNodes) ? getValidatableStaticContent(valueNodes) : OutputPrinter.print(valueNodes)
+    const identifier = isDynamic ? OutputPrinter.print(valueNodes) : getValidatableStaticContent(valueNodes)
     if (!identifier) return null
 
     return { identifier, shouldTrackDuplicates: true, isDynamic }
@@ -157,7 +160,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 
   private handleControlFlowId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
     if (this.currentControlFlowType === ControlFlowType.LOOP) {
-      this.handleLoopId(identifier, attributeNode)
+      this.handleLoopId(identifier, attributeNode, isDynamic)
     } else {
       this.handleConditionalId(identifier, attributeNode, isDynamic)
     }
@@ -165,10 +168,8 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     this.currentBranchIds.add(identifier)
   }
 
-  private handleLoopId(identifier: string, attributeNode: HTMLAttributeNode): void {
-    const isStaticId = this.isStaticId(attributeNode)
-
-    if (isStaticId) {
+  private handleLoopId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
+    if (!isDynamic) {
       this.addDuplicateIdOffense(identifier, attributeNode.location)
       return
     }
@@ -205,14 +206,6 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     }
 
     this.documentIds.add(identifier)
-  }
-
-  private isStaticId(attributeNode: HTMLAttributeNode): boolean {
-    const valueNodes = attributeNode.value!.children
-    const isCompletelyStatic = valueNodes.every(child => isNode(child, LiteralNode))
-    const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
-
-    return isCompletelyStatic || isEffectivelyStaticValue
   }
 
   private addDuplicateIdOffense(identifier: string, location: any): void {

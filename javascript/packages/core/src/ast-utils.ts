@@ -35,6 +35,7 @@ import {
   isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
+  isRubyLiteralNode,
   areAllOfType,
   filterLiteralNodes,
   filterHTMLTextNodes,
@@ -115,6 +116,24 @@ export function hasERBContent(nodes: Node[]): boolean {
  */
 export function hasERBOutput(nodes: Node[]): boolean {
   return nodes.some(isERBOutputNode)
+}
+
+/**
+ * Checks if a node outputs a dynamic value
+ *
+ * Covers both ERB output (`<%= %>`) and the Ruby expressions that Action View
+ * helper attribute values are made of, where `id: "#{user.name}-pending"`
+ * becomes a `RubyLiteralNode` next to a `LiteralNode` instead of an ERB node.
+ */
+export function isDynamicOutputNode(node: Node): boolean {
+  return isERBOutputNode(node) || isRubyLiteralNode(node)
+}
+
+/**
+ * Checks if an array of nodes contains any dynamic output nodes
+ */
+export function hasDynamicOutput(nodes: Node[]): boolean {
+  return nodes.some(isDynamicOutputNode)
 }
 
 

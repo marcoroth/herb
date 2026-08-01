@@ -65,6 +65,18 @@ The same dynamic expression repeated within the same scope (same document level,
 
 Hints do not fail a lint run unless you opt in with `failLevel: hint` (or `--fail-level hint`), which is how you enforce potential duplicates in CI when you know your IDs are deterministic.
 
+Ruby interpolation inside an Action View helper attribute counts as dynamic in exactly the same way, so these two IDs are compared as `#{event["name"]}-pending` and `#{talk["title"]}-pending` rather than as the shared literal `-pending`:
+
+```erb
+<%= link_to event["url"], id: "#{event["name"]}-pending" do %>
+  <%= event["name"] %>
+<% end %>
+
+<%= link_to talk["url"], id: "#{talk["title"]}-pending" do %>
+  <%= talk["title"] %>
+<% end %>
+```
+
 ## `<template>` elements
 
 A `<template>` is an inert document fragment — its contents only enter the document once the template is cloned/inflated. Each `<template>` body therefore gets its **own ID context**: IDs inside it don't compete with IDs elsewhere in the document, or with IDs in other templates.
