@@ -326,10 +326,23 @@ describe("@herb-tools/formatter", () => {
       `)
     })
 
-    test("span with only a comment becomes inline (acceptable for inline elements)", () => {
+    test("span with only a comment keeps the author's newlines", () => {
       const source = dedent`
         <span>
           <!-- Even in inline elements -->
+        </span>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <span>
+          <!-- Even in inline elements -->
+        </span>
+      `)
+    })
+
+    test("span with a comment glued to the open tag still collapses", () => {
+      const source = dedent`
+        <span><!-- Even in inline elements -->
         </span>
       `
       const result = formatter.format(source)

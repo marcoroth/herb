@@ -136,6 +136,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    */
   maxLineLength: number
 
+  public source: string
+
   /**
    * @deprecated refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
    */
@@ -154,9 +156,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private attributeRenderer: AttributeRenderer
   private spacingAnalyzer: SpacingAnalyzer
   private collectedHerbDisable: CollectedHerbDisable[] = []
-
-  public source: string
-
+  private sourceLines: string[] | null = null
   private herb?: HerbBackend
   private erbBlockTagNameCache = new Map<Node, string | null>()
 
@@ -1419,6 +1419,16 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     if (hasNonInlineChildElements) return false
 
+    if (openTagClosing && this.startsItsOwnLine(node)) {
+      const first = children[0]
+      const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+
+      if (startsOnNewLine || hasLeadingNewline) {
+        return false
+      }
+    }
+
     if (isInlineElement(tagName)) {
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
@@ -1510,6 +1520,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const gluedEnd = !isPureWhitespaceNode(last) && !(isNode(last, HTMLTextNode) && endsWithWhitespace(last.content))
 
     return gluedStart || gluedEnd
+  }
+
+  private startsItsOwnLine(node: HTMLElementNode): boolean {
+    const start = node.open_tag?.location.start
+    if (!start) return false
+
+    this.sourceLines ||= this.source.split("\n")
+
+    const line = this.sourceLines[start.line - 1]
+    if (line === undefined) return false
+
+    return /^\s*$/.test(line.slice(0, start.column))
   }
 
   private fitsOnCurrentLine(content: string): boolean {

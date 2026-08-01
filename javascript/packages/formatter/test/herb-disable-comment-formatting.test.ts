@@ -381,9 +381,11 @@ describe("herb:disable comment formatting", () => {
 
     const result = formatter.format(source)
 
-    expect(result).toBe(
-      `<a class="btn btn-secondary" aria-label="Close"> Close </a> <%# herb:disable html-anchor-require-href %>`
-    )
+    expect(result).toBe(dedent`
+      <a class="btn btn-secondary" aria-label="Close"> <%# herb:disable html-anchor-require-href %>
+        Close
+      </a>
+    `)
   })
 
   test("keeps herb:disable comment on the attribute line in a loop", () => {
