@@ -6,6 +6,6 @@ direnv allow
 bundle install
 bundle exec rake templates
 bundle exec rake
-bundle exex rake compile
+bundle exec rake compile
 yarn install
 yarn build
