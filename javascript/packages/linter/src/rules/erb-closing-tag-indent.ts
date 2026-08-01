@@ -1,7 +1,7 @@
-import type { ERBNode, ParseResult } from "@herb-tools/core"
-
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+
+import type { ERBNode, ParseResult } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 interface ClosingErbTagIndentAutofixContext extends BaseAutofixContext {
@@ -40,6 +40,7 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
     } else if (startsWithNewline && endsWithNewline) {
       const expectedIndent = openTag.location.start.column
       const actualIndent = this.trailingIndent(value)
+
       if (actualIndent === expectedIndent) return
 
       this.addOffense(
@@ -55,6 +56,7 @@ class ClosingErbTagIndentVisitor extends BaseRuleVisitor<ClosingErbTagIndentAuto
     if (lastNewlineIndex === -1) return false
 
     const afterLastNewline = value.substring(lastNewlineIndex + 1)
+
     return afterLastNewline.length === 0 || /^\s*$/.test(afterLastNewline)
   }
 
@@ -70,6 +72,7 @@ export class ERBClosingTagIndentRule extends ParserRule<ClosingErbTagIndentAutof
   static autocorrectable = true
   static reindentAfterAutofix = true
   static ruleName = "erb-closing-tag-indent"
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -101,6 +104,7 @@ export class ERBClosingTagIndentRule extends ParserRule<ClosingErbTagIndentAutof
 
         return result
       }
+
       case "remove-newline": {
         const lastNewlineIndex = content.lastIndexOf("\n")
         if (lastNewlineIndex === -1) return null
@@ -110,6 +114,7 @@ export class ERBClosingTagIndentRule extends ParserRule<ClosingErbTagIndentAutof
 
         return result
       }
+
       case "fix-indent": {
         const lastNewlineIndex = content.lastIndexOf("\n")
         if (lastNewlineIndex === -1) return null
