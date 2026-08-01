@@ -1,5 +1,5 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
-import { UNRELEASED_VERSION, compareSemver } from "../semver.js"
+import { UNRELEASED_VERSION, compareSemver } from "@herb-tools/core"
 
 import { ruleDocumentationUrl } from "../urls.js"
 
