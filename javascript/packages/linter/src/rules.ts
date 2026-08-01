@@ -18,12 +18,13 @@ import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-e
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
+import { ERBClosingTagIndentRule } from "./rules/erb-closing-tag-indent.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
-import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
+import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
@@ -129,14 +130,15 @@ export const rules: RuleClass[] = [
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
+  ERBClosingTagIndentRule,
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
   ERBNoCommentedOutOutputTagsRule,
-  ERBNoDebugOutputRule,
-  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
+  ERBNoDebugOutputRule,
   ERBNoDuplicateBranchElementsRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
@@ -149,8 +151,6 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
   ERBNoSilentStatementRule,
-  ERBNoUnusedExpressionsRule,
-  ERBNoUnusedLiteralsRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
@@ -158,6 +158,8 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
+  ERBNoUnusedExpressionsRule,
+  ERBNoUnusedLiteralsRule,
   ERBPreferDirectOutputRule,
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
