@@ -5,7 +5,7 @@ import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { DiagnosticSeverity } from "@herb-tools/core"
+import { DiagnosticSeverity, semverGreaterThan } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
 import { deepMerge } from "./merge.js"
 
@@ -1163,6 +1163,7 @@ export class Config {
     }
 
     const hasExplicitVersion = !!parsed.version
+    const declaredVersion = hasExplicitVersion ? String(parsed.version) : undefined
 
     if (!parsed.version) {
       parsed.version = version
@@ -1176,26 +1177,28 @@ export class Config {
           prefix: `Configuration errors in ${configPath}`,
         })
 
+        const message = declaredVersion && semverGreaterThan(declaredVersion, version)
+          ? `${validationError.toString()}\n\n  This configuration declares version ${declaredVersion}, but Herb ${version} is running. Options added after ${version} aren't recognized. Upgrade Herb to ${declaredVersion} or newer.`
+          : validationError.toString()
+
         if (exitOnError) {
-          console.error(`\n✗ ${validationError.toString()}\n`)
+          console.error(`\n✗ ${message}\n`)
 
           process.exit(1)
         } else {
-          throw new Error(validationError.toString())
+          throw new Error(message)
         }
       }
 
       throw error
     }
 
-    const userConfigVersion = hasExplicitVersion ? parsed.version : undefined
-
     const defaults = this.getDefaultConfig(version)
     const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved, userConfigVersion)
+    return new Config(projectRoot, resolved, declaredVersion)
   }
 
   /**

@@ -1,6 +1,6 @@
 import picomatch from "picomatch"
 
-import { Location } from "@herb-tools/core"
+import { Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -12,7 +12,6 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { semverGreaterThan } from "./semver.js"
 import { resolveSeverity } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
@@ -429,13 +428,13 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    this.parseCache.clear()
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
     const parseResult = this.parseCache.get(source)
 
-    // Check for file-level ignore directive using visitor
     if (hasLinterIgnoreDirective(parseResult)) {
       return {
         offenses: [],
@@ -446,6 +445,7 @@ export class Linter {
         ignored: 0
       }
     }
+
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
     const sourceLines = source.split("\n")
@@ -458,6 +458,7 @@ export class Linter {
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
         const offenses = rule.check(parseResult)
+
         this.offenses.push(...offenses)
       }
     }
@@ -485,8 +486,6 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
-      // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
@@ -588,6 +587,8 @@ export class Linter {
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    this.parseCache.clear()
+
     const includeUnsafe = options?.includeUnsafe ?? false
 
     context = {

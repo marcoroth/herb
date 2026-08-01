@@ -136,7 +136,7 @@ mod config_exists {
   fn returns_true_when_config_file_exists() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.2\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n").unwrap();
 
     assert!(Config::exists(dir.path()));
   }
@@ -146,7 +146,7 @@ mod config_exists {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.2\n").unwrap();
+    fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
     assert!(Config::exists(&config_path));
   }
@@ -159,7 +159,7 @@ mod config_read_raw_yaml {
   fn reads_raw_yaml_content_from_config_file() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.2\n# a comment\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(dir.path()).unwrap().contains("# a comment"));
   }
@@ -169,7 +169,7 @@ mod config_read_raw_yaml {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.2\n# a comment\n").unwrap();
+    fs::write(&config_path, "version: 0.10.3\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(&config_path).unwrap().contains("# a comment"));
   }
@@ -248,11 +248,11 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn applies_mutation_to_existing_yaml() {
-    let original = "version: 0.10.2\nlinter:\n  enabled: true\n";
+    let original = "version: 0.10.3\nlinter:\n  enabled: true\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
-    assert!(updated.contains("version: 0.10.2"));
+    assert!(updated.contains("version: 0.10.3"));
     assert!(updated.contains("enabled: true"));
     assert!(updated.contains("html-tag-name-lowercase:"));
     assert!(updated.contains("enabled: false"));
@@ -260,7 +260,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn merges_rules_without_overwriting_existing_rules() {
-    let original = "version: 0.10.2\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
+    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -270,7 +270,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_existing_rule_configuration() {
-    let original = "version: 0.10.2\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
+    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -996,9 +996,9 @@ mod config_upgrade_workflow {
 
     fs::write(&config_path, "version: 0.8.0\n\nlinter:\n  enabled: true\n").unwrap();
 
-    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.10.2");
+    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.10.3");
     fs::write(&config_path, contents).unwrap();
 
-    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.10.2".to_string()));
+    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.10.3".to_string()));
   }
 }

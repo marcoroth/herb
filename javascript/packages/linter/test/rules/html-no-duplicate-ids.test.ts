@@ -587,6 +587,94 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
+  describe("Ruby interpolation in Action View helper attributes", () => {
+    test("passes for interpolated helper IDs that only share a static suffix", () => {
+      expectNoOffenses(dedent`
+        <%= link_to event["url"], id: "#{event["name"]}-pending" do %>
+          <div></div>
+        <% end %>
+
+        <%= link_to talk["url"], id: "#{talk["title"]}-pending" do %>
+          <div></div>
+        <% end %>
+      `)
+    })
+
+    test("hints for the same interpolated helper ID across two helpers", () => {
+      expectHint('Potential duplicate ID `#{event["name"]}-pending` found. If this expression evaluates to the same value, IDs must be unique within a document.')
+
+      assertOffenses(dedent`
+        <%= link_to event["url"], id: "#{event["name"]}-pending" do %>
+          <div></div>
+        <% end %>
+
+        <%= link_to event["url"], id: "#{event["name"]}-pending" do %>
+          <div></div>
+        <% end %>
+      `)
+    })
+
+    test("passes for interpolated helper IDs in separate loops", () => {
+      expectNoOffenses(dedent`
+        <% @with_video_link.each do |event| %>
+          <%= link_to event["url"], id: "#{event["name"]}-published" do %>
+            <div></div>
+          <% end %>
+        <% end %>
+
+        <% @without_video_link.each do |event| %>
+          <%= link_to event["url"], id: "#{event["name"]}-pending" do %>
+            <div></div>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for an interpolated helper ID and a static ID matching its literal part", () => {
+      expectNoOffenses(dedent`
+        <%= tag.div id: "#{user.name}-pending" %>
+        <div id="-pending"></div>
+      `)
+    })
+
+    test("hints for the same interpolated helper ID twice", () => {
+      expectHint('Potential duplicate ID `#{user.id}-pending` found. If this expression evaluates to the same value, IDs must be unique within a document.')
+
+      assertOffenses(dedent`
+        <%= tag.div id: "#{user.id}-pending" %>
+        <%= tag.span id: "#{user.id}-pending" %>
+      `)
+    })
+
+    test("hints for the same Ruby expression helper ID twice", () => {
+      expectHint('Potential duplicate ID `#{dom_id(user)}` found. If this expression evaluates to the same value, IDs must be unique within a document.')
+
+      assertOffenses(dedent`
+        <%= tag.div id: dom_id(user) %>
+        <%= tag.span id: dom_id(user) %>
+      `)
+    })
+
+    test("passes for interpolated helper IDs in mutually exclusive branches", () => {
+      expectNoOffenses(dedent`
+        <% if condition? %>
+          <%= tag.div id: "#{user.id}-pending" %>
+        <% else %>
+          <%= tag.span id: "#{user.id}-pending" %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for the same static helper ID twice", () => {
+      expectError('Duplicate ID `pending` found. IDs must be unique within a document.')
+
+      assertOffenses(dedent`
+        <%= tag.div id: "pending" %>
+        <%= tag.span id: "pending" %>
+      `)
+    })
+  })
+
   describe("<template> elements (issue #1728)", () => {
     describe("isolation from the surrounding document", () => {
       test("passes for ID inside <template> matching an ID outside it", () => {

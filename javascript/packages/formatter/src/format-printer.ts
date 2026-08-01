@@ -46,6 +46,7 @@ import {
   endsWithWhitespace,
   isFrontmatter,
   isInlineElement,
+  isMultilineERBComment,
   setEdgeWhitespace,
   startsWithWhitespace,
   isNonWhitespaceNode,
@@ -590,46 +591,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return
     }
 
-    let lastMeaningfulNode: Node | null = null
-    let hasHandledSpacing = false
-
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-
-      if (shouldPreserveUserSpacing(child, children, i)) {
-        this.push("")
-        hasHandledSpacing = true
-        continue
-      }
-
-      if (isPureWhitespaceNode(child)) {
-        continue
-      }
-
-      if (shouldAppendToLastLine(child, children, i)) {
-        this.appendChildToLastLine(child, children, i)
-        lastMeaningfulNode = child
-        hasHandledSpacing = false
-        continue
-      }
-
-      if (!isNonWhitespaceNode(child)) continue
-
-      const childStartLine = this.stringLineCount
-      this.visit(child)
-
-      if (lastMeaningfulNode && !hasHandledSpacing) {
-        const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings( null, children, i)
-
-        if (shouldAddSpacing) {
-          this.lines.splice(childStartLine, 0, "")
-          this.stringLineCount++
-        }
-      }
-
-      lastMeaningfulNode = child
-      hasHandledSpacing = false
-    }
+    this.visitElementChildren(children, null)
   }
 
   visitHTMLElementNode(node: HTMLElementNode) {
@@ -828,19 +790,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     for (let index = 0; index < body.length; index++) {
       const child = body[index]
 
-      if (isNode(child, HTMLTextNode)) {
-        if (isPureWhitespaceNode(child)) {
-          const hasPreviousNonWhitespace = index > 0 && isNonWhitespaceNode(body[index - 1])
-          const hasNextNonWhitespace = index < body.length - 1 && isNonWhitespaceNode(body[index + 1])
-          const hasMultipleNewlines = child.content.includes('\n\n')
-
-          if (hasPreviousNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
-            this.push("")
-            hasHandledSpacing = true
-          }
-
-          continue
-        }
+      if (shouldPreserveUserSpacing(child, body, index)) {
+        this.push("")
+        hasHandledSpacing = true
+        continue
       }
 
       if (!isNonWhitespaceNode(child)) continue
@@ -1046,6 +999,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       } else {
         this.pushWithIndent(result.text)
       }
+    } else if (this.inlineMode) {
+      const childIndent = " ".repeat(this.indentWidth)
+      const contentLines = result.contentLines.map(line => line.trim() === "" ? "" : childIndent + line)
+
+      this.push([result.header, ...contentLines, result.footer].join("\n"))
     } else {
       this.pushWithIndent(result.header)
 
@@ -1583,6 +1541,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         if (isPureWhitespaceNode(prevSibling) || isNode(prevSibling, WhitespaceNode)) {
           hasSpaceBefore = true
         }
+
+        if (isNode(prevSibling, HTMLTextNode) && endsWithWhitespace(prevSibling.content)) {
+          hasSpaceBefore = true
+        }
       }
 
       const inlineContent = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
@@ -1752,6 +1714,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const trailingWhitespaceIsRendered = edge.after
 
     for (const child of children) {
+      if (isMultilineERBComment(child)) {
+        return null
+      }
+
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = startsWithWhitespace(child.content)
@@ -1825,7 +1791,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           return null
         }
       } else if (isNode(child, ERBContentNode)) {
-        // ERB content nodes are allowed in inline rendering
+        if (isMultilineERBComment(child)) {
+          return null
+        }
       } else {
         return null
       }

@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -234,6 +234,13 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
+ * Check if a node is an ERB comment that renders as a block.
+ */
+export function isMultilineERBComment(node: Node): boolean {
+  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+}
+
+/**
  * Check if a node should be appended to the last line (for adjacent inline elements and punctuation)
  */
 export function shouldAppendToLastLine(child: Node, siblings: Node[], index: number): boolean {
@@ -250,6 +257,8 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isNode(child, ERBContentNode)) {
+    if (isMultilineERBComment(child)) return false
+
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]
 

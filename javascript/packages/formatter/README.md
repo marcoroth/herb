@@ -25,8 +25,12 @@ npm install -g @herb-tools/formatter
 pnpm add -g @herb-tools/formatter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/formatter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/formatter template.html.erb
 ```
 
 ```shell [bun]
