@@ -162,6 +162,7 @@ printer:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/printer/**/*'
+      - '**/rust/herb-printer/**/*'
 
 highlighter:
   - changed-files:
