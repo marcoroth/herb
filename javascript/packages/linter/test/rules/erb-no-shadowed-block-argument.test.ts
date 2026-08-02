@@ -152,6 +152,81 @@ describe("erb-no-shadowed-block-argument", () => {
     assertOffenses(html)
   })
 
+  it("flags shadowing across a while loop boundary", () => {
+    const html = dedent`
+      <% @groups.each do |item| %>
+        <% while condition %>
+          <% @items.each do |item| %>
+            <%= item %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `
+
+    expectError(shadows("item"))
+
+    assertOffenses(html)
+  })
+
+  it("flags shadowing across an until loop boundary", () => {
+    const html = dedent`
+      <% @groups.each do |item| %>
+        <% until condition %>
+          <% @items.each do |item| %>
+            <%= item %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `
+
+    expectError(shadows("item"))
+
+    assertOffenses(html)
+  })
+
+  it("flags shadowing across an if boundary", () => {
+    const html = dedent`
+      <% @groups.each do |item| %>
+        <% if condition %>
+          <% @items.each do |item| %>
+            <%= item %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `
+
+    expectError(shadows("item"))
+
+    assertOffenses(html)
+  })
+
+  it("flags shadowing across a case boundary", () => {
+    const html = dedent`
+      <% @groups.each do |item| %>
+        <% case value %>
+        <% when 1 %>
+          <% @items.each do |item| %>
+            <%= item %>
+          <% end %>
+        <% end %>
+      <% end %>
+    `
+
+    expectError(shadows("item"))
+
+    assertOffenses(html)
+  })
+
+  it("does not flag a while loop, which binds nothing", () => {
+    expectNoOffenses(dedent`
+      <% @groups.each do |item| %>
+        <% while item.pending? %>
+          <%= item %>
+        <% end %>
+      <% end %>
+    `)
+  })
+
   it("does not flag distinct names", () => {
     expectNoOffenses(dedent`
       <% @groups.each do |group| %>

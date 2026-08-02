@@ -46,6 +46,8 @@ The above is still reported, because nothing in Ruby refers to `user`. Matching 
 
 Only positional and splat arguments are reported. An unused `&block` or `**options` reads differently and is left alone.
 
+Offenses are tagged as `unnecessary`, so an editor greys the argument out the way it does for other unused code, while the severity still fails a lint run in CI.
+
 ## Examples
 
 ### ✅ Good
