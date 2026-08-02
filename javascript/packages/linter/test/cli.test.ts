@@ -785,6 +785,33 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    test("stays quiet when --log-level is passed explicitly, even when it hides nothing", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--log-level", "hint")
+
+        expect(output).toContain("Not failing")
+        expect(output).not.toContain("Not shown")
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when logLevel is set in the config file", () => {
+      try {
+        writeFileSync(configPath, `${noisyConfig}\n  logLevel: hint\n`)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toContain("Not failing")
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
     test.each(["--json", "--github"])("stays quiet for %s output", (formatFlag) => {
       try {
         writeFileSync(configPath, noisyConfig)

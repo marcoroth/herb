@@ -360,6 +360,7 @@ export class CLI {
 
     const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"
     const effectiveLogLevel = logLevel || linterConfig.logLevel || "hint"
+    const hasLogLevel = logLevel !== undefined || linterConfig.logLevel !== undefined
 
     const outputOptions = {
       formatOption,
@@ -495,11 +496,11 @@ export class CLI {
       // TODO: once we have `yerba` and the config mutation features on the JavaScript
       // side, offer to write `linter.logLevel` into `.herb.yml` from here instead of
       // asking the user to edit it by hand.
-      if (showTips && effectiveLogLevel === "hint" && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
+      if (showTips && !hasLogLevel && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
         console.log("")
         console.log(` ${colorize("TIP:", "bold")} ${colorize(String(notFailingCount), "bold")} of the logged offenses don't fail the build.`)
-        console.log(`      Run ${colorize(`herb-lint --log-level=${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
-        console.log(`      To start enforcing them instead, set ${colorize("failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      Run ${colorize(`herb-lint --log-level=${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("linter.logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      To start enforcing them instead, set ${colorize("linter.failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
       }
 
       await this.afterProcess(results, outputOptions)

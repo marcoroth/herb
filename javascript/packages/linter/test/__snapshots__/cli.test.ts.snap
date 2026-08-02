@@ -1674,8 +1674,8 @@ multiple-rule-offenses.html.erb:
   Rules        91 enabled | 15 not enabled
 
  TIP: 11 of the logged offenses don't fail the build.
-      Run herb-lint --log-level=error to stop logging them, or set logLevel in your .herb.yml.
-      To start enforcing them instead, set failLevel to hint in your .herb.yml."
+      Run herb-lint --log-level=error to stop logging them, or set linter.logLevel in your .herb.yml.
+      To start enforcing them instead, set linter.failLevel to hint in your .herb.yml."
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when --log-level is already narrowing the output 1`] = `
