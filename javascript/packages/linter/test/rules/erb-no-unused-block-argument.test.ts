@@ -315,6 +315,106 @@ describe("erb-no-unused-block-argument", () => {
     assertOffenses(html)
   })
 
+  it("suggests `each` when the `each_with_index` index is unused", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each` when the index is unused alongside a destructured element", () => {
+    const html = dedent`
+      <% @pairs.each_with_index do |(name, data), index| %>
+        <%= name %>: <%= data %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each` for a receiverless `each_with_index`", () => {
+    const html = dedent`
+      <% each_with_index do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` for an unused element of `each_with_index`", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= index %>
+      <% end %>
+    `
+
+    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` when the `each_with_index` block takes a single argument", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `
+
+    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` when the `each_with_index` block splats its arguments", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, *rest| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `rest` is never used. Remove it, or prefix it with an underscore as `_rest` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` for an unused argument of another iterator", () => {
+    const html = dedent`
+      <% @users.each_with_object([]) do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Remove it, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not flag a used `each_with_index` index", () => {
+    expectNoOffenses(dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= index %>: <%= user.name %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag an underscored `each_with_index` index", () => {
+    expectNoOffenses(dedent`
+      <% @users.each_with_index do |user, _index| %>
+        <%= user.name %>
+      <% end %>
+    `)
+  })
+
   it("tags the offense as unnecessary so editors grey the argument out", async () => {
     await Herb.load()
 
