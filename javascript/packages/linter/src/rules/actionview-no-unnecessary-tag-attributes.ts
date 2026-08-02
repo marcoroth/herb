@@ -1,5 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+
 import { isTagAttributesCall } from "./action-view-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, createERBOutputNode, createERBSilentNode } from "@herb-tools/core"
 
@@ -65,6 +66,8 @@ class ActionViewNoUnnecessaryTagAttributesVisitor extends BaseRuleVisitor<Unnece
         tagName,
         isVoid: node.is_void,
       },
+      undefined,
+      ["unnecessary"],
     )
   }
 }

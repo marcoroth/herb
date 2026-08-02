@@ -329,4 +329,19 @@ describe("erb-no-unused-block-argument", () => {
     expect(result.offenses[0].tags).toEqual(["unnecessary"])
     expect(result.offenses[0].severity).toBe("error")
   })
+
+  it("reports as info in the editor and an error in CI", () => {
+    const source = dedent`
+      <% @users.each do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `
+
+    const cli = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    expect(cli.lint(source).offenses[0].severity).toBe("error")
+
+    const editor = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    editor.mode = "editor"
+    expect(editor.lint(source).offenses[0].severity).toBe("info")
+  })
 })

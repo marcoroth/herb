@@ -1,4 +1,7 @@
-import { describe, it } from "vitest"
+import { describe, it, expect, beforeAll } from "vitest"
+
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "../../src/linter"
 import dedent from "dedent";
 
 import { ERBNoCommentedOutOutputTagsRule } from "../../src/rules/erb-no-commented-out-output-tags";
@@ -95,5 +98,15 @@ describe("erb-no-commented-out-output-tags", () => {
     expectNoOffenses(dedent`
       <%# herb:disable erb-no-extra-whitespace-inside-tags %>
     `)
+  })
+
+  it("reports the whole ERB tag, not just the opening", async () => {
+    await Herb.load()
+
+    const source = `<%#= @conference.name %>`
+    const linter = new Linter(Herb, [ERBNoCommentedOutOutputTagsRule])
+    const { location } = linter.lint(source).offenses[0]
+
+    expect(source.slice(location.start.column, location.end.column)).toBe(source)
   })
 })
