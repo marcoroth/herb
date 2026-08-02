@@ -185,6 +185,52 @@ Each rule can be configured with the following options:
 - **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
 - **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
 
+### Setting the Default for All Rules <Badge type="tip" text="^0.11.0" />
+
+The `all` pseudo rule sets the default `enabled` state for every rule you don't list explicitly. It's the way to opt into a fully explicit rule set without having to know (and repeat) which rules are on by default:
+
+```yaml [.herb.yml]
+linter:
+  enabled: true
+
+  rules:
+    # Turn every rule off ...
+    all:
+      enabled: false
+
+    # ... and opt back in to exactly the ones you want
+    html-no-event-handlers:
+      enabled: true
+
+    html-img-require-alt:
+      enabled: true
+```
+
+Setting `all: enabled: true` does the opposite and turns on every rule, including the ones that are off by default:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    all:
+      enabled: true
+
+    # Individual rules can still be turned back off
+    html-no-title-attribute:
+      enabled: false
+```
+
+A few details worth knowing:
+
+- **Explicit configuration always wins.** A rule that appears in `rules` follows its own `enabled` setting, no matter what `all` says.
+- **Listing a rule without `enabled` enables it.** `html-img-require-alt: { severity: warning }` under `all: enabled: false` turns the rule on, the same way it would without `all`.
+- **`all: enabled: true` bypasses version gating.** Normally the `version` in your `.herb.yml` holds back rules introduced in later releases. Enabling everything means exactly that, so nothing gets held back. Under `all: enabled: false` version gating makes no difference either way, since those rules are off regardless.
+- **`--only` and `--all-rules` still take precedence**, since both flags ignore the rule configuration entirely.
+- Only `enabled` is meaningful on `all`. Other rule options like `severity` or `exclude` aren't inherited by the individual rules.
+
+::: warning
+`all` is a reserved name inside `rules`, it's never treated as an actual rule.
+:::
+
 #### Pattern Precedence
 
 When configuring rule-level file patterns:

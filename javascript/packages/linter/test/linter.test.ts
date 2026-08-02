@@ -868,6 +868,163 @@ describe("@herb-tools/linter", () => {
     })
   })
 
+  describe("`all` pseudo rule in the config", () => {
+    class EnabledRule extends ParserRule {
+      static ruleName = "enabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledRule extends ParserRule {
+      static ruleName = "disabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class VersionGatedRule extends ParserRule {
+      static ruleName = "version-gated-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("`all: enabled: false` disables every rule that isn't explicitly configured", () => {
+      const { enabled, disabledByConfig, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { all: { enabled: false } }
+      )
+
+      expect(enabled).toHaveLength(0)
+      expect(disabledByConfig).toBe(0)
+      expect(notEnabledByDefault).toBe(3)
+    })
+
+    test("`all: enabled: false` keeps explicitly enabled rules", () => {
+      const { enabled, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { all: { enabled: false }, "disabled-rule": { enabled: true } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+      expect(notEnabledByDefault).toBe(2)
+    })
+
+    test("`all: enabled: false` treats a rule listed without `enabled` as enabled", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false }, "disabled-rule": { severity: "warning" } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("`all: enabled: true` enables rules that are off by default", () => {
+      const { enabled, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: true } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "disabled-rule"])
+      expect(notEnabledByDefault).toBe(0)
+    })
+
+    test("`all: enabled: true` keeps explicitly disabled rules disabled", () => {
+      const { enabled, disabledByConfig } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: true }, "enabled-rule": { enabled: false } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+      expect(disabledByConfig).toBe(1)
+    })
+
+    test("`all: enabled: true` bypasses version gating", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        { all: { enabled: true } },
+        "0.8.0"
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "version-gated-rule"])
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("`all: enabled: false` leaves nothing for version gating to report", () => {
+      const { enabled, skippedByVersion, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        { all: { enabled: false } },
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(0)
+      expect(skippedByVersion).toHaveLength(0)
+      expect(notEnabledByDefault).toBe(2)
+    })
+
+    test("still applies version gating when `all` is not configured", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule"])
+      expect(skippedByVersion.map(rule => rule.ruleName)).toEqual(["version-gated-rule"])
+    })
+
+    test("`--only` takes precedence over the `all` pseudo rule", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false } },
+        undefined,
+        { only: ["disabled-rule"] }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("`--all-rules` takes precedence over the `all` pseudo rule", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false } },
+        undefined,
+        { all: true }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "disabled-rule"])
+    })
+
+    test("Linter.from() only runs the rules opted back in", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: {
+            all: { enabled: false },
+            "html-tag-name-lowercase": { enabled: true }
+          }
+        }
+      })
+
+      const linter = Linter.from(Herb, config)
+      const result = linter.lint("<DIV><img></DIV>", { fileName: "template.html.erb" })
+
+      expect(linter.getRuleCount()).toBe(1)
+      expect([...new Set(result.offenses.map(offense => offense.rule))]).toEqual(["html-tag-name-lowercase"])
+    })
+  })
+
   describe("Version-gated rule filtering", () => {
     class OldRule extends ParserRule {
       static ruleName = "old-rule"
