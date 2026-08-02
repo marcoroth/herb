@@ -827,11 +827,15 @@ export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementN
 // --- AST Mutation Utilities ---
 
 const CHILD_ARRAY_PROPS = ["children", "body", "statements", "conditions"]
-const LINKED_NODE_PROPS = ["subsequent", "else_clause"]
+
+function isSearchableNode(value: any): value is Node {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'type' in value
+}
 
 /**
  * Finds the array containing a target node in the AST, along with its index.
- * Traverses child arrays and linked node properties (e.g., `subsequent`, `else_clause`).
+ * Traverses child arrays and any node-valued property (e.g., `subsequent`, `else_clause`,
+ * `open_tag`, an attribute's `value`).
  *
  * Useful for autofix operations that need to splice nodes in/out of their parent array.
  *
@@ -860,7 +864,7 @@ export function findParentArray(root: Node, target: Node): { array: Node[], inde
 
       if (Array.isArray(array)) {
         for (const child of array) {
-          if (child && typeof child === 'object' && 'type' in child) {
+          if (isSearchableNode(child)) {
             const result = search(child)
 
             if (result) {
@@ -871,10 +875,8 @@ export function findParentArray(root: Node, target: Node): { array: Node[], inde
       }
     }
 
-    for (const prop of LINKED_NODE_PROPS) {
-      const value = record[prop]
-
-      if (value && typeof value === 'object' && 'type' in value) {
+    for (const value of Object.values(record)) {
+      if (isSearchableNode(value)) {
         const result = search(value)
 
         if (result) {
