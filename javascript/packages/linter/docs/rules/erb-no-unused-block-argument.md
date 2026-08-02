@@ -32,6 +32,20 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
+When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, since that is what the loop is actually doing:
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
+```
+Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.
+```
+
+That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used.
+
 Ruby's convention for a binding that is deliberately ignored is a leading underscore, so `_user` is treated as intentional and never reported.
 
 Only the Ruby inside ERB tags and interpolation is searched, never the surrounding HTML, so markup that happens to contain the same word does not count as a use:
@@ -94,6 +108,12 @@ An unused argument is worth cleaning up but is not a reason to interrupt someone
 <% end %>
 ```
 
+```erb
+<% @pairs.each do |(name, data)| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -119,6 +139,12 @@ An unused argument is worth cleaning up but is not a reason to interrupt someone
 ```erb
 <%= form_with model: @user do |form| %>
   <p>Nothing</p>
+<% end %>
+```
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
 <% end %>
 ```
 
