@@ -148,7 +148,7 @@ export class SummaryReporter {
         .map(severity => this.severityPart(severity, counts[severity]))
 
       const filesNotFailing = data.filesNotFailing ?? filesWithOtherOffensesOnly
-      const detailText = `${otherCount} ${this.pluralize(otherCount, "offense")} across ${filesNotFailing} ${this.pluralize(filesNotFailing, "file")}, below --fail-level ${failLevel}`
+      const detailText = `${otherCount} ${this.pluralize(otherCount, "offense")} across ${filesNotFailing} ${this.pluralize(filesNotFailing, "file")}, below --fail-level=${failLevel}`
 
       console.log(`  ${colorize(pad("Not failing"), "gray")} ${otherParts.join(" | ")} ${colorize(`(${detailText})`, "gray")}`)
     }

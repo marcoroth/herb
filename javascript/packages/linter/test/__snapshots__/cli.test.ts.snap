@@ -25,7 +25,7 @@ test/fixtures/all-rules.html.erb:
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
+  Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      0 offenses
   Rules        106 enabled | all rules via --all-rules"
 `;
@@ -151,7 +151,7 @@ test/fixtures/ignored.html.erb:8:8
  Summary:
   Checked      1 file
   Failing      5 errors (5 offenses across 1 file)
-  Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
+  Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
@@ -169,7 +169,7 @@ exports[`CLI Output Formatting > --log-level > breaks the hidden offenses down b
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  2 info | 1 hint (3 offenses across 1 file, below --fail-level error)
+  Not failing  2 info | 1 hint (3 offenses across 1 file, below --fail-level=error)
   Not shown    2 info | 1 hint (3 offenses hidden, show using --log-level=hint)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
@@ -186,7 +186,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  1 hint (1 offense across 1 file, below --fail-level error)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 hint (1 offense hidden, show using --log-level=hint)
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
@@ -206,7 +206,7 @@ test-file-with-errors.html.erb:
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  1 hint (1 offense across 1 file, below --fail-level error)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
 `;
@@ -222,7 +222,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  1 hint (1 offense across 1 file, below --fail-level error)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 hint (1 offense hidden, show using --log-level=hint)
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
@@ -258,7 +258,7 @@ test-file-with-errors.html.erb:
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  1 hint (1 offense across 1 file, below --fail-level error)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
 `;
@@ -325,7 +325,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -496,7 +496,7 @@ test/fixtures/tag-attributes.html.erb:5:0
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
+  Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -738,7 +738,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
  Summary:
   Checked      1 file
   Failing      8 errors (8 offenses across 1 file)
-  Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
+  Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -836,7 +836,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
  Summary:
   Checked      1 file
   Failing      4 errors (4 offenses across 1 file)
-  Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
+  Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -948,7 +948,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -1195,7 +1195,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -1425,7 +1425,7 @@ test/fixtures/disabled-1.html.erb:14:19
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
+  Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Ignored      8 offenses suppressed with herb:disable
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
@@ -1630,7 +1630,7 @@ test/fixtures/disabled-2.html.erb:2:44
  Summary:
   Checked      1 file
   Failing      6 errors (6 offenses across 1 file)
-  Not failing  7 warnings (7 offenses across 1 file, below --fail-level error)
+  Not failing  7 warnings (7 offenses across 1 file, below --fail-level=error)
   Ignored      5 offenses suppressed with herb:disable
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
@@ -1669,12 +1669,12 @@ multiple-rule-offenses.html.erb:
  Summary:
   Checked      1 file
   Failing      3 errors (3 offenses across 1 file)
-  Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level error)
+  Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled
 
  TIP: 11 of the logged offenses don't fail the build.
-      Run herb-lint --log-level error to stop logging them, or set logLevel in your .herb.yml.
+      Run herb-lint --log-level=error to stop logging them, or set logLevel in your .herb.yml.
       To start enforcing them instead, set failLevel to hint in your .herb.yml."
 `;
 
@@ -1700,7 +1700,7 @@ multiple-rule-offenses.html.erb:
  Summary:
   Checked      1 file
   Failing      3 errors (3 offenses across 1 file)
-  Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level error)
+  Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Not shown    1 info | 10 hints (11 offenses hidden, show using --log-level=hint)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
@@ -1739,7 +1739,7 @@ multiple-rule-offenses.html.erb:
  Summary:
   Checked      1 file
   Failing      8 errors (8 offenses across 1 file)
-  Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
+  Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -1888,7 +1888,7 @@ multiple-rule-offenses.html.erb:
  Summary:
   Checked      1 file
   Failing      8 errors | 4 warnings | 1 info (13 offenses across 1 file)
-  Not failing  1 hint (1 offense across 1 file, below --fail-level info)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=info)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -1926,7 +1926,7 @@ multiple-rule-offenses.html.erb:
  Summary:
   Checked      1 file
   Failing      8 errors | 4 warnings (12 offenses across 1 file)
-  Not failing  1 info | 1 hint (2 offenses across 1 file, below --fail-level warning)
+  Not failing  1 info | 1 hint (2 offenses across 1 file, below --fail-level=warning)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -1948,7 +1948,7 @@ test/fixtures/unsafe-autocorrectable.html.erb:
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\` | 1 more using \`--fix-unsafely\`
   Rules        2 enabled | filtered by --only"
 `;
@@ -1967,7 +1967,7 @@ test/fixtures/unsafe-autocorrectable.html.erb:
  Summary:
   Checked      1 file
   Failing      0 offenses
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      1 offense | 1 autocorrectable using \`--fix-unsafely\`
   Rules        1 enabled | filtered by --only"
 `;
@@ -2028,7 +2028,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Failing      2 errors (2 offenses across 1 file)
-  Not failing  1 warning (1 offense across 1 file, below --fail-level error)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;

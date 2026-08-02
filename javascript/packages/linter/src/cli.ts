@@ -498,7 +498,7 @@ export class CLI {
       if (showTips && effectiveLogLevel === "hint" && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
         console.log("")
         console.log(` ${colorize("TIP:", "bold")} ${colorize(String(notFailingCount), "bold")} of the logged offenses don't fail the build.`)
-        console.log(`      Run ${colorize(`herb-lint --log-level ${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      Run ${colorize(`herb-lint --log-level=${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
         console.log(`      To start enforcing them instead, set ${colorize("failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
       }
 
