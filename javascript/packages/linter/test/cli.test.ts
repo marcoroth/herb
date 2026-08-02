@@ -609,7 +609,7 @@ describe("CLI Output Formatting", () => {
       }
     })
 
-    test("breaks the hidden offenses down by severity and suggests the level that reveals them", () => {
+    test("counts the hidden offenses and suggests the level that reveals them", () => {
       try {
         writeFileSync(configPath, dedent`
           linter:

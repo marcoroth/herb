@@ -161,12 +161,12 @@ export class SummaryReporter {
 
     if (notReportedCount > 0) {
       const notReportedSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, logLevel) && counts[severity] > 0)
-      const notReportedParts = notReportedSeverities.map(severity => this.severityPart(severity, counts[severity]))
       const lowestSeverity = notReportedSeverities[notReportedSeverities.length - 1]
 
-      const detailText = `${notReportedCount} ${this.pluralize(notReportedCount, "offense")} hidden, show using --log-level=${lowestSeverity}`
+      const pronoun = notReportedCount === 1 ? "it" : "them"
+      const message = `${notReportedCount} ${this.pluralize(notReportedCount, "offense")} hidden, show ${pronoun} with --log-level=${lowestSeverity}`
 
-      console.log(`  ${colorize(pad("Not shown"), "gray")} ${notReportedParts.join(" | ")} ${colorize(`(${detailText})`, "gray")}`)
+      console.log(`  ${colorize(pad("Not shown"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
     }
 
     if (ignoreDisableComments && totalWouldBeIgnored && totalWouldBeIgnored > 0) {

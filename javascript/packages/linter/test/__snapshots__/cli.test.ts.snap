@@ -157,7 +157,7 @@ test/fixtures/ignored.html.erb:8:8
   Rules        91 enabled | 15 not enabled"
 `;
 
-exports[`CLI Output Formatting > --log-level > breaks the hidden offenses down by severity and suggests the level that reveals them 1`] = `
+exports[`CLI Output Formatting > --log-level > counts the hidden offenses and suggests the level that reveals them 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
 
 
@@ -170,7 +170,7 @@ exports[`CLI Output Formatting > --log-level > breaks the hidden offenses down b
   Checked      1 file
   Failing      0 offenses
   Not failing  2 info | 1 hint (3 offenses across 1 file, below --fail-level=error)
-  Not shown    2 info | 1 hint (3 offenses hidden, show using --log-level=hint)
+  Not shown    3 offenses hidden, show them with --log-level=hint
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
@@ -187,7 +187,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
   Checked      1 file
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
-  Not shown    1 hint (1 offense hidden, show using --log-level=hint)
+  Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
 `;
@@ -223,7 +223,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
   Checked      1 file
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
-  Not shown    1 hint (1 offense hidden, show using --log-level=hint)
+  Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
 `;
@@ -239,7 +239,7 @@ exports[`CLI Output Formatting > --log-level > still counts hidden offenses towa
  Summary:
   Checked      1 file
   Offenses     1 hint (1 offense across 1 file)
-  Not shown    1 hint (1 offense hidden, show using --log-level=hint)
+  Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
   Rules        90 enabled | 15 not enabled | 1 disabled"
 `;
@@ -1701,7 +1701,7 @@ multiple-rule-offenses.html.erb:
   Checked      1 file
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
-  Not shown    1 info | 10 hints (11 offenses hidden, show using --log-level=hint)
+  Not shown    11 offenses hidden, show them with --log-level=hint
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
   Rules        91 enabled | 15 not enabled"
 `;
