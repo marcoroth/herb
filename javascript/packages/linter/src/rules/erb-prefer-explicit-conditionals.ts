@@ -80,7 +80,7 @@ export class ERBPreferExplicitConditionalsRule extends ParserRule<PreferExplicit
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "warning"
+      severity: "error"
     }
   }
 

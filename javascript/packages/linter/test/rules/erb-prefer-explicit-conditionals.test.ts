@@ -4,7 +4,7 @@ import dedent from "dedent"
 import { ERBPreferExplicitConditionalsRule } from "../../src/rules/erb-prefer-explicit-conditionals"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(ERBPreferExplicitConditionalsRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBPreferExplicitConditionalsRule)
 
 describe("erb-prefer-explicit-conditionals", () => {
   it("flags an inline `if` in an output tag", () => {
@@ -12,7 +12,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= avatar_for(user) if user.avatar? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if user.avatar? %><%= avatar_for(user) %><% end %>` instead."
     )
 
@@ -24,7 +24,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= avatar_for(user) if user.avatar? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if user.avatar? %><%= avatar_for(user) %><% end %>` instead.",
       [1, 0]
     )
@@ -37,7 +37,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= badge unless user.admin? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% unless %>` block over an inline `unless` condition. Use `<% unless user.admin? %><%= badge %><% end %>` instead."
     )
 
@@ -51,7 +51,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       </div>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if done? %><%= icon(:check) %><% end %>` instead.",
       [2, 2]
     )
@@ -64,7 +64,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <div class="<%= "active" if selected %>"></div>
     `
 
-    expectWarning(
+    expectError(
       'Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if selected %><%= "active" %><% end %>` instead.'
     )
 
@@ -76,7 +76,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <a href="/" <%= 'aria-current=page' if selected %>>About</a>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if selected %><%= 'aria-current=page' %><% end %>` instead."
     )
 
@@ -88,7 +88,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= label if user.present? && user.admin? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if user.present? && user.admin? %><%= label %><% end %>` instead."
     )
 
@@ -100,7 +100,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%== markup if render_markup? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if render_markup? %><%== markup %><% end %>` instead."
     )
 
@@ -160,7 +160,7 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= (user.admin? ? admin_badge : user_badge) if user %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if user %><% if user.admin? %><%= admin_badge %><% else %><%= user_badge %><% end %><% end %>` instead."
     )
 
@@ -189,12 +189,12 @@ describe("erb-prefer-explicit-conditionals", () => {
       <%= badge unless user.admin? %>
     `
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% if %>` block over an inline `if` condition. Use `<% if done? %><%= icon(:check) %><% end %>` instead.",
       [1, 0]
     )
 
-    expectWarning(
+    expectError(
       "Prefer an explicit `<% unless %>` block over an inline `unless` condition. Use `<% unless user.admin? %><%= badge %><% end %>` instead.",
       [2, 0]
     )
