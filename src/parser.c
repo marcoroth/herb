@@ -1398,6 +1398,22 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   if (token_is(parser, TOKEN_ERB_END)) {
     closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, errors);
     end_position = closing_tag->location.end;
+
+    bool is_well_formed = hb_string_equals(closing_tag->value, hb_string("%>"))
+                       || hb_string_equals(closing_tag->value, hb_string("-%>"))
+                       || hb_string_equals(closing_tag->value, hb_string("=%>"))
+                       || hb_string_equals(closing_tag->value, hb_string("%%>"));
+
+    if (!is_well_formed) {
+      append_malformed_erb_closing_tag_error(
+        opening_tag,
+        closing_tag,
+        opening_tag->location.start,
+        closing_tag->location.end,
+        parser->allocator,
+        errors
+      );
+    }
   } else if (token_is(parser, TOKEN_ERB_START)) {
     append_nested_erb_tag_error(
       opening_tag,

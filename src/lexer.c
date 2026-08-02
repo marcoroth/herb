@@ -2,6 +2,7 @@
 #include "include/lexer/token.h"
 #include "include/lib/hb_string.h"
 #include "include/macros.h"
+#include "include/prism/ruby_parser.h"
 #include "include/util/utf8.h"
 #include "include/util/util.h"
 
@@ -10,6 +11,22 @@
 #include <string.h>
 
 #define LEXER_STALL_LIMIT 5
+#define LEXER_ERB_END_CANDIDATE_LIMIT 16
+#define LEXER_ERB_SPACED_DELIMITER_LIMIT 8
+
+typedef enum {
+  ERB_END_CANDIDATE_PERCENT,
+  ERB_END_CANDIDATE_HTML_TAG,
+  ERB_END_CANDIDATE_ANGLE_BRACKET,
+} erb_end_candidate_kind_T;
+
+typedef struct {
+  uint32_t position;
+  uint32_t line;
+  uint32_t column;
+  uint8_t delimiter_length;
+  erb_end_candidate_kind_T kind;
+} erb_end_candidate_T;
 
 static hb_string_T erb_open_patterns[] = HB_STRING_LIST("<%==", "<%%=", "<%graphql", "<%=", "<%#", "<%-", "<%%", "<%");
 
@@ -57,6 +74,7 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
+  lexer->malformed_erb_close_length = 0;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -201,24 +219,110 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
   return lexer_error(lexer, "Unexpected ERB start");
 }
 
+static uint8_t lexer_erb_percent_delimiter_length(const lexer_T* lexer) {
+  if (lexer->current_character != '%') { return 0; }
+
+  char next = lexer_peek(lexer, 1);
+
+  if (is_newline(next) || next == '<' || next == '"' || next == '\'' || next == '\0') { return 1; }
+
+  for (uint8_t offset = 1; offset <= LEXER_ERB_SPACED_DELIMITER_LIMIT; offset++) {
+    char character = lexer_peek(lexer, offset);
+
+    if (character == '>') { return offset + 1; }
+    if (character != ' ' && character != '\t') { break; }
+  }
+
+  return 0;
+}
+
+static bool lexer_recover_erb_tag_end(
+  lexer_T* lexer,
+  uint32_t start_position,
+  const erb_end_candidate_T* candidates,
+  size_t candidate_count
+) {
+  for (int pass = ERB_END_CANDIDATE_PERCENT; pass <= ERB_END_CANDIDATE_ANGLE_BRACKET; pass++) {
+    bool last_first = (pass == ERB_END_CANDIDATE_ANGLE_BRACKET);
+
+    for (size_t offset = 0; offset < candidate_count; offset++) {
+      const erb_end_candidate_T* candidate = &candidates[last_first ? candidate_count - 1 - offset : offset];
+
+      if (candidate->kind != (erb_end_candidate_kind_T) pass) { continue; }
+
+      if (!herb_ruby_fragment_is_parseable(hb_string_range(lexer->source, start_position, candidate->position))) {
+        continue;
+      }
+
+      lexer->current_position = candidate->position;
+      lexer->current_line = candidate->line;
+      lexer->current_column = candidate->column;
+      lexer->current_character = lexer->source.data[candidate->position];
+
+      if (candidate->delimiter_length > 0) {
+        lexer->state = STATE_ERB_CLOSE;
+        lexer->malformed_erb_close_length = candidate->delimiter_length;
+      } else {
+        lexer->state = STATE_DATA;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
   uint32_t start_position = lexer->current_position;
 
+  erb_end_candidate_T candidates[LEXER_ERB_END_CANDIDATE_LIMIT];
+  size_t candidate_count = 0;
+
   while (!lexer_peek_erb_end(lexer, 0)) {
-    if (lexer_eof(lexer)) {
+    if (lexer_eof(lexer) || lexer_peek_erb_start(lexer, 0)) {
+      if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count) && !lexer_eof(lexer)) {
+        lexer->state = STATE_DATA;
+      }
+
       token_T* token =
         token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
       return token;
     }
 
-    if (lexer_peek_erb_start(lexer, 0)) {
-      lexer->state = STATE_DATA;
+    if (candidate_count < LEXER_ERB_END_CANDIDATE_LIMIT) {
+      char next = lexer_peek(lexer, 1);
+      uint8_t trailing = lexer_erb_percent_delimiter_length(lexer);
 
-      token_T* token =
-        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
+      if (trailing > 0) {
+        uint8_t leading = 0;
 
-      return token;
+        if (lexer->current_position > start_position) {
+          char preceding = lexer->source.data[lexer->current_position - 1];
+
+          if (preceding == '-' || preceding == '=' || preceding == '%') { leading = 1; }
+        }
+
+        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position - leading,
+                                                                .line = lexer->current_line,
+                                                                .column = lexer->current_column - leading,
+                                                                .delimiter_length = leading + trailing,
+                                                                .kind = ERB_END_CANDIDATE_PERCENT };
+      } else if (lexer->current_character == '<'
+                 && (isalpha(next) || next == '!' || (next == '/' && isalpha(lexer_peek(lexer, 2))))) {
+        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position,
+                                                                .line = lexer->current_line,
+                                                                .column = lexer->current_column,
+                                                                .delimiter_length = 0,
+                                                                .kind = ERB_END_CANDIDATE_HTML_TAG };
+      } else if (lexer->current_character == '>') {
+        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position,
+                                                                .line = lexer->current_line,
+                                                                .column = lexer->current_column,
+                                                                .delimiter_length = 1,
+                                                                .kind = ERB_END_CANDIDATE_ANGLE_BRACKET };
+      }
     }
 
     if (is_newline(lexer->current_character)) {
@@ -242,6 +346,13 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
+
+  if (lexer->malformed_erb_close_length > 0) {
+    uint8_t length = lexer->malformed_erb_close_length;
+    lexer->malformed_erb_close_length = 0;
+
+    return lexer_advance_with_next(lexer, length, TOKEN_ERB_END);
+  }
 
   if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END); }
   if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END); }

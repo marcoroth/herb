@@ -37,6 +37,7 @@ module Herb
       "UnclosedQuoteError",
       "MissingAttributeValueError",
       "UnclosedERBTagError",
+      "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
       "NestedERBTagError"
     ].freeze
