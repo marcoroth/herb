@@ -46,6 +46,9 @@ pub struct LinterConfig {
   pub fail_level: Option<Severity>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub log_level: Option<Severity>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
   pub include: Option<Vec<String>>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
