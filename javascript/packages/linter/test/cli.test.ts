@@ -719,6 +719,85 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("non-failing offenses tip", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    const noisyConfig = dedent`
+      linter:
+        rules:
+          html-anchor-require-href:
+            severity: hint
+          html-attribute-double-quotes:
+            severity: hint
+          html-attribute-values-require-quotes:
+            severity: hint
+          html-img-require-alt:
+            severity: hint
+          html-no-empty-attributes:
+            severity: hint
+          html-no-empty-headings:
+            severity: info
+    `
+
+    const quietConfig = dedent`
+      linter:
+        rules:
+          html-no-empty-headings:
+            severity: warning
+    `
+
+    test("points at --log-level when many offenses don't fail the build", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when only a handful of offenses don't fail the build", () => {
+      try {
+        writeFileSync(configPath, quietConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when --log-level is already narrowing the output", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--log-level", "warning")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test.each(["--json", "--github"])("stays quiet for %s output", (formatFlag) => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", formatFlag)
+
+        expect(output).not.toContain("TIP:")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
   describe("summary offense buckets", () => {
     const { writeFileSync, unlinkSync } = require("fs")
     const configPath = "test/fixtures/.herb.yml"

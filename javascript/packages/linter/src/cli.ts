@@ -20,6 +20,8 @@ import type { FormatOption } from "./cli/argument-parser.js"
 
 export * from "./cli/index.js"
 
+const NOT_FAILING_TIP_THRESHOLD = 10
+
 export class CLI {
   protected argumentParser = new ArgumentParser()
   protected fileProcessor = new FileProcessor()
@@ -471,20 +473,36 @@ export class CLI {
 
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
 
-      if (!Config.exists(this.projectPath) && formatOption !== 'json' && !useGitHubActions) {
-        console.log("")
-        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
-        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
-      }
-
-      await this.afterProcess(results, outputOptions)
-
       const counts: Record<DiagnosticSeverity, number> = {
         error: results.totalErrors,
         warning: results.totalWarnings,
         info: results.totalInfo,
         hint: results.totalHints
       }
+
+      const showTips = formatOption !== 'json' && !useGitHubActions
+
+      if (!Config.exists(this.projectPath) && showTips) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
+        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
+      }
+
+      const notFailingSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, effectiveFailLevel) && counts[severity] > 0)
+      const notFailingCount = notFailingSeverities.reduce((sum, severity) => sum + counts[severity], 0)
+      const lowestNotFailingSeverity = notFailingSeverities[notFailingSeverities.length - 1]
+
+      // TODO: once we have `yerba` and the config mutation features on the JavaScript
+      // side, offer to write `linter.logLevel` into `.herb.yml` from here instead of
+      // asking the user to edit it by hand.
+      if (showTips && effectiveLogLevel === "hint" && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} ${colorize(String(notFailingCount), "bold")} of the logged offenses don't fail the build.`)
+        console.log(`      Run ${colorize(`herb-lint --log-level ${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      To start enforcing them instead, set ${colorize("failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+      }
+
+      await this.afterProcess(results, outputOptions)
 
       const shouldFail = DIAGNOSTIC_SEVERITIES.some(severity => counts[severity] > 0 && meetsSeverityThreshold(severity, effectiveFailLevel))
 
