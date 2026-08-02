@@ -1,7 +1,7 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
 import { UNRELEASED_VERSION, compareSemver } from "@herb-tools/core"
 
-import { ruleDocumentationUrl } from "../urls.js"
+import { ruleDocumentationUrl, RULE_CONFIGURATION_DOCUMENTATION_URL } from "../urls.js"
 
 import type { VersionSkippedRule } from "../linter.js"
 
@@ -153,7 +153,28 @@ export class SummaryReporter {
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
     }
 
+    this.displayNoEnabledRules(data)
     this.displayVersionSkippedRules(data)
+  }
+
+  displayNoEnabledRules(data: SummaryData): void {
+    const { ruleCount, configPath } = data
+
+    if (ruleCount > 0) return
+
+    console.log("")
+    console.log(` ${colorize("No rules enabled:", "bold")}`)
+    console.log(`  Every linter rule is turned off, so no offenses can be reported.`)
+
+    if (configPath) {
+      console.log(`  ${colorize("from Herb config:", "gray")} ${colorize(configPath, "cyan")}`)
+    }
+
+    console.log("")
+    console.log(`  Enable rules under ${colorize("linter.rules", "cyan")} in your ${colorize(".herb.yml", "cyan")}, or run ${colorize("herb-lint --all-rules", "cyan")}`)
+    console.log(`  to lint with every rule for a single run.`)
+    console.log("")
+    console.log(`  ${hyperlink(colorize(RULE_CONFIGURATION_DOCUMENTATION_URL, "gray"), RULE_CONFIGURATION_DOCUMENTATION_URL)}`)
   }
 
   displayVersionSkippedRules(data: SummaryData): void {
