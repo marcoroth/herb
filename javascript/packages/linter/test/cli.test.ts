@@ -791,8 +791,7 @@ describe("CLI Output Formatting", () => {
 
         const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--log-level", "hint")
 
-        expect(output).toContain("Not failing")
-        expect(output).not.toContain("Not shown")
+        expect(output).toMatchSnapshot()
         expect(output).not.toContain("don't fail the build")
       } finally {
         try { unlinkSync(configPath) } catch {}
@@ -805,7 +804,7 @@ describe("CLI Output Formatting", () => {
 
         const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
 
-        expect(output).toContain("Not failing")
+        expect(output).toMatchSnapshot()
         expect(output).not.toContain("don't fail the build")
       } finally {
         try { unlinkSync(configPath) } catch {}
