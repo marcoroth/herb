@@ -50,6 +50,7 @@ import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argume
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
+import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
@@ -164,6 +165,7 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
   ERBPreferDirectOutputRule,
+  ERBPreferEachOverMapRule,
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
