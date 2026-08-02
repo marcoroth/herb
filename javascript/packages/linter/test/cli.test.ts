@@ -1224,6 +1224,151 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("`all` pseudo rule in .herb.yml", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("`all: enabled: false` only runs the rules that are opted back in", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+              html-img-require-alt:
+                enabled: true
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+        expect(output).toContain("html-img-require-alt")
+        expect(output).not.toContain("html-tag-name-lowercase")
+        expect(output).toContain("1 enabled")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("`all: enabled: true` runs rules that are not enabled by default", () => {
+      const fixturePath = "test/fixtures/all-pseudo-rule-not-enabled-by-default.html.erb"
+
+      try {
+        writeFileSync(fixturePath, `<div disabled>Save</div>\n`)
+
+        const withoutAll = runLinter("all-pseudo-rule-not-enabled-by-default.html.erb", "--simple")
+        expect(withoutAll.output).not.toContain("a11y-disabled-attribute")
+
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: true
+        `)
+
+        const { output } = runLinter("all-pseudo-rule-not-enabled-by-default.html.erb", "--simple")
+
+        expect(output).toContain("a11y-disabled-attribute")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("does not hold back rules gated by the version in .herb.yml", () => {
+      const fixturePath = "test/fixtures/all-pseudo-rule-version-gated.html.erb"
+
+      try {
+        writeFileSync(fixturePath, dedent`
+          <div>
+            <foobar>hi</foobar>
+          </div>
+        ` + "\n")
+
+        writeFileSync(configPath, dedent`
+          version: 0.4.0
+        `)
+
+        const withoutAll = runLinter("all-pseudo-rule-version-gated.html.erb", "--simple")
+        expect(withoutAll.output).toContain("New rules available")
+
+        writeFileSync(configPath, dedent`
+          version: 0.4.0
+          linter:
+            rules:
+              all:
+                enabled: true
+        `)
+
+        const { output } = runLinter("all-pseudo-rule-version-gated.html.erb", "--simple")
+
+        expect(output).toContain("html-no-unknown-tag")
+        expect(output).not.toContain("New rules available")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { unlinkSync(fixturePath) } catch {}
+      }
+    })
+
+    test("--only takes precedence over a disabled `all`", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-tag-name-lowercase")
+
+        expect(output).toContain("html-tag-name-lowercase")
+        expect(output).toContain("1 enabled | filtered by --only")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("--all-rules takes precedence over a disabled `all`", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules")
+
+        expect(output).toContain("html-tag-name-lowercase")
+        expect(output).toContain("all rules via --all-rules")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("applies when the run is split across workers", () => {
+      try {
+        const withoutAll = JSON.parse(runLinter("parallel", "--jobs", "4", "--json").output)
+
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+              html-img-require-alt:
+                enabled: true
+        `)
+
+        const result = JSON.parse(runLinter("parallel", "--jobs", "4", "--json").output)
+
+        expect(withoutAll.summary.ruleCount).toBeGreaterThan(1)
+        expect(result.summary.ruleCount).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
   describe("Directory Scoping (issue #1045)", () => {
     const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
     const { join } = require("path")

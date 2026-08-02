@@ -27,7 +27,7 @@ test/fixtures/all-rules.html.erb:
   Failing      0 offenses
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
   Fixable      0 offenses
-  Rules        105 enabled | all rules via --all-rules"
+  Rules        106 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
@@ -39,7 +39,7 @@ exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture w
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
@@ -154,7 +154,7 @@ test/fixtures/ignored.html.erb:8:8
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > breaks the hidden offenses down by severity and suggests the level that reveals them 1`] = `
@@ -327,7 +327,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -352,7 +352,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
@@ -416,7 +416,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
   Checked      1 file
   Offenses     4 errors (4 offenses across 1 file)
   Fixable      4 offenses | 3 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
@@ -458,7 +458,7 @@ test/fixtures/ignored.html.erb:6:14
   Offenses     2 errors (2 offenses across 1 file)
   Ignored      3 offenses suppressed with herb:disable
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
@@ -498,7 +498,7 @@ test/fixtures/tag-attributes.html.erb:5:0
   Failing      0 offenses
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -524,7 +524,7 @@ test/fixtures/parser-errors.html.erb:2:16
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      0 offenses
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -740,7 +740,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -838,7 +838,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Failing      4 errors (4 offenses across 1 file)
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level error)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -877,7 +877,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -889,7 +889,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -950,7 +950,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -989,7 +989,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -1036,7 +1036,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 90,
+    "ruleCount": 91,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1058,7 +1058,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 90,
+    "ruleCount": 91,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1132,7 +1132,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 90,
+    "ruleCount": 91,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1197,7 +1197,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -1216,7 +1216,7 @@ test/fixtures/test-file-simple.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -1235,7 +1235,7 @@ test/fixtures/bad-file.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -1247,7 +1247,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles boolean attributes 1`] = `
@@ -1259,7 +1259,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
@@ -1294,7 +1294,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
@@ -1428,7 +1428,7 @@ test/fixtures/disabled-1.html.erb:14:19
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level error)
   Ignored      8 offenses suppressed with herb:disable
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
@@ -1633,7 +1633,7 @@ test/fixtures/disabled-2.html.erb:2:44
   Not failing  7 warnings (7 offenses across 1 file, below --fail-level error)
   Ignored      5 offenses suppressed with herb:disable
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is hint 1`] = `
@@ -1922,5 +1922,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        90 enabled | 15 not enabled"
+  Rules        91 enabled | 15 not enabled"
 `;

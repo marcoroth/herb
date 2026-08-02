@@ -12,7 +12,7 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { resolveSeverity } from "@herb-tools/config"
+import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
@@ -130,7 +130,13 @@ export class Linter {
    * Priority:
    * 1. User explicitly enabled/disabled (if rule config exists in userRulesConfig)
    * 2. Version gating (if rule.introducedIn > configVersion, skip unless explicitly enabled)
-   * 3. Default config from rule's defaultConfig getter
+   * 3. The `all` pseudo rule in userRulesConfig, if configured
+   * 4. Default config from rule's defaultConfig getter
+   *
+   * The `all` pseudo rule replaces every rule's own default. When it enables
+   * everything, version gating is bypassed as well, since holding rules back
+   * would contradict the setting. When it disables everything, gating stays in
+   * place but can't change the outcome: the rule ends up disabled either way.
    *
    * When `options.only` is provided all of the above is bypassed and exactly the
    * requested rules are enabled, regardless of the user configuration.
@@ -175,9 +181,11 @@ export class Linter {
     let disabledByConfig = 0
     let notEnabledByDefault = 0
 
+    const allRulesDefault = userRulesConfig?.[ALL_RULES_KEY]?.enabled
+
     for (const ruleClass of allRules) {
       const instance = new ruleClass()
-      const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
+      const defaultEnabled = allRulesDefault ?? instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
       const userRuleConfig = userRulesConfig?.[ruleClass.ruleName]
 
       if (userRuleConfig !== undefined) {
@@ -190,7 +198,7 @@ export class Linter {
         continue
       }
 
-      if (configVersion && ruleClass.introducedIn) {
+      if (allRulesDefault !== true && configVersion && ruleClass.introducedIn) {
         if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
           if (defaultEnabled) {
             skippedByVersion.push({

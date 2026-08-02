@@ -1,5 +1,8 @@
-import { describe, it } from "vitest"
+import { describe, it, expect } from "vitest"
 import dedent from "dedent"
+
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "../../src/linter"
 
 import { ERBNoUnusedBlockArgumentRule } from "../../src/rules/erb-no-unused-block-argument"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -57,6 +60,47 @@ describe("erb-no-unused-block-argument", () => {
       <% @users.each do |user| %>
         <% if user.admin? %>
           <p>admin</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a while loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% while user.pending? %>
+          <p>waiting</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside an until loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% until user.ready? %>
+          <p>waiting</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a case statement", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% case user.role %>
+        <% when "admin" %>
+          <p>admin</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a for loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% for role in user.roles %>
+          <%= role %>
         <% end %>
       <% end %>
     `)
@@ -269,5 +313,20 @@ describe("erb-no-unused-block-argument", () => {
     expectError('Block argument `group` is never used. Remove it, or prefix it with an underscore as `_group` to show it is intentionally unused.')
 
     assertOffenses(html)
+  })
+
+  it("tags the offense as unnecessary so editors grey the argument out", async () => {
+    await Herb.load()
+
+    const linter = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    const result = linter.lint(dedent`
+      <% @users.each do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `)
+
+    expect(result.offenses).toHaveLength(1)
+    expect(result.offenses[0].tags).toEqual(["unnecessary"])
+    expect(result.offenses[0].severity).toBe("error")
   })
 })

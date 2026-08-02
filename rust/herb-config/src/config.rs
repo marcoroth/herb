@@ -19,6 +19,7 @@ pub trait SeverityOverridable {
 }
 
 pub const CONFIG_PATH: &str = ".herb.yml";
+pub const ALL_RULES_KEY: &str = "all";
 
 const PROJECT_INDICATORS: &[&str] = &[
   ".git",
@@ -118,8 +119,15 @@ impl Config {
     self.linter()?.rules.as_ref()?.get(rule_name)
   }
 
+  pub fn default_rule_enabled(&self) -> Option<bool> {
+    self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.enabled)
+  }
+
   pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
-    self.get_rule_config(rule_name).and_then(|rule| rule.enabled) == Some(false)
+    match self.get_rule_config(rule_name) {
+      Some(rule) => rule.enabled == Some(false),
+      None => self.default_rule_enabled() == Some(false),
+    }
   }
 
   pub fn is_rule_enabled(&self, rule_name: &str) -> bool {

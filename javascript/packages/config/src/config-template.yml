@@ -60,6 +60,12 @@ linter:
   #   - 'app/views/admin/**/*'
 
   # rules:
+  #   # The 'all' pseudo rule sets the default for every rule you don't list.
+  #   #   false: start from an empty set and opt back in explicitly
+  #   #   true:  start from every rule, including the ones off by default
+  #   all:
+  #     enabled: false
+  #
   #   erb-no-extra-newline:
   #     enabled: false
   #
