@@ -2,7 +2,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import { findAttributeByName, hasAttributeValue, hasStaticAttributeValue } from "@herb-tools/core"
+import { findAttributeByName, getStaticAttributeValue, hasAttributeValue, hasStaticAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, HTMLOpenTagNode, ERBOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -35,8 +35,14 @@ class TurboPermanentNoMisleadingValueVisitor extends BaseRuleVisitor<TurboPerman
   private checkTurboPermanentAttribute(attribute: HTMLAttributeNode, autofixContext: TurboPermanentAutofixContext | undefined): void {
     if (!hasAttributeValue(attribute)) return
 
+    const isTruthyValue = getStaticAttributeValue(attribute)?.trim().toLowerCase() === "true"
+
+    const explanation = isTruthyValue
+      ? `is redundant, because Turbo only checks whether the attribute is present.`
+      : `still makes the element permanent, because Turbo only checks whether the attribute is present.`
+
     this.addOffense(
-      `Attribute \`data-turbo-permanent\` should not have a value. \`${IdentityPrinter.print(attribute)}\` still makes the element permanent, because Turbo only checks whether the attribute is present. Use \`data-turbo-permanent\` instead.`,
+      `Attribute \`data-turbo-permanent\` should not have a value. \`${IdentityPrinter.print(attribute)}\` ${explanation} Use \`data-turbo-permanent\` instead.`,
       attribute.value!.location,
       autofixContext
     )
