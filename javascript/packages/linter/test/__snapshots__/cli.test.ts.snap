@@ -1,5 +1,192 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--all-rules\` replaces the counts from a disabled \`all\` 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        106 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--only\` replaces the counts from a disabled \`all\` 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: false\` reports no enabled rules and the rest as not enabled 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+✓ test-file-with-errors.html.erb - No issues found
+
+
+ Summary:
+  Checked      1 file
+  Offenses     0 offenses
+  Fixable      0 offenses
+  Rules        0 enabled | 106 not enabled
+
+ No rules enabled:
+  Every linter rule is turned off, so no offenses can be reported.
+  from Herb config: /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+  Enable rules under linter.rules in your .herb.yml, or run herb-lint --all-rules
+  to lint with every rule for a single run.
+
+  https://herb-tools.dev/configuration#setting-the-default-for-all-rules"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: false\` swallows the version-skipped rules into \`not enabled\` 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+✓ test-file-with-errors.html.erb - No issues found
+
+
+ Summary:
+  Checked      1 file
+  Offenses     0 offenses
+  Fixable      0 offenses
+  Rules        0 enabled | 106 not enabled
+
+ No rules enabled:
+  Every linter rule is turned off, so no offenses can be reported.
+  from Herb config: /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+  Enable rules under linter.rules in your .herb.yml, or run herb-lint --all-rules
+  to lint with every rule for a single run.
+
+  https://herb-tools.dev/configuration#setting-the-default-for-all-rules"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports every rule as enabled and nothing else 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        106 enabled"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports no version-skipped rules 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        106 enabled"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > reports enabled and not-enabled rules when no \`all\` is configured 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+test/fixtures/test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        91 enabled | 15 not enabled"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted back in on top of \`all: enabled: false\` count as enabled 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
+  Fixable      0 offenses
+  Rules        1 enabled | 105 not enabled"
+`;
+
+exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted out on top of \`all: enabled: true\` count as disabled 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        105 enabled | 1 disabled"
+`;
+
 exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
 

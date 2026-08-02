@@ -1472,6 +1472,278 @@ describe("CLI Output Formatting", () => {
         try { unlinkSync(configPath) } catch {}
       }
     })
+
+    describe("`Rules` summary line", () => {
+      function rulesLine(output: string): string {
+        const line = output.split("\n").find(line => line.trim().startsWith("Rules "))
+
+        expect(line, `expected a \`Rules\` summary line in:\n${output}`).toBeDefined()
+
+        return line!.trim().replace(/^Rules\s+/, "")
+      }
+
+      function segment(line: string, label: string): number {
+        const match = line.match(new RegExp(`(\\d+) ${label}`))
+
+        return match ? Number(match[1]) : 0
+      }
+
+      function withoutConfig() {
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+        const line = rulesLine(output)
+        const enabled = segment(line, "enabled")
+        const notEnabled = segment(line, "not enabled")
+
+        return { output, line, enabled, notEnabled, total: enabled + notEnabled }
+      }
+
+      test("reports enabled and not-enabled rules when no `all` is configured", () => {
+        const { output, line } = withoutConfig()
+
+        expect(line).toMatch(/^\d+ enabled \| \d+ not enabled$/)
+        expect(output).toMatchSnapshot()
+      })
+
+      test("`all: enabled: true` reports every rule as enabled and nothing else", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total} enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: false` reports no enabled rules and the rest as not enabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`0 enabled | ${total} not enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("rules opted back in on top of `all: enabled: false` count as enabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+                html-img-require-alt:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`1 enabled | ${total - 1} not enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("rules opted out on top of `all: enabled: true` count as disabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: true
+                html-img-require-alt:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total - 1} enabled | 1 disabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: true` reports no version-skipped rules", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+          `)
+
+          const withVersion = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(rulesLine(withVersion.output)).toMatch(/\| \d+ skipped \(version\)$/)
+          expect(withVersion.output).toContain("New rules available")
+
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+            linter:
+              rules:
+                all:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total} enabled`)
+          expect(output).not.toContain("New rules available")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: false` swallows the version-skipped rules into `not enabled`", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`0 enabled | ${total} not enabled`)
+          expect(output).not.toContain("New rules available")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`0 enabled` explains how to enable rules and links to the docs", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(rulesLine(output)).toMatch(/^0 enabled\b/)
+          expect(output).toContain("No rules enabled:")
+          expect(output).toContain("Every linter rule is turned off, so no offenses can be reported.")
+          expect(output).toContain(configPath)
+          expect(output).toContain("Enable rules under linter.rules in your .herb.yml, or run herb-lint --all-rules")
+          expect(output).toContain("https://herb-tools.dev/configuration#setting-the-default-for-all-rules")
+          expect(exitCode).toBe(0)
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("the hint stays out of the way as soon as a single rule is enabled", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+                html-img-require-alt:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(output).not.toContain("No rules enabled:")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("the hint is not shown without a config file", () => {
+        expect(runLinter("test-file-with-errors.html.erb", "--simple").output).not.toContain("No rules enabled:")
+      })
+
+      test("the hint does not leak into `--json` output", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--json")
+          const result = JSON.parse(output)
+
+          expect(result.summary.ruleCount).toBe(0)
+          expect(output).not.toContain("No rules enabled:")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`--only` replaces the counts from a disabled `all`", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines", "--only", "html-tag-name-lowercase")
+
+          expect(rulesLine(output)).toBe("1 enabled | filtered by --only")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`--all-rules` replaces the counts from a disabled `all`", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines", "--all-rules")
+
+          expect(rulesLine(output)).toBe(`${total} enabled | all rules via --all-rules`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+    })
   })
 
   describe("Directory Scoping (issue #1045)", () => {
