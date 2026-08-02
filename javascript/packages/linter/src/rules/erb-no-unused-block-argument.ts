@@ -33,6 +33,9 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Block argument \`${name}\` is never used. Remove it, or prefix it with an underscore as \`_${name}\` to show it is intentionally unused.`,
         parameter.location,
+        undefined,
+        undefined,
+        ["unnecessary"],
       )
     }
   }
