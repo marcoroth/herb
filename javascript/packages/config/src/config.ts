@@ -70,6 +70,7 @@ export type RuleConfig = {
 export type LinterConfig = {
   enabled?: boolean
   failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   include?: string[]
   exclude?: string[]
   rules?: Record<string, RuleConfig>

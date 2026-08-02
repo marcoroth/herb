@@ -1,9 +1,17 @@
 import { colorize, hyperlink } from "@herb-tools/highlighter"
-import { UNRELEASED_VERSION, compareSemver } from "@herb-tools/core"
+import { UNRELEASED_VERSION, DIAGNOSTIC_SEVERITIES, compareSemver, meetsSeverityThreshold } from "@herb-tools/core"
 
 import { ruleDocumentationUrl, RULE_CONFIGURATION_DOCUMENTATION_URL } from "../urls.js"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { VersionSkippedRule } from "../linter.js"
+
+const SEVERITY_COLORS: Record<DiagnosticSeverity, "brightRed" | "brightYellow" | "cyan" | "gray"> = {
+  error: "brightRed",
+  warning: "brightYellow",
+  info: "cyan",
+  hint: "gray"
+}
 
 export interface SummaryData {
   files: string[]
@@ -14,12 +22,17 @@ export interface SummaryData {
   totalIgnored: number
   totalWouldBeIgnored?: number
   filesWithOffenses: number
+  filesFailing?: number
+  filesNotFailing?: number
+  failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   ruleCount: number
   startTime: number
   startDate: Date
   showTiming: boolean
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   autofixableCount: number
+  unsafeAutofixableCount?: number
   ignoreDisableComments?: boolean
   rulesSkippedByVersion?: VersionSkippedRule[]
   rulesDisabledByConfig?: number
@@ -37,8 +50,36 @@ export class SummaryReporter {
     return count === 1 ? singular : (plural || `${singular}s`)
   }
 
+  private severityPart(severity: DiagnosticSeverity, count: number): string {
+    const label = severity === "info" ? `${count} info` : `${count} ${this.pluralize(count, severity)}`
+
+    return colorize(colorize(label, SEVERITY_COLORS[severity]), "bold")
+  }
+
   displaySummary(data: SummaryData): void {
     const { files, totalErrors, totalWarnings, totalInfo = 0, totalHints = 0, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount, ignoreDisableComments } = data
+
+    const failLevel = data.failLevel ?? "error"
+    const logLevel = data.logLevel ?? "hint"
+
+    const counts: Record<DiagnosticSeverity, number> = {
+      error: totalErrors,
+      warning: totalWarnings,
+      info: totalInfo,
+      hint: totalHints
+    }
+
+    const failingSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => meetsSeverityThreshold(severity, failLevel))
+    const otherSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, failLevel))
+
+    const failingCount = failingSeverities.reduce((sum, severity) => sum + counts[severity], 0)
+    const otherCount = otherSeverities.reduce((sum, severity) => sum + counts[severity], 0)
+    const notReportedCount = DIAGNOSTIC_SEVERITIES
+      .filter(severity => !meetsSeverityThreshold(severity, logLevel))
+      .reduce((sum, severity) => sum + counts[severity], 0)
+
+    const filesFailing = data.filesFailing ?? filesWithOffenses
+    const filesWithOtherOffensesOnly = filesWithOffenses - filesFailing
 
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
@@ -51,77 +92,111 @@ export class SummaryReporter {
     if (files.length > 1) {
       const filesChecked = files.length
       const filesClean = filesChecked - filesWithOffenses
+      const fileParts: string[] = []
 
-      let filesSummary = ""
-
-      if (filesWithOffenses > 0) {
-        filesSummary = `${colorize(colorize(`${filesWithOffenses} with offenses`, "brightRed"), "bold")} | ${colorize(colorize(`${filesClean} clean`, "green"), "bold")} ${colorize(`(${filesChecked} total)`, "gray")}`
-      } else {
-        filesSummary = `${colorize(colorize(`${filesChecked} clean`, "green"), "bold")} ${colorize(`(${filesChecked} total)`, "gray")}`
+      if (filesFailing > 0 && filesWithOtherOffensesOnly > 0) {
+        fileParts.push(colorize(colorize(`${filesFailing} failing`, "brightRed"), "bold"))
+        fileParts.push(colorize(colorize(`${filesWithOtherOffensesOnly} with other offenses`, "brightYellow"), "bold"))
+      } else if (filesFailing > 0) {
+        fileParts.push(colorize(colorize(`${filesFailing} with offenses`, "brightRed"), "bold"))
+      } else if (filesWithOtherOffensesOnly > 0) {
+        fileParts.push(colorize(colorize(`${filesWithOtherOffensesOnly} with offenses`, "brightYellow"), "bold"))
       }
 
-      console.log(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`)
+      fileParts.push(colorize(colorize(`${filesClean} clean`, "green"), "bold"))
+
+      console.log(`  ${colorize(pad("Files"), "gray")} ${fileParts.join(" | ")} ${colorize(`(${filesChecked} total)`, "gray")}`)
+    }
+
+    const parts: string[] = []
+
+    for (const severity of failingSeverities) {
+      if (counts[severity] > 0) {
+        parts.push(this.severityPart(severity, counts[severity]))
+      } else if (severity === "warning" && totalErrors > 0) {
+        parts.push(colorize(colorize(`0 ${this.pluralize(0, "warning")}`, "green"), "bold"))
+      }
+    }
+
+    if (otherCount === 0) {
+      for (const severity of otherSeverities) {
+        if (counts[severity] > 0) {
+          parts.push(this.severityPart(severity, counts[severity]))
+        }
+      }
     }
 
     let offensesSummary = ""
-    const parts = []
-
-    if (totalErrors > 0) {
-      parts.push(colorize(colorize(`${totalErrors} ${this.pluralize(totalErrors, "error")}`, "brightRed"), "bold"))
-    }
-
-    if (totalWarnings > 0) {
-      parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "brightYellow"), "bold"))
-    } else if (totalErrors > 0) {
-      parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "green"), "bold"))
-    }
-
-    if (totalInfo > 0) {
-      parts.push(colorize(colorize(`${totalInfo} info`, "cyan"), "bold"))
-    }
-
-    if (totalHints > 0) {
-      parts.push(colorize(colorize(`${totalHints} ${this.pluralize(totalHints, "hint")}`, "gray"), "bold"))
-    }
-
-    if (totalIgnored > 0) {
-      parts.push(colorize(colorize(`${totalIgnored} ignored`, "gray"), "bold"))
-    }
 
     if (parts.length === 0) {
-      offensesSummary = colorize(colorize("0 offenses", "green"), "bold")
+      offensesSummary = colorize(colorize(`0 ${this.pluralize(0, "offense")}`, "green"), "bold")
     } else {
       offensesSummary = parts.join(" | ")
 
-      let detailText = ""
+      if (failingCount > 0 && filesFailing > 0) {
+        const detailText = `${failingCount} ${this.pluralize(failingCount, "offense")} across ${filesFailing} ${this.pluralize(filesFailing, "file")}`
 
-      const totalOffenses = totalErrors + totalWarnings + totalInfo + totalHints
-
-      if (filesWithOffenses > 0) {
-        detailText = `${totalOffenses} ${this.pluralize(totalOffenses, "offense")} across ${filesWithOffenses} ${this.pluralize(filesWithOffenses, "file")}`
-      }
-
-      if (detailText) {
         offensesSummary += ` ${colorize(`(${detailText})`, "gray")}`
       }
     }
 
-    console.log(`  ${colorize(pad("Offenses"), "gray")} ${offensesSummary}`)
+    console.log(`  ${colorize(pad(otherCount > 0 ? "Failing" : "Offenses"), "gray")} ${offensesSummary}`)
+
+    if (otherCount > 0) {
+      const otherParts = otherSeverities
+        .filter(severity => counts[severity] > 0)
+        .map(severity => this.severityPart(severity, counts[severity]))
+
+      const filesNotFailing = data.filesNotFailing ?? filesWithOtherOffensesOnly
+      const detailText = `${otherCount} ${this.pluralize(otherCount, "offense")} across ${filesNotFailing} ${this.pluralize(filesNotFailing, "file")}, below --fail-level=${failLevel}`
+
+      console.log(`  ${colorize(pad("Not failing"), "gray")} ${otherParts.join(" | ")} ${colorize(`(${detailText})`, "gray")}`)
+    }
+
+    if (totalIgnored > 0) {
+      const message = `${totalIgnored} ${this.pluralize(totalIgnored, "offense")} suppressed with herb:disable`
+
+      console.log(`  ${colorize(pad("Ignored"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
+    }
+
+    if (notReportedCount > 0) {
+      const notReportedSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, logLevel) && counts[severity] > 0)
+      const lowestSeverity = notReportedSeverities[notReportedSeverities.length - 1]
+
+      const pronoun = notReportedCount === 1 ? "it" : "them"
+      const message = `${notReportedCount} ${this.pluralize(notReportedCount, "offense")} hidden, show ${pronoun} with --log-level=${lowestSeverity}`
+
+      console.log(`  ${colorize(pad("Not shown"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
+    }
 
     if (ignoreDisableComments && totalWouldBeIgnored && totalWouldBeIgnored > 0) {
       const message = `${colorize(colorize(`${totalWouldBeIgnored} additional ${this.pluralize(totalWouldBeIgnored, "offense")} reported (would have been ignored)`, "cyan"), "bold")}`
       console.log(`  ${colorize(pad("Note"), "gray")} ${message}`)
     }
 
-    const totalOffenses = totalErrors + totalWarnings + totalInfo + totalHints
+    const totalOffenses = failingCount + otherCount
 
     {
+      const unsafeAutofixableCount = data.unsafeAutofixableCount ?? 0
       let fixableLine: string
 
-      if (autofixableCount > 0) {
-        fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")} | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+      if (autofixableCount > 0 || unsafeAutofixableCount > 0) {
+        const totalColor = failingCount > 0 ? "brightRed" : "brightYellow"
+        const fixableParts = [colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, totalColor), "bold")]
+
+        if (autofixableCount > 0) {
+          fixableParts.push(colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold"))
+        }
+
+        if (unsafeAutofixableCount > 0) {
+          const label = autofixableCount > 0 ? "more" : "autocorrectable"
+
+          fixableParts.push(colorize(colorize(`${unsafeAutofixableCount} ${label} using \`--fix-unsafely\``, "yellow"), "bold"))
+        }
+
+        fixableLine = fixableParts.join(" | ")
       } else {
-        fixableLine = `${colorize(colorize(`${autofixableCount} ${this.pluralize(autofixableCount, "offense")}`, "gray"), "bold")}`
+        fixableLine = `${colorize(colorize(`0 ${this.pluralize(0, "offense")}`, "gray"), "bold")}`
       }
 
       console.log(`  ${colorize(pad("Fixable"), "gray")} ${fixableLine}`)

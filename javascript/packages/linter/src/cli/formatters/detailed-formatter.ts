@@ -32,8 +32,17 @@ export class DetailedFormatter extends BaseFormatter {
     }
 
     const correctableTag = colorize(colorize("[Correctable]", "green"), "bold")
-    const autocorrectableSet = new Set(
-      allOffenses.filter(item => item.autocorrectable).map(item => item.offense)
+    const unsafeCorrectableTag = colorize(colorize("[Correctable with --fix-unsafely]", "yellow"), "bold")
+
+    const correctableTagFor = ({ autocorrectable, unsafeAutocorrectable }: ProcessedFile) => {
+      if (autocorrectable) return correctableTag
+      if (unsafeAutocorrectable) return unsafeCorrectableTag
+
+      return undefined
+    }
+
+    const correctableTags = new Map(
+      allOffenses.map(item => [item.offense, correctableTagFor(item)])
     )
 
     if (isSingleFile) {
@@ -49,7 +58,7 @@ export class DetailedFormatter extends BaseFormatter {
         truncateLines: this.truncateLines,
         codeUrlBuilder: ruleDocumentationUrl,
         fileUrlBuilder: (path) => fileUrl(path),
-        suffixBuilder: (diagnostic) => autocorrectableSet.has(diagnostic) ? correctableTag : undefined,
+        suffixBuilder: (diagnostic) => correctableTags.get(diagnostic),
       })
 
       console.log(`\n${highlighted}`)
@@ -57,10 +66,10 @@ export class DetailedFormatter extends BaseFormatter {
       const totalMessageCount = allOffenses.length
 
       for (let i = 0; i < allOffenses.length; i++) {
-        const { filename, offense, autocorrectable } = allOffenses[i]
+        const { filename, offense } = allOffenses[i]
         const content = this.contentFor(allOffenses[i])
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
-        const suffix = autocorrectable ? correctableTag : undefined
+        const suffix = correctableTagFor(allOffenses[i])
 
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,
