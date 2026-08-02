@@ -5,6 +5,7 @@ import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath }
 import { existsSync, statSync } from "fs"
 import { resolve, relative } from "path"
 import { colorize } from "@herb-tools/highlighter"
+import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
@@ -13,6 +14,7 @@ import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 import { version } from "../package.json"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
 
@@ -151,7 +153,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -354,6 +356,9 @@ export class CLI {
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
 
+    const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"
+    const effectiveLogLevel = logLevel || linterConfig.logLevel || "hint"
+
     const outputOptions = {
       formatOption,
       theme,
@@ -363,7 +368,9 @@ export class CLI {
       useGitHubActions,
       startTime,
       startDate,
-      toolVersion: version
+      toolVersion: version,
+      failLevel: effectiveFailLevel,
+      logLevel: effectiveLogLevel
     }
 
     try {
@@ -472,18 +479,14 @@ export class CLI {
 
       await this.afterProcess(results, outputOptions)
 
-      const effectiveFailLevel = failLevel || linterConfig.failLevel
+      const counts: Record<DiagnosticSeverity, number> = {
+        error: results.totalErrors,
+        warning: results.totalWarnings,
+        info: results.totalInfo,
+        hint: results.totalHints
+      }
 
-      const errors = results.totalErrors > 0
-      const warnings = results.totalWarnings > 0
-      const info = results.totalInfo > 0
-      const hints = results.totalHints > 0
-
-      const shouldFailOnWarnings = effectiveFailLevel === "warning" && warnings
-      const shouldFailOnInfo = effectiveFailLevel === "info" && (warnings || info)
-      const shouldFailOnHints = effectiveFailLevel === "hint" && (warnings || info || hints)
-
-      const shouldFail = errors || shouldFailOnWarnings || shouldFailOnInfo || shouldFailOnHints
+      const shouldFail = DIAGNOSTIC_SEVERITIES.some(severity => counts[severity] > 0 && meetsSeverityThreshold(severity, effectiveFailLevel))
 
       if (shouldFail) {
         process.exit(1)

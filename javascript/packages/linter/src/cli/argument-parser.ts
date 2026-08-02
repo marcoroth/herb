@@ -5,6 +5,8 @@ import { parseArgs } from "util"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
+import { DIAGNOSTIC_SEVERITIES, isDiagnosticSeverity } from "@herb-tools/core"
+
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -30,6 +32,7 @@ export interface ParsedArguments {
   disableFailing: boolean
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   jobs: number
   only?: string[]
   allRules: boolean
@@ -61,6 +64,9 @@ export class ArgumentParser {
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
+      --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]
+                                    lower-severity offenses are still counted in the summary, but aren't
+                                    printed or annotated in CI
       --format                      output format (simple|detailed|json) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
@@ -93,6 +99,7 @@ export class ArgumentParser {
         "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
         "fail-level": { type: "string" },
+        "log-level": { type: "string" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -193,16 +200,8 @@ export class ArgumentParser {
       }
     }
 
-    let failLevel: DiagnosticSeverity | undefined
-    if (values["fail-level"]) {
-      const level = values["fail-level"]
-      if (level === "error" || level === "warning" || level === "info" || level === "hint") {
-        failLevel = level
-      } else {
-        console.error(`Error: Invalid --fail-level value "${level}". Must be one of: error, warning, info, hint`)
-        process.exit(1)
-      }
-    }
+    const failLevel = this.parseSeverity(values["fail-level"], "--fail-level")
+    const logLevel = this.parseSeverity(values["log-level"], "--log-level")
 
     let jobs = availableParallelism()
 
@@ -217,7 +216,18 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+  }
+
+  private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {
+    if (!value) return undefined
+
+    if (!isDiagnosticSeverity(value)) {
+      console.error(`Error: Invalid ${flag} value "${value}". Must be one of: ${DIAGNOSTIC_SEVERITIES.join(", ")}`)
+      process.exit(1)
+    }
+
+    return value
   }
 
   private getFilePatterns(positionals: string[]): string[] {
