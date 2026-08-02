@@ -80,7 +80,10 @@ export class ERBNoUnusedBlockArgumentRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
     }
   }
 
