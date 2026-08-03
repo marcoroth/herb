@@ -206,6 +206,18 @@ module Engine
       )
     end
 
+    test "delimits a dynamic HTML comment from the outside" do
+      assert_evaluated_snapshot("<!-- Content: <%= @c %> -->", { "@c" => "X" }, OPTIONS)
+    end
+
+    test "delimits a conditional inside an HTML comment" do
+      assert_evaluated_snapshot("<!-- <% if @a %>yes<% end %> -->", { "@a" => true }, OPTIONS)
+    end
+
+    test "does not delimit a static HTML comment" do
+      assert_evaluated_snapshot("<!-- just a note --><p><%= @a %></p>", { "@a" => "A" }, OPTIONS)
+    end
+
     test "never emits a wrapper element" do
       [
         ["<p><%= @x %></p>", { "@x" => "a" }],

@@ -81,6 +81,10 @@ module Herb
       # : (Symbol) -> Symbol?
       def attribute_slot_type: (Symbol) -> Symbol?
 
+      # Whether a subtree contains ERB, and so renders differently run to run.
+      # : (untyped) -> bool
+      def dynamic?: (untyped) -> bool
+
       def expression_for: (untyped node) -> untyped
 
       def location_for: (untyped node) -> untyped

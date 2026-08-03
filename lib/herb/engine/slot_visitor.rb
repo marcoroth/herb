@@ -92,6 +92,8 @@ module Herb
       end
 
       def visit_html_comment_node(node)
+        record_slot(node, :comment) if dynamic?(node)
+
         @in_html_comment = true
         super
         @in_html_comment = false
@@ -226,6 +228,13 @@ module Herb
       #: (Symbol) -> Symbol?
       def attribute_slot_type(_type)
         :attribute
+      end
+
+      #: (untyped) -> bool
+      def dynamic?(node)
+        return true if node.type.to_s.start_with?("AST_ERB_")
+
+        node.compact_child_nodes.any? { |child| dynamic?(child) }
       end
 
       def expression_for(node)

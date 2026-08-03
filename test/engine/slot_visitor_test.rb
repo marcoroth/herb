@@ -94,6 +94,24 @@ module Engine
       assert_equal :block, visitor.slots[0].type
     end
 
+    test "classifies a dynamic HTML comment" do
+      visitor = slots_for("<!-- Content: <%= @c %> -->")
+
+      assert_equal [:comment], visitor.slots.map(&:type)
+    end
+
+    test "does not assign a slot to a static HTML comment" do
+      visitor = slots_for("<!-- just a note -->")
+
+      assert_empty visitor.slots
+    end
+
+    test "assigns one slot to a comment regardless of how much ERB it holds" do
+      visitor = slots_for("<!-- <%= @a %> and <%= @b %> -->")
+
+      assert_equal [:comment], visitor.slots.map(&:type)
+    end
+
     test "does not assign a slot to non-output ERB" do
       visitor = slots_for("<% x = 1 %><p>static</p>")
 
