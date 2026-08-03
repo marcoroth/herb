@@ -249,6 +249,6 @@ module Parser
 
     test "escaped ERB tag closed with %% instead of %%>" do
       assert_parsed_snapshot(%(<h1><%% title %%</h1>))
-    end    
+    end
   end
 end
