@@ -11,7 +11,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "NODE_DISABLE_COMPILE_CACHE=1 vite build",
     "dev": "vite dev",
     "preview": " vite preview",
     "serve": "vite serve --host",
