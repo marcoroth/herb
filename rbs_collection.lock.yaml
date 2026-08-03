@@ -333,6 +333,10 @@ gems:
   version: '0'
   source:
     type: stdlib
+- name: steep
+  version: 2.1.0.dev
+  source:
+    type: rubygems
 - name: stringio
   version: '0'
   source:
