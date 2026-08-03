@@ -1,0 +1,58 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0030_ternary with postfix unless"
+input: |2-
+<%= (condition? ? "true" : "false") unless hidden? %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBUnlessNode (location: (1:0)-(1:53))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " unless hidden? " (location: (1:0)-(1:53))
+    │   ├── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBIfNode (location: (1:0)-(1:53))
+    │   │       ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   │       ├── content: " if condition? " (location: (1:0)-(1:53))
+    │   │       ├── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (1 item)
+    │   │       │   └── @ ERBContentNode (location: (1:0)-(1:53))
+    │   │       │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       │       ├── content: " "true" " (location: (1:17)-(1:25))
+    │   │       │       ├── tag_closing: "%>" (location: (1:51)-(1:53))
+    │   │       │       ├── parsed: false
+    │   │       │       └── valid: true
+    │   │       │
+    │   │       ├── subsequent:
+    │   │       │   └── @ ERBElseNode (location: (1:53)-(1:53))
+    │   │       │       ├── tag_opening: "<%" (location: (1:53)-(1:53))
+    │   │       │       ├── content: " else " (location: (1:53)-(1:53))
+    │   │       │       ├── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   │       │       └── statements: (1 item)
+    │   │       │           └── @ ERBContentNode (location: (1:0)-(1:53))
+    │   │       │               ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       │               ├── content: " "false" " (location: (1:26)-(1:34))
+    │   │       │               ├── tag_closing: "%>" (location: (1:51)-(1:53))
+    │   │       │               ├── parsed: false
+    │   │       │               └── valid: true
+    │   │       │
+    │   │       │
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (1:53)-(1:53))
+    │   │               ├── tag_opening: "<%" (location: (1:53)-(1:53))
+    │   │               ├── content: " end " (location: (1:53)-(1:53))
+    │   │               └── tag_closing: "%>" (location: (1:53)-(1:53))
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:53)-(1:53))
+    │           ├── tag_opening: "<%" (location: (1:53)-(1:53))
+    │           ├── content: " end " (location: (1:53)-(1:53))
+    │           └── tag_closing: "%>" (location: (1:53)-(1:53))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:53)-(2:0))
+        └── content: "\n"

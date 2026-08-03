@@ -42,6 +42,22 @@ export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): Dia
   return severity[mode]
 }
 
+/**
+ * Pseudo rule name used inside `linter.rules` to set the default `enabled`
+ * state for every rule that isn't explicitly configured.
+ *
+ * ```yaml
+ * linter:
+ *   rules:
+ *     all:
+ *       enabled: false
+ *
+ *     html-no-event-handlers:
+ *       enabled: true
+ * ```
+ */
+export const ALL_RULES_KEY = "all"
+
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
@@ -54,6 +70,7 @@ export type RuleConfig = {
 export type LinterConfig = {
   enabled?: boolean
   failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   include?: string[]
   exclude?: string[]
   rules?: Record<string, RuleConfig>
@@ -175,12 +192,38 @@ export class Config {
   }
 
   /**
+   * The default `enabled` state for rules that aren't explicitly configured,
+   * set via the `all` pseudo rule in `linter.rules`.
+   *
+   * `false` disables every rule that isn't explicitly listed, `true` enables
+   * every rule that isn't explicitly listed (including rules that are off by
+   * default). Returns `undefined` when `all` isn't configured, in which case
+   * each rule falls back to its own default.
+   *
+   * @returns The configured default, or undefined when `all` isn't configured
+   */
+  public get defaultRuleEnabled(): boolean | undefined {
+    return this.config.linter?.rules?.[ALL_RULES_KEY]?.enabled
+  }
+
+  /**
    * Check if a specific rule is disabled.
+   *
+   * A rule that appears in `linter.rules` is disabled only when it sets
+   * `enabled: false`. A rule that doesn't appear falls back to the `all`
+   * pseudo rule, if configured.
+   *
    * @param ruleName - The name of the rule to check
-   * @returns true if the rule is explicitly disabled, false otherwise
+   * @returns true if the rule is disabled, false otherwise
    */
   public isRuleDisabled(ruleName: string): boolean {
-    return this.config.linter?.rules?.[ruleName]?.enabled === false
+    const ruleConfig = this.config.linter?.rules?.[ruleName]
+
+    if (ruleConfig !== undefined) {
+      return ruleConfig.enabled === false
+    }
+
+    return this.defaultRuleEnabled === false
   }
 
   /**

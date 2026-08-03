@@ -57,6 +57,26 @@ Fail the build on warnings in addition to errors:
   run: npx --yes @herb-tools/linter --fail-level warning
 ```
 
+## Quieter lint annotations
+
+Large codebases can produce a lot of `info` and `hint` offenses, which show up as `notice` annotations on the pull request. Use `--log-level` to keep the annotations focused:
+
+```yaml
+- name: Lint HTML+ERB templates
+  run: npx --yes @herb-tools/linter --log-level warning
+```
+
+Offenses below the level are still counted in the summary and still respected by `--fail-level`, they just don't get annotated.
+
+To apply the same level to local runs as well, set it in `.herb.yml` instead of passing the flag:
+
+```yaml [.herb.yml]
+linter:
+  logLevel: warning
+```
+
+The CLI flag takes precedence, so you can keep the config as the default and still pass `--log-level hint` in a workflow that should see everything.
+
 ## Parser analysis (Ruby)
 
 `herb analyze` reports how many templates parse cleanly and exits non-zero when any issue is detected (see `lib/herb/cli.rb`), so it can gate the build on its own.

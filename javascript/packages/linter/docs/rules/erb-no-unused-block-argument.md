@@ -32,6 +32,20 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
+When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, since that is what the loop is actually doing:
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
+```
+Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.
+```
+
+That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used.
+
 Ruby's convention for a binding that is deliberately ignored is a leading underscore, so `_user` is treated as intentional and never reported.
 
 Only the Ruby inside ERB tags and interpolation is searched, never the surrounding HTML, so markup that happens to contain the same word does not count as a use:
@@ -45,6 +59,12 @@ Only the Ruby inside ERB tags and interpolation is searched, never the surroundi
 The above is still reported, because nothing in Ruby refers to `user`. Matching is on whole identifiers, so `users_count` does not count as a use of `user` either.
 
 Only positional and splat arguments are reported. An unused `&block` or `**options` reads differently and is left alone.
+
+Offenses are tagged as `unnecessary`, so an editor greys the argument out the way it does for other unused code.
+
+The severity is also split by mode, reported as `info` in the editor and an `error` on the command line:
+
+An unused argument is worth cleaning up but is not a reason to interrupt someone mid-edit, so it stays quiet in the editor while still failing a lint run in CI.
 
 ## Examples
 
@@ -88,6 +108,12 @@ Only positional and splat arguments are reported. An unused `&block` or `**optio
 <% end %>
 ```
 
+```erb
+<% @pairs.each do |(name, data)| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -113,6 +139,12 @@ Only positional and splat arguments are reported. An unused `&block` or `**optio
 ```erb
 <%= form_with model: @user do |form| %>
   <p>Nothing</p>
+<% end %>
+```
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
 <% end %>
 ```
 

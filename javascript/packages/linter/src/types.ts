@@ -232,6 +232,8 @@ export interface LexerRuleConstructor {
   new (): LexerRule
   ruleName: string
   introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
 }
 
 /**
@@ -318,6 +320,8 @@ export interface SourceRuleConstructor {
   new (): SourceRule
   ruleName: string
   introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
 }
 
 /**
@@ -329,6 +333,8 @@ export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
   ruleName: string
   introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
   reindentAfterAutofix?: boolean
   consumesParserErrors?: boolean
 }

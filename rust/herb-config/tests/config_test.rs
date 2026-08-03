@@ -454,6 +454,66 @@ mod config_instance_methods {
   }
 
   #[test]
+  fn default_rule_enabled_returns_none_when_all_is_not_configured() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: false\n").default_rule_enabled(),
+      None
+    );
+  }
+
+  #[test]
+  fn default_rule_enabled_returns_the_all_pseudo_rule_setting() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").default_rule_enabled(),
+      Some(false)
+    );
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n").default_rule_enabled(),
+      Some(true)
+    );
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_true_for_unconfigured_rules_when_all_is_disabled() {
+    assert!(config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_rules_re_enabled_over_a_disabled_all() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      enabled: true\n");
+
+    assert!(!config.is_rule_disabled("html-img-require-alt"));
+    assert!(config.is_rule_disabled("html-tag-name-lowercase"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_rules_configured_without_enabled_when_all_is_disabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      severity: warning\n");
+
+    assert!(!config.is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_unconfigured_rules_when_all_is_enabled() {
+    assert!(!config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n").is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_still_honors_explicit_disables_when_all_is_enabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n    html-img-require-alt:\n      enabled: false\n");
+
+    assert!(config.is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_enabled_for_path_returns_false_for_unconfigured_rules_when_all_is_disabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      enabled: true\n");
+
+    assert!(!config.is_rule_enabled_for_path("html-tag-name-lowercase", "app/views/home/index.html.erb"));
+    assert!(config.is_rule_enabled_for_path("html-img-require-alt", "app/views/home/index.html.erb"));
+  }
+
+  #[test]
   fn is_linter_enabled_for_path_returns_true_when_no_exclude_patterns() {
     assert!(Config::default().is_linter_enabled_for_path("app/views/home/index.html.erb"));
   }

@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-export const SeveritySchema = z.enum(["error", "warning", "info", "hint"])
+import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
+
+export const SeveritySchema = z.enum(DIAGNOSTIC_SEVERITIES)
 
 export const SeverityConfigSchema = z.union([
   SeveritySchema,
@@ -25,6 +27,7 @@ export const RuleConfigSchema = RuleConfigBaseSchema.optional()
 export const LinterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the linter is enabled"),
   failLevel: SeveritySchema.optional().describe("Exit with error code when diagnostics of this severity or higher are present (e.g., 'warning' will fail on warnings and errors)"),
+  logLevel: SeveritySchema.optional().describe("Only report diagnostics of this severity or higher (e.g., 'warning' hides info and hint diagnostics from the output and from CI annotations)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from linting"),
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),

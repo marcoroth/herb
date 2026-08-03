@@ -1,5 +1,8 @@
-import { describe, it } from "vitest"
+import { describe, it, expect } from "vitest"
 import dedent from "dedent"
+
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "../../src/linter"
 
 import { ERBNoUnusedBlockArgumentRule } from "../../src/rules/erb-no-unused-block-argument"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -57,6 +60,47 @@ describe("erb-no-unused-block-argument", () => {
       <% @users.each do |user| %>
         <% if user.admin? %>
           <p>admin</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a while loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% while user.pending? %>
+          <p>waiting</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside an until loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% until user.ready? %>
+          <p>waiting</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a case statement", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% case user.role %>
+        <% when "admin" %>
+          <p>admin</p>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag a block argument used inside a for loop", () => {
+    expectNoOffenses(dedent`
+      <% @users.each do |user| %>
+        <% for role in user.roles %>
+          <%= role %>
         <% end %>
       <% end %>
     `)
@@ -269,5 +313,135 @@ describe("erb-no-unused-block-argument", () => {
     expectError('Block argument `group` is never used. Remove it, or prefix it with an underscore as `_group` to show it is intentionally unused.')
 
     assertOffenses(html)
+  })
+
+  it("suggests `each` when the `each_with_index` index is unused", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each` when the index is unused alongside a destructured element", () => {
+    const html = dedent`
+      <% @pairs.each_with_index do |(name, data), index| %>
+        <%= name %>: <%= data %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each` for a receiverless `each_with_index`", () => {
+    const html = dedent`
+      <% each_with_index do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` for an unused element of `each_with_index`", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= index %>
+      <% end %>
+    `
+
+    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` when the `each_with_index` block takes a single argument", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `
+
+    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` when the `each_with_index` block splats its arguments", () => {
+    const html = dedent`
+      <% @users.each_with_index do |user, *rest| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `rest` is never used. Remove it, or prefix it with an underscore as `_rest` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each` for an unused argument of another iterator", () => {
+    const html = dedent`
+      <% @users.each_with_object([]) do |user, index| %>
+        <%= user.name %>
+      <% end %>
+    `
+
+    expectError('Block argument `index` is never used. Remove it, or prefix it with an underscore as `_index` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not flag a used `each_with_index` index", () => {
+    expectNoOffenses(dedent`
+      <% @users.each_with_index do |user, index| %>
+        <%= index %>: <%= user.name %>
+      <% end %>
+    `)
+  })
+
+  it("does not flag an underscored `each_with_index` index", () => {
+    expectNoOffenses(dedent`
+      <% @users.each_with_index do |user, _index| %>
+        <%= user.name %>
+      <% end %>
+    `)
+  })
+
+  it("tags the offense as unnecessary so editors grey the argument out", async () => {
+    await Herb.load()
+
+    const linter = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    const result = linter.lint(dedent`
+      <% @users.each do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `)
+
+    expect(result.offenses).toHaveLength(1)
+    expect(result.offenses[0].tags).toEqual(["unnecessary"])
+    expect(result.offenses[0].severity).toBe("error")
+  })
+
+  it("reports as info in the editor and an error in CI", () => {
+    const source = dedent`
+      <% @users.each do |user| %>
+        <p>Hello</p>
+      <% end %>
+    `
+
+    const cli = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    expect(cli.lint(source).offenses[0].severity).toBe("error")
+
+    const editor = new Linter(Herb, [ERBNoUnusedBlockArgumentRule])
+    editor.mode = "editor"
+    expect(editor.lint(source).offenses[0].severity).toBe("info")
   })
 })
