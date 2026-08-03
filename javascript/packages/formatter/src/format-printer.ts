@@ -493,8 +493,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   /**
    * Format ERB content with proper spacing around the inner content.
-   * Returns empty string if content is empty, otherwise adds a leading space
-   * and a trailing space (or newline for heredoc content starting with "<<").
+   * Returns a single space if content is empty, so that an empty tag stays `<% %>`
+   * rather than collapsing into the `<%%` literal escape sequence. Otherwise adds a
+   * leading space and a trailing space (or newline for heredoc content starting with "<<").
    */
   private formatERBContent(content: string): string {
     const trimmedContent = content.trim();
@@ -503,7 +504,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     // TODO: revisit once we have access to Prism nodes
     const suffix = trimmedContent.startsWith("<<") ? "\n" : " "
 
-    return trimmedContent ? ` ${trimmedContent}${suffix}` : ""
+    return trimmedContent ? ` ${trimmedContent}${suffix}` : " "
   }
 
   /**

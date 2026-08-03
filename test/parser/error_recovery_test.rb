@@ -242,5 +242,13 @@ module Parser
     test "ERB tag closed with % at the end of a CRLF line" do
       assert_parsed_snapshot("<% users.each do |user| %\r\n  <p>x</p>\r\n<% end %>\r\n")
     end
+
+    test "ERB tag closed with =% instead of =%>" do
+      assert_parsed_snapshot(%(<h1><%= title =%</h1>))
+    end
+
+    test "escaped ERB tag closed with %% instead of %%>" do
+      assert_parsed_snapshot(%(<h1><%% title %%</h1>))
+    end    
   end
 end

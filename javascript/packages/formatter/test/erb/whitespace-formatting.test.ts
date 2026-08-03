@@ -69,14 +69,22 @@ describe("ERB whitespace formatting", () => {
     test("verifies formatERBContent utility function behavior through working cases", () => {
       expect(formatter.format('<%=content%>')).toEqual('<%= content %>')
       expect(formatter.format('<%=  spaced  %>')).toEqual('<%= spaced %>')
-      expect(formatter.format('<%   %>')).toEqual('<%%>')
+      expect(formatter.format('<%   %>')).toEqual('<% %>')
     })
 
     test("handles ERB tags with only whitespace content", () => {
       const source = '<%   %>'
       const result = formatter.format(source)
 
-      expect(result).toEqual('<%%>')
+      expect(result).toEqual('<% %>')
+    })
+
+    test("never collapses an empty ERB tag into the <%% literal escape", () => {
+      expect(formatter.format('<% %>')).toEqual('<% %>')
+      expect(formatter.format('<%%>')).toEqual('<% %>')
+      expect(formatter.format('<%= %>')).toEqual('<%= %>')
+      expect(formatter.format('<div><% %></div>')).toEqual('<div><% %></div>')
+      expect(formatter.format('a <% %> b')).toEqual('a <% %> b')
     })
 
     test("preserves ERB comment formatting", () => {

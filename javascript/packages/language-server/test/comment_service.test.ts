@@ -801,6 +801,45 @@ describe("CommentService", () => {
         expect(uncommented).toBe(original)
       })
 
+      it("round-trips <%%> empty tag", () => {
+        const original = `<%%>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<%#%>`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%%> empty tag surrounded by text", () => {
+        const original = `a <%%> b`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<!-- a <%#%> b -->`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
+      it("round-trips <%%> empty tag inside an element", () => {
+        const original = `<div><%%></div>`
+        const document1 = createDocument(original)
+        const commented = applyEdits(original, service.toggleLineComment(document1, lineRange(0)))
+
+        expect(commented).toBe(`<!-- <div><%#%></div> -->`)
+
+        const document2 = createDocument(commented)
+        const uncommented = applyEdits(commented, service.toggleLineComment(document2, lineRange(0)))
+
+        expect(uncommented).toBe(original)
+      })
+
       it("round-trips <%graphql tag", () => {
         const original = `<%graphql { user { name } } %>`
         const document1 = createDocument(original)

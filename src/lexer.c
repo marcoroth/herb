@@ -211,6 +211,11 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
   lexer->state = STATE_ERB_CONTENT;
+
+  if (lexer_peek(lexer, 2) == '%' && lexer_peek(lexer, 3) == '>') {
+    return lexer_advance_with(lexer, hb_string("<%"), TOKEN_ERB_START);
+  }
+
   for (size_t i = 0; i < sizeof(erb_open_patterns) / sizeof(erb_open_patterns[0]); i++) {
     token_T* match = lexer_match_and_advance(lexer, erb_open_patterns[i], TOKEN_ERB_START);
     if (match) { return match; }
