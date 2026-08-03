@@ -81,14 +81,6 @@ gems:
     revision: 82762423fc5694b82888ea89a972847cf19838c2
     remote: https://github.com/ruby/gem_rbs_collection.git
     repo_dir: gems
-- name: csv
-  version: '3.3'
-  source:
-    type: git
-    name: ruby/gem_rbs_collection
-    revision: 82762423fc5694b82888ea89a972847cf19838c2
-    remote: https://github.com/ruby/gem_rbs_collection.git
-    repo_dir: gems
 - name: date
   version: '0'
   source:
@@ -105,15 +97,7 @@ gems:
   version: '0'
   source:
     type: stdlib
-- name: ffi
-  version: 1.17.3
-  source:
-    type: rubygems
 - name: fileutils
-  version: '0'
-  source:
-    type: stdlib
-- name: forwardable
   version: '0'
   source:
     type: stdlib
@@ -153,14 +137,6 @@ gems:
   version: 0.2.2
   source:
     type: rubygems
-- name: listen
-  version: '3.9'
-  source:
-    type: git
-    name: ruby/gem_rbs_collection
-    revision: 82762423fc5694b82888ea89a972847cf19838c2
-    remote: https://github.com/ruby/gem_rbs_collection.git
-    repo_dir: gems
 - name: logger
   version: '1.7'
   source:
@@ -333,10 +309,6 @@ gems:
   version: '0'
   source:
     type: stdlib
-- name: steep
-  version: 2.1.0.dev
-  source:
-    type: rubygems
 - name: stringio
   version: '0'
   source:
