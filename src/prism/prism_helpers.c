@@ -74,6 +74,9 @@ static bool search_then_keyword_location(const pm_node_t* node, void* data) {
   switch (node->type) {
     case PM_IF_NODE: {
       const pm_if_node_t* if_node = (const pm_if_node_t*) node;
+
+      if (!has_pm_location(if_node->if_keyword_loc)) { break; }
+
       if (has_pm_location(if_node->then_keyword_loc)) {
         context->then_keyword_loc = if_node->then_keyword_loc;
         context->found = true;
