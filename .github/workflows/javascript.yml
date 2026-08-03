@@ -13,13 +13,6 @@ permissions:
   actions: read
   contents: read
 
-env:
-  # Vite's CLI calls `module.enableCompileCache()`, which makes every vite/vitepress
-  # process share $TMPDIR/node-compile-cache on the runner. Concurrent flushes there
-  # have handed V8 a code cache it couldn't deserialize, aborting the process with
-  # `Check failed: current == end_slot_index.` instead of recompiling from source.
-  NODE_DISABLE_COMPILE_CACHE: 1
-
 jobs:
   main:
     if: github.event.action != 'closed'

@@ -21,9 +21,6 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
-env:
-  NODE_DISABLE_COMPILE_CACHE: 1
-
 jobs:
   # Build job
   build:
