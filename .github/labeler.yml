@@ -21,6 +21,7 @@ cpp:
 rust:
   - changed-files:
     - any-glob-to-any-file:
+      - 'rust/**/*'
       - '**/*.rs'
       - '**/*.rs.erb'
       - '**/Cargo.toml'
