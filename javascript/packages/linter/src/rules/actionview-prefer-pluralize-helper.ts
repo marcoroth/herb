@@ -1,7 +1,5 @@
 import { ParserRule } from "../types.js"
-import { PrismVisitor, isPrismNodeType } from "@herb-tools/core"
-
-import { locationFromOffset } from "./rule-utils.js"
+import { PrismVisitor, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -62,7 +60,7 @@ export class ActionViewPreferPluralizeHelperRule extends ParserRule {
       source.substring(node.location.startOffset, node.location.startOffset + node.location.length)
 
     return collector.calls.map(call => {
-      const location = locationFromOffset(source, call.location.startOffset, call.location.length)
+      const location = locationFromByteOffset(source, call.location.startOffset, call.location.length)
       const suggestion = `pluralize(${slice(call.receiver)}, ${slice(call.arguments_)})`
 
       return this.createOffense(
