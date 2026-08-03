@@ -105,6 +105,19 @@ lexer:
       - 'src/include/lexer_*.h'
       - 'test/lexer/**/*'
 
+diff:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/diff/**/*'
+      - 'src/include/diff/**/*'
+      - 'templates/src/diff/**/*'
+      - 'test/diff/**/*'
+      - 'test/c/test_diff.c'
+      - 'lib/herb/diff_*.rb'
+      - 'sig/herb/diff_*.rbs'
+      - 'java/org/herb/Diff*.java'
+      - '**/javascript/packages/core/src/diff-result.ts'
+
 engine:
   - changed-files:
     - any-glob-to-any-file:
