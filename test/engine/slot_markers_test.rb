@@ -62,6 +62,126 @@ module Engine
       assert_compiled_snapshot("<p><%= @name %></p>", OPTIONS)
     end
 
+    test "compiles a conditional into the generated source" do
+      assert_compiled_snapshot("<div><% if @admin %><b><%= @secret %></b><% end %></div>", OPTIONS)
+    end
+
+    test "compiles a collection into the generated source" do
+      assert_compiled_snapshot("<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>", OPTIONS)
+    end
+
+    test "compiles attribute slots into the generated source" do
+      assert_compiled_snapshot(%(<div class="<%= @c %>" id="<%= @i %>"></div>), OPTIONS)
+    end
+
+    test "treats an if/elsif/else chain as one conditional slot" do
+      assert_evaluated_snapshot(
+        "<div><% if @a %>A<% elsif @b %><%= @n %><% else %>C<% end %></div>",
+        { "@a" => false, "@b" => true, "@n" => "N" },
+        OPTIONS
+      )
+    end
+
+    test "delimits a slot inside an unless/else" do
+      assert_evaluated_snapshot(
+        "<div><% unless @a %><%= @n %><% else %>E<% end %></div>",
+        { "@a" => false, "@n" => "N" },
+        OPTIONS
+      )
+    end
+
+    test "delimits a slot inside a when branch" do
+      assert_evaluated_snapshot(
+        "<div><% case @x %><% when 1 %><%= @a %><% end %></div>",
+        { "@x" => 1, "@a" => "A" },
+        OPTIONS
+      )
+    end
+
+    test "delimits a slot inside a case else branch" do
+      assert_evaluated_snapshot(
+        "<div><% case @x %><% when 9 %>N<% else %><%= @a %><% end %></div>",
+        { "@x" => 1, "@a" => "A" },
+        OPTIONS
+      )
+    end
+
+    test "gives a conditional nested inside an else its own slot" do
+      assert_evaluated_snapshot(
+        "<div><% if @a %>A<% else %><% if @b %><%= @n %><% end %><% end %></div>",
+        { "@a" => false, "@b" => true, "@n" => "N" },
+        OPTIONS
+      )
+    end
+
+    test "gives a conditional nested inside an elsif its own slot" do
+      assert_evaluated_snapshot(
+        "<div><% if @a %>A<% elsif @b %><% if @c %><%= @n %><% end %><% end %></div>",
+        { "@a" => false, "@b" => true, "@c" => true, "@n" => "N" },
+        OPTIONS
+      )
+    end
+
+    test "delimits a collection nested inside an else" do
+      assert_evaluated_snapshot(
+        "<div><% if @a %>A<% else %><% @l.each do |i| %><%= i %><% end %><% end %></div>",
+        { "@a" => false, "@l" => [1] },
+        OPTIONS
+      )
+    end
+
+    test "delimits nested collections" do
+      assert_evaluated_snapshot(
+        "<% @rows.each do |row| %><% row.each do |cell| %><%= cell %><% end %><% end %>",
+        { "@rows" => [[1, 2]] },
+        OPTIONS
+      )
+    end
+
+    test "delimits a collection body with several slots" do
+      assert_evaluated_snapshot(
+        "<ul><% @users.each do |u| %><li><%= u %> (<%= u %>)</li><% end %></ul>",
+        { "@users" => ["a", "b"] },
+        OPTIONS
+      )
+    end
+
+    test "anchors several attribute slots on the same element" do
+      assert_evaluated_snapshot(
+        %(<div class="<%= @c %>" id="<%= @i %>"></div>),
+        { "@c" => "C", "@i" => "I" },
+        OPTIONS
+      )
+    end
+
+    test "anchors an interpolated attribute value" do
+      assert_evaluated_snapshot(%(<div class="a <%= @c %> b"></div>), { "@c" => "C" }, OPTIONS)
+    end
+
+    test "delimits raw output" do
+      assert_evaluated_snapshot("<p><%== @h %></p>", { "@h" => "<b>x</b>" }, OPTIONS)
+    end
+
+    test "does not assign a slot to an ERB comment" do
+      assert_evaluated_snapshot("<p><%# skip %><%= @a %></p>", { "@a" => "A" }, OPTIONS)
+    end
+
+    test "preserves surrounding whitespace" do
+      assert_evaluated_snapshot("<div>\n  <h1><%= @t %></h1>\n</div>", { "@t" => "T" }, OPTIONS)
+    end
+
+    test "delimits a slot with no surrounding element" do
+      assert_evaluated_snapshot("<%= @a %>", { "@a" => "A" }, OPTIONS)
+    end
+
+    test "emits only a region marker when there are no slots" do
+      assert_evaluated_snapshot("<div>static</div>", {}, OPTIONS)
+    end
+
+    test "delimits a yield" do
+      assert_compiled_snapshot("<main><%= yield %></main>", OPTIONS)
+    end
+
     test "keeps head content free of injected elements" do
       assert_evaluated_snapshot(
         %(<head><meta name="a" content="b"><title><%= @t %></title></head>),

@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0021_delimits a collection body with several slots"
+input: "{source: \"<ul><% @users.each do |u| %><li><%= u %> (<%= u %>)</li><% end %></ul>\", locals: {\"@users\" => [\"a\", \"b\"]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:e89d1968--><ul><!--herb-slot:0--><li><!--herb-slot:1-->a<!--/herb-slot:1--> (<!--herb-slot:2-->a<!--/herb-slot:2-->)</li><li><!--herb-slot:1-->b<!--/herb-slot:1--> (<!--herb-slot:2-->b<!--/herb-slot:2-->)</li><!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->

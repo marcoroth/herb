@@ -93,6 +93,8 @@ module Herb
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @slots
+        @parser_options[:iteration_nodes] = true unless @parser_options.key?(:iteration_nodes)
+
         @slot_visitor = SlotVisitor.new(
           file_path: @filename,
           project_path: @project_path

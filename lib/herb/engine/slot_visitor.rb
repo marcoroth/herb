@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# typed: false
+# typed: true
 
 require "digest"
 
@@ -9,6 +9,8 @@ module Herb
   class Engine
     class SlotVisitor < Herb::Visitor
       ELEMENT_ANCHORED_TYPES = [:attribute, :attribute_interpolation, :boolean_attribute, :element].freeze #: Array[Symbol]
+      BRANCH_BODY_PROPERTIES = [:statements, :body, :children, :conditions].freeze #: Array[Symbol]
+      BRANCH_CONTINUATION_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze #: Array[Symbol]
 
       attr_reader :slots #: Array[Slot]
 
@@ -32,9 +34,11 @@ module Herb
 
         pending = {} #: Hash[untyped, Integer]
         element_anchored = {} #: Hash[untyped, Array[Integer]]
+        continuations = {} #: Hash[untyped, bool]
 
         @pending = pending.compare_by_identity
         @element_anchored = element_anchored.compare_by_identity
+        @continuations = continuations.compare_by_identity
 
         @in_attribute = false
         @in_html_comment = false
@@ -112,26 +116,23 @@ module Herb
       end
 
       def visit_erb_if_node(node)
-        record_slot(node, :conditional)
+        record_slot(node, :conditional) unless continuation?(node)
+
         visit_branching_node(node)
       end
 
       def visit_erb_unless_node(node)
-        record_slot(node, :conditional)
+        record_slot(node, :conditional) unless continuation?(node)
+
         visit_branching_node(node)
       end
 
       def visit_erb_case_node(node)
-        record_slot(node, :conditional)
+        record_slot(node, :conditional) unless continuation?(node)
+
         visit_branching_node(node)
       end
 
-      # A plain block is not necessarily a repeating region: `form_with do |f|`
-      # and `@user.tap do |u|` wrap their body once, while `@users.each do |u|`
-      # repeats it. Distinguishing them requires the receiver and message, which
-      # only `ERBIterationBlockNode` carries (see marcoroth/herb#1912), so until
-      # that lands every block is typed `:block` rather than over-claiming
-      # `:collection`. Keyed reconciliation needs the stronger fact.
       def visit_erb_block_node(node)
         record_slot(node, :block)
 
@@ -170,18 +171,26 @@ module Herb
       end
 
       def visit_branching_node(node)
-        [:statements, :body, :children, :conditions].each do |property|
+        BRANCH_BODY_PROPERTIES.each do |property|
           next unless node.respond_to?(property)
 
           visit_children_with_paths(node.send(property))
         end
 
-        [:subsequent, :else_clause, :rescue_clause, :ensure_clause].each do |property|
+        BRANCH_CONTINUATION_PROPERTIES.each do |property|
           next unless node.respond_to?(property)
 
           child = node.send(property)
-          visit(child) if child
+          next unless child
+
+          @continuations[child] = true
+          visit(child)
         end
+      end
+
+      #: (untyped) -> bool
+      def continuation?(node)
+        @continuations.key?(node)
       end
 
       #: (untyped, Symbol?) -> void
@@ -281,14 +290,14 @@ module Herb
 
       #: (untyped) { (Array[untyped]) -> void } -> void
       def each_child_array(node)
-        [:children, :body, :statements].each do |property|
+        BRANCH_BODY_PROPERTIES.each do |property|
           next unless node.respond_to?(property)
 
           array = node.send(property)
           yield array if array.is_a?(Array)
         end
 
-        [:subsequent, :else_clause, :end_node, :rescue_clause, :ensure_clause, :open_tag].each do |property|
+        (BRANCH_CONTINUATION_PROPERTIES + [:end_node, :open_tag]).each do |property|
           next unless node.respond_to?(property)
 
           child = node.send(property)

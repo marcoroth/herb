@@ -5,6 +5,10 @@ module Herb
     class SlotVisitor < Herb::Visitor
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
 
+      BRANCH_BODY_PROPERTIES: Array[Symbol]
+
+      BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
+
       attr_reader slots: Array[Slot]
 
       class Slot < Data
@@ -55,12 +59,6 @@ module Herb
 
       def visit_erb_case_node: (untyped node) -> untyped
 
-      # A plain block is not necessarily a repeating region: `form_with do |f|`
-      # and `@user.tap do |u|` wrap their body once, while `@users.each do |u|`
-      # repeats it. Distinguishing them requires the receiver and message, which
-      # only `ERBIterationBlockNode` carries (see marcoroth/herb#1912), so until
-      # that lands every block is typed `:block` rather than over-claiming
-      # `:collection`. Keyed reconciliation needs the stronger fact.
       def visit_erb_block_node: (untyped node) -> untyped
 
       def visit_erb_iteration_block_node: (untyped node) -> untyped
@@ -73,6 +71,9 @@ module Herb
       def visit_children_with_paths: (untyped children) -> untyped
 
       def visit_branching_node: (untyped node) -> untyped
+
+      # : (untyped) -> bool
+      def continuation?: (untyped) -> bool
 
       # : (untyped, Symbol?) -> void
       def record_slot: (untyped, Symbol?) -> void

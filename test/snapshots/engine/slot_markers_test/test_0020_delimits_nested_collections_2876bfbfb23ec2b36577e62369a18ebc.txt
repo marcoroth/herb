@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0020_delimits nested collections"
+input: "{source: \"<% @rows.each do |row| %><% row.each do |cell| %><%= cell %><% end %><% end %>\", locals: {\"@rows\" => [[1, 2]]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:ab9effbb--><!--herb-slot:0--><!--herb-slot:1--><!--herb-slot:2-->1<!--/herb-slot:2--><!--herb-slot:2-->2<!--/herb-slot:2--><!--/herb-slot:1--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

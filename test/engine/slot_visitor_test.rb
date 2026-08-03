@@ -49,10 +49,37 @@ module Engine
       assert_equal :attribute, visitor.slots[0].type
     end
 
-    test "classifies an each block without claiming it repeats" do
+    test "classifies an each block as a collection" do
       visitor = slots_for("<ul><% @items.each do |item| %><li>x</li><% end %></ul>")
 
-      assert_equal :block, visitor.slots[0].type
+      assert_equal :collection, visitor.slots[0].type
+    end
+
+    test "classifies other iteration methods as collections" do
+      [
+        "<div><% 3.times do |i| %><b>x</b><% end %></div>",
+        "<div><% @a.map do |i| %><b>x</b><% end %></div>"
+      ].each do |template|
+        assert_equal :collection, slots_for(template).slots[0].type, "unexpected type for: #{template}"
+      end
+    end
+
+    test "treats an if/elsif/else chain as a single conditional slot" do
+      visitor = slots_for("<div><% if @a %>A<% elsif @b %>B<% else %>C<% end %></div>")
+
+      assert_equal [:conditional], visitor.slots.map(&:type)
+    end
+
+    test "gives a conditional nested inside an else its own slot" do
+      visitor = slots_for("<div><% if @a %>A<% else %><% if @b %>B<% end %><% end %></div>")
+
+      assert_equal [:conditional, :conditional], visitor.slots.map(&:type)
+    end
+
+    test "assigns a slot inside a when branch" do
+      visitor = slots_for("<div><% case @x %><% when 1 %><%= @a %><% end %></div>")
+
+      assert_equal [:conditional, :child], visitor.slots.map(&:type)
     end
 
     test "classifies a builder block as a plain block" do
