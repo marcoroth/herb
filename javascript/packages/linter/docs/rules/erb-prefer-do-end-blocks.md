@@ -36,7 +36,9 @@ This rule provides an autofix that replaces `{` with `do` and the matching `<% }
 <% end %>
 ```
 
-`{` binds to the closest method call while `do` binds to the outermost one, so the fix is only safe when both are the same call. When they aren't, as in `<% puts @users.map { |user| %>` where the block belongs to `map` but a `do` would hand it to `puts`, the offense is still reported but the fix requires `--fix-unsafely`.
+`{` binds to the closest method call while `do` binds to the outermost one, so swapping the delimiters only preserves the meaning when both are the same call. In `<% puts @users.map { |user| %>` they aren't: the block belongs to `map`, but a `do` would hand it to `puts`, which then prints an `Enumerator` instead of the mapped values.
+
+Whenever the block is owned by anything other than the tag's outermost call, no fix is offered. The rewritten template would still run and quietly do something else, which is worse than leaving it alone. The offense is still reported, and the rewrite is left to you.
 
 ## Examples
 

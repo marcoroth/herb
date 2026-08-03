@@ -51,14 +51,14 @@ class PreferDoEndBlocksVisitor extends BaseRuleVisitor<PreferDoEndBlocksAutofixC
 
     const location = locationFromContentOffset(content.location.start.line, content.location.start.column, content.value, offset)
 
+    const autofixContext = blockBindsToSameCall(node.prismNode)
+      ? { node: node as Mutable<ERBBlockNode>, braceOffset: offset }
+      : undefined
+
     this.addOffense(
       "Avoid using `{ ... }` for a block that spans multiple ERB tags. Use `do ... end` instead.",
       location,
-      {
-        node: node as Mutable<ERBBlockNode>,
-        braceOffset: offset,
-        unsafe: !blockBindsToSameCall(node.prismNode),
-      },
+      autofixContext,
     )
   }
 }

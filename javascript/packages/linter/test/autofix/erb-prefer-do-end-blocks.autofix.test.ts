@@ -169,24 +169,19 @@ describe("erb-prefer-do-end-blocks autofix", () => {
     expect(result.unfixed).toHaveLength(1)
   })
 
-  test("fixes a block that `do` would bind to a different call when unsafe fixes are included", () => {
+  test("does not fix a block that `do` would bind to a different call with `--fix-unsafely` either", () => {
     const input = dedent`
       <% puts @users.map { |user| %>
         <p><%= user.name %></p>
       <% } %>
     `
 
-    const expected = dedent`
-      <% puts @users.map do |user| %>
-        <p><%= user.name %></p>
-      <% end %>
-    `
-
     const linter = new Linter(Herb, [ERBPreferDoEndBlocksRule])
     const result = linter.autofix(input, undefined, undefined, { includeUnsafe: true })
 
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(1)
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
   })
 
   test("fixes a block whose result is assigned", () => {
