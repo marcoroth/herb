@@ -62,6 +62,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
 - [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
 - [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
+- [`erb-prefer-do-end-blocks`](./erb-prefer-do-end-blocks.md) - Prefer `do ... end` over `{ ... }` for blocks that span multiple ERB tags
 - [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
 - [`erb-prefer-explicit-conditionals`](./erb-prefer-explicit-conditionals.md) - Prefer explicit `if`/`unless` blocks over inline conditions in ERB output tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
