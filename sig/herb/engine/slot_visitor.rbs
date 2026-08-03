@@ -1,0 +1,109 @@
+# Generated from lib/herb/engine/slot_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class SlotVisitor < Herb::Visitor
+      ELEMENT_ANCHORED_TYPES: Array[Symbol]
+
+      attr_reader slots: Array[Slot]
+
+      class Slot < Data
+        attr_reader index(): Integer
+
+        attr_reader type(): Symbol
+
+        attr_reader node_path(): Array[Integer]
+
+        attr_reader expression(): String?
+
+        attr_reader location(): String?
+
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?) -> instance
+
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location ]
+      end
+
+      # : (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
+      def initialize: (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
+
+      # : () -> String
+      def version: () -> String
+
+      # : () -> Hash[Symbol, untyped]
+      def schema: () -> Hash[Symbol, untyped]
+
+      def visit_document_node: (untyped node) -> untyped
+
+      def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_attribute_node: (untyped node) -> untyped
+
+      def visit_html_comment_node: (untyped node) -> untyped
+
+      def visit_html_doctype_node: (untyped node) -> untyped
+
+      def visit_erb_content_node: (untyped node) -> untyped
+
+      def visit_erb_yield_node: (untyped node) -> untyped
+
+      def visit_erb_if_node: (untyped node) -> untyped
+
+      def visit_erb_unless_node: (untyped node) -> untyped
+
+      def visit_erb_case_node: (untyped node) -> untyped
+
+      # A plain block is not necessarily a repeating region: `form_with do |f|`
+      # and `@user.tap do |u|` wrap their body once, while `@users.each do |u|`
+      # repeats it. Distinguishing them requires the receiver and message, which
+      # only `ERBIterationBlockNode` carries (see marcoroth/herb#1912), so until
+      # that lands every block is typed `:block` rather than over-claiming
+      # `:collection`. Keyed reconciliation needs the stronger fact.
+      def visit_erb_block_node: (untyped node) -> untyped
+
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+      private
+
+      # : (untyped, untyped) -> String
+      def relative_path_for: (untyped, untyped) -> String
+
+      def visit_children_with_paths: (untyped children) -> untyped
+
+      def visit_branching_node: (untyped node) -> untyped
+
+      # : (untyped, Symbol?) -> void
+      def record_slot: (untyped, Symbol?) -> void
+
+      # : (Symbol) -> Symbol?
+      def attribute_slot_type: (Symbol) -> Symbol?
+
+      def expression_for: (untyped node) -> untyped
+
+      def location_for: (untyped node) -> untyped
+
+      def raw_text_element?: (untyped node) -> untyped
+
+      def erb_output?: (untyped opening) -> untyped
+
+      def insert_markers: (untyped node) -> untyped
+
+      def anchor_attributes: (untyped node) -> untyped
+
+      # : (untyped) { (Array[untyped]) -> void } -> void
+      def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
+
+      def wrap_region: (untyped document_node) -> untyped
+
+      def comment_node: (untyped text) -> untyped
+
+      def attribute_node: (untyped name, untyped value) -> untyped
+
+      def literal: (untyped content) -> untyped
+
+      def token: (untyped type, untyped value) -> untyped
+    end
+  end
+end
