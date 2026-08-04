@@ -298,6 +298,8 @@ engine:
     accessibility: true  # Enable/disable accessibility validation (default: true)
 ```
 
+The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
+
 ### Validators
 
 The engine runs validators on templates during compilation. Each validator can be individually enabled or disabled:

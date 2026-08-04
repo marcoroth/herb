@@ -90,15 +90,7 @@ export type FormatterConfig = {
   }
 }
 
-export type ValidatorsConfig = {
-  security?: boolean
-  nesting?: boolean
-  accessibility?: boolean
-}
-
-export type EngineConfig = {
-  validators?: ValidatorsConfig
-}
+export type EngineConfig = Record<string, unknown>
 
 export type HerbConfigOptions = {
   files?: FilesConfig
