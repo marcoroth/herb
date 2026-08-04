@@ -39,4 +39,13 @@ arguments:
       Options hash.
 
 options: []
+
+block_arguments:
+  - name: "form"
+    position: 1
+    type: "ActionView::Helpers::FormBuilder"
+    optional: false
+    description: |-
+      The form builder scoped to the nested record.
+
 special_behaviors: []

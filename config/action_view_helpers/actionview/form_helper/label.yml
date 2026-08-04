@@ -61,4 +61,12 @@ options:
     description: |-
       Explicit `for` attribute value.
 
+block_arguments:
+  - name: "builder"
+    position: 1
+    type: "ActionView::Helpers::Tags::Label::LabelBuilder"
+    optional: false
+    description: |-
+      The label builder carrying the translated text.
+
 special_behaviors: []

@@ -54,4 +54,12 @@ options:
     description: |-
       Hash of XML processing instructions.
 
+block_arguments:
+  - name: "feed"
+    position: 1
+    type: "ActionView::Helpers::AtomFeedHelper::AtomFeedBuilder"
+    optional: false
+    description: |-
+      The feed builder the entries are added to.
+
 special_behaviors: []

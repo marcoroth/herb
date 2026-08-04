@@ -36,6 +36,7 @@ arguments:
       HTML attributes hash.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "fieldset_tag"

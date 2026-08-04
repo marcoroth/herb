@@ -33,4 +33,5 @@ options:
     description: |-
       Allowed HTML attributes.
 
+block_arguments: []
 special_behaviors: []

@@ -23,6 +23,7 @@ arguments:
       JavaScript string to escape.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "j"

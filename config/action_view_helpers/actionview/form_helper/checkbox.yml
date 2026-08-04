@@ -59,6 +59,7 @@ options:
     description: |-
       If `false`, omits the hidden field for the unchecked value.
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "check_box"

@@ -59,4 +59,5 @@ arguments:
       The selected value, or a hash with `:selected` and `:disabled` keys.
 
 options: []
+block_arguments: []
 special_behaviors: []

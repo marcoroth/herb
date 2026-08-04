@@ -40,4 +40,5 @@ options:
     description: |-
       Index for nested fields.
 
+block_arguments: []
 special_behaviors: []

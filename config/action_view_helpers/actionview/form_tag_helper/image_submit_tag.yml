@@ -46,4 +46,5 @@ options:
     description: |-
       If `true`, the submit button is disabled.
 
+block_arguments: []
 special_behaviors: []

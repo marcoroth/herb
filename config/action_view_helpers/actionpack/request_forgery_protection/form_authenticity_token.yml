@@ -21,4 +21,5 @@ options:
     description: |-
       A hash that may contain `:action` and `:method` keys for per-form CSRF tokens.
 
+block_arguments: []
 special_behaviors: []

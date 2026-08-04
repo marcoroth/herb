@@ -72,4 +72,5 @@ options:
     description: |-
       Preset the Reply-To field of the email.
 
+block_arguments: []
 special_behaviors: []

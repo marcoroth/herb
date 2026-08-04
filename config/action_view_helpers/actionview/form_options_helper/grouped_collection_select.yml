@@ -91,4 +91,5 @@ options:
     description: |-
       Prepend an option with a generic prompt or the given prompt string.
 
+block_arguments: []
 special_behaviors: []

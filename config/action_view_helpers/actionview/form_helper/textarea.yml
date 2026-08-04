@@ -43,6 +43,7 @@ options:
     description: |-
       Columns and rows in `"COLSxROWS"` format (e.g. `"20x30"`).
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "text_area"

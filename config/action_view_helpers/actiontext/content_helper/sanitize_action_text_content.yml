@@ -23,4 +23,5 @@ arguments:
       The Action Text content object to sanitize.
 
 options: []
+block_arguments: []
 special_behaviors: []

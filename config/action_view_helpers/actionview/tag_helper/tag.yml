@@ -57,5 +57,13 @@ options:
     description: |-
       Hash of `aria-*` attributes.
 
+block_arguments:
+  - name: "tag"
+    position: 1
+    type: "ActionView::Helpers::TagHelper::TagBuilder"
+    optional: false
+    description: |-
+      The tag builder, for nesting further tags inside the element.
+
 special_behaviors:
   - type: "method_name_underscores_to_dashes"

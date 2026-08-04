@@ -43,4 +43,5 @@ options:
     description: |-
       Extension to append.
 
+block_arguments: []
 special_behaviors: []

@@ -89,6 +89,8 @@ options:
     description: |-
       HTML id attribute.
 
+block_arguments: []
+
 special_behaviors:
   - type: "implied_attribute"
     when_attribute: "data-method"

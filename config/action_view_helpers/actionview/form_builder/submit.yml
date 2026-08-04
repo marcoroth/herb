@@ -43,4 +43,5 @@ options:
     description: |-
       Hash of `data-*` attributes.
 
+block_arguments: []
 special_behaviors: []

@@ -52,4 +52,5 @@ options:
     description: |-
       Prepends a plus sign and the given country code to the phone number.
 
+block_arguments: []
 special_behaviors: []

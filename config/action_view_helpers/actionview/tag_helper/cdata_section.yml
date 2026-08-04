@@ -23,4 +23,5 @@ arguments:
       Content for the CDATA section.
 
 options: []
+block_arguments: []
 special_behaviors: []

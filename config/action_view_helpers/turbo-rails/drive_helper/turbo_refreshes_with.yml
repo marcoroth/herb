@@ -26,4 +26,5 @@ options:
     description: |-
       Scroll behavior during a page refresh. Can be `:reset` (default) or `:preserve`.
 
+block_arguments: []
 special_behaviors: []

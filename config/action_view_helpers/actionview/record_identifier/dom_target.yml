@@ -24,4 +24,5 @@ arguments:
       Records, strings, or symbols to concatenate.
 
 options: []
+block_arguments: []
 special_behaviors: []

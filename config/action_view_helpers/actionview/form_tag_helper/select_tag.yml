@@ -63,4 +63,5 @@ options:
     description: |-
       Prompt text for the first option.
 
+block_arguments: []
 special_behaviors: []

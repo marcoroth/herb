@@ -28,4 +28,5 @@ arguments:
       Scroll strategy (`:reset` or `:preserve`).
 
 options: []
+block_arguments: []
 special_behaviors: []

@@ -28,4 +28,5 @@ options:
     description: |-
       Number of significant digits. Defaults to 3.
 
+block_arguments: []
 special_behaviors: []

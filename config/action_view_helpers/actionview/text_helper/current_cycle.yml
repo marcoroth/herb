@@ -24,4 +24,5 @@ arguments:
       Name of the cycle to return the current value for.
 
 options: []
+block_arguments: []
 special_behaviors: []

@@ -33,4 +33,5 @@ options:
     description: |-
       Line break sequence. Defaults to newline.
 
+block_arguments: []
 special_behaviors: []

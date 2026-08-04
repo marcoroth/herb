@@ -23,4 +23,5 @@ arguments:
       String to mark as safe.
 
 options: []
+block_arguments: []
 special_behaviors: []

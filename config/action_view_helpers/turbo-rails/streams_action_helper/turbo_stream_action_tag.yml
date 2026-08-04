@@ -42,4 +42,5 @@ options:
     description: |-
       The inner HTML content wrapped in a `<template>` element.
 
+block_arguments: []
 special_behaviors: []

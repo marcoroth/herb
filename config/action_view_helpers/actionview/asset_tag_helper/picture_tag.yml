@@ -33,4 +33,5 @@ options:
     description: |-
       CSS class name(s).
 
+block_arguments: []
 special_behaviors: []

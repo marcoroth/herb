@@ -40,4 +40,5 @@ arguments:
       The time zone model object. Must respond to `all` and return objects that respond to `name`.
 
 options: []
+block_arguments: []
 special_behaviors: []

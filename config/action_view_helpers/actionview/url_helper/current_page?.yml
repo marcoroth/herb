@@ -34,4 +34,5 @@ options:
     description: |-
       HTTP method to check. Defaults to `:get`.
 
+block_arguments: []
 special_behaviors: []

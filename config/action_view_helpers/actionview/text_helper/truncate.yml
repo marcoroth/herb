@@ -51,4 +51,5 @@ options:
     description: |-
       Whether to HTML-escape the result. Defaults to `true`.
 
+block_arguments: []
 special_behaviors: []

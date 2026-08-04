@@ -33,6 +33,7 @@ options:
     description: |-
       Locale to use.
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "l"

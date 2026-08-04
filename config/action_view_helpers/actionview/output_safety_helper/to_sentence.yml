@@ -38,4 +38,5 @@ options:
     description: |-
       Connector before last word. Defaults to `", and "`.
 
+block_arguments: []
 special_behaviors: []

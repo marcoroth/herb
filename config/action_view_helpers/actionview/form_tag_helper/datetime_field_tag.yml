@@ -43,6 +43,7 @@ arguments:
       HTML attributes hash.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "datetime_local_field_tag"

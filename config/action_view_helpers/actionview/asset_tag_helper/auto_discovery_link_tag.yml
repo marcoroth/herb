@@ -54,4 +54,5 @@ options:
     description: |-
       MIME type override.
 
+block_arguments: []
 special_behaviors: []

@@ -23,4 +23,5 @@ arguments:
       Identifier for the content block to check.
 
 options: []
+block_arguments: []
 special_behaviors: []

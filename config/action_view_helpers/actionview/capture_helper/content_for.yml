@@ -28,4 +28,5 @@ options:
     description: |-
       If `true`, replaces any existing content instead of appending.
 
+block_arguments: []
 special_behaviors: []

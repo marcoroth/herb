@@ -69,4 +69,5 @@ options:
     description: |-
       Preload behavior (`"auto"`, `"metadata"`, `"none"`).
 
+block_arguments: []
 special_behaviors: []

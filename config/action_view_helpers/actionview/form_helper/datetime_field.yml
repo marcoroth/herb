@@ -53,6 +53,7 @@ options:
     description: |-
       Maximum datetime value (ISO8601 string or Date/Time object).
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "datetime_local_field"

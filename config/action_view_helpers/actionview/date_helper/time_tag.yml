@@ -45,4 +45,5 @@ options:
     description: |-
       Override the datetime attribute value.
 
+block_arguments: []
 special_behaviors: []

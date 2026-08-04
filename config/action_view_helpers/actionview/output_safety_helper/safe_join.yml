@@ -30,4 +30,5 @@ arguments:
       Separator string.
 
 options: []
+block_arguments: []
 special_behaviors: []

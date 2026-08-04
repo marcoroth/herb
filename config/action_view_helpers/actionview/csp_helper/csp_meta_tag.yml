@@ -26,4 +26,5 @@ options:
     description: |-
       CSP nonce value.
 
+block_arguments: []
 special_behaviors: []

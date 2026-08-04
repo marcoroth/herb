@@ -58,4 +58,5 @@ options:
     description: |-
       If `true`, enables Active Storage direct upload.
 
+block_arguments: []
 special_behaviors: []

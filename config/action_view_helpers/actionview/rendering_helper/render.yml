@@ -44,4 +44,5 @@ options:
     description: |-
       Layout to wrap the rendered content.
 
+block_arguments: []
 special_behaviors: []

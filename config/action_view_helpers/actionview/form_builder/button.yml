@@ -48,4 +48,12 @@ options:
     description: |-
       Hash of `data-*` attributes.
 
+block_arguments:
+  - name: "value"
+    position: 1
+    type: "String"
+    optional: false
+    description: |-
+      The default button label, so a block can wrap or replace it.
+
 special_behaviors: []

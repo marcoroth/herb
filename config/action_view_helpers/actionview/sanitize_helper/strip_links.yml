@@ -23,4 +23,5 @@ arguments:
       HTML string to strip links from.
 
 options: []
+block_arguments: []
 special_behaviors: []
