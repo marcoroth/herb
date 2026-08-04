@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::MarkersTest#test_0012_compiles attribute slots into the generated source"
+input: "{source: \"<div class=\\\"<%= @c %>\\\" id=\\\"<%= @i %>\\\"></div>\", options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+_buf = ::String.new; _buf << '<!--herb-region:app/views/test.html.erb:0de86c81--><div class="'.freeze; _buf << ::Herb::Engine.attr((@c)); _buf << '" id="'.freeze; _buf << ::Herb::Engine.attr((@i)); _buf << '" data-herb-slot="0,1"></div><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

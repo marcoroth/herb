@@ -120,6 +120,56 @@ module Engine
       end
     end
 
+    test "compile with slots emits markers" do
+      template = "<div><%= name %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_includes captured_output, "herb-slot:0"
+        assert_empty captured_error
+      end
+    end
+
+    test "compile without slots emits no markers" do
+      template = "<div><%= name %></div>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        refute_includes captured_output, "herb-slot"
+      end
+    end
+
+    test "compile with slots warns on stderr about an unkeyed collection" do
+      template = "<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path, "--slots"]).call
+        end
+
+        assert_includes captured_error, "Add a `herb-key` or `id` attribute to `<li>`"
+        refute_includes captured_output, "warning", "warnings must stay off stdout so it remains pipeable"
+      end
+    end
+
+    test "compile without slots does not warn about an unkeyed collection" do
+      template = "<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_empty captured_error
+      end
+    end
+
     test "compile invalid template with json" do
       template = <<~ERB
         <div>

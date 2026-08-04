@@ -1,0 +1,6 @@
+---
+source: "Engine::Slots::MarkersTest#test_0029_delimits a yield"
+input: "{source: \"<main><%= yield %></main>\", options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+_buf = ::String.new; _buf << '<!--herb-region:app/views/test.html.erb:3877ae64--><main><!--herb-slot:0-->'.freeze; _buf << (yield).to_s; _buf << '<!--/herb-slot:0--></main><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

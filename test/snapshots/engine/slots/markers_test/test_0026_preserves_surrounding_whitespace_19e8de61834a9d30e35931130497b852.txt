@@ -1,0 +1,7 @@
+---
+source: "Engine::Slots::MarkersTest#test_0026_preserves surrounding whitespace"
+input: "{source: \"<div>\\n  <h1><%= @t %></h1>\\n</div>\", locals: {\"@t\" => \"T\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:3877ae64--><div>
+  <h1><!--herb-slot:0-->T<!--/herb-slot:0--></h1>
+</div><!--/herb-region:app/views/test.html.erb-->

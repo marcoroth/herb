@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0001_delimits a child slot with paired comments"
-input: "{source: \"<p><%= @name %></p>\", locals: {\"@name\" => \"Marco\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3877ae64--><p><!--herb-slot:0-->Marco<!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb-->

@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0008_wraps the document in a region marker carrying file and version"
-input: "{source: \"<p><%= @name %></p>\", locals: {\"@name\" => \"x\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3877ae64--><p><!--herb-slot:0-->x<!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb-->

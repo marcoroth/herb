@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0024_delimits raw output"
+input: "{source: \"<p><%== @h %></p>\", locals: {\"@h\" => \"<b>x</b>\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:3877ae64--><p><!--herb-slot:0-->&lt;b&gt;x&lt;/b&gt;<!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb-->

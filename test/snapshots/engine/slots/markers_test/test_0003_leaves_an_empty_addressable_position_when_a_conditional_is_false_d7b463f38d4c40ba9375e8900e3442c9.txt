@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0003_leaves an empty addressable position when a conditional is false"
+input: "{source: \"<div><% if @admin %><b>secret</b><% end %></div>\", locals: {\"@admin\" => false}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:c648677f--><div><!--herb-slot:0--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

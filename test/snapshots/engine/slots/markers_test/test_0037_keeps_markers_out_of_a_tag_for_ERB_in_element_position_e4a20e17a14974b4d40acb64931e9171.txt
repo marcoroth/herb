@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0037_keeps markers out of a tag for ERB in element position"
+input: "{source: \"<div <%= @a %>>x</div>\", locals: {\"@a\" => \"id=\\\"y\\\"\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:fd6b8ddd--><div id="y" data-herb-slot="0">x</div><!--/herb-region:app/views/test.html.erb-->

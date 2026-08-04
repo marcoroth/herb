@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0045_names the else branch that rendered"
+input: "{source: \"<% if @a %>A<% elsif @b %>B<% else %>C<% end %>\", locals: {\"@a\" => false, \"@b\" => false}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:c648677f--><!--herb-slot:0--><!--herb-branch:0:2-->C<!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0022_anchors several attribute slots on the same element"
-input: "{source: \"<div class=\\\"<%= @c %>\\\" id=\\\"<%= @i %>\\\"></div>\", locals: {\"@c\" => \"C\", \"@i\" => \"I\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:0de86c81--><div class="C" id="I" data-herb-slot="0,1"></div><!--/herb-region:app/views/test.html.erb-->

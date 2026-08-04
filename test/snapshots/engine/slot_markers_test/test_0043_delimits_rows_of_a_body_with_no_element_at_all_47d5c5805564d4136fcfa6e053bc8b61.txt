@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0043_delimits rows of a body with no element at all"
-input: "{source: \"<% @users.each do |user| %><%# herb:key user[:id] %><%= user[:name] %><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}, {id: 2, name: \"Alice\"}]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3bf6f964--><!--herb-slot:0--><!--herb-row:0:1--><!--herb-slot:1-->Marco<!--/herb-slot:1--><!--/herb-row:0--><!--herb-row:0:2--><!--herb-slot:1-->Alice<!--/herb-slot:1--><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

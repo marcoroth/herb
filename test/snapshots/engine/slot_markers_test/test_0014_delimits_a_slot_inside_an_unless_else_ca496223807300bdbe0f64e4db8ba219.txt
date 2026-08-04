@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0014_delimits a slot inside an unless/else"
-input: "{source: \"<div><% unless @a %><%= @n %><% else %>E<% end %></div>\", locals: {\"@a\" => false, \"@n\" => \"N\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:6f56441c--><div><!--herb-slot:0--><!--herb-branch:0:0--><!--herb-slot:1-->N<!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

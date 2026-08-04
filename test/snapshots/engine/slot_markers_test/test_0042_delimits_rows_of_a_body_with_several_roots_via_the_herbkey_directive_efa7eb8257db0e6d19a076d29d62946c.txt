@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0042_delimits rows of a body with several roots via the herb:key directive"
-input: "{source: \"<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\", email: \"marco@example.com\"}]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:e89d1968--><!--herb-slot:0--><!--herb-row:0:1--><dt><!--herb-slot:1-->Marco<!--/herb-slot:1--></dt><dd><!--herb-slot:2-->marco@example.com<!--/herb-slot:2--></dd><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

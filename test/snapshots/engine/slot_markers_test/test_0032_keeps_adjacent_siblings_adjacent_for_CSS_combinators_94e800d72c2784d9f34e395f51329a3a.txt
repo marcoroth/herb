@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0032_keeps adjacent siblings adjacent for CSS combinators"
-input: "{source: \"<div><input class=\\\"peer\\\"><%= @x %><p class=\\\"peer-checked:block\\\">y</p></div>\", locals: {\"@x\" => \"\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3877ae64--><div><input class="peer"><!--herb-slot:0--><!--/herb-slot:0--><p class="peer-checked:block">y</p></div><!--/herb-region:app/views/test.html.erb-->

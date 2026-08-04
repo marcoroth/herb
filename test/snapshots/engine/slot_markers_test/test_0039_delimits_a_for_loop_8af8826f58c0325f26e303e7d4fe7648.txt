@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0039_delimits a for loop"
-input: "{source: \"<% for x in @l %><b><%= x %></b><% end %>\", locals: {\"@l\" => [1]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3bf6f964--><!--herb-slot:0--><b><!--herb-slot:1-->1<!--/herb-slot:1--></b><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

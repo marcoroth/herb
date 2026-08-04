@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0038_keeps markers out of RCDATA content"
+input: "{source: \"<textarea><%= @a %></textarea>\", locals: {\"@a\" => \"A\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:0ab48c31--><textarea data-herb-slot="0">A</textarea><!--/herb-region:app/views/test.html.erb-->

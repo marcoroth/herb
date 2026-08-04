@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0034_delimits a conditional inside an HTML comment"
-input: "{source: \"<!-- <% if @a %>yes<% end %> -->\", locals: {\"@a\" => true}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:cf126d00--><!--herb-slot:0--><!-- yes --><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

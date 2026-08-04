@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0031_keeps SVG subtrees free of injected elements"
+input: "{source: \"<svg viewBox=\\\"0 0 1 1\\\"><circle r=\\\"<%= @r %>\\\"></circle></svg>\", locals: {\"@r\" => \"4\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:ac144d5f--><svg viewBox="0 0 1 1"><circle r="4" data-herb-slot="0"></circle></svg><!--/herb-region:app/views/test.html.erb-->

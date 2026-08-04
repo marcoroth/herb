@@ -1,6 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0011_compiles a collection into the generated source"
-input: "{source: \"<ul><% @items.each do |item| %><li><%= item %></li><% end %></ul>\", options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-_buf = ::String.new; _buf << '<!--herb-region:app/views/test.html.erb:3bf6f964--><ul><!--herb-slot:0-->'.freeze; @items.each do |item|; _buf << '<li><!--herb-slot:1-->'.freeze; _buf << (item).to_s; _buf << '<!--/herb-slot:1--></li>'.freeze; end; _buf << '<!--/herb-slot:0--></ul><!--/herb-region:app/views/test.html.erb-->'.freeze;
-_buf.to_s

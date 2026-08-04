@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0027_delimits a slot with no surrounding element"
-input: "{source: \"<%= @a %>\", locals: {\"@a\" => \"A\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:3877ae64--><!--herb-slot:0-->A<!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

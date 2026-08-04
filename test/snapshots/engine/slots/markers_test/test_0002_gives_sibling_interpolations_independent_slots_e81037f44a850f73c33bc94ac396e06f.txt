@@ -1,0 +1,5 @@
+---
+source: "Engine::Slots::MarkersTest#test_0002_gives sibling interpolations independent slots"
+input: "{source: \"<p>Hi <%= @name %>, you have <%= @count %></p>\", locals: {\"@name\" => \"Marco\", \"@count\" => 3}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:3e52f352--><p>Hi <!--herb-slot:0-->Marco<!--/herb-slot:0-->, you have <!--herb-slot:1-->3<!--/herb-slot:1--></p><!--/herb-region:app/views/test.html.erb-->

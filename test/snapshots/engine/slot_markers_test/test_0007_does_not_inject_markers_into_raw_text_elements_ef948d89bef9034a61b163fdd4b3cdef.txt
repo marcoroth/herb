@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0007_does not inject markers into raw text elements"
-input: "{source: \"<script>var a = \\\"<%= @a %>\\\";</script>\", locals: {\"@a\" => \"1\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:e3b0c442--><script>var a = "1";</script><!--/herb-region:app/views/test.html.erb-->

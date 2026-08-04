@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0016_delimits a slot inside a case else branch"
-input: "{source: \"<div><% case @x %><% when 9 %>N<% else %><%= @a %><% end %></div>\", locals: {\"@x\" => 1, \"@a\" => \"A\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:6f56441c--><div><!--herb-slot:0--><!--herb-branch:0:1--><!--herb-slot:1-->A<!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

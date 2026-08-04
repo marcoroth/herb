@@ -1,6 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0009_compiles slot markers into the generated source"
-input: "{source: \"<p><%= @name %></p>\", options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-_buf = ::String.new; _buf << '<!--herb-region:app/views/test.html.erb:3877ae64--><p><!--herb-slot:0-->'.freeze; _buf << (@name).to_s; _buf << '<!--/herb-slot:0--></p><!--/herb-region:app/views/test.html.erb-->'.freeze;
-_buf.to_s

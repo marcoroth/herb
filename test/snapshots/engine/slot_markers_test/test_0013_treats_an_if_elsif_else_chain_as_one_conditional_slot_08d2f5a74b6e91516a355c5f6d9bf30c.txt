@@ -1,5 +1,0 @@
----
-source: "Engine::SlotMarkersTest#test_0013_treats an if/elsif/else chain as one conditional slot"
-input: "{source: \"<div><% if @a %>A<% elsif @b %><%= @n %><% else %>C<% end %></div>\", locals: {\"@a\" => false, \"@b\" => true, \"@n\" => \"N\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
----
-<!--herb-region:app/views/test.html.erb:6f56441c--><div><!--herb-slot:0--><!--herb-branch:0:1--><!--herb-slot:1-->N<!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->
