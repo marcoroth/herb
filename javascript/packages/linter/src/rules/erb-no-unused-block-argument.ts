@@ -1,13 +1,14 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
+import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset } from "@herb-tools/core"
 
-import type { ERBBlockNode, Node, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ERBBlockNode, Node, ParseResult, ParserOptions, PrismNode, RubyParameterNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
 const REPORTED_KINDS = ["positional", "rest"]
+const MAXIMUM_TAG_SUGGESTION_LENGTH = 60
 
 class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -21,7 +22,11 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     if (parameters.length === 0) return
 
     const source = this.rubySourceInBody(node)
-    const indexArgument = this.eachWithIndexArgumentName(node)
+    const reported = parameters.filter(parameter => REPORTED_KINDS.includes(parameter.kind))
+
+    const removable = reported.length > 0 && reported.every(parameter => this.isUnused(source, parameter))
+    const removal = removable ? this.removalSuggestion(node, reported.length === parameters.length) : null
+    const indexArgument = removable ? null : this.eachWithIndexArgumentName(node)
 
     for (const parameter of parameters) {
       const name = parameter.name?.value
@@ -31,12 +36,14 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
       if (!REPORTED_KINDS.includes(parameter.kind)) continue
       if (this.referencesName(source, name)) continue
 
-      const suggestion = name === indexArgument
-        ? `Use \`each\` instead of \`each_with_index\``
-        : `Remove it`
+      const suggestion = removal ?? (name === indexArgument ? `Use \`each\` instead of \`each_with_index\`` : null)
+
+      const advice = suggestion
+        ? `${suggestion}, or prefix it with an underscore as \`_${name}\``
+        : `Prefix it with an underscore as \`_${name}\``
 
       this.addOffense(
-        `Block argument \`${name}\` is never used. ${suggestion}, or prefix it with an underscore as \`_${name}\` to show it is intentionally unused.`,
+        `Block argument \`${name}\` is never used. ${advice} to show it is intentionally unused.`,
         parameter.location,
         undefined,
         undefined,
@@ -45,11 +52,81 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     }
   }
 
+  private isUnused(source: string, parameter: RubyParameterNode): boolean {
+    const name = parameter.name?.value
+
+    if (!name) return true
+
+    return !this.referencesName(source, name)
+  }
+
+  private removalSuggestion(node: ERBBlockNode, dropsEveryArgument: boolean): string {
+    const tag = dropsEveryArgument ? this.tagWithoutBlockArguments(node) : null
+
+    if (tag && tag.length <= MAXIMUM_TAG_SUGGESTION_LENGTH) {
+      return `Remove it and write \`${tag}\``
+    }
+
+    return `Remove it`
+  }
+
+  private tagWithoutBlockArguments(node: ERBBlockNode): string | null {
+    const call = node.prismNode
+    const source = node.source
+
+    if (!source) return null
+    if (!isPrismNodeType(call, "CallNode")) return null
+
+    const opening = (call.block as PrismNode)?.parameters?.openingLoc
+    if (!opening) return null
+
+    const start = call.location.startOffset
+    const length = opening.startOffset - start
+    if (length <= 0) return null
+
+    const header = this.callHeader(source, call, start, length).trim()
+
+    if (header.includes("\n")) return null
+    if (!header.endsWith("do")) return null
+
+    const tagOpening = node.tag_opening?.value ?? "<%"
+    const tagClosing = node.tag_closing?.value ?? "%>"
+
+    return `${tagOpening} ${header} ${tagClosing}`
+  }
+
+  private callHeader(source: string, call: PrismNode, start: number, length: number): string {
+    const message = call.messageLoc
+
+    if (call.name === "each_with_index" && !call.arguments_ && message) {
+      const messageEnd = message.startOffset + message.length
+
+      const before = substringFromByteOffset(source, start, message.startOffset - start)
+      const after = substringFromByteOffset(source, messageEnd, start + length - messageEnd)
+
+      return `${before}each${after}`
+    }
+
+    return substringFromByteOffset(source, start, length)
+  }
+
   private eachWithIndexArgumentName(node: ERBBlockNode): string | null {
+    const parameters = this.plainBlockParameters(node, "each_with_index")
+
+    if (!parameters) return null
+    if (parameters.requireds.length !== 2) return null
+
+    const index = parameters.requireds[1]
+    if (!isPrismNodeType(index, "RequiredParameterNode")) return null
+
+    return index.name
+  }
+
+  private plainBlockParameters(node: ERBBlockNode, method: string): PrismNode | null {
     const call = node.prismNode
 
     if (!isPrismNodeType(call, "CallNode")) return null
-    if (call.name !== "each_with_index") return null
+    if (call.name !== method) return null
     if (call.arguments_) return null
 
     const parameters = (call.block as PrismNode)?.parameters?.parameters
@@ -59,12 +136,8 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     if (parameters.posts.length > 0) return null
     if (parameters.keywords.length > 0) return null
     if (parameters.rest || parameters.keywordRest || parameters.block) return null
-    if (parameters.requireds.length !== 2) return null
 
-    const index = parameters.requireds[1]
-    if (!isPrismNodeType(index, "RequiredParameterNode")) return null
-
-    return index.name
+    return parameters
   }
 
   private rubySourceInBody(node: ERBBlockNode): string {
