@@ -1,0 +1,143 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FileRenderer > NO_COLOR environment > should respect NO_COLOR environment variable 1`] = `
+"/test/file.erb
+
+      1 │ <div>test</div>"
+`;
+
+exports[`FileRenderer > edge cases > should handle special characters 1`] = `
+"/test/file.erb
+
+      1 │ line with	tabs
+      2 │ line with "quotes"
+      3 │ line with "single quotes""
+`;
+
+exports[`FileRenderer > edge cases > should handle unicode characters 1`] = `
+"/test/file.erb
+
+      1 │ Unicode: 🎉 émojis and àccénts"
+`;
+
+exports[`FileRenderer > edge cases > should handle very long lines 1`] = `
+"/test/file.erb
+
+      1 │ short line
+      2 │ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      3 │ short line"
+`;
+
+exports[`FileRenderer > line truncation > should not truncate lines shorter than maxWidth 1`] = `
+"/test/file.erb
+
+      1 │ Short line"
+`;
+
+exports[`FileRenderer > line truncation > should truncate lines in renderPlain method 1`] = `"This is another very long line that should be t…"`;
+
+exports[`FileRenderer > line truncation > should truncate long lines with ellipsis 1`] = `
+"/test/file.erb
+
+      1 │ This is a very long line that should …"
+`;
+
+exports[`FileRenderer > renderPlain > should apply syntax highlighting 1`] = `"[38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[38;2;171;178;191mHello[0m [38;2;171;178;191mWorld[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m"`;
+
+exports[`FileRenderer > renderPlain > should preserve exact content structure 1`] = `
+"line 1
+
+line 3
+    indented line"
+`;
+
+exports[`FileRenderer > renderPlain > should render content without line numbers or file headers 1`] = `
+"line 1
+line 2
+line 3"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should apply syntax highlighting 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mline[22m[0m[2m [22m[2;38;2;171;178;191m[2m1[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+[36m  → [0m[1m  2[0m [90m│[0m [38;2;224;108;117m<[0m[38;2;224;108;117mspan[0m[38;2;224;108;117m>[0m[38;2;171;178;191mline[0m [38;2;171;178;191m2[0m[38;2;224;108;117m</[0m[38;2;224;108;117mspan[0m[38;2;224;108;117m>[0m
+    [90m  3[0m [90m│[0m [2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mline[22m[0m[2m [22m[2;38;2;171;178;191m[2m3[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should handle focus line at beginning of file 1`] = `
+"/test/file.erb
+
+  →   1 │ line 1
+      2 │ line 2"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should handle focus line at end of file 1`] = `
+"/test/file.erb
+
+      2 │ line 2
+  →   3 │ line 3"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should handle large context that exceeds file bounds 1`] = `
+"/test/file.erb
+
+  →   1 │ line 1
+      2 │ line 2"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should highlight focus line and dim others 1`] = `
+"/test/file.erb
+
+      2 │ line 2
+  →   3 │ line 3
+      4 │ line 4"
+`;
+
+exports[`FileRenderer > renderWithFocusLine > should work without line numbers 1`] = `
+"line 1
+line 2
+line 3"
+`;
+
+exports[`FileRenderer > renderWithLineNumbers > should apply syntax highlighting 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[38;2;171;178;191mHello[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m"
+`;
+
+exports[`FileRenderer > renderWithLineNumbers > should handle content with empty lines 1`] = `
+"/test/file.erb
+
+      1 │ line 1
+      2 │ 
+      3 │ line 3"
+`;
+
+exports[`FileRenderer > renderWithLineNumbers > should handle empty content 1`] = `
+"/test/file.erb
+
+      1 │"
+`;
+
+exports[`FileRenderer > renderWithLineNumbers > should handle single line content 1`] = `
+"/test/file.erb
+
+      1 │ single line"
+`;
+
+exports[`FileRenderer > renderWithLineNumbers > should render content with line numbers 1`] = `
+"/test/file.erb
+
+      1 │ line 1
+      2 │ line 2
+      3 │ line 3"
+`;
+
+exports[`FileRenderer > theme support > should work with different themes 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [38;2;34;134;58m<[0m[38;2;34;134;58mdiv[0m[38;2;34;134;58m>[0m[38;2;36;41;46mtest[0m[38;2;34;134;58m</[0m[38;2;34;134;58mdiv[0m[38;2;34;134;58m>[0m"
+`;
+
+exports[`FileRenderer > theme support > should work with simple theme 1`] = `"[31m<[0m[31mspan[0m[31m>[0m[37mtest[0m[31m</[0m[31mspan[0m[31m>[0m"`;
