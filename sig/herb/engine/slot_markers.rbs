@@ -9,6 +9,18 @@ module Herb
       # : (Integer) -> String
       def slot_close: (Integer) -> String
 
+      # : (Integer, Integer) -> String
+      def branch: (Integer, Integer) -> String
+
+      # : (Integer) -> String
+      def row_open_prefix: (Integer) -> String
+
+      # : () -> String
+      def row_open_suffix: () -> String
+
+      # : (Integer) -> String
+      def row_close: (Integer) -> String
+
       # : (String, String) -> String
       def region_open: (String, String) -> String
 

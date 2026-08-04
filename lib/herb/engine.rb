@@ -92,6 +92,15 @@ module Herb
 
       @visitors = properties.fetch(:visitors, default_visitors)
 
+      if @debug && @visitors.empty?
+        debug_visitor = DebugVisitor.new(
+          file_path: @filename,
+          project_path: @project_path
+        )
+
+        @visitors << debug_visitor
+      end
+
       if @slots
         @parser_options[:iteration_nodes] = true unless @parser_options.key?(:iteration_nodes)
 
@@ -100,16 +109,7 @@ module Herb
           project_path: @project_path
         )
 
-        @visitors.unshift(@slot_visitor)
-      end
-
-      if @debug && @visitors.empty?
-        debug_visitor = DebugVisitor.new(
-          file_path: @filename,
-          project_path: @project_path
-        )
-
-        @visitors << debug_visitor
+        @visitors = [@slot_visitor, *@visitors]
       end
 
       unless [:raise, :overlay, :none].include?(@validation_mode)

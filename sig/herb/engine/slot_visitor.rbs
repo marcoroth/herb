@@ -3,6 +3,8 @@
 module Herb
   class Engine
     class SlotVisitor < Herb::Visitor
+      ATTRIBUTE_TYPES: Array[Symbol]
+
       ELEMENT_ANCHORED_TYPES: Array[Symbol]
 
       BRANCH_BODY_PROPERTIES: Array[Symbol]
@@ -10,6 +12,8 @@ module Herb
       BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
 
       attr_reader slots: Array[Slot]
+
+      attr_reader warnings: Array[Herb::Warnings::Warning]
 
       class Slot < Data
         attr_reader index(): Integer
@@ -22,12 +26,18 @@ module Herb
 
         attr_reader location(): String?
 
-        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location) -> instance
-                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?) -> instance
+        attr_reader attribute(): String?
 
-        def self.members: () -> [ :index, :type, :node_path, :expression, :location ]
+        attr_reader key_source(): Symbol?
 
-        def members: () -> [ :index, :type, :node_path, :expression, :location ]
+        attr_reader key_expression(): String?
+
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?) -> instance
+
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
       end
 
       # : (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
@@ -42,6 +52,8 @@ module Herb
       def visit_document_node: (untyped node) -> untyped
 
       def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
 
@@ -63,6 +75,12 @@ module Herb
 
       def visit_erb_iteration_block_node: (untyped node) -> untyped
 
+      def visit_erb_while_node: (untyped node) -> untyped
+
+      def visit_erb_until_node: (untyped node) -> untyped
+
+      def visit_erb_for_node: (untyped node) -> untyped
+
       private
 
       # : (untyped, untyped) -> String
@@ -79,9 +97,32 @@ module Herb
       def record_slot: (untyped, Symbol?) -> void
 
       # : (Symbol) -> Symbol?
-      def attribute_slot_type: (Symbol) -> Symbol?
+      def anchored_type_for: (Symbol) -> Symbol?
 
-      # Whether a subtree contains ERB, and so renders differently run to run.
+      # : (untyped) -> Symbol
+      def attribute_type_for: (untyped) -> Symbol
+
+      # : (untyped) -> [Symbol, String?]
+      def key_for: (untyped) -> [ Symbol, String? ]
+
+      # : (untyped) -> String?
+      def keyable_tag_name_for: (untyped) -> String?
+
+      # : (Array[untyped]) -> String?
+      def key_directive_in: (Array[untyped]) -> String?
+
+      # : (untyped) -> String?
+      def key_expression_for: (untyped) -> String?
+
+      # : (untyped) -> Array[untyped]
+      def collection_body: (untyped) -> Array[untyped]
+
+      # : (untyped) -> Array[untyped]
+      def attributes_for: (untyped) -> Array[untyped]
+
+      # : (untyped) -> String?
+      def attribute_name_for: (untyped) -> String?
+
       # : (untyped) -> bool
       def dynamic?: (untyped) -> bool
 
@@ -89,11 +130,21 @@ module Herb
 
       def location_for: (untyped node) -> untyped
 
-      def raw_text_element?: (untyped node) -> untyped
-
       def erb_output?: (untyped opening) -> untyped
 
       def insert_markers: (untyped node) -> untyped
+
+      # : (untyped, Integer?) -> void
+      def mark_branches: (untyped, Integer?) -> void
+
+      # : (untyped) -> Array[Array[untyped]]
+      def branch_bodies: (untyped) -> Array[Array[untyped]]
+
+      # : (untyped) -> untyped
+      def continuation_of: (untyped) -> untyped
+
+      # : (untyped, Integer?) -> void
+      def wrap_rows: (untyped, Integer?) -> void
 
       def anchor_attributes: (untyped node) -> untyped
 
@@ -101,6 +152,10 @@ module Herb
       def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
 
       def wrap_region: (untyped document_node) -> untyped
+
+      def text_node: (untyped content) -> untyped
+
+      def erb_output_node: (untyped code) -> untyped
 
       def comment_node: (untyped text) -> untyped
 

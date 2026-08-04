@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0046_names the case branch that rendered"
+input: "{source: \"<% case @x %><% when 1 %>ONE<% else %>OTHER<% end %>\", locals: {\"@x\" => 9}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:c648677f--><!--herb-slot:0--><!--herb-branch:0:1-->OTHER<!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

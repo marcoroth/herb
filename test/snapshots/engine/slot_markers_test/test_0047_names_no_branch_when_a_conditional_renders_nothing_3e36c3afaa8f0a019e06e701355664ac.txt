@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0047_names no branch when a conditional renders nothing"
+input: "{source: \"<% if @a %>A<% end %>\", locals: {\"@a\" => false}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:c648677f--><!--herb-slot:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

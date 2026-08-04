@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :file_timeout
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check, :action_view_helpers, :trim, :optimize, :slots, :file_timeout
 
   def initialize(args)
     @args = args
@@ -332,6 +332,10 @@ class Herb::CLI
 
       parser.on("--optimize", "Enable compile-time optimizations for Action View helpers (for compile/render commands) (default: false)") do
         self.optimize = true
+      end
+
+      parser.on("--slots", "Emit slot markers for reactive rendering (for compile/render commands) (default: false)") do
+        self.slots = true
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
@@ -688,8 +692,11 @@ class Herb::CLI
 
       options[:optimize] = true if optimize
       options[:trim] = true if trim
+      options[:slots] = true if slots
       options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
+
+      print_warnings(engine.slot_visitor&.warnings || []) unless json
 
       if json
         result = {
@@ -757,6 +764,21 @@ class Herb::CLI
       end
 
       exit(1)
+    end
+  end
+
+  def print_warnings(warnings)
+    return if warnings.empty?
+
+    $stderr.puts
+
+    warnings.each do |warning|
+      location = [@file, warning.location&.start&.line, warning.location&.start&.column].compact.join(":")
+
+      warn "#{bold(yellow("warning"))}: #{warning.message}"
+      warn "  #{dimmed(location)}"
+      warn "  #{dimmed(warning.expression.to_s)}" if warning.respond_to?(:expression) && warning.expression
+      $stderr.puts
     end
   end
 

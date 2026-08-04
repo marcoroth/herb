@@ -2,11 +2,6 @@
 
 module Herb
   module Warnings
-    # : type serialized_warning = {
-    # |  type: String,
-    # |  location: serialized_location?,
-    # |  message: String
-    # | }
     class Warning
       attr_reader type: String
 
@@ -28,6 +23,16 @@ module Herb
 
       # : (?untyped) -> String
       def to_json: (?untyped) -> String
+    end
+
+    # TODO: move to `config.yml` so they are in line with the way errors are defined and generated.
+    class UnkeyedCollectionWarning < Warning
+      attr_reader expression: String?
+
+      attr_reader tag_name: String?
+
+      # : (Location, ?String?, ?tag_name: String?) -> void
+      def initialize: (Location, ?String?, ?tag_name: String?) -> void
     end
   end
 end

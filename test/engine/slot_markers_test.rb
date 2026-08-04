@@ -232,6 +232,90 @@ module Engine
       end
     end
 
+    test "keeps markers out of a tag for ERB in element position" do
+      assert_evaluated_snapshot(%(<div <%= @a %>>x</div>), { "@a" => %(id="y") }, OPTIONS)
+    end
+
+    test "keeps markers out of RCDATA content" do
+      assert_evaluated_snapshot("<textarea><%= @a %></textarea>", { "@a" => "A" }, OPTIONS)
+    end
+
+    test "delimits a for loop" do
+      assert_evaluated_snapshot(
+        "<% for x in @l %><b><%= x %></b><% end %>",
+        { "@l" => [1] },
+        OPTIONS
+      )
+    end
+
+    test "delimits each row of a keyed collection" do
+      assert_evaluated_snapshot(
+        %(<% @users.each do |user| %><li herb-key="<%= user[:id] %>"><%= user[:name] %></li><% end %>),
+        { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
+        OPTIONS
+      )
+    end
+
+    test "does not delimit rows of an unkeyed collection" do
+      assert_evaluated_snapshot(
+        "<% @users.each do |user| %><li><%= user[:name] %></li><% end %>",
+        { "@users" => [{ id: 1, name: "Marco" }] },
+        OPTIONS
+      )
+    end
+
+    test "delimits rows of a body with several roots via the herb:key directive" do
+      assert_evaluated_snapshot(
+        %(<% @users.each do |user| %><%# herb:key user[:id] %><dt><%= user[:name] %></dt><dd><%= user[:email] %></dd><% end %>),
+        { "@users" => [{ id: 1, name: "Marco", email: "marco@example.com" }] },
+        OPTIONS
+      )
+    end
+
+    test "delimits rows of a body with no element at all" do
+      assert_evaluated_snapshot(
+        %(<% @users.each do |user| %><%# herb:key user[:id] %><%= user[:name] %><% end %>),
+        { "@users" => [{ id: 1, name: "Marco" }, { id: 2, name: "Alice" }] },
+        OPTIONS
+      )
+    end
+
+    test "names the branch of an if/elsif/else that rendered" do
+      assert_evaluated_snapshot(
+        "<% if @a %>A<% elsif @b %>B<% else %>C<% end %>",
+        { "@a" => false, "@b" => true },
+        OPTIONS
+      )
+    end
+
+    test "names the else branch that rendered" do
+      assert_evaluated_snapshot(
+        "<% if @a %>A<% elsif @b %>B<% else %>C<% end %>",
+        { "@a" => false, "@b" => false },
+        OPTIONS
+      )
+    end
+
+    test "names the case branch that rendered" do
+      assert_evaluated_snapshot(
+        "<% case @x %><% when 1 %>ONE<% else %>OTHER<% end %>",
+        { "@x" => 9 },
+        OPTIONS
+      )
+    end
+
+    test "names no branch when a conditional renders nothing" do
+      assert_evaluated_snapshot("<% if @a %>A<% end %>", { "@a" => false }, OPTIONS)
+    end
+
+    test "keeps nested collection rows distinguishable" do
+      assert_evaluated_snapshot(
+        %(<% @rows.each do |row| %><tr id="<%= row[:id] %>"><% row[:cells].each do |cell| %><td id="<%= cell %>"><%= cell %></td><% end %></tr><% end %>),
+        { "@rows" => [{ id: 1, cells: [11, 12] }] },
+        OPTIONS
+      )
+    end
+
     test "renders the same content as an unslotted template" do
       template = %(<div class="a"><h1><%= @title %></h1><% if @admin %><b>x</b><% end %></div>)
       locals = { "@title" => "T", "@admin" => true }
@@ -239,7 +323,7 @@ module Engine
       slotted = evaluate_herb_source(Herb::Engine.new(template, **OPTIONS).src, locals)
       plain = evaluate_herb_source(Herb::Engine.new(template, validation_mode: :none).src, locals)
 
-      assert_equal plain, slotted.gsub(%r{<!--/?herb-(slot|region)[^>]*-->}, "")
+      assert_equal plain, slotted.gsub(%r{<!--/?herb-(slot|region|row|branch)[^>]*-->}, "")
     end
   end
 end
