@@ -61,6 +61,18 @@ fn fail_level_defaults_to_none() {
 }
 
 #[test]
+fn log_level_parses_from_yaml() {
+  let config = config_from_yaml("linter:\n  logLevel: warning\n");
+
+  assert_eq!(config.linter().unwrap().log_level, Some(Severity::Warning));
+}
+
+#[test]
+fn log_level_defaults_to_none() {
+  assert_eq!(Config::default().linter().unwrap().log_level, None);
+}
+
+#[test]
 fn has_rule_exclude_reports_user_configured_excludes() {
   let config = config_from_yaml("linter:\n  rules:\n    rule-a:\n      exclude:\n        - 'a/**/*'\n    rule-b:\n      enabled: true\n");
 

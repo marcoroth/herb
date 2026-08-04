@@ -202,6 +202,28 @@ describe("ParseCache", () => {
       expect(cache.get(first)).not.toBe(cachedFirst)
     })
 
+    test("doesn't serve the mutated AST of a previous autofix() to lint()", () => {
+      const source = `<div class='foo'   id=''>\n<img src="logo.png">\n</div>\n`
+      const linter = new Linter(Herb)
+
+      const before = linter.lint(source).offenses.map(offense => offense.rule)
+
+      linter.autofix(source)
+
+      expect(linter.lint(source).offenses.map(offense => offense.rule)).toEqual(before)
+    })
+
+    test("doesn't serve the mutated AST of a previous autofix() to another autofix()", () => {
+      const source = `<div class='foo'   id=''>\n<img src="logo.png">\n</div>\n`
+      const linter = new Linter(Herb)
+
+      const first = linter.autofix(source)
+      const second = linter.autofix(source)
+
+      expect(second.source).toBe(first.source)
+      expect(second.fixed.map(offense => offense.rule)).toEqual(first.fixed.map(offense => offense.rule))
+    })
+
     test("still reuses parse results across rules within a single lint()", () => {
       const linter = new Linter(Herb)
       const parseSpy = vi.spyOn(Herb, "parse")

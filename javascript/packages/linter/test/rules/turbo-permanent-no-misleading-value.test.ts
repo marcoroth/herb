@@ -4,8 +4,6 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(TurboPermanentNoMisleadingValueRule)
 
-const message = (attribute: string) => `Attribute \`data-turbo-permanent\` should not have a value. \`${attribute}\` still makes the element permanent, because Turbo only checks whether the attribute is present. Use \`data-turbo-permanent\` instead.`
-
 describe("turbo-permanent-no-misleading-value", () => {
   test("passes when no explicit value is given", () => {
     expectNoOffenses('<div id="cart-counter" data-turbo-permanent>1 item</div>')
@@ -16,22 +14,32 @@ describe("turbo-permanent-no-misleading-value", () => {
   })
 
   test("fails with value `true`", () => {
-    expectError(message('data-turbo-permanent="true"'))
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent="true"` is redundant, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+
     assertOffenses('<div id="cart-counter" data-turbo-permanent="true">1 item</div>')
   })
 
+  test("fails with value `TRUE`", () => {
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent="TRUE"` is redundant, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+
+    assertOffenses('<div id="cart-counter" data-turbo-permanent="TRUE">1 item</div>')
+  })
+
   test("fails with value `false`", () => {
-    expectError(message('data-turbo-permanent="false"'))
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent="false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+
     assertOffenses('<div id="cart-counter" data-turbo-permanent="false">1 item</div>')
   })
 
   test("fails with arbitrary value", () => {
-    expectError(message('data-turbo-permanent="foo"'))
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent="foo"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+
     assertOffenses('<div id="cart-counter" data-turbo-permanent="foo">1 item</div>')
   })
 
   test("fails with empty string value", () => {
-    expectError(message('data-turbo-permanent=""'))
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent=""` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+
     assertOffenses('<div id="cart-counter" data-turbo-permanent="">1 item</div>')
   })
 
@@ -41,31 +49,31 @@ describe("turbo-permanent-no-misleading-value", () => {
     })
 
     test("fails with `turbo_permanent: false`", () => {
-      expectError(message('data-turbo-permanent: "false"'))
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
 
       assertOffenses('<%= tag.div id: "cart", data: { turbo_permanent: false } %>')
     })
 
     test("fails with `turbo_permanent: true`", () => {
-      expectError(message('data-turbo-permanent: "true"'))
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "true"` is redundant, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
 
       assertOffenses('<%= tag.div id: "cart", data: { turbo_permanent: true } %>')
     })
 
     test("fails with `turbo_permanent: \"false\"`", () => {
-      expectError(message('data-turbo-permanent: "false"'))
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
 
       assertOffenses('<%= tag.div id: "cart", data: { turbo_permanent: "false" } %>')
     })
 
     test("fails with empty string value", () => {
-      expectError(message('data-turbo-permanent: ""'))
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: ""` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
 
       assertOffenses('<%= tag.div id: "cart", data: { turbo_permanent: "" } %>')
     })
 
     test("fails for `content_tag`", () => {
-      expectError(message('data-turbo-permanent: "false"'))
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
 
       assertOffenses('<%= content_tag :div, "1 item", data: { turbo_permanent: false } %>')
     })

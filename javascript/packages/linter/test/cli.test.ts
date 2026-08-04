@@ -568,6 +568,326 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("--log-level", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    const OFFENSE_MESSAGE = "Missing required `alt` attribute"
+
+    const hintConfig = dedent`
+      linter:
+        rules:
+          html-img-require-alt:
+            severity: hint
+          html-tag-name-lowercase:
+            enabled: false
+    `
+
+    test("doesn't report offenses below the given level", () => {
+      try {
+        writeFileSync(configPath, hintConfig)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--log-level", "warning")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain(OFFENSE_MESSAGE)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("still reports offenses at or above the given level", () => {
+      try {
+        writeFileSync(configPath, hintConfig)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--log-level", "hint")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("Not shown")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("counts the hidden offenses and suggests the level that reveals them", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                severity: info
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--log-level", "warning")
+
+        expect(output).toMatchSnapshot()
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("still counts hidden offenses towards the exit code", () => {
+      try {
+        writeFileSync(configPath, hintConfig)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple", "--log-level", "warning", "--fail-level", "hint")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("reads logLevel from the config file", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            logLevel: warning
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain(OFFENSE_MESSAGE)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("prefers the CLI flag over the config file", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            logLevel: warning
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--log-level", "hint")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("Not shown")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("omits GitHub Actions annotations for offenses below the given level", () => {
+      try {
+        writeFileSync(configPath, hintConfig)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--github", "--log-level", "warning")
+
+        expect(output).not.toContain("::notice")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("omits offenses below the given level from JSON output but keeps the counts", () => {
+      try {
+        writeFileSync(configPath, hintConfig)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--json", "--log-level", "warning")
+        const result = JSON.parse(output)
+
+        expect(result.offenses).toHaveLength(0)
+        expect(result.summary.totalHints).toBe(1)
+        expect(result.summary.totalNotReported).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error for invalid --log-level value", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--log-level", "invalid")
+
+      expect(output).toContain("Invalid --log-level value")
+      expect(output).toContain("invalid")
+      expect(exitCode).toBe(1)
+    })
+  })
+
+  describe("non-failing offenses tip", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    const noisyConfig = dedent`
+      linter:
+        rules:
+          html-anchor-require-href:
+            severity: hint
+          html-attribute-double-quotes:
+            severity: hint
+          html-attribute-values-require-quotes:
+            severity: hint
+          html-img-require-alt:
+            severity: hint
+          html-no-empty-attributes:
+            severity: hint
+          html-no-empty-headings:
+            severity: info
+    `
+
+    const quietConfig = dedent`
+      linter:
+        rules:
+          html-no-empty-headings:
+            severity: warning
+    `
+
+    test("points at --log-level when many offenses don't fail the build", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when only a handful of offenses don't fail the build", () => {
+      try {
+        writeFileSync(configPath, quietConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when --log-level is already narrowing the output", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--log-level", "warning")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when --log-level is passed explicitly, even when it hides nothing", () => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--log-level", "hint")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("stays quiet when logLevel is set in the config file", () => {
+      try {
+        writeFileSync(configPath, `${noisyConfig}\n  logLevel: hint\n`)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+        expect(output).not.toContain("don't fail the build")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test.each(["--json", "--github"])("stays quiet for %s output", (formatFlag) => {
+      try {
+        writeFileSync(configPath, noisyConfig)
+
+        const { output } = runLinter("multiple-rule-offenses.html.erb", formatFlag)
+
+        expect(output).not.toContain("TIP:")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
+  describe("summary offense buckets", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    const mixedSeverityConfig = dedent`
+      linter:
+        rules:
+          html-img-require-alt:
+            severity: hint
+          html-no-empty-headings:
+            severity: info
+    `
+
+    test.each(["warning", "info", "hint"])("groups every severity into one line when --fail-level is %s", (failLevel) => {
+      const { output, exitCode } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--fail-level", failLevel)
+
+      expect(output).toMatchSnapshot()
+      expect(output).not.toContain("Not failing")
+      expect(exitCode).toBe(1)
+    })
+
+    test("splits the buckets when only some severities fail the build", () => {
+      try {
+        writeFileSync(configPath, mixedSeverityConfig)
+
+        const { output, exitCode } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--fail-level", "warning")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("moves a severity between buckets as --fail-level is lowered", () => {
+      try {
+        writeFileSync(configPath, mixedSeverityConfig)
+
+        const { output, exitCode } = runLinter("multiple-rule-offenses.html.erb", "--simple", "--fail-level", "info")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
+  describe("unsafe autocorrectable offenses", () => {
+    const rules = "--only html-no-unescaped-entities,html-tag-name-lowercase"
+
+    test("counts and tags them separately from offenses --fix can correct", () => {
+      const { output } = runLinter("unsafe-autocorrectable.html.erb", "--simple", ...rules.split(" "))
+
+      expect(output).toMatchSnapshot()
+    })
+
+    test("labels unsafe offenses as autocorrectable when no safe fix is available", () => {
+      const { output } = runLinter("unsafe-autocorrectable.html.erb", "--simple", "--only", "html-no-unescaped-entities")
+
+      expect(output).toMatchSnapshot()
+    })
+  })
+
   describe("--only", () => {
     const { writeFileSync, unlinkSync } = require("fs")
     const configPath = "test/fixtures/.herb.yml"
@@ -842,7 +1162,7 @@ describe("CLI Output Formatting", () => {
         const { output, exitCode } = runLinter("only-disable-comment.html.erb", "--simple", "--only", "html-tag-name-lowercase")
 
         expect(output).not.toContain("should be lowercase")
-        expect(output).toContain("2 ignored")
+        expect(output).toContain("2 offenses suppressed with herb:disable")
         expect(exitCode).toBe(0)
 
         const ignoring = runLinter("only-disable-comment.html.erb", "--simple", "--only", "html-tag-name-lowercase", "--ignore-disable-comments")
@@ -982,7 +1302,7 @@ describe("CLI Output Formatting", () => {
         const { output } = runLinter("all-rules-disable-comment.html.erb", "--simple", "--all-rules")
 
         expect(output).not.toContain("should be lowercase")
-        expect(output).toContain("2 ignored")
+        expect(output).toContain("2 offenses suppressed with herb:disable")
 
         const ignoring = runLinter("all-rules-disable-comment.html.erb", "--simple", "--all-rules", "--ignore-disable-comments")
 
@@ -1151,6 +1471,278 @@ describe("CLI Output Formatting", () => {
       } finally {
         try { unlinkSync(configPath) } catch {}
       }
+    })
+
+    describe("`Rules` summary line", () => {
+      function rulesLine(output: string): string {
+        const line = output.split("\n").find(line => line.trim().startsWith("Rules "))
+
+        expect(line, `expected a \`Rules\` summary line in:\n${output}`).toBeDefined()
+
+        return line!.trim().replace(/^Rules\s+/, "")
+      }
+
+      function segment(line: string, label: string): number {
+        const match = line.match(new RegExp(`(\\d+) ${label}`))
+
+        return match ? Number(match[1]) : 0
+      }
+
+      function withoutConfig() {
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+        const line = rulesLine(output)
+        const enabled = segment(line, "enabled")
+        const notEnabled = segment(line, "not enabled")
+
+        return { output, line, enabled, notEnabled, total: enabled + notEnabled }
+      }
+
+      test("reports enabled and not-enabled rules when no `all` is configured", () => {
+        const { output, line } = withoutConfig()
+
+        expect(line).toMatch(/^\d+ enabled \| \d+ not enabled$/)
+        expect(output).toMatchSnapshot()
+      })
+
+      test("`all: enabled: true` reports every rule as enabled and nothing else", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total} enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: false` reports no enabled rules and the rest as not enabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`0 enabled | ${total} not enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("rules opted back in on top of `all: enabled: false` count as enabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+                html-img-require-alt:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`1 enabled | ${total - 1} not enabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("rules opted out on top of `all: enabled: true` count as disabled", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: true
+                html-img-require-alt:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total - 1} enabled | 1 disabled`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: true` reports no version-skipped rules", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+          `)
+
+          const withVersion = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(rulesLine(withVersion.output)).toMatch(/\| \d+ skipped \(version\)$/)
+          expect(withVersion.output).toContain("New rules available")
+
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+            linter:
+              rules:
+                all:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`${total} enabled`)
+          expect(output).not.toContain("New rules available")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`all: enabled: false` swallows the version-skipped rules into `not enabled`", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            version: 0.4.0
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines")
+
+          expect(rulesLine(output)).toBe(`0 enabled | ${total} not enabled`)
+          expect(output).not.toContain("New rules available")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`0 enabled` explains how to enable rules and links to the docs", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(rulesLine(output)).toMatch(/^0 enabled\b/)
+          expect(output).toContain("No rules enabled:")
+          expect(output).toContain("Every linter rule is turned off, so no offenses can be reported.")
+          expect(output).toContain(configPath)
+          expect(output).toContain("Enable rules under linter.rules in your .herb.yml, or run herb-lint --all-rules")
+          expect(output).toContain("https://herb-tools.dev/configuration#setting-the-default-for-all-rules")
+          expect(exitCode).toBe(0)
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("the hint stays out of the way as soon as a single rule is enabled", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+                html-img-require-alt:
+                  enabled: true
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple")
+
+          expect(output).not.toContain("No rules enabled:")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("the hint is not shown without a config file", () => {
+        expect(runLinter("test-file-with-errors.html.erb", "--simple").output).not.toContain("No rules enabled:")
+      })
+
+      test("the hint does not leak into `--json` output", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--json")
+          const result = JSON.parse(output)
+
+          expect(result.summary.ruleCount).toBe(0)
+          expect(output).not.toContain("No rules enabled:")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`--only` replaces the counts from a disabled `all`", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines", "--only", "html-tag-name-lowercase")
+
+          expect(rulesLine(output)).toBe("1 enabled | filtered by --only")
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("`--all-rules` replaces the counts from a disabled `all`", () => {
+        const { total } = withoutConfig()
+
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              rules:
+                all:
+                  enabled: false
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--no-wrap-lines", "--all-rules")
+
+          expect(rulesLine(output)).toBe(`${total} enabled | all rules via --all-rules`)
+          expect(output).toMatchSnapshot()
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
     })
   })
 

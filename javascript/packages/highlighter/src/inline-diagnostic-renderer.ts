@@ -2,6 +2,8 @@ import { colorize, hyperlink, severityColor } from "./color.js"
 import { TextFormatter } from "./text-formatter.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
+
 import type { Diagnostic, DiagnosticSeverity } from "@herb-tools/core"
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 
@@ -17,9 +19,7 @@ export class InlineDiagnosticRenderer {
   }
 
   private getHighestSeverity(diagnostics: Diagnostic[]): DiagnosticSeverity {
-    const severityOrder: DiagnosticSeverity[] = ["error", "warning", "info", "hint"]
-
-    for (const severity of severityOrder) {
+    for (const severity of DIAGNOSTIC_SEVERITIES) {
       if (diagnostics.some(diagnostic => diagnostic.severity === severity)) {
         return severity
       }
