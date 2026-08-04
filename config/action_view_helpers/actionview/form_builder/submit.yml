@@ -1,6 +1,6 @@
 ---
 name: submit
-source: "ActionView::Helpers::FormHelper#submit"
+source: "ActionView::Helpers::FormBuilder#submit"
 gem: actionview
 output: html
 visibility: public
