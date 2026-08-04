@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 
 CONFIG = :top_level
 
@@ -6,8 +7,6 @@ module Admin
 
   class UsersController
     def show
-      CONFIG
-      Status::ACTIVE
       ::CONFIG
     end
   end

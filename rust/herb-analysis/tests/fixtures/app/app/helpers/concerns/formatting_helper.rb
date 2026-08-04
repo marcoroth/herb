@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module FormattingHelper
   extend ActiveSupport::Concern
 
   def format_price(cents)
-    "$%.2f" % (cents / 100.0)
+    format("$%.2f", cents / 100.0)
   end
 
   def format_date(date)

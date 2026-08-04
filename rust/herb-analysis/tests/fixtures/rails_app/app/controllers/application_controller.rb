@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationController < ActionController::Base
   include Searchable
 
@@ -7,12 +9,9 @@ class ApplicationController < ActionController::Base
   helper_method :page_title
 
   # not exposed to views
-  def internal_thing
-  end
+  def internal_thing; end
 
   private
 
-  def current_user
-    @current_user
-  end
+  attr_reader :current_user
 end
