@@ -7,6 +7,7 @@ export type {
   HerbConfigOptions,
   LinterConfig,
   FormatterConfig,
+  EngineConfig,
   RuleConfig,
   FilesConfig,
   LoadOptions,

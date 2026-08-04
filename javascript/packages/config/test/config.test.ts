@@ -1524,6 +1524,80 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("engine configuration", () => {
+    test("keeps the documented engine options", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        engine:
+          optimize: true
+          debug: true
+          validators:
+            security: false
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toEqual({
+        optimize: true,
+        debug: true,
+        validators: {
+          security: false,
+          nesting: true,
+          accessibility: true
+        }
+      })
+    })
+
+    test("accepts engine options the JavaScript tools don't know about", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        engine:
+          slots: true
+          parser_options:
+            timeout: 5
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toMatchObject({
+        slots: true,
+        parser_options: { timeout: 5 }
+      })
+    })
+
+    test("accepts an empty engine section without dropping the defaults", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine:\n")
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.config.engine).toEqual({
+        validators: {
+          security: true,
+          nesting: true,
+          accessibility: true
+        }
+      })
+    })
+
+    test("accepts an engine section with no options", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine: {}\n")
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isLinterEnabled).toBe(true)
+    })
+
+    test("rejects an engine section that isn't a mapping", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\n\nengine: true\n")
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow(/at "engine"/)
+    })
+  })
+
   describe("version skew", () => {
     const invalidForOlderVersions = dedent`
       version: 0.10.3
