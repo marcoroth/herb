@@ -1,17 +1,19 @@
 import path from "path"
-
-import { promises as fs } from "fs"
-import { stringify, parse, parseDocument, isMap } from "yaml"
-import { ZodError } from "zod"
-import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { DiagnosticSeverity, semverGreaterThan } from "@herb-tools/core"
-import { HerbConfigSchema } from "./config-schema.js"
-import { deepMerge } from "./merge.js"
-
 import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
+
+import { stringify, parse, parseDocument, isMap } from "yaml"
+import { semverGreaterThan } from "@herb-tools/core"
+import { promises as fs } from "fs"
+import { fromZodError } from "zod-validation-error"
+import { deepMerge } from "./merge.js"
+
+import { ZodError } from "zod"
+import { HerbConfigSchema } from "./config-schema.js"
+
+import type { DiagnosticSeverity } from "@herb-tools/core"
 
 const DEFAULT_VERSION = packageJson.version
 const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
@@ -124,6 +126,8 @@ export type FromObjectOptions = {
 
 export class Config {
   static configPath = ".herb.yml"
+
+  static misnamedConfigPaths = [".herb.yaml", "herb.yml", "herb.yaml"]
 
   private static PROJECT_INDICATORS = [
     '.git',
@@ -526,6 +530,46 @@ export class Config {
     }
   }
 
+  static isMisnamedConfigPath(pathOrFile: string): boolean {
+    return this.misnamedConfigPaths.includes(path.basename(pathOrFile))
+  }
+
+  static async findMisnamedConfigPaths(projectPath: string): Promise<string[]> {
+    const candidates = await Promise.all(
+      this.misnamedConfigPaths.map(async filename => {
+        const candidate = path.join(projectPath, filename)
+
+        try {
+          await fs.access(candidate)
+
+          return candidate
+        } catch {
+          return null
+        }
+      })
+    )
+
+    return candidates.filter((candidate): candidate is string => candidate !== null)
+  }
+
+  static misnamedConfigWarning(misnamedPath: string): string {
+    return `⚠ Ignoring ${misnamedPath}: Herb only reads \`${this.configPath}\`. Rename it to \`${this.configPath}\` to apply it.`
+  }
+
+  private static async warnAboutMisnamedConfigFiles(projectPath: string, additionalPaths: string[] = []) {
+    const misnamedPaths = new Set(await this.findMisnamedConfigPaths(projectPath))
+
+    for (const additionalPath of additionalPaths) {
+      if (this.isMisnamedConfigPath(additionalPath)) {
+        misnamedPaths.add(path.resolve(additionalPath))
+      }
+    }
+
+    for (const misnamedPath of misnamedPaths) {
+      console.error(this.misnamedConfigWarning(misnamedPath))
+    }
+  }
+
   /**
    * Find the project root by walking up from a given path.
    * Looks for .herb.yml first, then falls back to project indicators
@@ -637,6 +681,10 @@ export class Config {
       }
 
       const { configPath, projectRoot } = await this.findConfigFile(pathOrFile)
+
+      if (!silent) {
+        await this.warnAboutMisnamedConfigFiles(projectRoot, [pathOrFile])
+      }
 
       if (configPath) {
         return await this.loadFromPath(configPath, projectRoot, silent, version, exitOnError)
@@ -1014,6 +1062,8 @@ export class Config {
     const config = await this.readAndValidateConfig(resolvedPath, projectRoot, version, exitOnError)
 
     if (!silent) {
+      await this.warnAboutMisnamedConfigFiles(projectRoot)
+
       console.error(`✓ Using Herb config file at ${resolvedPath}`)
     }
 
@@ -1047,19 +1097,6 @@ export class Config {
     silent: boolean,
     version: string
   ): Promise<Config> {
-    const yamlPath = path.join(projectRoot, '.herb.yaml')
-
-    try {
-      await fs.access(yamlPath)
-
-      console.error(`\n✗ Found \`.herb.yaml\` file at ${yamlPath}`)
-      console.error(`  Please rename it to \`.herb.yml\`\n`)
-
-      process.exit(1)
-    } catch {
-      // File doesn't exist
-    }
-
     const configPath = this.configPathFromProjectPath(projectRoot)
 
     try {
@@ -1096,20 +1133,15 @@ export class Config {
     const projectPath = options?.projectPath
 
     if (projectPath) {
-      try {
-        const yamlPath = path.join(projectPath, '.herb.yaml')
-        await fs.access(yamlPath)
-
+      for (const misnamedPath of await this.findMisnamedConfigPaths(projectPath)) {
         errors.push({
-          message: 'Found .herb.yaml file. Please rename to .herb.yml',
+          message: `Found ${path.basename(misnamedPath)} file. Please rename to ${this.configPath}`,
           path: [],
           code: 'wrong_file_extension',
           severity: 'warning',
           line: 0,
           column: 0
         })
-      } catch {
-        // .herb.yaml doesn't exist
       }
     }
 
