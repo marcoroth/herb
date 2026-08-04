@@ -1,20 +1,23 @@
 ---
-name: action_cable_meta_tag
+name: "action_cable_meta_tag"
 source: "ActionCable::Helpers::ActionCableHelper#action_cable_meta_tag"
-gem: actioncable
-output: html
-visibility: public
+gem: "actioncable"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Returns an `"action-cable-url"` `<meta>` tag with the value of the URL specified in your configuration. Ensure this is above your JavaScript tag. Used by Action Cable to determine the URL of your WebSocket server.
 signature: "action_cable_meta_tag"
 documentation_url: "https://api.rubyonrails.org/classes/ActionCable/Helpers/ActionCableHelper.html#method-i-action_cable_meta_tag"
+
+description: |-
+  Returns an `"action-cable-url"` `<meta>` tag with the value of the URL specified in your configuration. Ensure this is above your JavaScript tag. Used by Action Cable to determine the URL of your WebSocket server.
+
 tag:
-  name: meta
+  name: "meta"
   is_void: true
   preferred: false
-  detect_style: call_name
+  detect_style: "call_name"
+
 arguments: []
 options: []
 special_behaviors: []

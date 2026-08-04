@@ -1,27 +1,34 @@
 ---
-name: polymorphic_path
+name: "polymorphic_path"
 source: "ActionDispatch::Routing::PolymorphicRoutes#polymorphic_path"
-gem: actionpack
-output: url
-visibility: public
+gem: "actionpack"
+output: "url"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Returns the path component of a URL for the given record. Like `polymorphic_url` but returns a path instead of a full URL.
 signature: "polymorphic_path(record_or_hash_or_array, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionDispatch/Routing/PolymorphicRoutes.html#method-i-polymorphic_path"
+
+description: |-
+  Returns the path component of a URL for the given record. Like `polymorphic_url` but returns a path instead of a full URL.
+
 tag: null
+
 arguments:
-  - name: record_or_hash_or_array
+  - name: "record_or_hash_or_array"
     position: 1
-    type: object
+    type: "object"
     optional: false
-    description: "An Active Record instance, class, array, or hash."
-  - name: options
+    description: |-
+      An Active Record instance, class, array, or hash.
+
+  - name: "options"
     position: 2
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "URL options hash."
+    description: |-
+      URL options hash.
+
 options: []
 special_behaviors: []

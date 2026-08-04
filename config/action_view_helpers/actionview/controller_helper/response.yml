@@ -1,15 +1,17 @@
 ---
-name: response
+name: "response"
 source: "ActionView::Helpers::ControllerHelper#response"
-gem: actionview
-output: object
-visibility: internal
+gem: "actionview"
+output: "object"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Returns the current `ActionDispatch::Response` object. Delegated to the controller.
 signature: "response"
 documentation_url: ""
+
+description: |-
+  Returns the current `ActionDispatch::Response` object. Delegated to the controller.
+
 tag: null
 arguments: []
 options: []

@@ -1,15 +1,17 @@
 ---
-name: error_wrapping
+name: "error_wrapping"
 source: "ActionView::Helpers::ActiveModelHelper#error_wrapping"
-gem: actionview
-output: html
-visibility: internal
+gem: "actionview"
+output: "html"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Wraps the given HTML tag with error-specific markup when the associated field has validation errors.
 signature: "error_wrapping(html_tag)"
 documentation_url: ""
+
+description: |-
+  Wraps the given HTML tag with error-specific markup when the associated field has validation errors.
+
 tag: null
 arguments: []
 options: []

@@ -1,15 +1,17 @@
 ---
-name: image_decoding
+name: "image_decoding"
 source: "ActionView::Helpers::AssetTagHelper#image_decoding"
-gem: actionview
-output: text
-visibility: internal
+gem: "actionview"
+output: "text"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Returns the default `decoding` attribute for `image_tag` (e.g. `"async"`).
 signature: "image_decoding"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html"
+
+description: |-
+  Returns the default `decoding` attribute for `image_tag` (e.g. `"async"`).
+
 tag: null
 arguments: []
 options: []
