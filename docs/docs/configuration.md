@@ -14,6 +14,14 @@ your-project/
 └── ...
 ```
 
+::: warning Only `.herb.yml` is read
+`.herb.yml` is the only filename Herb reads, following the convention used by Rails and most other Ruby tooling. A file named `.herb.yaml`, `herb.yml`, or `herb.yaml` is ignored, and every Herb tool warns about it so it doesn't look like your configuration is being applied:
+
+```
+⚠ Ignoring /your-project/.herb.yaml: Herb only reads `.herb.yml`. Rename it to `.herb.yml` to apply it.
+```
+:::
+
 ## Configuration Priority
 
 Configuration settings are applied in the following order (highest to lowest priority):
