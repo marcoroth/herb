@@ -291,12 +291,12 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
-    yerba (0.8.1-aarch64-linux-gnu)
-    yerba (0.8.1-aarch64-linux-musl)
-    yerba (0.8.1-arm64-darwin)
-    yerba (0.8.1-x86_64-darwin)
-    yerba (0.8.1-x86_64-linux-gnu)
-    yerba (0.8.1-x86_64-linux-musl)
+    yerba (0.9.0-aarch64-linux-gnu)
+    yerba (0.9.0-aarch64-linux-musl)
+    yerba (0.9.0-arm64-darwin)
+    yerba (0.9.0-x86_64-darwin)
+    yerba (0.9.0-x86_64-linux-gnu)
+    yerba (0.9.0-x86_64-linux-musl)
     zeitwerk (2.7.5)
 
 PLATFORMS
@@ -334,7 +334,7 @@ DEPENDENCIES
   sorbet
   steep!
   turbo-rails (~> 2.0)
-  yerba (~> 0.8)
+  yerba (~> 0.9)
 
 BUNDLED WITH
    2.7.2

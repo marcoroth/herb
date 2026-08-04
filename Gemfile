@@ -26,7 +26,7 @@ gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0"
-gem "yerba", "~> 0.8"
+gem "yerba", "~> 0.9"
 
 # TODO: remove once https://github.com/soutaro/steep/pull/2255 ships
 # gem "steep", "~> 2.0"
