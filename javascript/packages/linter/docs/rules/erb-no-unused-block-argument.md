@@ -28,7 +28,7 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
-When the only argument of an `each` is unused, the block is not iterating over anything, it is repeating its body once per element. A block runs just as well without declaring the argument at all, so the message spells that out:
+When every argument of a block is unused, the block does not need a parameter list at all, and the message says so with the tag that is already there, minus the `|...|`:
 
 ```erb
 <% pages.each do |page| %>
@@ -36,9 +36,24 @@ When the only argument of an `each` is unused, the block is not iterating over a
 <% end %>
 ```
 
-That wording is only used for a receiver that reads as a plain reference, like `pages`, `@user.pages` or `Page.all`. When the `each` is called on something that takes arguments or a block, or is called with `&.`, the receiver is not worth repeating in the message, so the regular message is used.
+That is not limited to iteration. An unused `form` suggests `<%= form_with model: @user do %>`, an unused index suggests `<% 3.times do %>`. The tag is rewritten from the source, so whatever the block is called on is kept as it is, including trim markers, safe navigation and arguments. The rewrite is skipped when the tag spans multiple lines, when it is long enough to make the message unwieldy, or when an argument the rule does not report would be left behind, and the message falls back to a plain `Remove it`.
 
-When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, for the same reason:
+Removing one argument out of several is a different edit than removing all of them, because a block destructures what it is yielded based on how many parameters it declares:
+
+```ruby
+[[1, 2], [3, 4]].each { |a, b| } # a is 1, b is 2
+[[1, 2], [3, 4]].each { |a| }    # a is [1, 2]
+```
+
+Dropping `value` from `|key, value|` would silently rebind `key` to the whole pair, so when only some of the arguments are unused, the message offers the underscore and nothing else:
+
+```erb
+<% @pairs.each do |key, value| %>
+  <%= key %>
+<% end %>
+```
+
+When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, since that is what the loop is actually doing:
 
 ```erb
 <% @pairs.each_with_index do |(name, data), index| %>
@@ -46,7 +61,7 @@ When the unused argument is the index of an `each_with_index`, the message sugge
 <% end %>
 ```
 
-That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used.
+That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used. When neither argument is used, the rewritten tag drops the `_with_index` as well and suggests `<% @pairs.each do %>`.
 
 Ruby's convention for a binding that is deliberately ignored is a leading underscore, so `_user` is treated as intentional and never reported.
 
