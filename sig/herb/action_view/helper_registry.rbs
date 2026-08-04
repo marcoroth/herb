@@ -201,9 +201,11 @@ module Herb
 
       DEBUG: ::Symbol
 
-      APPLY_FORM_FOR_OPTIONS_BANG: ::Symbol
-
       BUTTON: ::Symbol
+
+      SUBMIT: ::Symbol
+
+      APPLY_FORM_FOR_OPTIONS_BANG: ::Symbol
 
       CHECKBOX: ::Symbol
 
@@ -250,8 +252,6 @@ module Herb
       RANGE_FIELD: ::Symbol
 
       SEARCH_FIELD: ::Symbol
-
-      SUBMIT: ::Symbol
 
       TELEPHONE_FIELD: ::Symbol
 
@@ -807,9 +807,11 @@ module Herb
 
       DEBUG: HelperEntry
 
-      APPLY_FORM_FOR_OPTIONS_BANG: HelperEntry
-
       BUTTON: HelperEntry
+
+      SUBMIT: HelperEntry
+
+      APPLY_FORM_FOR_OPTIONS_BANG: HelperEntry
 
       CHECKBOX: HelperEntry
 
@@ -856,8 +858,6 @@ module Herb
       RANGE_FIELD: HelperEntry
 
       SEARCH_FIELD: HelperEntry
-
-      SUBMIT: HelperEntry
 
       TELEPHONE_FIELD: HelperEntry
 
