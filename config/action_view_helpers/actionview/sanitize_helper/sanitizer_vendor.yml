@@ -1,15 +1,17 @@
 ---
-name: sanitizer_vendor
+name: "sanitizer_vendor"
 source: "ActionView::Helpers::SanitizeHelper#sanitizer_vendor"
-gem: actionview
-output: boolean
-visibility: internal
+gem: "actionview"
+output: "boolean"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Returns the HTML sanitizer vendor in use (e.g. `Rails::HTML5::Sanitizer`).
 signature: "sanitizer_vendor"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/SanitizeHelper.html"
+
+description: |-
+  Returns the HTML sanitizer vendor in use (e.g. `Rails::HTML5::Sanitizer`).
+
 tag: null
 arguments: []
 options: []

@@ -1,39 +1,51 @@
 ---
-name: excerpt
+name: "excerpt"
 source: "ActionView::Helpers::TextHelper#excerpt"
-gem: actionview
-output: text
-visibility: public
+gem: "actionview"
+output: "text"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Extracts an excerpt from text that matches the first instance of a phrase.
 signature: "excerpt(text, phrase, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TextHelper.html#method-i-excerpt"
+
+description: |-
+  Extracts an excerpt from text that matches the first instance of a phrase.
+
 tag: null
+
 arguments:
-  - name: text
+  - name: "text"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "The text to excerpt from."
-  - name: phrase
+    description: |-
+      The text to excerpt from.
+
+  - name: "phrase"
     position: 2
-    type: string
+    type: "string"
     optional: false
-    description: "The phrase to center the excerpt around."
-  - name: options
+    description: |-
+      The phrase to center the excerpt around.
+
+  - name: "options"
     position: 3
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "Options hash."
+    description: |-
+      Options hash.
+
 options:
-  - name: radius
-    type: integer
-    description: "Number of characters around the phrase. Defaults to 100."
-  - name: omission
-    type: string
+  - name: "radius"
+    type: "integer"
+    description: |-
+      Number of characters around the phrase. Defaults to 100.
+
+  - name: "omission"
+    type: "string"
     description: |-
       Omission string. Defaults to `"..."`.
+
 special_behaviors: []

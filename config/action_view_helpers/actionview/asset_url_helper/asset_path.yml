@@ -1,23 +1,28 @@
 ---
-name: asset_path
+name: "asset_path"
 source: "ActionView::Helpers::AssetUrlHelper#asset_path"
-gem: actionview
-output: url
-visibility: public
+gem: "actionview"
+output: "url"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Computes the path to an asset in the public assets directory.
 signature: "asset_path(source, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-asset_path"
+
+description: |-
+  Computes the path to an asset in the public assets directory.
+
 tag: null
+
 arguments:
-  - name: source
+  - name: "source"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Asset file name or path."
+    description: |-
+      Asset file name or path.
+
 options: []
 special_behaviors: []
 aliases:
-  - path_to_asset
+  - "path_to_asset"
