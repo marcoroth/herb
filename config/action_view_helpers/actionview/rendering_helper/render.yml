@@ -45,4 +45,6 @@ options:
       Layout to wrap the rendered content.
 
 block_arguments: []
-special_behaviors: []
+
+special_behaviors:
+  - "block_arguments_from_template"
