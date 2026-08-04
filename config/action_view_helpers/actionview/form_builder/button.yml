@@ -1,6 +1,6 @@
 ---
 name: button
-source: "ActionView::Helpers::FormHelper#button"
+source: "ActionView::Helpers::FormBuilder#button"
 gem: actionview
 output: html
 visibility: public
