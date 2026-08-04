@@ -14,10 +14,6 @@ This applies to every block that spans ERB tags, both iteration blocks and helpe
 <% end %>
 ```
 
-```
-Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.
-```
-
 ## Rationale
 
 An unused block argument is usually one of two things: a leftover from an edit that removed the code using it, or a sign that the wrong variable is being referenced in the body. Both are worth a second look.
@@ -32,6 +28,41 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
+When every argument of a block is unused, the block does not need a parameter list at all, and the message says so with the tag that is already there, minus the `|...|`:
+
+```erb
+<% pages.each do |page| %>
+  <div class="page"></div>
+<% end %>
+```
+
+That is not limited to iteration. An unused `form` suggests `<%= form_with model: @user do %>`, an unused index suggests `<% 3.times do %>`. The tag is rewritten from the source, so whatever the block is called on is kept as it is, including trim markers, safe navigation and arguments. The rewrite is skipped when the tag spans multiple lines, when it is long enough to make the message unwieldy, or when an argument the rule does not report would be left behind, and the message falls back to a plain `Remove it`.
+
+Removing one argument out of several is a different edit than removing all of them, because a block destructures what it is yielded based on how many parameters it declares:
+
+```ruby
+[[1, 2], [3, 4]].each { |a, b| } # a is 1, b is 2
+[[1, 2], [3, 4]].each { |a| }    # a is [1, 2]
+```
+
+Dropping `value` from `|key, value|` would silently rebind `key` to the whole pair, so when only some of the arguments are unused, the message offers the underscore and nothing else:
+
+```erb
+<% @pairs.each do |key, value| %>
+  <%= key %>
+<% end %>
+```
+
+When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, since that is what the loop is actually doing:
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
+That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used. When neither argument is used, the rewritten tag drops the `_with_index` as well and suggests `<% @pairs.each do %>`.
+
 Ruby's convention for a binding that is deliberately ignored is a leading underscore, so `_user` is treated as intentional and never reported.
 
 Only the Ruby inside ERB tags and interpolation is searched, never the surrounding HTML, so markup that happens to contain the same word does not count as a use:
@@ -45,6 +76,12 @@ Only the Ruby inside ERB tags and interpolation is searched, never the surroundi
 The above is still reported, because nothing in Ruby refers to `user`. Matching is on whole identifiers, so `users_count` does not count as a use of `user` either.
 
 Only positional and splat arguments are reported. An unused `&block` or `**options` reads differently and is left alone.
+
+Offenses are tagged as `unnecessary`, so an editor greys the argument out the way it does for other unused code.
+
+The severity is also split by mode, reported as `info` in the editor and an `error` on the command line:
+
+An unused argument is worth cleaning up but is not a reason to interrupt someone mid-edit, so it stays quiet in the editor while still failing a lint run in CI.
 
 ## Examples
 
@@ -83,8 +120,20 @@ Only positional and splat arguments are reported. An unused `&block` or `**optio
 ```
 
 ```erb
+<% pages.each do %>
+  <div class="page"></div>
+<% end %>
+```
+
+```erb
 <%= form_with model: @user do |form| %>
   <%= form.text_field :name %>
+<% end %>
+```
+
+```erb
+<% @pairs.each do |(name, data)| %>
+  <%= name %>: <%= data %>
 <% end %>
 ```
 
@@ -113,6 +162,18 @@ Only positional and splat arguments are reported. An unused `&block` or `**optio
 ```erb
 <%= form_with model: @user do |form| %>
   <p>Nothing</p>
+<% end %>
+```
+
+```erb
+<% @pairs.each_with_index do |(name, data), index| %>
+  <%= name %>: <%= data %>
+<% end %>
+```
+
+```erb
+<% pages.each do |page| %>
+  <div class="page"></div>
 <% end %>
 ```
 

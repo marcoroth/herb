@@ -24,7 +24,10 @@ class ERBNoCommentedOutOutputTagsVisitor extends BaseRuleVisitor {
 
     this.addOffense(
       `\`${commentedTag}\` looks like a temporarily commented ERB output tag. Remove it, or restore it to \`${originalTag}\` if it's still needed.`,
-      openTag.location,
+      node.location,
+      undefined,
+      undefined,
+      ["unnecessary"],
     )
   }
 }

@@ -49,6 +49,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
 - [`erb-no-raw-output-in-attribute-value`](./erb-no-raw-output-in-attribute-value.md) - Disallow `<%==` in attribute values
+- [`erb-no-shadowed-block-argument`](./erb-no-shadowed-block-argument.md) - Disallow block arguments that shadow an enclosing binding
 - [`erb-no-silent-statement`](./erb-no-silent-statement.md) - Disallow silent ERB statements
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
@@ -61,7 +62,9 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
 - [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
 - [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
+- [`erb-prefer-do-end-blocks`](./erb-prefer-do-end-blocks.md) - Prefer `do ... end` over `{ ... }` for blocks that span multiple ERB tags
 - [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
+- [`erb-prefer-explicit-conditionals`](./erb-prefer-explicit-conditionals.md) - Prefer explicit `if`/`unless` blocks over inline conditions in ERB output tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags

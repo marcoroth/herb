@@ -1,15 +1,17 @@
 ---
-name: turbo_include_tags
+name: "turbo_include_tags"
 source: "Turbo::IncludesHelper#turbo_include_tags"
-gem: turbo-rails
-output: html
-visibility: public
+gem: "turbo-rails"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Deprecated. Returns a `<script>` tag to include the Turbo JavaScript. Use `javascript_include_tag "turbo", type: "module"` directly instead.
 signature: "turbo_include_tags"
 documentation_url: "https://www.rubydoc.info/github/hotwired/turbo-rails/Turbo/IncludesHelper#turbo_include_tags-instance_method"
+
+description: |-
+  Deprecated. Returns a `<script>` tag to include the Turbo JavaScript. Use `javascript_include_tag "turbo", type: "module"` directly instead.
+
 tag: null
 arguments: []
 options: []

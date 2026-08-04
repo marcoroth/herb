@@ -19,6 +19,8 @@ pub trait SeverityOverridable {
 }
 
 pub const CONFIG_PATH: &str = ".herb.yml";
+pub const MISNAMED_CONFIG_PATHS: &[&str] = &[".herb.yaml", "herb.yml", "herb.yaml"];
+pub const ALL_RULES_KEY: &str = "all";
 
 const PROJECT_INDICATORS: &[&str] = &[
   ".git",
@@ -118,8 +120,15 @@ impl Config {
     self.linter()?.rules.as_ref()?.get(rule_name)
   }
 
+  pub fn default_rule_enabled(&self) -> Option<bool> {
+    self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.enabled)
+  }
+
   pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
-    self.get_rule_config(rule_name).and_then(|rule| rule.enabled) == Some(false)
+    match self.get_rule_config(rule_name) {
+      Some(rule) => rule.enabled == Some(false),
+      None => self.default_rule_enabled() == Some(false),
+    }
   }
 
   pub fn is_rule_enabled(&self, rule_name: &str) -> bool {
@@ -320,6 +329,54 @@ impl Config {
     config_path.exists()
   }
 
+  pub fn is_misnamed_config_path(path_or_file: &Path) -> bool {
+    path_or_file
+      .file_name()
+      .and_then(|file_name| file_name.to_str())
+      .is_some_and(|file_name| MISNAMED_CONFIG_PATHS.contains(&file_name))
+  }
+
+  pub fn find_misnamed_config_paths(project_path: &Path) -> Vec<PathBuf> {
+    MISNAMED_CONFIG_PATHS
+      .iter()
+      .map(|file_name| project_path.join(file_name))
+      .filter(|candidate| candidate.exists())
+      .collect()
+  }
+
+  pub fn misnamed_config_warning(misnamed_path: &Path) -> String {
+    format!(
+      "\u{26a0} Ignoring {}: Herb only reads `{}`. Rename it to `{}` to apply it.",
+      misnamed_path.display(),
+      CONFIG_PATH,
+      CONFIG_PATH
+    )
+  }
+
+  fn warn_about_misnamed_config_files(project_path: &Path, additional_paths: &[&Path]) {
+    let mut candidates = Self::find_misnamed_config_paths(project_path);
+
+    for additional_path in additional_paths {
+      if Self::is_misnamed_config_path(additional_path) && additional_path.exists() {
+        candidates.push(additional_path.to_path_buf());
+      }
+    }
+
+    let mut seen: Vec<PathBuf> = Vec::new();
+
+    for candidate in candidates {
+      let key = candidate.canonicalize().unwrap_or_else(|_| candidate.clone());
+
+      if seen.contains(&key) {
+        continue;
+      }
+
+      seen.push(key);
+
+      eprintln!("{}", Self::misnamed_config_warning(&candidate));
+    }
+  }
+
   pub fn find_project_root(start_path: &Path) -> PathBuf {
     Self::find_config_file(start_path).project_root
   }
@@ -356,10 +413,18 @@ impl Config {
     let version = options.version.unwrap_or(DEFAULT_VERSION);
 
     if path_or_file.ends_with(CONFIG_PATH) {
+      if !options.silent {
+        Self::warn_about_misnamed_config_files(path_or_file.parent().unwrap_or(Path::new(".")), &[]);
+      }
+
       return Self::load_from_explicit_path(path_or_file, version);
     }
 
     let FoundConfigFile { config_path, project_root } = Self::find_config_file(path_or_file);
+
+    if !options.silent {
+      Self::warn_about_misnamed_config_files(&project_root, &[path_or_file]);
+    }
 
     if let Some(config_path) = config_path {
       let config = Self::load_from_path(&config_path, &project_root, version)?;
@@ -521,15 +586,6 @@ impl Config {
 
   #[cfg(feature = "yerba")]
   fn create_default_config(project_root: &Path, silent: bool, version: &str) -> Result<Self, String> {
-    let stray_yaml_path = project_root.join(".herb.yaml");
-
-    if stray_yaml_path.exists() {
-      return Err(format!(
-        "Found `.herb.yaml` file at {}\n  Please rename it to `.herb.yml`",
-        stray_yaml_path.display()
-      ));
-    }
-
     let config_path = Self::config_path_from_project_path(project_root);
 
     match crate::mutation::mutate_config_file(&config_path, &HerbConfigOptions::default(), Some(version)) {

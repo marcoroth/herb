@@ -1,24 +1,29 @@
 ---
-name: token_list
+name: "token_list"
 source: "ActionView::Helpers::TagHelper#token_list"
-gem: actionview
-output: text
-visibility: public
+gem: "actionview"
+output: "text"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Returns a string of space-separated tokens from the arguments. Conditional tokens can be passed as a hash.
 signature: "token_list(*args)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-token_list"
+
+description: |-
+  Returns a string of space-separated tokens from the arguments. Conditional tokens can be passed as a hash.
+
 tag: null
+
 arguments:
-  - name: args
+  - name: "args"
     position: 1
-    type: [string, hash]
+    type: ["string", "hash"]
     optional: false
     splat: true
-    description: "Tokens to join. Hashes enable conditional inclusion."
+    description: |-
+      Tokens to join. Hashes enable conditional inclusion.
+
 options: []
 special_behaviors: []
 aliases:
-  - class_names
+  - "class_names"

@@ -1,26 +1,33 @@
 ---
-name: safe_join
+name: "safe_join"
 source: "ActionView::Helpers::OutputSafetyHelper#safe_join"
-gem: actionview
-output: html
-visibility: public
+gem: "actionview"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Joins array elements with a separator, HTML-escaping each element but not the separator.
 signature: "safe_join(array, sep = $,)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/OutputSafetyHelper.html#method-i-safe_join"
+
+description: |-
+  Joins array elements with a separator, HTML-escaping each element but not the separator.
+
 tag: null
+
 arguments:
-  - name: array
+  - name: "array"
     position: 1
-    type: array
+    type: "array"
     optional: false
-    description: "Array of elements to join."
-  - name: sep
+    description: |-
+      Array of elements to join.
+
+  - name: "sep"
     position: 2
-    type: string
+    type: "string"
     optional: true
-    description: "Separator string."
+    description: |-
+      Separator string.
+
 options: []
 special_behaviors: []

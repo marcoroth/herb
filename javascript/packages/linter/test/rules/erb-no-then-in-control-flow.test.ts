@@ -158,6 +158,65 @@ describe("ERBNoThenInControlFlowRule", () => {
     })
   })
 
+  describe("ternary operators", () => {
+    test("valid if with ternary in condition", () => {
+      expectNoOffenses(dedent`
+        <% if v2 = (@smart_values[k] || {})[v.nil? ? v : v.to_s] %>
+          <div class="text-muted"><%= v2 %></div>
+        <% end %>
+      `)
+    })
+
+    test("valid unless with ternary in condition", () => {
+      expectNoOffenses(dedent`
+        <% unless (admin? ? user.active? : user.confirmed?) %>
+          content
+        <% end %>
+      `)
+    })
+
+    test("valid elsif with ternary in condition", () => {
+      expectNoOffenses(dedent`
+        <% if a %>
+          A
+        <% elsif b ? c : d %>
+          B
+        <% end %>
+      `)
+    })
+
+    test("invalid if with ternary in condition and then", () => {
+      expectWarning("Avoid using `then` in `if` expressions inside ERB templates. Use the multiline block form instead.")
+
+      assertOffenses(dedent`
+        <% if a ? b : c then %>
+          content
+        <% end %>
+      `)
+    })
+
+    test("invalid elsif with ternary in condition and then", () => {
+      expectWarning("Avoid using `then` in `elsif` expressions inside ERB templates. Use the multiline block form instead.")
+
+      assertOffenses(dedent`
+        <% if a %>
+          A
+        <% elsif b ? c : d then %>
+          B
+        <% end %>
+      `)
+    })
+
+    test("valid when with ternary containing then in a string", () => {
+      expectNoOffenses(dedent`
+        <% case value %>
+        <% when a == "then" ? 1 : 2 %>
+          content
+        <% end %>
+      `)
+    })
+  })
+
   describe("escaped ERB tags", () => {
     test("reports then in escaped if", () => {
       expectWarning("Avoid using `then` in `if` expressions inside ERB templates. Use the multiline block form instead.")

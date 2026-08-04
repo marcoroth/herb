@@ -20,6 +20,7 @@ import {
   hasDynamicAttributeNameNode,
   getStaticAttributeName,
   getCombinedAttributeName,
+  findParentArray,
   Location,
   HTMLAttributeNameNode
 } from "../src"
@@ -500,6 +501,103 @@ describe("ast-utils", () => {
       attributeNode.children = undefined as any
 
       expect(getCombinedAttributeName(attributeNode)).toBe("")
+    })
+  })
+
+  describe("findParentArray", () => {
+    const createDocumentNode = (children: Node[]): Node => ({
+      type: "AST_DOCUMENT_NODE",
+      children,
+      location: Location.from(1, 1, 1, 1)
+    } as any)
+
+    const createElementNode = (openTagChildren: Node[], body: Node[] = []): any => ({
+      type: "AST_HTML_ELEMENT_NODE",
+      open_tag: {
+        type: "AST_HTML_OPEN_TAG_NODE",
+        children: openTagChildren,
+        location: Location.from(1, 1, 1, 1)
+      },
+      body,
+      location: Location.from(1, 1, 1, 1)
+    })
+
+    const createAttributeNode = (valueChildren: Node[]): any => ({
+      type: "AST_HTML_ATTRIBUTE_NODE",
+      name: createAttributeNameNode([createLiteralNode("class")]),
+      value: {
+        type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+        children: valueChildren,
+        location: Location.from(1, 1, 1, 1)
+      },
+      location: Location.from(1, 1, 1, 1)
+    })
+
+    test("finds a node in the document children", () => {
+      const target = createERBContentNode("<%=", "value")
+      const document = createDocumentNode([createLiteralNode("before"), target])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(1)
+      expect(result?.array).toHaveLength(2)
+    })
+
+    test("finds a node in an element body", () => {
+      const target = createERBContentNode("<%=", "value")
+      const element = createElementNode([], [target])
+      const document = createDocumentNode([element])
+
+      expect(findParentArray(document, target)?.index).toBe(0)
+    })
+
+    test("finds a node inside an open tag", () => {
+      const target = createERBContentNode("<%=", "value")
+      const element = createElementNode([createLiteralNode("attribute"), target])
+      const document = createDocumentNode([element])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(1)
+      expect(result?.array).toBe(element.open_tag.children)
+    })
+
+    test("finds a node inside an attribute value", () => {
+      const target = createERBContentNode("<%=", "value")
+      const attribute = createAttributeNode([target])
+      const element = createElementNode([attribute])
+      const document = createDocumentNode([element])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(0)
+      expect(result?.array).toBe(attribute.value.children)
+    })
+
+    test("finds a node in a linked else branch", () => {
+      const target = createERBContentNode("<%=", "value")
+
+      const ifNode: any = {
+        type: "AST_ERB_IF_NODE",
+        statements: [],
+        subsequent: {
+          type: "AST_ERB_ELSE_NODE",
+          statements: [target],
+          location: Location.from(1, 1, 1, 1)
+        },
+        location: Location.from(1, 1, 1, 1)
+      }
+
+      const document = createDocumentNode([ifNode])
+
+      expect(findParentArray(document, target)?.array).toBe(ifNode.subsequent.statements)
+    })
+
+    test("returns null when the node is not in the tree", () => {
+      const target = createERBContentNode("<%=", "value")
+      const document = createDocumentNode([createLiteralNode("only")])
+
+      expect(findParentArray(document, target)).toBe(null)
     })
   })
 })

@@ -535,6 +535,111 @@ describe("@herb-tools/config", () => {
       expect(config.isRuleEnabled("html-tag-name-lowercase")).toBe(true)
     })
 
+    test("defaultRuleEnabled returns undefined when 'all' is not configured", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": { enabled: false }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.defaultRuleEnabled).toBeUndefined()
+    })
+
+    test("defaultRuleEnabled returns the 'all' pseudo rule setting", () => {
+      const disabled = Config.fromObject({ linter: { rules: { all: { enabled: false } } } }, { projectPath: testDir })
+      const enabled = Config.fromObject({ linter: { rules: { all: { enabled: true } } } }, { projectPath: testDir })
+
+      expect(disabled.defaultRuleEnabled).toBe(false)
+      expect(enabled.defaultRuleEnabled).toBe(true)
+    })
+
+    test("isRuleDisabled returns true for unconfigured rules when 'all' is disabled", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: false }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+    })
+
+    test("isRuleDisabled returns false for rules re-enabled over a disabled 'all'", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: false },
+            "html-img-require-alt": { enabled: true }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleDisabled("html-img-require-alt")).toBe(false)
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+    })
+
+    test("isRuleDisabled returns false for rules configured without 'enabled' when 'all' is disabled", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: false },
+            "html-img-require-alt": { severity: "warning" }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleDisabled("html-img-require-alt")).toBe(false)
+    })
+
+    test("isRuleDisabled returns false for unconfigured rules when 'all' is enabled", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: true }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(false)
+    })
+
+    test("isRuleDisabled still honors explicit disables when 'all' is enabled", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: true },
+            "html-tag-name-lowercase": { enabled: false }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+    })
+
+    test("isRuleEnabledForPath returns false for unconfigured rules when 'all' is disabled", () => {
+      const configOptions: HerbConfigOptions = {
+        linter: {
+          rules: {
+            all: { enabled: false },
+            "html-img-require-alt": { enabled: true }
+          }
+        }
+      }
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.isRuleEnabledForPath("html-tag-name-lowercase", "app/views/home/index.html.erb")).toBe(false)
+      expect(config.isRuleEnabledForPath("html-img-require-alt", "app/views/home/index.html.erb")).toBe(true)
+    })
+
     test("isLinterEnabledForPath returns true when no exclude patterns", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 

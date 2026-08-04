@@ -1,23 +1,28 @@
 ---
-name: escape_javascript
+name: "escape_javascript"
 source: "ActionView::Helpers::JavaScriptHelper#escape_javascript"
-gem: actionview
-output: text
-visibility: public
+gem: "actionview"
+output: "text"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Escapes carriage returns and single and double quotes for JavaScript segments. Also available as alias `j()`.
 signature: "escape_javascript(javascript)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/JavaScriptHelper.html#method-i-escape_javascript"
+
+description: |-
+  Escapes carriage returns and single and double quotes for JavaScript segments. Also available as alias `j()`.
+
 tag: null
+
 arguments:
-  - name: javascript
+  - name: "javascript"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "JavaScript string to escape."
+    description: |-
+      JavaScript string to escape.
+
 options: []
 special_behaviors: []
 aliases:
-  - j
+  - "j"

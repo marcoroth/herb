@@ -1,23 +1,28 @@
 ---
-name: audio_url
+name: "audio_url"
 source: "ActionView::Helpers::AssetUrlHelper#audio_url"
-gem: actionview
-output: url
-visibility: public
+gem: "actionview"
+output: "url"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Computes the full URL to an audio asset.
 signature: "audio_url(source, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-audio_url"
+
+description: |-
+  Computes the full URL to an audio asset.
+
 tag: null
+
 arguments:
-  - name: source
+  - name: "source"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Audio file name or path."
+    description: |-
+      Audio file name or path.
+
 options: []
 special_behaviors: []
 aliases:
-  - url_to_audio
+  - "url_to_audio"
