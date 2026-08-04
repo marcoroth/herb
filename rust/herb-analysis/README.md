@@ -12,13 +12,14 @@ cd rust && cargo build -p herb-analysis
 ```
 
 ```
-helpers   [path] [--only app,gem,rails,route]        what a template can call
-          [--roots A,B]
-audit     [paths...] [--roots A,B]                   cross-check Herb's helper registry
-          [--gem G] [--include-internal]
-ancestors [paths...] --roots A [--built-ins]         ancestor chain + completeness
-constants [paths...] --nesting A::B NAME             lexical constant resolution
-stats     [paths...]                                 counts and per-phase timings
+Usage: herb-analysis <command> [path] [options]
+
+Commands:
+  helpers          List everything a template can call, grouped by origin
+  audit            Cross-check Herb's Action View helper registry against real sources
+  ancestors        Show a module's ancestor chain and whether it is complete
+  constants        List constants, or resolve one against a lexical nesting
+  stats            Show index counts and per-phase timings
 ```
 
 Paths default to the current directory and must start with `.` or `/`, which is how the

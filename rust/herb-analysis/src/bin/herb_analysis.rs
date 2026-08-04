@@ -23,6 +23,8 @@ struct CLIOptions {
   only: Option<Vec<String>>,
   built_ins: bool,
   help: bool,
+  version: bool,
+  no_color: bool,
 }
 
 fn main() {
@@ -32,8 +34,19 @@ fn main() {
 fn run() -> i32 {
   let options = parse_args(env::args().collect());
 
-  if options.help || options.command.is_none() {
-    show_help();
+  if options.no_color {
+    colored::control::set_override(false);
+  }
+
+  if options.help || (options.command.is_none() && !options.version) {
+    print_usage();
+
+    return 0;
+  }
+
+  if options.version {
+    println!("herb-analysis {VERSION}");
+
     return 0;
   }
 
@@ -45,7 +58,8 @@ fn run() -> i32 {
     Some("stats") => stats(&options),
     Some(other) => {
       eprintln!("{}", format!("Unknown command: {other}").red());
-      show_help();
+      print_usage();
+
       1
     }
     None => 0,
@@ -61,6 +75,8 @@ fn parse_args(args: Vec<String>) -> CLIOptions {
 
     match arg.as_str() {
       "--help" | "-h" => options.help = true,
+      "--version" | "-v" => options.version = true,
+      "--no-color" => options.no_color = true,
       "--built-ins" => options.built_ins = true,
       "--roots" => {
         index += 1;
@@ -591,35 +607,38 @@ fn plural(count: usize, noun: &str) -> String {
   }
 }
 
-fn show_help() {
-  let commands = [
-    ("helpers   [path] [--only app,gem,rails,route]", "what a template can call, grouped by origin"),
-    ("          [--roots A,B]", ""),
-    (
-      "audit     [path] [--gem G] [--include-internal]",
-      "cross-check Herb's Action View helper registry",
-    ),
-    ("ancestors <Name> [path] [--built-ins]", "ancestor chain and whether it is complete"),
-    ("constants [NAME] [--nesting A::B] [path]", "list constants, or resolve one against a nesting"),
-    ("stats     [path]", "index counts and per-phase timings"),
-  ];
-
-  let width = commands.iter().map(|(usage, _)| usage.len()).max().unwrap_or(0);
-
+fn print_usage() {
+  println!("herb-analysis {VERSION} - Cross-file static analysis for Ruby and Action View");
   println!();
-  println!(" {} {}", "herb-analysis".bold(), format!("v{VERSION}").dimmed());
+  println!("Usage: herb-analysis <command> [path] [options]");
   println!();
-
-  for (usage, description) in commands {
-    if description.is_empty() {
-      println!("   {}", usage.dimmed());
-    } else {
-      println!("   {usage:width$}   {description}");
-    }
-  }
-
+  println!("Arguments:");
+  println!("  path             Directory to index, defaults to the current directory");
+  println!("                   Must start with . or / so it is not read as a name");
   println!();
-  println!("   {}", "a path defaults to the current directory and must start with . or /".dimmed());
-  println!("   {}", "without --roots, every indexed *Helper module is used".dimmed());
+  println!("Commands:");
+  println!("  helpers          List everything a template can call, grouped by origin");
+  println!("  audit            Cross-check Herb's Action View helper registry against real sources");
+  println!("  ancestors        Show a module's ancestor chain and whether it is complete");
+  println!("  constants        List constants, or resolve one against a lexical nesting");
+  println!("  stats            Show index counts and per-phase timings");
   println!();
+  println!("Options:");
+  println!("  -h, --help                    show help");
+  println!("  -v, --version                 show version");
+  println!("  --roots <A,B>                 limit to these modules instead of every *Helper module");
+  println!("  --only <origins>              limit `helpers` to app, gem, rails, and/or route");
+  println!("  --gem <name>                  limit the registry comparison in `audit` to one gem");
+  println!("  --include-internal            include registry entries marked internal in `audit`");
+  println!("  --nesting <A::B>              lexical nesting to resolve a constant against");
+  println!("  --built-ins                   seed core class data before resolving ancestors");
+  println!("  --no-color                    disable colored output");
+  println!();
+  println!("Examples:");
+  println!("  herb-analysis helpers                      # everything a template in this app can call");
+  println!("  herb-analysis helpers --only app           # just the app's own helpers");
+  println!("  herb-analysis helpers ../some/gem          # any directory, listed flat");
+  println!("  herb-analysis audit --gem actionview       # check the registry against Action View");
+  println!("  herb-analysis ancestors ActionView::Base   # what a view inherits from");
+  println!("  herb-analysis constants CONFIG --nesting Admin::UsersController");
 }

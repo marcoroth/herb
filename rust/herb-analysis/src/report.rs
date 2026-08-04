@@ -18,12 +18,12 @@ pub struct Diff {
 }
 
 impl Diff {
-  pub fn new(found: &BTreeMap<String, String>, oracle: &BTreeSet<String>) -> Self {
+  pub fn new(found: &BTreeMap<String, String>, expected: &BTreeSet<String>) -> Self {
     let mut matched = BTreeSet::new();
     let mut missing = BTreeSet::new();
     let mut extra = BTreeMap::new();
 
-    for name in oracle {
+    for name in expected {
       if found.contains_key(name) {
         matched.insert(name.clone());
       } else {
@@ -32,7 +32,7 @@ impl Diff {
     }
 
     for (name, owner) in found {
-      if !oracle.contains(name) {
+      if !expected.contains(name) {
         extra.insert(name.clone(), owner.clone());
       }
     }
