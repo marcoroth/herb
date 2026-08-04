@@ -24,6 +24,7 @@ arguments:
       Tokens to join. Hashes enable conditional inclusion.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "class_names"

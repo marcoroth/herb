@@ -40,4 +40,5 @@ options:
     description: |-
       Locale for pluralization rules.
 
+block_arguments: []
 special_behaviors: []

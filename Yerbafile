@@ -168,6 +168,7 @@ rules:
             - tag
             - arguments
             - options
+            - block_arguments
             - special_behaviors
             - aliases
 
@@ -259,6 +260,7 @@ rules:
             - tag
             - arguments
             - options
+            - block_arguments
             - special_behaviors
 
           after:
@@ -267,6 +269,7 @@ rules:
             - tag
             - arguments
             - options
+            - block_arguments
             - special_behaviors
 
       - blank_lines:
@@ -275,6 +278,10 @@ rules:
 
       - blank_lines:
           path: "options"
+          count: 1
+
+      - blank_lines:
+          path: "block_arguments"
           count: 1
 
       - blank_lines:

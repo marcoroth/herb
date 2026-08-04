@@ -39,4 +39,5 @@ options:
     description: |-
       Defaults to `Date.beginning_of_week`.
 
+block_arguments: []
 special_behaviors: []

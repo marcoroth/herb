@@ -72,4 +72,12 @@ options:
     description: |-
       If `false`, prevents the hidden field from being generated.
 
+block_arguments:
+  - name: "builder"
+    position: 1
+    type: "ActionView::Helpers::Tags::CollectionRadioButtons::RadioButtonBuilder"
+    optional: false
+    description: |-
+      The builder for a single radio button in the collection.
+
 special_behaviors: []

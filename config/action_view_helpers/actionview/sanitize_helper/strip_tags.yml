@@ -23,4 +23,5 @@ arguments:
       HTML string to strip tags from.
 
 options: []
+block_arguments: []
 special_behaviors: []

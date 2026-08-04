@@ -40,4 +40,5 @@ options:
     description: |-
       Namespace prefix for the id.
 
+block_arguments: []
 special_behaviors: []

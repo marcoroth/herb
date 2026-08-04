@@ -31,4 +31,5 @@ arguments:
       URL options hash.
 
 options: []
+block_arguments: []
 special_behaviors: []

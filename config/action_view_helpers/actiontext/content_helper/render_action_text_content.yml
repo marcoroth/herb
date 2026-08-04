@@ -23,4 +23,5 @@ arguments:
       The Action Text content object to render.
 
 options: []
+block_arguments: []
 special_behaviors: []

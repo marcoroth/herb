@@ -43,4 +43,27 @@ arguments:
       HTML attributes hash.
 
 options: []
+
+block_arguments:
+  - name: "name"
+    position: 1
+    type: "String"
+    optional: false
+    description: |-
+      The link text, yielded when the URL is the current one.
+
+  - name: "options"
+    position: 2
+    type: "String, Hash"
+    optional: true
+    description: |-
+      The URL options, only yielded to a block that declares three arguments.
+
+  - name: "html_options"
+    position: 3
+    type: "Hash"
+    optional: true
+    description: |-
+      The HTML attributes, only yielded to a block that declares three arguments.
+
 special_behaviors: []

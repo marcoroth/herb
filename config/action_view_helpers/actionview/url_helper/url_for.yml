@@ -24,4 +24,5 @@ arguments:
       URL string or `url_for` options hash.
 
 options: []
+block_arguments: []
 special_behaviors: []

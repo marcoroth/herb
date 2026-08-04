@@ -57,4 +57,5 @@ options:
     description: |-
       Preset the body of the SMS message.
 
+block_arguments: []
 special_behaviors: []

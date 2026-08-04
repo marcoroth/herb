@@ -68,6 +68,8 @@ options:
     description: |-
       Specify if the use of server push is not desired. Defaults to `true`.
 
+block_arguments: []
+
 special_behaviors:
   - type: "multiple_elements"
     source: "splat_args"

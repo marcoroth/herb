@@ -26,4 +26,5 @@ options:
     description: |-
       The request ID for the refresh. Defaults to `Turbo.current_request_id`.
 
+block_arguments: []
 special_behaviors: []

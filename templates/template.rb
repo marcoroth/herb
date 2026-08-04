@@ -485,6 +485,26 @@ module Herb
       end
     end
 
+    class HelperBlockArgument
+      attr_reader :name, :position, :type, :optional, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @position = config.fetch("position")
+        @type = Array(config.fetch("type"))
+        @optional = config.fetch("optional", false)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
+      end
+    end
+
     class HelperOption
       attr_reader :name, :type, :maps_to, :description
 
@@ -618,7 +638,7 @@ module Herb
                   :supported, :description, :signature, :documentation_url, :tag,
                   :content, :attributes_arg, :attributes_arg_with_block,
                   :transform_style, :custom_transform,
-                  :arguments, :options, :special_behaviors, :aliases
+                  :arguments, :options, :block_arguments, :special_behaviors, :aliases
 
       def initialize(config)
         @name = config.fetch("name")
@@ -645,6 +665,7 @@ module Herb
 
         @arguments = (config.fetch("arguments", []) || []).map { |arg| HelperArgument.new(arg) }
         @options = (config.fetch("options", []) || []).map { |opt| HelperOption.new(opt) }
+        @block_arguments = (config.fetch("block_arguments", []) || []).map { |arg| HelperBlockArgument.new(arg) }
 
         raw_behaviors = config.fetch("special_behaviors", []) || []
         @special_behaviors = raw_behaviors.map { |b| HelperSpecialBehavior.new(b) }

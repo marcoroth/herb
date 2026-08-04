@@ -39,4 +39,12 @@ options:
     description: |-
       Custom form builder class.
 
+block_arguments:
+  - name: "form"
+    position: 1
+    type: "ActionView::Helpers::FormBuilder"
+    optional: false
+    description: |-
+      The form builder scoped to the given model.
+
 special_behaviors: []

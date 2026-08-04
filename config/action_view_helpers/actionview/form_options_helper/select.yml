@@ -79,4 +79,5 @@ options:
     description: |-
       If `false`, prevents the hidden field from being generated for multiple selects.
 
+block_arguments: []
 special_behaviors: []

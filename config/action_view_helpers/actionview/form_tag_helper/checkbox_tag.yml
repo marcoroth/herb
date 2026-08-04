@@ -51,6 +51,7 @@ arguments:
       HTML attributes hash.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "check_box_tag"

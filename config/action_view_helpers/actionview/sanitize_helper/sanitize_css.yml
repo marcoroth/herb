@@ -23,4 +23,5 @@ arguments:
       CSS string to sanitize.
 
 options: []
+block_arguments: []
 special_behaviors: []

@@ -57,4 +57,12 @@ options:
     description: |-
       CSS class name(s).
 
+block_arguments:
+  - name: "form"
+    position: 1
+    type: "ActionView::Helpers::FormBuilder"
+    optional: false
+    description: |-
+      The form builder for the model.
+
 special_behaviors: []

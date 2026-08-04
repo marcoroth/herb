@@ -41,4 +41,5 @@ options:
     description: |-
       Whether to generate `:url` or `:path`. Defaults to `:url`.
 
+block_arguments: []
 special_behaviors: []

@@ -23,6 +23,7 @@ arguments:
       Stylesheet file name or path.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "url_to_stylesheet"

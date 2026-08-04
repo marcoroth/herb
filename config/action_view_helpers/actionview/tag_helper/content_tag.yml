@@ -80,4 +80,5 @@ options:
     description: |-
       Hash of `aria-*` attributes.
 
+block_arguments: []
 special_behaviors: []

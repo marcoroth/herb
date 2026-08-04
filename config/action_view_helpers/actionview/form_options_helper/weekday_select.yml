@@ -46,4 +46,5 @@ arguments:
       HTML attributes for the `<select>` tag.
 
 options: []
+block_arguments: []
 special_behaviors: []

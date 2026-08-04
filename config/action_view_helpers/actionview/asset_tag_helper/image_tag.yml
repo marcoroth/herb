@@ -77,6 +77,8 @@ options:
     description: |-
       Hash of `data-*` attributes.
 
+block_arguments: []
+
 special_behaviors:
   - type: "size_to_dimensions"
     attribute: "size"

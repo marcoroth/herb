@@ -23,4 +23,5 @@ arguments:
       HTML string to escape.
 
 options: []
+block_arguments: []
 special_behaviors: []

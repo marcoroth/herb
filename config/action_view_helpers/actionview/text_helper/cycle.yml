@@ -36,4 +36,5 @@ options:
     description: |-
       Name for the cycle. Defaults to `"default"`.
 
+block_arguments: []
 special_behaviors: []

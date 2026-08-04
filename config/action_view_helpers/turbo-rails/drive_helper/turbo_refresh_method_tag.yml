@@ -28,4 +28,5 @@ arguments:
       Refresh method (`:replace` or `:morph`).
 
 options: []
+block_arguments: []
 special_behaviors: []

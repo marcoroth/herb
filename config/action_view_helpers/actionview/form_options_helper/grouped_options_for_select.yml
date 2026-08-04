@@ -49,4 +49,5 @@ options:
     description: |-
       The divider string for option groups.
 
+block_arguments: []
 special_behaviors: []

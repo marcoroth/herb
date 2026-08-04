@@ -23,6 +23,7 @@ arguments:
       Audio file name or path.
 
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
   - "path_to_audio"

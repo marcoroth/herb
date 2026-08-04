@@ -33,4 +33,5 @@ options:
     description: |-
       Decimal separator. Defaults to `"."`.
 
+block_arguments: []
 special_behaviors: []

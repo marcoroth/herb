@@ -31,4 +31,5 @@ arguments:
       Optional prefix for the DOM id (e.g. `:edit`).
 
 options: []
+block_arguments: []
 special_behaviors: []

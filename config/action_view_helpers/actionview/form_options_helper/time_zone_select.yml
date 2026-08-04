@@ -69,4 +69,5 @@ options:
     description: |-
       Default `ActiveSupport::TimeZone` name if the object's time zone is `nil`.
 
+block_arguments: []
 special_behaviors: []

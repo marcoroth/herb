@@ -49,4 +49,5 @@ options:
     description: |-
       HTML tag to wrap paragraphs in. Defaults to `"p"`.
 
+block_arguments: []
 special_behaviors: []

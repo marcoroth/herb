@@ -20,6 +20,7 @@ tag:
 
 arguments: []
 options: []
+block_arguments: []
 
 special_behaviors:
   - "produces_multiple_elements"

@@ -41,4 +41,5 @@ options:
     description: |-
       I18n scope for translations.
 
+block_arguments: []
 special_behaviors: []

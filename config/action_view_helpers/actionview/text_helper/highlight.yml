@@ -43,4 +43,12 @@ options:
     description: |-
       HTML tag to wrap highlights in. Defaults to `<mark>`.
 
+block_arguments:
+  - name: "match"
+    position: 1
+    type: "String"
+    optional: false
+    description: |-
+      Each occurrence of the phrase that was found in the text.
+
 special_behaviors: []

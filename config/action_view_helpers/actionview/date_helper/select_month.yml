@@ -74,4 +74,5 @@ options:
     description: |-
       Set to `true` for a generic prompt or a string for a custom prompt.
 
+block_arguments: []
 special_behaviors: []

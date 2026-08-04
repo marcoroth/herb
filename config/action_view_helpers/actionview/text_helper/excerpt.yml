@@ -48,4 +48,5 @@ options:
     description: |-
       Omission string. Defaults to `"..."`.
 
+block_arguments: []
 special_behaviors: []

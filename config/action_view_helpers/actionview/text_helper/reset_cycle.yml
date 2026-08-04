@@ -24,4 +24,5 @@ arguments:
       Name of the cycle to reset.
 
 options: []
+block_arguments: []
 special_behaviors: []

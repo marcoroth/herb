@@ -101,4 +101,5 @@ options:
     description: |-
       If `true`, the select fields are disabled.
 
+block_arguments: []
 special_behaviors: []

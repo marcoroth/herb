@@ -60,4 +60,12 @@ options:
     description: |-
       Hash of `data-*` attributes.
 
+block_arguments:
+  - name: "tag"
+    position: 1
+    type: "ActionView::Helpers::TagHelper::TagBuilder"
+    optional: false
+    description: |-
+      The tag builder for the `<turbo-frame>` element.
+
 special_behaviors: []

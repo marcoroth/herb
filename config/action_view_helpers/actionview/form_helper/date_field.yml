@@ -48,4 +48,5 @@ options:
     description: |-
       Maximum date value (ISO8601 string or Date/Time object).
 
+block_arguments: []
 special_behaviors: []

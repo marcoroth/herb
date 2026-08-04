@@ -28,6 +28,7 @@ options:
     description: |-
       Include more detail for distances under 1 minute.
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "distance_of_time_in_words_to_now"

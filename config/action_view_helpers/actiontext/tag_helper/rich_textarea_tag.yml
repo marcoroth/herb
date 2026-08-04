@@ -54,4 +54,5 @@ options:
     description: |-
       Hash of `data-*` attributes. Includes direct_upload_url and blob_url_template by default.
 
+block_arguments: []
 special_behaviors: []

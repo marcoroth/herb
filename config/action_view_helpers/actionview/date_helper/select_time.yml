@@ -70,4 +70,5 @@ options:
     description: |-
       Set to `true` for generic prompts, a string for a custom prompt, or a hash for per-field prompts.
 
+block_arguments: []
 special_behaviors: []

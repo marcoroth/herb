@@ -72,6 +72,14 @@ options:
     description: |-
       If `false`, prevents the hidden field from being generated.
 
+block_arguments:
+  - name: "builder"
+    position: 1
+    type: "ActionView::Helpers::Tags::CollectionCheckBoxes::CheckBoxBuilder"
+    optional: false
+    description: |-
+      The builder for a single check box in the collection.
+
 special_behaviors: []
 aliases:
   - "collection_check_boxes"

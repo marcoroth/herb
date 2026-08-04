@@ -87,4 +87,5 @@ options:
     description: |-
       Value, values, or Proc to determine disabled options.
 
+block_arguments: []
 special_behaviors: []

@@ -45,4 +45,5 @@ arguments:
       The selected value(s), a Proc, or a hash with `:selected` and `:disabled` keys.
 
 options: []
+block_arguments: []
 special_behaviors: []

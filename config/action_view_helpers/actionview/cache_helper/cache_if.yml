@@ -31,4 +31,5 @@ arguments:
       Cache key.
 
 options: []
+block_arguments: []
 special_behaviors: []

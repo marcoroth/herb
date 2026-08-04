@@ -38,6 +38,7 @@ options:
     description: |-
       Count for pluralization.
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "t"

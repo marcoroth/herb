@@ -53,4 +53,5 @@ options:
     description: |-
       Maximum time value (ISO8601 string or Time object).
 
+block_arguments: []
 special_behaviors: []

@@ -50,4 +50,5 @@ options:
     description: |-
       File types to accept (e.g. `"image/*"`).
 
+block_arguments: []
 special_behaviors: []

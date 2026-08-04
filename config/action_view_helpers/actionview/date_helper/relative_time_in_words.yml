@@ -46,4 +46,5 @@ options:
     description: |-
       Locale for the translation.
 
+block_arguments: []
 special_behaviors: []

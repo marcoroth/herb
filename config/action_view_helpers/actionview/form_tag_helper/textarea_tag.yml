@@ -48,6 +48,7 @@ options:
     description: |-
       Textarea dimensions as `"COLSxROWS"` (e.g. `"20x40"`).
 
+block_arguments: []
 special_behaviors: []
 aliases:
   - "text_area_tag"

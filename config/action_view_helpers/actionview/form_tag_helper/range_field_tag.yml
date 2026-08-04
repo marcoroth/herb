@@ -63,4 +63,5 @@ options:
     description: |-
       Range of allowed values (sets min, max, and step).
 
+block_arguments: []
 special_behaviors: []

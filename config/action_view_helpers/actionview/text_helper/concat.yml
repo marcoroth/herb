@@ -23,4 +23,5 @@ arguments:
       The text to append to the output buffer.
 
 options: []
+block_arguments: []
 special_behaviors: []
