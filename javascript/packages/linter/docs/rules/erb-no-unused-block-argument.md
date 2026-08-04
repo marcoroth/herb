@@ -28,6 +28,18 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
+With `framework: actionview` configured, the rule knows what each Action View helper hands to its block, so rather than suggesting the builder be dropped, the message names it and leaves the underscore as the way to say the omission is deliberate.
+
+The reverse is stronger still. `cache`, `content_tag` and `link_to` call their block without any arguments, so an argument declared there is bound to `nil` whatever the block does, as is an argument past the end of what the helper yields, like a second one on a `form_with`:
+
+```erb
+<% cache @post do |entry| %>
+  <p>Nothing</p>
+<% end %>
+```
+
+Both of these only apply to a project that sets `framework: actionview` in `.herb.yml`. Anywhere else a `cache` or `form_with` block is whatever the project defines it to be, so the registry says nothing about it and the regular messages are used.
+
 When every argument of a block is unused, the block does not need a parameter list at all, and the message says so with the tag that is already there, minus the `|...|`:
 
 ```erb
@@ -36,7 +48,7 @@ When every argument of a block is unused, the block does not need a parameter li
 <% end %>
 ```
 
-That is not limited to iteration. An unused `form` suggests `<%= form_with model: @user do %>`, an unused index suggests `<% 3.times do %>`. The tag is rewritten from the source, so whatever the block is called on is kept as it is, including trim markers, safe navigation and arguments. The rewrite is skipped when the tag spans multiple lines, when it is long enough to make the message unwieldy, or when an argument the rule does not report would be left behind, and the message falls back to a plain `Remove it`.
+That is not limited to iteration. An unused index suggests `<% 3.times do %>`, an unused row suggests `<% CSV.parse(data).each do %>`. The tag is rewritten from the source, so whatever the block is called on is kept as it is, including trim markers, safe navigation and arguments. The rewrite is skipped when the tag spans multiple lines, when it is long enough to make the message unwieldy, or when an argument the rule does not report would be left behind, and the message falls back to a plain `Remove it`.
 
 Removing one argument out of several is a different edit than removing all of them, because a block destructures what it is yielded based on how many parameters it declares:
 
@@ -174,6 +186,12 @@ An unused argument is worth cleaning up but is not a reason to interrupt someone
 ```erb
 <% pages.each do |page| %>
   <div class="page"></div>
+<% end %>
+```
+
+```erb
+<% cache @post do |entry| %>
+  <p>Nothing</p>
 <% end %>
 ```
 

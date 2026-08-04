@@ -3,13 +3,13 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
-import type { RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
+import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
 
 export type { Mutable } from "@herb-tools/rewriter"
 export type { RuleVersion } from "@herb-tools/core"
-export type { SeverityConfig, LinterMode } from "@herb-tools/config"
+export type { Framework, SeverityConfig, LinterMode } from "@herb-tools/config"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
 
@@ -246,6 +246,7 @@ export interface LintContext {
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
   indentWidth: number | undefined
+  framework: Framework | undefined
 }
 
 /**
@@ -256,7 +257,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
-  indentWidth: undefined
+  indentWidth: undefined,
+  framework: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

@@ -1,14 +1,16 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset } from "@herb-tools/core"
+import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset, getHelper } from "@herb-tools/core"
 
-import type { ERBBlockNode, Node, ParseResult, ParserOptions, PrismNode, RubyParameterNode } from "@herb-tools/core"
+import type { ERBBlockNode, HelperBlockArgument, HelperEntry, Node, ParseResult, ParserOptions, PrismNode, RubyParameterNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
 const REPORTED_KINDS = ["positional", "rest"]
 const MAXIMUM_TAG_SUGGESTION_LENGTH = 60
+
+const TEMPLATE_DRIVEN_BLOCK = "block_arguments_from_template"
 
 class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -37,10 +39,7 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
       if (this.referencesName(source, name)) continue
 
       const suggestion = removal ?? (name === indexArgument ? `Use \`each\` instead of \`each_with_index\`` : null)
-
-      const advice = suggestion
-        ? `${suggestion}, or prefix it with an underscore as \`_${name}\``
-        : `Prefix it with an underscore as \`_${name}\``
+      const advice = this.adviceFor(node, name, suggestion)
 
       this.addOffense(
         `Block argument \`${name}\` is never used. ${advice} to show it is intentionally unused.`,
@@ -50,6 +49,66 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
         ["unnecessary"],
       )
     }
+  }
+
+  private yieldedArgumentFor(node: ERBBlockNode, name: string): { helper: HelperEntry, argument: HelperBlockArgument | null } | null {
+    if (this.context.framework !== "actionview") return null
+
+    const helper = this.helperFor(node)
+
+    if (!helper) return null
+    if (!helper.supportsBlock) return null
+    if (helper.specialBehaviors.includes(TEMPLATE_DRIVEN_BLOCK)) return null
+
+    const parameters = (node.prismNode?.block as PrismNode)?.parameters?.parameters
+
+    if (!isPrismNodeType(parameters, "ParametersNode")) return null
+    if (parameters.optionals.length > 0) return null
+    if (parameters.posts.length > 0) return null
+    if (parameters.rest) return null
+    if (!parameters.requireds.every((parameter: PrismNode) => isPrismNodeType(parameter, "RequiredParameterNode"))) return null
+
+    const position = parameters.requireds.findIndex((parameter: PrismNode) => parameter.name === name)
+    if (position === -1) return null
+
+    return { helper, argument: helper.blockArguments[position] ?? null }
+  }
+
+  private helperFor(node: ERBBlockNode): HelperEntry | null {
+    const call = node.prismNode
+
+    if (!isPrismNodeType(call, "CallNode")) return null
+
+    if (isPrismNodeType(call.receiver, "CallNode") && call.receiver.name === "tag" && !call.receiver.receiver) {
+      return getHelper("tag") ?? null
+    }
+
+    if (call.receiver) return null
+
+    return getHelper(call.name) ?? null
+  }
+
+  private adviceFor(node: ERBBlockNode, name: string, suggestion: string | null): string {
+    const underscore = `prefix it with an underscore as \`_${name}\``
+    const yielded = this.yieldedArgumentFor(node, name)
+
+    if (yielded?.argument) {
+      return `It is the \`${yielded.argument.type}\` yielded by \`${yielded.helper.name}\`, so ${underscore}`
+    }
+
+    if (yielded) {
+      const count = yielded.helper.blockArguments.length
+
+      const reason = count === 0
+        ? `\`${yielded.helper.name}\` yields nothing to its block, so it is always \`nil\``
+        : `\`${yielded.helper.name}\` yields ${count} argument${count === 1 ? "" : "s"}, so it is always \`nil\``
+
+      return `${reason}. ${suggestion ?? "Remove it"}, or ${underscore}`
+    }
+
+    if (suggestion) return `${suggestion}, or ${underscore}`
+
+    return `Prefix it with an underscore as \`_${name}\``
   }
 
   private isUnused(source: string, parameter: RubyParameterNode): boolean {
