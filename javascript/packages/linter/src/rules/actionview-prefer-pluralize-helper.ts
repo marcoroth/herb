@@ -56,10 +56,15 @@ function stringPluralizeCall(node: ERBContentNode): PrismNode | null {
 
   if (!isPrismNodeType(expression, "CallNode")) return null
   if (expression.name !== "pluralize") return null
-  if (!isPrismNodeType(expression.receiver, "StringNode")) return null
+  if (
+    !isPrismNodeType(expression.receiver, "StringNode") &&
+    !isPrismNodeType(expression.receiver, "InterpolatedStringNode")
+  ) {
+    return null
+  }
 
   const args = expression.arguments_?.arguments_
-  if (!Array.isArray(args) || args.length === 0) return null
+  if (!Array.isArray(args) || args.length !== 1) return null
 
   return expression
 }
@@ -143,15 +148,22 @@ class ActionViewPreferPluralizeHelperVisitor extends BaseRuleVisitor {
       )
 
     let singular = slice(pluralize.receiver)
-    const prefix = interveningText.trim()
 
-    if (prefix) {
-      const content = substringFromByteOffset(
-        this.source,
-        pluralize.receiver.contentLoc.startOffset,
-        pluralize.receiver.contentLoc.length,
-      )
-      singular = JSON.stringify(`${prefix} ${content}`)
+    if (interveningText.trim()) {
+      const canRepresentLiteralText =
+        interveningText.startsWith(" ") &&
+        isPrismNodeType(pluralize.receiver, "StringNode")
+
+      if (!canRepresentLiteralText) {
+        singular = "singular"
+      } else {
+        const content = substringFromByteOffset(
+          this.source,
+          pluralize.receiver.contentLoc.startOffset,
+          pluralize.receiver.contentLoc.length,
+        )
+        singular = JSON.stringify(`${interveningText.slice(1)}${content}`)
+      }
     }
 
     const suggestion = `pluralize(${slice(count)}, ${singular})`

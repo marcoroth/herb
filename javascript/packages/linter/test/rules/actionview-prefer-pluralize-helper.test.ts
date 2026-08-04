@@ -52,6 +52,12 @@ describe("ActionViewPreferPluralizeHelperRule", () => {
       `)
     })
 
+    test("passes when String#pluralize has an additional locale argument", () => {
+      expectNoOffenses(dedent`
+        <%= users.size %> <%= "User".pluralize(users.size, :fr) %>
+      `)
+    })
+
     test("does not match across another executable ERB node", () => {
       expectNoOffenses(dedent`
         <%= aliases.size %><% track(aliases) %><%= "Known Alias".pluralize(aliases.size) %>
@@ -124,6 +130,36 @@ describe("ActionViewPreferPluralizeHelperRule", () => {
       assertOffenses(dedent`
         <%= account.aliases(true).size %> <%= "Alias".pluralize(account.aliases(true).size) %>
       `)
+    })
+
+    test("supports an interpolated string receiver", () => {
+      expectWarning(
+        'Prefer the `pluralize` helper over separate count and `String#pluralize` output. Use `<%= pluralize(aliases.size, "#{kind}") %>` instead.',
+      )
+
+      assertOffenses(dedent`
+        <%= aliases.size %> <%= "#{kind}".pluralize(aliases.size) %>
+      `)
+    })
+
+    test("preserves punctuation in the suggested singular", () => {
+      expectWarning(
+        'Prefer the `pluralize` helper over separate count and `String#pluralize` output. Use `<%= pluralize(records.size, "/ Record") %>` instead.',
+      )
+
+      assertOffenses(dedent`
+        <%= records.size %> / <%= "Record".pluralize(records.size) %>
+      `)
+    })
+
+    test("uses a generic suggestion when literal content cannot be represented safely", () => {
+      expectWarning(
+        "Prefer the `pluralize` helper over separate count and `String#pluralize` output. Use `<%= pluralize(records.size, singular) %>` instead.",
+      )
+
+      assertOffenses(
+        `<%= records.size %>\tKnown <%= "Record".pluralize(records.size) %>`,
+      )
     })
   })
 })
