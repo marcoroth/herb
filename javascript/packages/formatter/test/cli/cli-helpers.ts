@@ -31,7 +31,7 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
   const binary = resolve(process.cwd(), "bin/herb-format")
 
   return new Promise((resolvePromise) => {
-    const { NO_COLOR: _ignored, ...env } = process.env
+    const { NO_COLOR: _noColor, FORCE_COLOR: _forceColor, ...env } = process.env
 
     const child = spawn("node", [binary, ...args], {
       cwd: options.cwd,
