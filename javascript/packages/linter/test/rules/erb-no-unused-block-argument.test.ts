@@ -17,7 +17,7 @@ describe("erb-no-unused-block-argument", () => {
       <% end %>
     `
 
-    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+    expectError('Block argument `user` is never used. Remove it and write `<% @users.each do %>`, or prefix it with an underscore as `_user` to show it is intentionally unused.')
 
     assertOffenses(html)
   })
@@ -30,7 +30,7 @@ describe("erb-no-unused-block-argument", () => {
     `
 
     expectError(
-      'Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.',
+      'Block argument `user` is never used. Remove it and write `<% @users.each do %>`, or prefix it with an underscore as `_user` to show it is intentionally unused.',
       [1, 19]
     )
 
@@ -187,7 +187,7 @@ describe("erb-no-unused-block-argument", () => {
       <% end %>
     `
 
-    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+    expectError('Block argument `user` is never used. Remove it and write `<% @users.each do %>`, or prefix it with an underscore as `_user` to show it is intentionally unused.')
 
     assertOffenses(html)
   })
@@ -199,7 +199,7 @@ describe("erb-no-unused-block-argument", () => {
       <% end %>
     `
 
-    expectError('Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.')
+    expectError('Block argument `user` is never used. Remove it and write `<% @users.each do %>`, or prefix it with an underscore as `_user` to show it is intentionally unused.')
 
     assertOffenses(html)
   })
@@ -310,7 +310,128 @@ describe("erb-no-unused-block-argument", () => {
       <% end %>
     `
 
-    expectError('Block argument `group` is never used. Remove it, or prefix it with an underscore as `_group` to show it is intentionally unused.')
+    expectError('Block argument `group` is never used. Remove it and write `<% @groups.each do %>`, or prefix it with an underscore as `_group` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each do` when the only `each` argument is unused", () => {
+    const html = dedent`
+      <% pages.each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it and write `<% pages.each do %>`, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("keeps the trim markers of the ERB tag in the suggestion", () => {
+    const html = dedent`
+      <%- pages.each do |page| -%>
+        <div class="page"></div>
+      <%- end -%>
+    `
+
+    expectError('Block argument `page` is never used. Remove it and write `<%- pages.each do -%>`, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each do` for a chained receiver", () => {
+    const html = dedent`
+      <% @user.pages.each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it and write `<% @user.pages.each do %>`, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `each do` for a constant receiver", () => {
+    const html = dedent`
+      <% Page.all.each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it and write `<% Page.all.each do %>`, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` for a receiverless `each`", () => {
+    const html = dedent`
+      <% each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` when the receiver takes arguments", () => {
+    const html = dedent`
+      <% pages.where(published: true).each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` when the receiver takes a block", () => {
+    const html = dedent`
+      <% pages.select { |page| page.published? }.each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` for a safe navigation `each`", () => {
+    const html = dedent`
+      <% pages&.each do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it, or prefix it with an underscore as `_page` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` for a destructured `each` argument", () => {
+    const html = dedent`
+      <% pairs.each do |(name, data)| %>
+        <div class="pair"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `name` is never used. Remove it, or prefix it with an underscore as `_name` to show it is intentionally unused.')
+    expectError('Block argument `data` is never used. Remove it, or prefix it with an underscore as `_data` to show it is intentionally unused.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `each do` for another iterator", () => {
+    const html = dedent`
+      <% pages.map do |page| %>
+        <div class="page"></div>
+      <% end %>
+    `
+
+    expectError('Block argument `page` is never used. Remove it, or prefix it with an underscore as `_page` to show it is intentionally unused.')
 
     assertOffenses(html)
   })

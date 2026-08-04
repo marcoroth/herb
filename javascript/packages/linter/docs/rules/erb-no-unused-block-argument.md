@@ -14,10 +14,6 @@ This applies to every block that spans ERB tags, both iteration blocks and helpe
 <% end %>
 ```
 
-```
-Block argument `user` is never used. Remove it, or prefix it with an underscore as `_user` to show it is intentionally unused.
-```
-
 ## Rationale
 
 An unused block argument is usually one of two things: a leftover from an edit that removed the code using it, or a sign that the wrong variable is being referenced in the body. Both are worth a second look.
@@ -32,16 +28,22 @@ For helper blocks the signal is often stronger. A `form_with` block that never t
 <% end %>
 ```
 
-When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, since that is what the loop is actually doing:
+When the only argument of an `each` is unused, the block is not iterating over anything, it is repeating its body once per element. A block runs just as well without declaring the argument at all, so the message spells that out:
+
+```erb
+<% pages.each do |page| %>
+  <div class="page"></div>
+<% end %>
+```
+
+That wording is only used for a receiver that reads as a plain reference, like `pages`, `@user.pages` or `Page.all`. When the `each` is called on something that takes arguments or a block, or is called with `&.`, the receiver is not worth repeating in the message, so the regular message is used.
+
+When the unused argument is the index of an `each_with_index`, the message suggests `each` instead, for the same reason:
 
 ```erb
 <% @pairs.each_with_index do |(name, data), index| %>
   <%= name %>: <%= data %>
 <% end %>
-```
-
-```
-Block argument `index` is never used. Use `each` instead of `each_with_index`, or prefix it with an underscore as `_index` to show it is intentionally unused.
 ```
 
 That suggestion is only made for the plain `|element, index|` shape. With any other parameter list the index is not simply droppable, so the regular message is used.
@@ -103,6 +105,12 @@ An unused argument is worth cleaning up but is not a reason to interrupt someone
 ```
 
 ```erb
+<% pages.each do %>
+  <div class="page"></div>
+<% end %>
+```
+
+```erb
 <%= form_with model: @user do |form| %>
   <%= form.text_field :name %>
 <% end %>
@@ -145,6 +153,12 @@ An unused argument is worth cleaning up but is not a reason to interrupt someone
 ```erb
 <% @pairs.each_with_index do |(name, data), index| %>
   <%= name %>: <%= data %>
+<% end %>
+```
+
+```erb
+<% pages.each do |page| %>
+  <div class="page"></div>
 <% end %>
 ```
 

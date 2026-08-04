@@ -1,13 +1,23 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
+import { isRubyLiteralNode, isRubyParameterNode, isPrismNodeType, substringFromByteOffset } from "@herb-tools/core"
 
 import type { ERBBlockNode, Node, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
 
 const IGNORED_PREFIX = "_"
 const REPORTED_KINDS = ["positional", "rest"]
+
+const SIMPLE_RECEIVER_TYPES = [
+  "ClassVariableReadNode",
+  "ConstantPathNode",
+  "ConstantReadNode",
+  "GlobalVariableReadNode",
+  "InstanceVariableReadNode",
+  "LocalVariableReadNode",
+  "SelfNode",
+] as const
 
 class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -21,7 +31,6 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     if (parameters.length === 0) return
 
     const source = this.rubySourceInBody(node)
-    const indexArgument = this.eachWithIndexArgumentName(node)
 
     for (const parameter of parameters) {
       const name = parameter.name?.value
@@ -31,9 +40,7 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
       if (!REPORTED_KINDS.includes(parameter.kind)) continue
       if (this.referencesName(source, name)) continue
 
-      const suggestion = name === indexArgument
-        ? `Use \`each\` instead of \`each_with_index\``
-        : `Remove it`
+      const suggestion = this.suggestionFor(node, name)
 
       this.addOffense(
         `Block argument \`${name}\` is never used. ${suggestion}, or prefix it with an underscore as \`_${name}\` to show it is intentionally unused.`,
@@ -45,11 +52,61 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     }
   }
 
+  private suggestionFor(node: ERBBlockNode, name: string): string {
+    if (name === this.eachWithIndexArgumentName(node)) {
+      return `Use \`each\` instead of \`each_with_index\``
+    }
+
+    const receiver = this.eachReceiverSource(node, name)
+
+    if (receiver) {
+      const opening = node.tag_opening?.value ?? "<%"
+      const closing = node.tag_closing?.value ?? "%>"
+
+      return `Remove it and write \`${opening} ${receiver}.each do ${closing}\``
+    }
+
+    return `Remove it`
+  }
+
   private eachWithIndexArgumentName(node: ERBBlockNode): string | null {
+    const parameters = this.plainBlockParameters(node, "each_with_index")
+
+    if (!parameters) return null
+    if (parameters.requireds.length !== 2) return null
+
+    const index = parameters.requireds[1]
+    if (!isPrismNodeType(index, "RequiredParameterNode")) return null
+
+    return index.name
+  }
+
+  private eachReceiverSource(node: ERBBlockNode, name: string): string | null {
+    const call = node.prismNode
+    const parameters = this.plainBlockParameters(node, "each")
+
+    if (!parameters) return null
+    if (parameters.requireds.length !== 1) return null
+
+    const element = parameters.requireds[0]
+    if (!isPrismNodeType(element, "RequiredParameterNode")) return null
+    if (element.name !== name) return null
+    if (call.isSafeNavigation()) return null
+
+    const receiver = call.receiver
+    if (!this.isSimpleReceiver(receiver)) return null
+
+    const source = node.source
+    if (!source) return null
+
+    return substringFromByteOffset(source, receiver.location.startOffset, receiver.location.length)
+  }
+
+  private plainBlockParameters(node: ERBBlockNode, method: string): PrismNode | null {
     const call = node.prismNode
 
     if (!isPrismNodeType(call, "CallNode")) return null
-    if (call.name !== "each_with_index") return null
+    if (call.name !== method) return null
     if (call.arguments_) return null
 
     const parameters = (call.block as PrismNode)?.parameters?.parameters
@@ -59,12 +116,23 @@ class NoUnusedBlockArgumentVisitor extends BaseRuleVisitor {
     if (parameters.posts.length > 0) return null
     if (parameters.keywords.length > 0) return null
     if (parameters.rest || parameters.keywordRest || parameters.block) return null
-    if (parameters.requireds.length !== 2) return null
 
-    const index = parameters.requireds[1]
-    if (!isPrismNodeType(index, "RequiredParameterNode")) return null
+    return parameters
+  }
 
-    return index.name
+  private isSimpleReceiver(node: PrismNode | null | undefined): boolean {
+    if (!node) return false
+    if (SIMPLE_RECEIVER_TYPES.some(type => isPrismNodeType(node, type))) return true
+
+    if (isPrismNodeType(node, "CallNode")) {
+      if (node.arguments_ || node.block) return false
+      if (node.isSafeNavigation()) return false
+      if (!node.receiver) return true
+
+      return this.isSimpleReceiver(node.receiver)
+    }
+
+    return false
   }
 
   private rubySourceInBody(node: ERBBlockNode): string {
