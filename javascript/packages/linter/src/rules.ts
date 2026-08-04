@@ -110,6 +110,8 @@ import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
+import { ReactivityPreferCollectionKeyRule } from "./rules/reactivity-prefer-collection-key.js"
+
 import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
@@ -227,6 +229,8 @@ export const rules: RuleClass[] = [
   HTMLTagNameLowercaseRule,
 
   ParserNoErrorsRule,
+
+  ReactivityPreferCollectionKeyRule,
 
   SourceIndentationRule,
 

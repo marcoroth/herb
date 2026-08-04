@@ -131,6 +131,11 @@ This page contains documentation for all Herb Linter rules.
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
 
 
+#### Reactivity
+
+- [`reactivity-prefer-collection-key`](./reactivity-prefer-collection-key.md) - Prefer a stable key on collection rows.
+
+
 #### Source
 
 - [`source-indentation`](./source-indentation.md) - Indent with spaces instead of tabs.
