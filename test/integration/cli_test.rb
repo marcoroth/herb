@@ -170,6 +170,19 @@ module Engine
       end
     end
 
+    test "compile picks up a herb:slots directive without the flag" do
+      template = "<%# herb:slots %>\n<% users.each do |user| %><li><%= user.name %></li><% end %>"
+
+      with_temp_file(template) do |file_path|
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", file_path]).call
+        end
+
+        assert_includes captured_output, "herb-slot:0"
+        assert_includes captured_error, "Add a `herb-key` or `id` attribute to `<li>`"
+      end
+    end
+
     test "compile invalid template with json" do
       template = <<~ERB
         <div>

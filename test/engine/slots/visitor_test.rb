@@ -341,6 +341,35 @@ module Engine
                      slots_for("<div><% if @a %>x<% end %></div>").version
       end
 
+      test "a herb:slots directive opts a single template in" do
+        engine = Herb::Engine.new("<%# herb:slots %>\n<p><%= @a %></p>", validation_mode: :none)
+
+        refute_nil engine.slot_visitor
+        assert_includes engine.src, "herb-slot:0"
+      end
+
+      test "recognises the trimming and unspaced forms of the directive" do
+        ["<%#- herb:slots -%>", "<%#herb:slots%>", "<%#   herb:slots   %>"].each do |directive|
+          engine = Herb::Engine.new("#{directive}<p><%= @a %></p>", validation_mode: :none)
+
+          refute_nil engine.slot_visitor, "expected slots for: #{directive}"
+        end
+      end
+
+      test "leaves other ERB comments alone" do
+        ["<%# just a note %>", "<%# herb:key u.id %>", "<%# slots %>"].each do |comment|
+          engine = Herb::Engine.new("#{comment}<p><%= @a %></p>", validation_mode: :none)
+
+          assert_nil engine.slot_visitor, "expected no slots for: #{comment}"
+        end
+      end
+
+      test "an explicit slots option wins over the directive" do
+        engine = Herb::Engine.new("<%# herb:slots %><p><%= @a %></p>", slots: false, validation_mode: :none)
+
+        assert_nil engine.slot_visitor
+      end
+
       test "engine exposes no slot visitor unless slots are enabled" do
         assert_nil Herb::Engine.new("<p><%= @a %></p>", validation_mode: :none).slot_visitor
       end

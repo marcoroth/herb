@@ -39,6 +39,8 @@ module Herb
       "'" => "&#39;",
     }.freeze
 
+    SLOTS_DIRECTIVE = /<%#-?\s*herb:slots\s*-?%>/
+
     class CompilationError < StandardError
     end
 
@@ -76,7 +78,7 @@ module Herb
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
       @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
-      @slots = properties.fetch(:slots, Herb.configuration.engine_option("slots", false))
+      @slots = properties.fetch(:slots) { self.class.slots_directive?(input) || Herb.configuration.engine_option("slots", false) }
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
@@ -242,6 +244,11 @@ module Herb
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
+    #: (String) -> bool
+    def self.slots_directive?(source)
+      SLOTS_DIRECTIVE.match?(source)
     end
 
     def source_may_contain_action_view_helpers?(source)
