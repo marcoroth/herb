@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build": "yarn vendor:playground && yarn vendor:c-reference && yarn fetch:contributors && vitepress build",
+    "build": "yarn vendor:playground && yarn vendor:c-reference && yarn fetch:contributors && NODE_DISABLE_COMPILE_CACHE=1 vitepress build",
     "vendor:c-reference": "cd .. && doxygen Doxyfile",
     "vendor:playground": "cd ../playground && yarn build && cd - && cp ../playground/dist/index.html ./docs/public/playground-embed.html && cp ../playground/dist/prism/index.html ./docs/public/playground-prism-embed.html && cp -R ../playground/dist/assets ./docs/public",
     "preview": "vitepress preview",

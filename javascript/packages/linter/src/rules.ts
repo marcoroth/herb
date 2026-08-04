@@ -51,6 +51,7 @@ import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argume
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
+import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
 import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
 import { ERBPreferExplicitConditionalsRule } from "./rules/erb-prefer-explicit-conditionals.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
@@ -168,6 +169,7 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
   ERBPreferDirectOutputRule,
+  ERBPreferDoEndBlocksRule,
   ERBPreferEachOverMapRule,
   ERBPreferExplicitConditionalsRule,
   ERBPreferImageTagHelperRule,
