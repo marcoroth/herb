@@ -5,13 +5,7 @@ import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ERBBlockNode, ERBContentNode, ParseResult, ParserOptions, PrismNode, Location } from "@herb-tools/core"
 
-// Supported helpers are transformed into `<form>` elements by the parser and
-// caught by the element branch, so only unsupported ones need Prism detection.
-const FORM_HELPERS = new Set(
-  getHelpersForTag("form")
-    .filter(helper => !helper.supported)
-    .flatMap(helper => [helper.name, ...helper.aliases])
-)
+const FORM_HELPERS = new Set(getHelpersForTag("form").filter(helper => !helper.supported).flatMap(helper => [helper.name, ...helper.aliases]))
 
 class FormHelperCallCollector extends PrismVisitor {
   public helperName: string | null = null
@@ -39,7 +33,7 @@ class NestedFormVisitor extends BaseRuleVisitor {
 
     if (this.formDepth > 0) {
       this.addOffense(
-        "Nested `<form>` elements are not allowed. Move the inner `<form>` outside of the enclosing form, or associate its controls using the `form` attribute.",
+        "Nested `<form>` elements are not allowed. Move the inner `<form>` outside of the enclosing `<form>`, or associate its controls using the `form` attribute.",
         this.elementLocation(node),
       )
     }
@@ -49,6 +43,7 @@ class NestedFormVisitor extends BaseRuleVisitor {
     this.formDepth--
   }
 
+  // TODO: remove once we support transforming all the Action View form helpers
   visitERBBlockNode(node: ERBBlockNode): void {
     const helperName = this.formHelperName(node)
 
@@ -64,6 +59,7 @@ class NestedFormVisitor extends BaseRuleVisitor {
     this.formDepth--
   }
 
+  // TODO: remove once we support transforming all the Action View form helpers
   visitERBContentNode(node: ERBContentNode): void {
     const helperName = this.formHelperName(node)
 
@@ -78,7 +74,7 @@ class NestedFormVisitor extends BaseRuleVisitor {
     if (this.formDepth === 0) return
 
     this.addOffense(
-      `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another form. Move it outside of the enclosing form.`,
+      `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another \`<form>\`. Move it outside of the enclosing \`<form>\`.`,
       location,
     )
   }

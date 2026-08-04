@@ -14,7 +14,7 @@ Disallow placing one `<form>` element inside another `<form>` element. HTML does
 ```
 
 ```
-`button_to` renders its own `<form>` element and cannot be nested inside another form. Move it outside of the enclosing form.
+`button_to` renders its own `<form>` element and cannot be nested inside another `<form>`. Move it outside of the enclosing `<form>`.
 ```
 
 ## Rationale
