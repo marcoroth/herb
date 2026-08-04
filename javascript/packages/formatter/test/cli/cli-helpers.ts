@@ -5,8 +5,13 @@ import { resolve } from "path"
 export type ExecResult = {
   stdout: string
   stderr: string
+  plainStdout: string
   exitCode: number
 }
+
+const ANSI_PATTERN = /\x1b\[[0-9;]*m|\x1b\]8;;.*?\x1b\\/g
+
+export const stripAnsi = (text: string): string => text.replace(ANSI_PATTERN, "")
 
 export type ExecOptions = {
   cwd?: string
@@ -40,7 +45,7 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
 
     const timeout = setTimeout(() => {
       child.kill()
-      resolvePromise({ stdout, stderr, exitCode: 1 })
+      resolvePromise({ stdout, stderr, plainStdout: stripAnsi(stdout), exitCode: 1 })
     }, 5000)
 
     child.stdout.on("data", (data) => {
@@ -53,7 +58,7 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
 
     child.on("close", (code) => {
       clearTimeout(timeout)
-      resolvePromise({ stdout, stderr, exitCode: code || 0 })
+      resolvePromise({ stdout, stderr, plainStdout: stripAnsi(stdout), exitCode: code || 0 })
     })
 
     if (child.stdin) {
