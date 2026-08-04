@@ -5,17 +5,13 @@ import { resolve } from "path"
 export type ExecResult = {
   stdout: string
   stderr: string
-  plainStdout: string
   exitCode: number
 }
-
-const ANSI_PATTERN = /\x1b\[[0-9;]*m|\x1b\]8;;.*?\x1b\\/g
-
-export const stripAnsi = (text: string): string => text.replace(ANSI_PATTERN, "")
 
 export type ExecOptions = {
   cwd?: string
   stdin?: "pipe" | "ignore"
+  color?: boolean
 }
 
 export const expectExitCode = (result: ExecResult, expectedCode: number) => {
@@ -35,9 +31,12 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
   const binary = resolve(process.cwd(), "bin/herb-format")
 
   return new Promise((resolvePromise) => {
+    const { NO_COLOR: _ignored, ...env } = process.env
+
     const child = spawn("node", [binary, ...args], {
       cwd: options.cwd,
-      stdio: [options.stdin || "pipe", "pipe", "pipe"]
+      stdio: [options.stdin || "pipe", "pipe", "pipe"],
+      env: options.color ? env : { ...env, NO_COLOR: "1" }
     })
 
     let stdout = ""
@@ -45,7 +44,7 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
 
     const timeout = setTimeout(() => {
       child.kill()
-      resolvePromise({ stdout, stderr, plainStdout: stripAnsi(stdout), exitCode: 1 })
+      resolvePromise({ stdout, stderr, exitCode: 1 })
     }, 5000)
 
     child.stdout.on("data", (data) => {
@@ -58,7 +57,7 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
 
     child.on("close", (code) => {
       clearTimeout(timeout)
-      resolvePromise({ stdout, stderr, plainStdout: stripAnsi(stdout), exitCode: code || 0 })
+      resolvePromise({ stdout, stderr, exitCode: code || 0 })
     })
 
     if (child.stdin) {

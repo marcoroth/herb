@@ -106,7 +106,7 @@ describe("CLI Binary", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain('Formatted: test-format.html.erb')
+      expect(result.stdout).toContain('Formatted: test-format.html.erb')
 
       const formattedContent = await readFile(testFile, 'utf-8')
       expect(formattedContent).toBe(dedent`
@@ -182,7 +182,7 @@ describe("CLI Binary", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).not.toContain(`Formatted: ${testFile}`)
+      expect(result.stdout).not.toContain(`Formatted: ${testFile}`)
 
       const fileContent = await readFile(testFile, 'utf-8')
       expect(fileContent).toBe(input)
@@ -201,7 +201,7 @@ describe("CLI Binary", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain(`Formatted: ${testFile}`)
+      expect(result.stdout).toContain(`Formatted: ${testFile}`)
 
       const fileContent = await readFile(testFile, 'utf-8')
       expect(fileContent).not.toBe(input)
@@ -235,7 +235,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("1 formatted")
-      expect(result.plainStdout).toContain(`Formatted: ${testFile}`)
+      expect(result.stdout).toContain(`Formatted: ${testFile}`)
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -470,7 +470,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-fixtures/test.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/test.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
 
       const actualContent = await readFile("test-fixtures/test.xml.erb", "utf-8")
       expect(actualContent.trim()).toBe(expectedContent)
@@ -487,8 +487,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/file1.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/file2.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file2.xml.erb")
       expect(result.stdout).not.toContain("ignored.html.erb")
       expect(result.stdout).toContain("2 formatted")
     })
@@ -502,8 +502,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-fixtures/**/*.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/top.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/nested/deep.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/top.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/nested/deep.xml.erb")
       expect(result.stdout).toContain("2 formatted")
     })
 
@@ -517,8 +517,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-fixtures/*.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/file.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/file.html.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file.html.erb")
       expect(result.stdout).toContain("2 formatted")
     })
 
@@ -570,7 +570,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["./test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-fixtures/test.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
       expect(result.stdout).toContain("1 formatted")
     })
   })
@@ -598,9 +598,9 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-advanced/**/file*.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-advanced/sub1/file1.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-advanced/sub1/file2.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-advanced/sub2/file3.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/sub1/file1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/sub1/file2.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/sub2/file3.xml.erb")
       expect(result.stdout).not.toContain("root.xml.erb")
       expect(result.stdout).not.toContain("ignore.html.erb")
       expect(result.stdout).toContain("3 formatted")
@@ -616,8 +616,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-advanced/{config,manifest}.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-advanced/config.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-advanced/manifest.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/config.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/manifest.xml.erb")
       expect(result.stdout).not.toContain("other.erb")
       expect(result.stdout).toContain("2 formatted")
     })
@@ -633,7 +633,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-advanced/"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-advanced/page.html.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/page.html.erb")
       expect(result.stdout).not.toContain("file.xml.erb") // Only .html.erb by default for directories
       expect(result.stdout).not.toContain("readme.txt")
       expect(result.stdout).toContain("1 formatted")
@@ -655,11 +655,11 @@ describe("CLI Binary", () => {
 
       const result1 = await execBinary(["test-advanced/specific.xml.erb"])
       expectExitCode(result1, 0)
-      expect(result1.plainStdout).toContain("Formatted: test-advanced/specific.xml.erb")
+      expect(result1.stdout).toContain("Formatted: test-advanced/specific.xml.erb")
 
       const result2 = await execBinary(["test-advanced/another.html.erb"])
       expectExitCode(result2, 0)
-      expect(result2.plainStdout).toContain("Formatted: test-advanced/another.html.erb")
+      expect(result2.stdout).toContain("Formatted: test-advanced/another.html.erb")
     })
 
     it("should preserve glob patterns in error messages", async () => {
@@ -714,8 +714,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-multi/file1.html.erb", "test-multi/file2.html.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-multi/file1.html.erb")
-      expect(result.plainStdout).toContain("Formatted: test-multi/file2.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/file1.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/file2.html.erb")
       expect(result.stdout).toContain("2 formatted")
     })
 
@@ -729,8 +729,8 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-multi/formatted.html.erb", "test-multi/unformatted.html.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).not.toContain("Formatted: test-multi/formatted.html.erb")
-      expect(result.plainStdout).toContain("Formatted: test-multi/unformatted.html.erb")
+      expect(result.stdout).not.toContain("Formatted: test-multi/formatted.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/unformatted.html.erb")
       expect(result.stdout).toContain("1 formatted")
     })
 
@@ -793,9 +793,9 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-multi/specific.html.erb", "test-multi/*.xml.erb"])
 
       expectExitCode(result, 0)
-      expect(result.plainStdout).toContain("Formatted: test-multi/specific.html.erb")
-      expect(result.plainStdout).toContain("Formatted: test-multi/pattern1.xml.erb")
-      expect(result.plainStdout).toContain("Formatted: test-multi/pattern2.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/specific.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/pattern1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/pattern2.xml.erb")
       expect(result.stdout).toContain("3 formatted")
     })
   })
