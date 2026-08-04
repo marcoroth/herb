@@ -152,7 +152,10 @@ export class Client {
       documentSelector: [
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
-        { scheme: "file", language: "yaml", pattern: "**/.herb.yml" },
+        { scheme: "file", language: "yaml", pattern: `**/${Config.configPath}` },
+        ...Config.misnamedConfigPaths.map(misnamedPath => ({
+          scheme: "file", language: "yaml", pattern: `**/${misnamedPath}`
+        })),
       ],
       synchronize: {
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),

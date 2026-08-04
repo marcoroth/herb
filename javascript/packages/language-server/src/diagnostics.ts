@@ -5,6 +5,7 @@ import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
 import { ConfigService } from "./config_service"
+import { isConfigDocument } from "./utils"
 
 export class Diagnostics {
   private readonly connection: Connection
@@ -31,7 +32,7 @@ export class Diagnostics {
   async validate(textDocument: TextDocument) {
     let allDiagnostics: Diagnostic[] = []
 
-    if (textDocument.uri.endsWith('.herb.yml')) {
+    if (isConfigDocument(textDocument.uri)) {
       allDiagnostics = await this.configService.validateDocument(textDocument)
     } else {
       const parseResult = this.parserService.parseDocument(textDocument)
