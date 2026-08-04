@@ -42,9 +42,11 @@ export function extractHTMLCommentContent(children: Node[]): string {
  *
  * @param rawInner - The joined children content string (may be empty)
  * @param indentWidth - Number of spaces per indent level
+ * @param baseIndent - Indentation of the line the comment starts on, so nested
+ *   comments keep their content and closing `-->` aligned with the `<!--`
  * @returns The formatted inner string, or null if rawInner is empty-ish
  */
-export function formatHTMLCommentInner(rawInner: string, indentWidth: number): string {
+export function formatHTMLCommentInner(rawInner: string, indentWidth: number, baseIndent: string = ""): string {
   if (!rawInner && rawInner !== "") return ""
 
   const trimmedInner = rawInner.trim()
@@ -57,12 +59,12 @@ export function formatHTMLCommentInner(rawInner: string, indentWidth: number): s
 
   if (hasNewlines) {
     const lines = rawInner.split('\n')
-    const childIndent = " ".repeat(indentWidth)
+    const childIndent = baseIndent + " ".repeat(indentWidth)
     const firstLineHasContent = lines[0].trim() !== ''
 
     if (firstLineHasContent && lines.length > 1) {
       const contentLines = lines.map(line => line.trim()).filter(line => line !== '')
-      return '\n' + contentLines.map(line => childIndent + line).join('\n') + '\n'
+      return '\n' + contentLines.map(line => childIndent + line).join('\n') + '\n' + baseIndent
     } else {
       const contentLines = lines.filter((line, index) => {
         return line.trim() !== '' && !(index === 0 || index === lines.length - 1)
@@ -73,8 +75,12 @@ export function formatHTMLCommentInner(rawInner: string, indentWidth: number): s
       const processedLines = lines.map((line, index) => {
         const trimmedLine = line.trim()
 
-        if ((index === 0 || index === lines.length - 1) && trimmedLine === '') {
+        if (index === 0 && trimmedLine === '') {
           return line
+        }
+
+        if (index === lines.length - 1 && trimmedLine === '') {
+          return baseIndent
         }
 
         if (trimmedLine !== '') {
