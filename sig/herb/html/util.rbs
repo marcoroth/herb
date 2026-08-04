@@ -6,8 +6,18 @@ module Herb
       # TODO: extract to shared utility for all languages in .yml
       VOID_ELEMENTS: Array[String]
 
+      RCDATA_ELEMENTS: Array[String]
+
+      RAW_TEXT_ELEMENTS: Array[String]
+
       # : (String) -> bool
       def self.void_element?: (String) -> bool
+
+      # : (String) -> bool
+      def self.rcdata_element?: (String) -> bool
+
+      # : (String) -> bool
+      def self.raw_text_element?: (String) -> bool
     end
   end
 end

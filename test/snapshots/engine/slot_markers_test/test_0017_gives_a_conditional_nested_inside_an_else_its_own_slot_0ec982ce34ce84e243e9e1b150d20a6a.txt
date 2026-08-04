@@ -2,4 +2,4 @@
 source: "Engine::SlotMarkersTest#test_0017_gives a conditional nested inside an else its own slot"
 input: "{source: \"<div><% if @a %>A<% else %><% if @b %><%= @n %><% end %><% end %></div>\", locals: {\"@a\" => false, \"@b\" => true, \"@n\" => \"N\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
 ---
-<!--herb-region:app/views/test.html.erb:59f2bf41--><div><!--herb-slot:0--><!--herb-slot:1--><!--herb-slot:2-->N<!--/herb-slot:2--><!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:59f2bf41--><div><!--herb-slot:0--><!--herb-branch:0:1--><!--herb-slot:1--><!--herb-branch:1:0--><!--herb-slot:2-->N<!--/herb-slot:2--><!--/herb-slot:1--><!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->

@@ -2,4 +2,4 @@
 source: "Engine::SlotMarkersTest#test_0023_anchors an interpolated attribute value"
 input: "{source: \"<div class=\\\"a <%= @c %> b\\\"></div>\", locals: {\"@c\" => \"C\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
 ---
-<!--herb-region:app/views/test.html.erb:ac144d5f--><div class="a C b" data-herb-slot="0"></div><!--/herb-region:app/views/test.html.erb-->
+<!--herb-region:app/views/test.html.erb:2518ad79--><div class="a C b" data-herb-slot="0"></div><!--/herb-region:app/views/test.html.erb-->
