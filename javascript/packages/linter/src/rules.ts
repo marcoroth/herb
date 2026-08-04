@@ -96,6 +96,7 @@ import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
+import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
@@ -214,6 +215,7 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
   HTMLNoEmptyHeadingsRule,
+  HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
