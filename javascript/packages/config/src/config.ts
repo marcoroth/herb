@@ -10,8 +10,10 @@ import { promises as fs } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
-import { ZodError } from "zod"
+import { ZodError, z } from "zod"
 import { HerbConfigSchema } from "./config-schema.js"
+
+import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -99,8 +101,13 @@ export type HerbConfigOptions = {
   formatter?: FormatterConfig
 }
 
+export type Framework = z.infer<typeof FrameworkSchema>
+export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
+
 export type HerbConfig = HerbConfigOptions & {
   version: string
+  framework?: Framework
+  template_engine?: TemplateEngine
 }
 
 export type LoadOptions = {
@@ -157,6 +164,10 @@ export class Config {
       linter: this.config.linter,
       formatter: this.config.formatter
     }
+  }
+
+  get framework() {
+    return this.config.framework
   }
 
   get linter() {
