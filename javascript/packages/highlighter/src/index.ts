@@ -1,4 +1,5 @@
 export * from "./color.js"
+export * from "./diagnostic-markers.js"
 export * from "./diagnostic-renderer.js"
 export * from "./file-renderer.js"
 export * from "./highlighter.js"
