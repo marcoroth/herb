@@ -26,7 +26,7 @@ module Herb
         @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
-        @erb_block_stack = [] #: Array[Herb::AST::ERBBlockNode]
+        @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
         @debug_attributes_applied = false
         @in_attribute = false
         @in_html_comment = false
@@ -87,6 +87,12 @@ module Herb
       end
 
       def visit_erb_block_node(node)
+        @erb_block_stack.push(node)
+        super
+        @erb_block_stack.pop
+      end
+
+      def visit_erb_iteration_block_node(node)
         @erb_block_stack.push(node)
         super
         @erb_block_stack.pop

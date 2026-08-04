@@ -1,5 +1,5 @@
-use std::path::Path;
 use herb_analysis::rails;
+use std::path::Path;
 
 fn app() -> &'static Path {
   Path::new("tests/fixtures/rails_app")
@@ -123,4 +123,54 @@ fn namespace_does_not_leak_past_its_end() {
 #[test]
 fn missing_routes_file_yields_nothing_rather_than_panicking() {
   assert!(rails::route_helpers(Path::new("tests/fixtures/ruby")).is_empty());
+}
+
+fn exposed() -> std::collections::BTreeMap<String, std::path::PathBuf> {
+  rails::helper_methods(&[app().to_string_lossy().to_string()])
+}
+
+#[test]
+fn finds_methods_exposed_with_helper_method() {
+  let exposed = exposed();
+
+  for name in ["current_user", "signed_in?", "page_title"] {
+    assert!(exposed.contains_key(name), "missing {name}");
+  }
+}
+
+#[test]
+fn finds_helper_method_inside_an_included_block() {
+  let exposed = exposed();
+
+  assert!(exposed.contains_key("search_query"));
+}
+
+#[test]
+fn handles_a_trailing_conditional_on_the_declaration() {
+  let exposed = exposed();
+
+  assert!(exposed.contains_key("cookies"), "`helper_method :cookies if defined?(...)` should still count");
+}
+
+#[test]
+fn ignores_dynamic_helper_method_calls() {
+  let exposed = exposed();
+
+  assert!(!exposed.contains_key("type"), "`helper_method(type)` carries no symbol to resolve");
+}
+
+#[test]
+fn does_not_treat_ordinary_controller_methods_as_exposed() {
+  let exposed = exposed();
+
+  assert!(!exposed.contains_key("internal_thing"));
+  assert!(!exposed.contains_key("expose"));
+}
+
+#[test]
+fn records_the_file_each_exposure_came_from() {
+  let exposed = exposed();
+
+  assert!(exposed["current_user"].ends_with("application_controller.rb"));
+  assert!(exposed["search_query"].ends_with("concerns/searchable.rb"));
 }

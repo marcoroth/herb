@@ -1,6 +1,6 @@
 import picomatch from "picomatch"
 
-import { Location } from "@herb-tools/core"
+import { Location, semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -12,8 +12,7 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { semverGreaterThan } from "./semver.js"
-import { resolveSeverity } from "@herb-tools/config"
+import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
@@ -131,7 +130,13 @@ export class Linter {
    * Priority:
    * 1. User explicitly enabled/disabled (if rule config exists in userRulesConfig)
    * 2. Version gating (if rule.introducedIn > configVersion, skip unless explicitly enabled)
-   * 3. Default config from rule's defaultConfig getter
+   * 3. The `all` pseudo rule in userRulesConfig, if configured
+   * 4. Default config from rule's defaultConfig getter
+   *
+   * The `all` pseudo rule replaces every rule's own default. When it enables
+   * everything, version gating is bypassed as well, since holding rules back
+   * would contradict the setting. When it disables everything, gating stays in
+   * place but can't change the outcome: the rule ends up disabled either way.
    *
    * When `options.only` is provided all of the above is bypassed and exactly the
    * requested rules are enabled, regardless of the user configuration.
@@ -176,9 +181,11 @@ export class Linter {
     let disabledByConfig = 0
     let notEnabledByDefault = 0
 
+    const allRulesDefault = userRulesConfig?.[ALL_RULES_KEY]?.enabled
+
     for (const ruleClass of allRules) {
       const instance = new ruleClass()
-      const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
+      const defaultEnabled = allRulesDefault ?? instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
       const userRuleConfig = userRulesConfig?.[ruleClass.ruleName]
 
       if (userRuleConfig !== undefined) {
@@ -191,7 +198,7 @@ export class Linter {
         continue
       }
 
-      if (configVersion && ruleClass.introducedIn) {
+      if (allRulesDefault !== true && configVersion && ruleClass.introducedIn) {
         if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
           if (defaultEnabled) {
             skippedByVersion.push({
@@ -429,13 +436,13 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    this.parseCache.clear()
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
     const parseResult = this.parseCache.get(source)
 
-    // Check for file-level ignore directive using visitor
     if (hasLinterIgnoreDirective(parseResult)) {
       return {
         offenses: [],
@@ -446,6 +453,7 @@ export class Linter {
         ignored: 0
       }
     }
+
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
     const sourceLines = source.split("\n")
@@ -458,6 +466,7 @@ export class Linter {
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
         const offenses = rule.check(parseResult)
+
         this.offenses.push(...offenses)
       }
     }
@@ -485,8 +494,6 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
-      // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
@@ -588,6 +595,8 @@ export class Linter {
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    this.parseCache.clear()
+
     const includeUnsafe = options?.includeUnsafe ?? false
 
     context = {

@@ -1,9 +1,9 @@
 [package]
 name = "herb-analysis"
-version = "0.10.2"
+version = "0.10.3"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
-description = "Exploratory static-analysis spike over rubydex"
+description = "Cross-file static analysis of Ruby and Action View sources for Herb"
 license = "MIT"
 repository = "https://github.com/marcoroth/herb"
 publish = false

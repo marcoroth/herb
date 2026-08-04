@@ -419,11 +419,24 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("multiline span with text collapses to inline with spaces", () => {
+  test("multiline span with text keeps the author's newlines", () => {
     const source = dedent`
       <span>
         And on the other hand one can not remove whitespace entirely
       </span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span>
+        And on the other hand one can not remove whitespace entirely
+      </span>
+    `)
+  })
+
+  test("single-line span with text keeps the author's single line", () => {
+    const source = dedent`
+      <span> And on the other hand one can not remove whitespace entirely </span>
     `
 
     const result = formatter.format(source)

@@ -11,7 +11,7 @@ fn load_reads_and_merges_with_defaults() {
   fs::write(
     &config_path,
     r#"
-version: 0.10.2
+version: 0.10.3
 linter:
   enabled: true
   rules:
@@ -27,7 +27,7 @@ formatter:
 
   let config = Config::load(dir.path(), None).unwrap();
 
-  assert_eq!(config.config_version, Some("0.10.2".into()));
+  assert_eq!(config.config_version, Some("0.10.3".into()));
   assert_eq!(config.version(), herb_config::DEFAULT_VERSION);
 
   assert!(config.is_linter_enabled());
@@ -86,6 +86,56 @@ fn load_for_editor_does_not_create_a_config_file() {
   assert!(!dir.path().join(".herb.yml").exists());
 }
 
+fn load_error(config_content: &str, version: &str) -> String {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join(".herb.yml"), config_content).unwrap();
+
+  Config::load(dir.path(), Some(version)).unwrap_err()
+}
+
+#[test]
+fn explains_the_skew_when_the_config_declares_a_newer_version_than_the_one_running() {
+  let error = load_error("version: 0.10.3\nunknown_key: value\n", "0.9.2");
+
+  assert!(error.contains("Configuration errors in"));
+  assert!(error.contains("This configuration declares version 0.10.3, but Herb 0.9.2 is running"));
+  assert!(error.contains("Upgrade Herb to 0.10.3 or newer"));
+}
+
+#[test]
+fn does_not_explain_the_skew_when_the_config_declares_an_older_version() {
+  let error = load_error("version: 0.9.2\nunknown_key: value\n", "0.10.3");
+
+  assert!(error.contains("Configuration errors in"));
+  assert!(!error.contains("declares version"));
+}
+
+#[test]
+fn does_not_explain_the_skew_when_the_versions_match() {
+  let error = load_error("version: 0.10.3\nunknown_key: value\n", "0.10.3");
+
+  assert!(!error.contains("declares version"));
+}
+
+#[test]
+fn does_not_explain_the_skew_when_the_config_has_no_version() {
+  let error = load_error("unknown_key: value\n", "0.9.2");
+
+  assert!(!error.contains("declares version"));
+}
+
+#[test]
+fn does_not_report_a_skew_for_a_valid_config() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n\nlinter:\n  enabled: true\n").unwrap();
+
+  let config = Config::load(dir.path(), Some("0.9.2")).unwrap();
+
+  assert_eq!(config.config_version.as_deref(), Some("0.10.3"));
+}
+
 #[test]
 fn read_raw_yaml_errors_when_the_file_is_missing() {
   let dir = tempfile::tempdir().unwrap();
@@ -98,7 +148,7 @@ fn find_config_file_finds_config_in_current_dir() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
 
-  fs::write(&config_path, "version: 0.10.2\n").unwrap();
+  fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
   let found = Config::find_config_file(dir.path());
 
@@ -111,7 +161,7 @@ fn find_config_file_walks_up_directory_tree() {
   let dir = tempfile::tempdir().unwrap();
   let config_path = dir.path().join(".herb.yml");
 
-  fs::write(&config_path, "version: 0.10.2\n").unwrap();
+  fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
   let sub_dir = dir.path().join("app").join("views");
   fs::create_dir_all(&sub_dir).unwrap();

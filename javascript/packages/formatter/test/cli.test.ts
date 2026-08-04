@@ -84,7 +84,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.10.2
+      version: 0.10.3
       formatter:
         enabled: false
     `)
@@ -278,17 +278,55 @@ describe("CLI Binary", () => {
   })
 
   it("should reject --check with stdin", async () => {
-    const result = await execBinary(["--check"], "<div>test</div>")
+    const result = await execBinary(["--check", "-"], "<div>test</div>")
 
     expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
   })
 
   it("should reject -c with stdin", async () => {
-    const result = await execBinary(["-c"], "<div>test</div>")
+    const result = await execBinary(["-c", "-"], "<div>test</div>")
 
     expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
+  })
+
+  for (const stdin of ["pipe", "ignore"] as const)  {
+    it(`should check configured files with --check when stdin is a non-TTY ${stdin}`, async () => {
+      const directory = `test-non-tty-${stdin}`
+      const input = '<div><p>   Not formatted   </p></div>'
+
+      await mkdir(directory, { recursive: true })
+      await writeFile(join(directory, "unformatted.html.erb"), input)
+
+      try {
+        const result = await execBinary(["--check"], undefined, { cwd: directory, stdin })
+
+        expect(result.stderr).not.toContain("--check mode is not supported with stdin")
+        expectExitCode(result, 1)
+        expect(result.stdout).toContain("unformatted.html.erb")
+        expect(result.stdout).toContain("not formatted")
+      } finally {
+        await rm(directory, { recursive: true }).catch(() => {})
+      }
+    })
+  }
+
+  it("should pass --check with a non-TTY stdin when all files are formatted", async () => {
+    const directory = "test-non-tty-stdin-formatted"
+    const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "formatted.html.erb"), input)
+
+    try {
+      const result = await execBinary(["--check"], undefined, { cwd: directory, stdin: "pipe" })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("all files are properly formatted")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
   })
 
   it("should pass --check when file is already formatted", async () => {

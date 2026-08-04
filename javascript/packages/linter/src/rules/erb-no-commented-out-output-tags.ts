@@ -24,14 +24,17 @@ class ERBNoCommentedOutOutputTagsVisitor extends BaseRuleVisitor {
 
     this.addOffense(
       `\`${commentedTag}\` looks like a temporarily commented ERB output tag. Remove it, or restore it to \`${originalTag}\` if it's still needed.`,
-      openTag.location,
+      node.location,
+      undefined,
+      undefined,
+      ["unnecessary"],
     )
   }
 }
 
 export class ERBNoCommentedOutOutputTagsRule extends ParserRule {
   static ruleName = "erb-no-commented-out-output-tags"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.10.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

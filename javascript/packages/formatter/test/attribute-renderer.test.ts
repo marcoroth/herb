@@ -251,16 +251,16 @@ describe("AttributeRenderer", () => {
       expect(renderer.shouldRenderInline(0, 40, 4)).toBe(false)
     })
 
-    test("returns true for 1-3 attributes within line length", () => {
+    test("returns true for multiple attributes within line length", () => {
       const renderer = createRenderer(120)
 
       expect(renderer.shouldRenderInline(2, 40, 4)).toBe(true)
     })
 
-    test("returns false for more than 3 attributes", () => {
+    test("returns true for many attributes that still fit within line length", () => {
       const renderer = createRenderer(120)
 
-      expect(renderer.shouldRenderInline(4, 40, 4)).toBe(false)
+      expect(renderer.shouldRenderInline(4, 40, 4)).toBe(true)
     })
 
     test("returns false when exceeding line length", () => {

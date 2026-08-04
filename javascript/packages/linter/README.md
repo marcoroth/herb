@@ -20,8 +20,12 @@ npm install -g @herb-tools/linter
 pnpm add -g @herb-tools/linter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/linter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/linter template.html.erb
 ```
 
 ```shell [bun]
@@ -193,23 +197,52 @@ npx @herb-tools/linter template.html.erb --no-github
 ```
 
 **Exit Behavior:** <Badge type="info" text="v0.8.7+" />
-```bash
-# Exit with error code when warnings or higher are present
-npx @herb-tools/linter template.html.erb --fail-level warning
-
-# Exit with error code when info diagnostics or higher are present
-npx @herb-tools/linter template.html.erb --fail-level info
-
-# Exit with error code when any diagnostic (including hints) is present
-npx @herb-tools/linter template.html.erb --fail-level hint
-```
 
 By default, the linter exits with code `1` only when errors are present. The `--fail-level` option allows you to control this behavior for CI/CD pipelines where you want stricter enforcement. Valid values are: `error` (default), `warning`, `info`, `hint`.
+
+Exit with error code when warnings or higher are present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level warning
+```
+
+Exit with error code when info diagnostics or higher are present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level info
+```
+
+Exit with error code when any diagnostic (including hints) is present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level hint
+```
 
 This can also be configured in `.herb.yml`:
 ```yaml [.herb.yml]
 linter:
   failLevel: warning
+```
+
+The CLI flag takes precedence over the configuration file.
+
+**Reported Severities:** <Badge type="info" text="^0.11.0" />
+
+By default, every offense is reported. The `--log-level` option keeps low-severity noise out of the output and out of GitHub Actions annotations, which is useful on large codebases where `hint` and `info` offenses would otherwise drown out the ones you care about.
+
+Only report errors, hiding warnings, info and hints:
+```bash
+npx @herb-tools/linter template.html.erb --log-level error
+```
+
+Only report warnings and errors:
+```bash
+npx @herb-tools/linter template.html.erb --log-level warning
+```
+
+Offenses below the level are still counted: they show up in the summary, they still count towards `--fail-level`, and they still show up in your editor. Only the individual reports (and CI annotations) are omitted.
+
+This can also be configured in `.herb.yml`:
+```yaml [.herb.yml]
+linter:
+  logLevel: warning
 ```
 
 The CLI flag takes precedence over the configuration file.
@@ -322,7 +355,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -337,7 +370,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -499,6 +532,10 @@ linter:
   # # Exit with error code when diagnostics of this severity or higher are present
   # # Valid values: error (default), warning, info, hint
   # failLevel: warning
+
+  # # Only report diagnostics of this severity or higher
+  # # Valid values: error, warning, info, hint (default)
+  # logLevel: warning
 
   # Additional glob patterns to include (additive to defaults)
   include:

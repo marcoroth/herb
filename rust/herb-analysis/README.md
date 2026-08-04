@@ -12,43 +12,66 @@ cd rust && cargo build -p herb-analysis
 ```
 
 ```
-smoke                                        in-memory indexing check, no filesystem needed
-helpers   <paths...> --roots A,B              helper set
-          [--oracle [--gem G] [--public-only]] score against the built-in registry
-ancestors <paths...> --roots A [--built-ins]  ancestor chain + linearization completeness
-constants <paths...> --nesting A::B NAME      lexical constant resolution
-stats     <paths...>                          counts and per-phase timings
+helpers   [path] [--only app,gem,rails,route]        what a template can call
+          [--roots A,B]
+audit     [paths...] [--roots A,B]                   cross-check Herb's helper registry
+          [--gem G] [--include-internal]
+ancestors [paths...] --roots A [--built-ins]         ancestor chain + completeness
+constants [paths...] --nesting A::B NAME             lexical constant resolution
+stats     [paths...]                                 counts and per-phase timings
 ```
 
-Paths must start with `.` or `/` — the arg parser uses that to tell paths from names.
+Paths default to the current directory and must start with `.` or `/`, which is how the
+arg parser tells them from names. Without `--roots`, every indexed `*Helper` module is
+used, so `herb-analysis helpers .` lists everything callable in the app you are standing in.
 
-`--oracle` scores against `herb::action_view_helpers`, the registry generated from
-`config/action_view_helpers/` into the `herb` crate — the same source
-`lib/herb/action_view/helper_registry.rb` is rendered from. Nothing is read at runtime.
-`--gem` and `--public-only` filter it; `--public-only` is almost always what you want,
-since the registry also records internal config accessors no template calls.
+`audit` cross-checks `herb::action_view_helpers`, the registry generated from
+`config/action_view_helpers/` into the `herb` crate, against what rubydex finds in real gem
+sources. Disagreements are actionable in both directions: a registry entry nothing defines
+usually means a wrong `source:` field, and a helper the registry has never heard of is a
+candidate to add. It already found two wrong `source:` values (`button` and `submit` are
+`FormBuilder` methods, not `FormHelper` ones).
 
-Examples, all against corpora already vendored in this repo. Resolve the gem path rather
-than hardcoding a Ruby ABI version — `vendor/bundle/ruby/<version>/` moves whenever the
-bundle is reinstalled under a different Ruby:
+`--gem` narrows the registry to one gem. Internal entries are excluded by default, since
+the registry also records config accessors no template calls; `--include-internal` opts
+back in.
 
 ```bash
 ACTIONVIEW=$(ls -d ../vendor/bundle/ruby/*/gems/actionview-*/lib | head -1)
 TURBO=$(ls -d ../vendor/bundle/ruby/*/gems/turbo-rails-* | head -1)
 
-./bin/herb-analysis smoke
 ./bin/herb-analysis ancestors $ACTIONVIEW --roots ActionView::Base
-./bin/herb-analysis helpers $ACTIONVIEW --roots ActionView::Base --oracle --gem actionview --public-only
-./bin/herb-analysis helpers $TURBO --roots Turbo::FramesHelper,Turbo::StreamsHelper \
-  --oracle --gem turbo-rails --public-only
+./bin/herb-analysis audit $ACTIONVIEW --roots ActionView::Base --gem actionview
+./bin/herb-analysis audit $TURBO --roots Turbo::FramesHelper,Turbo::StreamsHelper \
+  --gem turbo-rails
 ./bin/herb-analysis stats ../lib
 ```
 
-Experiments against a real Rails app need one on disk; there is no usable fixture app in
-this repo (`stimulus-lint/test/fixtures/test-rails-app/` has views but zero `.rb` files).
+## What a template can call
 
-## Note on the dependency arrow
+`helpers` answers "what can a template here call". Run it from a Rails app, or pass a path.
+In an app (one with a `Gemfile.lock`) it resolves the app's gems and route helpers and
+groups the result by origin; pointed anywhere else it lists what those sources define.
+Origins can be requested individually:
 
-`herb-analysis` depends on `herb`; the root `herb` package must **never** depend on
-`herb-analysis`. CI runs `cargo package` on the root package, and a path dependency
-without a version breaks packaging.
+```bash
+herb-analysis helpers                    # everything, grouped by origin
+herb-analysis helpers --only app         # helpers defined in app/helpers
+herb-analysis helpers --only gem         # helpers from gems in the Gemfile.lock
+herb-analysis helpers --only rails       # Action View built-ins
+herb-analysis helpers --only route       # route helpers from config/routes.rb
+herb-analysis helpers --only app,gem     # any combination
+herb-analysis helpers ../some/gem        # any directory, flat list
+```
+
+Narrower requests do less work. `--only route` reads `config/routes.rb` and indexes
+nothing, and `--only app` skips gem sources entirely.
+
+Names a controller exposes with `helper_method :name` are included too. They never appear
+in a view's ancestor chain, so they are found by reading the declarations directly, and are
+reported with the controller they came from. Dynamic forms such as `helper_method(type)`
+carry no symbol and are skipped.
+
+Route helpers are approximate. They are generated at boot from the routes DSL and have no
+definition to find, so they are reconstructed from `root`, `resources`, `resource`, `as:`
+and literal path segments. Nesting, `scope`, and `only:`/`except:` are not modelled.

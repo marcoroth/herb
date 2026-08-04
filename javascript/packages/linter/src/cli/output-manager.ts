@@ -1,9 +1,13 @@
+import { meetsSeverityThreshold } from "@herb-tools/core"
+
 import { SummaryReporter } from "./summary-reporter.js"
 import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, type JSONOutput } from "./formatters/index.js"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { FormatOption } from "./argument-parser.js"
-import type { ProcessingResult } from "./file-processor.js"
+import type { ProcessedFile, ProcessingResult } from "./file-processor.js"
+import type { SummaryData } from "./summary-reporter.js"
 
 interface OutputOptions {
   formatOption: FormatOption
@@ -15,6 +19,8 @@ interface OutputOptions {
   startTime: number
   startDate: Date
   toolVersion?: string
+  failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
 }
 
 interface LintResults extends ProcessingResult {
@@ -28,52 +34,29 @@ export class OutputManager {
    * Output successful lint results
    */
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
-    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, ruleOffenses, rulesSkippedByVersion, context } = results
+    const { allOffenses, files, totalErrors, totalWarnings, totalIgnored, filesWithOffenses, ruleCount, ruleOffenses, context } = results
 
-    const autofixableCount = allOffenses.filter(offense => offense.autocorrectable).length
+    const logLevel = options.logLevel ?? "hint"
+
+    const reportedOffenses = this.reportedOffenses(allOffenses, logLevel)
 
     if (options.useGitHubActions) {
-      const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines)
-      await githubFormatter.formatAnnotations(allOffenses)
+      const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines, context?.projectPath)
+      await githubFormatter.formatAnnotations(reportedOffenses)
 
       if (options.formatOption !== "json") {
         const regularFormatter = options.formatOption === "simple"
           ? new SimpleFormatter()
-          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
+          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
 
-        await regularFormatter.format(allOffenses, files.length === 1)
+        await regularFormatter.format(reportedOffenses, files.length === 1)
 
         this.summaryReporter.displayMostViolatedRules(ruleOffenses)
-        this.summaryReporter.displaySummary({
-          files,
-          totalErrors,
-          totalWarnings,
-          totalInfo,
-          totalHints,
-          totalIgnored,
-          totalWouldBeIgnored,
-          filesWithOffenses,
-          ruleCount,
-          startTime: options.startTime,
-          startDate: options.startDate,
-          showTiming: options.showTiming,
-          ruleOffenses,
-          autofixableCount,
-          ignoreDisableComments: context?.ignoreDisableComments,
-          rulesSkippedByVersion,
-          rulesDisabledByConfig: results.rulesDisabledByConfig,
-          rulesNotEnabledByDefault: results.rulesNotEnabledByDefault,
-          configVersion: context?.config?.configVersion,
-          configPath: context?.config?.path,
-          hasConfigFile: context?.hasConfigFile,
-          toolVersion: options.toolVersion,
-          only: context?.only,
-          allRules: context?.allRules,
-        })
+        this.summaryReporter.displaySummary(this.summaryData(results, options))
       }
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
-        offenses: allOffenses.map(({ filename, offense }) => ({
+        offenses: reportedOffenses.map(({ filename, offense }) => ({
           filename,
           message: offense.message,
           location: offense.location.toJSON(),
@@ -86,10 +69,11 @@ export class OutputManager {
           filesWithOffenses,
           totalErrors,
           totalWarnings,
-          totalInfo,
-          totalHints,
+          totalInfo: results.totalInfo,
+          totalHints: results.totalHints,
           totalIgnored,
           totalOffenses: totalErrors + totalWarnings,
+          totalNotReported: allOffenses.length - reportedOffenses.length,
           ruleCount
         },
         timing: null,
@@ -108,37 +92,68 @@ export class OutputManager {
     } else {
       const formatter = options.formatOption === "simple"
         ? new SimpleFormatter()
-        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
+        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
 
-      await formatter.format(allOffenses, files.length === 1)
+      await formatter.format(reportedOffenses, files.length === 1)
 
       this.summaryReporter.displayMostViolatedRules(ruleOffenses)
-      this.summaryReporter.displaySummary({
-        files,
-        totalErrors,
-        totalWarnings,
-        totalInfo,
-        totalHints,
-        totalIgnored,
-        totalWouldBeIgnored,
-        filesWithOffenses,
-        ruleCount,
-        startTime: options.startTime,
-        startDate: options.startDate,
-        showTiming: options.showTiming,
-        ruleOffenses,
-        autofixableCount,
-        ignoreDisableComments: context?.ignoreDisableComments,
-        rulesSkippedByVersion,
-        rulesDisabledByConfig: results.rulesDisabledByConfig,
-        rulesNotEnabledByDefault: results.rulesNotEnabledByDefault,
-        configVersion: context?.config?.configVersion,
-        configPath: context?.config?.path,
-        hasConfigFile: context?.hasConfigFile,
-        toolVersion: options.toolVersion,
-        only: context?.only,
-        allRules: context?.allRules,
-      })
+      this.summaryReporter.displaySummary(this.summaryData(results, options))
+    }
+  }
+
+  private reportedOffenses(allOffenses: ProcessedFile[], logLevel: DiagnosticSeverity): ProcessedFile[] {
+    if (logLevel === "hint") return allOffenses
+
+    return allOffenses.filter(({ offense }) => meetsSeverityThreshold(offense.severity, logLevel))
+  }
+
+  private summaryData(results: LintResults, options: OutputOptions): SummaryData {
+    const { allOffenses, files, totalErrors, totalWarnings, totalInfo, totalHints, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, ruleOffenses, rulesSkippedByVersion, context } = results
+
+    const failLevel = options.failLevel ?? "error"
+    const logLevel = options.logLevel ?? "hint"
+
+    const failingFiles = new Set<string>()
+    const notFailingFiles = new Set<string>()
+
+    for (const { filename, offense } of allOffenses) {
+      if (meetsSeverityThreshold(offense.severity, failLevel)) {
+        failingFiles.add(filename)
+      } else {
+        notFailingFiles.add(filename)
+      }
+    }
+
+    return {
+      files,
+      totalErrors,
+      totalWarnings,
+      totalInfo,
+      totalHints,
+      totalIgnored,
+      totalWouldBeIgnored,
+      filesWithOffenses,
+      filesFailing: failingFiles.size,
+      filesNotFailing: notFailingFiles.size,
+      failLevel,
+      logLevel,
+      ruleCount,
+      startTime: options.startTime,
+      startDate: options.startDate,
+      showTiming: options.showTiming,
+      ruleOffenses,
+      autofixableCount: allOffenses.filter(offense => offense.autocorrectable).length,
+      unsafeAutofixableCount: allOffenses.filter(offense => offense.unsafeAutocorrectable).length,
+      ignoreDisableComments: context?.ignoreDisableComments,
+      rulesSkippedByVersion,
+      rulesDisabledByConfig: results.rulesDisabledByConfig,
+      rulesNotEnabledByDefault: results.rulesNotEnabledByDefault,
+      configVersion: context?.config?.configVersion,
+      configPath: context?.config?.path,
+      hasConfigFile: context?.hasConfigFile,
+      toolVersion: options.toolVersion,
+      only: context?.only,
+      allRules: context?.allRules,
     }
   }
 
@@ -160,6 +175,7 @@ export class OutputManager {
           totalHints: 0,
           totalIgnored: 0,
           totalOffenses: 0,
+          totalNotReported: 0,
           ruleCount: 0
         },
         timing: null,

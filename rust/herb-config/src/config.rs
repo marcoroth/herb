@@ -4,6 +4,7 @@ use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigO
 use crate::defaults::{config_template, default_config, default_config_value, DEFAULT_VERSION};
 use crate::glob::{glob, glob_absolute, is_path_matching};
 use crate::merge::deep_merge;
+use crate::semver::semver_greater_than;
 use crate::severity::{resolve_severity, LinterMode, Severity, SeverityConfig};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,6 +19,7 @@ pub trait SeverityOverridable {
 }
 
 pub const CONFIG_PATH: &str = ".herb.yml";
+pub const ALL_RULES_KEY: &str = "all";
 
 const PROJECT_INDICATORS: &[&str] = &[
   ".git",
@@ -117,8 +119,15 @@ impl Config {
     self.linter()?.rules.as_ref()?.get(rule_name)
   }
 
+  pub fn default_rule_enabled(&self) -> Option<bool> {
+    self.get_rule_config(ALL_RULES_KEY).and_then(|rule| rule.enabled)
+  }
+
   pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
-    self.get_rule_config(rule_name).and_then(|rule| rule.enabled) == Some(false)
+    match self.get_rule_config(rule_name) {
+      Some(rule) => rule.enabled == Some(false),
+      None => self.default_rule_enabled() == Some(false),
+    }
   }
 
   pub fn is_rule_enabled(&self, rule_name: &str) -> bool {
@@ -444,7 +453,17 @@ impl Config {
       mapping.insert(serde_yaml::Value::String("version".to_string()), serde_yaml::Value::String(version.to_string()));
     }
 
-    serde_yaml::from_value::<HerbConfig>(parsed.clone()).map_err(|error| format!("Configuration errors in {}: {}", config_path.display(), error))?;
+    serde_yaml::from_value::<HerbConfig>(parsed.clone()).map_err(|error| {
+      let message = format!("Configuration errors in {}: {}", config_path.display(), error);
+
+      match &user_config_version {
+        Some(declared_version) if semver_greater_than(declared_version, version) => format!(
+          "{}\n\n  This configuration declares version {}, but Herb {} is running. Options added after {} aren't recognized. Upgrade Herb to {} or newer.",
+          message, declared_version, version, version, declared_version
+        ),
+        _ => message,
+      }
+    })?;
 
     let defaults = default_config_value(version);
     let mut resolved: HerbConfig =

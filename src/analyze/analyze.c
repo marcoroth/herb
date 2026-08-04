@@ -8,6 +8,7 @@
 #include "../include/analyze/control_type.h"
 #include "../include/analyze/helpers.h"
 #include "../include/analyze/invalid_structures.h"
+#include "../include/analyze/iteration_nodes.h"
 #include "../include/analyze/postfix_conditionals.h"
 #include "../include/analyze/render_nodes.h"
 #include "../include/analyze/strict_locals.h"
@@ -953,6 +954,7 @@ hb_array_T* get_node_children_array(const AST_NODE_T* node) {
     case AST_DOCUMENT_NODE: return ((AST_DOCUMENT_NODE_T*) node)->children;
     case AST_HTML_ELEMENT_NODE: return ((AST_HTML_ELEMENT_NODE_T*) node)->body;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->body;
+    case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->body;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->statements;
     case AST_ERB_UNLESS_NODE: return ((AST_ERB_UNLESS_NODE_T*) node)->statements;
     case AST_ERB_ELSE_NODE: return ((AST_ERB_ELSE_NODE_T*) node)->statements;
@@ -1027,6 +1029,7 @@ void herb_analyze_parse_tree(
     .document = document,
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
+    .tag_helper_locals = hb_array_init(8, allocator),
     .allocator = allocator,
     .source = source,
   };
@@ -1039,6 +1042,9 @@ void herb_analyze_parse_tree(
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, &context);
 
   if (options && options->render_nodes) { herb_visit_node((AST_NODE_T*) document, transform_render_nodes, &context); }
+  if (options && options->iteration_nodes) {
+    herb_visit_node((AST_NODE_T*) document, transform_iteration_nodes, &context);
+  }
 
   if (options && options->strict_locals) {
     herb_visit_node((AST_NODE_T*) document, transform_strict_locals_nodes, &context);
@@ -1063,5 +1069,11 @@ void herb_analyze_parse_tree(
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 
+  for (size_t index = hb_array_size(context.tag_helper_locals); index > 0; index--) {
+    char* local_name = hb_array_get(context.tag_helper_locals, index - 1);
+    if (local_name) { hb_allocator_dealloc(allocator, local_name); }
+  }
+
+  hb_array_free(&context.tag_helper_locals);
   hb_array_free(&context.ruby_context_stack);
 }

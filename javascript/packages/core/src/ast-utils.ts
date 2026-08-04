@@ -6,6 +6,7 @@ import {
   ERBIfNode,
   ERBUnlessNode,
   ERBBlockNode,
+  ERBIterationBlockNode,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBWhileNode,
@@ -35,6 +36,7 @@ import {
   isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
+  isRubyLiteralNode,
   areAllOfType,
   filterLiteralNodes,
   filterHTMLTextNodes,
@@ -100,7 +102,7 @@ export function isERBCommentNode(node: Node): node is ERBCommentNode {
  * Checks if a node is a non-output ERB node (control flow: <% %>)
  */
 export function isERBControlFlowNode(node: Node): node is ERBContentNode {
-  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
+  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBIterationBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
 }
 
 /**
@@ -115,6 +117,24 @@ export function hasERBContent(nodes: Node[]): boolean {
  */
 export function hasERBOutput(nodes: Node[]): boolean {
   return nodes.some(isERBOutputNode)
+}
+
+/**
+ * Checks if a node outputs a dynamic value
+ *
+ * Covers both ERB output (`<%= %>`) and the Ruby expressions that Action View
+ * helper attribute values are made of, where `id: "#{user.name}-pending"`
+ * becomes a `RubyLiteralNode` next to a `LiteralNode` instead of an ERB node.
+ */
+export function isDynamicOutputNode(node: Node): boolean {
+  return isERBOutputNode(node) || isRubyLiteralNode(node)
+}
+
+/**
+ * Checks if an array of nodes contains any dynamic output nodes
+ */
+export function hasDynamicOutput(nodes: Node[]): boolean {
+  return nodes.some(isDynamicOutputNode)
 }
 
 
@@ -807,11 +827,15 @@ export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementN
 // --- AST Mutation Utilities ---
 
 const CHILD_ARRAY_PROPS = ["children", "body", "statements", "conditions"]
-const LINKED_NODE_PROPS = ["subsequent", "else_clause"]
+
+function isSearchableNode(value: any): value is Node {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) && 'type' in value
+}
 
 /**
  * Finds the array containing a target node in the AST, along with its index.
- * Traverses child arrays and linked node properties (e.g., `subsequent`, `else_clause`).
+ * Traverses child arrays and any node-valued property (e.g., `subsequent`, `else_clause`,
+ * `open_tag`, an attribute's `value`).
  *
  * Useful for autofix operations that need to splice nodes in/out of their parent array.
  *
@@ -840,7 +864,7 @@ export function findParentArray(root: Node, target: Node): { array: Node[], inde
 
       if (Array.isArray(array)) {
         for (const child of array) {
-          if (child && typeof child === 'object' && 'type' in child) {
+          if (isSearchableNode(child)) {
             const result = search(child)
 
             if (result) {
@@ -851,10 +875,8 @@ export function findParentArray(root: Node, target: Node): { array: Node[], inde
       }
     }
 
-    for (const prop of LINKED_NODE_PROPS) {
-      const value = record[prop]
-
-      if (value && typeof value === 'object' && 'type' in value) {
+    for (const value of Object.values(record)) {
+      if (isSearchableNode(value)) {
         const result = search(value)
 
         if (result) {

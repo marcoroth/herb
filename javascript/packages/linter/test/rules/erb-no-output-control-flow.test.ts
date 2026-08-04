@@ -135,4 +135,140 @@ describe("erb-no-output-control-flow", () => {
 
     expectNoOffenses(html)
   })
+
+  it("should allow iteration blocks without output tags", () => {
+    expectNoOffenses(dedent`
+      <% [1, 2, 3, 4, 5].each do |i| %>
+        <%= i * i %>
+      <% end %>
+    `)
+  })
+
+  it("should not allow each blocks with output tags", () => {
+    const html = dedent`
+      <%= [1, 2, 3, 4, 5].each do |i| %>
+        <%= i * i %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% [1, 2, 3, 4, 5].each do |i| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("names the iteration method in the message", () => {
+    const html = dedent`
+      <%= 3.times do |i| %>
+        <%= i %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `times` should not be used with output tags, they return the collection instead of the rendered output. Use `<% 3.times do |i| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("should flag a nested each block with an output tag", () => {
+    const html = dedent`
+      <% groups.each do |group| %>
+        <%= group.items.each do |item| %>
+          <%= item %>
+        <% end %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% group.items.each do |item| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("should not allow brace iteration blocks with output tags", () => {
+    const html = dedent`
+      <%= items.each { |item| %>
+        <%= item %>
+      <% } %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% items.each { |item| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("should allow an output tag inside an iteration block body", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <%= item.name %>
+      <% end %>
+    `)
+  })
+
+  it("should flag each iteration block that uses an output tag", () => {
+    const html = dedent`
+      <%= first.each do |item| %>
+        <%= item %>
+      <% end %>
+
+      <%= second.map do |item| %>
+        <%= item %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% first.each do |item| %>` instead.')
+    expectError('Iteration blocks like `map` should not be used with output tags, they return the collection instead of the rendered output. Use `<% second.map do |item| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("preserves trim tags in the suggested replacement", () => {
+    const html = dedent`
+      <%= items.each do |item| -%>
+        <%= item %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% items.each do |item| -%>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("collapses a multi-line iteration block onto one line in the suggestion", () => {
+    const html = dedent`
+      <%= [
+        1,
+        2
+      ].each do |i| %>
+        <%= i %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each` should not be used with output tags, they return the collection instead of the rendered output. Use `<% [ 1, 2 ].each do |i| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests the replacement for a call with arguments", () => {
+    const html = dedent`
+      <%= items.each_slice(3) do |group| %>
+        <%= group %>
+      <% end %>
+    `
+
+    expectError('Iteration blocks like `each_slice` should not be used with output tags, they return the collection instead of the rendered output. Use `<% items.each_slice(3) do |group| %>` instead.')
+
+    assertOffenses(html)
+  })
+
+  it("should allow non-iteration blocks with output tags", () => {
+    expectNoOffenses(dedent`
+      <%= content_tag :div do %>
+        <span>content</span>
+      <% end %>
+    `)
+
+    expectNoOffenses(dedent`
+      <%= @user.tap do |user| %>
+        <%= user %>
+      <% end %>
+    `)
+  })
 })

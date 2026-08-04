@@ -184,3 +184,199 @@ jobs:
           name: corpus-runs
           path: corpus/runs/*.json
           retention-days: 30
+
+  printer:
+    name: Printer Roundtrip
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    # Comparing the Rust and JavaScript printers against each other only needs
+    # this flag flipped to "true", nothing else.
+    #
+    # TODO: turn it on once the UTF-8 BOM fix for the WASM bindings has landed.
+    # Emscripten decodes strings coming out of WASM with a plain
+    # `new TextDecoder()`, which drops a leading BOM, so the JavaScript printer
+    # loses it on the seven corpus files that start with one while the Rust
+    # printer keeps it. Everything else already agrees, so the comparison only
+    # fails on those seven. It has been run against a patched build and passes.
+    env:
+      COMPARE_IMPLEMENTATIONS: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: yarn install
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Build herb-print
+        run: cargo build --release -p herb-printer --features cli
+        working-directory: rust
+
+      - name: Build the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn nx build @herb-tools/printer
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Verify the printer round-trips the corpus
+        id: verify
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          rust/target/release/herb-print \
+            --glob \
+            --verify \
+            --force \
+            "corpus/erb/**/*.erb" > summary.txt 2> failures.txt
+
+          set -e
+
+          cat summary.txt
+          echo
+
+          mismatches=$(sed -n 's/.*Verifications:.*passed, \([0-9]*\) failed.*/\1/p' summary.txt)
+
+          if [ -z "$mismatches" ]; then
+            echo "::error::Could not read the verification count from herb-print"
+            exit 1
+          fi
+
+          if [ "$mismatches" -ne 0 ]; then
+            grep "Verification failed" failures.txt | head -n 100
+            echo "::error::The printer did not round-trip $mismatches file(s) that parsed cleanly"
+            exit 1
+          fi
+
+      - name: Print the corpus with the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          node javascript/packages/printer/bin/herb-print \
+            --glob \
+            --verify \
+            --force \
+            "corpus/erb/**/*.erb" > javascript-summary.txt 2> javascript-failures.txt
+
+          exit 0
+
+      - name: Compare the Rust and JavaScript printers
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: |-
+          strip_ansi() { sed $'s/\033\[[0-9;]*m//g'; }
+
+          failing_files() {
+            strip_ansi < "$1" | grep '^✗' | sed 's/^✗ //; s/: .*//' | sort
+          }
+
+          totals() {
+            strip_ansi < "$1" | sed -n '/^Summary:/,$p'
+          }
+
+          failing_files failures.txt > rust-failed-files.txt
+          failing_files javascript-failures.txt > javascript-failed-files.txt
+
+          totals summary.txt > rust-totals.txt
+          totals javascript-summary.txt > javascript-totals.txt
+
+          if ! diff -u rust-totals.txt javascript-totals.txt; then
+            echo "::error::The Rust and JavaScript printers report different totals"
+            exit 1
+          fi
+
+          if ! diff -u rust-failed-files.txt javascript-failed-files.txt; then
+            echo "::error::The Rust and JavaScript printers disagree on which files fail"
+            exit 1
+          fi
+
+          echo "Both printers agree on all $(wc -l < rust-failed-files.txt | tr -d ' ') failing files and on every total."
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Printer Roundtrip"
+            echo
+
+            if [ -s summary.txt ]; then
+              echo '```'
+              cat summary.txt
+              echo '```'
+            else
+              echo "the roundtrip did not run"
+            fi
+
+            if [ -s failures.txt ]; then
+              echo
+              echo "<details><summary>Files that did not round-trip or parse</summary>"
+              echo
+              echo '```'
+              head -n 100 failures.txt
+              echo '```'
+              echo
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the roundtrip report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: printer-roundtrip
+          path: |
+            summary.txt
+            failures.txt
+            javascript-summary.txt
+            javascript-failures.txt
+          if-no-files-found: ignore
+          retention-days: 30

@@ -12,18 +12,22 @@ import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 
+import { fixabilityFor } from "./fixability.js"
+
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
+import type { Fixability } from "./fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
-import type { RuleClass } from "../types.js"
+import type { LintOffense, RuleClass } from "../types.js"
 
 export interface ProcessedFile {
   filename: string
   offense: Diagnostic
-  content: string
+  content?: string
   autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
 }
 
 export interface ProcessingContext {
@@ -159,16 +163,10 @@ export class FileProcessor {
     return didyoumean(ruleName, availableRuleNames, SUGGESTION_DISTANCE_THRESHOLD) ?? undefined
   }
 
-  private isRuleAutocorrectable(ruleName: string): boolean {
-    if (!this.linter) return false
+  private fixabilityFor(offense: LintOffense): Fixability {
+    const ruleClass = this.linter?.rules.find(rule => rule.ruleName === offense.rule)
 
-    const ruleClass = (this.linter as any).rules.find(
-      (rule: any) => rule.ruleName === ruleName
-    )
-
-    if (!ruleClass) return false
-
-    return ruleClass.autocorrectable === true
+    return fixabilityFor(offense, ruleClass)
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
@@ -204,7 +202,7 @@ export class FileProcessor {
 
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
-      let content = readFileSync(filePath, "utf-8")
+      const content = readFileSync(filePath, "utf-8")
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
@@ -231,14 +229,11 @@ export class FileProcessor {
           }
         }
 
-        content = autofixResult.source
-
         for (const offense of autofixResult.unfixed) {
           allOffenses.push({
             filename,
             offense: offense,
-            content,
-            autocorrectable: this.isRuleAutocorrectable(offense.rule)
+            ...this.fixabilityFor(offense)
           })
 
           const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
@@ -263,8 +258,7 @@ export class FileProcessor {
           allOffenses.push({
             filename,
             offense: offense,
-            content,
-            autocorrectable: this.isRuleAutocorrectable(offense.rule)
+            ...this.fixabilityFor(offense)
           })
 
           const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
@@ -418,8 +412,8 @@ export class FileProcessor {
         allOffenses.push({
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
-          content: offense.content,
-          autocorrectable: offense.autocorrectable
+          autocorrectable: offense.autocorrectable,
+          unsafeAutocorrectable: offense.unsafeAutocorrectable
         })
       }
 

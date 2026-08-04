@@ -1,8 +1,9 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[derive(Default)]
 pub struct Gems {
   pub paths: Vec<String>,
   pub resolved: usize,
@@ -307,4 +308,80 @@ fn singularize(word: &str) -> String {
   }
 
   word.strip_suffix('s').map_or_else(|| word.to_string(), str::to_string)
+}
+
+pub fn helper_methods(roots: &[String]) -> BTreeMap<String, PathBuf> {
+  let mut found = BTreeMap::new();
+
+  for root in roots {
+    collect_helper_methods(Path::new(root), &mut found);
+  }
+
+  found
+}
+
+fn collect_helper_methods(path: &Path, found: &mut BTreeMap<String, PathBuf>) {
+  let Ok(entries) = fs::read_dir(path) else {
+    return;
+  };
+
+  for entry in entries.flatten() {
+    let path = entry.path();
+
+    if path.is_dir() {
+      collect_helper_methods(&path, found);
+
+      continue;
+    }
+
+    if path.extension().is_none_or(|extension| extension != "rb") {
+      continue;
+    }
+
+    let Ok(source) = fs::read_to_string(&path) else {
+      continue;
+    };
+
+    if !source.contains("helper_method") {
+      continue;
+    }
+
+    for line in source.lines() {
+      let trimmed = line.trim_start();
+
+      if !trimmed.starts_with("helper_method") {
+        continue;
+      }
+
+      for name in symbols_in(trimmed) {
+        found.entry(name).or_insert_with(|| path.clone());
+      }
+    }
+  }
+}
+
+fn symbols_in(line: &str) -> Vec<String> {
+  let mut names = Vec::new();
+  let mut rest = line;
+
+  while let Some(index) = rest.find(':') {
+    rest = &rest[index + 1..];
+
+    if rest.starts_with(':') {
+      rest = &rest[1..];
+
+      continue;
+    }
+
+    let name: String = rest
+      .chars()
+      .take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == '?' || *c == '!')
+      .collect();
+
+    if !name.is_empty() && name.chars().next().is_some_and(|c| c.is_ascii_lowercase() || c == '_') {
+      names.push(name);
+    }
+  }
+
+  names
 }

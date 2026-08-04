@@ -18,10 +18,12 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
+- [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
@@ -47,6 +49,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
 - [`erb-no-raw-output-in-attribute-value`](./erb-no-raw-output-in-attribute-value.md) - Disallow `<%==` in attribute values
+- [`erb-no-shadowed-block-argument`](./erb-no-shadowed-block-argument.md) - Disallow block arguments that shadow an enclosing binding
 - [`erb-no-silent-statement`](./erb-no-silent-statement.md) - Disallow silent ERB statements
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-no-statement-in-script`](./erb-no-statement-in-script.md) - Disallow ERB statements inside `<script>` tags
@@ -55,9 +58,13 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unsafe-js-attribute`](./erb-no-unsafe-js-attribute.md) - Disallow unsafe ERB output in JavaScript attributes
 - [`erb-no-unsafe-raw`](./erb-no-unsafe-raw.md) - Disallow `raw()` and `.html_safe` in ERB output
 - [`erb-no-unsafe-script-interpolation`](./erb-no-unsafe-script-interpolation.md) - Disallow unsafe ERB output inside `<script>` tags
+- [`erb-no-unused-block-argument`](./erb-no-unused-block-argument.md) - Disallow unused block arguments in ERB blocks
 - [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
 - [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
 - [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
+- [`erb-prefer-do-end-blocks`](./erb-prefer-do-end-blocks.md) - Prefer `do ... end` over `{ ... }` for blocks that span multiple ERB tags
+- [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
+- [`erb-prefer-explicit-conditionals`](./erb-prefer-explicit-conditionals.md) - Prefer explicit `if`/`unless` blocks over inline conditions in ERB output tags
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
@@ -136,6 +143,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Turbo
 
+- [`turbo-permanent-no-misleading-value`](./turbo-permanent-no-misleading-value.md) - Disallow misleading values on `data-turbo-permanent`
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 
 

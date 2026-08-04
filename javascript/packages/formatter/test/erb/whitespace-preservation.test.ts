@@ -443,4 +443,36 @@ describe("whitespace preservation around ERB control flow", () => {
       expectFormattedToMatch(`y and <%= @z %>`)
     })
   })
+
+  describe("glued control flow on a line after a non-text-flow sibling", () => {
+    test("keeps an if glued on both sides after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        a<% if @b %>c<% end %>d
+      `)
+    })
+
+    test("keeps an unless glued on both sides after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        a<% unless @b %>c<% end %>d
+      `)
+    })
+
+    test("keeps glued punctuation after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        Hello<% if owner %> <%= owner.name %><% end %>!
+      `)
+    })
+
+    test("keeps an if glued after a control-flow block sibling", () => {
+      expectFormattedToMatch(dedent`
+        <% if @a %>
+          <div>x</div>
+        <% end %>
+        a<% if @b %>c<% end %>d
+      `)
+    })
+  })
 })

@@ -10,10 +10,12 @@ import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribut
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
+import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -36,6 +38,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
 import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in-attribute-value.js"
+import { ERBNoShadowedBlockArgumentRule } from "./rules/erb-no-shadowed-block-argument.js"
 import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
@@ -44,9 +47,13 @@ import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.
 import { ERBNoUnsafeJSAttributeRule } from "./rules/erb-no-unsafe-js-attribute.js"
 import { ERBNoUnsafeRawRule } from "./rules/erb-no-unsafe-raw.js"
 import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script-interpolation.js"
+import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argument.js"
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
+import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
+import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
+import { ERBPreferExplicitConditionalsRule } from "./rules/erb-prefer-explicit-conditionals.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
@@ -107,6 +114,7 @@ import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
+import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 export const rules: RuleClass[] = [
@@ -120,10 +128,12 @@ export const rules: RuleClass[] = [
   A11yNoRedundantImageAltRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoHelperShadowingRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoVoidElementContentRule,
+  ActionViewPreferCollectionRenderRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
@@ -146,7 +156,9 @@ export const rules: RuleClass[] = [
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
   ERBNoRawOutputInAttributeValueRule,
+  ERBNoShadowedBlockArgumentRule,
   ERBNoSilentStatementRule,
+  ERBNoUnusedBlockArgumentRule,
   ERBNoUnusedExpressionsRule,
   ERBNoUnusedLiteralsRule,
   ERBNoSilentTagInAttributeNameRule,
@@ -157,6 +169,9 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
   ERBPreferDirectOutputRule,
+  ERBPreferDoEndBlocksRule,
+  ERBPreferEachOverMapRule,
+  ERBPreferExplicitConditionalsRule,
   ERBPreferImageTagHelperRule,
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
@@ -217,5 +232,6 @@ export const rules: RuleClass[] = [
 
   SVGTagNameCapitalizationRule,
 
+  TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,
 ]

@@ -16,6 +16,7 @@ interface JSONSummary {
   totalHints: number
   totalIgnored: number
   totalOffenses: number
+  totalNotReported: number
   ruleCount: number
 }
 
@@ -89,6 +90,7 @@ export class JSONFormatter extends BaseFormatter {
       totalHints: options.totalHints,
       totalIgnored: options.totalIgnored,
       totalOffenses: options.totalErrors + options.totalWarnings,
+      totalNotReported: 0,
       ruleCount: options.ruleCount
     }
 

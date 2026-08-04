@@ -93,6 +93,11 @@ export default class extends Controller {
     "autofixUnsafeWrapper",
     "autofixUnsafeButton",
     "autofixUnsafeTooltip",
+    "autofixViewer",
+    "autofixOutput",
+    "autofixError",
+    "autofixVerification",
+    "autofixIncludeUnsafe",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -170,6 +175,7 @@ export default class extends Controller {
       this.restoreParserOptions()
       this.restorePrinterOptions()
       this.restoreFormatterOptions()
+      this.restoreAutofixOptions()
     }
 
     this.inputTarget.focus()
@@ -309,9 +315,11 @@ export default class extends Controller {
       const options = this.getParserOptions()
       const printerOptions = this.getPrinterOptions()
       const formatterOptions = this.getFormatterOptions()
+      const autofixOptions = this.getAutofixOptions()
       this.setOptionsInURL(options)
       this.setPrinterOptionsInURL(printerOptions)
       this.setFormatterOptionsInURL(formatterOptions)
+      this.setAutofixOptionsInURL(autofixOptions)
     }
   }
 
@@ -403,6 +411,14 @@ export default class extends Controller {
           content = this.formatSuccessTarget.textContent
         } else if (!this.formatErrorTarget.classList.contains('hidden')) {
           const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
+          content = blurredPre ? blurredPre.textContent : ''
+        }
+        break
+      case 'autofix':
+        if (!this.autofixOutputTarget.classList.contains('hidden')) {
+          content = this.autofixOutputTarget.textContent
+        } else if (!this.autofixErrorTarget.classList.contains('hidden')) {
+          const blurredPre = this.autofixErrorTarget.querySelector('pre.language-html')
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
@@ -534,6 +550,20 @@ export default class extends Controller {
     }
   }
 
+  restoreAutofixOptions() {
+    const autofixOptionsFromURL = this.getAutofixOptionsFromURL()
+
+    if (Object.keys(autofixOptionsFromURL).length > 0) {
+      this.setAutofixOptions(autofixOptionsFromURL)
+    }
+  }
+
+  setAutofixOptions(autofixOptions) {
+    if (this.hasAutofixIncludeUnsafeTarget && autofixOptions.hasOwnProperty('includeUnsafe')) {
+      this.autofixIncludeUnsafeTarget.checked = Boolean(autofixOptions.includeUnsafe)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
@@ -547,7 +577,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
     return validTabs.includes(tab)
   }
 
@@ -1348,7 +1378,8 @@ export default class extends Controller {
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
+    const autofixOptions = this.getAutofixOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -1547,6 +1578,50 @@ export default class extends Controller {
           } else {
             this.formatVerificationTarget.textContent = '⚠ Document needs formatting'
             this.formatVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+          }
+        }
+      }
+    }
+
+    if (this.hasAutofixViewerTarget) {
+      const autofixResult = result.autofixResult
+      const autofixedSource = autofixResult && typeof autofixResult.source === "string" ? autofixResult.source : null
+      const fixedCount = autofixResult && Array.isArray(autofixResult.fixed) ? autofixResult.fixed.length : 0
+      const offenseCount = result.lintResult && Array.isArray(result.lintResult.offenses) ? result.lintResult.offenses.length : 0
+
+      if (hasParserErrors || autofixedSource === null) {
+        this.autofixOutputTarget.classList.add('hidden')
+        this.autofixErrorTarget.classList.remove('hidden')
+
+        const pre = this.autofixErrorTarget.querySelector('pre.language-html')
+        pre.textContent = autofixedSource || currentSource
+
+        Prism.highlightElement(pre)
+
+        if (this.hasAutofixVerificationTarget) {
+          this.autofixVerificationTarget.textContent = '⚠ Autofix Unavailable'
+          this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
+        }
+      } else {
+        this.autofixErrorTarget.classList.add('hidden')
+        this.autofixOutputTarget.classList.remove('hidden')
+
+        this.autofixOutputTarget.textContent = autofixedSource
+
+        Prism.highlightElement(this.autofixOutputTarget)
+
+        if (this.hasAutofixVerificationTarget) {
+          const offensesLabel = fixedCount === 1 ? 'offense' : 'offenses'
+
+          if (fixedCount > 0) {
+            this.autofixVerificationTarget.textContent = `✓ Autofixed ${fixedCount} ${offensesLabel}`
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          } else if (offenseCount > 0) {
+            this.autofixVerificationTarget.textContent = '⚠ No autofixes available'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-orange-600 text-orange-100'
+          } else {
+            this.autofixVerificationTarget.textContent = '✓ No Herb Linter offenses found'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
           }
         }
       }
@@ -1845,6 +1920,11 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onAutofixOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
   getPrinterOptions() {
     const options = {}
     if (this.hasPrinterIgnoreErrorsTarget) {
@@ -1862,6 +1942,16 @@ export default class extends Controller {
       if (!isNaN(value) && value > 0) {
         options.maxLineLength = value
       }
+    }
+
+    return options
+  }
+
+  getAutofixOptions() {
+    const options = {}
+
+    if (this.hasAutofixIncludeUnsafeTarget) {
+      options.includeUnsafe = this.autofixIncludeUnsafeTarget.checked
     }
 
     return options
@@ -1893,6 +1983,7 @@ export default class extends Controller {
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
@@ -1991,6 +2082,48 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(formatterOptionsString))
       } catch (e) {
         console.warn('Failed to parse formatter options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setAutofixOptionsInURL(autofixOptions) {
+    const url = new URL(window.parent.location)
+
+    const defaults = {
+      includeUnsafe: false,
+    }
+
+    const nonDefaultAutofixOptions = {}
+
+    Object.keys(autofixOptions).forEach(key => {
+      const value = autofixOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultAutofixOptions[key] = value
+      }
+    })
+
+    if (Object.keys(nonDefaultAutofixOptions).length > 0) {
+      url.searchParams.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
+    } else {
+      url.searchParams.delete('autofixOptions')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
+  getAutofixOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const autofixOptionsString = urlParams.get('autofixOptions')
+
+    if (autofixOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(autofixOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse autofix options from URL:', e)
       }
     }
 

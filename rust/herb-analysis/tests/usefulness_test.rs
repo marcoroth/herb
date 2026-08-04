@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use herb_analysis::Analysis;
+use std::collections::HashSet;
 
 fn fixture_app() -> Analysis {
   let mut analysis = Analysis::index_paths(&["tests/fixtures/app".to_string()], &HashSet::new());
@@ -46,7 +46,7 @@ fn documents_that_private_helpers_are_still_over_reported() {
 
   assert!(
     helpers.contains_key("internal_only_secret"),
-    "if this now fails, visibility filtering has been wired up — tighten this test"
+    "if this now fails, visibility filtering has been wired up, so tighten this test"
   );
 }
 
@@ -112,4 +112,22 @@ fn distinguishes_app_owned_modules_from_foreign_ones() {
   assert!(analysis.is_app_owned("ApplicationHelper", "tests/fixtures/app"));
   assert!(!analysis.is_app_owned("ApplicationHelper", "some/other/path"));
   assert!(!analysis.is_app_owned("NoSuchHelper", "tests/fixtures/app"));
+}
+
+#[test]
+fn indexes_in_memory_sources_without_a_filesystem() {
+  let mut analysis = Analysis::index_sources(&[(
+    "file:///memory.rb",
+    "module Alpha\n  class Beta\n    def gamma; end\n    def delta(a, b = 1, *rest, key:, **opts, &blk); end\n    def self.epsilon; end\n  end\nend\n",
+  )]);
+
+  analysis.resolve();
+
+  assert!(analysis.ancestors_of("Alpha::Beta").is_some());
+
+  let methods = analysis.methods_of("Alpha::Beta");
+
+  assert!(methods.contains("gamma"));
+  assert!(methods.contains("delta"));
+  assert!(!methods.contains("epsilon"));
 }

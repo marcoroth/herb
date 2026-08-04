@@ -175,6 +175,22 @@ impl Analysis {
     methods
   }
 
+  pub fn defines(&self, name: &str) -> bool {
+    self.declaration(name).is_some()
+  }
+
+  pub fn constants(&self) -> BTreeMap<String, String> {
+    let mut constants = BTreeMap::new();
+
+    for declaration in self.graph.declarations().values() {
+      if declaration.as_constant().is_some() || declaration.as_constant_alias().is_some() {
+        constants.insert(declaration.name().to_string(), declaration.kind().to_string());
+      }
+    }
+
+    constants
+  }
+
   pub fn helper_modules(&self) -> Vec<String> {
     let mut modules: Vec<String> = self
       .graph

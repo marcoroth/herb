@@ -72,7 +72,20 @@ static body_info_T extract_statements_body_info(
 
   info.offset_in_content = (size_t) (body_start - parser_start);
   info.length = (size_t) (body_end - body_start);
-  info.source = hb_allocator_strndup(allocator, (const char*) body_start, info.length);
+
+  bool has_leading_space = info.length > 0 && *body_start == ' ';
+  bool has_trailing_space = info.length > 0 && *(body_end - 1) == ' ';
+
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, info.length + 2, allocator);
+
+  if (!has_leading_space) { hb_buffer_append_char(&buffer, ' '); }
+
+  hb_buffer_append_with_length(&buffer, (const char*) body_start, info.length);
+
+  if (!has_trailing_space) { hb_buffer_append_char(&buffer, ' '); }
+
+  info.source = hb_buffer_value(&buffer);
 
   return info;
 }
