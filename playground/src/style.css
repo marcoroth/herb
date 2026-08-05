@@ -250,6 +250,7 @@ code.language-tree {
 .diff-op-attribute   { border-left-color: #61afef; }
 .diff-op-tag         { border-left-color: #d19a66; }
 .diff-op-moved       { border-left-color: #56b6c2; }
+.diff-op-whitespace  { border-left-color: #abb2bf; }
 
 .diff-label-inserted    { color: #90b874; }
 .diff-label-removed     { color: #e06c75; }
@@ -259,6 +260,7 @@ code.language-tree {
 .diff-label-attribute   { color: #61afef; }
 .diff-label-tag         { color: #d19a66; }
 .diff-label-moved       { color: #56b6c2; }
+.diff-label-whitespace  { color: #abb2bf; }
 
 .diff-value-old {
   color: #e06c75;

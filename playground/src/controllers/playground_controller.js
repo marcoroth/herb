@@ -140,6 +140,7 @@ export default class extends Controller {
     "diffCheckpointButton",
     "diffSnapshotButton",
     "diffCheckButton",
+    "diffWhitespaceCheckbox",
     "diffParseError",
   ]
 
@@ -786,12 +787,33 @@ export default class extends Controller {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
 
     try {
-      const result = Herb.diff(this.diffSnapshotSource, value)
+      const result = Herb.diff(this.diffSnapshotSource, value, this.diffOptions())
       this.renderDiffResult(result)
     } catch (error) {
       console.error("Diff error:", error)
       this.updateDiffStatus("Error computing diff")
     }
+  }
+
+  diffOptions() {
+    if (!this.hasDiffWhitespaceCheckboxTarget) return {}
+
+    return { detect_whitespace_changes: this.diffWhitespaceCheckboxTarget.checked }
+  }
+
+  onDiffOptionChange(_event) {
+    this.updateURL()
+
+    if (this.diffMode === "checkpoint") {
+      if (this.diffSnapshotSource) { this.diffCheckpoint() }
+
+      return
+    }
+
+    this.diffFeedEntries = []
+    this.previousSource = null
+
+    this.updateDiff()
   }
 
   // alias for data-action naming
@@ -843,7 +865,7 @@ export default class extends Controller {
     this.hideDiffParseError()
 
     try {
-      const result = Herb.diff(this.previousSource, value)
+      const result = Herb.diff(this.previousSource, value, this.diffOptions())
 
       if (!result.identical) {
         if (!this.diffFeedEntries) { this.diffFeedEntries = [] }
@@ -984,6 +1006,7 @@ export default class extends Controller {
       node_removed:           { css: "removed",    icon: "fa-minus" },
       node_replaced:          { css: "replaced",   icon: "fa-right-left" },
       text_changed:           { css: "changed",    icon: "fa-pen" },
+      whitespace_changed:     { css: "whitespace", icon: "fa-arrows-left-right-to-line" },
       erb_content_changed:    { css: "erb",        icon: "fa-code" },
       attribute_added:        { css: "attribute",  icon: "fa-plus" },
       attribute_removed:      { css: "removed",    icon: "fa-minus" },
@@ -1068,8 +1091,16 @@ export default class extends Controller {
     return html
   }
 
+  visualizeWhitespace(value) {
+    return value.replace(/\t/g, "\u2192").replace(/\n/g, "\u23ce").replace(/ /g, "\u00b7")
+  }
+
   extractNodeValue(node, operationType) {
     if (!node) return null
+
+    if (operationType === "whitespace_changed") {
+      return node.content ? this.visualizeWhitespace(node.content) : null
+    }
 
     if (operationType === "text_changed" || node.type === "AST_HTML_TEXT_NODE") {
       return node.content || null
