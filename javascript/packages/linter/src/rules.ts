@@ -11,6 +11,7 @@ import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
+import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnecessary-html-safe.js"
@@ -132,6 +133,7 @@ export const rules: RuleClass[] = [
   A11ySVGHasAccessibleTextRule,
 
   ActionViewNoHelperShadowingRule,
+  ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoUnnecessaryHTMLSafeRule,
