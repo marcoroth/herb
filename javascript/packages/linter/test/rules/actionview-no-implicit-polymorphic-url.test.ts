@@ -187,6 +187,14 @@ describe("actionview-no-implicit-polymorphic-url", () => {
     assertOffenses(`<%= link_to "Security", @security %>`)
   })
 
+  it("passes for `link_to_if`, whose URL argument sits in a different position", () => {
+    expectNoOffenses(`<%= link_to_if @user.admin?, "Profile", @profile %>`)
+  })
+
+  it("passes for `button_to`, which carries no `url_for` implicit attribute in the registry", () => {
+    expectNoOffenses(`<%= button_to "Delete", @post, method: :delete %>`)
+  })
+
   it("passes for a model object passed to another helper", () => {
     expectNoOffenses(`<%= form_with model: @profile do |form| %><% end %>`)
   })
