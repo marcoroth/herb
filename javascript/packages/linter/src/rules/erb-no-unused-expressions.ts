@@ -3,7 +3,7 @@ import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
+import { isAssignmentNode, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBRenderNode, ERBBlockNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -68,6 +68,7 @@ class UnusedExpressionCollector extends PrismVisitor {
       if (this.isMutationCall(node)) return false
       if (this.isSideEffectCall(node)) return false
       if (isDebugOutputCall(node)) return false
+      if (isSleepCall(node)) return false
       if (this.blockLocalNames.size > 0 && isCallOnLocal(node, this.blockLocalNames)) return false
 
       return true
