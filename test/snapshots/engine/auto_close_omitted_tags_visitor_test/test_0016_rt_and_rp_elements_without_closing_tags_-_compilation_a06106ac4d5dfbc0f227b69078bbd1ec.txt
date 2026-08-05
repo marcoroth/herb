@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0016_rt and rp elements without closing tags - compilation"
+input: "{source: \"<ruby>Base<rp>(<rt>annotation<rp>)</ruby>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<ruby>Base<rp>(</rp><rt>annotation</rt><rp>)</rp></ruby>'.freeze;
+_buf.to_s

@@ -73,6 +73,50 @@ Controls how the engine presents validation results:
 - **`:overlay`** — Renders errors as in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
 - **`:none`** — Skips validation entirely
 
+## Transform Visitors
+
+The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that run over the AST before compilation. Transform visitors rewrite the AST, which changes what the compiler emits.
+
+Herb ships the following transform visitors:
+
+| Visitor | Description |
+|---|---|
+| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones |
+
+Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
+
+```ruby
+require "herb/engine/auto_close_omitted_tags_visitor"
+
+Herb::Engine.new(source, visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.new])
+```
+
+Your own visitors are passed the same way. See [Visitors](/bindings/ruby/reference#visitors) for how to write one.
+
+### AutoCloseOmittedTagsVisitor
+
+Makes sure the compiled output always contains a closing tag, even when the template omits it.
+
+Given this template:
+
+```html+erb
+<ul>
+  <li>List Item 1
+  <li>List Item 2
+</ul>
+```
+
+The engine renders:
+
+```html
+<ul>
+  <li>List Item 1
+  </li><li>List Item 2
+</li></ul>
+```
+
+The closing tag is inserted where the parser determined the element ends, which keeps the surrounding whitespace (and therefore the rendering of `inline-block` elements) identical to the template without the visitor.
+
 ## Component Transform Visitor
 
 > [!WARNING]
@@ -113,3 +157,16 @@ end %>
 [ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It uses `validation_mode: :overlay` so validation errors appear as in-browser overlays during development instead of raising exceptions.
 
 Validator settings from `.herb.yml` are respected automatically — no ReActionView-specific configuration needed.
+
+ReActionView also lets you run transform visitors on every template it compiles, through `config.transform_visitors`:
+
+```ruby
+# config/initializers/reactionview.rb
+require "herb/engine/auto_close_omitted_tags_visitor"
+
+ReActionView.configure do |config|
+  config.transform_visitors = [
+    Herb::Engine::AutoCloseOmittedTagsVisitor.new
+  ]
+end
+```
