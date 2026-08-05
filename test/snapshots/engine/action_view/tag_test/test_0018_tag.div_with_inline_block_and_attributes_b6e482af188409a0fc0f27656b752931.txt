@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0018_tag.div with inline block and attributes"
+input: "{source: \"<%= tag.div(class: \\\"container\\\") { \\\"Hello\\\" } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div class="container">Hello</div>'.freeze;
+_buf.to_s

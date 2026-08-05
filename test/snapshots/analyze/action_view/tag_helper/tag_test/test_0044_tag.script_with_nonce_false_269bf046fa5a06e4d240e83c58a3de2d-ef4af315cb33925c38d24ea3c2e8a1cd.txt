@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0044_tag.script with nonce false"
+input: |2-
+<%= tag.script(nonce: false) { "alert('Hello')".html_safe } %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:62))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:62))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.script(nonce: false) { "alert('Hello')".html_safe } " (location: (1:3)-(1:60))
+    │   │       ├── tag_closing: "%>" (location: (1:60)-(1:62))
+    │   │       ├── tag_name: "script" (location: (1:8)-(1:14))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:15)-(1:27))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:15)-(1:20))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:15)-(1:20))
+    │   │               │               └── content: "nonce"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:20)-(1:22))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:22)-(1:27))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ LiteralNode (location: (1:22)-(1:27))
+    │   │                       │       └── content: "false"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "script" (location: (1:8)-(1:14))
+    │   ├── body: (1 item)
+    │   │   └── @ RubyLiteralNode (location: (1:0)-(1:62))
+    │   │       └── content: "\"alert('Hello')\".html_safe"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:62)-(1:62))
+    │   │       └── tag_name: "script" (location: (1:8)-(1:14))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (1:62)-(2:0))
+        └── content: "\n"

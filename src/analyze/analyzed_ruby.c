@@ -1,5 +1,5 @@
 #include "../include/analyze/analyzed_ruby.h"
-#include "../include/util/hb_string.h"
+#include "../include/lib/hb_string.h"
 
 #include <prism.h>
 #include <string.h>

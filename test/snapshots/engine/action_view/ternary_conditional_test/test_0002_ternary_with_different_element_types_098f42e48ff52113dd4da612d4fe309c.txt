@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0002_ternary with different element types"
+input: "{source: \"<%= condition ? tag.strong(\\\"Yes\\\") : tag.em(\\\"No\\\") %>\", options: {optimize: true, locals: {condition: false}}}"
+---
+_buf = ::String.new; if condition 
+ _buf << '<strong>Yes</strong>'.freeze; else; _buf << '<em>No</em>'.freeze; end;
+_buf.to_s

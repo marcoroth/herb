@@ -1,0 +1,51 @@
+# Generated from lib/herb/dev/server_entry.rb with RBS::Inline
+
+module Herb
+  module Dev
+    class ServerEntry
+      SERVERS_DIR: untyped
+
+      REQUIRED_KEYS: untyped
+
+      attr_reader pid: untyped
+
+      attr_reader port: untyped
+
+      attr_reader project: untyped
+
+      attr_reader started_at: untyped
+
+      def initialize: (pid: untyped, port: untyped, project: untyped, ?started_at: untyped) -> untyped
+
+      def save: () -> untyped
+
+      def remove: () -> untyped
+
+      def alive?: () -> untyped
+
+      def to_hash: () -> untyped
+
+      def to_json: (*untyped) -> untyped
+
+      def project_name: () -> untyped
+
+      def stop!: () -> untyped
+
+      def self.all: () -> untyped
+
+      def self.find_by_port: (untyped port) -> untyped
+
+      def self.find_by_project: (untyped project_path) -> untyped
+
+      def self.stop_all: () -> untyped
+
+      def self.process_alive?: (untyped pid) -> untyped
+
+      private def self.load_file: (untyped path) -> untyped
+
+      private
+
+      def file_path: () -> untyped
+    end
+  end
+end

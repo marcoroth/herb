@@ -1,8 +1,8 @@
 #ifndef HERB_ANALYZED_RUBY_H
 #define HERB_ANALYZED_RUBY_H
 
-#include "../util/hb_array.h"
-#include "../util/hb_string.h"
+#include "../lib/hb_array.h"
+#include "../lib/hb_string.h"
 
 #include <prism.h>
 

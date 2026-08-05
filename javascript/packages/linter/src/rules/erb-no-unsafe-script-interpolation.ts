@@ -1,5 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { PrismVisitor } from "@herb-tools/core"
+
 import {
   getTagLocalName,
   getAttribute,
@@ -10,9 +12,34 @@ import {
 } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLElementNode, Node } from "@herb-tools/core"
+import type { ParseResult, HTMLElementNode, Node, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
-const SAFE_PATTERN = /\.to_json\b/
+const SAFE_METHOD_NAMES = new Set([
+  "to_json",
+  "json_escape",
+])
+
+const ESCAPE_JAVASCRIPT_METHOD_NAMES = new Set([
+  "j",
+  "escape_javascript",
+])
+
+class SafeCallDetector extends PrismVisitor {
+  public hasSafeCall = false
+  public hasEscapeJavascriptCall = false
+
+  visitCallNode(node: PrismNode): void {
+    if (SAFE_METHOD_NAMES.has(node.name)) {
+      this.hasSafeCall = true
+    }
+
+    if (ESCAPE_JAVASCRIPT_METHOD_NAMES.has(node.name)) {
+      this.hasEscapeJavascriptCall = true
+    }
+
+    this.visitChildNodes(node)
+  }
+}
 
 class ERBNoUnsafeScriptInterpolationVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -35,7 +62,6 @@ class ERBNoUnsafeScriptInterpolationVisitor extends BaseRuleVisitor {
     const typeValue = typeAttribute ? getStaticAttributeValue(typeAttribute) : null
 
     if (typeValue === "text/html") return
-
     if (!node.body || node.body.length === 0) return
 
     this.checkNodesForUnsafeOutput(node.body)
@@ -46,9 +72,21 @@ class ERBNoUnsafeScriptInterpolationVisitor extends BaseRuleVisitor {
       if (!isERBNode(child)) continue
       if (!isERBOutputNode(child)) continue
 
-      const content = child.content?.value?.trim() || ""
+      const erbContent = child as ERBContentNode
+      const prismNode = erbContent.prismNode
+      const detector = new SafeCallDetector()
 
-      if (SAFE_PATTERN.test(content)) continue
+      if (prismNode) detector.visit(prismNode)
+      if (detector.hasSafeCall) continue
+
+      if (detector.hasEscapeJavascriptCall) {
+        this.addOffense(
+          "Avoid `j()` / `escape_javascript()` in `<script>` tags. It is only safe inside quoted string literals. Use `.to_json` instead, which is safe in any position.",
+          child.location,
+        )
+
+        continue
+      }
 
       this.addOffense(
         "Unsafe ERB output in `<script>` tag. Use `.to_json` to safely serialize values into JavaScript.",
@@ -60,6 +98,7 @@ class ERBNoUnsafeScriptInterpolationVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnsafeScriptInterpolationRule extends ParserRule {
   static ruleName = "erb-no-unsafe-script-interpolation"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -68,9 +107,17 @@ export class ERBNoUnsafeScriptInterpolationRule extends ParserRule {
     }
   }
 
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      prism_nodes: true,
+    }
+  }
+
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBNoUnsafeScriptInterpolationVisitor(this.ruleName, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
   }
 }

@@ -66,6 +66,7 @@ class ERBNoStatementInScriptVisitor extends BaseRuleVisitor {
 
 export class ERBNoStatementInScriptRule extends ParserRule {
   static ruleName = "erb-no-statement-in-script"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

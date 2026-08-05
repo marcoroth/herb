@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0031_tag.div with dynamic hash data attribute value"
+input: "{source: \"<%= tag.div data: { config: options } %>\", locals: {options: {nested: true, count: 3}}, options: {action_view_helpers: true}}"
+---
+<div data-config="{&quot;nested&quot;:true,&quot;count&quot;:3}"></div>

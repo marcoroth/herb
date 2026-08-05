@@ -1,0 +1,47 @@
+---
+source: "Analyze::StrictLocalsTest#test_0043_leading comma in parameters produces errors"
+input: |2-
+<%# locals: (, user:) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:24))
+    │   ├── errors: (5 errors)
+    │   │   ├── @ RubyParseError (location: (1:13)-(1:14))
+    │   │   │   ├── message: "def_params_term_paren: unexpected ','; expected a `)` to close the parameters"
+    │   │   │   ├── error_message: "unexpected ','; expected a `)` to close the parameters"
+    │   │   │   ├── diagnostic_id: "def_params_term_paren"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:13)-(1:14))
+    │   │   │   ├── message: "unexpected_token_ignore: unexpected ',', ignoring it"
+    │   │   │   ├── error_message: "unexpected ',', ignoring it"
+    │   │   │   ├── diagnostic_id: "unexpected_token_ignore"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:20)-(1:20))
+    │   │   │   ├── message: "symbol_invalid: invalid symbol"
+    │   │   │   ├── error_message: "invalid symbol"
+    │   │   │   ├── diagnostic_id: "symbol_invalid"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:20)-(1:21))
+    │   │   │   ├── message: "expect_eol_after_statement: unexpected ')', expecting end-of-input"
+    │   │   │   ├── error_message: "unexpected ')', expecting end-of-input"
+    │   │   │   ├── diagnostic_id: "expect_eol_after_statement"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   └── @ RubyParseError (location: (1:20)-(1:21))
+    │   │       ├── message: "unexpected_token_ignore: unexpected ')', ignoring it"
+    │   │       ├── error_message: "unexpected ')', ignoring it"
+    │   │       ├── diagnostic_id: "unexpected_token_ignore"
+    │   │       └── level: "syntax"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (, user:) " (location: (1:3)-(1:22))
+    │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:24)-(2:0))
+        └── content: "\n"

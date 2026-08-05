@@ -1,7 +1,7 @@
 use crate::errors::{AnyError, ErrorNode};
 use crate::{Location, Token};
 use crate::union_types::*;
-use colored::*;
+use crate::style::Colorize;
 
 pub(crate) fn prettify_prism_tree(input: &str) -> String {
   let input = input.replace("+-- ", "├── ").replace("|   ", "│   ");
@@ -210,7 +210,7 @@ pub trait ERBNode {
 #[derive(Debug, Clone)]
 pub enum AnyNode {
   <%- nodes.each do |node| -%>
-  <%= node.name %>(<%= node.name %>),
+  <%= node.name %>(Box<<%= node.name %>>),
   <%- end -%>
 }
 

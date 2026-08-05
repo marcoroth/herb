@@ -14,11 +14,22 @@ require_relative "engine/validation_error_overlay"
 require_relative "engine/validators/security_validator"
 require_relative "engine/validators/nesting_validator"
 require_relative "engine/validators/accessibility_validator"
+require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors, :enabled_validators
+
+    # @rbs!
+    #   def self.optimize_warning_issued: () -> bool
+    #   def self.optimize_warning_issued=: (bool) -> bool
+
+    class << self
+      attr_accessor :optimize_warning_issued #: bool
+    end
+
+    self.optimize_warning_issued = false
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -29,6 +40,9 @@ module Herb
     }.freeze
 
     class CompilationError < StandardError
+    end
+
+    class GeneratorTemplateError < CompilationError
     end
 
     class InvalidRubyError < CompilationError
@@ -55,15 +69,26 @@ module Herb
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
       @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
+      @attrfunc = properties.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
+      @jsfunc = properties.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
+      @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @debug = properties.fetch(:debug, false)
+      @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
-      @strict = properties.fetch(:strict, true)
+      @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
+      @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
+
+      if @optimize && !self.class.optimize_warning_issued
+        self.class.optimize_warning_issued = true
+
+        warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
+      end
+
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -104,7 +129,11 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
+      action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
+      transform_conditionals = @optimize && action_view_helpers
+      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true,
+                                                            action_view_helpers: action_view_helpers,
+                                                            transform_conditionals: transform_conditionals)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -148,15 +177,7 @@ module Herb
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       if properties.fetch(:validate_ruby, false)
-        require "prism"
-
-        prism_result = Prism.parse(@src)
-        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
-
-        if syntax_errors.any?
-          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
-          raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
-        end
+        ensure_valid_ruby!(@src)
       end
 
       @src.freeze
@@ -199,12 +220,36 @@ module Herb
       end
     end
 
+    def self.nested_attribute_value(value)
+      value.is_a?(::String) || value.is_a?(::Symbol) ? value.to_s : value.to_json
+    end
+
     def self.comment?(code)
       code.include?("#")
     end
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
+    def source_may_contain_action_view_helpers?(source)
+      self.class.action_view_helper_pattern.match?(source)
+    end
+
+    def self.action_view_helper_pattern
+      @action_view_helper_pattern ||= begin
+        require_relative "action_view/helper_registry"
+
+        names = ::Herb::ActionView::HelperRegistry.supported.flat_map { |entry|
+          if entry.receiver_call_detect?
+            "#{entry.name}."
+          else
+            [entry.name, *entry.aliases]
+          end
+        }
+
+        Regexp.new("\\b(?:#{names.map { |name| Regexp.escape(name) }.join("|")})")
+      end
     end
 
     protected
@@ -238,11 +283,35 @@ module Herb
       @buffer_on_stack = false
     end
 
+    def expression_block?
+      @_in_expression_block || false
+    end
+
     def add_expression(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_result(code)
+      unescaped = (indicator == "=") ^ @escape
+
+      if expression_block?
+        unescaped ? add_expression_block_result(code) : add_expression_block_result_escaped(code)
       else
-        add_expression_result_escaped(code)
+        unescaped ? add_expression_result(code) : add_expression_result_escaped(code)
+      end
+    end
+
+    def add_context_aware_expression(indicator, code, context)
+      escapefunc = context_escape_function(context)
+
+      if escapefunc.nil?
+        add_expression(indicator, code)
+      else
+        with_buffer { @src << " << #{escapefunc}((" << code << trailing_newline(code) << "))" }
+      end
+    end
+
+    def context_escape_function(context)
+      case context
+      when :attribute_value then @attrfunc
+      when :script_content then @jsfunc
+      when :style_content then @cssfunc
       end
     end
 
@@ -259,39 +328,48 @@ module Herb
     end
 
     def add_expression_block(indicator, code)
-      if (indicator == "=") ^ @escape
-        add_expression_block_result(code)
-      else
-        add_expression_block_result_escaped(code)
-      end
+      @_in_expression_block = true
+      @_expression_block_open_paren = false
+
+      add_expression(indicator, code)
+    ensure
+      @_in_expression_block = false
     end
 
     def add_expression_block_result(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
+      @_expression_block_open_paren = true
+
       with_buffer {
         @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_end(code, escaped: false)
-      terminate_expression
+      if @_expression_block_open_paren
+        terminate_expression
 
-      trailing_newline = code.end_with?("\n")
-      code_stripped = code.chomp
+        trailing_newline = code.end_with?("\n")
+        code_stripped = code.chomp
 
-      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+        @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
 
-      @src << " " << code_stripped
-      @src << "\n" if self.class.comment?(code_stripped)
-      @src << (escaped ? "))" : ")")
-      @src << (trailing_newline ? "\n" : ";")
+        @src << " " << code_stripped
+        @src << "\n" if self.class.comment?(code_stripped)
+        @src << (escaped ? "))" : ")")
+        @src << (trailing_newline ? "\n" : ";")
 
-      @buffer_on_stack = false
+        @buffer_on_stack = false
+      else
+        add_code(code)
+      end
     end
 
     def trailing_newline(code)
@@ -306,7 +384,7 @@ module Herb
       @src << postamble
     end
 
-    def with_buffer(&_block)
+    def with_buffer(&)
       if @chain_appends
         @src << "; " << @bufvar unless @buffer_on_stack
         yield
@@ -439,6 +517,35 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    #: () -> Hash[Symbol, untyped]
+    def default_parser_options
+      fallback = {} #: Hash[Symbol, untyped]
+
+      Herb.configuration.engine_option("parser_options", fallback)
+    end
+
+    def ensure_valid_ruby!(source)
+      RubyVM::InstructionSequence.compile(source)
+    rescue SyntaxError => e
+      return if e.message.include?("Invalid yield")
+
+      begin
+        require "prism"
+      rescue LoadError
+        # Prism not available, fall through
+      end
+
+      raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n  - #{e.message}", compiled_source: @src) unless defined?(Prism)
+
+      prism_result = Prism.parse(@src)
+      syntax_errors = prism_result.errors.reject { |error| error.type == :invalid_yield }
+
+      if syntax_errors.any?
+        details = syntax_errors.map { |err| "  - #{err.message} (line #{err.location.start_line})" }.join("\n")
+        raise InvalidRubyError.new("Compiled template produced invalid Ruby:\n#{details}", compiled_source: @src)
+      end
     end
   end
 end

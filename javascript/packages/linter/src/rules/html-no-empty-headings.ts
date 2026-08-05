@@ -106,6 +106,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
   static ruleName = "html-no-empty-headings"
+  static introducedIn = this.version("0.4.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

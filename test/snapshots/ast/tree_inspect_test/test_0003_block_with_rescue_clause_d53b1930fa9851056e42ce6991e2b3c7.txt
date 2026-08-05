@@ -1,0 +1,62 @@
+---
+source: "AST::TreeInspectTest#test_0003_block with rescue clause"
+input: |2-
+<% 5.times do %>
+  <%= "foo" %>
+<% rescue %>
+  <%= "error" %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " 5.times do " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:16)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:14))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " "foo" " (location: (2:5)-(2:12))
+    │   │   │   ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:14)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause:
+    │   │   └── @ ERBRescueNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " rescue " (location: (3:2)-(3:10))
+    │   │       ├── tag_closing: "%>" (location: (3:10)-(3:12))
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (3:12)-(4:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (4:2)-(4:16))
+    │   │       │   │   ├── tag_opening: "<%=" (location: (4:2)-(4:5))
+    │   │       │   │   ├── content: " "error" " (location: (4:5)-(4:14))
+    │   │       │   │   ├── tag_closing: "%>" (location: (4:14)-(4:16))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: true
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (4:16)-(5:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       └── subsequent: ∅
+    │   │
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

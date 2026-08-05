@@ -1,0 +1,29 @@
+---
+name: "video_url"
+source: "ActionView::Helpers::AssetUrlHelper#video_url"
+gem: "actionview"
+output: "url"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "video_url(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-video_url"
+
+description: |-
+  Computes the full URL to a video asset.
+
+tag: null
+
+arguments:
+  - name: "source"
+    position: 1
+    type: "string"
+    optional: false
+    description: |-
+      Video file name or path.
+
+options: []
+block_arguments: []
+special_behaviors: []
+aliases:
+  - "url_to_video"

@@ -48,6 +48,7 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
 
 export class HTMLNoUnderscoresInAttributeNamesRule extends ParserRule {
   static ruleName = "html-no-underscores-in-attribute-names"
+  static introducedIn = this.version("0.7.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

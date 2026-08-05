@@ -35,6 +35,7 @@ class HTMLAttributeEqualsSpacingVisitor extends BaseRuleVisitor<AttributeEqualsS
 export class HTMLAttributeEqualsSpacingRule extends ParserRule<AttributeEqualsSpacingAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-attribute-equals-spacing"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

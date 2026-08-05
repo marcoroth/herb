@@ -1,23 +1,23 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
+#include "include/ast/ast_node.h"
+#include "include/ast/ast_nodes.h"
 
 #ifndef HERB_EXCLUDE_PRETTYPRINT
-#  include "include/ast_pretty_print.h"
+#  include "include/ast/ast_pretty_print.h"
 #endif
 
 #include "include/extract.h"
 #include "include/herb.h"
-#include "include/io.h"
-#include "include/lex_helpers.h"
+#include "include/lexer/lex_helpers.h"
+#include "include/lib/hb_allocator.h"
+#include "include/lib/hb_arena.h"
+#include "include/lib/hb_arena_debug.h"
+#include "include/lib/hb_buffer.h"
+#include "include/lib/string.h"
 #include "include/macros.h"
-#include "include/ruby_parser.h"
-#include "include/util/hb_allocator.h"
-#include "include/util/hb_arena.h"
-#include "include/util/hb_arena_debug.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/string.h"
+#include "include/prism/ruby_parser.h"
+#include "include/util/io.h"
 
 #include <stdio.h>
 #include <stdlib.h>

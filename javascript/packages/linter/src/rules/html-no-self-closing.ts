@@ -3,7 +3,7 @@ import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
 import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult } from "@herb-tools/core"
+import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
@@ -27,7 +27,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
       this.addOffense(
         `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
-        node.location,
+        node.tag_closing.location,
         {
           node,
           tagName,
@@ -41,6 +41,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContext> {
   static autocorrectable = true
   static ruleName = "html-no-self-closing"
+  static introducedIn = this.version("0.6.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -48,6 +49,17 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
       severity: "error",
       exclude: ["**/views/**/*_mailer/**/*"]
     }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
+  }
+
+  private isIndentation(precedingNode: Node | null, node: Node): boolean {
+    return !!precedingNode &&
+      isWhitespaceNode(node) &&
+      isWhitespaceNode(precedingNode) &&
+      (precedingNode.value?.value?.includes("\n") || false)
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
@@ -71,8 +83,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (node.children && Array.isArray(node.children)) {
       const children = node.children as Node[]
 
-      if (children.length > 0 && isWhitespaceNode(children[children.length - 1])) {
-        node.children = children.slice(0, -1)
+      if (children.length > 0) {
+        const lastChild = children[children.length - 1]
+        const secondToLastChild = children[children.length - 2] ?? null
+
+        if (isWhitespaceNode(lastChild) && !this.isIndentation(secondToLastChild, lastChild)) {
+          node.children = children.slice(0, -1)
+        }
       }
     }
 

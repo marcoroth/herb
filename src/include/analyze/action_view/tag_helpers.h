@@ -1,9 +1,9 @@
 #ifndef HERB_ANALYZE_TAG_HELPERS_H
 #define HERB_ANALYZE_TAG_HELPERS_H
 
-#include "../../ast_nodes.h"
-#include "../../position.h"
-#include "../../util/hb_array.h"
+#include "../../ast/ast_nodes.h"
+#include "../../lib/hb_array.h"
+#include "../../location/position.h"
 #include "../analyze.h"
 #include "tag_helper_handler.h"
 

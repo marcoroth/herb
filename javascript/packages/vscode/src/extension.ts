@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
@@ -32,6 +33,36 @@ function getFileGlobPattern(): string {
   return Config.getDefaultFilePatterns().join(",")
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(vscode.Uri.file(filePath))
+
+    return true
+  } catch (_error) {
+    return false
+  }
+}
+
+async function findMisnamedConfigPaths(workspaceRoot: string): Promise<string[]> {
+  const misnamedPaths: string[] = []
+
+  for (const misnamedConfigPath of Config.misnamedConfigPaths) {
+    const candidate = path.join(workspaceRoot, misnamedConfigPath)
+
+    if (await fileExists(candidate)) {
+      misnamedPaths.push(candidate)
+    }
+  }
+
+  const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath
+
+  if (activeDocumentPath && Config.isMisnamedConfigPath(activeDocumentPath) && !misnamedPaths.includes(activeDocumentPath)) {
+    misnamedPaths.unshift(activeDocumentPath)
+  }
+
+  return misnamedPaths
+}
+
 async function updateConfigStatusBarItem() {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
 
@@ -41,23 +72,43 @@ async function updateConfigStatusBarItem() {
     return
   }
 
+  const misnamedPaths = await findMisnamedConfigPaths(workspaceRoot)
+
+  if (misnamedPaths.length > 0) {
+    const misnamedPath = misnamedPaths[0]
+    const misnamedNames = misnamedPaths.map(misnamedConfigPath => path.basename(misnamedConfigPath)).join(', ')
+    const verb = misnamedPaths.length === 1 ? 'is' : 'are'
+
+    configStatusBarItem.text = `$(warning) ${path.basename(misnamedPath)} (Not Read)`
+    configStatusBarItem.tooltip = `Herb only reads ${Config.configPath}, so ${misnamedNames} ${verb} ignored.\n\nRename to ${Config.configPath} to apply the configuration.\n\nClick to open ${path.basename(misnamedPath)}`
+    configStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground')
+    configStatusBarItem.color = new vscode.ThemeColor('statusBarItem.errorForeground')
+    configStatusBarItem.command = {
+      title: `Open ${path.basename(misnamedPath)}`,
+      command: 'vscode.open',
+      arguments: [vscode.Uri.file(misnamedPath)]
+    }
+
+    configStatusBarItem.show()
+
+    return
+  }
+
   const configPath = Config.configPathFromProjectPath(workspaceRoot)
 
-  try {
-    await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
+  configStatusBarItem.backgroundColor = undefined
+  configStatusBarItem.color = undefined
+  configStatusBarItem.command = 'herb.showConfigDetails'
 
-    configStatusBarItem.text = '$(file-code) .herb.yml (Project Settings)'
-    configStatusBarItem.tooltip = 'Herb configuration loaded from .herb.yml (overrides VS Code settings)\n\nClick to view configuration details'
-    configStatusBarItem.command = 'herb.showConfigDetails'
-
-    configStatusBarItem.show()
-  } catch (_error) {
+  if (await fileExists(configPath)) {
+    configStatusBarItem.text = `$(file-code) ${Config.configPath} (Project Settings)`
+    configStatusBarItem.tooltip = `Herb configuration loaded from ${Config.configPath} (overrides VS Code settings)\n\nClick to view configuration details`
+  } else {
     configStatusBarItem.text = '$(settings-gear) Herb (Personal Settings)'
-    configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yml'
-    configStatusBarItem.command = 'herb.showConfigDetails'
-
-    configStatusBarItem.show()
+    configStatusBarItem.tooltip = `Herb using personal VS Code settings\n\nClick to view configuration details or create ${Config.configPath}`
   }
+
+  configStatusBarItem.show()
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -160,23 +211,19 @@ export async function activate(context: vscode.ExtensionContext) {
       await client.updateConfiguration()
     }),
 
-    vscode.commands.registerCommand('editor.action.commentLine', async () => {
+    vscode.commands.registerCommand('herb.toggleLineComment', async () => {
       const editor = vscode.window.activeTextEditor
 
-      if (editor?.document.languageId === 'erb') {
+      if (editor) {
         await sendCommentRequest(editor, 'herb/toggleLineComment')
-      } else {
-        await vscode.commands.executeCommand('default:editor.action.commentLine')
       }
     }),
 
-    vscode.commands.registerCommand('editor.action.blockComment', async () => {
+    vscode.commands.registerCommand('herb.toggleBlockComment', async () => {
       const editor = vscode.window.activeTextEditor
 
-      if (editor?.document.languageId === 'erb') {
+      if (editor) {
         await sendCommentRequest(editor, 'herb/toggleBlockComment')
-      } else {
-        await vscode.commands.executeCommand('default:editor.action.blockComment')
       }
     })
   )
@@ -200,7 +247,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(fileWatcher)
 
-  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.yml')
+  const configWatcher = vscode.workspace.createFileSystemWatcher(`**/{${Config.configPath},${Config.misnamedConfigPaths.join(",")}}`)
 
   configWatcher.onDidCreate(async () => {
     await updateConfigStatusBarItem()
@@ -215,6 +262,10 @@ export async function activate(context: vscode.ExtensionContext) {
   })
 
   context.subscriptions.push(configWatcher)
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async () => {
+    await updateConfigStatusBarItem()
+  }))
 
   await updateConfigStatusBarItem()
   await runAutoAnalysis()

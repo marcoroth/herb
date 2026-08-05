@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0001_javascript_include_tag with single source"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '"></script>'.freeze;
+_buf.to_s

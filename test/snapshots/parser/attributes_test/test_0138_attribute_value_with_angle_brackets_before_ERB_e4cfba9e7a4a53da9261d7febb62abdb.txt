@@ -1,0 +1,56 @@
+---
+source: "Parser::AttributesTest#test_0138_attribute value with angle brackets before ERB"
+input: "<div data-html=\"<b><%= label %></b>\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:43))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:43))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:37))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:36)-(1:37))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:36))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:14))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:14))
+        │       │       │               └── content: "data-html"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:14)-(1:15))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:36))
+        │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+        │       │               ├── children: (3 items)
+        │       │               │   ├── @ LiteralNode (location: (1:16)-(1:19))
+        │       │               │   │   └── content: "<b>"
+        │       │               │   │
+        │       │               │   ├── @ ERBContentNode (location: (1:19)-(1:31))
+        │       │               │   │   ├── tag_opening: "<%=" (location: (1:19)-(1:22))
+        │       │               │   │   ├── content: " label " (location: (1:22)-(1:29))
+        │       │               │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │               │   │   ├── parsed: true
+        │       │               │   │   └── valid: true
+        │       │               │   │
+        │       │               │   └── @ LiteralNode (location: (1:31)-(1:35))
+        │       │               │       └── content: "</b>"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:35)-(1:36))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:37)-(1:43))
+        │       ├── tag_opening: "</" (location: (1:37)-(1:39))
+        │       ├── tag_name: "div" (location: (1:39)-(1:42))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:42)-(1:43))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

@@ -1,0 +1,29 @@
+---
+name: "stylesheet_url"
+source: "ActionView::Helpers::AssetUrlHelper#stylesheet_url"
+gem: "actionview"
+output: "url"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "stylesheet_url(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-stylesheet_url"
+
+description: |-
+  Computes the full URL to a stylesheet asset.
+
+tag: null
+
+arguments:
+  - name: "source"
+    position: 1
+    type: "string"
+    optional: false
+    description: |-
+      Stylesheet file name or path.
+
+options: []
+block_arguments: []
+special_behaviors: []
+aliases:
+  - "url_to_stylesheet"

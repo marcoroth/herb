@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0019_tag.p with inline block and ruby expression"
+input: "{source: \"<%= tag.p { @user_name } %>\", locals: {\"@user_name\": \"Alice\"}, options: {action_view_helpers: true}}"
+---
+<p>Alice</p>

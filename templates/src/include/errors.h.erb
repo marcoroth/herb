@@ -2,13 +2,13 @@
 #define HERB_ERRORS_H
 
 #include "errors.h"
-#include "location.h"
-#include "position.h"
-#include "token.h"
-#include "util/hb_allocator.h"
-#include "util/hb_array.h"
-#include "util/hb_buffer.h"
-#include "util/hb_string.h"
+#include "location/location.h"
+#include "location/position.h"
+#include "lexer/token.h"
+#include "lib/hb_allocator.h"
+#include "lib/hb_array.h"
+#include "lib/hb_buffer.h"
+#include "lib/hb_string.h"
 
 typedef enum {
 <%- errors.each do |error| -%>

@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_narray.h"
+#include "../../src/include/lib/hb_narray.h"
 
 TEST(test_hb_narray_init)
   hb_narray_T array;

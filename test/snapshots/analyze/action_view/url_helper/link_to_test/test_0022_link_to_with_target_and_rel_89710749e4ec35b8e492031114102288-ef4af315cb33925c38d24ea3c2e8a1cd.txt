@@ -14,63 +14,63 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:94)-(1:96))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (3 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:29)-(1:58))
+    │   │           ├── @ HTMLAttributeNode (location: (1:60)-(1:76))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:29)-(1:58))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:60)-(1:66))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:29)-(1:58))
-    │   │           │   │               └── content: "href"
-    │   │           │   │
-    │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:29)-(1:58))
-    │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:29)-(1:58))
-    │   │           │           ├── open_quote: """ (location: (1:29)-(1:58))
-    │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:29)-(1:58))
-    │   │           │           │       └── content: "http://www.rubyonrails.org/"
-    │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:58)-(1:58))
-    │   │           │           └── quoted: true
-    │   │           │
-    │   │           │
-    │   │           ├── @ HTMLAttributeNode (location: (1:60)-(1:68))
-    │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:60)-(1:68))
-    │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:60)-(1:68))
+    │   │           │   │           └── @ LiteralNode (location: (1:60)-(1:66))
     │   │           │   │               └── content: "target"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:60)-(1:68))
+    │   │           │   ├── equals: ": " (location: (1:66)-(1:68))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:60)-(1:68))
-    │   │           │           ├── open_quote: """ (location: (1:60)-(1:68))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:68)-(1:76))
+    │   │           │           ├── open_quote: """ (location: (1:68)-(1:69))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:60)-(1:68))
+    │   │           │           │   └── @ LiteralNode (location: (1:69)-(1:75))
     │   │           │           │       └── content: "_blank"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:68)-(1:68))
+    │   │           │           ├── close_quote: """ (location: (1:75)-(1:76))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:78)-(1:83))
+    │   │           ├── @ HTMLAttributeNode (location: (1:78)-(1:93))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:78)-(1:81))
+    │   │           │   │       └── children: (1 item)
+    │   │           │   │           └── @ LiteralNode (location: (1:78)-(1:81))
+    │   │           │   │               └── content: "rel"
+    │   │           │   │
+    │   │           │   │
+    │   │           │   ├── equals: ": " (location: (1:81)-(1:83))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:83)-(1:93))
+    │   │           │           ├── open_quote: """ (location: (1:83)-(1:84))
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ LiteralNode (location: (1:84)-(1:92))
+    │   │           │           │       └── content: "nofollow"
+    │   │           │           │
+    │   │           │           ├── close_quote: """ (location: (1:92)-(1:93))
+    │   │           │           └── quoted: true
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:29)-(1:58))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:78)-(1:83))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:29)-(1:58))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:78)-(1:83))
-    │   │               │               └── content: "rel"
+    │   │               │           └── @ LiteralNode (location: (1:29)-(1:58))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:78)-(1:83))
+    │   │               ├── equals: "=" (location: (1:29)-(1:58))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:78)-(1:83))
-    │   │                       ├── open_quote: """ (location: (1:78)-(1:83))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:29)-(1:58))
+    │   │                       ├── open_quote: """ (location: (1:29)-(1:29))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:78)-(1:83))
-    │   │                       │       └── content: "nofollow"
+    │   │                       │   └── @ LiteralNode (location: (1:29)-(1:58))
+    │   │                       │       └── content: "http://www.rubyonrails.org/"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:83)-(1:83))
+    │   │                       ├── close_quote: """ (location: (1:58)-(1:58))
     │   │                       └── quoted: true
     │   │
     │   │

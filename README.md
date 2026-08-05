@@ -56,8 +56,10 @@ The Herb ecosystem offers multiple tools that integrate seamlessly into editors,
 | [Herb Parser](https://herb-tools.dev/projects/parser) | Fast, portable, HTML-aware ERB parser written in C. |
 | [Herb Linter](https://herb-tools.dev/projects/linter) | Static analysis to enforce best practices and identify common mistakes. |
 | [Herb Formatter](https://herb-tools.dev/projects/formatter) | Automatic, consistent formatting for HTML+ERB files. *(experimental)* |
+| [Herb Language Service](https://herb-tools.dev/projects/language-service) | HTML+ERB language service with ActionView tag helper support. |
 | [Herb Language Server](https://herb-tools.dev/projects/language-server) | Rich editor integration for VS Code, Zed, Neovim, and more. |
 | [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
+| [Herb Dev Server](https://herb-tools.dev/projects/dev-server) | File-watching dev server with live DOM patching for templates. *(experimental)* |
 | [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
 | [ReActionView](https://reactionview.dev) | ActionView-compatible ERB engine with modern DX for Rails. |
 
@@ -157,6 +159,7 @@ While Herb brings a fresh approach to HTML+ERB tooling, it builds upon and learn
 - [**erb_lint**](https://github.com/Shopify/erb_lint)
 - [**erb-formatter**](https://github.com/nebulab/erb-formatter)
 - [**erb-formatter-vscode**](https://github.com/nebulab/erb-formatter-vscode)
+- [**erblint-github**](https://github.com/github/erblint-github)
 - [**deface**](https://github.com/spree/deface)
 - [**html_press**](https://github.com/stereobooster/html_press)
 - [**htmlbeautifier**](https://github.com/threedaymonk/htmlbeautifier)

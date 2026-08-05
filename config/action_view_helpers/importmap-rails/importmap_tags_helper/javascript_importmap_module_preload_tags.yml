@@ -1,0 +1,39 @@
+---
+name: "javascript_importmap_module_preload_tags"
+source: "Importmap::ImportmapTagsHelper#javascript_importmap_module_preload_tags"
+gem: "importmap-rails"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "javascript_importmap_module_preload_tags(importmap = Rails.application.importmap, entry_point: \"application\")"
+documentation_url: "https://www.rubydoc.info/gems/importmap-rails/Importmap/ImportmapTagsHelper#javascript_importmap_module_preload_tags-instance_method"
+
+description: |-
+  Returns `<link rel="modulepreload">` tags for all modules marked as `preload: true` in the `importmap` (defaults to `Rails.application.importmap`), such that they'll be fetched in advance by browsers supporting this link type.
+
+tag:
+  name: "link"
+  is_void: true
+  preferred: false
+  detect_style: "call_name"
+
+arguments:
+  - name: "importmap"
+    position: 1
+    type: "object"
+    optional: true
+    default: "Rails.application.importmap"
+    description: |-
+      The `Importmap::Map` whose preloaded modules should be linked.
+
+options:
+  - name: "entry_point"
+    type: "string"
+    description: |-
+      Entry point used to resolve the preloaded module packages. Defaults to `"application"`.
+
+block_arguments: []
+
+special_behaviors:
+  - "produces_multiple_elements"

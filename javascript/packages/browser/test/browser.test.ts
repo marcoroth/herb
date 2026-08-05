@@ -17,7 +17,7 @@ describe("@herb-tools/browser", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/browser@0.9.0, @herb-tools/core@0.9.0, libprism@1.9.0, libherb@0.9.0 (WebAssembly)")
+    expect(version).toBe("@herb-tools/browser@0.10.3, @herb-tools/core@0.10.3, libprism@1.9.0, libherb@0.10.3 (WebAssembly)")
   })
 
   test("parse() can process a simple template", async () => {

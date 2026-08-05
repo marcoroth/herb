@@ -4,7 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Visitor, Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
-import { isERBOpenTagNode, isHTMLOpenTagNode } from "@herb-tools/core"
+import { isERBOpenTagNode, isHTMLOpenTagNode, HELPER_BY_SOURCE, findPreferredHelperForTag } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange } from "./range_utils"
 
@@ -12,7 +12,8 @@ import type { Node, HTMLElementNode } from "@herb-tools/core"
 
 interface CollectedElement {
   node: HTMLElementNode
-  range: Range
+  elementRange: Range
+  openTagRange: Range
 }
 
 class ElementCollector extends Visitor {
@@ -23,12 +24,14 @@ class ElementCollector extends Visitor {
     if (node.element_source && node.element_source !== "HTML" && isERBOpenTagNode(node.open_tag)) {
       this.actionViewElements.push({
         node,
-        range: nodeToRange(node),
+        elementRange: nodeToRange(node),
+        openTagRange: nodeToRange(node.open_tag),
       })
     } else if (isHTMLOpenTagNode(node.open_tag) && node.open_tag.tag_name) {
       this.htmlElements.push({
         node,
-        range: nodeToRange(node),
+        elementRange: nodeToRange(node),
+        openTagRange: nodeToRange(node.open_tag),
       })
     }
 
@@ -55,7 +58,7 @@ export class RewriteCodeActionService {
     const actions: CodeAction[] = []
 
     for (const element of collector.actionViewElements) {
-      if (!this.rangesOverlap(element.range, requestedRange)) continue
+      if (!this.rangesOverlap(element.openTagRange, requestedRange)) continue
 
       const action = this.createActionViewToHTMLAction(document, element)
 
@@ -65,7 +68,7 @@ export class RewriteCodeActionService {
     }
 
     for (const element of collector.htmlElements) {
-      if (!this.rangesOverlap(element.range, requestedRange)) continue
+      if (!this.rangesOverlap(element.openTagRange, requestedRange)) continue
 
       const action = this.createHTMLToActionViewAction(document, element)
 
@@ -78,7 +81,7 @@ export class RewriteCodeActionService {
   }
 
   private createActionViewToHTMLAction(document: TextDocument, element: CollectedElement): CodeAction | null {
-    const originalText = document.getText(element.range)
+    const originalText = document.getText(element.elementRange)
 
     const parseResult = this.parserService.parseContent(originalText, {
       action_view_helpers: true,
@@ -96,11 +99,13 @@ export class RewriteCodeActionService {
 
     const edit: WorkspaceEdit = {
       changes: {
-        [document.uri]: [TextEdit.replace(element.range, rewrittenText)]
+        [document.uri]: [TextEdit.replace(element.elementRange, rewrittenText)]
       }
     }
 
-    const tagName = element.node.tag_name?.value
+    const elementSource = element.node.element_source
+    const helper = elementSource ? HELPER_BY_SOURCE[elementSource] : undefined
+    const tagName = helper?.tagName ?? element.node.tag_name?.value
     const title = tagName
       ? `Herb: Convert to \`<${tagName}>\``
       : "Herb: Convert to HTML"
@@ -113,7 +118,7 @@ export class RewriteCodeActionService {
   }
 
   private createHTMLToActionViewAction(document: TextDocument, element: CollectedElement): CodeAction | null {
-    const originalText = document.getText(element.range)
+    const originalText = document.getText(element.elementRange)
 
     const parseResult = this.parserService.parseContent(originalText, {
       track_whitespace: true,
@@ -130,21 +135,18 @@ export class RewriteCodeActionService {
 
     const edit: WorkspaceEdit = {
       changes: {
-        [document.uri]: [TextEdit.replace(element.range, rewrittenText)]
+        [document.uri]: [TextEdit.replace(element.elementRange, rewrittenText)]
       }
     }
 
     const tagName = element.node.tag_name?.value
-    const isAnchor = tagName === "a"
-    const isTurboFrame = tagName === "turbo-frame"
+    const helper = tagName ? findPreferredHelperForTag(tagName) : undefined
     const methodName = tagName?.replace(/-/g, "_")
-    const title = isAnchor
-      ? "Herb: Convert to `link_to`"
-      : isTurboFrame
-        ? "Herb: Convert to `turbo_frame_tag`"
-        : methodName
-          ? `Herb: Convert to \`tag.${methodName}\``
-          : "Herb: Convert to tag helper"
+    const title = helper
+      ? `Herb: Convert to \`${helper.name}\``
+      : methodName
+        ? `Herb: Convert to \`tag.${methodName}\``
+        : "Herb: Convert to tag helper"
 
     return {
       title,

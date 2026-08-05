@@ -610,5 +610,11 @@ module Engine
 
       assert_compiled_snapshot(template, debug: true)
     end
+
+    test "standalone title content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <title><%= @page_title %></title>
+      ERB
+    end
   end
 end

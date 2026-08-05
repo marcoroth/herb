@@ -37,9 +37,7 @@
       "cache": false,
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "npx nx reset"
-        ],
+        "commands": ["npx nx reset"],
         "parallel": true
       }
     }
@@ -65,5 +63,6 @@
         "file": false
       }
     }
-  }
+  },
+  "analytics": false
 }

@@ -4,15 +4,15 @@
 #include <string.h>
 
 extern "C" {
-#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/ast/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/location.h"
-#include "../extension/libherb/include/position.h"
-#include "../extension/libherb/include/range.h"
-#include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/util/hb_array.h"
-#include "../extension/libherb/include/util/hb_buffer.h"
-#include "../extension/libherb/include/util/hb_string.h"
+#include "../extension/libherb/include/location/location.h"
+#include "../extension/libherb/include/location/position.h"
+#include "../extension/libherb/include/location/range.h"
+#include "../extension/libherb/include/lexer/token.h"
+#include "../extension/libherb/include/lib/hb_array.h"
+#include "../extension/libherb/include/lib/hb_buffer.h"
+#include "../extension/libherb/include/lib/hb_string.h"
 }
 
 #include "error_helpers.h"
@@ -173,12 +173,13 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_value options_object;
   napi_create_object(env, &options_object);
 
-  napi_value strict_value, track_whitespace_value, analyze_value, action_view_helpers_value, prism_program_value, prism_nodes_value, prism_nodes_deep_value;
+  napi_value strict_value, track_whitespace_value, analyze_value, action_view_helpers_value, render_nodes_value, prism_program_value, prism_nodes_value, prism_nodes_deep_value;
 
   napi_get_boolean(env, options->strict, &strict_value);
   napi_get_boolean(env, options->track_whitespace, &track_whitespace_value);
   napi_get_boolean(env, options->analyze, &analyze_value);
   napi_get_boolean(env, options->action_view_helpers, &action_view_helpers_value);
+  napi_get_boolean(env, options->render_nodes, &render_nodes_value);
   napi_get_boolean(env, options->prism_program, &prism_program_value);
   napi_get_boolean(env, options->prism_nodes, &prism_nodes_value);
   napi_get_boolean(env, options->prism_nodes_deep, &prism_nodes_deep_value);
@@ -187,6 +188,7 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_set_named_property(env, options_object, "track_whitespace", track_whitespace_value);
   napi_set_named_property(env, options_object, "analyze", analyze_value);
   napi_set_named_property(env, options_object, "action_view_helpers", action_view_helpers_value);
+  napi_set_named_property(env, options_object, "render_nodes", render_nodes_value);
   napi_set_named_property(env, options_object, "prism_program", prism_program_value);
   napi_set_named_property(env, options_object, "prism_nodes", prism_nodes_value);
   napi_set_named_property(env, options_object, "prism_nodes_deep", prism_nodes_deep_value);

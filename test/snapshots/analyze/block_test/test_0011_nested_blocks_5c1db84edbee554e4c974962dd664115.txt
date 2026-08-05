@@ -27,6 +27,10 @@ input: |2-
     │   │   │   │   └── @ HTMLTextNode (location: (4:16)-(6:2))
     │   │   │   │       └── content: "\n    Level 2\n  "
     │   │   │   │
+    │   │   │   ├── block_arguments: []
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
     │   │   │   └── end_node:
     │   │   │       └── @ ERBEndNode (location: (6:2)-(6:11))
     │   │   │           ├── tag_opening: "<%" (location: (6:2)-(6:4))
@@ -37,6 +41,10 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (6:11)-(7:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (7:0)-(7:9))
     │           ├── tag_opening: "<%" (location: (7:0)-(7:2))

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0009_link_to with model"
+input: "{source: \"<%= link_to @profile %>\", locals: {\"@profile\": #<data Engine::ActionView::LinkToTest::Profile id=42, name=\"Alice\">}, options: {action_view_helpers: true}}"
+---
+<a href="/profiles/42">/profiles/42</a>

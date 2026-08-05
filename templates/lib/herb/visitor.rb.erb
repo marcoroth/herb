@@ -17,9 +17,23 @@ module Herb
       node.compact_child_nodes.each { |node| node.accept(self) }
     end
 
+    #: (Herb::AST::Node) -> void
+    def visit_node(node)
+      # Default implementation does nothing
+    end
+
+    #: (Herb::AST::Node) -> void
+    def visit_erb_node(node)
+      # Default implementation does nothing
+    end
+
     <%- nodes.each do |node| -%>
     #: (Herb::AST::<%= node.name %>) -> void
     def visit_<%= node.human %>(node)
+      visit_node(node)
+      <%- if node.name.start_with?("ERB") -%>
+      visit_erb_node(node)
+      <%- end -%>
       visit_child_nodes(node)
     end
 

@@ -30,6 +30,7 @@ interface LinterTestHelpers {
   expectWarning: (message: string, location?: LocationInput) => void
   expectError: (message: string, location?: LocationInput) => void
   expectInfo: (message: string, location?: LocationInput) => void
+  expectHint: (message: string, location?: LocationInput) => void
   assertOffenses: (html: string, options?: any | TestOptions) => void
 }
 
@@ -68,12 +69,13 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
   const expectedInfos: ExpectedOffense[] = []
+  const expectedHints: ExpectedOffense[] = []
   let hasAsserted = false
 
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
-  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors"
+  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors" || ('consumesParserErrors' in primaryRuleClass && primaryRuleClass.consumesParserErrors)
   const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
@@ -83,8 +85,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   })
 
   afterEach(() => {
-    if (!hasAsserted && (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0)) {
-      const pendingCount = expectedWarnings.length + expectedErrors.length + expectedInfos.length
+    if (!hasAsserted && (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0 || expectedHints.length > 0)) {
+      const pendingCount = expectedWarnings.length + expectedErrors.length + expectedInfos.length + expectedHints.length
 
       throw new Error(
         `Test has ${pendingCount} pending expectation(s) that were never asserted. ` +
@@ -95,12 +97,13 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     expectedWarnings.length = 0
     expectedErrors.length = 0
     expectedInfos.length = 0
+    expectedHints.length = 0
     hasAsserted = false
     parseCache.clear()
   })
 
   const expectNoOffenses = (html: string, options?: any | TestOptions) => {
-    if (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0) {
+    if (expectedWarnings.length > 0 || expectedErrors.length > 0 || expectedInfos.length > 0 || expectedHints.length > 0) {
       throw new Error(
         "Cannot call expectNoOffenses() after registering expectations with expectWarning(), expectError(), or expectInfo()"
       )
@@ -182,8 +185,12 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     expectedInfos.push({ message, location: normalizeLocation(location) })
   }
 
+  const expectHint = (message: string, location?: LocationInput) => {
+    expectedHints.push({ message, location: normalizeLocation(location) })
+  }
+
   const assertOffenses = (html: string, options?: any | TestOptions) => {
-    if (expectedWarnings.length === 0 && expectedErrors.length === 0 && expectedInfos.length === 0) {
+    if (expectedWarnings.length === 0 && expectedErrors.length === 0 && expectedInfos.length === 0 && expectedHints.length === 0) {
       throw new Error(
         "Cannot call assertOffenses() with no expectations. Use expectNoOffenses() instead."
       )
@@ -241,6 +248,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const primaryErrors = primaryOffenses.filter(o => o.severity === "error")
     const primaryWarnings = primaryOffenses.filter(o => o.severity === "warning")
     const primaryInfos = primaryOffenses.filter(o => o.severity === "info")
+    const primaryHints = primaryOffenses.filter(o => o.severity === "hint")
 
     if (primaryErrors.length !== expectedErrors.length) {
       throw new Error(
@@ -266,6 +274,14 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
       )
     }
 
+    if (primaryHints.length !== expectedHints.length) {
+      throw new Error(
+        `Expected ${expectedHints.length} hint(s) from rule "${ruleName}" but found ${primaryHints.length}.\n` +
+        `Expected:\n${expectedHints.map(h => `  - "${h.message}"`).join('\n')}\n` +
+        `Actual:\n${primaryHints.map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
+      )
+    }
+
     primaryOffenses.forEach(offense => {
       expect(offense.rule).toBe(ruleName)
     })
@@ -273,14 +289,17 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const actualErrors = primaryErrors
     const actualWarnings = primaryWarnings
     const actualInfos = primaryInfos
+    const actualHints = primaryHints
 
     matchOffenses(expectedErrors, actualErrors, "error")
     matchOffenses(expectedWarnings, actualWarnings, "warning")
     matchOffenses(expectedInfos, actualInfos, "info")
+    matchOffenses(expectedHints, actualHints, "hint")
 
     expectedWarnings.length = 0
     expectedErrors.length = 0
     expectedInfos.length = 0
+    expectedHints.length = 0
   }
 
   return {
@@ -288,6 +307,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     expectWarning,
     expectError,
     expectInfo,
+    expectHint,
     assertOffenses
   }
 }
@@ -298,7 +318,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 function matchOffenses(
   expected: ExpectedOffense[],
   actual: any[],
-  severity: "error" | "warning" | "info"
+  severity: "error" | "warning" | "info" | "hint"
 ) {
   const unmatched = [...expected]
   const unmatchedActual = [...actual]

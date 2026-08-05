@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include "include/ast_node.h"
-#include "include/ast_nodes.h"
-#include "include/util/hb_array.h"
+#include "include/ast/ast_node.h"
+#include "include/ast/ast_nodes.h"
+#include "include/lib/hb_array.h"
 #include "include/visitor.h"
 
 void herb_visit_node(const AST_NODE_T* node, bool (*visitor)(const AST_NODE_T*, void*), void* data) {

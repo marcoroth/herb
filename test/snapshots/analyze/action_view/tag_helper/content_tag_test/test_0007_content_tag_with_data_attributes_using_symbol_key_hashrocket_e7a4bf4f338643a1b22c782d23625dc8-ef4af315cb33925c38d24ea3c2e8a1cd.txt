@@ -14,23 +14,23 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:51)-(1:53))
     │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:30)-(1:41))
+    │   │           └── @ HTMLAttributeNode (location: (1:31)-(1:48))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:30)-(1:41))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:37))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:30)-(1:41))
+    │   │               │           └── @ LiteralNode (location: (1:31)-(1:37))
     │   │               │               └── content: "data-action"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:30)-(1:41))
+    │   │               ├── equals: " => " (location: (1:37)-(1:41))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:30)-(1:41))
-    │   │                       ├── open_quote: """ (location: (1:30)-(1:41))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:41)-(1:48))
+    │   │                       ├── open_quote: """ (location: (1:41)-(1:42))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:30)-(1:41))
+    │   │                       │   └── @ LiteralNode (location: (1:42)-(1:47))
     │   │                       │       └── content: "value"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:41)-(1:41))
+    │   │                       ├── close_quote: """ (location: (1:47)-(1:48))
     │   │                       └── quoted: true
     │   │
     │   │

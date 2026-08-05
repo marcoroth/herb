@@ -37,8 +37,12 @@ For editors not listed above, you can use the Herb Language Server with any edit
 npm install -g @herb-tools/language-server
 ```
 
-```bash [yarn]
+```bash [yarn 1]
 yarn global add @herb-tools/language-server
+```
+
+```bash [yarn 4]
+yarn dlx -q @herb-tools/language-server --stdio
 ```
 
 ```bash [pnpm]

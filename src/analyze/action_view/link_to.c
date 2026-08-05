@@ -56,7 +56,12 @@ char* extract_link_to_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, h
 char* extract_link_to_content(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   (void) parser;
 
-  if (!call_node || !call_node->arguments) { return NULL; }
+  if (!call_node) { return NULL; }
+
+  char* block_content = extract_inline_block_content(call_node, allocator);
+  if (block_content) { return block_content; }
+
+  if (!call_node->arguments) { return NULL; }
 
   pm_arguments_node_t* arguments = call_node->arguments;
   if (!arguments->arguments.size) { return NULL; }
@@ -96,6 +101,25 @@ char* extract_link_to_href(pm_call_node_t* call_node, pm_parser_t* parser, hb_al
   if (!call_node || !call_node->arguments) { return NULL; }
 
   pm_arguments_node_t* arguments = call_node->arguments;
+  bool has_inline_block = call_node->block && call_node->block->type == PM_BLOCK_NODE;
+
+  if (has_inline_block && arguments->arguments.size >= 1) {
+    pm_node_t* first_argument = arguments->arguments.nodes[0];
+
+    if (first_argument->type == PM_STRING_NODE) {
+      pm_string_node_t* string_node = (pm_string_node_t*) first_argument;
+      size_t length = pm_string_length(&string_node->unescaped);
+      return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+    }
+
+    size_t source_length = first_argument->location.end - first_argument->location.start;
+
+    if (is_route_helper_node(first_argument, parser)) {
+      return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+    }
+
+    return wrap_in_url_for((const char*) first_argument->location.start, source_length, allocator);
+  }
 
   // Format: "url_for(<expression>)"
   if (arguments->arguments.size == 1) {

@@ -4,6 +4,7 @@ import { IdentityPrinter } from "@herb-tools/printer"
 
 import {
   isHTMLElementNode,
+  isHTMLOpenTagNode,
   isERBIfNode,
   isERBElseNode,
   isERBUnlessNode,
@@ -27,10 +28,19 @@ type ConditionalNode = ERBIfNode | ERBUnlessNode | ERBCaseNode
 
 interface DuplicateBranchAutofixContext extends BaseAutofixContext {
   node: Mutable<ConditionalNode>
+  allIdentical?: boolean
 }
 
 function getSignificantNodes(statements: Node[]): Node[] {
   return statements.filter(node => !isPureWhitespaceNode(node))
+}
+
+function trimWhitespaceNodes(nodes: Node[]): Node[] {
+  let start = 0
+  let end = nodes.length
+  while (start < end && isPureWhitespaceNode(nodes[start])) start++
+  while (end > start && isPureWhitespaceNode(nodes[end - 1])) end--
+  return nodes.slice(start, end)
 }
 
 function allEquivalentElements(nodes: Node[]): nodes is HTMLElementNode[] {
@@ -172,8 +182,29 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
       this.markSubsequentIfNodesAsProcessed(node)
     }
 
+    if (this.allBranchesIdentical(branches)) {
+      this.addOffense(
+        "All branches of this conditional have identical content. The conditional can be removed.",
+        node.location,
+        { node: node as Mutable<ConditionalNode>, allIdentical: true },
+        "warning",
+      )
+
+      return
+    }
+
     const state = { isFirstOffense: true }
     this.checkBranches(branches, node, state)
+  }
+
+  private allBranchesIdentical(branches: Node[][]): boolean {
+    if (branches.length < 2) return false
+
+    const first = branches[0].map(node => IdentityPrinter.print(node)).join("")
+
+    return branches.slice(1).every(branch =>
+      branch.map(node => IdentityPrinter.print(node)).join("") === first
+    )
   }
 
   private markSubsequentIfNodesAsProcessed(node: ERBIfNode): void {
@@ -214,17 +245,37 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
 
     for (const element of elements) {
       const printed = IdentityPrinter.print(element.open_tag)
-      const autofixContext = state.isFirstOffense
-        ? { node: conditionalNode as Mutable<ConditionalNode> }
-        : undefined
 
-      this.addOffense(
-        `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
-        bodiesMatch ? element.location : (element?.open_tag?.location || element.location),
-        autofixContext,
-      )
+      if (bodiesMatch) {
+        const autofixContext = state.isFirstOffense
+          ? { node: conditionalNode as Mutable<ConditionalNode> }
+          : undefined
 
-      state.isFirstOffense = false
+        this.addOffense(
+          `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
+          element.location,
+          autofixContext,
+        )
+
+        state.isFirstOffense = false
+      } else {
+        const autofixContext = state.isFirstOffense
+          ? { node: conditionalNode as Mutable<ConditionalNode> }
+          : undefined
+
+        const tagNameLocation = isHTMLOpenTagNode(element.open_tag) && element.open_tag.tag_name?.location
+          ? element.open_tag.tag_name.location
+          : element?.open_tag?.location || element.location
+
+        this.addOffense(
+          `The \`${printed}\` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.`,
+          tagNameLocation,
+          autofixContext,
+          "hint",
+        )
+
+        state.isFirstOffense = false
+      }
     }
 
     if (!bodiesMatch && bodies.every(body => body.length > 0)) {
@@ -235,6 +286,7 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
 
 export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranchAutofixContext> {
   static ruleName = "erb-no-duplicate-branch-elements"
+  static introducedIn = this.version("0.9.0")
   static autocorrectable = true
   static reindentAfterAutofix = true
 
@@ -260,6 +312,18 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
     const branches = collectBranches(conditionalNode as ConditionalNode)
     if (!branches) return null
 
+    if (offense.autofixContext.allIdentical) {
+      const parentInfo = findParentArray(result.value, conditionalNode as unknown as Node)
+      if (!parentInfo) return null
+
+      const { array: parentArray, index: conditionalIndex } = parentInfo
+      const firstBranchContent = trimWhitespaceNodes(branches[0])
+
+      parentArray.splice(conditionalIndex, 1, ...firstBranchContent)
+
+      return result
+    }
+
     const significantBranches = branches.map(getSignificantNodes)
     if (significantBranches.some(branch => branch.length === 0)) return null
 
@@ -274,23 +338,56 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
 
     let { array: parentArray, index: conditionalIndex } = parentInfo
     let hasWrapped = false
+    let didMutate = false
+    let failedToHoistPrefix = false
+    let hoistedBefore = false
 
     const hoistElement = (elements: HTMLElementNode[], position: "before" | "after"): void => {
+      const actualPosition = (position === "before" && failedToHoistPrefix) ? "after" : position
       const bodiesMatch = elements.every(element => IdentityPrinter.print(element) === IdentityPrinter.print(elements[0]))
 
       if (bodiesMatch) {
+        if (actualPosition === "after") {
+          const currentLengths = branches.map(b => getSignificantNodes(b as Node[]).length)
+          if (currentLengths.some(l => l !== currentLengths[0])) return
+        }
+
+        if (actualPosition === "after" && position === "before") {
+          const isAtEnd = branches.every((branch, index) => {
+            const nodes = getSignificantNodes(branch as Node[])
+
+            return nodes.length > 0 && nodes[nodes.length - 1] === elements[index]
+          })
+
+          if (!isAtEnd) return
+        }
+
         for (let i = 0; i < branches.length; i++) {
           removeNodeFromArray(branches[i] as Node[], elements[i])
         }
 
-        if (position === "before") {
-          parentArray.splice(conditionalIndex, 0, elements[0])
-          conditionalIndex++
+        if (actualPosition === "before") {
+          parentArray.splice(conditionalIndex, 0, elements[0], createLiteral("\n"))
+          conditionalIndex += 2
+          hoistedBefore = true
         } else {
-          parentArray.splice(conditionalIndex + 1, 0, elements[0])
+          parentArray.splice(conditionalIndex + 1, 0, createLiteral("\n"), elements[0])
         }
+
+        didMutate = true
       } else {
         if (hasWrapped) return
+
+        const canWrap = branches.every((branch, index) => {
+          const remaining = getSignificantNodes(branch)
+
+          return remaining.length === 1 && remaining[0] === elements[index]
+        })
+
+        if (!canWrap) {
+          if (position === "before") failedToHoistPrefix = true
+          return
+        }
 
         for (let i = 0; i < branches.length; i++) {
           replaceNodeWithBody(branches[i] as Node[], elements[i])
@@ -302,6 +399,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
         parentArray = wrapper.body as Node[]
         conditionalIndex = 1
         hasWrapped = true
+        didMutate = true
       }
     }
 
@@ -315,6 +413,25 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
       hoistElement(elements, "after")
     }
 
-    return result
+    if (!hasWrapped && hoistedBefore) {
+      const remaining = branches.map(branch => getSignificantNodes(branch as Node[]))
+
+      if (remaining.every(branch => branch.length === 1) && allEquivalentElements(remaining.map(b => b[0]))) {
+        const elements = remaining.map(b => b[0] as HTMLElementNode)
+        const bodiesMatch = elements.every(el => IdentityPrinter.print(el) === IdentityPrinter.print(elements[0]))
+
+        if (!bodiesMatch && elements.every(el => el.body.length > 0)) {
+          for (let i = 0; i < branches.length; i++) {
+            replaceNodeWithBody(branches[i] as Node[], elements[i])
+          }
+
+          const wrapper = createWrapper(elements[0], [createLiteral("\n"), conditionalNode as unknown as Node, createLiteral("\n")])
+          parentArray[conditionalIndex] = wrapper
+          didMutate = true
+        }
+      }
+    }
+
+    return didMutate ? result : null
   }
 }
