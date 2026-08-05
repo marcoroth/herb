@@ -279,7 +279,7 @@ module Herb
       return {} unless @config_path&.exist?
 
       begin
-        YAML.safe_load_file(@config_path, permitted_classes: [Symbol]) || {}
+        YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}
       rescue Psych::SyntaxError => e
         warn "Warning: Invalid YAML in #{@config_path}: #{e.message}"
 

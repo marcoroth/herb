@@ -215,3 +215,30 @@ fn find_config_file_walks_up_directory_tree() {
 
   assert_eq!(found.config_path, Some(fs::canonicalize(&config_path).unwrap()));
 }
+
+#[test]
+fn load_supports_yaml_anchors_and_aliases() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yml");
+
+  fs::write(
+    &config_path,
+    r#"
+version: 0.10.3
+files:
+  include: &patterns
+    - "**/*.custom.erb"
+    - "**/*.other.erb"
+  exclude: *patterns
+"#,
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+  let files = config.files_config_for_linter();
+
+  assert!(files.include.as_ref().unwrap().contains(&"**/*.custom.erb".to_string()));
+  assert!(files.include.as_ref().unwrap().contains(&"**/*.other.erb".to_string()));
+  assert!(files.exclude.as_ref().unwrap().contains(&"**/*.custom.erb".to_string()));
+  assert!(files.exclude.as_ref().unwrap().contains(&"**/*.other.erb".to_string()));
+}
