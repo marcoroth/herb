@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0021_kebab-case attributes become snake_case keywords"
+input: "{source: \"<MyComponent item-id=\\\"7\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(item_id: "7")).to_s;
+_buf.to_s

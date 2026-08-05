@@ -211,8 +211,11 @@ module Herb
         Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", dummy_location, [], name_node, equals_token, value_node)
       end
 
+      # TODO: replace all create_token with Herb::Token.from
+      # TODO: replace all dummy_location with Locataion.zero
+      # TODO: replace all dummy_range with Range.zero
       def create_token(type, value)
-        Herb::Token.new(value.dup, dummy_range, dummy_location, type.to_s)
+        Herb::Token.from(type, value, location: dummy_location, range: dummy_range)
       end
 
       def create_debug_span_for_erb(erb_node)

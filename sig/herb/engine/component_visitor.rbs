@@ -3,14 +3,22 @@
 module Herb
   class Engine
     class ComponentVisitor < Herb::Visitor
+      TAG_NAME_SEPARATOR: ::Regexp
+
+      KEYWORD_NAME: ::Regexp
+
+      ARRAY_PROPERTIES: untyped
+
+      NODE_PROPERTIES: untyped
+
       def self.experimental_warning_issued: () -> bool
 
       def self.experimental_warning_issued=: (bool) -> bool
 
       attr_accessor experimental_warning_issued: bool
 
-      # : () -> void
-      def initialize: () -> void
+      # : (?resolvers: Array[Herb::Engine::ComponentVisitor::Resolver]) -> void
+      def initialize: (?resolvers: Array[Herb::Engine::ComponentVisitor::Resolver]) -> void
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -21,23 +29,43 @@ module Herb
 
       def replace_component_nodes_recursive: (untyped node) -> untyped
 
-      def should_transform_to_component?: (untyped node) -> untyped
+      # : (Herb::AST::Node?) -> bool
+      def component?: (Herb::AST::Node?) -> bool
 
       def transform_to_erb_component: (untyped element_node) -> untyped
 
-      def extract_attributes_from_element: (untyped element_node) -> untyped
+      # : (String) -> Herb::Engine::ComponentVisitor::Resolver?
+      def resolver_for: (String) -> Herb::Engine::ComponentVisitor::Resolver?
 
-      def build_component_code: (untyped tag_name, untyped attributes, untyped element_node) -> untyped
+      # : (String?, Hash[String, String], block: bool) -> String?
+      def render_code: (String?, Hash[String, String], block: bool) -> String?
 
-      def format_attribute_value: (untyped value, ?is_directive: untyped) -> untyped
+      # : (Herb::AST::HTMLElementNode) -> Hash[String, String]
+      def extract_attributes_from_element: (Herb::AST::HTMLElementNode) -> Hash[String, String]
 
-      def complex_content?: (untyped element_node) -> untyped
+      # : (Herb::AST::HTMLAttributeNode) -> String?
+      def attribute_name: (Herb::AST::HTMLAttributeNode) -> String?
 
-      def extract_simple_content: (untyped element_node) -> untyped
+      # : (Herb::AST::HTMLAttributeNode, directive: bool) -> String
+      def attribute_value: (Herb::AST::HTMLAttributeNode, directive: bool) -> String
 
-      def extract_content_as_erb: (untyped element_node) -> untyped
+      # : (Array[Herb::AST::Node]) -> String
+      def ruby_code_from: (Array[Herb::AST::Node]) -> String
 
-      def create_token: (untyped type, untyped value) -> untyped
+      # : (Array[Herb::AST::Node]) -> String
+      def string_literal_from: (Array[Herb::AST::Node]) -> String
+
+      # : (String) -> String
+      def escape: (String) -> String
+
+      # : (Herb::AST::HTMLElementNode, String) -> Herb::AST::ERBContentNode
+      def erb_content_node: (Herb::AST::HTMLElementNode, String) -> Herb::AST::ERBContentNode
+
+      # : (Herb::AST::HTMLElementNode, String, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
+      def erb_block_node: (Herb::AST::HTMLElementNode, String, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
+
+      # : (Herb::AST::HTMLElementNode) -> Herb::AST::ERBEndNode
+      def erb_end_node: (Herb::AST::HTMLElementNode) -> Herb::AST::ERBEndNode
     end
   end
 end

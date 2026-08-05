@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0027_a namespaced tag becomes a namespaced constant"
+input: "{source: \"<Users::Card />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Users::Card.new).to_s;
+_buf.to_s

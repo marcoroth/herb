@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0042_a tag no resolver claims is left as HTML"
+input: "{source: \"<Card />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<Card />'.freeze;
+_buf.to_s

@@ -1,10 +1,23 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "snapshot_utils"
 require_relative "../lib/herb/engine/component_visitor"
 
 module Engine
   class ComponentVisitorTest < Minitest::Spec
+    include SnapshotUtils
+
+    class IconResolver < Herb::Engine::ComponentVisitor::Resolver
+      def handles?(tag_name)
+        tag_name.start_with?("Icon")
+      end
+
+      def render_code(tag_name, attributes, block: false) # rubocop:disable Lint/UnusedMethodArgument
+        %(icon_tag("#{tag_name.delete_prefix("Icon").downcase}"))
+      end
+    end
+
     def setup
       # skip
 
@@ -131,7 +144,146 @@ module Engine
       assert_equal expected, engine.src
     end
 
+    test "escapes double quotes in attribute values" do
+      assert_compiled_snapshot(%(<MyComponent name='He said "hi"' />), component_options)
+    end
+
+    test "escapes backslashes in attribute values" do
+      assert_compiled_snapshot(%(<MyComponent path="C:\\temp" />), component_options)
+    end
+
+    test "does not interpolate Ruby from a regular attribute value" do
+      assert_compiled_snapshot("<MyComponent name=\"\#{1 + 1}\" />", component_options)
+    end
+
+    test "an attribute without a value becomes true" do
+      assert_compiled_snapshot("<MyComponent disabled />", component_options)
+    end
+
+    test "an empty attribute value becomes an empty string" do
+      assert_compiled_snapshot('<MyComponent name="" />', component_options)
+    end
+
+    test "an ERB expression in an attribute value is interpolated into the string" do
+      assert_compiled_snapshot('<MyComponent name="<%= @user.name %>" />', component_options)
+    end
+
+    test "an ERB expression mixed with text in an attribute value keeps both" do
+      assert_compiled_snapshot('<MyComponent name="Hi <%= @user.name %>!" />', component_options)
+    end
+
+    test "a directive attribute is used as Ruby code" do
+      assert_compiled_snapshot('<MyComponent :count="@count" />', component_options)
+    end
+
+    test "the first of a duplicated attribute wins" do
+      assert_compiled_snapshot('<MyComponent name="a" name="b" />', component_options)
+    end
+
+    test "kebab-case attributes become snake_case keywords" do
+      assert_compiled_snapshot('<MyComponent item-id="7" />', component_options)
+    end
+
+    test "an attribute name that is not a valid keyword is skipped" do
+      assert_compiled_snapshot('<MyComponent @click="go" name="x" />', component_options)
+    end
+
+    test "an all-caps tag is left as HTML" do
+      assert_compiled_snapshot("<DIV>hello</DIV>", component_options)
+    end
+
+    test "an all-caps void tag is left as HTML" do
+      assert_compiled_snapshot("<BR>", component_options)
+    end
+
+    test "a single letter tag is left as HTML" do
+      assert_compiled_snapshot("<A>x</A>", component_options)
+    end
+
+    test "a tag name that is not a valid constant is left as HTML" do
+      assert_compiled_snapshot("<My-Component />", component_options)
+    end
+
+    test "a namespaced tag becomes a namespaced constant" do
+      assert_compiled_snapshot("<Users::Card />", component_options)
+    end
+
+    test "a component with an HTML body compiles the body inside the block" do
+      assert_compiled_snapshot("<Card><div>x</div></Card>", component_options)
+    end
+
+    test "a component with an ERB body compiles the body inside the block" do
+      assert_compiled_snapshot("<Card><%= @thing %></Card>", component_options)
+    end
+
+    test "a component with a mixed body compiles the body inside the block" do
+      assert_compiled_snapshot("<Card><div>x</div><%= @thing %></Card>", component_options)
+    end
+
+    test "nested components compile as nested render blocks" do
+      assert_compiled_snapshot("<Card><Button>Go</Button></Card>", component_options)
+    end
+
+    test "a component inside an ERB block is transformed" do
+      assert_compiled_snapshot("<% items.each do |item| %><Item /><% end %>", component_options)
+    end
+
+    test "a dot notation tag becomes a partial" do
+      assert_compiled_snapshot("<Users.Card />", dot_notation_options)
+    end
+
+    test "a dot notation tag keeps CamelCase segments as snake_case path segments" do
+      assert_compiled_snapshot("<Users.ProfileCard />", dot_notation_options)
+    end
+
+    test "a nested dot notation tag becomes a nested partial path" do
+      assert_compiled_snapshot("<Admin.Users.Card />", dot_notation_options)
+    end
+
+    test "attributes of a partial become locals" do
+      assert_compiled_snapshot('<Users.Card name="hello" :count="@count" />', dot_notation_options)
+    end
+
+    test "a partial with a body is rendered as a layout" do
+      assert_compiled_snapshot("<Shared.Card>Body</Shared.Card>", dot_notation_options)
+    end
+
+    test "a partial with a body and attributes passes locals to the layout" do
+      assert_compiled_snapshot('<Users.Card title="x"><div>y</div></Users.Card>', dot_notation_options)
+    end
+
+    test "a component nested inside a partial is still transformed" do
+      assert_compiled_snapshot("<Users.Card><Button>Go</Button></Users.Card>", dot_notation_options)
+    end
+
+    test "a double colon tag stays a component" do
+      assert_compiled_snapshot("<Users::Card />", dot_notation_options)
+    end
+
+    test "a custom resolver decides what a tag renders to" do
+      assert_compiled_snapshot("<IconStar />", custom_resolver_options)
+    end
+
+    test "a tag no resolver claims is left as HTML" do
+      assert_compiled_snapshot("<Card />", custom_resolver_options)
+    end
+
     private
+
+    def component_options
+      { visitors: [Herb::Engine::ComponentVisitor.new] }
+    end
+
+    def dot_notation_options
+      {
+        parser_options: { dot_notation_tags: true },
+        visitors: [Herb::Engine::ComponentVisitor.new],
+      }
+    end
+
+    def custom_resolver_options
+      { visitors: [Herb::Engine::ComponentVisitor.new(resolvers: [IconResolver.new])] }
+    end
 
     def parse_and_transform(html)
       result = Herb.parse(html)

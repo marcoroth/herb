@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0034_a dot notation tag keeps CamelCase segments as snake_case path segments"
+input: "{source: \"<Users.ProfileCard />\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render "users/profile_card").to_s;
+_buf.to_s

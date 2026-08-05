@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0022_an attribute name that is not a valid keyword is skipped"
+input: "{source: \"<MyComponent @click=\\\"go\\\" name=\\\"x\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "x")).to_s;
+_buf.to_s

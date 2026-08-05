@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0025_a single letter tag is left as HTML"
+input: "{source: \"<A>x</A>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<A>x</A>'.freeze;
+_buf.to_s

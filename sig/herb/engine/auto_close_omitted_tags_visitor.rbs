@@ -21,9 +21,6 @@ module Herb
 
       # : (Herb::Token, Herb::Location) -> Herb::AST::HTMLCloseTagNode
       def explicit_close_tag: (Herb::Token, Herb::Location) -> Herb::AST::HTMLCloseTagNode
-
-      # : (String, String, Herb::Location) -> Herb::Token
-      def token: (String, String, Herb::Location) -> Herb::Token
     end
   end
 end
