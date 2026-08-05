@@ -23,6 +23,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-unnecessary-html-safe`](./actionview-no-unnecessary-html-safe.md) - Disallow calling `.html_safe` on String literals
 - [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
+- [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
