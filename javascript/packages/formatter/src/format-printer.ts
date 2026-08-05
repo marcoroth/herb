@@ -106,35 +106,16 @@ import {
 } from "@herb-tools/core"
 
 /**
- * Checks if a node holds an ERB statement body, either as a control flow node itself
- * (`<% if %>`, `<% while %>`, ...) or as one of its branches (`<% else %>`, `<% when %>`, ...).
+ * The subset of `ERBNode` that carries the given property.
  */
-function hasERBStatements(node: Node): node is Node & { statements: Node[] } {
-  return Array.isArray((node as any).statements)
-}
+type ERBNodeWith<Property extends string> = Extract<ERBNode, Record<Property, unknown>>
 
-type NodeWithElseClause = ERBBlockNode | ERBIterationBlockNode | ERBCaseNode | ERBCaseMatchNode | ERBBeginNode | ERBUnlessNode | ERBRenderNode
-type NodeWithRescueAndEnsureClauses = ERBBlockNode | ERBIterationBlockNode | ERBBeginNode | ERBRenderNode
-
-function hasElseClause(node: Node): node is NodeWithElseClause {
-  return (
-    isNode(node, ERBBlockNode) ||
-    isNode(node, ERBIterationBlockNode) ||
-    isNode(node, ERBCaseNode) ||
-    isNode(node, ERBCaseMatchNode) ||
-    isNode(node, ERBBeginNode) ||
-    isNode(node, ERBUnlessNode) ||
-    isNode(node, ERBRenderNode)
-  )
-}
-
-function hasRescueAndEnsureClauses(node: Node): node is NodeWithRescueAndEnsureClauses {
-  return (
-    isNode(node, ERBBlockNode) ||
-    isNode(node, ERBIterationBlockNode) ||
-    isNode(node, ERBBeginNode) ||
-    isNode(node, ERBRenderNode)
-  )
+/**
+ * Narrows a node to the ERB nodes carrying the given property, so that node types
+ * added to `ERBNode` are picked up without maintaining a list of classes here.
+ */
+function hasERBProperty<Property extends string>(node: Node, property: Property): node is ERBNodeWith<Property> {
+  return isERBNode(node) && property in node
 }
 
 /**
@@ -233,7 +214,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private inlineFlowChildren(node: Node): Node[] | null {
     if (isNode(node, DocumentNode)) return node.children
     if (isNode(node, HTMLElementNode)) return node.body
-    if (hasERBStatements(node)) return node.statements
+    if (hasERBProperty(node, "statements")) return node.statements
     if (Array.isArray((node as any).body)) return (node as any).body
 
     return null
@@ -246,22 +227,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private inlineFlowBranches(node: Node): Node[] {
     const branches: Node[] = []
 
-    if (isNode(node, ERBIfNode) || isNode(node, ERBRescueNode)) {
-      if (node.subsequent) branches.push(node.subsequent)
-    }
-
-    if (isNode(node, ERBCaseNode) || isNode(node, ERBCaseMatchNode)) {
-      branches.push(...node.conditions)
-    }
-
-    if (hasRescueAndEnsureClauses(node)) {
-      if (node.rescue_clause) branches.push(node.rescue_clause)
-      if (node.ensure_clause) branches.push(node.ensure_clause)
-    }
-
-    if (hasElseClause(node)) {
-      if (node.else_clause) branches.push(node.else_clause)
-    }
+    if (hasERBProperty(node, "subsequent") && node.subsequent) branches.push(node.subsequent)
+    if (hasERBProperty(node, "conditions")) branches.push(...node.conditions)
+    if (hasERBProperty(node, "rescue_clause") && node.rescue_clause) branches.push(node.rescue_clause)
+    if (hasERBProperty(node, "ensure_clause") && node.ensure_clause) branches.push(node.ensure_clause)
+    if (hasERBProperty(node, "else_clause") && node.else_clause) branches.push(node.else_clause)
 
     return branches
   }
@@ -293,7 +263,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const staysInline =
         (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) ||
         isERBControlFlowNode(child) ||
-        hasERBStatements(child)
+        hasERBProperty(child, "statements")
 
       this.collectInlineFlowContext(child, staysInline && before, staysInline && after)
     })
