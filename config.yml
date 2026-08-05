@@ -308,6 +308,24 @@ errors:
         - name: "opening_tag"
           type: "token"
 
+    - name: "MalformedERBClosingTagError"
+      message:
+        template: "ERB tag `%s` at (%u:%u) is closed with `%s` at (%u:%u) instead of `%%>`."
+        arguments:
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "closing_tag->value"
+          - "closing_tag->location.start.line"
+          - "closing_tag->location.start.column"
+
+      fields:
+        - name: "opening_tag"
+          type: "token"
+
+        - name: "closing_tag"
+          type: "token"
+
     - name: "StrayERBClosingTagError"
       message:
         template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
