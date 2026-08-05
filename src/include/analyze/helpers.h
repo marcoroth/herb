@@ -76,7 +76,7 @@ hb_array_T* extract_parameters_from_prism(
 hb_array_T* extract_block_arguments_from_erb_node(
   const AST_ERB_CONTENT_NODE_T* erb_node,
   const char* source,
-  hb_array_T* errors,
+  hb_array_T** errors,
   hb_allocator_T* allocator
 );
 

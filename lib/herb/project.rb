@@ -12,7 +12,9 @@ module Herb
   class Project
     include Colors
 
-    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats, :leak_check
+    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats, :leak_check, :file_timeout
+
+    DEFAULT_FILE_TIMEOUT = 1 # seconds per file for parse + compile
 
     # Known error types that indicate issues in the user's template, not bugs in the parser.
     TEMPLATE_ERRORS = [
@@ -35,6 +37,7 @@ module Herb
       "UnclosedQuoteError",
       "MissingAttributeValueError",
       "UnclosedERBTagError",
+      "MalformedERBClosingTagError",
       "StrayERBClosingTagError",
       "NestedERBTagError"
     ].freeze
@@ -126,6 +129,7 @@ module Herb
 
       date = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
       @output_file = output_file || "#{date}_erb_parsing_result_#{@project_path.basename}.log"
+      @file_timeout = DEFAULT_FILE_TIMEOUT
     end
 
     def configuration
@@ -354,7 +358,7 @@ module Herb
         result[:leak_check] = capture_leak_check(file_content)
       end
 
-      Timeout.timeout(1) do
+      Timeout.timeout(file_timeout) do
         parse_result = Herb.parse(file_content)
 
         if parse_result.failed?
@@ -369,7 +373,7 @@ module Herb
       result
     rescue Timeout::Error
       result.merge(status: :timeout, file_content: file_content,
-                   log: "⏱️ Parsing #{file_path} timed out after 1 second")
+                   log: "⏱️ Parsing #{file_path} timed out after #{file_timeout} #{pluralize(file_timeout, "second")}")
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -388,7 +392,7 @@ module Herb
       stdout_file = Tempfile.new("stdout")
       stderr_file = Tempfile.new("stderr")
 
-      Timeout.timeout(1) do
+      Timeout.timeout(file_timeout) do
         pid = Process.fork do
           $stdout.reopen(stdout_file.path, "w")
           $stderr.reopen(stderr_file.path, "w")
@@ -431,7 +435,7 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :timeout, file_content: file_content, log: "⏱️ Parsing #{file_path} timed out after 1 second" }
+      { file_path: file_path, status: :timeout, file_content: file_content, log: "⏱️ Parsing #{file_path} timed out after #{file_timeout} #{pluralize(file_timeout, "second")}" }
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -903,12 +907,7 @@ module Herb
     def ensure_parallel!
       return if defined?(Parallel)
 
-      require "bundler/inline"
-
-      gemfile(true, quiet: true) do
-        source "https://rubygems.org"
-        gem "parallel"
-      end
+      Herb.ensure_installed { gem "parallel" } # steep:ignore
     end
 
     def separator

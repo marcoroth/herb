@@ -1,0 +1,30 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0030_unclosed ERB tag is not recovered when no > leaves parseable Ruby behind"
+input: "<%= items.select { |item| item.size > 3 "
+---
+@ DocumentNode (location: (1:0)-(1:40))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (1:40)-(1:40))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:17)-(1:18))
+│       ├── message: "block_term_brace: expected a block beginning with `{` to end with `}`"
+│       ├── error_message: "expected a block beginning with `{` to end with `}`"
+│       ├── diagnostic_id: "block_term_brace"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:40))
+        ├── errors: (1 error)
+        │   └── @ UnclosedERBTagError (location: (1:0)-(1:40))
+        │       ├── message: "ERB tag `<%=` at (1:0) is missing closing `%>`."
+        │       └── opening_tag: "<%=" (location: (1:0)-(1:3))
+        │
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " items.select { |item| item.size > 3 " (location: (1:3)-(1:40))
+        ├── tag_closing: ∅
+        ├── parsed: true
+        └── valid: false

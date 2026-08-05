@@ -6,11 +6,14 @@ export interface ParseOptions {
   transform_conditionals?: boolean
   render_nodes?: boolean
   strict_locals?: boolean
+  iteration_nodes?: boolean
   prism_nodes?: boolean
   prism_nodes_deep?: boolean
   prism_program?: boolean
   dot_notation_tags?: boolean
   html?: boolean
+  timeout?: number
+  max_errors?: number | null
 }
 
 export type SerializedParserOptions = Required<ParseOptions>
@@ -23,11 +26,14 @@ export const DEFAULT_PARSER_OPTIONS: SerializedParserOptions = {
   transform_conditionals: false,
   render_nodes: false,
   strict_locals: false,
+  iteration_nodes: false,
   prism_nodes: false,
   prism_nodes_deep: false,
   prism_program: false,
   dot_notation_tags: false,
   html: true,
+  timeout: 1000,
+  max_errors: 25,
 }
 
 /**
@@ -54,6 +60,7 @@ export class ParserOptions {
 
   /** Whether strict locals analysis was enabled during parsing. */
   readonly strict_locals: boolean
+  readonly iteration_nodes: boolean
 
   /** Whether Prism node serialization was enabled during parsing. */
   readonly prism_nodes: boolean
@@ -70,6 +77,12 @@ export class ParserOptions {
   /** Whether HTML tag parsing is enabled during parsing. When false, HTML-like content is treated as literal text. */
   readonly html: boolean
 
+  /** Parse timeout in milliseconds. 0 disables the timeout. */
+  readonly timeout: number
+
+  /** Maximum number of errors to report. null means unlimited. */
+  readonly max_errors: number | null
+
   static from(options: SerializedParserOptions): ParserOptions {
     return new ParserOptions(options)
   }
@@ -82,10 +95,13 @@ export class ParserOptions {
     this.transform_conditionals = options.transform_conditionals ?? DEFAULT_PARSER_OPTIONS.transform_conditionals
     this.render_nodes = options.render_nodes ?? DEFAULT_PARSER_OPTIONS.render_nodes
     this.strict_locals = options.strict_locals ?? DEFAULT_PARSER_OPTIONS.strict_locals
+    this.iteration_nodes = options.iteration_nodes ?? DEFAULT_PARSER_OPTIONS.iteration_nodes
     this.prism_nodes = options.prism_nodes ?? DEFAULT_PARSER_OPTIONS.prism_nodes
     this.prism_nodes_deep = options.prism_nodes_deep ?? DEFAULT_PARSER_OPTIONS.prism_nodes_deep
     this.prism_program = options.prism_program ?? DEFAULT_PARSER_OPTIONS.prism_program
     this.dot_notation_tags = options.dot_notation_tags ?? DEFAULT_PARSER_OPTIONS.dot_notation_tags
     this.html = options.html ?? DEFAULT_PARSER_OPTIONS.html
+    this.timeout = options.timeout ?? DEFAULT_PARSER_OPTIONS.timeout
+    this.max_errors = options.max_errors ?? DEFAULT_PARSER_OPTIONS.max_errors
   }
 }

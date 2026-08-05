@@ -3,7 +3,7 @@ import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-
 import { getAttributeName, getAttributes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { ParseResult, ParserOptions } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
@@ -28,6 +28,12 @@ export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

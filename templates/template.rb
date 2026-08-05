@@ -25,6 +25,10 @@ module Herb
         @options = options
       end
 
+      def writable?
+        options.fetch(:writable, false)
+      end
+
       def always_invisible?
         ALWAYS_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
       end
@@ -66,9 +70,9 @@ module Herb
     end
 
     class ArrayField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def ruby_type
@@ -107,9 +111,9 @@ module Herb
     end
 
     class NodeField < Field
-      def initialize(kind:, **options)
+      def initialize(kind:, **)
         @kind = kind
-        super(**options)
+        super(**)
       end
 
       def c_type
@@ -412,7 +416,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind)
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
       end
 
@@ -482,6 +486,26 @@ module Herb
 
       def escaped_default
         @default ? Template.escape_string(@default) : nil
+      end
+    end
+
+    class HelperBlockArgument
+      attr_reader :name, :position, :type, :optional, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @position = config.fetch("position")
+        @type = Array(config.fetch("type"))
+        @optional = config.fetch("optional", false)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
       end
     end
 
@@ -618,7 +642,7 @@ module Herb
                   :supported, :description, :signature, :documentation_url, :tag,
                   :content, :attributes_arg, :attributes_arg_with_block,
                   :transform_style, :custom_transform,
-                  :arguments, :options, :special_behaviors, :aliases
+                  :arguments, :options, :block_arguments, :special_behaviors, :aliases
 
       def initialize(config)
         @name = config.fetch("name")
@@ -645,6 +669,7 @@ module Herb
 
         @arguments = (config.fetch("arguments", []) || []).map { |arg| HelperArgument.new(arg) }
         @options = (config.fetch("options", []) || []).map { |opt| HelperOption.new(opt) }
+        @block_arguments = (config.fetch("block_arguments", []) || []).map { |arg| HelperBlockArgument.new(arg) }
 
         raw_behaviors = config.fetch("special_behaviors", []) || []
         @special_behaviors = raw_behaviors.map { |b| HelperSpecialBehavior.new(b) }

@@ -6,6 +6,7 @@ import { join } from "path"
 
 describe("herb-highlight CLI", () => {
   const testFile = join(__dirname, "test-template.html.erb")
+  const normalize = (output: string) => output.replaceAll(testFile, "<test-file>")
 
   beforeAll(async () => {
     await Herb.load()
@@ -34,13 +35,7 @@ describe("herb-highlight CLI", () => {
       cwd: process.cwd(),
     })
 
-    // Should contain ANSI color codes
-    expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m") // HTML tags
-    expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m") // Ruby keywords
-    expect(result).toContain("\x1b[38;2;190;80;70m<%\x1b[0m") // ERB tags
-
-    // Should not contain corrupted ANSI codes
-    expect(result).not.toContain("[38;2;209;154;102m38")
+    expect(normalize(result)).toMatchSnapshot()
   })
 
   test("should handle non-existent file gracefully", () => {
@@ -61,8 +56,8 @@ describe("herb-highlight CLI", () => {
       },
     )
 
-    // Should not contain ANSI color codes when NO_COLOR is set
     expect(result).not.toContain("\x1b[")
+    expect(normalize(result)).toMatchSnapshot()
   })
 
   test("should support --focus option", () => {
@@ -71,15 +66,7 @@ describe("herb-highlight CLI", () => {
       cwd: process.cwd(),
     })
 
-    // Should contain focus line indicator
-    expect(result).toContain("  → ")
-    // Should contain file path header
-    expect(result).toContain(testFile)
-    // Should contain dimmed context lines
-    expect(result).toContain("\x1b[2;")
-    // Should not show all lines (only focus + context)
-    const lines = result.split("\n").filter((line) => line.includes("│"))
-    expect(lines.length).toBeLessThanOrEqual(5) // focus + 2 context each side
+    expect(normalize(result)).toMatchSnapshot()
   })
 
   test("should support --context-lines option", () => {
@@ -91,9 +78,7 @@ describe("herb-highlight CLI", () => {
       },
     )
 
-    // Should show fewer context lines
-    const lines = result.split("\n").filter((line) => line.includes("│"))
-    expect(lines.length).toBeLessThanOrEqual(3) // focus + 1 context each side
+    expect(normalize(result)).toMatchSnapshot()
   })
 
   test("should handle invalid --focus value", () => {

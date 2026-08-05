@@ -1,37 +1,47 @@
 ---
-name: month_field_tag
+name: "month_field_tag"
 source: "ActionView::Helpers::FormTagHelper#month_field_tag"
-gem: actionview
-output: html
-visibility: public
+gem: "actionview"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Creates a text field of type `"month"`.
 signature: "month_field_tag(name, value = nil, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-month_field_tag"
+
+description: |-
+  Creates a text field of type `"month"`.
+
 tag:
-  name: input
+  name: "input"
   is_void: true
   preferred: false
-  detect_style: call_name
+  detect_style: "call_name"
+
 arguments:
-  - name: name
+  - name: "name"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Name attribute for the input."
-  - name: value
+    description: |-
+      Name attribute for the input.
+
+  - name: "value"
     position: 2
-    type: string
+    type: "string"
     optional: true
     default: "nil"
-    description: "Default month value."
-  - name: options
+    description: |-
+      Default month value.
+
+  - name: "options"
     position: 3
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "HTML attributes hash."
+    description: |-
+      HTML attributes hash.
+
 options: []
+block_arguments: []
 special_behaviors: []

@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/core",
-  "version": "0.9.6",
+  "version": "0.10.3",
   "description": "Core module exporting shared interfaces, AST node definitions, and common utilities for Herb",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -30,10 +30,10 @@
       "default": "./dist/herb-core.esm.js"
     }
   },
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "@ruby/prism": "^1.9.0"
   },
+  "devDependencies": {},
   "files": [
     "package.json",
     "README.md",

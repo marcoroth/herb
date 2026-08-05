@@ -1,0 +1,10 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0033_inline-block with erb - closing tag inserted at correct position - render"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <li style=\\\"display: inline-block\\\"><%= item %>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"A\", \"B\", \"C\"]}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul>
+    <li style="display: inline-block">A
+  </li>    <li style="display: inline-block">B
+  </li>    <li style="display: inline-block">C
+  </li>
+</ul>

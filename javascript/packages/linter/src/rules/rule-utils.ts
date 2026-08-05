@@ -1,9 +1,7 @@
 import {
   Visitor,
   Location,
-  Position,
-  hasERBOutput,
-  isEffectivelyStatic,
+  hasDynamicOutput,
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
@@ -13,9 +11,11 @@ import {
   getAttributeValue,
   getTagLocalName,
   forEachAttribute,
+  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
+  ERBOpenTagNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLElementNode,
@@ -152,6 +152,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
@@ -224,6 +228,13 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
       const name = getTagLocalName(element)
       return name !== null && tagNames.includes(name)
     })
+  }
+
+  /**
+   * All ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestors(): readonly HTMLElementNode[] {
+    return this.elementStack
   }
 
   /**
@@ -382,7 +393,8 @@ export const VALID_ARIA_ROLES = new Set([
   "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
   "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
   "treegrid", "treeitem",
-  "log", "marquee"
+  "log", "marquee",
+  "graphics-document", "graphics-object", "graphics-symbol"
 ]);
 
 /**
@@ -413,7 +425,7 @@ export interface StaticAttributeStaticValueParams {
   attributeValue: string
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
@@ -421,7 +433,7 @@ export interface StaticAttributeDynamicValueParams {
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedValue?: string | null
 }
 
@@ -429,7 +441,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
 }
 
@@ -437,7 +449,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -548,15 +560,20 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkAttributesOnNode(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkAttributesOnNode(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
-      const hasOutputERB = hasERBOutput(valueNodes)
-      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+      const hasOutputERB = hasDynamicOutput(valueNodes)
+      const isEffectivelyStaticValue = !hasDynamicOutput(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
         this.checkStaticAttributeStaticValue({
@@ -955,40 +972,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a start offset, and a length.
- */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {

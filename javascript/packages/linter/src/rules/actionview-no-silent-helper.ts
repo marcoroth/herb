@@ -1,45 +1,85 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { isERBOutputNode, PrismVisitor } from "@herb-tools/core"
+
+import { isERBOutputNode, isPrismNodeType } from "@herb-tools/core"
 import { isActionViewHelperCall } from "./action-view-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, ERBNode, ParserOptions, PrismNode } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
-class ActionViewHelperCallCollector extends PrismVisitor {
-  public readonly matches: { helperName: string }[] = []
+function collectDiscardedHelperCalls(prismNode: PrismNode): { helperName: string }[] {
+  const matches: { helperName: string }[] = []
 
-  visitCallNode(node: PrismNode): void {
+  const collect = (node: PrismNode | null | undefined): void => {
+    if (!node) return
+
     const match = isActionViewHelperCall(node)
 
     if (match) {
-      this.matches.push(match)
+      matches.push(match)
+      return
     }
 
-    this.visitChildNodes(node)
+    if (isPrismNodeType(node, "StatementsNode")) {
+      node.body.forEach(collect)
+      return
+    }
+
+    if (isPrismNodeType(node, "IfNode")) {
+      collect(node.statements)
+      collect(node.subsequent)
+      return
+    }
+
+    if (isPrismNodeType(node, "UnlessNode")) {
+      collect(node.statements)
+      collect(node.elseClause)
+      return
+    }
+
+    if (isPrismNodeType(node, "ElseNode")) {
+      collect(node.statements)
+      return
+    }
+
+    if (isPrismNodeType(node, "AndNode") || isPrismNodeType(node, "OrNode")) {
+      collect(node.right)
+      return
+    }
+
+    if (isPrismNodeType(node, "BeginNode")) {
+      collect(node.statements)
+      return
+    }
+
+    if (isPrismNodeType(node, "ParenthesesNode")) {
+      collect(node.body)
+      return
+    }
   }
+
+  collect(prismNode)
+
+  return matches
 }
 
 class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
-  visitERBNode(node: ERBNode): void {
+  visitERBContentNode(node: ERBContentNode): void {
     this.checkSilentHelper(node)
-    super.visitERBNode(node)
+    super.visitERBContentNode(node)
   }
 
-  private checkSilentHelper(node: ERBNode): void {
+  private checkSilentHelper(node: ERBContentNode): void {
     if (isERBOutputNode(node)) return
 
     const tagOpening = node.tag_opening?.value
     if (!tagOpening) return
     if (tagOpening.startsWith("<%%")) return
 
-    const prismNode = (node as any).prismNode
+    const prismNode = node.prismNode
     if (!prismNode) return
 
-    const collector = new ActionViewHelperCallCollector()
-    collector.visit(prismNode)
-
-    for (const match of collector.matches) {
+    for (const match of collectDiscardedHelperCalls(prismNode)) {
       this.addOffense(
         `Avoid using \`${tagOpening} %>\` with \`${match.helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
         node.location,

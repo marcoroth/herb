@@ -5,6 +5,7 @@
 #include "../include/analyze/helpers.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
+#include "../include/lexer/token.h"
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_array.h"
 #include "../include/lib/hb_string.h"
@@ -506,7 +507,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (!locals) { locals = hb_array_init(0, allocator); }
 
-  hb_array_T* errors = hb_array_init(0, allocator);
+  hb_array_T* errors = NULL;
 
   if (!has_keyword_partial && partial && keyword_hash) {
     keyword_result_T locals_keyword = find_keyword_value(keyword_hash, "locals", allocator);
@@ -519,7 +520,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
 
       hb_allocator_dealloc(allocator, locals_keyword.value);
@@ -592,7 +593,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
 
       hb_allocator_dealloc(allocator, keywords_buffer);
@@ -601,7 +602,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (!partial && !template_path && !layout && !file && !inline_template && !body && !plain && !html && !renderable
       && !has_positional_partial && !object) {
-    append_render_no_arguments_error(erb_node->base.location.start, erb_node->base.location.end, allocator, errors);
+    append_render_no_arguments_error(erb_node->base.location.start, erb_node->base.location.end, allocator, &errors);
   }
 
   if (has_positional_partial && has_keyword_partial && keyword_hash) {
@@ -613,7 +614,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
 
     if (keyword_partial.value) { hb_allocator_dealloc(allocator, keyword_partial.value); }
@@ -641,7 +642,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
     }
   }
@@ -651,7 +652,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
   }
 
@@ -661,7 +662,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
   }
 
@@ -811,6 +812,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_content_node(
 ) {
   if (!erb_node->analyzed_ruby || !erb_node->analyzed_ruby->valid || !erb_node->analyzed_ruby->parsed) { return NULL; }
   if (is_erb_comment_tag(erb_node->tag_opening)) { return NULL; }
+  if (token_is_escaped_erb_tag_opening(erb_node->tag_opening)) { return NULL; }
 
   pm_call_node_t* render_call = find_render_call(erb_node->analyzed_ruby->root, &erb_node->analyzed_ruby->parser);
   if (!render_call) { return NULL; }
@@ -840,6 +842,7 @@ static AST_ERB_RENDER_NODE_T* try_transform_block_node(
   analyze_ruby_context_T* context
 ) {
   if (!block_node->content || hb_string_is_empty(block_node->content->value)) { return NULL; }
+  if (token_is_escaped_erb_tag_opening(block_node->tag_opening)) { return NULL; }
 
   const char* ruby_source = block_node->content->value.data;
   size_t ruby_length = block_node->content->value.length;

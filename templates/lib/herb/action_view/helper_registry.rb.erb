@@ -58,6 +58,25 @@ module Herb
       def maps_to_aria_attribute? = maps_to&.start_with?("aria-") || false
     end
 
+    class HelperBlockArgument
+      attr_reader :name #: String
+      attr_reader :position #: Integer
+      attr_reader :type #: String
+      attr_reader :description #: String
+
+      #: (String, Integer, String, bool, String) -> void
+      def initialize(name, position, type, optional, description)
+        @name = name
+        @position = position
+        @type = type
+        @optional = optional
+        @description = description
+      end
+
+      #: () -> bool
+      def optional? = @optional
+    end
+
     class HelperImplicitAttribute
       attr_reader :name #: String
       attr_reader :source #: String
@@ -90,14 +109,15 @@ module Herb
       attr_reader :implicit_attribute #: HelperImplicitAttribute?
       attr_reader :arguments #: Array[HelperArgument]
       attr_reader :options #: Array[HelperOption]
+      attr_reader :block_arguments #: Array[HelperBlockArgument]
       attr_reader :special_behaviors #: Array[Symbol]
       attr_reader :aliases #: Array[String]
 
-      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
       def initialize( # rubocop:disable Metrics/ParameterLists
         name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
         preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
-        implicit_attribute:, arguments:, options:, special_behaviors:, aliases:
+        implicit_attribute:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
       )
         @name = name
         @type = type
@@ -117,6 +137,7 @@ module Herb
         @implicit_attribute = implicit_attribute
         @arguments = arguments
         @options = options
+        @block_arguments = block_arguments
         @special_behaviors = special_behaviors
         @aliases = aliases
       end
@@ -183,6 +204,11 @@ module Herb
         options: [
         <%- helper.options.each do |opt| -%>
           HelperOption.new("<%= opt.name %>", "<%= opt.type_display %>", <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "nil" %>, "<%= opt.escaped_description %>"),
+        <%- end -%>
+        ],
+        block_arguments: [
+        <%- helper.block_arguments.each do |arg| -%>
+          HelperBlockArgument.new("<%= arg.name %>", <%= arg.position %>, "<%= arg.type_display %>", <%= arg.optional %>, "<%= arg.escaped_description %>"),
         <%- end -%>
         ],
         special_behaviors: [<%= helper.special_behaviors.map { |b| ":#{b}" }.join(", ") %>],

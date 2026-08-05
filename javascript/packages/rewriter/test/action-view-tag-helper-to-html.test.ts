@@ -941,15 +941,15 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
-    test("tag.div with array data attribute wraps in .to_json", () => {
+    test("tag.div with array data attribute wraps in nested_attribute_value", () => {
       expect(transform('<%= tag.div data: { items: ["a", "b"] } %>')).toBe(
-        '<div data-items="<%= ["a", "b"].to_json %>"></div>'
+        '<div data-items="<%= ::Herb::Engine.nested_attribute_value(["a", "b"]) %>"></div>'
       )
     })
 
-    test("tag.div with nested hash data attribute wraps in .to_json", () => {
+    test("tag.div with nested hash data attribute wraps in nested_attribute_value", () => {
       expect(transform('<%= tag.div data: { config: { nested: "hash" } } %>')).toBe(
-        '<div data-config="<%= { nested: "hash" }.to_json %>"></div>'
+        '<div data-config="<%= ::Herb::Engine.nested_attribute_value({ nested: "hash" }) %>"></div>'
       )
     })
   })

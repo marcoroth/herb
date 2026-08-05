@@ -28,4 +28,6 @@ void token_free(token_T* token, hb_allocator_T* allocator);
 
 bool token_value_empty(const token_T* token);
 
+bool token_is_escaped_erb_tag_opening(const token_T* token);
+
 #endif

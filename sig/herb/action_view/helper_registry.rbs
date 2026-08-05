@@ -201,9 +201,11 @@ module Herb
 
       DEBUG: ::Symbol
 
-      APPLY_FORM_FOR_OPTIONS_BANG: ::Symbol
-
       BUTTON: ::Symbol
+
+      SUBMIT: ::Symbol
+
+      APPLY_FORM_FOR_OPTIONS_BANG: ::Symbol
 
       CHECKBOX: ::Symbol
 
@@ -250,8 +252,6 @@ module Herb
       RANGE_FIELD: ::Symbol
 
       SEARCH_FIELD: ::Symbol
-
-      SUBMIT: ::Symbol
 
       TELEPHONE_FIELD: ::Symbol
 
@@ -459,6 +459,16 @@ module Herb
 
       URL_FOR: ::Symbol
 
+      JAVASCRIPT_IMPORT_MODULE_TAG: ::Symbol
+
+      JAVASCRIPT_IMPORTMAP_MODULE_PRELOAD_TAGS: ::Symbol
+
+      JAVASCRIPT_IMPORTMAP_TAGS: ::Symbol
+
+      JAVASCRIPT_INLINE_IMPORTMAP_TAG: ::Symbol
+
+      JAVASCRIPT_MODULE_PRELOAD_TAG: ::Symbol
+
       TURBO_EXEMPTS_PAGE_FROM_CACHE: ::Symbol
 
       TURBO_EXEMPTS_PAGE_FROM_CACHE_TAG: ::Symbol
@@ -532,6 +542,22 @@ module Herb
       def maps_to_aria_attribute?: () -> bool
     end
 
+    class HelperBlockArgument
+      attr_reader name: String
+
+      attr_reader position: Integer
+
+      attr_reader type: String
+
+      attr_reader description: String
+
+      # : (String, Integer, String, bool, String) -> void
+      def initialize: (String, Integer, String, bool, String) -> void
+
+      # : () -> bool
+      def optional?: () -> bool
+    end
+
     class HelperImplicitAttribute
       attr_reader name: String
 
@@ -576,12 +602,14 @@ module Herb
 
       attr_reader options: Array[HelperOption]
 
+      attr_reader block_arguments: Array[HelperBlockArgument]
+
       attr_reader special_behaviors: Array[Symbol]
 
       attr_reader aliases: Array[String]
 
-      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
-      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
 
       # : () -> bool
       def void?: () -> bool
@@ -807,9 +835,11 @@ module Herb
 
       DEBUG: HelperEntry
 
-      APPLY_FORM_FOR_OPTIONS_BANG: HelperEntry
-
       BUTTON: HelperEntry
+
+      SUBMIT: HelperEntry
+
+      APPLY_FORM_FOR_OPTIONS_BANG: HelperEntry
 
       CHECKBOX: HelperEntry
 
@@ -856,8 +886,6 @@ module Herb
       RANGE_FIELD: HelperEntry
 
       SEARCH_FIELD: HelperEntry
-
-      SUBMIT: HelperEntry
 
       TELEPHONE_FIELD: HelperEntry
 
@@ -1064,6 +1092,16 @@ module Herb
       SMS_TO: HelperEntry
 
       URL_FOR: HelperEntry
+
+      JAVASCRIPT_IMPORT_MODULE_TAG: HelperEntry
+
+      JAVASCRIPT_IMPORTMAP_MODULE_PRELOAD_TAGS: HelperEntry
+
+      JAVASCRIPT_IMPORTMAP_TAGS: HelperEntry
+
+      JAVASCRIPT_INLINE_IMPORTMAP_TAG: HelperEntry
+
+      JAVASCRIPT_MODULE_PRELOAD_TAG: HelperEntry
 
       TURBO_EXEMPTS_PAGE_FROM_CACHE: HelperEntry
 

@@ -451,5 +451,32 @@ module Analyze
         <% end %>
       HTML
     end
+
+    # https://github.com/marcoroth/herb/issues/1770
+    test "closed do/end block with yield in single tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          meth do
+            yield
+          end
+        %>
+      HTML
+    end
+
+    test "block with destructured block arguments" do
+      assert_parsed_snapshot(<<~HTML)
+        <% @pairs.each do |(key, value)| %>
+          <%= key %>: <%= value %>
+        <% end %>
+      HTML
+    end
+
+    test "block with post-rest block argument" do
+      assert_parsed_snapshot(<<~HTML)
+        <% @rows.each do |first, *middle, last| %>
+          <%= first %><%= middle %><%= last %>
+        <% end %>
+      HTML
+    end
   end
 end

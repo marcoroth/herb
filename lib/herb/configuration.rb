@@ -5,7 +5,14 @@ require "pathname"
 
 module Herb
   class Configuration
-    CONFIG_FILENAMES = [".herb.yml"].freeze
+    OPTIONS_PATH = File.expand_path("../../config/options.yml", __dir__ || __FILE__).freeze #: String
+    OPTIONS = YAML.safe_load_file(OPTIONS_PATH).freeze #: Hash[String, untyped]
+
+    VALID_FRAMEWORKS = OPTIONS["framework"]["values"].freeze #: Array[String]
+    VALID_TEMPLATE_ENGINES = OPTIONS["template_engine"]["values"].freeze #: Array[String]
+
+    CONFIG_FILENAMES = [".herb.yml"].freeze #: Array[String]
+    MISNAMED_CONFIG_FILENAMES = [".herb.yaml", "herb.yml", "herb.yaml"].freeze #: Array[String]
 
     PROJECT_INDICATORS = [
       ".git",
@@ -17,17 +24,21 @@ module Herb
       "README.md",
       "*.gemspec",
       "config/application.rb"
-    ].freeze
+    ].freeze #: Array[String]
 
     DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__ || __FILE__).freeze
     DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH).freeze
 
-    attr_reader :config, :config_path, :project_root
+    attr_reader :config, :user_config, :config_path, :project_root, :misnamed_config_paths
 
     def initialize(project_path = nil)
       @start_path = project_path ? Pathname.new(project_path) : Pathname.pwd
       @config_path, @project_root = find_config_file
-      @config = load_config
+      @misnamed_config_paths = find_misnamed_config_paths
+      @user_config = load_user_config
+      @config = deep_merge(DEFAULTS, @user_config)
+
+      warn_about_misnamed_config_files
     end
 
     def [](key)
@@ -40,6 +51,30 @@ module Herb
 
     def version
       @config["version"]
+    end
+
+    #: () -> String
+    def framework
+      value = @config["framework"] || "ruby"
+
+      unless VALID_FRAMEWORKS.include?(value)
+        warn "[Herb] Unknown framework: #{value.inspect}. Valid values: #{VALID_FRAMEWORKS.join(", ")}. Defaulting to 'ruby'."
+        return "ruby"
+      end
+
+      value
+    end
+
+    #: () -> String
+    def template_engine
+      value = @config["template_engine"] || "erubi"
+
+      unless VALID_TEMPLATE_ENGINES.include?(value)
+        warn "[Herb] Unknown template_engine: #{value.inspect}. Valid values: #{VALID_TEMPLATE_ENGINES.join(", ")}. Defaulting to 'erubi'."
+        return "erubi"
+      end
+
+      value
     end
 
     def files
@@ -60,6 +95,11 @@ module Herb
 
     def engine
       @config["engine"] || {}
+    end
+
+    #: (String, untyped) -> untyped
+    def engine_option(key, default = nil)
+      engine.fetch(key.to_s, default)
     end
 
     def enabled_validators(overrides = {})
@@ -211,6 +251,20 @@ module Herb
       [nil, @start_path]
     end
 
+    def find_misnamed_config_paths
+      search_path = @project_root || @start_path
+      search_path = search_path.parent if search_path.file?
+
+      MISNAMED_CONFIG_FILENAMES.map { |filename| search_path / filename }.select(&:exist?)
+    end
+
+    def warn_about_misnamed_config_files
+      @misnamed_config_paths.each do |misnamed_path|
+        warn "[Herb] Ignoring #{misnamed_path}: Herb only reads `#{CONFIG_FILENAMES.first}`. " \
+             "Rename it to `#{CONFIG_FILENAMES.first}` to apply it."
+      end
+    end
+
     def project_root?(path)
       PROJECT_INDICATORS.any? do |indicator|
         if indicator.include?("*")
@@ -221,26 +275,26 @@ module Herb
       end
     end
 
-    def load_config
-      return deep_merge(DEFAULTS, {}) unless @config_path&.exist?
+    def load_user_config
+      return {} unless @config_path&.exist?
 
       begin
-        user_config = YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}
-        deep_merge(DEFAULTS, user_config)
+        YAML.safe_load_file(@config_path, permitted_classes: [Symbol], aliases: true) || {}
       rescue Psych::SyntaxError => e
         warn "Warning: Invalid YAML in #{@config_path}: #{e.message}"
-        deep_merge(DEFAULTS, {})
+
+        {}
       end
     end
 
     def deep_merge(base, override, additive_keys: ["include", "exclude"])
-      base.merge(override) do |key, old_val, new_val|
-        if old_val.is_a?(Hash) && new_val.is_a?(Hash)
-          deep_merge(old_val, new_val, additive_keys: additive_keys)
-        elsif old_val.is_a?(Array) && new_val.is_a?(Array) && additive_keys.include?(key)
-          old_val + new_val
+      base.merge(override) do |key, old_value, new_value|
+        if old_value.is_a?(Hash) && new_value.is_a?(Hash)
+          deep_merge(old_value, new_value, additive_keys: additive_keys)
+        elsif old_value.is_a?(Array) && new_value.is_a?(Array) && additive_keys.include?(key)
+          old_value + new_value
         else
-          new_val
+          new_value
         end
       end
     end

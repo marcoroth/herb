@@ -1,16 +1,19 @@
 ---
-name: emitted_hidden_id?
+name: "emitted_hidden_id?"
 source: "ActionView::Helpers::FormHelper#emitted_hidden_id?"
-gem: actionview
-output: boolean
-visibility: internal
+gem: "actionview"
+output: "boolean"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Returns whether the hidden `id` field has already been emitted for this form builder.
 signature: "emitted_hidden_id?"
 documentation_url: ""
+
+description: |-
+  Returns whether the hidden `id` field has already been emitted for this form builder.
+
 tag: null
 arguments: []
 options: []
+block_arguments: []
 special_behaviors: []

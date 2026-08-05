@@ -7,6 +7,7 @@ const defaultSidebar = [
     items: [
       { text: "Overview", link: "/overview" },
       { text: "Configuration", link: "/configuration" },
+      { text: "Parser Options", link: "/parser-options" },
       { text: "Projects", link: "/projects" },
     ],
   },
@@ -18,6 +19,7 @@ const defaultSidebar = [
       { text: "Formatter", link: "/projects/formatter" },
       { text: "Linter", link: "/projects/linter" },
       { text: "CLI", link: "/projects/cli" },
+      { text: "Dev Server", link: "/projects/dev-server" },
       { text: "Dev Tools", link: "/projects/dev-tools" },
     ],
   },
@@ -25,6 +27,7 @@ const defaultSidebar = [
     text: "Utility Libraries",
     collapsed: false,
     items: [
+      { text: "Dev Server Client", link: "/projects/client" },
       { text: "Language Service", link: "/projects/language-service" },
       { text: "Highlighter", link: "/projects/highlighter" },
       { text: "Syntax Tree Printer", link: "/projects/printer" },
@@ -55,6 +58,17 @@ const defaultSidebar = [
       { text: "Vim", link: "/integrations/editors/vim" },
       { text: "Visual Studio Code", link: "/integrations/editors/vscode" },
       { text: "Zed", link: "/integrations/editors/zed" },
+    ],
+  },
+  {
+    text: "CI Integrations",
+    collapsed: false,
+    items: [
+      { text: "Overview", link: "/integrations/ci" },
+      { text: "GitHub Actions", link: "/integrations/ci/github-actions" },
+      { text: "GitLab CI", link: "/integrations/ci/gitlab" },
+      { text: "Bitbucket Pipelines", link: "/integrations/ci/bitbucket" },
+      { text: "Reviewdog", link: "/integrations/ci/reviewdog" },
     ],
   },
   {

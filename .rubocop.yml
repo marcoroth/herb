@@ -1,7 +1,7 @@
 AllCops:
   NewCops: enable
   SuggestExtensions: false
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.2
   Exclude:
     - 'pkg/**/*'
     - 'vendor/**/*'
@@ -40,6 +40,11 @@ Style/SymbolArray:
 Style/BlockDelimiters:
   Enabled: false
 
+Style/SafeNavigationChainLength:
+  Exclude:
+    - lib/herb/ast/erb_render_node.rb
+    - lib/herb/dev/runner.rb
+
 Style/GlobalVars:
   Exclude:
     - ext/herb/extconf.rb
@@ -55,63 +60,78 @@ Style/TrailingCommaInHashLiteral:
 Metrics/CyclomaticComplexity:
   Max: 15
   Exclude:
-    - lib/herb/project.rb
+    - bench/**/*
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
+    - lib/herb/dev/runner.rb
     - lib/herb/engine.rb
-    - lib/herb/prism_inspect.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
 
 Metrics/MethodLength:
   Max: 20
   Exclude:
+    - bench/**/*
+    - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - bin/**/*
 
 Metrics/AbcSize:
   Exclude:
+    - bench/**/*
+    - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/errors.rb
-    - lib/herb/project.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - lib/herb/token.rb
+    - lib/herb/errors.rb
     - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
+    - lib/herb/token.rb
     - templates/template.rb
+    - test/engine/action_view/action_view_test_helper.rb
+    - test/engine/rails_compatibility_test.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
-    - test/engine/rails_compatibility_test.rb
-    - bin/**/*
 
 Metrics/ClassLength:
   Exclude:
     - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
+    - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/configuration.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - lib/herb/project.rb
     - lib/herb/visitor.rb
-    - lib/herb/ast/nodes.rb
-    - test/**/*_test.rb
     - templates/template.rb
+    - test/**/*_test.rb
 
 Metrics/ModuleLength:
   Exclude:
     - test/**/*.rb
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
+    - bench/**/*
 
 Metrics/BlockLength:
   Max: 30
@@ -128,6 +148,8 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/diff_operation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb
     - lib/herb/parser_options.rb
@@ -135,15 +157,19 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Exclude:
+    - bench/**/*
+    - bin/**/*
+    - lib/herb/ast/erb_render_node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/prism_inspect.rb
+    - lib/herb/dev/runner.rb
+    - lib/herb/dev/server.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/prism_inspect.rb
+    - lib/herb/project.rb
     - templates/template.rb
     - test/**/*.rb
-    - bin/**/*
 
 Layout/LineLength:
   Enabled: false
@@ -176,6 +202,7 @@ Security/Eval:
     - bin/erubi-render
     - bin/compare-render
     - bin/compare-render
+    - bench/action_view/benchmark_helper.rb
 
 Security/MarshalLoad:
   Exclude:
@@ -190,4 +217,7 @@ Lint/UnusedMethodArgument:
     - lib/herb/errors.rb
 
 Style/IfUnlessModifier:
+  Enabled: false
+
+Style/DocumentDynamicEvalDefinition:
   Enabled: false

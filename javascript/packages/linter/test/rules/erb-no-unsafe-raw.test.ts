@@ -29,10 +29,18 @@ describe("ERBNoUnsafeRawRule", () => {
     })
 
     test("raw() in text content is not allowed", () => {
-      expectError(RAW_MESSAGE)
+      expectError(RAW_MESSAGE, [1, 7])
 
       assertOffenses(dedent`
         <p><%= raw(user_input) %></p>
+      `)
+    })
+
+    test("raw() offense points at the `raw` call, not the ERB node", () => {
+      expectError(RAW_MESSAGE, [1, 23])
+
+      assertOffenses(dedent`
+        <%= ui_my_helper(:foo, raw("bar")) %>
       `)
     })
 
@@ -57,7 +65,7 @@ describe("ERBNoUnsafeRawRule", () => {
 
   describe(".html_safe", () => {
     test("html_safe in attribute value is not allowed", () => {
-      expectError(HTML_SAFE_MESSAGE)
+      expectError(HTML_SAFE_MESSAGE, [1, 26])
 
       assertOffenses(dedent`
         <div class="<%= user_input.html_safe %>"></div>
@@ -85,6 +93,46 @@ describe("ERBNoUnsafeRawRule", () => {
 
       assertOffenses(dedent`
         <p><%= user_input.html_safe %></p>
+      `)
+    })
+
+    test("html_safe on an interpolated String is not allowed", () => {
+      expectError(HTML_SAFE_MESSAGE)
+
+      assertOffenses(dedent`
+        <p><%= "<strong>#{user_input}</strong>".html_safe %></p>
+      `)
+    })
+  })
+
+  describe(".html_safe on String literals", () => {
+    test("html_safe on a String literal is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= "<strong>Sale</strong>".html_safe %></p>
+      `)
+    })
+
+    test("html_safe on a String literal in attribute position is allowed", () => {
+      expectNoOffenses(`<div <%= 'style="display: none;"'.html_safe %>></div>`)
+    })
+
+    test("html_safe on a String literal in an attribute value is allowed", () => {
+      expectNoOffenses(dedent`
+        <div class="<%= 'btn btn-primary'.html_safe %>"></div>
+      `)
+    })
+
+    test("html_safe on a String literal argument is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= link_to "<strong>Sale</strong>".html_safe, sale_path %></p>
+      `)
+    })
+
+    test("html_safe on a String literal with another call in between is not allowed", () => {
+      expectError(HTML_SAFE_MESSAGE)
+
+      assertOffenses(dedent`
+        <p><%= "<strong>Sale</strong>".dup.html_safe %></p>
       `)
     })
   })
@@ -136,6 +184,35 @@ describe("ERBNoUnsafeRawRule", () => {
   })
 
   describe("safe usage", () => {
+    test("raw inside a Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= render SomeComponent.new(
+          columns: [
+            # This comment mentions the raw upstream value.
+            { title: "Name", value: ->(record) { record.name } }
+          ]
+        ) %>
+      `)
+    })
+
+    test("raw inside a trailing Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= user_input # raw was considered here %>
+      `)
+    })
+
+    test("html_safe inside a Ruby comment is allowed", () => {
+      expectNoOffenses(dedent`
+        <%= user_input # avoid calling .html_safe here %>
+      `)
+    })
+
+    test("raw as part of a string literal is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= "raw text is fine" %></p>
+      `)
+    })
+
     test("safe ERB output in attribute value is allowed", () => {
       expectNoOffenses(dedent`
         <div class="<%= user_input %>"></div>

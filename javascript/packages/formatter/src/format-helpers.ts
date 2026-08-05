@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -102,6 +102,19 @@ export function findPreviousMeaningfulSibling(siblings: Node[], currentIndex: nu
 }
 
 /**
+ * Find the index of the next non-whitespace sibling, or -1 when there is none
+ */
+export function findNextMeaningfulSibling(siblings: Node[], currentIndex: number): number {
+  for (let i = currentIndex + 1; i < siblings.length; i++) {
+    if (isNonWhitespaceNode(siblings[i])) {
+      return i
+    }
+  }
+
+  return -1
+}
+
+/**
  * Check if there's whitespace between two indices in children array
  */
 export function hasWhitespaceBetween(children: Node[], startIndex: number, endIndex: number): boolean {
@@ -194,8 +207,6 @@ export function buildLineWithWord(currentLine: string, word: string): string {
   }
 
   if (isClosingPunctuation(word)) {
-    currentLine = currentLine.trimEnd()
-
     return `${currentLine}${word}`
   }
 
@@ -236,6 +247,13 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
+ * Check if a node is an ERB comment that renders as a block.
+ */
+export function isMultilineERBComment(node: Node): boolean {
+  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+}
+
+/**
  * Check if a node should be appended to the last line (for adjacent inline elements and punctuation)
  */
 export function shouldAppendToLastLine(child: Node, siblings: Node[], index: number): boolean {
@@ -252,6 +270,8 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isNode(child, ERBContentNode)) {
+    if (isMultilineERBComment(child)) return false
+
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]
 
@@ -464,15 +484,55 @@ export function isLineBreakingElement(node: Node): boolean {
  * Then split into words
  */
 export function normalizeAndSplitWords(text: string): string[] {
-  const normalized = text.replace(/\s+/g, ' ')
+  const normalized = text.replace(ASCII_WHITESPACE, ' ')
+
   return normalized.trim().split(' ')
+}
+
+/**
+ * Check if a character is ASCII whitespace.
+ *
+ * Deliberately not `\s`: Unicode whitespace such as NBSP (U+00A0) is content,
+ * not layout, and must survive formatting — the same reason
+ * {@link ASCII_WHITESPACE} exists.
+ */
+export function isAsciiWhitespace(character: string): boolean {
+  return character === " " || character === "\t" || character === "\n" || character === "\r"
+}
+
+/**
+ * Check if text starts with whitespace
+ */
+export function startsWithWhitespace(text: string): boolean {
+  return text.length > 0 && isAsciiWhitespace(text[0])
 }
 
 /**
  * Check if text ends with whitespace
  */
 export function endsWithWhitespace(text: string): boolean {
-  return /\s$/.test(text)
+  return text.length > 0 && isAsciiWhitespace(text[text.length - 1])
+}
+
+/**
+ * Collapse the whitespace runs at either end of `text` down to a single space
+ * when that edge is rendered, or remove them when it isn't.
+ */
+export function setEdgeWhitespace(text: string, keepLeading: boolean, keepTrailing: boolean): string {
+  let start = 0
+  let end = text.length
+
+  while (start < end && isAsciiWhitespace(text[start])) start++
+  while (end > start && isAsciiWhitespace(text[end - 1])) end--
+
+  if (start === end) {
+    return text.length > 0 && keepLeading && keepTrailing ? " " : ""
+  }
+
+  const leading = start > 0 && keepLeading ? " " : ""
+  const trailing = end < text.length && keepTrailing ? " " : ""
+
+  return leading + text.slice(start, end) + trailing
 }
 
 /**

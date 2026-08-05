@@ -5,9 +5,13 @@ import { resolve } from "node:path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
-import { Diagnostic } from "@herb-tools/core"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
+import { fixabilityFor } from "./fixability.js"
+
+import type { SerializedDiagnostic } from "@herb-tools/core"
+import type { Fixability } from "./fixability.js"
+import type { LintOffense } from "../types.js"
 
 export interface WorkerInput {
   files: string[]
@@ -17,13 +21,15 @@ export interface WorkerInput {
   fixUnsafe: boolean
   ignoreDisableComments: boolean
   loadCustomRules: boolean
+  only?: string[]
+  allRules: boolean
 }
 
 export interface WorkerOffense {
   filename: string
-  offense: Diagnostic
-  content: string
+  offense: SerializedDiagnostic
   autocorrectable: boolean
+  unsafeAutocorrectable: boolean
 }
 
 export interface WorkerResult {
@@ -64,7 +70,7 @@ async function run() {
     }
   }
 
-  const linter = Linter.from(Herb, config, customRules)
+  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -80,20 +86,17 @@ async function run() {
   const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
   const fixMessages: string[] = []
 
-  const isRuleAutocorrectable = (ruleName: string): boolean => {
+  const fixabilityOf = (offense: LintOffense): Fixability => {
     const ruleClass = linter.rules.find(
-      (rule) => rule.ruleName === ruleName
+      (rule) => rule.ruleName === offense.rule
     )
 
-    if (!ruleClass) return false
-
-    // TODO: fix types
-    return (ruleClass as any).autocorrectable === true
+    return fixabilityFor(offense, ruleClass)
   }
 
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
-    let content = readFileSync(filePath, "utf-8")
+    const content = readFileSync(filePath, "utf-8")
 
     const lintResult = linter.lint(content, {
       fileName: filename,
@@ -112,14 +115,11 @@ async function run() {
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
 
-      content = autofixResult.source
-
       for (const offense of autofixResult.unfixed) {
         allOffenses.push({
           filename,
           offense,
-          content,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
@@ -140,8 +140,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }

@@ -1,490 +1,519 @@
+---
 errors:
   fields:
-    - name: message
-      type: string
+    - name: "message"
+      type: "string"
 
-    - name: start
-      type: position
+    - name: "start"
+      type: "position"
 
-    - name: end
-      type: position
+    - name: "end"
+      type: "position"
 
   types:
-    - name: UnexpectedError
+    - name: "UnexpectedError"
       message:
         template: "%s. Expected: %s, found: %s."
         arguments:
-          - description
-          - expected
-          - found
+          - "description"
+          - "expected"
+          - "found"
 
       fields:
-        - name: description
-          type: string
+        - name: "description"
+          type: "string"
 
-        - name: expected
-          type: string
+        - name: "expected"
+          type: "string"
 
-        - name: found
-          type: string
+        - name: "found"
+          type: "string"
 
-    - name: UnexpectedTokenError
+    - name: "UnexpectedTokenError"
       message:
         template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_friendly_string(found->type)
-          - token_type_to_friendly_string(expected_type)
-          - found->location.start.line
-          - found->location.start.column
+          - "token_type_to_friendly_string(found->type)"
+          - "token_type_to_friendly_string(expected_type)"
+          - "found->location.start.line"
+          - "found->location.start.column"
 
       fields:
-        - name: expected_type
-          type: token_type
+        - name: "expected_type"
+          type: "token_type"
 
-        - name: found
-          type: token
+        - name: "found"
+          type: "token"
 
-    - name: MissingOpeningTagError
+    - name: "MissingOpeningTagError"
       message:
         template: "Found closing tag `</%s>` at (%u:%u) without a matching opening tag in the same scope."
         arguments:
-          - closing_tag->value
-          - closing_tag->location.start.line
-          - closing_tag->location.start.column
+          - "closing_tag->value"
+          - "closing_tag->location.start.line"
+          - "closing_tag->location.start.column"
 
       fields:
-        - name: closing_tag
-          type: token
+        - name: "closing_tag"
+          type: "token"
 
-    - name: MissingClosingTagError
+    - name: "MissingClosingTagError"
       message:
         template: "Opening tag `<%s>` at (%u:%u) doesn't have a matching closing tag `</%s>` in the same scope."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
-          - opening_tag->value
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "opening_tag->value"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-    - name: TagNamesMismatchError
+    - name: "TagNamesMismatchError"
       message:
         template: "Opening tag `<%s>` at (%u:%u) closed with `</%s>` at (%u:%u)."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
-          - closing_tag->value
-          - closing_tag->location.start.line
-          - closing_tag->location.start.column
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "closing_tag->value"
+          - "closing_tag->location.start.line"
+          - "closing_tag->location.start.column"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-        - name: closing_tag
-          type: token
+        - name: "closing_tag"
+          type: "token"
 
-    - name: VoidElementClosingTagError
+    - name: "VoidElementClosingTagError"
       message:
         template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."
         arguments:
-          - tag_name->value
-          - tag_name->value
-          - tag_name->value
-          - tag_name->value
+          - "tag_name->value"
+          - "tag_name->value"
+          - "tag_name->value"
+          - "tag_name->value"
 
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: expected
-          type: string
+        - name: "expected"
+          type: "string"
 
-        - name: found
-          type: string
+        - name: "found"
+          type: "string"
 
-    - name: UnclosedElementError
+    - name: "UnclosedElementError"
       message:
         template: "Tag `<%s>` opened at (%u:%u) was never closed before the end of document."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-    - name: RubyParseError
+    - name: "RubyParseError"
       message:
         template: "%s: %s"
         arguments:
-          - diagnostic_id
-          - error_message
+          - "diagnostic_id"
+          - "error_message"
 
       fields:
-        - name: error_message
-          type: string
+        - name: "error_message"
+          type: "string"
 
-        - name: diagnostic_id
-          type: string
+        - name: "diagnostic_id"
+          type: "string"
 
-        - name: level
-          type: string
+        - name: "level"
+          type: "string"
 
-    - name: ERBControlFlowScopeError
+    - name: "ERBControlFlowScopeError"
       message:
         template: "%s appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
         arguments:
-          - keyword
+          - "keyword"
 
       fields:
-        - name: keyword
-          type: string
+        - name: "keyword"
+          type: "string"
 
-    - name: MissingERBEndTagError
+    - name: "MissingERBEndTagError"
       message:
         template: "%s started here but never closed with an end tag. The end tag may be in a different scope."
         arguments:
-          - keyword
+          - "keyword"
 
       fields:
-        - name: keyword
-          type: string
+        - name: "keyword"
+          type: "string"
 
-    - name: ERBMultipleBlocksInTagError
+    - name: "ERBMultipleBlocksInTagError"
       message:
         template: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
         arguments: []
 
       fields: []
 
-    - name: ERBCaseWithConditionsError
+    - name: "ERBCaseWithConditionsError"
       message:
         template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
         arguments: []
 
       fields: []
 
-    - name: ConditionalElementMultipleTagsError
+    - name: "ConditionalElementMultipleTagsError"
       message:
         template: "Conditional element pattern detected at (%zu:%zu) but the conditional block contains multiple HTML tags. Each conditional element must wrap exactly one opening and one closing tag. Consider nesting the conditionals individually."
         arguments:
-          - line
-          - column
+          - "line"
+          - "column"
 
       fields:
-        - name: line
-          type: size_t
+        - name: "line"
+          type: "size_t"
 
-        - name: column
-          type: size_t
+        - name: "column"
+          type: "size_t"
 
-    - name: ConditionalElementConditionMismatchError
+    - name: "ConditionalElementConditionMismatchError"
       message:
         template: "Conditional element `<%s>` has mismatched conditions: opening uses `%s` at (%zu:%zu) but closing uses `%s` at (%zu:%zu). Both conditions must be identical."
         arguments:
-          - tag_name
-          - open_condition
-          - open_line
-          - open_column
-          - close_condition
-          - close_line
-          - close_column
+          - "tag_name"
+          - "open_condition"
+          - "open_line"
+          - "open_column"
+          - "close_condition"
+          - "close_line"
+          - "close_column"
 
       fields:
-        - name: tag_name
-          type: string
+        - name: "tag_name"
+          type: "string"
 
-        - name: open_condition
-          type: string
+        - name: "open_condition"
+          type: "string"
 
-        - name: open_line
-          type: size_t
+        - name: "open_line"
+          type: "size_t"
 
-        - name: open_column
-          type: size_t
+        - name: "open_column"
+          type: "size_t"
 
-        - name: close_condition
-          type: string
+        - name: "close_condition"
+          type: "string"
 
-        - name: close_line
-          type: size_t
+        - name: "close_line"
+          type: "size_t"
 
-        - name: close_column
-          type: size_t
+        - name: "close_column"
+          type: "size_t"
 
-    - name: InvalidCommentClosingTagError
+    - name: "InvalidCommentClosingTagError"
       message:
         template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
         arguments:
-          - closing_tag->value
-          - closing_tag->location.start.line
-          - closing_tag->location.start.column
+          - "closing_tag->value"
+          - "closing_tag->location.start.line"
+          - "closing_tag->location.start.column"
 
       fields:
-        - name: closing_tag
-          type: token
+        - name: "closing_tag"
+          type: "token"
 
-    - name: OmittedClosingTagError
+    - name: "OmittedClosingTagError"
       message:
         template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity, or set `strict: false` to allow this."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
-          - opening_tag->value
-          - insertion_point.line
-          - insertion_point.column
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "opening_tag->value"
+          - "insertion_point.line"
+          - "insertion_point.column"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-        - name: insertion_point
-          type: position
+        - name: "insertion_point"
+          type: "position"
 
-    - name: UnclosedOpenTagError
+    - name: "UnclosedOpenTagError"
       message:
         template: "Opening tag `<%s>` at (%u:%u) is missing closing `>`."
         arguments:
-          - tag_name->value
-          - tag_name->location.start.line
-          - tag_name->location.start.column
+          - "tag_name->value"
+          - "tag_name->location.start.line"
+          - "tag_name->location.start.column"
 
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-    - name: UnclosedCloseTagError
+    - name: "UnclosedCloseTagError"
       message:
         template: "Closing tag `</%s>` at (%u:%u) is missing closing `>`."
         arguments:
-          - tag_name->value
-          - tag_name->location.start.line
-          - tag_name->location.start.column
+          - "tag_name->value"
+          - "tag_name->location.start.line"
+          - "tag_name->location.start.column"
 
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-    - name: UnclosedQuoteError
+    - name: "UnclosedQuoteError"
       message:
         template: "Attribute value opened with %s at (%u:%u) was never closed."
         arguments:
-          - opening_quote->value
-          - opening_quote->location.start.line
-          - opening_quote->location.start.column
+          - "opening_quote->value"
+          - "opening_quote->location.start.line"
+          - "opening_quote->location.start.column"
 
       fields:
-        - name: opening_quote
-          type: token
+        - name: "opening_quote"
+          type: "token"
 
-    - name: MissingAttributeValueError
+    - name: "MissingAttributeValueError"
       message:
         template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
         arguments:
-          - attribute_name
-          - start.line
-          - start.column
+          - "attribute_name"
+          - "start.line"
+          - "start.column"
 
       fields:
-        - name: attribute_name
-          type: string
+        - name: "attribute_name"
+          type: "string"
 
-    - name: UnclosedERBTagError
+    - name: "UnclosedERBTagError"
       message:
         template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-    - name: StrayERBClosingTagError
+    - name: "MalformedERBClosingTagError"
+      message:
+        template: "ERB tag `%s` at (%u:%u) is closed with `%s` at (%u:%u) instead of `%%>`."
+        arguments:
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "closing_tag->value"
+          - "closing_tag->location.start.line"
+          - "closing_tag->location.start.column"
+
+      fields:
+        - name: "opening_tag"
+          type: "token"
+
+        - name: "closing_tag"
+          type: "token"
+
+    - name: "StrayERBClosingTagError"
       message:
         template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
         arguments:
-          - start.line
-          - start.column
+          - "start.line"
+          - "start.column"
 
       fields: []
 
-    - name: NestedERBTagError
+    - name: "NestedERBTagError"
       message:
         template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
         arguments:
-          - opening_tag->value
-          - opening_tag->location.start.line
-          - opening_tag->location.start.column
-          - nested_tag_line
-          - nested_tag_column
+          - "opening_tag->value"
+          - "opening_tag->location.start.line"
+          - "opening_tag->location.start.column"
+          - "nested_tag_line"
+          - "nested_tag_column"
 
       fields:
-        - name: opening_tag
-          type: token
+        - name: "opening_tag"
+          type: "token"
 
-        - name: nested_tag_line
-          type: size_t
+        - name: "nested_tag_line"
+          type: "size_t"
 
-        - name: nested_tag_column
-          type: size_t
+        - name: "nested_tag_column"
+          type: "size_t"
 
-    - name: RenderAmbiguousLocalsError
+    - name: "RenderAmbiguousLocalsError"
       message:
         template: "Did you mean `render partial: '%s', locals: { ... }`? Using `render '%s', locals: { ... }` passes a local variable named `locals` to the partial instead of setting the `locals:` option."
         arguments:
-          - partial
-          - partial
+          - "partial"
+          - "partial"
 
       fields:
-        - name: partial
-          type: string
+        - name: "partial"
+          type: "string"
 
-    - name: RenderMissingLocalsError
+    - name: "RenderMissingLocalsError"
       message:
         template: "Wrap `%s` in `locals: { ... }` when using `partial:`. Use `render partial: '%s', locals: { %s }` instead. Without `locals:`, these keyword arguments are ignored."
         arguments:
-          - keywords
-          - partial
-          - keywords
+          - "keywords"
+          - "partial"
+          - "keywords"
 
       fields:
-        - name: partial
-          type: string
+        - name: "partial"
+          type: "string"
 
-        - name: keywords
-          type: string
+        - name: "keywords"
+          type: "string"
 
-    - name: RenderNoArgumentsError
+    - name: "RenderNoArgumentsError"
       message:
         template: "No arguments passed to `render`. It needs a partial name, a keyword argument like `partial:`, `template:`, or `layout:`, or a renderable object."
         arguments: []
 
       fields: []
 
-    - name: RenderConflictingPartialError
+    - name: "RenderConflictingPartialError"
       message:
         template: "Both a positional partial `'%s'` and a keyword `partial: '%s'` were passed to `render`. Use one form or the other, not both."
         arguments:
-          - positional_partial
-          - keyword_partial
+          - "positional_partial"
+          - "keyword_partial"
 
       fields:
-        - name: positional_partial
-          type: string
+        - name: "positional_partial"
+          type: "string"
 
-        - name: keyword_partial
-          type: string
+        - name: "keyword_partial"
+          type: "string"
 
-    - name: RenderInvalidAsOptionError
+    - name: "RenderInvalidAsOptionError"
       message:
         template: "The `as:` value `'%s'` is not a valid Ruby identifier. Use a name that starts with a lowercase letter or underscore, like `as: :item`."
         arguments:
-          - as_value
+          - "as_value"
 
       fields:
-        - name: as_value
-          type: string
+        - name: "as_value"
+          type: "string"
 
-    - name: RenderObjectAndCollectionError
+    - name: "RenderObjectAndCollectionError"
       message:
         template: "The `object:` and `collection:` options are mutually exclusive. Use one or the other in your `render` call."
         arguments: []
 
       fields: []
 
-    - name: RenderLayoutWithoutBlockError
+    - name: "RenderLayoutWithoutBlockError"
       message:
         template: "Layout rendering needs a block. Use `render layout: '%s' do ... end` so the layout has content to wrap."
         arguments:
-          - layout
+          - "layout"
 
       fields:
-        - name: layout
-          type: string
+        - name: "layout"
+          type: "string"
 
-    - name: StrictLocalsPositionalArgumentError
+    - name: "StrictLocalsPositionalArgumentError"
       message:
         template: "Strict locals only support keyword arguments. Positional argument `%s` is not allowed. Use keyword argument format: `%s:`."
         arguments:
-          - name
-          - name
+          - "name"
+          - "name"
 
       fields:
-        - name: name
-          type: string
+        - name: "name"
+          type: "string"
 
-    - name: StrictLocalsBlockArgumentError
+    - name: "StrictLocalsBlockArgumentError"
       message:
         template: "Strict locals only support keyword arguments. Block argument `&%s` is not allowed."
         arguments:
-          - name
+          - "name"
 
       fields:
-        - name: name
-          type: string
+        - name: "name"
+          type: "string"
 
-    - name: StrictLocalsSplatArgumentError
+    - name: "StrictLocalsSplatArgumentError"
       message:
         template: "Strict locals only support keyword arguments. Splat argument `*%s` is not allowed."
         arguments:
-          - name
+          - "name"
 
       fields:
-        - name: name
-          type: string
+        - name: "name"
+          type: "string"
 
-    - name: StrictLocalsMissingParenthesisError
+    - name: "StrictLocalsMissingParenthesisError"
       message:
         template: "Strict locals declaration requires parentheses. Expected `locals: (...)` but got `locals: %s`."
         arguments:
-          - rest
+          - "rest"
 
       fields:
-        - name: rest
-          type: string
+        - name: "rest"
+          type: "string"
 
-    - name: StrictLocalsDuplicateDeclarationError
+    - name: "StrictLocalsDuplicateDeclarationError"
       message:
         template: "Duplicate strict locals declaration. Only the first `<%# locals: (...) %>` declaration is used by Rails."
         arguments: []
 
       fields: []
 
-    - name: VoidElementContentError
+    - name: "VoidElementContentError"
       message:
         template: "Void element `%s` cannot have content. `%s` does not accept %s for content."
         arguments:
-          - tag_name->value
-          - helper_name
-          - content_type
+          - "tag_name->value"
+          - "helper_name"
+          - "content_type"
 
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: helper_name
-          type: string
+        - name: "helper_name"
+          type: "string"
 
-        - name: content_type
-          type: string
+        - name: "content_type"
+          type: "string"
 
-    - name: DotNotationCasingError
+    - name: "DotNotationCasingError"
       message:
         template: "Dot-notation component tags require the first segment to start with an uppercase letter. `%s` does not start with an uppercase letter."
         arguments:
-          - segment->value
+          - "segment->value"
 
       fields:
-        - name: segment
-          type: token
+        - name: "segment"
+          type: "token"
+
+    - name: "TimeoutError"
+      message:
+        template: "Parsing timed out after %zu ms."
+        arguments:
+          - "timeout_ms"
+
+      fields:
+        - name: "timeout_ms"
+          type: "size_t"
 
 warnings:
   fields: []
@@ -513,365 +542,366 @@ nodes:
   #   #   type: range
 
   types:
-    - name: DocumentNode
+    - name: "DocumentNode"
       fields:
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: prism_context
-          type: prism_context
+        - name: "prism_context"
+          type: "prism_context"
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-    - name: LiteralNode
+    - name: "LiteralNode"
       fields:
-        - name: content
-          type: string
+        - name: "content"
+          type: "string"
 
-    - name: HTMLOpenTagNode
+    - name: "HTMLOpenTagNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: is_void
-          type: boolean
+        - name: "is_void"
+          type: "boolean"
 
-    - name: HTMLConditionalOpenTagNode
+    - name: "HTMLConditionalOpenTagNode"
       fields:
-        - name: conditional
-          type: node
+        - name: "conditional"
+          type: "node"
           kind:
-            - ERBIfNode
-            - ERBUnlessNode
+            - "ERBIfNode"
+            - "ERBUnlessNode"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: is_void
-          type: boolean
+        - name: "is_void"
+          type: "boolean"
 
-    - name: HTMLCloseTagNode
+    - name: "HTMLCloseTagNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: WhitespaceNode
+        - name: "children"
+          type: "array"
+          kind: "WhitespaceNode"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: HTMLOmittedCloseTagNode
+    - name: "HTMLOmittedCloseTagNode"
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-    - name: HTMLVirtualCloseTagNode
+    - name: "HTMLVirtualCloseTagNode"
       fields:
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-    - name: HTMLElementNode
+    - name: "HTMLElementNode"
       fields:
-        - name: open_tag
-          type: node
+        - name: "open_tag"
+          type: "node"
           kind:
-            - HTMLOpenTagNode
-            - HTMLConditionalOpenTagNode
-            - ERBOpenTagNode
+            - "HTMLOpenTagNode"
+            - "HTMLConditionalOpenTagNode"
+            - "ERBOpenTagNode"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: body
-          type: array
-          kind: Node
+        - name: "body"
+          type: "array"
+          kind: "Node"
 
-        - name: close_tag
-          type: node
+        - name: "close_tag"
+          type: "node"
+          writable: true
           kind:
-            - HTMLCloseTagNode
-            - HTMLOmittedCloseTagNode
-            - HTMLVirtualCloseTagNode
-            - ERBEndNode
+            - "HTMLCloseTagNode"
+            - "HTMLOmittedCloseTagNode"
+            - "HTMLVirtualCloseTagNode"
+            - "ERBEndNode"
 
-        - name: is_void
-          type: boolean
+        - name: "is_void"
+          type: "boolean"
 
-        - name: element_source
-          type: element_source
+        - name: "element_source"
+          type: "element_source"
 
-    - name: HTMLConditionalElementNode
+    - name: "HTMLConditionalElementNode"
       fields:
-        - name: condition
-          type: string
+        - name: "condition"
+          type: "string"
 
-        - name: open_conditional
-          type: node
+        - name: "open_conditional"
+          type: "node"
           kind:
-            - ERBIfNode
-            - ERBUnlessNode
+            - "ERBIfNode"
+            - "ERBUnlessNode"
 
-        - name: open_tag
-          type: borrowed_node
-          kind: HTMLOpenTagNode
+        - name: "open_tag"
+          type: "borrowed_node"
+          kind: "HTMLOpenTagNode"
 
-        - name: body
-          type: array
-          kind: Node
+        - name: "body"
+          type: "array"
+          kind: "Node"
 
-        - name: close_tag
-          type: borrowed_node
+        - name: "close_tag"
+          type: "borrowed_node"
           kind:
-            - HTMLCloseTagNode
-            - HTMLOmittedCloseTagNode
+            - "HTMLCloseTagNode"
+            - "HTMLOmittedCloseTagNode"
 
-        - name: close_conditional
-          type: node
+        - name: "close_conditional"
+          type: "node"
           kind:
-            - ERBIfNode
-            - ERBUnlessNode
+            - "ERBIfNode"
+            - "ERBUnlessNode"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: element_source
-          type: element_source
+        - name: "element_source"
+          type: "element_source"
 
-    - name: HTMLAttributeValueNode
+    - name: "HTMLAttributeValueNode"
       fields:
-        - name: open_quote
-          type: token
+        - name: "open_quote"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: close_quote
-          type: token
+        - name: "close_quote"
+          type: "token"
 
-        - name: quoted
-          type: boolean
+        - name: "quoted"
+          type: "boolean"
 
-    - name: HTMLAttributeNameNode
+    - name: "HTMLAttributeNameNode"
       fields:
-        - name: children
-          type: array
+        - name: "children"
+          type: "array"
           kind:
-            - LiteralNode
-            - ERBContentNode
+            - "LiteralNode"
+            - "ERBContentNode"
 
-    - name: HTMLAttributeNode
+    - name: "HTMLAttributeNode"
       fields:
-        - name: name
-          type: node
-          kind: HTMLAttributeNameNode
+        - name: "name"
+          type: "node"
+          kind: "HTMLAttributeNameNode"
 
-        - name: equals
-          type: token
+        - name: "equals"
+          type: "token"
 
-        - name: value
-          type: node
-          kind: HTMLAttributeValueNode
+        - name: "value"
+          type: "node"
+          kind: "HTMLAttributeValueNode"
 
-    - name: RubyLiteralNode
+    - name: "RubyLiteralNode"
       fields:
-        - name: content
-          type: string
+        - name: "content"
+          type: "string"
 
-    - name: RubyHTMLAttributesSplatNode
+    - name: "RubyHTMLAttributesSplatNode"
       fields:
-        - name: content
-          type: string
+        - name: "content"
+          type: "string"
 
-        - name: prefix
-          type: string
+        - name: "prefix"
+          type: "string"
 
-    - name: ERBOpenTagNode
+    - name: "ERBOpenTagNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: tag_name
-          type: token
+        - name: "tag_name"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-    - name: HTMLTextNode
+    - name: "HTMLTextNode"
       fields:
-        - name: content
-          type: string
+        - name: "content"
+          type: "string"
 
-    - name: HTMLCommentNode
+    - name: "HTMLCommentNode"
       fields:
-        - name: comment_start
-          type: token
+        - name: "comment_start"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: comment_end
-          type: token
+        - name: "comment_end"
+          type: "token"
 
-    - name: HTMLDoctypeNode
+    - name: "HTMLDoctypeNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: XMLDeclarationNode
+    - name: "XMLDeclarationNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: CDATANode
+    - name: "CDATANode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: WhitespaceNode
+    - name: "WhitespaceNode"
       fields:
-        - name: value
-          type: token
+        - name: "value"
+          type: "token"
 
-    - name: ERBContentNode
+    - name: "ERBContentNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: analyzed_ruby
-          type: analyzed_ruby
+        - name: "analyzed_ruby"
+          type: "analyzed_ruby"
 
-        - name: parsed
-          type: boolean
+        - name: "parsed"
+          type: "boolean"
 
-        - name: valid
-          type: boolean
+        - name: "valid"
+          type: "boolean"
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-    - name: ERBEndNode
+    - name: "ERBEndNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: ERBElseNode
+    - name: "ERBElseNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-    - name: ERBIfNode
+    - name: "ERBIfNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: then_keyword
-          type: location
+        - name: "then_keyword"
+          type: "location"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: subsequent
-          type: node
+        - name: "subsequent"
+          type: "node"
           kind:
-            - ERBIfNode
-            - ERBElseNode
+            - "ERBIfNode"
+            - "ERBElseNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBBlockNode
+    - name: "ERBBlockNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
         # - name: block_type
         #   type: string
@@ -879,182 +909,238 @@ nodes:
         # - name: opener
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: body
-          type: array
-          kind: Node
+        - name: "body"
+          type: "array"
+          kind: "Node"
 
-        - name: block_arguments
-          type: array
+        - name: "block_arguments"
+          type: "array"
           kind:
-            - RubyParameterNode
+            - "RubyParameterNode"
 
-        - name: rescue_clause
-          type: node
-          kind: ERBRescueNode
+        - name: "rescue_clause"
+          type: "node"
+          kind: "ERBRescueNode"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: ensure_clause
-          type: node
-          kind: ERBEnsureNode
+        - name: "ensure_clause"
+          type: "node"
+          kind: "ERBEnsureNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBWhenNode
+    - name: "ERBIterationBlockNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: then_keyword
-          type: location
+        - name: "prism_node"
+          type: "prism_node"
+
+        - name: "receiver"
+          type: "token"
+
+        - name: "call_operator"
+          type: "token"
+
+        - name: "message"
+          type: "token"
+
+        - name: "arguments"
+          type: "array"
+          kind:
+            - "RubyLiteralNode"
+
+        - name: "block_opening"
+          type: "token"
+
+        - name: "body"
+          type: "array"
+          kind: "Node"
+
+        - name: "block_arguments"
+          type: "array"
+          kind:
+            - "RubyParameterNode"
+
+        - name: "rescue_clause"
+          type: "node"
+          kind: "ERBRescueNode"
+
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
+
+        - name: "ensure_clause"
+          type: "node"
+          kind: "ERBEnsureNode"
+
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
+
+    - name: "ERBWhenNode"
+      fields:
+        - name: "tag_opening"
+          type: "token"
+
+        - name: "content"
+          type: "token"
+
+        - name: "tag_closing"
+          type: "token"
+
+        - name: "then_keyword"
+          type: "location"
 
         # - name: conditions
         #   type: array
         #   kind: prism_node
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-    - name: ERBCaseNode
+    - name: "ERBCaseNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: conditions
-          type: array
-          kind: ERBWhenNode
+        - name: "conditions"
+          type: "array"
+          kind: "ERBWhenNode"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBCaseMatchNode
+    - name: "ERBCaseMatchNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: children
-          type: array
-          kind: Node
+        - name: "children"
+          type: "array"
+          kind: "Node"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: conditions
-          type: array
-          kind: ERBInNode
+        - name: "conditions"
+          type: "array"
+          kind: "ERBInNode"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBWhileNode
+    - name: "ERBWhileNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBUntilNode
+    - name: "ERBUntilNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBForNode
+    - name: "ERBForNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
         # - name: index
         #   type: prism_node
@@ -1062,27 +1148,27 @@ nodes:
         # - name: collection
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBRescueNode
+    - name: "ERBRescueNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
         # - name: exceptions
         #   type: array
@@ -1091,270 +1177,270 @@ nodes:
         # - name: reference
         #   type: prism_node
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: subsequent
-          type: node
-          kind: ERBRescueNode
+        - name: "subsequent"
+          type: "node"
+          kind: "ERBRescueNode"
 
-    - name: ERBEnsureNode
+    - name: "ERBEnsureNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-    - name: ERBBeginNode
+    - name: "ERBBeginNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: rescue_clause
-          type: node
-          kind: ERBRescueNode
+        - name: "rescue_clause"
+          type: "node"
+          kind: "ERBRescueNode"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: ensure_clause
-          type: node
-          kind: ERBEnsureNode
+        - name: "ensure_clause"
+          type: "node"
+          kind: "ERBEnsureNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: ERBUnlessNode
+    - name: "ERBUnlessNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: then_keyword
-          type: location
+        - name: "then_keyword"
+          type: "location"
 
         # - name: predicate
         #   type: prism_node
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: RubyRenderLocalNode
+    - name: "RubyRenderLocalNode"
       fields:
-        - name: name
-          type: token
+        - name: "name"
+          type: "token"
 
-        - name: value
-          type: node
-          kind: RubyLiteralNode
+        - name: "value"
+          type: "node"
+          kind: "RubyLiteralNode"
 
-    - name: RubyRenderKeywordsNode
+    - name: "RubyRenderKeywordsNode"
       fields:
-        - name: partial
-          type: token
+        - name: "partial"
+          type: "token"
 
-        - name: template_path
-          type: token
+        - name: "template_path"
+          type: "token"
 
-        - name: layout
-          type: token
+        - name: "layout"
+          type: "token"
 
-        - name: file
-          type: token
+        - name: "file"
+          type: "token"
 
-        - name: inline_template
-          type: token
+        - name: "inline_template"
+          type: "token"
 
-        - name: body
-          type: token
+        - name: "body"
+          type: "token"
 
-        - name: plain
-          type: token
+        - name: "plain"
+          type: "token"
 
-        - name: html
-          type: token
+        - name: "html"
+          type: "token"
 
-        - name: renderable
-          type: token
+        - name: "renderable"
+          type: "token"
 
-        - name: collection
-          type: token
+        - name: "collection"
+          type: "token"
 
-        - name: object
-          type: token
+        - name: "object"
+          type: "token"
 
-        - name: as_name
-          type: token
+        - name: "as_name"
+          type: "token"
 
-        - name: spacer_template
-          type: token
+        - name: "spacer_template"
+          type: "token"
 
-        - name: formats
-          type: token
+        - name: "formats"
+          type: "token"
 
-        - name: variants
-          type: token
+        - name: "variants"
+          type: "token"
 
-        - name: handlers
-          type: token
+        - name: "handlers"
+          type: "token"
 
-        - name: content_type
-          type: token
+        - name: "content_type"
+          type: "token"
 
-        - name: locals
-          type: array
+        - name: "locals"
+          type: "array"
           kind:
-            - RubyRenderLocalNode
+            - "RubyRenderLocalNode"
 
-    - name: ERBRenderNode
+    - name: "ERBRenderNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: analyzed_ruby
-          type: analyzed_ruby
+        - name: "analyzed_ruby"
+          type: "analyzed_ruby"
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: keywords
-          type: node
-          kind: RubyRenderKeywordsNode
+        - name: "keywords"
+          type: "node"
+          kind: "RubyRenderKeywordsNode"
 
-        - name: body
-          type: array
-          kind: Node
+        - name: "body"
+          type: "array"
+          kind: "Node"
 
-        - name: block_arguments
-          type: array
+        - name: "block_arguments"
+          type: "array"
           kind:
-            - RubyParameterNode
+            - "RubyParameterNode"
 
-        - name: rescue_clause
-          type: node
-          kind: ERBRescueNode
+        - name: "rescue_clause"
+          type: "node"
+          kind: "ERBRescueNode"
 
-        - name: else_clause
-          type: node
-          kind: ERBElseNode
+        - name: "else_clause"
+          type: "node"
+          kind: "ERBElseNode"
 
-        - name: ensure_clause
-          type: node
-          kind: ERBEnsureNode
+        - name: "ensure_clause"
+          type: "node"
+          kind: "ERBEnsureNode"
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
+        - name: "end_node"
+          type: "node"
+          kind: "ERBEndNode"
 
-    - name: RubyParameterNode
+    - name: "RubyParameterNode"
       fields:
-        - name: name
-          type: token
+        - name: "name"
+          type: "token"
 
-        - name: default_value
-          type: node
-          kind: RubyLiteralNode
+        - name: "default_value"
+          type: "node"
+          kind: "RubyLiteralNode"
 
-        - name: kind
-          type: string
+        - name: "kind"
+          type: "string"
 
-        - name: required
-          type: boolean
+        - name: "required"
+          type: "boolean"
 
-    - name: ERBStrictLocalsNode
+    - name: "ERBStrictLocalsNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: analyzed_ruby
-          type: analyzed_ruby
+        - name: "analyzed_ruby"
+          type: "analyzed_ruby"
 
-        - name: prism_node
-          type: prism_node
+        - name: "prism_node"
+          type: "prism_node"
 
-        - name: locals
-          type: array
+        - name: "locals"
+          type: "array"
           kind:
-            - RubyParameterNode
+            - "RubyParameterNode"
 
-    - name: ERBYieldNode
+    - name: "ERBYieldNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-    - name: ERBInNode
+    - name: "ERBInNode"
       fields:
-        - name: tag_opening
-          type: token
+        - name: "tag_opening"
+          type: "token"
 
-        - name: content
-          type: token
+        - name: "content"
+          type: "token"
 
-        - name: tag_closing
-          type: token
+        - name: "tag_closing"
+          type: "token"
 
-        - name: then_keyword
-          type: location
+        - name: "then_keyword"
+          type: "location"
 
-        - name: statements
-          type: array
-          kind: Node
+        - name: "statements"
+          type: "array"
+          kind: "Node"
