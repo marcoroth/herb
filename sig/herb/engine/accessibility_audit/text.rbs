@@ -1,0 +1,21 @@
+# Generated from lib/herb/engine/accessibility_audit/text.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      module Text
+        NAMING_ATTRIBUTE: ::Regexp
+
+        TAG: ::Regexp
+
+        NON_BREAKING_SPACE: ::Regexp
+
+        # : (String?) -> bool
+        def self.blank?: (String?) -> bool
+
+        # : (String) -> String
+        def self.visible: (String) -> String
+      end
+    end
+  end
+end

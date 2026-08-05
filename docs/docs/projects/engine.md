@@ -393,6 +393,157 @@ A partial with a body is rendered as a layout, so the body reaches the partial t
 <%= render layout: "users/card", locals: { title: "Hello" } do %>Body<% end %>
 ```
 
+## Accessibility Audit
+
+Static analysis can only reason about the markup that is literally in the template. It can tell that this image has an `alt` attribute, but not what `caption` renders:
+
+```erb
+<img src="/logo.png" alt="<%= caption %>">
+```
+
+The accessibility audit closes that gap. When it is enabled, the engine compiles assertions into the template that check the values ERB actually produced, at render time:
+
+```ruby
+Herb::Engine.new(source, accessibility_audit: true)
+```
+
+The instrumentation is identity-preserving. Every audited value is passed straight through, so a template renders exactly the same output whether the audit is enabled or not. A check that raises is swallowed and reported separately, so the audit can never be the reason a page fails to render.
+
+Compile the instrumentation in wherever you want the option of auditing, and use `mode` and `sample_rate` to decide what it costs in each environment. `mode = :disabled` turns instrumented templates into no-ops without recompiling them.
+
+### Checks
+
+**Attribute checks** run when an attribute value comes from a single ERB output tag:
+
+| Check | Reports |
+|---|---|
+| `blank-alt-text` | `alt` on `<img>`, `<area>`, or `<input>` rendered blank |
+| `redundant-alt-text` | `alt` rendered a value starting with "image of", "photo of", … |
+| `blank-aria-label` | `aria-label` rendered blank, leaving no accessible name |
+| `blank-href` | `<a href>` rendered blank |
+| `blank-frame-title` | `title` on `<iframe>` or `<frame>` rendered blank |
+| `duplicate-id` | The same `id` was rendered twice in one document |
+| `invalid-lang` | `lang` rendered something that is not a BCP 47 language tag |
+| `invalid-role` | `role` rendered an unknown or abstract ARIA role |
+| `positive-tabindex` | `tabindex` rendered a value greater than zero |
+| `invalid-aria-value` | An ARIA attribute rendered a value outside its allowed tokens |
+
+**Content checks** run on elements whose accessible name can only come from ERB, meaning there is no static text anywhere inside them and no static `aria-label`, `aria-labelledby`, or `title` on the element itself:
+
+| Check | Reports |
+|---|---|
+| `empty-link-text` | `<a>` rendered without any text |
+| `generic-link-text` | `<a>` rendered text like "click here" or "read more" |
+| `empty-button-text` | `<button>` rendered without any text |
+| `empty-heading` | `<h1>`–`<h6>` rendered without any text |
+| `empty-label` | `<label>` rendered without any text |
+| `empty-summary` | `<summary>` rendered without any text |
+
+Text contributed by an `alt`, `aria-label`, or `title` inside the element counts, so a link that renders an image with alt text is not reported as empty.
+
+### Reporting
+
+Violations are written to `$stderr` by default. `Herb::Engine::AccessibilityAudit.mode` changes that:
+
+- `:warn`: Writes each violation to `logger` if one is set, otherwise to `$stderr`. _(default)_
+- `:raise`: Raises `Herb::Engine::AccessibilityAudit::ViolationError` on the first violation.
+- `:silent`: Only records violations.
+- `:disabled`: Turns instrumented templates into no-ops, without recompiling them.
+
+```ruby
+Herb::Engine::AccessibilityAudit.configure do |audit|
+  audit.mode = :silent
+  audit.logger = Rails.logger
+  audit.disabled_checks = [:generic_link_text]
+  audit.on_violation = ->(violation) { report_to_error_tracker(violation.to_h) }
+end
+```
+
+Every violation carries the check, the message, the element, the attribute, and the position in the template it came from. `#to_h` gives the structured form for an error tracker or metrics pipeline:
+
+```ruby
+violation.code   # => "blank-alt-text"
+violation.file   # => "app/views/users/show.html.erb"
+violation.line   # => 12
+```
+
+Individual checks can also be selected at compile time, in which case the engine only instruments what those checks need:
+
+```ruby
+Herb::Engine.new(source, accessibility_audit: [:empty_link_text, :duplicate_id])
+```
+
+### Sessions
+
+Checks that need to see a whole document, such as `duplicate-id`, only run inside a session. A session also scopes which violations belong to which render, and is the unit `sample_rate` samples over:
+
+```ruby
+violations = Herb::Engine::AccessibilityAudit.collect do
+  render_the_page
+end
+```
+
+In a Rack application, one session per request is what you want:
+
+```ruby
+config.middleware.use Herb::Engine::AccessibilityAudit::Middleware
+```
+
+When a request records violations, the middleware also appends them to the end of the page as a JSON data block, next to the `template[data-herb-validation-error]` markers the engine emits at compile time:
+
+```html
+<script type="application/json" data-herb-accessibility-violations data-count="1">[…]</script>
+```
+
+It is a data block rather than a script, so it is never executed and a Content Security Policy leaves it alone. The Herb dev tools pick it up on their own and list the violations in the floating menu, where clicking one opens the template at that line in your editor. Reading it yourself takes one line:
+
+```js
+JSON.parse(document.querySelector("[data-herb-accessibility-violations]").textContent)
+```
+
+Only HTML responses that record at least one violation are touched, streaming responses are left alone, and `Middleware.new(app, inject: false)` turns the injection off while keeping the session.
+
+Callers that cannot wrap their work in a block use `start_session` and `end_session`, and `verify!` raises a `ViolationError` listing everything recorded so far.
+
+### In the test suite
+
+Include the test helper to turn violations into test failures. Every test runs in its own session, so `duplicate-id` sees a whole rendered document and violations never leak between tests:
+
+```ruby
+require "herb/engine/accessibility_audit/test_helper"
+
+class ActiveSupport::TestCase
+  include Herb::Engine::AccessibilityAudit::TestHelper
+end
+```
+
+A test that renders markup which is knowingly incomplete opts out with `skip_accessibility_audit!`. For a narrower scope, assert on a single render:
+
+```ruby
+assert_no_accessibility_violations { render "users/show" }
+```
+
+`accessibility_violations { … }` returns them instead of failing, for tests that want to assert on the violations themselves.
+
+### In production
+
+Auditing every render in production is usually not worth it, but auditing a slice of traffic is. Sample sessions, report each site once, and never write to `$stderr`:
+
+```ruby
+Herb::Engine::AccessibilityAudit.configure do |audit|
+  audit.mode = :silent
+  audit.sample_rate = 0.01
+  audit.report_once = true
+  audit.max_violations = 25
+  audit.on_violation = ->(violation) { report_to_error_tracker(violation.to_h) }
+end
+```
+
+- `sample_rate`: The share of sessions that are audited, between `0.0` and `1.0`. Unsampled sessions skip the checks entirely. Renders outside a session are always audited. _(default: `1.0`)_
+- `report_once`: Report each violation site once for the lifetime of the process instead of once per session, so a hot template cannot flood the logs. _(default: `false`)_
+- `max_violations`: Cap how many violations a single session reports. _(default: no cap)_
+
+>>>>>>> be198ec8 (Engine: Implement `AccessibilityAudit` for render-time checks)
 ## ReActionView Integration
 
 [ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It uses `validation_mode: :overlay` so validation errors appear as in-browser overlays during development instead of raising exceptions.

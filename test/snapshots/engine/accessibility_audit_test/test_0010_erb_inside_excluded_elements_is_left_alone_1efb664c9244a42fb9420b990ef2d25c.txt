@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0010_erb inside excluded elements is left alone"
+input: "{source: \"<script>var id = \\\"<%= user.id %>\\\";</script>\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<script>var id = "'.freeze; _buf << ::Herb::Engine.js((user.id)); _buf << '";</script>'.freeze;
+_buf.to_s

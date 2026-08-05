@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0008_attribute mixing static and dynamic parts is left alone"
+input: "{source: \"<img src=\\\"/logo.png\\\" alt=\\\"Logo for <%= account.name %>\\\">\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<img src="/logo.png" alt="Logo for '.freeze; _buf << ::Herb::Engine.attr((account.name)); _buf << '">'.freeze;
+_buf.to_s

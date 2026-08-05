@@ -19,7 +19,9 @@ require_relative "engine/validators/render_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug,
-                :validation_error_template, :visitors, :enabled_validators
+                :validation_error_template, :visitors, :enabled_validators, :accessibility_audit
+
+    autoload :AccessibilityAudit, "herb/engine/accessibility_audit"
 
     # @rbs!
     #   def self.optimize_warning_issued: () -> bool
@@ -76,6 +78,14 @@ module Herb
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
       @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
+<<<<<<< HEAD
+||||||| parent of be198ec8 (Engine: Implement `AccessibilityAudit` for render-time checks)
+      @content_for_head = properties[:content_for_head]
+=======
+      @accessibility_audit = properties.fetch(:accessibility_audit,
+                                              Herb.configuration.engine_option("accessibility_audit", false))
+      @content_for_head = properties[:content_for_head]
+>>>>>>> be198ec8 (Engine: Implement `AccessibilityAudit` for render-time checks)
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
@@ -91,12 +101,20 @@ module Herb
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
-        debug_visitor = DebugVisitor.new(
+        @visitors << DebugVisitor.new(
           file_path: @filename,
           project_path: @project_path
         )
+      end
 
-        @visitors << debug_visitor
+      # Unlike `debug`, the audit is a feature flag rather than a default visitor: it still applies
+      # when the caller brings its own visitors, which is how ActionView integrations pass theirs.
+      if @accessibility_audit && @visitors.none?(AccessibilityAudit::Visitor)
+        @visitors << AccessibilityAudit::Visitor.new(
+          file_path: @filename,
+          project_path: @project_path,
+          checks: @accessibility_audit.is_a?(Array) ? @accessibility_audit.map(&:to_sym) : :all
+        )
       end
 
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)

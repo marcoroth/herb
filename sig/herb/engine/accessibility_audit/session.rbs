@@ -1,0 +1,49 @@
+# Generated from lib/herb/engine/accessibility_audit/session.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # Everything the audit remembers while a document renders.
+      #
+      # A scoped session is one the caller opened deliberately, around a request or a test. Checks
+      # that need to see a whole document, such as `duplicate-id`, only run in one, and sampling is
+      # decided once per scoped session rather than per value.
+      class Session
+        attr_reader violations: Array[Violation]
+
+        # : (?scoped: bool, ?sampled: bool) -> void
+        def initialize: (?scoped: bool, ?sampled: bool) -> void
+
+        # : () -> bool
+        def scoped?: () -> bool
+
+        # : () -> bool
+        def sampled?: () -> bool
+
+        # : () -> Hash[String, bool]?
+        def ids: () -> Hash[String, bool]?
+
+        # : (bool) -> void
+        def open_name: (bool) -> void
+
+        # : (untyped) -> void
+        def append_name: (untyped) -> void
+
+        # : () -> String?
+        def close_name: () -> String?
+
+        # : (Array[untyped]) -> bool
+        def reported?: (Array[untyped]) -> bool
+
+        # : (Array[untyped]) -> void
+        def record_reported: (Array[untyped]) -> void
+
+        # : (Violation) -> void
+        def record: (Violation) -> void
+
+        # : (Integer?) -> bool
+        def full?: (Integer?) -> bool
+      end
+    end
+  end
+end

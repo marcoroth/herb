@@ -1,0 +1,71 @@
+# Generated from lib/herb/engine/accessibility_audit/attribute_check.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # Checks that judge the value an ERB expression rendered into an attribute.
+      #
+      # TODO: Delegate to the corresponding linter rules once the linter is callable from Ruby.
+      #
+      # The predicates here duplicate logic the linter already owns: `a11y-no-redundant-image-alt`,
+      # `html-aria-role-must-be-valid`, `html-no-abstract-roles`, `html-no-positive-tab-index`,
+      # `html-aria-attribute-must-be-valid`, `html-no-duplicate-ids`, `html-anchor-require-href`,
+      # and `html-iframe-has-title`.
+      #
+      # Those rules deliberately bail out on dynamic values (`hasDynamicAttributeValue(node)` and
+      # friends), which is exactly the case this audit covers, and `AttributeVisitorMixin` already
+      # splits its hooks along that line: `checkStaticAttributeStaticValue` takes an attribute name
+      # and a resolved value string, which is what `violation` is handed at render time. So the call
+      # the visitor compiles already carries everything a rule needs (element, attribute, value, and
+      # source location), and only this module would change.
+      #
+      # Delegating would also let `.herb.yml` linter configuration (enabled rules, severities) govern
+      # the audit, instead of the separate `disabled_checks` list.
+      #
+      # Not everything maps: `blank-alt-text` (the rule only requires `alt` to be present) and
+      # `invalid-lang` have no rule counterpart today, and would stay here or become new rules.
+      module AttributeCheck
+        REDUNDANT_ALT_PREFIXES: untyped
+
+        ABSTRACT_ROLES: untyped
+
+        VALID_ROLES: untyped
+
+        LANGUAGE_TAG: ::Regexp
+
+        # : (Symbol, String?, String, String, ?ids: Hash[String, bool]?) -> String?
+        def self.violation: (Symbol, String?, String, String, ?ids: Hash[String, bool]?) -> String?
+
+        # : (String?, String) -> String?
+        private def self.blank_alt_text: (String?, String) -> String?
+
+        # : (String?, String) -> String?
+        private def self.redundant_alt_text: (String?, String) -> String?
+
+        # : (String?, String) -> String?
+        private def self.blank_aria_label: (String?, String) -> String?
+
+        # : (String?) -> String?
+        private def self.blank_href: (String?) -> String?
+
+        # : (String?, String) -> String?
+        private def self.blank_frame_title: (String?, String) -> String?
+
+        # : (String?, Hash[String, bool]?) -> String?
+        private def self.duplicate_id: (String?, Hash[String, bool]?) -> String?
+
+        # : (String?, String) -> String?
+        private def self.invalid_lang: (String?, String) -> String?
+
+        # : (String?, String) -> String?
+        private def self.invalid_role: (String?, String) -> String?
+
+        # : (String?, String) -> String?
+        private def self.positive_tabindex: (String?, String) -> String?
+
+        # : (String?, String, String) -> String?
+        private def self.invalid_aria_value: (String?, String, String) -> String?
+      end
+    end
+  end
+end

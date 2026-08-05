@@ -1,0 +1,40 @@
+# Generated from lib/herb/engine/accessibility_audit/violation.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      class Violation
+        attr_reader check: Symbol
+
+        attr_reader message: String
+
+        attr_reader element: String
+
+        attr_reader attribute: String?
+
+        attr_reader value: String?
+
+        attr_reader file: String?
+
+        attr_reader line: Integer?
+
+        attr_reader column: Integer?
+
+        # : (check: Symbol, message: String, element: String, ?attribute: String?, ?value: String?, ?file: String?, ?line: Integer?, ?column: Integer?) -> void
+        def initialize: (check: Symbol, message: String, element: String, ?attribute: String?, ?value: String?, ?file: String?, ?line: Integer?, ?column: Integer?) -> void
+
+        # : () -> String
+        def code: () -> String
+
+        # : () -> String
+        def location: () -> String
+
+        # : () -> String
+        def to_s: () -> String
+
+        # : () -> Hash[Symbol, untyped]
+        def to_h: () -> Hash[Symbol, untyped]
+      end
+    end
+  end
+end

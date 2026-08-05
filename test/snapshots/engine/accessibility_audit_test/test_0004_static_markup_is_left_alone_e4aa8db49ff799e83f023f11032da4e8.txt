@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0004_static markup is left alone"
+input: "{source: \"<a href=\\\"/about\\\">About us</a><img src=\\\"/logo.png\\\" alt=\\\"Logo\\\">\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<a href="/about">About us</a><img src="/logo.png" alt="Logo">'.freeze;
+_buf.to_s

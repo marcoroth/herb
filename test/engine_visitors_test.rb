@@ -51,6 +51,41 @@ class EngineVisitorsTest < Minitest::Spec
     assert_equal expected, engine.src
   end
 
+  test "accessibility audit applies alongside visitors provided by the caller" do
+    html = "<h1><%= title %></h1>"
+
+    other = Class.new(Herb::Visitor).new
+
+    engine = Herb::Engine.new(html, visitors: [other], accessibility_audit: true, filename: "test.html.erb")
+
+    assert_equal 2, engine.visitors.length
+    assert_includes engine.src, "::Herb::Engine::AccessibilityAudit.push_name"
+  end
+
+  test "accessibility audit does not instrument twice when the visitor is passed explicitly" do
+    html = "<h1><%= title %></h1>"
+
+    visitor = Herb::Engine::AccessibilityAudit::Visitor.new(file_path: "test.html.erb")
+
+    engine = Herb::Engine.new(html, visitors: [visitor], accessibility_audit: true, filename: "test.html.erb")
+
+    assert_equal 1, engine.visitors.length
+    assert_equal 1, engine.src.scan("AccessibilityAudit.push_name").length
+  end
+
+  test "accessibility audit visitor can be used explicitly" do
+    html = "<h1><%= title %></h1>"
+
+    visitor = Herb::Engine::AccessibilityAudit::Visitor.new(
+      file_path: "test.html.erb",
+      project_path: "/project"
+    )
+
+    engine = Herb::Engine.new(html, visitors: [visitor], accessibility_audit: false)
+
+    assert_includes engine.src, "::Herb::Engine::AccessibilityAudit.push_name"
+  end
+
   test "debug visitor can still be used explicitly" do
     html = "<div>Debug test</div>"
 

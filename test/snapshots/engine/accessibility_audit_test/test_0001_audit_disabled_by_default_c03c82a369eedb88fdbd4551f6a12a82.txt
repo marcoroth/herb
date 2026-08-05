@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0001_audit disabled by default"
+input: "{source: \"<img src=\\\"/logo.png\\\" alt=\\\"<%= caption %>\\\">\", options: {}}"
+---
+_buf = ::String.new; _buf << '<img src="/logo.png" alt="'.freeze; _buf << ::Herb::Engine.attr((caption)); _buf << '">'.freeze;
+_buf.to_s

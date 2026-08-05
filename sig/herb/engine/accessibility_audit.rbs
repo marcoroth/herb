@@ -1,0 +1,145 @@
+# Generated from lib/herb/engine/accessibility_audit.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Render-time accessibility audit runtime.
+    #
+    # `Herb::Engine::AccessibilityAudit::Visitor` rewrites the template AST so that dynamic values
+    # flow through the methods in this module while the template renders. Every entry point is
+    # identity-preserving: `attribute` and `name_part` return the exact object they were given,
+    # so auditing a template never changes what it renders.
+    #
+    # This complements the static `AccessibilityValidator` and the linter rules: those can only
+    # reason about literal markup, while these checks see the values ERB actually produced.
+    module AccessibilityAudit
+      STATE_KEY: ::Symbol
+
+      def self.mode=: (Symbol) -> Symbol
+
+      def self.logger: () -> untyped
+
+      def self.logger=: (untyped) -> untyped
+
+      def self.on_violation: () -> (^(Violation) -> void)?
+
+      def self.on_violation=: ((^(Violation) -> void)?) -> (^(Violation) -> void)?
+
+      def self.disabled_checks=: (Array[Symbol]) -> Array[Symbol]
+
+      def self.sample_rate=: (Float) -> Float
+
+      def self.report_once=: (bool) -> bool
+
+      def self.max_violations: () -> Integer?
+
+      def self.max_violations=: (Integer?) -> Integer?
+
+      attr_writer mode: Symbol
+
+      attr_accessor logger: untyped
+
+      attr_accessor on_violation: (^(Violation) -> void)?
+
+      attr_writer disabled_checks: Array[Symbol]
+
+      attr_writer sample_rate: Float
+
+      attr_writer report_once: bool
+
+      attr_accessor max_violations: Integer?
+
+      # : () { (untyped) -> void } -> void
+      def self.configure: () { (untyped) -> void } -> void
+
+      # : () -> Symbol
+      def self.mode: () -> Symbol
+
+      # : () -> Array[Symbol]
+      def self.disabled_checks: () -> Array[Symbol]
+
+      # : () -> Float
+      def self.sample_rate: () -> Float
+
+      # : () -> bool
+      def self.report_once: () -> bool
+
+      # : () -> bool
+      def self.enabled?: () -> bool
+
+      # : (Symbol) -> bool
+      def self.check_enabled?: (Symbol) -> bool
+
+      # : (String, String) -> Array[Symbol]
+      def self.attribute_checks: (String, String) -> Array[Symbol]
+
+      # : (String) -> Array[Symbol]
+      def self.content_checks: (String) -> Array[Symbol]
+
+      # : (untyped, element: String, attribute: String, ?file: String?, ?line: Integer?, ?column: Integer?) -> untyped
+      def self.attribute: (untyped, element: String, attribute: String, ?file: String?, ?line: Integer?, ?column: Integer?) -> untyped
+
+      # : () -> nil
+      def self.push_name: () -> nil
+
+      # : (untyped) -> untyped
+      def self.name_part: (untyped) -> untyped
+
+      # : (element: String, ?file: String?, ?line: Integer?, ?column: Integer?) -> nil
+      def self.pop_name: (element: String, ?file: String?, ?line: Integer?, ?column: Integer?) -> nil
+
+      # : [T] () { () -> T } -> T
+      def self.session: [T] () { () -> T } -> T
+
+      # : () { () -> void } -> Array[Violation]
+      def self.collect: () { () -> void } -> Array[Violation]
+
+      # : () -> void
+      def self.start_session: () -> void
+
+      # : () -> Array[Violation]
+      def self.end_session: () -> Array[Violation]
+
+      # : () -> void
+      def self.verify!: () -> void
+
+      # : (Array[Violation]) -> String
+      def self.format_violations: (Array[Violation]) -> String
+
+      # : () -> Array[Violation]
+      def self.violations: () -> Array[Violation]
+
+      # : () -> Session
+      def self.current: () -> Session
+
+      # : () -> void
+      def self.reset!: () -> void
+
+      # : () -> void
+      def self.reset_reported!: () -> void
+
+      # : () -> Session
+      private def self.new_session: () -> Session
+
+      # : () -> bool
+      private def self.sampled?: () -> bool
+
+      # : (Symbol, String, element: String, attribute: String?, value: String?, file: String?, line: Integer?, column: Integer?) -> Violation?
+      private def self.report: (Symbol, String, element: String, attribute: String?, value: String?, file: String?, line: Integer?, column: Integer?) -> Violation?
+
+      # : (Array[untyped]) -> bool
+      private def self.already_reported?: (Array[untyped]) -> bool
+
+      # : () -> Hash[Array[untyped], bool]
+      private def self.reported_sites: () -> Hash[Array[untyped], bool]
+
+      # : () -> Thread::Mutex
+      private def self.reported_mutex: () -> Thread::Mutex
+
+      # : (StandardError) -> void
+      private def self.report_internal_error: (StandardError) -> void
+
+      # : (String) -> void
+      private def self.log: (String) -> void
+    end
+  end
+end

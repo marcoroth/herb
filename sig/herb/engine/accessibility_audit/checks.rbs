@@ -1,0 +1,29 @@
+# Generated from lib/herb/engine/accessibility_audit/checks.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # The catalog of what gets checked where.
+      #
+      # `Visitor` reads it at compile time to decide what to instrument, and the
+      # audit reads it at render time to decide which checks a value has to pass.
+      module Checks
+        ATTRIBUTE: untyped
+
+        CONTENT: untyped
+
+        BOOLEAN_ARIA_VALUES: untyped
+
+        ARIA_VALUES: untyped
+
+        ALL: untyped
+
+        # : (String, String) -> Array[Symbol]
+        def self.for_attribute: (String, String) -> Array[Symbol]
+
+        # : (String) -> Array[Symbol]
+        def self.for_content: (String) -> Array[Symbol]
+      end
+    end
+  end
+end

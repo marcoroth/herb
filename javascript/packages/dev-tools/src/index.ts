@@ -1,9 +1,9 @@
 import './styles.css';
-import { HerbOverlay, type HerbDevToolsOptions } from './herb-overlay.js';
+import { HerbOverlay, type HerbDevToolsOptions, type AccessibilityViolation } from './herb-overlay.js';
 import { ErrorOverlay, type ValidationError, type ValidationData } from './error-overlay.js';
 
 export { HerbOverlay, ErrorOverlay };
-export type { HerbDevToolsOptions, ValidationError, ValidationData };
+export type { HerbDevToolsOptions, ValidationError, ValidationData, AccessibilityViolation };
 
 export function initHerbDevTools(options: HerbDevToolsOptions = {}): HerbOverlay {
   if (typeof window !== 'undefined') {
@@ -29,7 +29,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   const hasValidationError = document.querySelector('template[data-herb-validation-error]') !== null;
   const hasParserErrors = document.querySelector('template[data-herb-parser-error]') !== null;
   const hasOptimizationMismatches = document.querySelector('template[data-herb-optimization-mismatch]') !== null;
-  const shouldAutoInit = hasDebugMode || hasDebugErb || hasValidationErrors || hasValidationError || hasParserErrors || hasOptimizationMismatches;
+  const hasAccessibilityViolations = document.querySelector('script[data-herb-accessibility-violations]') !== null;
+  const shouldAutoInit = hasDebugMode || hasDebugErb || hasValidationErrors || hasValidationError || hasParserErrors || hasOptimizationMismatches || hasAccessibilityViolations;
 
   if (shouldAutoInit) {
     document.addEventListener('DOMContentLoaded', () => {

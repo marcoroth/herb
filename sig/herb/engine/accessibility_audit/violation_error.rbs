@@ -1,0 +1,10 @@
+# Generated from lib/herb/engine/accessibility_audit/violation_error.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      class ViolationError < StandardError
+      end
+    end
+  end
+end

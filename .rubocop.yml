@@ -128,6 +128,7 @@ Metrics/ClassLength:
 
 Metrics/ModuleLength:
   Exclude:
+    - lib/herb/engine/**/*.rb
     - test/**/*.rb
     - templates/**/*.rb
     - bin/lib/compare_helpers.rb
@@ -150,6 +151,8 @@ Metrics/ParameterLists:
     - lib/herb/ast/nodes.rb
     - lib/herb/dev/runner.rb
     - lib/herb/diff_operation.rb
+    - lib/herb/engine/accessibility_audit.rb
+    - lib/herb/engine/accessibility_audit/violation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb
     - lib/herb/parser_options.rb

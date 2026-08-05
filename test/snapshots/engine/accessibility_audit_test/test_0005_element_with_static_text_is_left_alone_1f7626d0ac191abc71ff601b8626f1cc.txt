@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0005_element with static text is left alone"
+input: "{source: \"<a href=\\\"/about\\\">Read the <%= post.title %> announcement</a>\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<a href="/about">Read the '.freeze; _buf << (post.title).to_s; _buf << ' announcement</a>'.freeze;
+_buf.to_s

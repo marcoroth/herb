@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0002_attribute value gets wrapped"
+input: "{source: \"<img src=\\\"/logo.png\\\" alt=\\\"<%= caption %>\\\">\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<img src="/logo.png" alt="'.freeze; _buf << ::Herb::Engine.attr((::Herb::Engine::AccessibilityAudit.attribute((caption), element: "img", attribute: "alt", file: "app/views/test.html.erb", line: 1, column: 27))); _buf << '">'.freeze;
+_buf.to_s

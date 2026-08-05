@@ -1,0 +1,26 @@
+# Generated from lib/herb/engine/accessibility_audit/content_check.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # Checks that judge the text an element rendered.
+      #
+      # TODO: Delegate to the corresponding linter rules once the linter is callable from Ruby.
+      # `html-no-empty-headings` and `a11y-avoid-generic-link-text` already own two of these, and
+      # both bail out when the content of the element is dynamic. `empty-button-text`,
+      # `empty-label`, and `empty-summary` have no rule counterpart today.
+      module ContentCheck
+        GENERIC_LINK_TEXT: untyped
+
+        # : (Symbol, String, String) -> String?
+        def self.violation: (Symbol, String, String) -> String?
+
+        # : (String, String) -> String?
+        private def self.empty_heading: (String, String) -> String?
+
+        # : (String) -> String?
+        private def self.generic_link_text: (String) -> String?
+      end
+    end
+  end
+end

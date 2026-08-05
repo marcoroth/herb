@@ -1,5 +1,16 @@
 import { ErrorOverlay } from './error-overlay';
 
+export interface AccessibilityViolation {
+  code: string;
+  message: string;
+  element: string;
+  attribute: string | null;
+  value: string | null;
+  file: string | null;
+  line: number | null;
+  column: number | null;
+}
+
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
@@ -63,6 +74,8 @@ export class HerbOverlay {
     this.setupMenuToggle();
     this.setupToggleSwitches();
     this.setupEditorDropdown();
+    this.setupAccessibilityViolations();
+    this.setupAccessibilityBadge();
     this.initializeErrorOverlay();
     this.setupTurboListeners();
     this.applySettings();
@@ -174,6 +187,8 @@ export class HerbOverlay {
 
     const menuHTML = `
       <div class="herb-floating-menu">
+        ${this.accessibilityBadge()}
+
         <button class="herb-menu-trigger" id="herbMenuTrigger">
           <span class="herb-icon">🌿</span>
           <span class="herb-text">Herb</span>
@@ -244,6 +259,8 @@ export class HerbOverlay {
               <span class="herb-toggle-text">Show ERB Output Tags</span>
             </label>
           </div>
+
+          ${this.accessibilityViolationsSection()}
 
           <div class="herb-editor-section">
             <label class="herb-editor-label">
@@ -341,6 +358,8 @@ export class HerbOverlay {
     this.setupMenuToggle();
     this.setupToggleSwitches();
     this.setupEditorDropdown();
+    this.setupAccessibilityViolations();
+    this.setupAccessibilityBadge();
     this.applySettings();
     this.updateMenuButtonState();
   }
@@ -1087,6 +1106,140 @@ export class HerbOverlay {
       default:
         return '';
     }
+  }
+
+  /**
+   * Render-time accessibility violations, published by
+   * `Herb::Engine::AccessibilityAudit::Middleware` as a JSON data block at the end of the page.
+   */
+  private readAccessibilityViolations(): AccessibilityViolation[] {
+    const block = document.querySelector('script[data-herb-accessibility-violations]');
+
+    if (!block?.textContent) {
+      return [];
+    }
+
+    try {
+      const violations = JSON.parse(block.textContent);
+
+      return Array.isArray(violations) ? violations : [];
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  /**
+   * Sits to the left of the Herb button so a violation is visible without opening the menu.
+   */
+  private accessibilityBadge(): string {
+    const violations = this.readAccessibilityViolations();
+
+    if (violations.length === 0) {
+      return '';
+    }
+
+    const label = violations.length === 1 ? '1 accessibility violation' : `${violations.length} accessibility violations`;
+
+    return `
+      <button class="herb-a11y-badge" id="herbAccessibilityBadge" title="${this.escapeAttribute(label)}" aria-label="${this.escapeAttribute(label)}">
+        <span class="herb-a11y-badge-icon">⚠️</span>
+        <span class="herb-a11y-badge-count">${violations.length}</span>
+      </button>
+    `;
+  }
+
+  private setupAccessibilityBadge() {
+    const badge = document.getElementById('herbAccessibilityBadge');
+
+    if (badge) {
+      badge.addEventListener('click', () => {
+        this.openMenu();
+      });
+    }
+  }
+
+  /**
+   * Opens rather than toggles, so it stays correct if the handler ends up attached more than once.
+   */
+  private openMenu() {
+    const menuTrigger = document.getElementById('herbMenuTrigger');
+    const menuPanel = document.getElementById('herbMenuPanel');
+
+    if (!menuTrigger || !menuPanel) {
+      return;
+    }
+
+    this.menuOpen = true;
+
+    menuTrigger.classList.add('active');
+    menuPanel.classList.add('open');
+
+    this.saveSettings();
+  }
+
+  private accessibilityViolationsSection(): string {
+    const violations = this.readAccessibilityViolations();
+
+    if (violations.length === 0) {
+      return '';
+    }
+
+    const items = violations.map(violation => {
+      const file = violation.file || '';
+      const basename = file.split('/').pop() || file;
+      const location = violation.line ? `${basename}:${violation.line}` : basename;
+
+      return `
+        <li class="herb-a11y-item" data-herb-a11y-file="${this.escapeAttribute(file)}" data-herb-a11y-line="${violation.line || 1}" data-herb-a11y-column="${violation.column || 1}">
+          <div class="herb-a11y-item-header">
+            <span class="herb-a11y-code">${this.escapeAttribute(violation.code)}</span>
+            <span class="herb-a11y-location">${this.escapeAttribute(location)}</span>
+          </div>
+          <div class="herb-a11y-message">${this.escapeAttribute(violation.message)}</div>
+        </li>
+      `;
+    }).join('');
+
+    const label = violations.length === 1 ? '1 violation' : `${violations.length} violations`;
+
+    return `
+      <div class="herb-a11y-section" id="herbAccessibilitySection">
+        <div class="herb-a11y-header">
+          <span class="herb-a11y-title">Accessibility</span>
+          <span class="herb-a11y-count">${label}</span>
+        </div>
+
+        <ul class="herb-a11y-list">${items}</ul>
+      </div>
+    `;
+  }
+
+  private setupAccessibilityViolations() {
+    const items = document.querySelectorAll('.herb-a11y-item');
+
+    items.forEach(item => {
+      item.addEventListener('click', () => {
+        const file = item.getAttribute('data-herb-a11y-file');
+
+        if (!file) {
+          return;
+        }
+
+        const line = parseInt(item.getAttribute('data-herb-a11y-line') || '1', 10);
+        const column = parseInt(item.getAttribute('data-herb-a11y-column') || '1', 10);
+
+        this.openFileInEditor(file, line, column);
+      });
+    });
+  }
+
+  private escapeAttribute(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   private openFileInEditor(file: string, line: number, column: number) {

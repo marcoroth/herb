@@ -1,0 +1,7 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0011_block expressions are left alone"
+input: "{source: \"<a href=\\\"/about\\\"><%= content_tag :span do %><%= label %><% end %></a>\\n\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<a href="/about">'.freeze; ::Herb::Engine::AccessibilityAudit.push_name; _buf << (content_tag :span do; _buf << (::Herb::Engine::AccessibilityAudit.name_part((label))).to_s; end); ::Herb::Engine::AccessibilityAudit.pop_name(element: "a", file: "app/views/test.html.erb", line: 1, column: 1); _buf << '</a>
+'.freeze;
+_buf.to_s

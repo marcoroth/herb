@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0009_nested elements report through the outer name frame"
+input: "{source: \"<a href=\\\"/about\\\"><span><%= label %></span></a>\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<a href="/about">'.freeze; ::Herb::Engine::AccessibilityAudit.push_name; _buf << '<span>'.freeze; _buf << (::Herb::Engine::AccessibilityAudit.name_part((label))).to_s; _buf << '</span>'.freeze; ::Herb::Engine::AccessibilityAudit.pop_name(element: "a", file: "app/views/test.html.erb", line: 1, column: 1); _buf << '</a>'.freeze;
+_buf.to_s

@@ -1,0 +1,54 @@
+# Generated from lib/herb/engine/accessibility_audit/test_helper.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # Turns render-time accessibility violations into test failures.
+      #
+      # Include it in a test case to audit every render that happens in it:
+      #
+      #     class ActiveSupport::TestCase
+      #       include Herb::Engine::AccessibilityAudit::TestHelper
+      #     end
+      #
+      # Each test runs inside its own audit session, so `duplicate-id` sees a whole rendered
+      # document and violations from one test never leak into the next. A test that records a
+      # violation fails, unless it opted out with `skip_accessibility_audit!`.
+      #
+      # For a narrower scope, assert on a single render instead:
+      #
+      #     assert_no_accessibility_violations { render "users/show" }
+      #
+      # Frameworks without `setup`/`teardown` hooks can reach for the same primitives directly:
+      # `AccessibilityAudit.start_session`, `AccessibilityAudit.verify!`, and
+      # `AccessibilityAudit.end_session`.
+      module TestHelper
+        # : () -> void
+        def before_setup: () -> void
+
+        # : () -> void
+        def after_teardown: () -> void
+
+        # : () -> void
+        def skip_accessibility_audit!: () -> void
+
+        # : () { () -> void } -> Array[Violation]
+        def assert_no_accessibility_violations: () { () -> void } -> Array[Violation]
+
+        # : () { () -> void } -> Array[Violation]
+        def accessibility_violations: () { () -> void } -> Array[Violation]
+
+        private
+
+        # : () -> bool
+        def accessibility_audit_reportable?: () -> bool
+
+        # : (Array[Violation]) -> void
+        def fail_with_accessibility_violations: (Array[Violation]) -> void
+
+        # : () -> void
+        def assert_accessibility_audit_passed: () -> void
+      end
+    end
+  end
+end

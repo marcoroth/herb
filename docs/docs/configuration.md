@@ -324,6 +324,8 @@ Configure the template engine behavior:
 
 ```yaml [.herb.yml]
 engine:
+  accessibility_audit: false  # Compile render-time accessibility checks into templates (default: false)
+
   validators:
     security: true       # Enable/disable security validation (default: true)
     nesting: true        # Enable/disable HTML nesting validation (default: true)
@@ -341,6 +343,14 @@ The engine runs validators on templates during compilation. Each validator can b
 - **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
 
 When a validator is disabled (`false`), the engine skips it entirely during compilation. This applies regardless of the `validation_mode` used by the engine.
+
+### Accessibility Audit
+
+Validators and linter rules can only judge the markup that is literally in the template. The accessibility audit compiles checks into the template that run while it renders, so they see the values ERB produced: an `alt` attribute that renders blank, a link whose text is empty, an `id` that appears twice in one document.
+
+- `accessibility_audit`: Enable render-time accessibility checks. Accepts `true`, `false`, or a list of check names to compile. _(default: `false`)_
+
+Since the checks run on every render, enable them in development and test only. See [Accessibility Audit](/projects/engine#accessibility-audit) for the full list of checks and how violations are reported.
 
 ### Validation Mode
 

@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0006_element with a static accessible name is left alone"
+input: "{source: \"<a href=\\\"/about\\\" aria-label=\\\"About us\\\"><%= icon %></a>\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<a href="/about" aria-label="About us">'.freeze; _buf << (icon).to_s; _buf << '</a>'.freeze;
+_buf.to_s

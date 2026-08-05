@@ -1,0 +1,6 @@
+---
+source: "Engine::AccessibilityAuditTest#test_0007_attribute without any applicable check is left alone"
+input: "{source: \"<div class=\\\"<%= css_class %>\\\" data-id=\\\"<%= user.id %>\\\">Content</div>\", options: {accessibility_audit: true, filename: \"app/views/test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '" data-id="'.freeze; _buf << ::Herb::Engine.attr((user.id)); _buf << '">Content</div>'.freeze;
+_buf.to_s

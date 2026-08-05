@@ -1,0 +1,115 @@
+# Generated from lib/herb/engine/accessibility_audit/visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module AccessibilityAudit
+      # Rewrites the template AST so accessibility concerns that only exist once ERB has produced a
+      # value get checked while the template renders.
+      #
+      # Static analysis can tell that `<img alt="<%= caption %>">` has an `alt` attribute, but not
+      # whether `caption` renders blank; it can tell that `<a><%= label %></a>` has content, but not
+      # whether that content is empty or reads "click here". This visitor instruments exactly those
+      # spots, and leaves everything a linter can already see alone.
+      #
+      # Two kinds of instrumentation are inserted:
+      #
+      #   1. Attribute values that are a single ERB output get wrapped in
+      #      `AccessibilityAudit.attribute(...)`, which returns the value unchanged.
+      #
+      #   2. Elements whose accessible name can only come from ERB (no static text anywhere in the
+      #      subtree) get a `push_name` / `pop_name` pair around their body, and every ERB output in
+      #      between is wrapped in `name_part(...)` so the audit sees the text that was rendered.
+      class Visitor < Herb::Visitor
+        RUNTIME: ::String
+
+        EXCLUDED_ANCESTORS: untyped
+
+        HIDDEN_ROLES: untyped
+
+        LABELLING_ATTRIBUTES: untyped
+
+        # : (?file_path: (String | ::Pathname)?, ?project_path: (String | ::Pathname)?, ?checks: (Symbol | Array[Symbol])) -> void
+        def initialize: (?file_path: (String | ::Pathname)?, ?project_path: (String | ::Pathname)?, ?checks: Symbol | Array[Symbol]) -> void
+
+        def visit_html_element_node: (untyped node) -> untyped
+
+        private
+
+        # : () -> String
+        def calculate_relative_path: () -> String
+
+        # : () -> bool
+        def excluded_context?: () -> bool
+
+        # : (Herb::AST::Node?, String) -> void
+        def instrument_attributes: (Herb::AST::Node?, String) -> void
+
+        # : (Herb::AST::HTMLElementNode, String) -> void
+        def instrument_content: (Herb::AST::HTMLElementNode, String) -> void
+
+        # : (Array[Herb::AST::Node]) -> void
+        def instrument_name_parts: (Array[Herb::AST::Node]) -> void
+
+        # : (Herb::AST::Node) -> Array[Array[Herb::AST::Node]]
+        def child_nodes: (Herb::AST::Node) -> Array[Array[Herb::AST::Node]]
+
+        # : (Array[Herb::AST::Node]) -> bool
+        def static_text?: (Array[Herb::AST::Node]) -> bool
+
+        # : (Array[Herb::AST::Node]) -> bool
+        def dynamic_content?: (Array[Herb::AST::Node]) -> bool
+
+        # : (Herb::AST::Node?) -> bool
+        def statically_named?: (Herb::AST::Node?) -> bool
+
+        # : (Herb::AST::HTMLAttributeNode) -> String?
+        def static_attribute_name: (Herb::AST::HTMLAttributeNode) -> String?
+
+        # : (Herb::AST::HTMLAttributeNode) -> String?
+        def static_attribute_value: (Herb::AST::HTMLAttributeNode) -> String?
+
+        # : (Array[Herb::AST::Node]) -> Array[String]?
+        def literals: (Array[Herb::AST::Node]) -> Array[String]?
+
+        # : (Array[Herb::AST::Node]) -> Herb::AST::ERBContentNode?
+        def single_erb_output: (Array[Herb::AST::Node]) -> Herb::AST::ERBContentNode?
+
+        # : (Herb::AST::Node?) -> bool
+        def erb_output_node?: (Herb::AST::Node?) -> bool
+
+        # : (String) -> bool
+        def erb_output?: (String) -> bool
+
+        # : (Herb::AST::ERBContentNode) -> bool
+        def instrumentable?: (Herb::AST::ERBContentNode) -> bool
+
+        # : (String) -> bool
+        def block_opening?: (String) -> bool
+
+        # : (Herb::AST::ERBContentNode, String, String) -> Herb::AST::ERBContentNode
+        def audited_attribute_node: (Herb::AST::ERBContentNode, String, String) -> Herb::AST::ERBContentNode
+
+        # : (Herb::AST::ERBContentNode) -> Herb::AST::ERBContentNode
+        def audited_name_part_node: (Herb::AST::ERBContentNode) -> Herb::AST::ERBContentNode
+
+        # : (Herb::AST::HTMLElementNode, String) -> String
+        def pop_name_code: (Herb::AST::HTMLElementNode, String) -> String
+
+        # : (Herb::AST::ERBContentNode) -> String
+        def expression: (Herb::AST::ERBContentNode) -> String
+
+        # : (Herb::AST::Node) -> String
+        def source_arguments: (Herb::AST::Node) -> String
+
+        # : (Herb::AST::Node, String) -> Herb::AST::ERBContentNode
+        def code_node: (Herb::AST::Node, String) -> Herb::AST::ERBContentNode
+
+        # : (Herb::AST::Node, untyped, String, untyped) -> Herb::AST::ERBContentNode
+        def erb_node: (Herb::AST::Node, untyped, String, untyped) -> Herb::AST::ERBContentNode
+
+        # : (Symbol, String) -> Herb::Token
+        def create_token: (Symbol, String) -> Herb::Token
+      end
+    end
+  end
+end
