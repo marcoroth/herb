@@ -17,9 +17,10 @@ module Herb
     class AutoCloseOmittedTagsVisitor < Herb::Visitor
       #: (Herb::AST::HTMLElementNode) -> void
       def visit_html_element_node(node)
-        close_tag = node.close_tag
+        omitted = omitted_close_tag(node)
+        tag_name = omitted&.tag_name
 
-        node.close_tag = explicit_close_tag(close_tag) if omitted_close_tag?(node) && close_tag.tag_name
+        node.close_tag = explicit_close_tag(tag_name, omitted.location) if omitted && tag_name
 
         super
       end
@@ -31,22 +32,22 @@ module Herb
 
       private
 
-      #: (Herb::AST::HTMLOmittedCloseTagNode) -> Herb::AST::HTMLCloseTagNode
-      def explicit_close_tag(omitted_close_tag)
+      #: (Herb::Token, Herb::Location) -> Herb::AST::HTMLCloseTagNode
+      def explicit_close_tag(tag_name, location)
         Herb::AST::HTMLCloseTagNode.new(
           "HTMLCloseTagNode",
-          omitted_close_tag.location,
+          location,
           [],
-          token("</", "TOKEN_HTML_TAG_START_CLOSE", omitted_close_tag.location),
-          omitted_close_tag.tag_name,
+          token("</", "TOKEN_HTML_TAG_START_CLOSE", location),
+          tag_name,
           [],
-          token(">", "TOKEN_HTML_TAG_END", omitted_close_tag.location)
+          token(">", "TOKEN_HTML_TAG_END", location)
         )
       end
 
-      #: (String, String, Herb::Location?) -> Herb::Token
+      #: (String, String, Herb::Location) -> Herb::Token
       def token(value, type, location)
-        Herb::Token.new(value.dup, Herb::Range.from(0, 0), location || Herb::Location.from(0, 0, 0, 0), type)
+        Herb::Token.new(value.dup, Herb::Range.from(0, 0), location, type)
       end
     end
   end
