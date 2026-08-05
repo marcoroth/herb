@@ -31,9 +31,7 @@
     "tsx": "^4.23.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^4.1.8",
-    "yaml": "^2.9.0",
-    "yeoman-environment": "^6.1.0",
-    "yeoman-generator": "^8.2.2"
+    "yaml": "^2.9.0"
   },
   "scripts": {
     "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server",

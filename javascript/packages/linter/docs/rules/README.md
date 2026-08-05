@@ -153,17 +153,7 @@ This page contains documentation for all Herb Linter rules.
 
 ## Contributing
 
-To add a new linter rule you can scaffold a new rule by running:
-
-```bash
-cd javascript/packages/linter
-
-scripts/generate-rule
-```
-
-The script creates the documentation, rule stub, and test stub based on the GitHub issue (requires the `linter` label and a `Rule name: [rule-name]` line).
-
-Alternatively, you can create one manually:
+To add a new linter rule:
 
 1. Create the rule class implementing the `Rule` interface
 2. Add comprehensive tests in `test/rules/`
