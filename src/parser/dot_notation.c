@@ -14,7 +14,7 @@ static bool current_token_is_dot(parser_T* parser) {
   return token_is_dot(parser->current_token);
 }
 
-static void consume_dot_notation_loop(parser_T* parser, token_T* tag_name, hb_array_T* errors) {
+static void consume_dot_notation_loop(parser_T* parser, token_T* tag_name, hb_array_T** errors) {
   while (current_token_is_dot(parser)) {
     token_T* dot = parser_advance(parser);
     token_T* segment = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
@@ -81,7 +81,7 @@ bool parser_lookahead_is_valid_dot_notation_open_tag(parser_T* parser) {
   return true;
 }
 
-void parser_consume_dot_notation_segments(parser_T* parser, token_T* tag_name, hb_array_T* errors) {
+void parser_consume_dot_notation_segments(parser_T* parser, token_T* tag_name, hb_array_T** errors) {
   if (!parser->options.dot_notation_tags) { return; }
   if (tag_name == NULL || tag_name->value.length == 0) { return; }
   if (!current_token_is_dot(parser)) { return; }

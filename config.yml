@@ -634,6 +634,7 @@ nodes:
 
         - name: "close_tag"
           type: "node"
+          writable: true
           kind:
             - "HTMLCloseTagNode"
             - "HTMLOmittedCloseTagNode"
