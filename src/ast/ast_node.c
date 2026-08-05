@@ -62,10 +62,6 @@ hb_array_T* ast_node_errors(const AST_NODE_T* node) {
   return node->errors;
 }
 
-void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error) {
-  hb_array_append(node->errors, error);
-}
-
 void ast_node_set_start(AST_NODE_T* node, position_T position) {
   node->location.start = position;
 }

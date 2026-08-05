@@ -29,7 +29,6 @@ void ast_node_set_end(AST_NODE_T* node, position_T position);
 
 size_t ast_node_errors_count(const AST_NODE_T* node);
 hb_array_T* ast_node_errors(const AST_NODE_T* node);
-void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error);
 
 void ast_node_set_start_from_token(AST_NODE_T* node, const token_T* token);
 void ast_node_set_end_from_token(AST_NODE_T* node, const token_T* token);
