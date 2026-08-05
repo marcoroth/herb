@@ -20,6 +20,7 @@ typedef enum {
   HERB_DIFF_NODE_MOVED,
 
   HERB_DIFF_TEXT_CHANGED,
+  HERB_DIFF_WHITESPACE_CHANGED,
   HERB_DIFF_ERB_CONTENT_CHANGED,
 
   HERB_DIFF_ATTRIBUTE_ADDED,
@@ -47,9 +48,16 @@ typedef struct {
 } herb_diff_operation_T;
 
 typedef struct {
+  bool detect_whitespace_changes;
+} herb_diff_options_T;
+
+extern const herb_diff_options_T HERB_DEFAULT_DIFF_OPTIONS;
+
+typedef struct {
   hb_array_T* operations;
   hb_allocator_T* allocator;
   bool trees_identical;
+  herb_diff_options_T options;
 } herb_diff_result_T;
 
 herb_diff_path_T herb_diff_path_empty(void);
@@ -58,6 +66,7 @@ herb_diff_path_T herb_diff_path_append(herb_diff_path_T path, uint32_t index);
 herb_diff_result_T* herb_diff(
   const AST_DOCUMENT_NODE_T* old_document,
   const AST_DOCUMENT_NODE_T* new_document,
+  const herb_diff_options_T* options,
   hb_allocator_T* allocator
 );
 
@@ -72,6 +81,7 @@ void herb_diff_node(
   herb_diff_path_T path,
   const herb_hash_map_T* old_hashes,
   const herb_hash_map_T* new_hashes,
+  bool preserve_whitespace,
   herb_diff_result_T* result
 );
 
@@ -81,6 +91,7 @@ void herb_diff_children(
   herb_diff_path_T parent_path,
   const herb_hash_map_T* old_hashes,
   const herb_hash_map_T* new_hashes,
+  bool preserve_whitespace,
   herb_diff_result_T* result
 );
 

@@ -13,6 +13,7 @@ export type DiffOperationType =
   | "node_wrapped"
   | "tag_name_changed"
   | "text_changed"
+  | "whitespace_changed"
 
 export interface DiffOperation {
   type: DiffOperationType
@@ -26,4 +27,8 @@ export interface DiffOperation {
 export interface DiffResult {
   identical: boolean
   operations: DiffOperation[]
+}
+
+export interface DiffOptions {
+  detect_whitespace_changes?: boolean
 }

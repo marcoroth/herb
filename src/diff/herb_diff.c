@@ -6,6 +6,8 @@
 
 #include <stdio.h>
 
+const herb_diff_options_T HERB_DEFAULT_DIFF_OPTIONS = { .detect_whitespace_changes = false };
+
 herb_diff_path_T herb_diff_path_empty(void) {
   herb_diff_path_T path;
 
@@ -52,12 +54,14 @@ static void emit_operation(
 herb_diff_result_T* herb_diff(
   const AST_DOCUMENT_NODE_T* old_document,
   const AST_DOCUMENT_NODE_T* new_document,
+  const herb_diff_options_T* options,
   hb_allocator_T* allocator
 ) {
   herb_diff_result_T* result = (herb_diff_result_T*) hb_allocator_alloc(allocator, sizeof(herb_diff_result_T));
   result->operations = hb_array_init(16, allocator);
   result->allocator = allocator;
   result->trees_identical = false;
+  result->options = (options != NULL) ? *options : HERB_DEFAULT_DIFF_OPTIONS;
 
   herb_hash_map_T old_hashes;
   herb_hash_map_T new_hashes;
@@ -81,8 +85,11 @@ herb_diff_result_T* herb_diff(
     root_path,
     &old_hashes,
     &new_hashes,
+    false,
     result
   );
+
+  result->trees_identical = hb_array_size(result->operations) == 0;
 
   return result;
 }
@@ -119,6 +126,7 @@ const char* herb_diff_operation_type_to_string(const herb_diff_operation_type_T 
     case HERB_DIFF_NODE_WRAPPED: return "node_wrapped";
     case HERB_DIFF_TAG_NAME_CHANGED: return "tag_name_changed";
     case HERB_DIFF_TEXT_CHANGED: return "text_changed";
+    case HERB_DIFF_WHITESPACE_CHANGED: return "whitespace_changed";
   }
 
   return "unknown";
