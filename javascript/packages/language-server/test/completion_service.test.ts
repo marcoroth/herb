@@ -170,6 +170,16 @@ describe("CompletionService", () => {
       expect(labels).toContain("div")
       expect(labels).toContain("span")
     })
+
+    it("works when the ERB tag spans multiple lines", () => {
+      const content = "<%= link_to \"Home\",\n    tag.d %>"
+      const labels = completionLabels(content, 1, 9)
+
+      expect(labels).toContain("div")
+      expect(labels).toContain("dialog")
+      expect(labels).not.toContain("link_to")
+      expect(labels).not.toContain("span")
+    })
   })
 
   describe("ActionView helper completions", () => {
@@ -252,6 +262,21 @@ describe("CompletionService", () => {
       const labels = completionLabels("<%=   l", 0, 7)
 
       expect(labels).toContain("link_to")
+    })
+
+    it("applies the prefix when the ERB tag spans multiple lines", () => {
+      const labels = completionLabels("<%=\n  link %>", 1, 6)
+
+      expect(labels).toContain("link_to")
+      expect(labels).not.toContain("tag")
+      expect(labels).not.toContain("content_tag")
+    })
+
+    it("does not offer the same helper twice", () => {
+      const labels = completionLabels("<%= a", 0, 5)
+
+      expect(labels.length).toBeGreaterThan(0)
+      expect(new Set(labels).size).toBe(labels.length)
     })
   })
 

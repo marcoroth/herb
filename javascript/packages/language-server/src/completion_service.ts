@@ -8,12 +8,11 @@ import {
 } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
+import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, getHelperEntries, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
-import { nodeToRange, isPositionInRange, rangeSize } from "./range_utils"
-import { ACTION_VIEW_HELPERS } from "./action_view_helpers"
+import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
 
-import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode } from "@herb-tools/core"
+import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry } from "@herb-tools/core"
 import type { Range } from "vscode-languageserver/node"
 
 const HTML_OPEN_TAG_PATTERN = /<(\w*)$/
@@ -29,20 +28,20 @@ const COMMON_TAGS = new Set([
   "footer", "nav", "main", "article", "aside", "table", "img",
 ])
 
-interface HelperCompletionInfo {
-  name: string
-  signature: string
-  documentationURL: string
+function publicHelpers(): HelperEntry[] {
+  const helpers = new Map<string, HelperEntry>()
+
+  for (const helper of getHelperEntries()) {
+    if (helper.visibility !== "public") continue
+    if (helpers.has(helper.name)) continue
+
+    helpers.set(helper.name, helper)
+  }
+
+  return [...helpers.values()].sort((a, b) => a.name.localeCompare(b.name))
 }
 
-function extractHelpers(): HelperCompletionInfo[] {
-  return Object.entries(ACTION_VIEW_HELPERS).map(([key, info]) => {
-    const name = key.split("#").pop()!
-    return { name, ...info }
-  })
-}
-
-const HELPERS = extractHelpers()
+const HELPERS = publicHelpers()
 
 class NodeAtPositionCollector extends Visitor {
   public matches: { node: Node; range: Range }[] = []
@@ -105,7 +104,7 @@ export class CompletionService {
     })
 
     if (node && isERBContentNode(node)) {
-      return this.getERBCompletions(node, position, textAfterCursor)
+      return this.getERBCompletions(node, position, textAfterCursor, document)
     }
 
     if (node && isHTMLOpenTagNode(node)) {
@@ -150,12 +149,14 @@ export class CompletionService {
     return best
   }
 
-  private getERBCompletions(node: ERBContentNode, position: Position, textAfterCursor: string): CompletionList | null {
+  private getERBCompletions(node: ERBContentNode, position: Position, textAfterCursor: string, document: TextDocument): CompletionList | null {
     if (!node.content) return null
 
     const contentText = node.content.value
-    const contentStart = node.content.location.start
-    const cursorOffset = position.character - contentStart.column
+    const contentStart = lspPosition(node.content.location.start)
+    const cursorOffset = document.offsetAt(position) - document.offsetAt(contentStart)
+
+    if (cursorOffset < 0 || cursorOffset > contentText.length) return null
 
     const textBeforeCursor = contentText.substring(0, cursorOffset).trimStart()
 
@@ -355,13 +356,18 @@ export class CompletionService {
     const items: CompletionItem[] = HELPERS
       .filter(helper => helper.name.startsWith(prefix))
       .map((helper, index) => {
+        const documentation = [
+          helper.description,
+          helper.documentationURL ? `[Documentation](${helper.documentationURL})` : null,
+        ].filter(Boolean).join("\n\n")
+
         return {
           label: helper.name,
           kind: CompletionItemKind.Function,
           detail: helper.signature,
           documentation: {
             kind: MarkupKind.Markdown,
-            value: `[Documentation](${helper.documentationURL})`,
+            value: documentation,
           },
           sortText: `!00${String(index).padStart(3, "0")}`,
           insertTextFormat: InsertTextFormat.PlainText,

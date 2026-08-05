@@ -496,7 +496,6 @@ export function isBlockElement(tagName: string): boolean {
   return HTML_BLOCK_ELEMENTS.has(tagName.toLowerCase())
 }
 
-
 /**
  * Attribute visitor that provides granular processing based on both
  * attribute name type (static/dynamic) and value type (static/dynamic)
