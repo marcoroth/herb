@@ -8,6 +8,11 @@ module Herb
         replace_component_nodes_recursive(node)
       end
 
+      #: () -> String
+      def inspect
+        "#<#{self.class.name}>"
+      end
+
       private
 
       def replace_component_nodes_recursive(node)
@@ -40,13 +45,16 @@ module Herb
 
       def should_transform_to_component?(node)
         return false unless node.is_a?(Herb::AST::HTMLElementNode)
-        return false unless node.tag_name&.value
 
-        node.tag_name.value.match?(/^[A-Z]/)
+        tag_name = node.tag_name&.value
+
+        return false unless tag_name
+
+        tag_name.match?(/^[A-Z]/)
       end
 
       def transform_to_erb_component(element_node)
-        tag_name = element_node.tag_name.value
+        tag_name = element_node.tag_name&.value
         attributes = extract_attributes_from_element(element_node)
 
         component_code = build_component_code(tag_name, attributes, element_node)
@@ -57,29 +65,38 @@ module Herb
 
         Herb::AST::ERBContentNode.new(
           "ERBContentNode",
-          element_node.location || dummy_location,
+          element_node.location,
           [],
           erb_start_token,
           erb_content_token,
           erb_end_token,
           nil,
           false,
-          true
+          true,
+          nil # steep:ignore
         )
       end
 
       def extract_attributes_from_element(element_node)
-        return {} unless element_node.open_tag&.children
+        children = element_node.open_tag&.children
 
-        attributes = {}
+        return {} unless children
 
-        element_node.open_tag.children.each do |child|
+        attributes = {} #: Hash[String, Hash[Symbol, untyped]]
+
+        children.each do |child|
           next unless child.is_a?(Herb::AST::HTMLAttributeNode)
-          next unless child.name&.children&.first&.content
-          next unless child.value&.children&.first&.content
 
-          original_name = child.name.children.first.content
-          attribute_value = child.value.children.first.content
+          name_node = child.name&.children&.first
+          value_node = child.value&.children&.first
+
+          next unless name_node.is_a?(Herb::AST::LiteralNode)
+          next unless value_node.is_a?(Herb::AST::LiteralNode)
+
+          original_name = name_node.content
+          attribute_value = value_node.content
+
+          next unless original_name && attribute_value
 
           is_vue_directive = original_name.start_with?(":")
 
@@ -88,7 +105,7 @@ module Herb
 
           attributes[attribute_name] = {
             value: attribute_value,
-            is_directive: is_vue_directive
+            is_directive: is_vue_directive,
           }
         end
 
@@ -99,7 +116,7 @@ module Herb
         if attributes.empty? && (element_node.body.nil? || element_node.body.empty?)
           "render #{tag_name}.new"
         elsif attributes.empty?
-          if has_complex_content?(element_node)
+          if complex_content?(element_node)
             "render #{tag_name}.new do\n#{extract_content_as_erb(element_node)}\nend"
           else
             content = extract_simple_content(element_node)
@@ -107,16 +124,16 @@ module Herb
           end
         elsif element_node.body.nil? || element_node.body.empty?
           kwargs = attributes.map { |name, attr_data|
-            "#{name}: #{format_attribute_value(attr_data[:value], attr_data[:is_directive])}"
+            "#{name}: #{format_attribute_value(attr_data[:value], is_directive: attr_data[:is_directive])}"
           }.join(", ")
 
           "render #{tag_name}.new(#{kwargs})"
         else
           kwargs = attributes.map { |name, attr_data|
-            "#{name}: #{format_attribute_value(attr_data[:value], attr_data[:is_directive])}"
+            "#{name}: #{format_attribute_value(attr_data[:value], is_directive: attr_data[:is_directive])}"
           }.join(", ")
 
-          if has_complex_content?(element_node)
+          if complex_content?(element_node)
             "render #{tag_name}.new(#{kwargs}) do\n#{extract_content_as_erb(element_node)}\nend"
           else
             content = extract_simple_content(element_node)
@@ -126,7 +143,7 @@ module Herb
         end
       end
 
-      def format_attribute_value(value, is_directive = false)
+      def format_attribute_value(value, is_directive: false)
         if is_directive
           value
         else
@@ -134,7 +151,7 @@ module Herb
         end
       end
 
-      def has_complex_content?(element_node)
+      def complex_content?(element_node)
         return false unless element_node.body
 
         element_node.body.any? do |child|
@@ -146,7 +163,7 @@ module Herb
         return "" unless element_node.body
 
         content_parts = element_node.body.filter_map do |child|
-          child.content.strip if child.is_a?(Herb::AST::HTMLTextNode)
+          child.content&.strip if child.is_a?(Herb::AST::HTMLTextNode)
         end
 
         content_parts.join(" ").strip
@@ -165,8 +182,6 @@ module Herb
             else
               child.to_s
             end
-          when Herb::AST::ERBContentNode
-            child.to_s
           else
             child.to_s
           end

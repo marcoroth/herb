@@ -29,7 +29,7 @@ module Engine
       html = '<UserCard :user="@current_user" :show_avatar="true" />'
       result = parse_and_transform(html)
 
-      assert_erb_output(result, '<%= render UserCard.new(user: @current_user, show_avatar: true) %>')
+      assert_erb_output(result, "<%= render UserCard.new(user: @current_user, show_avatar: true) %>")
     end
 
     test "handles components without attributes" do
@@ -69,7 +69,7 @@ module Engine
       erb_content = extract_erb_from_ast(result.value)
       assert_includes erb_content, "user: @user"
       assert_includes erb_content, "settings: @settings"
-      assert_includes erb_content, 'active: true'
+      assert_includes erb_content, "active: true"
     end
 
     test "component visitor transforms Vue components to ERB" do
@@ -81,7 +81,7 @@ module Engine
 
       engine = Herb::Engine.new(html, visitors: visitors)
 
-      expected = "_buf = ::String.new;\n _buf << (render MyComponent.new(prop: @value)).to_s;\n_buf.to_s\n"
+      expected = "_buf = ::String.new; _buf << (render MyComponent.new(prop: @value)).to_s;\n_buf.to_s\n"
       assert_equal expected, engine.src
     end
 
@@ -98,7 +98,7 @@ module Engine
 
       engine = Herb::Engine.new(html, visitors: visitors)
 
-      expected = "_buf = ::String.new;\n _buf << (render TestComponent.new(name: \"test\")).to_s;\n_buf.to_s\n"
+      expected = "_buf = ::String.new; _buf << (render TestComponent.new(name: \"test\")).to_s;\n_buf.to_s\n"
       assert_equal expected, engine.src
     end
 
@@ -127,7 +127,7 @@ module Engine
 
       assert test_visitor.called, "Test visitor should have been called"
 
-      expected = "_buf = ::String.new;\n _buf << (render SomethingComponent.new(name: \"hello\", count: @count)).to_s; _buf << '<div>Regular HTML</div>'.freeze;\n_buf.to_s\n"
+      expected = "_buf = ::String.new; _buf << (render SomethingComponent.new(name: \"hello\", count: @count)).to_s; _buf << '<div>Regular HTML</div>'.freeze;\n_buf.to_s\n"
       assert_equal expected, engine.src
     end
 
@@ -146,22 +146,27 @@ module Engine
       assert_equal expected_erb, erb_content
     end
 
+    def child_nodes_for(node)
+      return node.children if node.respond_to?(:children) && node.children
+      return node.body if node.respond_to?(:body) && node.body
+
+      nil
+    end
+
     def extract_erb_from_ast(node)
       case node
       when Herb::AST::ERBContentNode
         "#{node.tag_opening.value}#{node.content.value}#{node.tag_closing.value}"
       when Herb::AST::DocumentNode, Herb::AST::HTMLElementNode
-        if node.respond_to?(:children) && node.children
-          erb_parts = node.children.filter_map { |child| extract_erb_from_ast(child) }
-          return erb_parts.first if erb_parts.length == 1
+        children = child_nodes_for(node)
 
-          erb_parts.join("\n") if erb_parts.any?
-        elsif node.respond_to?(:body) && node.body
-          erb_parts = node.body.filter_map { |child| extract_erb_from_ast(child) }
-          return erb_parts.first if erb_parts.length == 1
+        return nil unless children
 
-          erb_parts.join("\n") if erb_parts.any?
-        end
+        erb_parts = children.filter_map { |child| extract_erb_from_ast(child) }
+
+        return erb_parts.first if erb_parts.length == 1
+
+        erb_parts.join("\n") if erb_parts.any?
       end
     end
 
@@ -172,13 +177,9 @@ module Engine
       when Herb::AST::ERBContentNode
         "#{node.tag_opening.value}#{node.content.value}#{node.tag_closing.value}"
       else
-        if node.respond_to?(:children) && node.children
-          node.children.map { |child| extract_all_text(child) }.join
-        elsif node.respond_to?(:body) && node.body
-          node.body.map { |child| extract_all_text(child) }.join
-        else
-          ""
-        end
+        children = child_nodes_for(node)
+
+        children ? children.map { |child| extract_all_text(child) }.join : ""
       end
     end
   end

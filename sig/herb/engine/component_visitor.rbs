@@ -5,13 +5,10 @@ module Herb
     class ComponentVisitor < Herb::Visitor
       def visit_document_node: (untyped node) -> untyped
 
+      # : () -> String
+      def inspect: () -> String
+
       private
-
-      # : () -> Herb::Location
-      def dummy_location: () -> Herb::Location
-
-      # : () -> Herb::Range
-      def dummy_range: () -> Herb::Range
 
       def replace_component_nodes_recursive: (untyped node) -> untyped
 
@@ -23,9 +20,9 @@ module Herb
 
       def build_component_code: (untyped tag_name, untyped attributes, untyped element_node) -> untyped
 
-      def format_attribute_value: (untyped value, ?untyped is_directive) -> untyped
+      def format_attribute_value: (untyped value, ?is_directive: untyped) -> untyped
 
-      def has_complex_content?: (untyped element_node) -> untyped
+      def complex_content?: (untyped element_node) -> untyped
 
       def extract_simple_content: (untyped element_node) -> untyped
 
