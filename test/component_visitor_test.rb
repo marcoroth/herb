@@ -19,8 +19,6 @@ module Engine
     end
 
     def setup
-      # skip
-
       @visitor = Herb::Engine::ComponentVisitor.new
     end
 

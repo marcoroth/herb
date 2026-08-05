@@ -204,7 +204,6 @@ module Herb
 
       #: (Herb::AST::HTMLElementNode, String) -> Herb::AST::ERBContentNode
       def erb_content_node(element_node, code)
-        # steep:ignore:start
         Herb::AST::ERBContentNode.new(
           "ERBContentNode",
           element_node.location,
@@ -217,12 +216,10 @@ module Herb
           true,
           nil
         )
-        # steep:ignore:end
       end
 
       #: (Herb::AST::HTMLElementNode, String, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
       def erb_block_node(element_node, code, body)
-        # steep:ignore:start
         Herb::AST::ERBBlockNode.new(
           "ERBBlockNode",
           element_node.location,
@@ -238,7 +235,6 @@ module Herb
           nil,
           erb_end_node(element_node)
         )
-        # steep:ignore:end
       end
 
       #: (Herb::AST::HTMLElementNode) -> Herb::AST::ERBEndNode
