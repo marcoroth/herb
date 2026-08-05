@@ -37,6 +37,8 @@ export interface BaseAutofixContext {
   node: Mutable<Node>
   /** If true, this fix requires --fix-unsafely to be applied */
   unsafe?: boolean
+  /** Node type to match when re-finding the node in the re-parsed tree. Defaults to the type of `node` */
+  nodeType?: string
 }
 
 /**

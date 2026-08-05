@@ -1,10 +1,16 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { ParserRule } from "../types.js"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode, ERBIterationBlockNode, ParserOptions } from "@herb-tools/core"
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode, ERBIterationBlockNode, ERBBlockNode, ParserOptions } from "@herb-tools/core"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
-class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
+type OutputControlFlowNode = ERBIfNode | ERBUnlessNode | ERBElseNode | ERBEndNode | ERBIterationBlockNode | ERBBlockNode
+
+interface ERBNoOutputControlFlowAutofixContext extends BaseAutofixContext {
+  node: Mutable<OutputControlFlowNode>
+}
+
+class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor<ERBNoOutputControlFlowAutofixContext> {
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
@@ -45,6 +51,7 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     this.addOffense(
       `Iteration blocks like \`${method}\` should not be used with output tags, they return the collection instead of the rendered output. Use \`${suggestion}\` instead.`,
       openTag.location,
+      { node: node as Mutable<ERBIterationBlockNode>, nodeType: "AST_ERB_BLOCK_NODE" },
     )
   }
 
@@ -72,14 +79,16 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`,
         openTag.location,
+        { node: controlBlock as Mutable<OutputControlFlowNode> },
       )
     }
   }
 }
 
-export class ERBNoOutputControlFlowRule extends ParserRule {
+export class ERBNoOutputControlFlowRule extends ParserRule<ERBNoOutputControlFlowAutofixContext> {
   static ruleName = "erb-no-output-control-flow"
   static introducedIn = this.version("0.4.0")
+  static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -94,11 +103,24 @@ export class ERBNoOutputControlFlowRule extends ParserRule {
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBNoOutputControlFlowAutofixContext>[] {
     const visitor = new ERBNoOutputControlFlowRuleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<ERBNoOutputControlFlowAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node } = offense.autofixContext
+
+    if (!node.tag_opening) return null
+    if (node.tag_opening.value !== "<%=") return null
+
+    node.tag_opening.value = "<%"
+
+    return result
   }
 }
