@@ -17,6 +17,7 @@ import { version } from "../package.json"
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
+import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 
 export * from "./cli/index.js"
 
@@ -147,6 +148,25 @@ export class CLI {
 
   protected async afterProcess(_results: any, _outputOptions: any): Promise<void> {
     // Hook for subclasses to add custom output after processing
+  }
+
+  /**
+   * Returns the severity `--only` or `--all-rules` should lower the log level to, together with the flag
+   * that asked for it, or `undefined` when the log level stays as configured.
+   */
+  protected loweredLogLevel(counts: Record<DiagnosticSeverity, number>, effectiveLogLevel: DiagnosticSeverity, options: { only?: string[], allRules?: boolean, logLevelFlag?: DiagnosticSeverity }): { severity: DiagnosticSeverity, flag: RuleFilterFlag } | undefined {
+    const { only, allRules, logLevelFlag } = options
+    const flag: RuleFilterFlag | undefined = (only && only.length > 0) ? "--only" : (allRules ? "--all-rules" : undefined)
+
+    if (!flag) return undefined
+    if (logLevelFlag !== undefined) return undefined
+
+    const lowestSeverity = DIAGNOSTIC_SEVERITIES.filter(severity => counts[severity] > 0).pop()
+
+    if (!lowestSeverity) return undefined
+    if (meetsSeverityThreshold(lowestSeverity, effectiveLogLevel)) return undefined
+
+    return { severity: lowestSeverity, flag }
   }
 
   async run() {
@@ -472,14 +492,21 @@ export class CLI {
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
-      await this.outputManager.outputResults({ ...results, files }, outputOptions)
-
       const counts: Record<DiagnosticSeverity, number> = {
         error: results.totalErrors,
         warning: results.totalWarnings,
         info: results.totalInfo,
         hint: results.totalHints
       }
+
+      const lowered = this.loweredLogLevel(counts, effectiveLogLevel, { only, allRules, logLevelFlag: logLevel })
+
+      await this.outputManager.outputResults({ ...results, files }, {
+        ...outputOptions,
+        logLevel: lowered?.severity ?? effectiveLogLevel,
+        logLevelLoweredFrom: lowered ? effectiveLogLevel : undefined,
+        logLevelLoweredBy: lowered?.flag
+      })
 
       const showTips = formatOption !== 'json' && !useGitHubActions
 

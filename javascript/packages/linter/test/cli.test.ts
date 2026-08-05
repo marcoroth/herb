@@ -717,6 +717,133 @@ describe("CLI Output Formatting", () => {
       expect(output).toContain("invalid")
       expect(exitCode).toBe(1)
     })
+
+    describe("with --only", () => {
+      const quietConfig = dedent`
+        linter:
+          logLevel: warning
+          rules:
+            html-img-require-alt:
+              severity: hint
+      `
+
+      test("lowers the log level to report the rules it was asked for", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-img-require-alt")
+
+          expect(output).toMatchSnapshot()
+          expect(output).toContain(OFFENSE_MESSAGE)
+          expect(output).toContain("Log level    hint | lowered from warning by --only")
+          expect(output).not.toContain("Not shown")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("lowers the log level to the lowest severity of the run", () => {
+        try {
+          writeFileSync(configPath, dedent`
+            linter:
+              logLevel: error
+              rules:
+                html-img-require-alt:
+                  severity: info
+          `)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-img-require-alt")
+
+          expect(output).toMatchSnapshot()
+          expect(output).toContain("Log level    info | lowered from error by --only")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("keeps the log level when it is passed explicitly", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-img-require-alt", "--log-level", "warning")
+
+          expect(output).toMatchSnapshot()
+          expect(output).not.toContain(OFFENSE_MESSAGE)
+          expect(output).not.toContain("Log level")
+          expect(output).toContain("Not shown")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("stays quiet when the configured log level hides nothing", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--only", "html-tag-name-lowercase")
+
+          expect(output).toMatchSnapshot()
+          expect(output).not.toContain("Log level")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("reports the offenses in JSON output as well", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--json", "--only", "html-img-require-alt")
+          const result = JSON.parse(output)
+
+          expect(result.offenses).toHaveLength(1)
+          expect(result.summary.totalHints).toBe(1)
+          expect(result.summary.totalNotReported).toBe(0)
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+    })
+
+    describe("with --all-rules", () => {
+      const quietConfig = dedent`
+        linter:
+          logLevel: warning
+          rules:
+            html-img-require-alt:
+              severity: hint
+      `
+
+      test("lowers the log level to report the rules it was asked for", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules")
+
+          expect(output).toMatchSnapshot()
+          expect(output).toContain(OFFENSE_MESSAGE)
+          expect(output).toContain("Log level    hint | lowered from warning by --all-rules")
+          expect(output).not.toContain("Not shown")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+
+      test("keeps the log level when it is passed explicitly", () => {
+        try {
+          writeFileSync(configPath, quietConfig)
+
+          const { output } = runLinter("test-file-with-errors.html.erb", "--simple", "--all-rules", "--log-level", "warning")
+
+          expect(output).toMatchSnapshot()
+          expect(output).not.toContain(OFFENSE_MESSAGE)
+          expect(output).not.toContain("Log level")
+          expect(output).toContain("Not shown")
+        } finally {
+          try { unlinkSync(configPath) } catch {}
+        }
+      })
+    })
   })
 
   describe("non-failing offenses tip", () => {

@@ -13,6 +13,8 @@ const SEVERITY_COLORS: Record<DiagnosticSeverity, "brightRed" | "brightYellow" |
   hint: "gray"
 }
 
+export type RuleFilterFlag = "--only" | "--all-rules"
+
 export interface SummaryData {
   files: string[]
   totalErrors: number
@@ -26,6 +28,8 @@ export interface SummaryData {
   filesNotFailing?: number
   failLevel?: DiagnosticSeverity
   logLevel?: DiagnosticSeverity
+  logLevelLoweredFrom?: DiagnosticSeverity
+  logLevelLoweredBy?: RuleFilterFlag
   ruleCount: number
   startTime: number
   startDate: Date
@@ -167,6 +171,13 @@ export class SummaryReporter {
       const message = `${notReportedCount} ${this.pluralize(notReportedCount, "offense")} hidden, show ${pronoun} with --log-level=${lowestSeverity}`
 
       console.log(`  ${colorize(pad("Not shown"), "gray")} ${colorize(colorize(message, "gray"), "bold")}`)
+    }
+
+    if (data.logLevelLoweredFrom && data.logLevelLoweredBy) {
+      const level = colorize(colorize(logLevel, SEVERITY_COLORS[logLevel]), "bold")
+      const reason = colorize(`lowered from ${data.logLevelLoweredFrom} by ${data.logLevelLoweredBy}`, "cyan")
+
+      console.log(`  ${colorize(pad("Log level"), "gray")} ${level} | ${reason}`)
     }
 
     if (ignoreDisableComments && totalWouldBeIgnored && totalWouldBeIgnored > 0) {

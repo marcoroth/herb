@@ -104,6 +104,12 @@ herb-lint --all-rules app/views/
 
 Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
 
+Both flags also lower the [`logLevel`](#linter-options) for that run, down to the lowest severity that came up, so the rules you asked to run always get reported instead of being filtered out of the output. Passing `--log-level` explicitly keeps the level you gave it. The summary says so whenever it happens:
+
+```
+  Log level    hint | lowered from warning by --only
+```
+
 ## Linter Configuration
 
 Configure the linter behavior and rules:
@@ -184,7 +190,7 @@ Both `include` and `exclude` patterns are **additive**, they add to the defaults
 
 - **`enabled`**: `true` or `false` - Enable or disable the linter globally
 - **`failLevel`** <Badge type="info" text="v0.8.7+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
-- **`logLevel`** <Badge type="info" text="^0.11.0" />: `error`, `warning`, `info`, or `hint` - Only report diagnostics of this severity or higher (default: `hint`, meaning everything is reported). This affects the CLI output only: lower-severity offenses are still counted in the summary, still respected by `failLevel`, and still shown in your editor, they just aren't printed individually or annotated in CI. Useful for keeping CI output focused on what matters. To hide a rule in the editor as well, use the rule's `severity` option with separate `editor` and `cli` values. Can also be set via `--log-level` CLI flag.
+- **`logLevel`** <Badge type="info" text="^0.11.0" />: `error`, `warning`, `info`, or `hint` - Only report diagnostics of this severity or higher (default: `hint`, meaning everything is reported). This affects the CLI output only: lower-severity offenses are still counted in the summary, still respected by `failLevel`, and still shown in your editor, they just aren't printed individually or annotated in CI. Useful for keeping CI output focused on what matters. To hide a rule in the editor as well, use the rule's `severity` option with separate `editor` and `cli` values. Can also be set via `--log-level` CLI flag. Runs that pick their own rules with `--only` or `--all-rules` lower this level automatically, unless `--log-level` is passed explicitly.
 - **`include`**: Array of glob patterns - Additional file patterns to lint (additive to defaults)
 - **`exclude`**: Array of glob patterns - Additional patterns to exclude from linting (additive to defaults)
 
