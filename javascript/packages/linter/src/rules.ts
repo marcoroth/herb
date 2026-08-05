@@ -15,6 +15,7 @@ import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helpe
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnecessary-html-safe.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
+import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
@@ -135,6 +136,7 @@ export const rules: RuleClass[] = [
   ActionViewNoSilentRenderRule,
   ActionViewNoUnnecessaryHTMLSafeRule,
   ActionViewNoUnnecessaryTagAttributesRule,
+  ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
   ActionViewStrictLocalsFirstLineRule,
