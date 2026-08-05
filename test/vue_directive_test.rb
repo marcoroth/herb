@@ -10,32 +10,24 @@ class VueDirectiveTest < Minitest::Spec
   test "component visitor handles Vue directives correctly" do
     html = %(<MyComponent name="hello" :count="@count" :user="current_user" />)
 
-    component_visitor = Herb::Engine::ComponentVisitor.new
-
-    assert_compiled_snapshot(html, { visitors: [component_visitor] })
+    assert_compiled_snapshot(html, { visitors: [Herb::Engine::ComponentVisitor.new] })
   end
 
   test "component visitor treats colon attributes as Ruby code" do
     html = %(<Button :disabled="form.invalid?" :loading="@submitting" />)
 
-    component_visitor = Herb::Engine::ComponentVisitor.new
-
-    assert_compiled_snapshot(html, { visitors: [component_visitor] })
+    assert_compiled_snapshot(html, { visitors: [Herb::Engine::ComponentVisitor.new] })
   end
 
   test "component visitor treats regular attributes as strings" do
     html = %(<Button class="btn-primary" type="submit" />)
 
-    component_visitor = Herb::Engine::ComponentVisitor.new
-
-    assert_compiled_snapshot(html, { visitors: [component_visitor] })
+    assert_compiled_snapshot(html, { visitors: [Herb::Engine::ComponentVisitor.new] })
   end
 
   test "component visitor treats @ in regular attributes as string literals" do
     html = %(<MyComponent name="@hello" email="user@example.com" />)
 
-    component_visitor = Herb::Engine::ComponentVisitor.new
-
-    assert_compiled_snapshot(html, { visitors: [component_visitor] })
+    assert_compiled_snapshot(html, { visitors: [Herb::Engine::ComponentVisitor.new] })
   end
 end
