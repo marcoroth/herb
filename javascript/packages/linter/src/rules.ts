@@ -13,6 +13,7 @@ import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-te
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnecessary-html-safe.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
@@ -132,6 +133,7 @@ export const rules: RuleClass[] = [
   ActionViewNoHelperShadowingRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoUnnecessaryHTMLSafeRule,
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
