@@ -85,7 +85,7 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
       document->base.location.start,
       document->base.location.end,
       allocator,
-      document->base.errors
+      &document->base.errors
     );
   }
 

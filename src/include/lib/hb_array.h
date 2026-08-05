@@ -20,6 +20,7 @@ void* hb_array_first(hb_array_T* array);
 void* hb_array_last(hb_array_T* array);
 
 bool hb_array_append(hb_array_T* array, void* item);
+bool hb_array_append_lazy(hb_array_T** array, void* item, struct hb_allocator* allocator);
 void hb_array_set(const hb_array_T* array, size_t index, void* item);
 void hb_array_free(hb_array_T** array);
 void hb_array_remove(hb_array_T* array, size_t index);
