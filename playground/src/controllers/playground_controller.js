@@ -788,7 +788,7 @@ export default class extends Controller {
 
     try {
       const result = Herb.diff(this.diffSnapshotSource, value, this.diffOptions())
-      this.renderDiffResult(result)
+      this.renderDiffResult(result, this.diffSnapshotSource !== value)
     } catch (error) {
       console.error("Diff error:", error)
       this.updateDiffStatus("Error computing diff")
@@ -798,11 +798,12 @@ export default class extends Controller {
   diffOptions() {
     if (!this.hasDiffWhitespaceCheckboxTarget) return {}
 
-    return { detect_whitespace_changes: this.diffWhitespaceCheckboxTarget.checked }
+    return { track_whitespace_changes: this.diffWhitespaceCheckboxTarget.checked }
   }
 
   onDiffOptionChange(_event) {
     this.updateURL()
+    this.diffNoChangeset = false
 
     if (this.diffMode === "checkpoint") {
       if (this.diffSnapshotSource) { this.diffCheckpoint() }
@@ -827,6 +828,7 @@ export default class extends Controller {
 
   clearDiffFeed() {
     this.diffFeedEntries = []
+    this.diffNoChangeset = false
     this.previousSource = this.editor ? this.editor.getValue() : this.inputTarget.value
 
     if (this.hasDiffOutputTarget) {
@@ -867,7 +869,11 @@ export default class extends Controller {
     try {
       const result = Herb.diff(this.previousSource, value, this.diffOptions())
 
-      if (!result.identical) {
+      if (result.identical) {
+        this.diffNoChangeset = true
+      } else {
+        this.diffNoChangeset = false
+
         if (!this.diffFeedEntries) { this.diffFeedEntries = [] }
 
         this.diffFeedEntries.unshift({
@@ -893,7 +899,10 @@ export default class extends Controller {
     if (!this.hasDiffOutputTarget) return
 
     if (!this.diffFeedEntries || this.diffFeedEntries.length === 0) {
-      if (latestResult && latestResult.identical) {
+      if (this.diffNoChangeset) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else if (latestResult && latestResult.identical) {
         this.diffOutputTarget.innerHTML = '<span class="diff-empty">No changes detected.</span>'
         this.updateDiffStatus("Identical")
       }
@@ -904,7 +913,7 @@ export default class extends Controller {
     const totalOperations = this.diffFeedEntries.reduce((sum, entry) => sum + entry.operations.length, 0)
     this.updateDiffStatus(`${totalOperations} change${totalOperations === 1 ? "" : "s"} in ${this.diffFeedEntries.length} edit${this.diffFeedEntries.length === 1 ? "" : "s"}`)
 
-    let html = ""
+    let html = this.diffNoChangeset ? this.renderNoChangesetNotice() : ""
 
     this.diffFeedEntries.forEach((entry, entryIndex) => {
       const time = entry.timestamp.toLocaleTimeString()
@@ -986,18 +995,39 @@ export default class extends Controller {
     this.analyze()
   }
 
-  renderDiffResult(result) {
+  renderDiffResult(result, sourceChanged = false) {
     if (!this.hasDiffOutputTarget) return
 
     if (result.identical) {
-      this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
-      this.updateDiffStatus("Identical")
+      if (sourceChanged) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
+        this.updateDiffStatus("Identical")
+      }
+
       return
     }
 
     const operations = result.operations
     this.updateDiffStatus(`${operations.length} difference${operations.length === 1 ? "" : "s"}`)
     this.diffOutputTarget.innerHTML = this.renderOperations(operations)
+  }
+
+  renderNoChangesetNotice() {
+    const tracking = this.diffOptions().track_whitespace_changes
+
+    const hint = tracking
+      ? "The edit does not affect the syntax tree."
+      : "Whitespace that HTML collapses is not reported. Enable \"Track insignificant whitespace changes\" to see it."
+
+    let html = `<div class="diff-no-changeset">`
+    html += `<div class="text-sm font-semibold"><i class="fas fa-circle-info mr-2"></i>Source changed, but no changeset was emitted.</div>`
+    html += `<div class="text-xs diff-no-changeset-hint">${hint}</div>`
+    html += `</div>`
+
+    return html
   }
 
   renderOperations(operations) {

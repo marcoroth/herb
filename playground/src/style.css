@@ -327,6 +327,35 @@ code.language-tree {
   color: #607d8b;
 }
 
+.diff-no-changeset {
+  border-left: 3px solid #abb2bf;
+  border-radius: 4px;
+  padding: 0.5rem 0.625rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: #abb2bf;
+  animation: diff-no-changeset-bob 450ms ease-out;
+}
+
+@keyframes diff-no-changeset-bob {
+  0%   { transform: translateY(0); }
+  30%  { transform: translateY(-5px); }
+  55%  { transform: translateY(2px); }
+  80%  { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diff-no-changeset {
+    animation: none;
+  }
+}
+
+.diff-no-changeset-hint {
+  color: #607d8b;
+  margin-top: 0.25rem;
+}
+
 .diff-rollback-button {
   color: #abb2bf;
   background: rgba(171, 178, 191, 0.1);
