@@ -720,7 +720,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
         content_start,
         content_end,
         allocator,
-        element_errors
+        &element_errors
       );
     }
 
@@ -1151,7 +1151,7 @@ static AST_NODE_T* transform_erb_block_to_tag_helper(
       block_node->base.location.start,
       block_node->base.location.end,
       allocator,
-      element_errors
+      &element_errors
     );
   }
 
