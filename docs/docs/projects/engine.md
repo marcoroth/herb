@@ -43,7 +43,7 @@ In addition to Erubi options, `Herb::Engine` supports:
 |---|---|---|
 | `validation_mode` | `:raise` | How to handle validation errors: `:raise`, `:overlay`, or `:none` |
 | `validators` | `{}` | Per-validator overrides (e.g., `{ security: false }`) |
-| `parser_options` | `{}` | Options forwarded to the parser (e.g., `{ strict: false }`) |
+| `parser_options` | `{}` | [Parser options](/parser-options) forwarded to the parser (e.g., `{ strict: false }`) |
 | `visitors` | `[]` | AST visitors to run before compilation |
 | `project_path` | `Dir.pwd` | Project root for relative path resolution |
 | `content_for_head` | `nil` | HTML injected before the closing `</head>` tag |
@@ -51,7 +51,7 @@ In addition to Erubi options, `Herb::Engine` supports:
 | `optimize` | `false` | Compile-time optimizations for Action View helpers (experimental) |
 | `debug` | `false` | Enable debug mode |
 
-Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`:
+Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`, together with any other [parser option](/parser-options):
 
 ```ruby
 Herb::Engine.new(source, parser_options: { strict: false })
@@ -152,7 +152,7 @@ How the tag is resolved is decided entirely from the tag name, with no lookup at
 | `<Admin.Users.ProfileCard />` | `.`, a path      | `render "admin/users/profile_card"` |
 
 
-Dot notation needs the `dot_notation_tags` parser option for the tag name to parse at all:
+Dot notation needs the [`dot_notation_tags`](/parser-options) parser option for the tag name to parse at all:
 
 ```ruby
 Herb::Engine.new(source,

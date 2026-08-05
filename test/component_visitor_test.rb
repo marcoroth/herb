@@ -266,6 +266,10 @@ module Engine
       assert_compiled_snapshot("<Card />", custom_resolver_options)
     end
 
+    test "an acronym in a dot notation tag is split from the word that follows it" do
+      assert_compiled_snapshot("<Users.HTTPCard />", dot_notation_options)
+    end
+
     private
 
     def component_options
