@@ -188,10 +188,18 @@ describe("html-no-empty-attributes", () => {
       assertOffenses('<%= tag.div class: "" %>')
     })
 
-    test("fails for tag.div with an empty data attribute", () => {
-      expectWarning("Data attribute `data-foo` should not have an empty value. Either provide a meaningful value or use `data-foo` instead of `data-foo: \"\"`.")
+    test("passes for an empty data attribute, which can't be written without a value", () => {
+      expectNoOffenses('<%= tag.div data: { foo: "" } %>')
+    })
 
-      assertOffenses('<%= tag.div data: { foo: "" } %>')
+    test("passes for an empty data attribute written as a dasherized string key", () => {
+      expectNoOffenses('<%= tag.div "data-foo": "" %>')
+    })
+
+    test("fails for an empty aria attribute, which has no valueless form in HTML either", () => {
+      expectWarning("Attribute `aria-label` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= tag.div aria: { label: "" } %>')
     })
 
     test("fails for content_tag with an empty attribute", () => {
