@@ -62,10 +62,15 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     }
 
     if (openTag.value === "<%="){
-      const controlBlockType = ERBNoOutputControlFlowRuleVisitor.CONTROL_BLOCK_NAMES[controlBlock.type] || controlBlock.type
+      const content = controlBlock.content?.value ?? ""
+      const collapsedContent = content.replace(/\s*\n\s*/g, " ")
+      const keyword = collapsedContent.trim().split(/\s+/)[0] || ERBNoOutputControlFlowRuleVisitor.CONTROL_BLOCK_NAMES[controlBlock.type] || controlBlock.type
+
+      const tagClosing = controlBlock.tag_closing?.value ?? "%>"
+      const suggestion = collapsedContent ? `<%${collapsedContent}${tagClosing}` : `<% ${keyword} ... ${tagClosing}`
 
       this.addOffense(
-        `Control flow statements like \`${controlBlockType}\` should not be used with output tags. Use \`<% ${controlBlockType} ... %>\` instead.`,
+        `Control flow statements like \`${keyword}\` should not be used with output tags. Use \`${suggestion}\` instead.`,
         openTag.location,
       )
     }
