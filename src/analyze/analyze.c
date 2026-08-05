@@ -756,7 +756,7 @@ static size_t process_block_structure(
   }
 
   hb_array_T* block_arguments =
-    extract_block_arguments_from_erb_node(erb_node, context->source, block_errors, allocator);
+    extract_block_arguments_from_erb_node(erb_node, context->source, &block_errors, allocator);
 
   AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
     erb_node->tag_opening,
