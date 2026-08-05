@@ -4,7 +4,7 @@ import { IdentityPrinter } from "@herb-tools/printer"
 import { Visitor, isERBOutputNode, isERBEscapedNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ERBContentNode, LiteralNode, Node, ParserOptions } from "@herb-tools/core"
 
 const RESTRICTED_ATTRIBUTES = new Set([
   'id',
@@ -127,6 +127,12 @@ export class HTMLNoEmptyAttributesRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

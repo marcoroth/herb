@@ -21,6 +21,8 @@ import {
   getStaticAttributeName,
   getCombinedAttributeName,
   findParentArray,
+  getAttributes,
+  getAttribute,
   Location,
   HTMLAttributeNameNode
 } from "../src"
@@ -362,6 +364,18 @@ describe("ast-utils", () => {
 
       expect(getValidatableStaticContent(nodes)).toBe("")
     })
+
+    test("returns null when contains a Ruby literal, so a dynamic Action View helper value isn't mistaken for an empty one", () => {
+      const nodes = [createRubyLiteralNode("level")]
+
+      expect(getValidatableStaticContent(nodes)).toBe(null)
+    })
+
+    test("returns null when mixing literals with a Ruby literal", () => {
+      const nodes = [createLiteralNode("btn-"), createRubyLiteralNode("kind")]
+
+      expect(getValidatableStaticContent(nodes)).toBe(null)
+    })
   })
 
   describe("getCombinedStringFromNodes", () => {
@@ -600,4 +614,37 @@ describe("ast-utils", () => {
       expect(findParentArray(document, target)).toBe(null)
     })
   })
+
+  describe("getAttributes", () => {
+    const createAttributeNode = (name: string) => ({
+      type: "AST_HTML_ATTRIBUTE_NODE",
+      location: Location.from(1, 1, 1, 1),
+      errors: [],
+      name: createAttributeNameNode([createLiteralNode(name)]),
+      equals: null,
+      value: null
+    })
+
+    const createERBOpenTagNode = (children: Node[]) => ({
+      type: "AST_ERB_OPEN_TAG_NODE",
+      location: Location.from(1, 1, 1, 1),
+      errors: [],
+      tag_opening: null,
+      content: null,
+      tag_closing: null,
+      tag_name: null,
+      children
+    })
+
+    test("reads attributes off the ERB open tag that Action View tag helpers parse into", () => {
+      const node = createERBOpenTagNode([createAttributeNode("data-turbo-permanent")]) as any
+
+      expect(getAttributes(node)).toHaveLength(1)
+      expect(getAttribute(node, "data-turbo-permanent")).not.toBe(null)
+    })
+
+    test("returns an empty list for an ERB open tag without attributes", () => {
+      expect(getAttributes(createERBOpenTagNode([]) as any)).toEqual([])
+    })
+  })  
 })

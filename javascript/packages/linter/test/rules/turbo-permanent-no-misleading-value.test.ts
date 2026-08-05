@@ -43,6 +43,11 @@ describe("turbo-permanent-no-misleading-value", () => {
     assertOffenses('<div id="cart-counter" data-turbo-permanent="">1 item</div>')
   })
 
+  test("fails with an ERB value, since the attribute is present either way", () => {
+    expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent="<%= flag %>"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+    assertOffenses('<div id="cart-counter" data-turbo-permanent="<%= flag %>">1 item</div>')
+  })
+
   describe("ActionView tag helpers", () => {
     test("passes when no `turbo_permanent` key is given", () => {
       expectNoOffenses('<%= tag.div id: "cart", class: "counter" %>')
@@ -84,6 +89,30 @@ describe("turbo-permanent-no-misleading-value", () => {
 
     test("passes for a dynamic value, which can't be resolved statically", () => {
       expectNoOffenses('<%= tag.div id: "cart", data: { turbo_permanent: permanent? } %>')
+    })
+
+    test("fails for `tag.span`", () => {
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+      assertOffenses('<%= tag.span id: "cart", data: { turbo_permanent: false } %>')
+    })
+
+    test("fails alongside other attributes", () => {
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+      assertOffenses('<%= tag.div id: "cart", class: "counter", data: { turbo_permanent: false, controller: "cart" } %>')
+    })
+
+    test("fails for the block form", () => {
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+      assertOffenses('<%= tag.div(id: "cart", data: { turbo_permanent: false }) do %>1 item<% end %>')
+    })
+
+    test("fails for a dasherized string key", () => {
+      expectError('Attribute `data-turbo-permanent` should not have a value. `data-turbo-permanent: "false"` still makes the element permanent, because Turbo only checks whether the attribute is present. Use `data-turbo-permanent` instead.')
+      assertOffenses('<%= tag.div id: "cart", "data-turbo-permanent": "false" %>')
+    })
+
+    test("passes for an interpolated value, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div id: "cart", data: { turbo_permanent: "#{flag}" } %>')
     })
   })
 })
