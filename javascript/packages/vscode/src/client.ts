@@ -11,7 +11,7 @@ export class Client {
   private languageClientName = "Herb Language Server "
   private context: ExtensionContext
   private configurationListener?: Disposable
-  private outputChannel = window.createOutputChannel("Herb Language Server")
+  private outputChannel = window.createOutputChannel("Herb Language Server", { log: true })
 
   constructor(context: ExtensionContext) {
     this.context = context
@@ -152,7 +152,10 @@ export class Client {
       documentSelector: [
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
-        { scheme: "file", language: "yaml", pattern: "**/.herb.yml" },
+        { scheme: "file", language: "yaml", pattern: `**/${Config.configPath}` },
+        ...Config.misnamedConfigPaths.map(misnamedPath => ({
+          scheme: "file", language: "yaml", pattern: `**/${misnamedPath}`
+        })),
       ],
       synchronize: {
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),

@@ -12,8 +12,8 @@ The `Herb` module exposes a few methods for you to lex, extract and parse HTML+E
 
 * `Herb.lex(source)`
 * `Herb.lex_file(path)`
-* `Herb.parse(source)`
-* `Herb.parse_file(path)`
+* `Herb.parse(source, **options)`
+* `Herb.parse_file(path, **options)`
 * `Herb.extract_ruby(source)`
 * `Herb.extract_html(source)`
 * `Herb.version`
@@ -60,7 +60,7 @@ Herb.lex_file("./index.html.erb").value
 
 The `Herb.parse` and `Herb.parse_file` methods allow you to parse an HTML document with embedded Ruby and returns you a parsed result of your document containing an Abstract Syntax Tree (AST) that you can use to structurally traverse the parsed document.
 
-### `Herb.parse(source)`
+### `Herb.parse(source, **options)`
 
 :::code-group
 ```ruby
@@ -100,7 +100,30 @@ Herb.parse(source).value
 ```
 :::
 
-### `Herb.parse_file(path)`
+#### Options
+
+The most commonly used parser options are:
+
+| Option             | Type      | Default | Description                                                                                            |
+|--------------------|-----------|---------|--------------------------------------------------------------------------------------------------------|
+| `strict`           | `Boolean` | `true`  | Report diagnostics for patterns that are valid HTML+ERB but ambiguous for tooling                      |
+| `analyze`          | `Boolean` | `true`  | Run the post-parse analysis passes (ERB control-flow structure, HTML tag matching, Ruby syntax errors) |
+| `track_whitespace` | `Boolean` | `false` | Keep insignificant whitespace in the syntax tree as `WhitespaceNode`s                                  |
+
+```ruby
+Herb.parse(source, strict: false, track_whitespace: true)
+```
+
+The options used for a parse are available on the result:
+
+```ruby
+Herb.parse(source).options.strict
+# => true
+```
+
+See [Parser Options](/parser-options) for the full list and detailed descriptions.
+
+### `Herb.parse_file(path, **options)`
 
 :::code-group
 ```ruby

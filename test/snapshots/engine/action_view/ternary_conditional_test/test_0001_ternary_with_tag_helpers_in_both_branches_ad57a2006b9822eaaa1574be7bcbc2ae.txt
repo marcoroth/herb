@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0001_ternary with tag helpers in both branches"
+input: "{source: \"<%= active ? tag.div(\\\"On\\\") : tag.span(\\\"Off\\\") %>\", locals: {active: true}, options: {action_view_helpers: true}}"
+---
+<div>On</div>

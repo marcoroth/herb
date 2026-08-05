@@ -30,7 +30,7 @@ options: {action_view_helpers: true}
     │   │       │   │           │       └── content: "text"
     │   │       │   │           │
     │   │       │   │           ├── close_quote: ∅
-    │   │       │   │           └── quoted: false
+    │   │       │   │           └── quoted: true
     │   │       │   │
     │   │       │   │
     │   │       │   └── @ HTMLAttributeNode (location: (1:47)-(1:62))

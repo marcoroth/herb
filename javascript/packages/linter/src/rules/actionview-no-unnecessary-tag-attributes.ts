@@ -1,7 +1,8 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+
 import { isTagAttributesCall } from "./action-view-utils.js"
-import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, Location, ERBContentNode, createSyntheticToken } from "@herb-tools/core"
+import { getTagLocalName, isHTMLOpenTagNode, isERBContentNode, isERBOutputNode, isHTMLAttributeNode, isWhitespaceNode, isHTMLElementNode, createERBOutputNode, createERBSilentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLElementNode, HTMLOpenTagNode, ParserOptions, Node } from "@herb-tools/core"
@@ -43,34 +44,6 @@ function extractTagAttributesArguments(openTag: HTMLOpenTagNode | Mutable<HTMLOp
   return match[1]
 }
 
-function createERBOutputNode(content: string): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
-    location: Location.zero,
-    errors: [],
-    tag_opening: createSyntheticToken("<%="),
-    content: createSyntheticToken(content),
-    tag_closing: createSyntheticToken("%>"),
-    parsed: false,
-    valid: true,
-    prism_node: null,
-  })
-}
-
-function createERBSilentNode(content: string): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
-    location: Location.zero,
-    errors: [],
-    tag_opening: createSyntheticToken("<%"),
-    content: createSyntheticToken(content),
-    tag_closing: createSyntheticToken("%>"),
-    parsed: false,
-    valid: true,
-    prism_node: null,
-  })
-}
-
 class ActionViewNoUnnecessaryTagAttributesVisitor extends BaseRuleVisitor<UnnecessaryTagAttributesAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
     this.checkUnnecessaryTagAttributes(node)
@@ -93,6 +66,8 @@ class ActionViewNoUnnecessaryTagAttributesVisitor extends BaseRuleVisitor<Unnece
         tagName,
         isVoid: node.is_void,
       },
+      undefined,
+      ["unnecessary"],
     )
   }
 }
@@ -100,7 +75,7 @@ class ActionViewNoUnnecessaryTagAttributesVisitor extends BaseRuleVisitor<Unnece
 export class ActionViewNoUnnecessaryTagAttributesRule extends ParserRule<UnnecessaryTagAttributesAutofixContext> {
   static autocorrectable = true
   static ruleName = "actionview-no-unnecessary-tag-attributes"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

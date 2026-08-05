@@ -573,5 +573,76 @@ module Analyze::ActionView::TagHelper
         <% end %>
       HTML
     end
+
+    test "tag.img with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.img alt: "hello" do %>
+          a
+        <% end %>
+      HTML
+    end
+
+    test "tag.br with inline block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.br { "content" } %>
+      HTML
+    end
+
+    test "tag.input with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.input do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "tag.hr with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.hr class: "divider" do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "tag.div with ternary argument is not unwrapped" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true, transform_conditionals: true)
+        <%= tag.div(cond ? "yes" : "no") %>
+      HTML
+    end
+
+    test "tag shadowed by block argument is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by block argument with method chain is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name.upcase %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by nested block argument is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @groups.each do |tag| %>
+          <% tag.items.each do |item| %>
+            <%= tag.name %>
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "real tag helper is still transformed outside the shadowing block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+        <%= tag.hr %>
+      HTML
+    end
   end
 end

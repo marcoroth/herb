@@ -59,6 +59,7 @@ The Herb ecosystem offers multiple tools that integrate seamlessly into editors,
 | [Herb Language Service](https://herb-tools.dev/projects/language-service) | HTML+ERB language service with ActionView tag helper support. |
 | [Herb Language Server](https://herb-tools.dev/projects/language-server) | Rich editor integration for VS Code, Zed, Neovim, and more. |
 | [Herb Engine](https://herb-tools.dev/projects/engine) | HTML-aware ERB rendering engine, API-compatible with Erubi. |
+| [Herb Dev Server](https://herb-tools.dev/projects/dev-server) | File-watching dev server with live DOM patching for templates. *(experimental)* |
 | [Herb Dev Tools](https://herb-tools.dev/projects/dev-tools) | In-browser dev tools for inspecting and debugging templates, shipped with ReActionView. |
 | [ReActionView](https://reactionview.dev) | ActionView-compatible ERB engine with modern DX for Rails. |
 

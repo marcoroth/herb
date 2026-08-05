@@ -73,4 +73,12 @@ describe("ERBNoInlineCaseConditionsRule", () => {
       assertOffenses(`<% case value\n   in 1 %>\n  One\n<% in 2 %>\n  Two\n<% end %>`)
     })
   })
+
+  describe("escaped ERB tags", () => {
+    test("reports inline case conditions in escaped tag", () => {
+      expectWarning('A `case` statement with `when` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`).')
+
+      assertOffenses(`<%% case value when 1 %>\n  One\n<%% end %>`)
+    })
+  })
 })

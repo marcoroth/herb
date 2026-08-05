@@ -1,9 +1,10 @@
 import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-tools/highlighter"
 
-import { BaseFormatter } from "./base-formatter.js"
-import { LineWrapper } from "@herb-tools/highlighter"
 import { ruleDocumentationUrl } from "../../urls.js"
 import { fileUrl } from "../file-url.js"
+
+import { BaseFormatter } from "./base-formatter.js"
+import { LineWrapper } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -14,8 +15,9 @@ export class DetailedFormatter extends BaseFormatter {
   private wrapLines: boolean
   private truncateLines: boolean
 
-  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false) {
-    super()
+  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string) {
+    super(projectPath)
+
     this.theme = theme
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
@@ -30,12 +32,22 @@ export class DetailedFormatter extends BaseFormatter {
     }
 
     const correctableTag = colorize(colorize("[Correctable]", "green"), "bold")
-    const autocorrectableSet = new Set(
-      allOffenses.filter(item => item.autocorrectable).map(item => item.offense)
+    const unsafeCorrectableTag = colorize(colorize("[Correctable with --fix-unsafely]", "yellow"), "bold")
+
+    const correctableTagFor = ({ autocorrectable, unsafeAutocorrectable }: ProcessedFile) => {
+      if (autocorrectable) return correctableTag
+      if (unsafeAutocorrectable) return unsafeCorrectableTag
+
+      return undefined
+    }
+
+    const correctableTags = new Map(
+      allOffenses.map(item => [item.offense, correctableTagFor(item)])
     )
 
     if (isSingleFile) {
-      const { filename, content } = allOffenses[0]
+      const { filename } = allOffenses[0]
+      const content = this.contentFor(allOffenses[0])
       const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
@@ -46,7 +58,7 @@ export class DetailedFormatter extends BaseFormatter {
         truncateLines: this.truncateLines,
         codeUrlBuilder: ruleDocumentationUrl,
         fileUrlBuilder: (path) => fileUrl(path),
-        suffixBuilder: (diagnostic) => autocorrectableSet.has(diagnostic) ? correctableTag : undefined,
+        suffixBuilder: (diagnostic) => correctableTags.get(diagnostic),
       })
 
       console.log(`\n${highlighted}`)
@@ -54,10 +66,11 @@ export class DetailedFormatter extends BaseFormatter {
       const totalMessageCount = allOffenses.length
 
       for (let i = 0; i < allOffenses.length; i++) {
-        const { filename, offense, content, autocorrectable } = allOffenses[i]
-
+        const { filename, offense } = allOffenses[i]
+        const content = this.contentFor(allOffenses[i])
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
-        const suffix = autocorrectable ? correctableTag : undefined
+        const suffix = correctableTagFor(allOffenses[i])
+
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
@@ -66,6 +79,7 @@ export class DetailedFormatter extends BaseFormatter {
           fileUrl: fileUrl(filename),
           suffix,
         })
+
         console.log(`\n${formatted}`)
 
         const width = LineWrapper.getTerminalWidth()

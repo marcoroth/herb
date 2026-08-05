@@ -171,5 +171,13 @@ module Engine
 
       assert_compiled_snapshot(template)
     end
+
+    test "handles empty escaped erb tag" do
+      assert_evaluated_snapshot("<%%>", {}, enforce_erubi_equality: true)
+    end
+
+    test "handles empty escaped erb tag surrounded by text" do
+      assert_evaluated_snapshot("a <%%> b", {}, enforce_erubi_equality: true)
+    end
   end
 end

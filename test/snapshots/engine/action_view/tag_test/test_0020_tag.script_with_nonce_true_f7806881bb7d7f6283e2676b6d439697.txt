@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0020_tag.script with nonce true"
+input: "{source: \"<%= tag.script(nonce: true) { \\\"alert(1)\\\".html_safe } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script nonce="true">'.freeze; _buf << ::Herb::Engine.js(("alert(1)".html_safe)); _buf << '</script>'.freeze;
+_buf.to_s

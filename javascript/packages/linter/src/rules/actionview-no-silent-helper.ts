@@ -1,33 +1,90 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { isERBOpenTagNode, isERBOutputNode } from "@herb-tools/core"
+
+import { isERBOutputNode, isPrismNodeType } from "@herb-tools/core"
+import { isActionViewHelperCall } from "./action-view-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLElementNode, ParserOptions } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
 
-class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
-  visitHTMLElementNode(node: HTMLElementNode): void {
-    this.checkActionViewHelper(node)
-    super.visitHTMLElementNode(node)
+function collectDiscardedHelperCalls(prismNode: PrismNode): { helperName: string }[] {
+  const matches: { helperName: string }[] = []
+
+  const collect = (node: PrismNode | null | undefined): void => {
+    if (!node) return
+
+    const match = isActionViewHelperCall(node)
+
+    if (match) {
+      matches.push(match)
+      return
+    }
+
+    if (isPrismNodeType(node, "StatementsNode")) {
+      node.body.forEach(collect)
+      return
+    }
+
+    if (isPrismNodeType(node, "IfNode")) {
+      collect(node.statements)
+      collect(node.subsequent)
+      return
+    }
+
+    if (isPrismNodeType(node, "UnlessNode")) {
+      collect(node.statements)
+      collect(node.elseClause)
+      return
+    }
+
+    if (isPrismNodeType(node, "ElseNode")) {
+      collect(node.statements)
+      return
+    }
+
+    if (isPrismNodeType(node, "AndNode") || isPrismNodeType(node, "OrNode")) {
+      collect(node.right)
+      return
+    }
+
+    if (isPrismNodeType(node, "BeginNode")) {
+      collect(node.statements)
+      return
+    }
+
+    if (isPrismNodeType(node, "ParenthesesNode")) {
+      collect(node.body)
+      return
+    }
   }
 
-  private checkActionViewHelper(node: HTMLElementNode): void {
-    if (!node.element_source || node.element_source === "HTML") return
-    if (!isERBOpenTagNode(node.open_tag)) return
-    if (isERBOutputNode(node.open_tag)) return
+  collect(prismNode)
 
-    const tagOpening = node.open_tag.tag_opening?.value
+  return matches
+}
 
+class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
+  visitERBContentNode(node: ERBContentNode): void {
+    this.checkSilentHelper(node)
+    super.visitERBContentNode(node)
+  }
+
+  private checkSilentHelper(node: ERBContentNode): void {
+    if (isERBOutputNode(node)) return
+
+    const tagOpening = node.tag_opening?.value
     if (!tagOpening) return
+    if (tagOpening.startsWith("<%%")) return
 
-    const helperName = node.element_source.includes("#")
-      ? node.element_source.split("#").pop()
-      : node.element_source
+    const prismNode = node.prismNode
+    if (!prismNode) return
 
-    this.addOffense(
-      `Avoid using \`${tagOpening} %>\` with \`${helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
-      node.open_tag.location,
-    )
+    for (const match of collectDiscardedHelperCalls(prismNode)) {
+      this.addOffense(
+        `Avoid using \`${tagOpening} %>\` with \`${match.helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
+        node.location,
+      )
+    }
   }
 }
 
@@ -44,8 +101,8 @@ export class ActionViewNoSilentHelperRule extends ParserRule {
 
   get parserOptions(): Partial<ParserOptions> {
     return {
-      track_whitespace: true,
       action_view_helpers: true,
+      prism_nodes: true,
     }
   }
 

@@ -427,6 +427,26 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class MalformedERBClosingTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token?
+
+      attr_reader closing_tag: Herb::Token?
+
+      # : (String, Location?, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_malformed_erb_closing_tag_error
+      def to_hash: () -> serialized_malformed_erb_closing_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class StrayERBClosingTagError < Error
       include Colors
 
@@ -662,8 +682,10 @@ module Herb
 
       attr_reader helper_name: String?
 
-      # : (String, Location?, String, Herb::Token, String) -> void
-      def initialize: (String, Location?, String, Herb::Token, String) -> void
+      attr_reader content_type: String?
+
+      # : (String, Location?, String, Herb::Token, String, String) -> void
+      def initialize: (String, Location?, String, Herb::Token, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -688,6 +710,24 @@ module Herb
 
       # : () -> serialized_dot_notation_casing_error
       def to_hash: () -> serialized_dot_notation_casing_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class TimeoutError < Error
+      include Colors
+
+      attr_reader timeout_ms: Integer?
+
+      # : (String, Location?, String, Integer) -> void
+      def initialize: (String, Location?, String, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_timeout_error
+      def to_hash: () -> serialized_timeout_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String

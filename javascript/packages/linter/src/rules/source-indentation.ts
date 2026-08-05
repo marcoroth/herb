@@ -1,6 +1,7 @@
 import { Location } from "@herb-tools/core"
 
-import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { positionFromOffset } from "@herb-tools/core"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
@@ -33,7 +34,7 @@ class SourceIndentationVisitor extends BaseSourceRuleVisitor {
 export class SourceIndentationRule extends SourceRule {
   static autocorrectable = true
   static ruleName = "source-indentation"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

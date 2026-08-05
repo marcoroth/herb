@@ -19,6 +19,9 @@ module Herb
     # : (Integer, Integer, Integer, Integer) -> Location
     def self.[]: (Integer, Integer, Integer, Integer) -> Location
 
+    # : () -> Location
+    def self.zero: () -> Location
+
     # : () -> serialized_location
     def to_hash: () -> serialized_location
 

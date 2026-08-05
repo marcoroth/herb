@@ -1,0 +1,29 @@
+---
+name: "image_path"
+source: "ActionView::Helpers::AssetUrlHelper#image_path"
+gem: "actionview"
+output: "url"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "image_path(source, options = {})"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-image_path"
+
+description: |-
+  Computes the path to an image asset.
+
+tag: null
+
+arguments:
+  - name: "source"
+    position: 1
+    type: "string"
+    optional: false
+    description: |-
+      Image file name or path.
+
+options: []
+block_arguments: []
+special_behaviors: []
+aliases:
+  - "path_to_image"

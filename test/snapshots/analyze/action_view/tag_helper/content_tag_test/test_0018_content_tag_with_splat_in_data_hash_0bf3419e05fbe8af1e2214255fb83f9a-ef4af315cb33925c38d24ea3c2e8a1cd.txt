@@ -37,7 +37,7 @@ options: {action_view_helpers: true}
     │   │           │
     │   │           │
     │   │           └── @ RubyHTMLAttributesSplatNode (location: (1:53)-(1:53))
-    │   │               ├── content: "**data_attrs"
+    │   │               ├── content: "tag.attributes(data: data_attrs)"
     │   │               └── prefix: "data"
     │   │
     │   │

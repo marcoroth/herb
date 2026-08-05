@@ -14,6 +14,7 @@ import type {
   ERBUnlessNode,
   ERBElseNode,
   ERBBlockNode,
+  ERBIterationBlockNode,
   ERBForNode,
   ERBCaseNode,
   ERBWhenNode,
@@ -85,6 +86,10 @@ class ClassAttributeSorter extends Visitor {
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
+    asMutable(node).body = this.formatNodes(node.body, true)
+  }
+
+  visitERBIterationBlockNode(node: ERBIterationBlockNode): void {
     asMutable(node).body = this.formatNodes(node.body, true)
   }
 

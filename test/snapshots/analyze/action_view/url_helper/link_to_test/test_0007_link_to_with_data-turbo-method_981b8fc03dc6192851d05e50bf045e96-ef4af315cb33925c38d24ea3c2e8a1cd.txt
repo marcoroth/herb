@@ -14,43 +14,43 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:66)-(1:68))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:22)-(1:31))
+    │   │           ├── @ HTMLAttributeNode (location: (1:41)-(1:63))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:31))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:53))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:22)-(1:31))
-    │   │           │   │               └── content: "href"
+    │   │           │   │           └── @ LiteralNode (location: (1:41)-(1:53))
+    │   │           │   │               └── content: "data-turbo-method"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: ":" (location: (1:22)-(1:31))
+    │   │           │   ├── equals: ": " (location: (1:53)-(1:55))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:31))
-    │   │           │           ├── open_quote: ∅
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:55)-(1:63))
+    │   │           │           ├── open_quote: """ (location: (1:55)-(1:56))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ RubyLiteralNode (location: (1:22)-(1:31))
-    │   │           │           │       └── content: "root_path"
+    │   │           │           │   └── @ LiteralNode (location: (1:56)-(1:62))
+    │   │           │           │       └── content: "delete"
     │   │           │           │
-    │   │           │           ├── close_quote: ∅
-    │   │           │           └── quoted: false
+    │   │           │           ├── close_quote: """ (location: (1:62)-(1:63))
+    │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:41)-(1:63))
+    │   │           └── @ HTMLAttributeNode (location: (1:22)-(1:31))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:53))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:22)-(1:31))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:41)-(1:53))
-    │   │               │               └── content: "data-turbo-method"
+    │   │               │           └── @ LiteralNode (location: (1:22)-(1:31))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:53)-(1:55))
+    │   │               ├── equals: ":" (location: (1:22)-(1:31))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:55)-(1:63))
-    │   │                       ├── open_quote: """ (location: (1:55)-(1:56))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:22)-(1:31))
+    │   │                       ├── open_quote: ∅
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:56)-(1:62))
-    │   │                       │       └── content: "delete"
+    │   │                       │   └── @ RubyLiteralNode (location: (1:22)-(1:31))
+    │   │                       │       └── content: "root_path"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:62)-(1:63))
+    │   │                       ├── close_quote: ∅
     │   │                       └── quoted: true
     │   │
     │   │

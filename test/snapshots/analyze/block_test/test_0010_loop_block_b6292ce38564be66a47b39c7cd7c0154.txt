@@ -15,6 +15,7 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (1:13)-(3:0))
     │   │       └── content: "\n  loop\n"
     │   │
+    │   ├── block_arguments: []
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

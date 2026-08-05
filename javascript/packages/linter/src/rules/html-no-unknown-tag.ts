@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, isKnownHTMLElement, isCustomElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isKnownHTMLElement, isKnownSVGElement, isKnownMathMLElement, isCustomElement } from "./rule-utils.js"
 import { getTagLocalName, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -34,7 +34,7 @@ class NoUnknownTagVisitor extends BaseRuleVisitor {
       return
     }
 
-    if (!isCustomElement(tagName) && !isKnownHTMLElement(tagName) && node.open_tag?.tag_name) {
+    if (!isCustomElement(tagName) && !isKnownHTMLElement(tagName) && !isKnownSVGElement(tagName) && !isKnownMathMLElement(tagName) && node.open_tag?.tag_name) {
       let message = `Unknown HTML tag \`<${tagName}>\`. This is not a standard HTML element.`
 
       if (tagName.includes("_")) {
@@ -54,7 +54,7 @@ class NoUnknownTagVisitor extends BaseRuleVisitor {
 
 export class HTMLNoUnknownTagRule extends ParserRule {
   static ruleName = "html-no-unknown-tag"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.3")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -284,7 +284,6 @@ describe("ERB Formatter Compatibility Tests", () => {
       expect(result).toEqual(dedent`
         <%# This is a comment %>
         <div>Content</div>
-
         <% # Another comment style %>
       `)
     })

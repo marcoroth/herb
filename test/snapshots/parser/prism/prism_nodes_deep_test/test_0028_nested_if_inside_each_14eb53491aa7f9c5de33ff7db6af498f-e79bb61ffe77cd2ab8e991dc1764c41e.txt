@@ -161,6 +161,13 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               └── tag_closing: "%>" (location: (1:71)-(1:73))
         │
         │
+        ├── block_arguments: (1 item)
+        │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+        │       ├── name: "item" (location: (1:18)-(1:22))
+        │       ├── default_value: ∅
+        │       ├── kind: "positional"
+        │       └── required: true
+        │
         ├── rescue_clause: ∅
         ├── else_clause: ∅
         ├── ensure_clause: ∅

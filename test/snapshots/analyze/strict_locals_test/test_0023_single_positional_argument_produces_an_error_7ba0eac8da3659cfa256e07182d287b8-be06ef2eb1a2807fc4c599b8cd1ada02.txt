@@ -11,7 +11,7 @@ options: {strict_locals: true}
     │   ├── content: " locals: (message) " (location: (1:3)-(1:22))
     │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
     │   └── locals: (1 item)
-    │       └── @ RubyStrictLocalNode (location: (1:13)-(1:20))
+    │       └── @ RubyParameterNode (location: (1:13)-(1:20))
     │           ├── errors: (1 error)
     │           │   └── @ StrictLocalsPositionalArgumentError (location: (1:13)-(1:20))
     │           │       ├── message: "Strict locals only support keyword arguments. Positional argument `message` is not allowed. Use keyword argument format: `message:`."
@@ -19,8 +19,8 @@ options: {strict_locals: true}
     │           │
     │           ├── name: "message" (location: (1:13)-(1:20))
     │           ├── default_value: ∅
-    │           ├── required: true
-    │           └── double_splat: false
+    │           ├── kind: "positional"
+    │           └── required: true
     │
     │
     └── @ HTMLTextNode (location: (1:24)-(2:0))

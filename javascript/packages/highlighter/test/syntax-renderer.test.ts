@@ -6,10 +6,6 @@ import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 import { ANSI_REGEX } from "../src/color.js"
 
-function stripAnsiColors(text: string): string {
-  return text.replace(ANSI_REGEX, '')
-}
-
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
 
@@ -76,8 +72,8 @@ describe("SyntaxRenderer", () => {
     it("should highlight simple HTML", () => {
       const content = "<div>hello</div>"
       const result = renderer.highlight(content)
-      expect(result).toContain("div")
-      expect(result).toContain("hello")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should handle empty content", () => {
@@ -112,7 +108,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<div>test</div>"
       const result = githubLightRenderer.highlight(content)
-      expect(result).toContain("div")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should work with simple theme", async () => {
@@ -121,7 +118,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<div>test</div>"
       const result = simpleRenderer.highlight(content)
-      expect(result).toContain("div")
+
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -138,6 +136,7 @@ describe("SyntaxRenderer", () => {
         const result = noColorRenderer.highlight(content)
 
         expect(result).not.toMatch(ANSI_REGEX)
+        expect(result).toMatchSnapshot()
       } finally {
         if (originalNoColor === undefined) {
           delete process.env.NO_COLOR
@@ -168,8 +167,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<% if true %>"
       const result = erbRenderer.highlight(content)
-      expect(result).toContain("if")
-      expect(result).toContain("true")
+
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -196,7 +195,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<!-- comment -->"
       const result = commentRenderer.highlight(content)
-      expect(stripAnsiColors(result)).toContain("comment")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should preserve ERB highlighting in comments", async () => {
@@ -223,9 +223,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<!-- <% code %> -->"
       const result = erbCommentRenderer.highlight(content)
-      expect(result).toMatchInlineSnapshot(
-        `"[38;2;92;99;112m<!--[0m [38;2;190;80;70m<%[0m code[38;2;190;80;70m %[0m>[38;2;92;99;112m --[0m>"`,
-      )
+
+      expect(result).toMatchSnapshot()
     })
   })
 })

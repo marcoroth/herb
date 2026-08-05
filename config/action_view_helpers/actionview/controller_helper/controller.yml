@@ -1,0 +1,19 @@
+---
+name: "controller"
+source: "ActionView::Helpers::ControllerHelper#controller"
+gem: "actionview"
+output: "object"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "controller"
+documentation_url: ""
+
+description: |-
+  Returns the current controller instance. Delegated from `ActionView::Helpers::ControllerHelper`.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0052_expression tag with right trim on variable removes following newline"
+input: "{source: \"<%= name -%>\\nworld\", options: {}}"
+---
+_buf = ::String.new; _buf << (name).to_s; _buf << 'world'.freeze;
+_buf.to_s
