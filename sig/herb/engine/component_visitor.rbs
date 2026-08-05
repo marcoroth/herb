@@ -3,6 +3,15 @@
 module Herb
   class Engine
     class ComponentVisitor < Herb::Visitor
+      def self.experimental_warning_issued: () -> bool
+
+      def self.experimental_warning_issued=: (bool) -> bool
+
+      attr_accessor experimental_warning_issued: bool
+
+      # : () -> void
+      def initialize: () -> void
+
       def visit_document_node: (untyped node) -> untyped
 
       # : () -> String

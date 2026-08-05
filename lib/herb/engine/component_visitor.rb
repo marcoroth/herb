@@ -3,6 +3,27 @@
 module Herb
   class Engine
     class ComponentVisitor < Herb::Visitor
+      # @rbs!
+      #   def self.experimental_warning_issued: () -> bool
+      #   def self.experimental_warning_issued=: (bool) -> bool
+
+      class << self
+        attr_accessor :experimental_warning_issued #: bool
+      end
+
+      self.experimental_warning_issued = false
+
+      #: () -> void
+      def initialize
+        super
+
+        return if self.class.experimental_warning_issued
+
+        self.class.experimental_warning_issued = true
+
+        warn "[Herb] The Component-Transform Visitor is experimental. Its output and API may change."
+      end
+
       def visit_document_node(node)
         super
         replace_component_nodes_recursive(node)

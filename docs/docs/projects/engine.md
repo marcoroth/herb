@@ -73,6 +73,41 @@ Controls how the engine presents validation results:
 - **`:overlay`** — Renders errors as in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
 - **`:none`** — Skips validation entirely
 
+## Component Transform Visitor
+
+> [!WARNING]
+> `ComponentVisitor` is experimental and a proof of concept. The generated `render` calls, the attribute mapping, and the class itself may change or be removed without a major version bump. It prints a warning the first time it is instantiated in a process.
+
+`Herb::Engine::ComponentVisitor` rewrites capitalized HTML elements into `render` calls before compilation, so a component can be written as a tag instead of an ERB expression. Pass it through the `visitors` option:
+
+```ruby
+Herb::Engine.new(source, visitors: [Herb::Engine::ComponentVisitor.new])
+```
+
+Attribute names are converted from kebab-case to snake_case and become keyword arguments. An attribute prefixed with `:` is treated as Ruby code, any other attribute is passed as a string:
+
+```html+erb
+<MyComponent name="hello" :count="@count" item-id="7" />
+```
+
+Compiles to the equivalent of:
+
+```erb
+<%= render MyComponent.new(name: "hello", count: @count, item_id: "7") %>
+```
+
+Elements with a body become a block, so the content is yielded to the component:
+
+```html+erb
+<Card>Hello</Card>
+```
+
+```erb
+<%= render Card.new do
+Hello
+end %>
+```
+
 ## ReActionView Integration
 
 [ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It uses `validation_mode: :overlay` so validation errors appear as in-browser overlays during development instead of raising exceptions.
