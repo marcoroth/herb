@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0023_empty script and style tags"
+input: "<script></script><style></style>"
+---
 @ DocumentNode (location: (1:0)-(1:32))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:17))
@@ -19,7 +23,7 @@
     │   │       └── tag_closing: ">" (location: (1:16)-(1:17))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLElementNode (location: (1:17)-(1:32))
         ├── open_tag:
@@ -40,4 +44,4 @@
         │       └── tag_closing: ">" (location: (1:31)-(1:32))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

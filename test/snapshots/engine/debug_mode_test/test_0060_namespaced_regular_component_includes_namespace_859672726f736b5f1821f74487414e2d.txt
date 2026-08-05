@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0060_namespaced regular component includes namespace"
+input: "{source: \"<div>Hello</div>\", options: {debug: true, filename: \"app/components/ui/avatar_component.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="component" data-herb-debug-file-name="Ui::AvatarComponent" data-herb-debug-file-relative-path="app/components/ui/avatar_component.html.erb" data-herb-debug-file-full-path="app/components/ui/avatar_component.html.erb">Hello</div>'.freeze;
+_buf.to_s

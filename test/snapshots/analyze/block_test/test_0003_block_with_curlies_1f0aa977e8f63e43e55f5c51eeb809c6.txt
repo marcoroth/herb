@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0003_block with curlies"
+input: |2-
+<% block { %>
+  Content
+<% } %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:7))
@@ -8,6 +15,10 @@
     │   │   └── @ HTMLTextNode (location: (1:13)-(3:0))
     │   │       └── content: "\n  Content\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (3:0)-(3:7))
     │           ├── tag_opening: "<%" (location: (3:0)-(3:2))

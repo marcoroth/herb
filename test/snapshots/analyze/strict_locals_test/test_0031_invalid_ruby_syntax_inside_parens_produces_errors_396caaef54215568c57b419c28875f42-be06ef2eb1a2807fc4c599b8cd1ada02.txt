@@ -1,0 +1,41 @@
+---
+source: "Analyze::StrictLocalsTest#test_0031_invalid ruby syntax inside parens produces errors"
+input: |2-
+<%# locals: (!!!) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:20))
+    │   ├── errors: (4 errors)
+    │   │   ├── @ RubyParseError (location: (1:13)-(1:14))
+    │   │   │   ├── message: "def_params_term_paren: unexpected '!'; expected a `)` to close the parameters"
+    │   │   │   ├── error_message: "unexpected '!'; expected a `)` to close the parameters"
+    │   │   │   ├── diagnostic_id: "def_params_term_paren"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:15)-(1:16))
+    │   │   │   ├── message: "unary_receiver: unexpected ')', expected a receiver for unary `!`"
+    │   │   │   ├── error_message: "unexpected ')', expected a receiver for unary `!`"
+    │   │   │   ├── diagnostic_id: "unary_receiver"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   ├── @ RubyParseError (location: (1:16)-(1:17))
+    │   │   │   ├── message: "expect_eol_after_statement: unexpected ')', expecting end-of-input"
+    │   │   │   ├── error_message: "unexpected ')', expecting end-of-input"
+    │   │   │   ├── diagnostic_id: "expect_eol_after_statement"
+    │   │   │   └── level: "syntax"
+    │   │   │
+    │   │   └── @ RubyParseError (location: (1:16)-(1:17))
+    │   │       ├── message: "unexpected_token_ignore: unexpected ')', ignoring it"
+    │   │       ├── error_message: "unexpected ')', ignoring it"
+    │   │       ├── diagnostic_id: "unexpected_token_ignore"
+    │   │       └── level: "syntax"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (!!!) " (location: (1:3)-(1:18))
+    │   ├── tag_closing: "%>" (location: (1:18)-(1:20))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:20)-(2:0))
+        └── content: "\n"

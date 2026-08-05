@@ -1,3 +1,9 @@
+---
+source: "Parser::NewlinesTest#test_0004_two newlines"
+input: |2-
+
+
+---
 @ DocumentNode (location: (1:0)-(3:0))
 └── children: (1 item)
     └── @ HTMLTextNode (location: (1:0)-(3:0))

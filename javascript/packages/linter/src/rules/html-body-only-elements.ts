@@ -1,57 +1,40 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, isBodyOnlyTag } from "./rule-utils.js"
+import { ElementStackVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { getTagLocalName } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
 
-class HTMLBodyOnlyElementsVisitor extends BaseRuleVisitor {
-  private elementStack: string[] = []
-
+class HTMLBodyOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node.open_tag)?.toLowerCase()
-    if (!tagName) return
+    const tagName = getTagLocalName(node)
 
-    this.checkBodyOnlyElement(node, tagName)
+    if (tagName && !this.isInsideElement("body") && this.isInsideElement("head") && isBodyOnlyTag(tagName)) {
+      this.addOffense(
+        `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
+        node.location,
+      )
+    }
 
-    this.elementStack.push(tagName)
-    this.visitChildNodes(node)
-    this.elementStack.pop()
-  }
-
-  private checkBodyOnlyElement(node: HTMLElementNode, tagName: string): void {
-    if (this.insideBody) return
-    if (!this.insideHead) return
-    if (!isBodyOnlyTag(tagName)) return
-
-    this.addOffense(
-      `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
-      node.location,
-      "error"
-    )
-  }
-
-  private get insideBody(): boolean {
-    return this.elementStack.includes("body")
-  }
-
-  private get insideHead(): boolean {
-    return this.elementStack.includes("head")
+    super.visitHTMLElementNode(node)
   }
 }
 
 export class HTMLBodyOnlyElementsRule extends ParserRule {
   static autocorrectable = false
-  name = "html-body-only-elements"
+  static ruleName = "html-body-only-elements"
+  static introducedIn = this.version("0.8.0")
 
-  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml")) return false
-    if (context?.fileName?.endsWith(".xml.erb")) return false
-
-    return true
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new HTMLBodyOnlyElementsVisitor(this.name, context)
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new HTMLBodyOnlyElementsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

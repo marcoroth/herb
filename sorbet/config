@@ -1,6 +1,4 @@
---dir
-lib/
+--dir=lib/
+--dir=sorbet/rbi
 --ignore=/tmp/
 --ignore=/vendor/bundle
---enable-experimental-rbs-signatures
---enable-experimental-rbs-assertions

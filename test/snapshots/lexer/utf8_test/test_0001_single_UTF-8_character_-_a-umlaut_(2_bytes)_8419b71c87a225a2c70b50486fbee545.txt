@@ -1,2 +1,6 @@
+---
+source: "Lexer::Utf8Test#test_0001_single UTF-8 character - a-umlaut (2 bytes)"
+input: "ä"
+---
 #<Herb::Token type="TOKEN_CHARACTER" value="ä" range=[0, 2] start=(1:0) end=(1:1)>
 #<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[2, 2] start=(1:1) end=(1:1)>

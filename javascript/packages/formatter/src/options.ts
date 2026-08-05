@@ -1,14 +1,22 @@
+import type { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
+
 /**
  * Formatting options for the Herb formatter.
  *
  * indentWidth: number of spaces per indentation level.
  * maxLineLength: maximum line length before wrapping text or attributes.
+ * preRewriters: AST rewriters to run before formatting.
+ * postRewriters: String rewriters to run after formatting.
  */
 export interface FormatOptions {
   /** number of spaces per indentation level; defaults to 2 */
   indentWidth?: number
   /** maximum line length before wrapping; defaults to 80 */
   maxLineLength?: number
+  /** Pre-format rewriters (transform AST before formatting); defaults to [] */
+  preRewriters?: ASTRewriter[]
+  /** Post-format rewriters (transform string after formatting); defaults to [] */
+  postRewriters?: StringRewriter[]
 }
 
 /**
@@ -17,6 +25,8 @@ export interface FormatOptions {
 export const defaultFormatOptions: Required<FormatOptions> = {
   indentWidth: 2,
   maxLineLength: 80,
+  preRewriters: [],
+  postRewriters: [],
 }
 
 /**
@@ -30,5 +40,7 @@ export function resolveFormatOptions(
   return {
     indentWidth: options.indentWidth ?? defaultFormatOptions.indentWidth,
     maxLineLength: options.maxLineLength ?? defaultFormatOptions.maxLineLength,
+    preRewriters: options.preRewriters ?? defaultFormatOptions.preRewriters,
+    postRewriters: options.postRewriters ?? defaultFormatOptions.postRewriters,
   }
 }

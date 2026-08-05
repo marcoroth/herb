@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLNoDuplicateAttributesRule } from "../../src/rules/html-no-duplicate-attributes.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -10,18 +11,18 @@ describe("html-no-duplicate-attributes", () => {
   })
 
   test("fails for duplicate attributes", () => {
-    expectError('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
+    expectError("Duplicate attribute `type`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
     assertOffenses(`<input type="text" type="password" name="username">`)
   })
 
   test("fails for multiple duplicate attributes", () => {
-    expectError('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
-    expectError('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
+    expectError("Duplicate attribute `type`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
     assertOffenses(`<button type="submit" type="button" class="btn" class="primary"></button>`)
   })
 
   test("handles case-insensitive duplicates", () => {
-    expectError('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
     assertOffenses(`<div Class="container" class="active"></div>`)
   })
 
@@ -30,7 +31,7 @@ describe("html-no-duplicate-attributes", () => {
   })
 
   test("handles self-closing tags", () => {
-    expectError('Duplicate attribute `src` found on tag. Remove the duplicate occurrence.')
+    expectError("Duplicate attribute `src`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
     assertOffenses(`<img src="/logo.png" src="/backup.png" alt="Logo">`)
   })
 
@@ -40,5 +41,333 @@ describe("html-no-duplicate-attributes", () => {
 
   test("ignores closing tags", () => {
     expectNoOffenses(`<div class="test"></div>`)
+  })
+
+  test("passes when ERB control flow uses unique attributes", () => {
+    expectNoOffenses(dedent`
+      <div
+        <% if active? %>
+          class="active"
+        <% else %>
+          class="inactive"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails when ERB control flow adds duplicate attributes on the same tag", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    assertOffenses(dedent`
+      <div
+        class="base"
+
+        <% if active? %>
+          class="active"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails when attribute outside control flow and different branches create duplicates", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    assertOffenses(dedent`
+      <div
+        class="base"
+
+        <% if active? %>
+          class="active"
+        <% else %>
+          class="inactive"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for duplicate attributes within the same control flow branch", () => {
+    expectError("Duplicate attribute `class` in same branch. This branch will produce an element with duplicate attributes. Remove one or merge the values.")
+    assertOffenses(dedent`
+      <div
+        <% if condition %>
+          class="one"
+          class="two"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for duplicate attributes within the same loop iteration", () => {
+    expectError("Attribute `class` inside loop will appear multiple times on this element. Use a dynamic attribute name like `class-<%= index %>` or move the attribute outside the loop.")
+    expectError("Duplicate attribute `class` in same loop iteration. Each iteration will produce an element with duplicate attributes. Remove one or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        <% while condition %>
+          class="one"
+          class="two"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for duplicate attributes with attribute outside control flow and mutually exclusive case/when branches", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+    assertOffenses(dedent`
+      <div
+        class="base"
+
+        <% case status %>
+        <% when 'active' %>
+          class="status-active"
+        <% when 'inactive' %>
+          class="status-inactive"
+        <% else %>
+          class="status-other"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails when attribute appears after control flow that contained same attribute", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        <% if active? %>
+          class="active"
+        <% end %>
+        class="base"
+      ></div>
+    `)
+  })
+
+  test("fails when attribute appears after if/else control flow", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        <% if active? %>
+          class="active"
+        <% else %>
+          class="inactive"
+        <% end %>
+        class="base"
+      ></div>
+    `)
+  })
+
+  test("passes for different attributes in control flow branches", () => {
+    expectNoOffenses(dedent`
+      <div
+        <% if active? %>
+          class="active"
+        <% else %>
+          id="inactive"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for nested control flow with duplicate in inner branch", () => {
+    expectError("Duplicate attribute `class` in same branch. This branch will produce an element with duplicate attributes. Remove one or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        <% if outer %>
+          <% if inner %>
+            class="one"
+            class="two"
+          <% end %>
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails when outer attribute conflicts with nested control flow attribute", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        class="base"
+        <% if outer %>
+          <% if inner %>
+            class="nested"
+          <% end %>
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("passes for unless control flow with unique attributes per branch", () => {
+    expectNoOffenses(dedent`
+      <div
+        <% unless disabled? %>
+          class="enabled"
+        <% else %>
+          class="disabled"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for for loop with duplicate attributes", () => {
+    expectError("Attribute `data-index` inside loop will appear multiple times on this element. Use a dynamic attribute name like `data-index-<%= index %>` or move the attribute outside the loop.")
+    expectError("Duplicate attribute `data-index` in same loop iteration. Each iteration will produce an element with duplicate attributes. Remove one or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        <% for item in @items %>
+          data-index="1"
+          data-index="2"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails for static attribute name in loop", () => {
+    expectError("Attribute `data-id` inside loop will appear multiple times on this element. Use a dynamic attribute name like `data-id-<%= index %>` or move the attribute outside the loop.")
+
+    assertOffenses(dedent`
+      <div
+        <% for item in @items %>
+          data-id="<%= item.id %>"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("passes for dynamic attribute name in loop", () => {
+    expectNoOffenses(dedent`
+      <div
+        <% @items.each_with_index do |item, i| %>
+          data-id-<%= i %>="value"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test.fails("fails for static attribute name in each loop", () => {
+    assertOffenses(dedent`
+      <div
+        <% @items.each do |i| %>
+          data-id="<%= i %>"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test.fails("fails for static attribute name in each_with_index loop", () => {
+    assertOffenses(dedent`
+      <div
+        <% @items.each_with_index do |item, i| %>
+          data-id="<%= i %>"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test.fails("fails for static attribute name in times loop", () => {
+    assertOffenses(dedent`
+      <div
+        <% 10.times do |i| %>
+          data-id="<%= i %>"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  test("fails when attribute before loop conflicts with attribute inside loop", () => {
+    expectError("Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.")
+
+    assertOffenses(dedent`
+      <div
+        class="base"
+
+        <% @items.each do |item| %>
+          class="item"
+        <% end %>
+      ></div>
+    `)
+  })
+
+  // Action View tag helper tests
+
+  test("passes for tag helper with unique attributes", () => {
+    expectNoOffenses('<%= tag.div class: "container", id: "main" %>')
+  })
+
+  test("fails for tag helper with duplicate data attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `data-value`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div data: { value: "value-one" }, data_value: "value-two" %>')
+  })
+
+  test("fails for tag helper with duplicate aria attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `aria-label`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div aria: { label: "Label one" }, aria_label: "Label two" %>')
+  })
+
+  test("fails for image_tag helper with duplicate src from positional argument and keyword", () => {
+    expectError('Duplicate attribute `src`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= image_tag image_path("image.png"), src: "image-2.png" %>')
+  })
+
+  test("passes for tag helper with non-overlapping data hash and underscore attributes", () => {
+    expectNoOffenses('<%= tag.div data: { controller: "content" }, data_action: "click" %>')
+  })
+
+  test("fails for tag helper with duplicate class attribute", () => {
+    expectError('Duplicate attribute `class`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div class: "one", class: "two" %>')
+  })
+
+  test("fails for javascript_include_tag with duplicate src from positional argument and keyword", () => {
+    expectError('Duplicate attribute `src`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= javascript_include_tag "application", src: "other.js" %>')
+  })
+
+  test("fails for link_to with duplicate href from positional argument and keyword", () => {
+    expectError('Duplicate attribute `href`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= link_to "Click here", "/path", href: "/other-path" %>')
+  })
+
+  test("fails for turbo_frame_tag with duplicate id from positional argument and keyword", () => {
+    expectError('Duplicate attribute `id`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= turbo_frame_tag "my-frame", id: "other-frame" %>')
+  })
+
+  test("passes for image_tag with unique attributes", () => {
+    expectNoOffenses('<%= image_tag "logo.png", alt: "Logo", class: "img-fluid" %>')
+  })
+
+  test("passes for link_to with unique attributes", () => {
+    expectNoOffenses('<%= link_to "Home", root_path, class: "nav-link" %>')
+  })
+
+  test("passes for turbo_frame_tag with unique attributes", () => {
+    expectNoOffenses('<%= turbo_frame_tag "main", src: "/path", loading: "lazy" %>')
+  })
+
+  test("fails for content_tag with duplicate data attributes via hash and underscore style", () => {
+    expectError('Duplicate attribute `data-controller`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= content_tag :div, "content", data: { controller: "one" }, data_controller: "two" %>')
+  })
+
+  test("passes for id in mutually exclusive branches with HTML and Action View tag helper", () => {
+    expectNoOffenses(dedent`
+      <% if use_tag_helper? %>
+        <%= tag.div id: "my-id" do %>
+          content
+        <% end %>
+      <% else %>
+        <div id="my-id">content</div>
+      <% end %>
+    `)
+  })
+
+  test("fails for tag helper with duplicate data attributes from multiple nested hash keys", () => {
+    expectError('Duplicate attribute `data-action`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.')
+    assertOffenses('<%= tag.div data: { controller: "content", action: "click" }, data_action: "hover" %>')
   })
 })

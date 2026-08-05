@@ -1,8 +1,0 @@
-_buf = ::String.new;
- _buf << 'Sitename • Title
-
-'.freeze; @title = "Home"; _buf << '
-
-<title>'.freeze; _buf << ([@title, "Sitename"].compact.join(" • ")).to_s; _buf << '</title>
-'.freeze;
-_buf.to_s

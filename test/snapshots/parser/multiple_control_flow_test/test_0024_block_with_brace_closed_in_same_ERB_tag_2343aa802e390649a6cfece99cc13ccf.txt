@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0024_block with brace closed in same ERB tag"
+input: |2-
+<% items.map { |x| x * 2 }; other.each { |y| puts y } %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:56))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.map { |x| x * 2 }; other.each { |y| puts y } " (location: (1:2)-(1:54))
+    │   ├── tag_closing: "%>" (location: (1:54)-(1:56))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:56)-(2:0))
+        └── content: "\n"

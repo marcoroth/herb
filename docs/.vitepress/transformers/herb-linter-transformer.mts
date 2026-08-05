@@ -4,7 +4,6 @@ import { createPositionConverter } from "twoslash-protocol"
 
 import { Herb } from '@herb-tools/node'
 import { Linter } from '@herb-tools/linter'
-import type { LintContext } from '@herb-tools/linter'
 
 export interface LinterDiagnostic {
   line: number
@@ -17,8 +16,8 @@ export interface LinterDiagnostic {
 }
 
 // Create custom Twoslash function for linter diagnostics
-function createCustomTwoslashFunction(optionse) {
-  return (code, lang, options) => {
+function createCustomTwoslashFunction(_options) {
+  return (code, lang, _options) => {
     let fileName = undefined
 
     // kind of a hack to make sure we pass a `fileName` for the `erb-require-trailing-newline` rule

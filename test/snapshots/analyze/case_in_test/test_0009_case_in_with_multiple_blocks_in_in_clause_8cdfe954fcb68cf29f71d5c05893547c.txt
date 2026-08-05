@@ -1,3 +1,16 @@
+---
+source: "Analyze::CaseInTest#test_0009_case in with multiple blocks in in clause"
+input: |2-
+<% case data %>
+<% in { type: :alert } %>
+  <%= content_tag(:div) do %>
+    Alert
+  <% end %>
+  <%= content_tag(:span) do %>
+    Icon
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(9:9))
@@ -13,6 +26,7 @@
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in { type: :alert } " (location: (2:2)-(2:23))
     │   │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (5 items)
     │   │           ├── @ HTMLTextNode (location: (2:25)-(3:2))
     │   │           │   └── content: "\n  "
@@ -25,6 +39,10 @@
     │   │           │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │           │   │       └── content: "\n    Alert\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
     │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
@@ -43,6 +61,10 @@
     │   │           │   │   └── @ HTMLTextNode (location: (6:30)-(8:2))
     │   │           │   │       └── content: "\n    Icon\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (8:2)-(8:11))
     │   │           │           ├── tag_opening: "<%" (location: (8:2)-(8:4))

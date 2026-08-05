@@ -1,3 +1,10 @@
+---
+source: "Analyze::TernaryTest#test_0007_ternary operator with blocks"
+input: |2-
+<%= content_tag :div, class: (visible? ? "show" : "hide") do %>
+  Content
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))
@@ -8,6 +15,10 @@
     │   │   └── @ HTMLTextNode (location: (1:63)-(3:0))
     │   │       └── content: "\n  Content\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (3:0)-(3:9))
     │           ├── tag_opening: "<%" (location: (3:0)-(3:2))

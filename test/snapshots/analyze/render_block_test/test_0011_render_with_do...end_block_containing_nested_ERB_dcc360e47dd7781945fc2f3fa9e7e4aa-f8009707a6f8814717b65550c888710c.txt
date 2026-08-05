@@ -1,0 +1,90 @@
+---
+source: "Analyze::RenderBlockTest#test_0011_render with do...end block containing nested ERB"
+input: |2-
+<%= render FormComponent.new do |form| %>
+  <%= form.input :name %>
+  <%= form.input :email %>
+  <%= form.submit "Save" %>
+<% end %>
+options: {render_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBRenderNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " render FormComponent.new do |form| " (location: (1:3)-(1:39))
+    │   ├── tag_closing: "%>" (location: (1:39)-(1:41))
+    │   ├── keywords:
+    │   │   └── @ RubyRenderKeywordsNode (location: (1:0)-(5:9))
+    │   │       ├── partial: ∅
+    │   │       ├── template_path: ∅
+    │   │       ├── layout: ∅
+    │   │       ├── file: ∅
+    │   │       ├── inline_template: ∅
+    │   │       ├── body: ∅
+    │   │       ├── plain: ∅
+    │   │       ├── html: ∅
+    │   │       ├── renderable: ∅
+    │   │       ├── collection: ∅
+    │   │       ├── object: "FormComponent.new" (location: (1:11)-(1:28))
+    │   │       ├── as_name: ∅
+    │   │       ├── spacer_template: ∅
+    │   │       ├── formats: ∅
+    │   │       ├── variants: ∅
+    │   │       ├── handlers: ∅
+    │   │       ├── content_type: ∅
+    │   │       └── locals: []
+    │   │
+    │   ├── body: (7 items)
+    │   │   ├── @ HTMLTextNode (location: (1:41)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:25))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " form.input :name " (location: (2:5)-(2:23))
+    │   │   │   ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:25)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:26))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │   ├── content: " form.input :email " (location: (3:5)-(3:24))
+    │   │   │   ├── tag_closing: "%>" (location: (3:24)-(3:26))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:26)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:2)-(4:27))
+    │   │   │   ├── tag_opening: "<%=" (location: (4:2)-(4:5))
+    │   │   │   ├── content: " form.submit "Save" " (location: (4:5)-(4:25))
+    │   │   │   ├── tag_closing: "%>" (location: (4:25)-(4:27))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:27)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:33)-(1:37))
+    │   │       ├── name: "form" (location: (1:33)-(1:37))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

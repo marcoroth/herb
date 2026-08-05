@@ -1,15 +1,39 @@
-import { colorize } from "./color.js"
+import { colorize, hyperlink, severityColor } from "./color.js"
 import { TextFormatter } from "./text-formatter.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
-import type { Diagnostic } from "@herb-tools/core"
+import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
+import { computeDiagnosticMarkers } from "./diagnostic-markers.js"
+
+import type { Diagnostic, DiagnosticSeverity } from "@herb-tools/core"
 import type { SyntaxRenderer } from "./syntax-renderer.js"
+import type { DiagnosticMarker } from "./diagnostic-markers.js"
+
+interface LineMarker {
+  diagnostic: Diagnostic
+  marker: DiagnosticMarker
+  isLastLine: boolean
+}
 
 export class InlineDiagnosticRenderer {
   private syntaxRenderer: SyntaxRenderer
 
   constructor(syntaxRenderer: SyntaxRenderer) {
     this.syntaxRenderer = syntaxRenderer
+  }
+
+  private getSeverityText(severity: DiagnosticSeverity): string {
+    return colorize(colorize(severity, severityColor(severity)), "bold")
+  }
+
+  private getHighestSeverity(diagnostics: Diagnostic[]): DiagnosticSeverity {
+    for (const severity of DIAGNOSTIC_SEVERITIES) {
+      if (diagnostics.some(diagnostic => diagnostic.severity === severity)) {
+        return severity
+      }
+    }
+
+    return "warning"
   }
 
   render(
@@ -21,45 +45,62 @@ export class InlineDiagnosticRenderer {
     wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
     truncateLines = false,
+    codeUrlBuilder?: (code: string) => string,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
+    const contentLines = content.split("\n")
 
-    const diagnosticsByLine = new Map<number, Diagnostic[]>()
+    const markersByLine = new Map<number, LineMarker[]>()
     for (const diagnostic of diagnostics) {
-      const lineNumber = diagnostic.location.start.line
+      const markers = computeDiagnosticMarkers(diagnostic.location, contentLines)
 
-      if (!diagnosticsByLine.has(lineNumber)) {
-        diagnosticsByLine.set(lineNumber, [])
-      }
+      markers.forEach((marker, index) => {
+        if (!markersByLine.has(marker.line)) {
+          markersByLine.set(marker.line, [])
+        }
 
-      diagnosticsByLine.get(lineNumber)!.push(diagnostic)
+        markersByLine.get(marker.line)!.push({
+          diagnostic,
+          marker,
+          isLastLine: index === markers.length - 1,
+        })
+      })
     }
 
-    for (const lineDiagnostics of diagnosticsByLine.values()) {
-      lineDiagnostics.sort((a, b) => {
-        if (a.severity === "error" && b.severity === "warning") return -1
-        if (a.severity === "warning" && b.severity === "error") return 1
+    const severityOrder: Record<DiagnosticSeverity, number> = {
+      "error": 0,
+      "warning": 1,
+      "info": 2,
+      "hint": 3
+    }
 
-        return 0
+    for (const lineMarkers of markersByLine.values()) {
+      lineMarkers.sort((a, b) => {
+        const orderA = severityOrder[a.diagnostic.severity] ?? 99
+        const orderB = severityOrder[b.diagnostic.severity] ?? 99
+        return orderA - orderB
       })
     }
 
     const lines = highlightedContent.split("\n")
     let output = showLineNumbers ? `${colorize(path, "cyan")}\n\n` : ""
-    let previousLineHadDiagnostics = false
+    let previousLineHadMessages = false
 
     for (let i = 1; i <= lines.length; i++) {
       const line = lines[i - 1] || ""
-      const lineDiagnostics = diagnosticsByLine.get(i) || []
-      const hasDiagnostics = lineDiagnostics.length > 0
+      const lineMarkers = markersByLine.get(i) || []
+      const lineDiagnostics = lineMarkers.map(({ diagnostic }) => diagnostic)
+      const hasDiagnostics = lineMarkers.length > 0
+      const hasMessages = lineMarkers.some(({ isLastLine }) => isLastLine)
 
-      if (hasDiagnostics && previousLineHadDiagnostics) {
+      if (hasDiagnostics && previousLineHadMessages) {
         output += "\n"
       }
 
-      const hasErrors = lineDiagnostics.some((diagnostic) => diagnostic.severity === "error")
+      const highestSeverity = this.getHighestSeverity(lineDiagnostics)
+      const lineColor = severityColor(highestSeverity)
 
-      let displayLine = line
+      const displayLine = line
       let availableWidth = maxWidth
 
       if (wrapLines && showLineNumbers) {
@@ -68,7 +109,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -90,7 +131,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -105,7 +146,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -125,59 +166,47 @@ export class InlineDiagnosticRenderer {
       }
 
       if (hasDiagnostics) {
-        for (const diagnostic of lineDiagnostics) {
-          const column = diagnostic.location.start.column - 1
-          const pointerLength = Math.max(
-            1,
-            diagnostic.location.end.column - diagnostic.location.start.column,
+        for (const { diagnostic, marker, isLastLine } of lineMarkers) {
+          const pointerLength = Math.max(1, marker.end - marker.start)
+          const pointer = colorize(
+            "~".repeat(pointerLength),
+            severityColor(diagnostic.severity),
           )
-          const isError = diagnostic.severity === "error"
+
+          const severityText = this.getSeverityText(diagnostic.severity)
+          const diagnosticIdText = diagnostic.code || "-"
+          const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
+          const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
+          const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
+          const dimmedDiagnosticText =
+            TextFormatter.applyDimToStyledText(diagnosticText)
 
           if (showLineNumbers) {
             const pointerPrefix = `        ${colorize("│", "gray")}`
-            const pointerSpacing = " ".repeat(column + 2)
-            const pointer = colorize(
-              "~".repeat(pointerLength),
-              isError ? "brightRed" : "brightYellow",
-            )
+            const pointerSpacing = " ".repeat(Math.max(0, marker.start + 1))
 
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
 
-            const severityText = isError
-              ? colorize("error", "brightRed")
-              : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
-            const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
-            const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
-            const dimmedDiagnosticText =
-              TextFormatter.applyDimToStyledText(diagnosticText)
-
-            output += `${pointerPrefix}${pointerSpacing}${dimmedDiagnosticText}\n`
+            if (isLastLine) {
+              output += `${pointerPrefix}${pointerSpacing}${dimmedDiagnosticText}\n`
+            }
           } else {
-            const pointerSpacing = " ".repeat(column)
-            const pointer = colorize(
-              "~".repeat(pointerLength),
-              isError ? "brightRed" : "brightYellow",
-            )
+            const pointerSpacing = " ".repeat(Math.max(0, marker.start))
 
             output += `${pointerSpacing}${pointer}\n`
 
-            const severityText = isError
-              ? colorize("error", "brightRed")
-              : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
-            const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
-            const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
-            const dimmedDiagnosticText =
-              TextFormatter.applyDimToStyledText(diagnosticText)
-
-            output += `${dimmedDiagnosticText}\n`
+            if (isLastLine) {
+              output += `${dimmedDiagnosticText}\n`
+            }
           }
         }
-        output += "\n"
+
+        if (hasMessages) {
+          output += "\n"
+        }
       }
 
-      previousLineHadDiagnostics = hasDiagnostics
+      previousLineHadMessages = hasMessages
     }
 
     return output.trimEnd()

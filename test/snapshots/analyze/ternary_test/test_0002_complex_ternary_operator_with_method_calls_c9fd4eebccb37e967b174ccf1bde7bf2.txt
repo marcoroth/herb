@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0002_complex ternary operator with method calls"
+input: |2-
+<%= @user.new_record? ? new_user_path(name: @user.name) : edit_user_path(@user, name: @user.name) %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:100))

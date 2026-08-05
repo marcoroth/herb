@@ -22,20 +22,17 @@ Validating against a known list ensures you're using correct and effective ARIA 
 
 ```html
 <div role="button" aria-pressed="false">Toggle</div>
-<input type="text" aria-label="Search" />
+<input type="text" aria-label="Search" autocomplete="off">
 <span role="heading" aria-level="2">Title</span>
 ```
 
 ### 🚫 Bad
 
 ```html
-<!-- typo -->
 <div role="button" aria-presed="false">Toggle</div>
 
-<!-- typo -->
-<input type="text" aria-lable="Search" />
+<input type="text" aria-lable="Search" autocomplete="off">
 
-<!-- invalid -->
 <span aria-size="large" role="heading" aria-level="2">Title</span>
 ```
 

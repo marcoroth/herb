@@ -1,0 +1,23 @@
+---
+source: "Analyze::StrictLocalsTest#test_0029_splat argument with keyword produces error for splat"
+input: |2-
+<%# locals: (message:, *args) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:32))
+    │   ├── errors: (1 error)
+    │   │   └── @ RubyParseError (location: (1:23)-(1:24))
+    │   │       ├── message: "parameter_order: unexpected parameter order"
+    │   │       ├── error_message: "unexpected parameter order"
+    │   │       ├── diagnostic_id: "parameter_order"
+    │   │       └── level: "syntax"
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (message:, *args) " (location: (1:3)-(1:30))
+    │   ├── tag_closing: "%>" (location: (1:30)-(1:32))
+    │   └── locals: []
+    │
+    └── @ HTMLTextNode (location: (1:32)-(2:0))
+        └── content: "\n"

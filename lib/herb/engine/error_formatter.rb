@@ -98,16 +98,24 @@ module Herb
       def format_error(error, number)
         output = String.new
 
-        output << "Error ##{number}: #{error.class.name.split("::").last.gsub(/Error$/, "")}\n"
+        error_name = if error.is_a?(Hash)
+                       error[:code] || "UnknownError"
+                     else
+                       error.class.name.split("::").last.gsub(/Error$/, "")
+                     end
+
+        output << "Error ##{number}: #{error_name}\n"
         output << ("-" * 40) << "\n"
 
-        if error.location
+        location = error.is_a?(Hash) ? error[:location] : error.location
+        if location
           output << "  File: #{@filename}\n"
-          output << "  Location: Line #{error.location.start.line}, Column #{error.location.start.column}\n"
+          output << "  Location: Line #{location.start.line}, Column #{location.start.column}\n"
         end
 
-        output << "  Message: #{error.message}\n\n"
-        output << format_source_context(error) if error.location
+        error_message = error.is_a?(Hash) ? error[:message] : error.message
+        output << "  Message: #{error_message}\n\n"
+        output << format_source_context(error) if location
         output << format_error_details(error)
 
         output
@@ -206,12 +214,9 @@ module Herb
           output << "  Details: #{error.error_message}\n"
           output << "  Suggestion: Check your Ruby syntax inside the ERB tag\n"
 
-        when Herb::Errors::QuotesMismatchError
-          if error.opening_quote && error.closing_quote
-            output << "  Opening quote: #{error.opening_quote.value}\n"
-            output << "  Closing quote: #{error.closing_quote.value}\n"
-            output << "  Suggestion: Use matching quotes for attribute values\n"
-          end
+        when Herb::Errors::MissingAttributeValueError
+          output << "  Attribute: #{error.attribute_name}\n"
+          output << "  Suggestion: Add a value after the equals sign or remove the equals sign\n"
         end
 
         output
@@ -221,7 +226,8 @@ module Herb
         case error
         when Herb::Errors::MissingClosingTagError,
              Herb::Errors::TagNamesMismatchError,
-             Herb::Errors::UnclosedElementError
+             Herb::Errors::UnclosedElementError,
+             Herb::Errors::MissingAttributeValueError
           true
         else
           false
@@ -236,6 +242,8 @@ module Herb
           "← Tag mismatch"
         when Herb::Errors::UnclosedElementError
           "← Unclosed element"
+        when Herb::Errors::MissingAttributeValueError
+          "← Missing attribute value"
         else
           ""
         end
@@ -411,8 +419,12 @@ module Herb
           end
         when Herb::Errors::RubyParseError
           "Check your Ruby syntax inside the ERB tag"
-        when Herb::Errors::QuotesMismatchError
-          "Use matching quotes for attribute values"
+        when Herb::Errors::MissingAttributeValueError
+          if error.attribute_name
+            "Add a value after the equals sign for '#{error.attribute_name}' or remove the equals sign"
+          else
+            "Add a value after the equals sign or remove the equals sign"
+          end
         end
       end
     end

@@ -1,0 +1,63 @@
+---
+source: "Analyze::ThenTest#test_0018_mixed when clauses with and without then"
+input: |2-
+<% case value %>
+<% when 1 then %>
+  one
+<% when 2 %>
+  two
+<% when 3 then %>
+  three
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(8:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case value " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (3 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:17))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when 1 then " (location: (2:2)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   ├── then_keyword: (location: (2:10)-(2:14))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:17)-(4:0))
+    │   │   │           └── content: "\n  one\n"
+    │   │   │
+    │   │   │
+    │   │   ├── @ ERBWhenNode (location: (4:0)-(4:12))
+    │   │   │   ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │   │   ├── content: " when 2 " (location: (4:2)-(4:10))
+    │   │   │   ├── tag_closing: "%>" (location: (4:10)-(4:12))
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (4:12)-(6:0))
+    │   │   │           └── content: "\n  two\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (6:0)-(6:17))
+    │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │       ├── content: " when 3 then " (location: (6:2)-(6:15))
+    │   │       ├── tag_closing: "%>" (location: (6:15)-(6:17))
+    │   │       ├── then_keyword: (location: (6:10)-(6:14))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (6:17)-(8:0))
+    │   │               └── content: "\n  three\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (8:0)-(8:9))
+    │           ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │           ├── content: " end " (location: (8:2)-(8:7))
+    │           └── tag_closing: "%>" (location: (8:7)-(8:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (8:9)-(9:0))
+        └── content: "\n"

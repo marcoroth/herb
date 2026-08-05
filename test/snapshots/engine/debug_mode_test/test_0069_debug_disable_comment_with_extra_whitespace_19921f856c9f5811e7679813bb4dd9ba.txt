@@ -1,0 +1,9 @@
+---
+source: "Engine::DebugModeTest#test_0069_debug disable comment with extra whitespace"
+input: "{source: \"<%= content_for :title do #   herb:debug   disable %>\\n  <%= \\\"Title\\\" %>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << (content_for :title do #   herb:debug   disable
+; _buf << '
+  '.freeze; _buf << ("Title").to_s; _buf << '
+'.freeze; end )
+_buf.to_s

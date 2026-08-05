@@ -8,7 +8,7 @@ class EngineVisitorsTest < Minitest::Spec
 
     engine = Herb::Engine.new(html)
 
-    expected = "_buf = ::String.new;\n _buf << '<div>Hello World</div>'.freeze;\n_buf.to_s\n"
+    expected = "_buf = ::String.new; _buf << '<div>Hello World</div>'.freeze;\n_buf.to_s\n"
     assert_equal expected, engine.src
   end
 
@@ -47,7 +47,7 @@ class EngineVisitorsTest < Minitest::Spec
 
     assert_equal ["visitor1", "visitor2"], execution_order
 
-    expected = "_buf = ::String.new;\n _buf << '<div>Test</div>'.freeze;\n_buf.to_s\n"
+    expected = "_buf = ::String.new; _buf << '<div>Test</div>'.freeze;\n_buf.to_s\n"
     assert_equal expected, engine.src
   end
 

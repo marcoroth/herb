@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
+import { Visitor, isERBOutputNode, isERBEscapedNode, isERBOpenTagNode } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, ERBOpenTagNode, ERBContentNode, LiteralNode, Node, ParserOptions } from "@herb-tools/core"
 
-// Attributes that must not have empty values
 const RESTRICTED_ATTRIBUTES = new Set([
   'id',
   'class',
@@ -18,19 +18,15 @@ const RESTRICTED_ATTRIBUTES = new Set([
   'role'
 ])
 
-// Check if attribute name matches any restricted patterns
 function isRestrictedAttribute(attributeName: string): boolean {
-  // Check direct matches
   if (RESTRICTED_ATTRIBUTES.has(attributeName)) {
     return true
   }
 
-  // Check for data-* attributes
   if (attributeName.startsWith('data-')) {
     return true
   }
 
-  // Check for aria-* attributes
   if (attributeName.startsWith('aria-')) {
     return true
   }
@@ -42,28 +38,76 @@ function isDataAttribute(attributeName: string): boolean {
   return attributeName.startsWith('data-')
 }
 
+/**
+ * Visitor that checks if a node tree contains any output content.
+ * Output content includes:
+ * - Non-whitespace literal text (LiteralNode)
+ * - ERB output tags (<%= %>, <%== %>)
+ */
+class ContainsOutputContentVisitor extends Visitor {
+  public hasOutputContent: boolean = false
+
+  visitLiteralNode(node: LiteralNode): void {
+    if (this.hasOutputContent) return
+
+    if (node.content && node.content.trim() !== "") {
+      this.hasOutputContent = true
+
+      return
+    }
+
+    this.visitChildNodes(node)
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    if (this.hasOutputContent) return
+
+    if (isERBOutputNode(node) || isERBEscapedNode(node)) {
+      this.hasOutputContent = true
+
+      return
+    }
+
+    this.visitChildNodes(node)
+  }
+}
+
+
+function containsOutputContent(node: Node): boolean {
+  const visitor = new ContainsOutputContentVisitor()
+
+  visitor.visit(node)
+
+  return visitor.hasOutputContent
+}
+
+
 class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
-    this.checkEmptyAttribute(attributeName, attributeValue, attributeNode)
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
+    this.checkEmptyAttribute(attributeName, attributeValue, attributeNode, parentNode)
   }
 
-  protected checkDynamicAttributeStaticValue({ combinedName, attributeValue, attributeNode }: DynamicAttributeStaticValueParams): void {
+  protected checkDynamicAttributeStaticValue({ combinedName, attributeValue, attributeNode, parentNode }: DynamicAttributeStaticValueParams): void {
     const name = (combinedName || "").toLowerCase()
-    this.checkEmptyAttribute(name, attributeValue, attributeNode)
+    this.checkEmptyAttribute(name, attributeValue, attributeNode, parentNode)
   }
 
-  private checkEmptyAttribute(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode): void {
+  private checkEmptyAttribute(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, parentNode: HTMLOpenTagNode | ERBOpenTagNode): void {
     if (!isRestrictedAttribute(attributeName)) return
     if (attributeValue.trim() !== "") return
+
+    if (!attributeNode?.value) return
+    if (containsOutputContent(attributeNode.value)) return
 
     const hasExplicitValue = attributeNode.value !== null
 
     if (isDataAttribute(attributeName)) {
+      if (isERBOpenTagNode(parentNode)) return
+
       if (hasExplicitValue) {
         this.addOffense(
           `Data attribute \`${attributeName}\` should not have an empty value. Either provide a meaningful value or use \`${attributeName}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
           attributeNode.location,
-          "warning"
         )
       }
 
@@ -73,16 +117,29 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
     this.addOffense(
       `Attribute \`${attributeName}\` must not be empty. Either provide a meaningful value or remove the attribute entirely.`,
       attributeNode.location,
-      "warning"
     )
   }
 }
 
 export class HTMLNoEmptyAttributesRule extends ParserRule {
-  name = "html-no-empty-attributes"
+  static ruleName = "html-no-empty-attributes"
+  static introducedIn = this.version("0.7.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new NoEmptyAttributesVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new NoEmptyAttributesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -17,7 +17,7 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 ### ✅ Good
 
 ```html
-<input type="text">
+<input type="text" autocomplete="off">
 
 <a href="/profile">Profile</a>
 
@@ -31,7 +31,7 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 ### 🚫 Bad
 
 ```html
-<input type='text'>
+<input type='text' autocomplete="off">
 
 <a href='/profile'>Profile</a>
 

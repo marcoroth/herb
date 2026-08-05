@@ -23,6 +23,15 @@ export class Token {
     )
   }
 
+  static synthetic(value: string, type: string = "SYNTETHIC") {
+    return new Token(
+      value,
+      Range.zero,
+      Location.zero,
+      type
+    )
+  }
+
   constructor(value: string, range: Range, location: Location, type: string) {
     this.value = value
     this.range = range

@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput } from "@herb-tools/core"
+import { isNode, isERBNode, isERBCommentNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -33,6 +33,12 @@ export interface ContentUnitWithNode {
 
 // --- Constants ---
 
+/**
+ * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
+ * characters like NBSP (U+00A0) and full-width space (U+3000)
+ */
+export const ASCII_WHITESPACE = /[ \t\n\r]+/g
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
@@ -41,7 +47,7 @@ export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
 
 export const INLINE_ELEMENTS = new Set([
   'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
-  'dfn', 'em', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
+  'dfn', 'em', 'hr', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
   'samp', 'small', 'span', 'strong', 'sub', 'sup',
   'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
 ])
@@ -50,48 +56,35 @@ export const CONTENT_PRESERVING_ELEMENTS = new Set([
   'script', 'style', 'pre', 'textarea'
 ])
 
+// https://tailwindcss.com/docs/white-space
+export const WHITESPACE_PRESERVING_CLASSES = [
+  'whitespace-pre-line',
+  'whitespace-pre-wrap',
+  'whitespace-pre',
+  'whitespace-break-spaces',
+]
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/white-space
+export const WHITESPACE_PRESERVING_STYLE_VALUES = new Set([
+  'pre',
+  'pre-line',
+  'pre-wrap',
+  'break-spaces',
+])
+
 export const SPACEABLE_CONTAINERS = new Set([
   'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
   'figure', 'details', 'summary', 'dialog', 'fieldset'
-])
-
-export const TIGHT_GROUP_PARENTS = new Set([
-  'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead',
-  'tbody', 'tfoot'
-])
-
-export const TIGHT_GROUP_CHILDREN = new Set([
-  'li', 'option', 'td', 'th', 'dt', 'dd'
-])
-
-export const SPACING_THRESHOLD = 3
-
-/**
- * Token list attributes that contain space-separated values and benefit from
- * spacing around ERB content for readability
- */
-export const TOKEN_LIST_ATTRIBUTES = new Set([
-  'class', 'data-controller', 'data-action'
 ])
 
 
 // --- Node Utility Functions ---
 
 /**
- * Check if a node is pure whitespace (empty text node with only whitespace)
- */
-export function isPureWhitespaceNode(node: Node): boolean {
-  return isNode(node, HTMLTextNode) && node.content.trim() === ""
-}
-
-/**
  * Check if a node is non-whitespace (has meaningful content)
  */
 export function isNonWhitespaceNode(node: Node): boolean {
-  if (isNode(node, WhitespaceNode)) return false
-  if (isNode(node, HTMLTextNode)) return node.content.trim() !== ""
-
-  return true
+  return !isPureWhitespaceNode(node)
 }
 
 /**
@@ -100,6 +93,19 @@ export function isNonWhitespaceNode(node: Node): boolean {
  */
 export function findPreviousMeaningfulSibling(siblings: Node[], currentIndex: number): number {
   for (let i = currentIndex - 1; i >= 0; i--) {
+    if (isNonWhitespaceNode(siblings[i])) {
+      return i
+    }
+  }
+
+  return -1
+}
+
+/**
+ * Find the index of the next non-whitespace sibling, or -1 when there is none
+ */
+export function findNextMeaningfulSibling(siblings: Node[], currentIndex: number): number {
+  for (let i = currentIndex + 1; i < siblings.length; i++) {
     if (isNonWhitespaceNode(siblings[i])) {
       return i
     }
@@ -138,15 +144,6 @@ export function filterSignificantChildren(body: Node[]): Node[] {
   })
 }
 
-/**
- * Filter out empty text nodes and whitespace nodes
- */
-export function filterEmptyNodes(nodes: Node[]): Node[] {
-  return nodes.filter(child =>
-    !isNode(child, WhitespaceNode) && !(isNode(child, HTMLTextNode) && child.content.trim() === "")
-  )
-}
-
 // --- Punctuation and Word Spacing Functions ---
 
 /**
@@ -160,7 +157,7 @@ export function isClosingPunctuation(word: string): boolean {
  * Check if a line ends with opening punctuation
  */
 export function lineEndsWithOpeningPunctuation(line: string): boolean {
-  return /[(\[]$/.test(line)
+  return /[([]$/.test(line)
 }
 
 /**
@@ -174,14 +171,16 @@ export function isERBTag(text: string): boolean {
  * Check if a string ends with an ERB tag
  */
 export function endsWithERBTag(text: string): boolean {
-  return /%>$/.test(text.trim())
+  const trimmed = text.trim()
+
+  return trimmed.endsWith('%>') || /%>\S+$/.test(trimmed)
 }
 
 /**
  * Check if a string starts with an ERB tag
  */
 export function startsWithERBTag(text: string): boolean {
-  return /^<%/.test(text.trim())
+  return text.trim().startsWith('<%')
 }
 
 /**
@@ -191,6 +190,7 @@ export function needsSpaceBetween(currentLine: string, word: string): boolean {
   if (isClosingPunctuation(word)) return false
   if (lineEndsWithOpeningPunctuation(currentLine)) return false
   if (currentLine.endsWith(' ')) return false
+  if (word.startsWith(' ')) return false
   if (endsWithERBTag(currentLine) && startsWithERBTag(word)) return false
 
   return true
@@ -204,6 +204,10 @@ export function buildLineWithWord(currentLine: string, word: string): string {
 
   if (word === ' ') {
     return currentLine.endsWith(' ') ? currentLine : `${currentLine} `
+  }
+
+  if (isClosingPunctuation(word)) {
+    return `${currentLine}${word}`
   }
 
   return needsSpaceBetween(currentLine, word) ? `${currentLine} ${word}` : `${currentLine}${word}`
@@ -243,6 +247,13 @@ export function isAdjacentToPreviousInline(siblings: Node[], index: number): boo
 }
 
 /**
+ * Check if a node is an ERB comment that renders as a block.
+ */
+export function isMultilineERBComment(node: Node): boolean {
+  return isNode(node, ERBContentNode) && isERBCommentNode(node) && (node.content?.value ?? "").trim().includes("\n")
+}
+
+/**
  * Check if a node should be appended to the last line (for adjacent inline elements and punctuation)
  */
 export function shouldAppendToLastLine(child: Node, siblings: Node[], index: number): boolean {
@@ -259,6 +270,8 @@ export function shouldAppendToLastLine(child: Node, siblings: Node[], index: num
   }
 
   if (isNode(child, ERBContentNode)) {
+    if (isMultilineERBComment(child)) return false
+
     for (let i = index - 1; i >= 0; i--) {
       const previousSibling = siblings[i]
 
@@ -300,12 +313,8 @@ export function hasMultilineTextContent(children: Node[]): boolean {
       return child.content.includes('\n')
     }
 
-    if (isNode(child, HTMLElementNode)) {
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (hasMultilineTextContent(nestedChildren)) {
-        return true
-      }
+    if (isNode(child, HTMLElementNode) && hasMultilineTextContent(child.body)) {
+      return true
     }
   }
 
@@ -322,9 +331,7 @@ export function areAllNestedElementsInline(children: Node[]): boolean {
         return false
       }
 
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (!areAllNestedElementsInline(nestedChildren)) {
+      if (!areAllNestedElementsInline(child.body)) {
         return false
       }
     } else if (isAnyOf(child, HTMLDoctypeNode, HTMLCommentNode, isERBControlFlowNode)) {
@@ -379,24 +386,50 @@ export function hasMixedTextAndInlineContent(children: Node[]): boolean {
   return (hasText && hasInlineElements) || (hasERBOutput(children) && hasText)
 }
 
+export function hasWhitespacePreservingStyle(element: HTMLElementNode): boolean {
+  if (getTokenList(element, "class").some(klass => WHITESPACE_PRESERVING_CLASSES.some(whitespace => klass.includes(whitespace)))) return true
+
+  const styleValue = getStaticAttributeValue(element, "style")
+  if (styleValue) {
+    const match = styleValue.match(/white-space\s*:\s*([^;!]+)/)
+
+    if (match) {
+      const value = match[1].trim().toLowerCase()
+      if (WHITESPACE_PRESERVING_STYLE_VALUES.has(value)) return true
+    }
+  }
+
+  return false
+}
+
 export function isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): boolean {
   const tagName = getTagName(element)
+  if (CONTENT_PRESERVING_ELEMENTS.has(tagName)) return true
 
-  return CONTENT_PRESERVING_ELEMENTS.has(tagName)
+  if (isNode(element, HTMLElementNode)) {
+    return hasWhitespacePreservingStyle(element)
+  }
+
+  return false
 }
 
 /**
- * Count consecutive inline elements/ERB at the start of children (with no whitespace between)
+ * Count consecutive inline elements/ERB with no whitespace between them.
+ * Starts from startIndex and skips indices in processedIndices.
  */
-export function countAdjacentInlineElements(children: Node[]): number {
+export function countAdjacentInlineElements(children: Node[], startIndex = 0, processedIndices?: Set<number>): number {
   let count = 0
   let lastSignificantIndex = -1
 
-  for (let i = 0; i < children.length; i++) {
+  for (let i = startIndex; i < children.length; i++) {
     const child = children[i]
 
     if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
       continue
+    }
+
+    if (processedIndices?.has(i)) {
+      break
     }
 
     const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)
@@ -417,16 +450,6 @@ export function countAdjacentInlineElements(children: Node[]): number {
 }
 
 /**
- * Determine if we should wrap to the next line
- */
-export function shouldWrapToNextLine(testLine: string, currentLine: string, word: string, wrapWidth: number): boolean {
-  if (!currentLine) return false
-  if (isClosingPunctuation(word)) return false
-
-  return testLine.length >= wrapWidth
-}
-
-/**
  * Check if a node represents a block-level element
  */
 export function isBlockLevelNode(node: Node): boolean {
@@ -444,32 +467,94 @@ export function isBlockLevelNode(node: Node): boolean {
 }
 
 /**
+ * Check if an element is a line-breaking element (br or hr)
+ */
+export function isLineBreakingElement(node: Node): boolean {
+  if (!isNode(node, HTMLElementNode)) {
+    return false
+  }
+
+  const tagName = getTagName(node)
+
+  return tagName === 'br' || tagName === 'hr'
+}
+
+/**
  * Normalize text by replacing multiple spaces with single space and trim
  * Then split into words
  */
 export function normalizeAndSplitWords(text: string): string[] {
-  const normalized = text.replace(/\s+/g, ' ')
+  const normalized = text.replace(ASCII_WHITESPACE, ' ')
+
   return normalized.trim().split(' ')
 }
 
 /**
- * Check if text starts with an alphanumeric character (not punctuation)
+ * Check if a character is ASCII whitespace.
+ *
+ * Deliberately not `\s`: Unicode whitespace such as NBSP (U+00A0) is content,
+ * not layout, and must survive formatting — the same reason
+ * {@link ASCII_WHITESPACE} exists.
  */
-export function startsWithAlphanumeric(text: string): boolean {
-  const trimmed = text.trim()
-  return /^[a-zA-Z0-9]/.test(trimmed)
+export function isAsciiWhitespace(character: string): boolean {
+  return character === " " || character === "\t" || character === "\n" || character === "\r"
 }
 
 /**
- * Check if text ends with an alphanumeric character (not punctuation)
+ * Check if text starts with whitespace
  */
-export function endsWithAlphanumeric(text: string): boolean {
-  return /[a-zA-Z0-9]$/.test(text)
+export function startsWithWhitespace(text: string): boolean {
+  return text.length > 0 && isAsciiWhitespace(text[0])
 }
 
 /**
  * Check if text ends with whitespace
  */
 export function endsWithWhitespace(text: string): boolean {
-  return /\s$/.test(text)
+  return text.length > 0 && isAsciiWhitespace(text[text.length - 1])
+}
+
+/**
+ * Collapse the whitespace runs at either end of `text` down to a single space
+ * when that edge is rendered, or remove them when it isn't.
+ */
+export function setEdgeWhitespace(text: string, keepLeading: boolean, keepTrailing: boolean): string {
+  let start = 0
+  let end = text.length
+
+  while (start < end && isAsciiWhitespace(text[start])) start++
+  while (end > start && isAsciiWhitespace(text[end - 1])) end--
+
+  if (start === end) {
+    return text.length > 0 && keepLeading && keepTrailing ? " " : ""
+  }
+
+  const leading = start > 0 && keepLeading ? " " : ""
+  const trailing = end < text.length && keepTrailing ? " " : ""
+
+  return leading + text.slice(start, end) + trailing
+}
+
+/**
+ * Check if an ERB content node is a herb:disable comment
+ */
+export function isHerbDisableComment(node: Node): node is ERBContentNode & { tag_opening: { value: "<%#" } } {
+  if (!isNode(node, ERBContentNode)) return false
+  if (node.tag_opening?.value !== "<%#") return false
+
+  const content = node?.content?.value || ""
+  const trimmed = content.trim()
+
+  return trimmed.startsWith("herb:disable")
+}
+
+/**
+ * Check if a text node is YAML frontmatter (starts and ends with ---)
+ */
+export function isFrontmatter(node: Node): node is HTMLTextNode {
+  if (!isNode(node, HTMLTextNode)) return false
+
+  const content = node.content.trim()
+
+  return content.startsWith("---") && /---\s*$/.test(content)
 }

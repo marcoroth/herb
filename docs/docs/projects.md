@@ -9,6 +9,7 @@ These are the user-facing tools that integrate into your development workflow:
 * [Herb Language Server](/projects/language-server)
 * [Herb Formatter](/projects/formatter)
 * [Herb Linter](/projects/linter)
+* [Herb Dev Server](/projects/dev-server)
 * [Herb CLI](/projects/cli)
 
 ## Language Bindings
@@ -24,8 +25,11 @@ These libraries provide access to the Herb Parser in different programming langu
 
 These specialized libraries provide additional functionality for working with HTML+ERB:
 
+* [Dev Server Client](/projects/client)
 * [Language Service](/projects/language-service)
 * [Highlighter](/projects/highlighter)
 * [Syntax Tree Printer](/projects/minifier)
 * [Printer](/projects/printer)
+* [Rewriter](/projects/rewriter)
+* [Config](/projects/config)
 * [Core](/projects/core)

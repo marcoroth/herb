@@ -8,7 +8,7 @@ function prefixCandidate(
   context: TailwindContext,
   selector: string,
 ): string {
-  let prefix = context.tailwindConfig.prefix
+  const prefix = context.tailwindConfig.prefix
   return typeof prefix === 'function' ? prefix(selector) : prefix + selector
 }
 
@@ -17,18 +17,22 @@ function getClassOrderPolyfill(
   classes: string[],
   { env }: { env: SortEnv },
 ): [string, bigint | null][] {
+  if (!env.context || !env.generateRules) {
+    return classes.map(name => [name, null] as [string, bigint | null])
+  }
+
   // A list of utilities that are used by certain Tailwind CSS utilities but
   // that don't exist on their own. This will result in them "not existing" and
   // sorting could be weird since you still require them in order to make the
   // host utitlies work properly. (Thanks Biology)
-  let parasiteUtilities = new Set([
+  const parasiteUtilities = new Set([
     prefixCandidate(env.context, 'group'),
     prefixCandidate(env.context, 'peer'),
   ])
 
-  let classNamesWithOrder: [string, bigint | null][] = []
+  const classNamesWithOrder: [string, bigint | null][] = []
 
-  for (let className of classes) {
+  for (const className of classes) {
     let order: bigint | null =
       env
         .generateRules(new Set([className]), env.context)
@@ -48,7 +52,11 @@ function getClassOrderPolyfill(
 }
 
 function reorderClasses(classList: string[], { env }: { env: SortEnv }) {
-  let orderedClasses = env.context.getClassOrder
+  if (!env.context) {
+    return classList.map(name => [name, null] as [string, bigint | null])
+  }
+
+  const orderedClasses = env.context.getClassOrder
     ? env.context.getClassOrder(classList)
     : getClassOrderPolyfill(classList, { env })
 
@@ -101,8 +109,9 @@ export function sortClasses(
   }
 
   let result = ''
-  let parts = classStr.split(/([\t\r\f\n ]+)/)
-  let classes = parts.filter((_, i) => i % 2 === 0)
+  const parts = classStr.split(/([\t\r\f\n ]+)/)
+  const classes = parts.filter((_, i) => i % 2 === 0)
+
   let whitespace = parts.filter((_, i) => i % 2 !== 0)
 
   if (classes[classes.length - 1] === '') {
@@ -123,7 +132,7 @@ export function sortClasses(
     suffix = `${whitespace.pop() ?? ''}${classes.pop() ?? ''}`
   }
 
-  let { classList, removedIndices } = sortClassList(classes, {
+  const { classList, removedIndices } = sortClassList(classes, {
     env,
     removeDuplicates,
   })
@@ -165,10 +174,10 @@ export function sortClassList(
     removeDuplicates = false
   }
 
-  let removedIndices = new Set<number>()
+  const removedIndices = new Set<number>()
 
   if (removeDuplicates) {
-    let seenClasses = new Set<string>()
+    const seenClasses = new Set<string>()
 
     orderedClasses = orderedClasses.filter(([cls, order], index) => {
       if (seenClasses.has(cls)) {

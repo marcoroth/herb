@@ -1,3 +1,24 @@
+---
+source: "Parser::CDATATest#test_0016_CDATA in complex document structure"
+input: |2-
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      <![CDATA[
+        function test() {
+          if (x < 5 && y > 3) {
+            return true;
+          }
+        }
+      ]]>
+    </script>
+  </head>
+  <body>
+    <div><![CDATA[<%= render partial: 'test' %>]]></div>
+  </body>
+</html>
+---
 @ DocumentNode (location: (1:0)-(18:0))
 └── children: (4 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))
@@ -61,7 +82,7 @@
     │   │   │   │   │   │       └── tag_closing: ">" (location: (12:12)-(12:13))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (12:13)-(13:2))
     │   │   │   │       └── content: "\n  "
@@ -74,7 +95,7 @@
     │   │   │   │       └── tag_closing: ">" (location: (13:8)-(13:9))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (13:9)-(14:2))
     │   │   │   └── content: "\n  "
@@ -124,7 +145,7 @@
     │   │   │   │   │   │       └── tag_closing: ">" (location: (15:55)-(15:56))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (15:56)-(16:2))
     │   │   │   │       └── content: "\n  "
@@ -137,7 +158,7 @@
     │   │   │   │       └── tag_closing: ">" (location: (16:8)-(16:9))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (16:9)-(17:0))
     │   │       └── content: "\n"
@@ -150,7 +171,7 @@
     │   │       └── tag_closing: ">" (location: (17:6)-(17:7))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (17:7)-(18:0))
         └── content: "\n"

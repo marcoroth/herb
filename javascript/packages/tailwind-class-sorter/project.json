@@ -8,8 +8,7 @@
       "executor": "nx:run-script",
       "options": {
         "script": "build"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "test": {
       "executor": "nx:run-script",

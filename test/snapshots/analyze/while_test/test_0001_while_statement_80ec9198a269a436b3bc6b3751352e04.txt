@@ -1,3 +1,10 @@
+---
+source: "Analyze::WhileTest#test_0001_while statement"
+input: |2-
+<% while true %>
+  true
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBWhileNode (location: (1:0)-(3:9))

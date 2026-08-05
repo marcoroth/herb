@@ -4,7 +4,7 @@ import dedent from "dedent";
 import { ERBRequireWhitespaceRule } from "../../src/rules/erb-require-whitespace-inside-tags";
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBRequireWhitespaceRule)
+const { expectNoOffenses, expectError, expectInfo, assertOffenses } = createLinterTest(ERBRequireWhitespaceRule)
 
 describe("erb-require-whitespace-inside-tags", () => {
 
@@ -142,7 +142,7 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
     `
 
-    expectError("Add whitespace after `<%#=`.")
+    expectInfo("Add whitespace after `<%#=`. This looks like a temporarily commented ERB tag.")
     expectError("Add whitespace before `%>`.")
     assertOffenses(html)
   })
@@ -153,6 +153,31 @@ describe("erb-require-whitespace-inside-tags", () => {
     `
 
     expectNoOffenses(html)
+  })
+
+  it("should not report ERB comment tags that look like section dividers", () => {
+    const html = dedent`
+      <%# === Section === %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should not report ERB comment tags with double equals followed by space", () => {
+    const html = dedent`
+      <%#== raw_content %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should report ERB comment tags with double equals and no space after", () => {
+    const html = dedent`
+      <%#==raw_content %>
+    `
+
+    expectInfo("Add whitespace after `<%#==`. This looks like a temporarily commented ERB tag.")
+    assertOffenses(html)
   })
 
   it("should handle multi-line ERB comment tags", () => {
@@ -170,5 +195,12 @@ describe("erb-require-whitespace-inside-tags", () => {
     `
 
     expectNoOffenses(html)
+  })
+
+  it("allows escaped comment tag without whitespace after the opening", () => {
+    expectNoOffenses(dedent`
+      <%%# locals: (user:) %>
+      <p><%%= user.name %></p>
+    `)
   })
 })

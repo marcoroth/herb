@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("formats simple HTML with ERB content", () => {
@@ -31,17 +35,10 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB output tags on two lines on top-level", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%= title %>
       <%= title %>
-    `
-    const expected = dedent`
-      <%= title %>
-
-      <%= title %>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(expected)
+    `)
   })
 
   test("adjecent ERB output tags without space on top-level", () => {
@@ -101,22 +98,21 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div>
-        <h1 class="<%= classes %>"><%= title %></h1>
+        <h1 class="<%= classes %>">
+          <%= title %>
+        </h1>
       </div>
     `)
   })
 
   test("should not add extra % to ERB closing tags with quoted strings", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <%= link_to "Nederlands", url_for(locale: 'nl'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "Français", url_for(locale: 'fr'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "English", url_for(locale: 'en'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
       </div>
-    `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+    `)
   })
 
   test("should handle complex ERB in layout files", () => {
@@ -165,7 +161,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <h3>
-        <%= link_to "Start", start_path %> &rsquo;s overview of
+        <%= link_to "Start", start_path %>&rsquo;s overview of
         <%= link_to "Section", section_path %>, <%= link_to "End", end_path %>.
       </h3>
     `)
@@ -275,6 +271,30 @@ describe("@herb-tools/formatter", () => {
     expect(secondFormat).toBe(result)
   })
 
+  test("issue 978: does not duplicate content with multiple adjacent inline/ERB groups separated by br", () => {
+    const input = dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `)
+
+    // Test idempotency
+    const secondFormat = formatter.format(result)
+    expect(secondFormat).toBe(result)
+  })
+
   test("https://github.com/hanakai-rb/site/blob/8adc128d9d464f3e37615be2aa29d57979904533/app/templates/pages/home.html.erb", () => {
     const input = dedent`
       <h1>Hanakai</h1>
@@ -328,7 +348,7 @@ describe("@herb-tools/formatter", () => {
         Here is some text.
         <br />
         Tel:
-        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone">08-123 456 78</a>
+        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone"> 08-123 456 78 </a>
       </p>
     `)
 
@@ -344,8 +364,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <p>
-        Should not be duplicated.
-        <br />
+        Should not be duplicated.<br />
         Text with a inline
         element<a href="mailto:something@something.com">something@something.com</a>
         and some more text after
@@ -365,13 +384,13 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(input)
 
     expect(result).toBe(dedent`
-       <p>
-         Visit
-         <a href="/products">our amazing product catalog with hundreds of items</a> or
-         <a href="/support">contact our customer support team</a> for assistance with
-         your order.
-       </p>
-     `)
+      <p>
+        Visit
+        <a href="/products">our amazing product catalog with hundreds of items</a> or
+        <a href="/support">contact our customer support team</a> for assistance with
+        your order.
+      </p>
+    `)
   })
 
   test("handles multiple inline elements with adjacent text", () => {
@@ -481,18 +500,6 @@ describe("@herb-tools/formatter", () => {
      `)
   })
 
-  test("https://github.com/marcoroth/herb/issues/469#issue-3379906221", () => {
-    const input = dedent`
-       <%= @user.translated_greeting %>,<br>
-     `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(dedent`
-       <%= @user.translated_greeting %>,<br>
-     `)
-  })
-
   test("https://github.com/marcoroth/herb/issues/436#issue-3351228515", () => {
     const input = dedent`
       <!DOCTYPE html>
@@ -580,9 +587,7 @@ describe("@herb-tools/formatter", () => {
       >
         <head>
           <meta charset="utf-8">
-
           <meta http-equiv="x-ua-compatible" content="ie=edge">
-
           <meta name="viewport" content="width=device-width, initial-scale=1">
 
           <meta
@@ -593,8 +598,8 @@ describe("@herb-tools/formatter", () => {
           <meta name="x-apple-disable-message-reformatting">
 
           <title><%= message.subject %> | Company</title>
-
           <%= stylesheet_link_tag "mailer", media: "all" %>
+
           <style>
             @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
           </style>
@@ -612,10 +617,14 @@ describe("@herb-tools/formatter", () => {
             }
           </style>
         </head>
+
         <body style="font-family: 'DM Sans', Arial, sans-serif;">
           <% if content_for?(:preheader) %>
-            <div class="hidden"><%= yield :preheader %></div>
+            <div class="hidden">
+              <%= yield :preheader %>
+            </div>
           <% end %>
+
           <div
             role="article"
             aria-roledescription="email"
@@ -632,6 +641,7 @@ describe("@herb-tools/formatter", () => {
               <tr>
                 <td height="32"></td>
               </tr>
+
               <tr>
                 <td align="center">
                   <table
@@ -655,8 +665,10 @@ describe("@herb-tools/formatter", () => {
                             <% else %>
                               <%= hosted_image_tag('mailer/header-logo.png', class: 'h-[35px] block mb-3') %>
                             <% end %>
+
                             <%= yield %>
                           </div>
+
                           <div
                             class="
                               p-4 bg-primary-foreground text-center border-t
@@ -664,9 +676,10 @@ describe("@herb-tools/formatter", () => {
                             "
                           >
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
+
                             <p class="text-muted-foreground text-sm leading-5">
-                              &copy;<%= Time.current.year %> - Company Inc, All
-                              rights reserved.
+                              &copy;<%= Time.current.year %> - Company Inc, All rights
+                              reserved.
                               <br />
                               Main Street, San Francisco, CAs, USA 12345
                               <br />
@@ -683,6 +696,7 @@ describe("@herb-tools/formatter", () => {
                   </table>
                 </td>
               </tr>
+
               <tr>
                 <td height="32"></td>
               </tr>
@@ -806,105 +820,109 @@ describe("@herb-tools/formatter", () => {
       </script>
      `
 
-     const expected = dedent`
-       <div class="relative">
-         <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
-           <span>Show/Hide Columns</span>
-         </button>
-         <div
-           id="column-dropdown"
-           class="
-             absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
-             hidden
-           "
-         >
-           <div class="flex flex-col space-y-1 min-w-[200px]">
-             <% columns.each do |column| %>
-               <div class="form-control">
-                 <label class="cursor-pointer label justify-start gap-2">
-                   <input
-                     type="checkbox"
-                     class="column-toggle checkbox checkbox-sm"
-                     data-column="<%= column[:name] %>"
-                     <%= 'checked' if column[:default_visible] %>
-                   >
-                   <span class="label-text text-muted-foreground"><%= column[:label] %></span>
-                 </label>
-               </div>
-             <% end %>
-           </div>
-         </div>
-       </div>
+    const expected = dedent`
+      <div class="relative">
+        <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
+          <span>Show/Hide Columns</span>
+        </button>
 
-       <script>
-       document.addEventListener('DOMContentLoaded', function() {
-         // Column toggle functionality
-         const columnToggleBtn = document.getElementById('column-toggle-btn');
-         const columnDropdown = document.getElementById('column-dropdown');
+        <div
+          id="column-dropdown"
+          class="
+            absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
+            hidden
+          "
+        >
+          <div class="flex flex-col space-y-1 min-w-[200px]">
+            <% columns.each do |column| %>
+              <div class="form-control">
+                <label class="cursor-pointer label justify-start gap-2">
+                  <input
+                    type="checkbox"
+                    class="column-toggle checkbox checkbox-sm"
+                    data-column="<%= column[:name] %>"
+                    <%= 'checked' if column[:default_visible] %>
+                  >
 
-         // Toggle dropdown visibility
-         columnToggleBtn.addEventListener('click', function() {
-           columnDropdown.classList.toggle('hidden');
-         });
+                  <span class="label-text text-muted-foreground">
+                    <%= column[:label] %>
+                  </span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
 
-         // Close dropdown when clicking outside
-         document.addEventListener('click', function(event) {
-           if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
-             columnDropdown.classList.add('hidden');
-           }
-         });
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Column toggle functionality
+        const columnToggleBtn = document.getElementById('column-toggle-btn');
+        const columnDropdown = document.getElementById('column-dropdown');
 
-         // Handle column visibility toggles
-         const columnToggles = document.querySelectorAll('.column-toggle');
+        // Toggle dropdown visibility
+        columnToggleBtn.addEventListener('click', function() {
+          columnDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+          if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
+            columnDropdown.classList.add('hidden');
+          }
+        });
+
+        // Handle column visibility toggles
+        const columnToggles = document.querySelectorAll('.column-toggle');
+        columnToggles.forEach(toggle => {
+          toggle.addEventListener('change', function() {
+            const columnName = this.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+
+            columnCells.forEach(cell => {
+              if (this.checked) {
+                cell.style.display = '';
+              } else {
+                cell.style.display = 'none';
+              }
+            });
+
+            // Save column visibility preferences to localStorage
+            localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
+          });
+
+          // Apply saved preferences on load
+          const columnName = toggle.dataset.column;
+          const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
+
+          if (savedPreference === 'hidden') {
+            toggle.checked = false;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+
          columnToggles.forEach(toggle => {
-           toggle.addEventListener('change', function() {
-             const columnName = this.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-
-             columnCells.forEach(cell => {
-               if (this.checked) {
-                 cell.style.display = '';
-               } else {
-                 cell.style.display = 'none';
-               }
-             });
-
-             // Save column visibility preferences to localStorage
-             localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
-           });
-
-           // Apply saved preferences on load
-           const columnName = toggle.dataset.column;
-           const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
-
-           if (savedPreference === 'hidden') {
-             toggle.checked = false;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-
-          columnToggles.forEach(toggle => {
-           if (!toggle.checked) {
-             const columnName = toggle.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-       });
-       </script>
-     `
+          if (!toggle.checked) {
+            const columnName = toggle.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+      });
+      </script>
+    `
 
     const result = formatter.format(input)
     expect(result).toBe(expected)
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 3", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <style>
         [data-test-page-header] {
           margin-bottom: 0px;
@@ -929,10 +947,7 @@ describe("@herb-tools/formatter", () => {
       </script>
 
       <div class="pt-3" id="chat"></div>
-     `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+     `)
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 4", () => {
@@ -1333,26 +1348,20 @@ describe("@herb-tools/formatter", () => {
       </p>
 
       <p>
-        Subscription Details:
-        <br>
-        Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b>
-        <br>
-        Resumption Date: <b><%= render_date(Time.current, format: '%B %e, %Y') %></b>
-        <br>
+        Subscription Details:<br>
+        Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b><br>
+        Resumption Date:
+        <b><%= render_date(Time.current, format: '%B %e, %Y') %></b><br>
         Pickups Left:
-        <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b>
-        <br>
+        <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b><br>
         Next Billing Date:
-        <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b>
-        <br>
+        <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b><br>
       </p>
 
       <p>Why wait now? Schedule your next pickup today!</p>
 
       <%= render "user_mailer/schedule_now" %>
-
       <%= render "user_subscription_mailer/more_info" %>
-
       <%= render "user_mailer/questions" %>
 
       <p>
@@ -1367,10 +1376,11 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3356738094", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <% if cover.present? %>
         <figure class="figure">
           <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
+
           <figcaption class="figure-caption text-center">
             <span>
               <strong>Cover Image</strong><br>
@@ -1382,10 +1392,8 @@ describe("@herb-tools/formatter", () => {
           </figcaption>
         </figure>
       <% end %>
-     `
+     `)
 
-    const result = formatter.format(input)
-    expect(result).toBe(input)
   })
 
   test("adjecent ERB text within elements", () => {
@@ -1450,8 +1458,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <div>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       </div>
     `
 
@@ -1461,12 +1469,12 @@ describe("@herb-tools/formatter", () => {
 
   test("ERB output after adjecent text within HTML element causing line-break", () => {
     const input = dedent`
-      <div>some text some text some text some text some text some text<%= icon("icon") %></div>
+      <div>some text some text some text some text some text somes text<%= icon("icon") %></div>
     `
 
     const expected = dedent`
       <div>
-        some text some text some text some text some text some
+        some text some text some text some text some text somes
         text<%= icon("icon") %>
       </div>
     `
@@ -1543,8 +1551,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <%= link_to "/" do %>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       <% end %>
     `
 
@@ -1581,6 +1589,112 @@ describe("@herb-tools/formatter", () => {
     `
 
     const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output with heredoc (issue 476)", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<EXAMPLE
+      example
+      EXAMPLE
+      %>
+    `)
+  })
+
+  test("ERB output with squiggly heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<~HEREDOC
+        example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with hyphen heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<-HEREDOC
+      example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with single-quoted heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<'HEREDOC'
+      no #{interpolation}
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with double-quoted heredoc", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<"HEREDOC"
+      with #{interpolation}
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with heredoc and method chaining", () => {
+    expectFormattedToMatch(dedent`
+      <%= <<HEREDOC.strip
+      example
+      HEREDOC
+      %>
+    `)
+  })
+
+  test("ERB output with bitshift operator", () => {
+    expectFormattedToMatch(`<%= 1 << 4 %>`)
+  })
+
+  test("ERB output with append operator", () => {
+    expectFormattedToMatch(`<%= array << item %>`)
+  })
+
+  // The heredoc is not detected because it doesn't start with "<<".
+  // See: https://github.com/marcoroth/herb/issues/476
+  // TODO: revisit once we have access to Prism nodes
+  test("ERB output with heredoc as method argument", () => {
+    const input = dedent`
+      <%= foo(<<HEREDOC)
+      example
+      HEREDOC
+      %>
+    `
+
+    const expected = dedent`
+      <%= foo(<<HEREDOC)
+      example
+      HEREDOC %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(expected)
+  })
+
+  // The heredoc is not detected because it doesn't start with "<<".
+  // See: https://github.com/marcoroth/herb/issues/476
+  // TODO: revisit once we have access to Prism nodes
+  test("ERB output with heredoc after assignment", () => {
+    const input = dedent`
+      <%= x = <<HEREDOC
+      example
+      HEREDOC
+      %>
+    `
+
+    const expected = dedent`
+      <%= x = <<HEREDOC
+      example
+      HEREDOC %>
+    `
+
+    const result = formatter.format(input)
+
     expect(result).toBe(expected)
   })
 

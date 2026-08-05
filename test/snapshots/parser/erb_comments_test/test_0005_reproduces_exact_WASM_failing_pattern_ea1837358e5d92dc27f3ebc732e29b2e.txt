@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBCommentsTest#test_0005_reproduces exact WASM failing pattern"
+input: "<%# herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp %>"
+---
 @ DocumentNode (location: (1:0)-(1:132))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(1:132))

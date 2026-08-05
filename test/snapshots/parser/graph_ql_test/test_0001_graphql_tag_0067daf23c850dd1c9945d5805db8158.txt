@@ -1,0 +1,26 @@
+---
+source: "Parser::GraphQLTest#test_0001_graphql tag"
+input: |2-
+<%graphql
+  fragment HumanFragment on Human {
+    name
+    homePlanet
+  }
+%>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(6:2))
+    │   ├── tag_opening: "<%graphql" (location: (1:0)-(1:9))
+    │   ├── content: "
+    │     fragment HumanFragment on Human {
+    │       name
+    │       homePlanet
+    │     }
+    │   " (location: (1:9)-(6:0))
+    │   ├── tag_closing: "%>" (location: (6:0)-(6:2))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (6:2)-(7:0))
+        └── content: "\n"

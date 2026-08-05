@@ -98,9 +98,7 @@ module Parser
       assert_parsed_snapshot("<%# #{"a" * 50_000} %>")
     end
 
-    test "handles extremely large comment length (100000 chars)" do
-      skip "Skipping extremely long test - takes too much time"
-
+    test "handles extremely large comment length (100_000 chars)" do
       assert_parsed_snapshot("<%# #{"a" * 100_000} %>")
     end
 

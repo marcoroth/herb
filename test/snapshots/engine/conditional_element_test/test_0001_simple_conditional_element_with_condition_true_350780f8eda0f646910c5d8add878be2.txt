@@ -1,0 +1,7 @@
+---
+source: "Engine::ConditionalElementTest#test_0001_simple conditional element with condition true"
+input: "{source: \"<% if @with_wrapper %>\\n  <div class=\\\"wrapper\\\">\\n<% end %>\\n  <span>Content</span>\\n<% if @with_wrapper %>\\n  </div>\\n<% end %>\\n\", locals: {\"@with_wrapper\": true}, options: {escape: false}}"
+---
+  <div class="wrapper">
+  <span>Content</span>
+  </div>

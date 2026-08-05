@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0012_nested tags"
+input: "<div><h1>Hello<span>World</span></h1></div>"
+---
 @ DocumentNode (location: (1:0)-(1:43))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:43))
@@ -47,7 +51,7 @@
         │       │       │       └── tag_closing: ">" (location: (1:31)-(1:32))
         │       │       │
         │       │       ├── is_void: false
-        │       │       └── source: "HTML"
+        │       │       └── element_source: "HTML"
         │       │
         │       ├── close_tag:
         │       │   └── @ HTMLCloseTagNode (location: (1:32)-(1:37))
@@ -57,7 +61,7 @@
         │       │       └── tag_closing: ">" (location: (1:36)-(1:37))
         │       │
         │       ├── is_void: false
-        │       └── source: "HTML"
+        │       └── element_source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:37)-(1:43))
@@ -67,4 +71,4 @@
         │       └── tag_closing: ">" (location: (1:42)-(1:43))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

@@ -1,0 +1,106 @@
+---
+source: "Parser::UnclosedCloseTagTest#test_0001_close tag missing > followed by ERB"
+input: |2-
+<% case Date.today.cwday %>
+<% when 6 %>
+  <p>Today is Saturday</p
+<% else %>
+  <p>Today is not a day of the week</p>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case Date.today.cwday " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:27)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:12))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 6 " (location: (2:2)-(2:10))
+    │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (2 items)
+    │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           └── @ HTMLElementNode (location: (3:2)-(3:25))
+    │   │               ├── open_tag:
+    │   │               │   └── @ HTMLOpenTagNode (location: (3:2)-(3:5))
+    │   │               │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │               │       ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │               │       ├── tag_closing: ">" (location: (3:4)-(3:5))
+    │   │               │       ├── children: []
+    │   │               │       └── is_void: false
+    │   │               │
+    │   │               ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │               ├── body: (1 item)
+    │   │               │   └── @ HTMLTextNode (location: (3:5)-(3:22))
+    │   │               │       └── content: "Today is Saturday"
+    │   │               │
+    │   │               ├── close_tag:
+    │   │               │   └── @ HTMLCloseTagNode (location: (3:22)-(3:25))
+    │   │               │       ├── errors: (1 error)
+    │   │               │       │   └── @ UnclosedCloseTagError (location: (3:22)-(3:25))
+    │   │               │       │       ├── message: "Closing tag `</p>` at (3:24) is missing closing `>`."
+    │   │               │       │       └── tag_name: "p" (location: (3:24)-(3:25))
+    │   │               │       │
+    │   │               │       ├── tag_opening: "</" (location: (3:22)-(3:24))
+    │   │               │       ├── tag_name: "p" (location: (3:24)-(3:25))
+    │   │               │       ├── children: []
+    │   │               │       └── tag_closing: ∅
+    │   │               │
+    │   │               ├── is_void: false
+    │   │               └── element_source: "HTML"
+    │   │
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (4:0)-(4:10))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " else " (location: (4:2)-(4:8))
+    │   │       ├── tag_closing: "%>" (location: (4:8)-(4:10))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (4:10)-(5:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (5:2)-(5:39))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (5:2)-(5:5))
+    │   │           │   │       ├── tag_opening: "<" (location: (5:2)-(5:3))
+    │   │           │   │       ├── tag_name: "p" (location: (5:3)-(5:4))
+    │   │           │   │       ├── tag_closing: ">" (location: (5:4)-(5:5))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "p" (location: (5:3)-(5:4))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (5:5)-(5:35))
+    │   │           │   │       └── content: "Today is not a day of the week"
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (5:35)-(5:39))
+    │   │           │   │       ├── tag_opening: "</" (location: (5:35)-(5:37))
+    │   │           │   │       ├── tag_name: "p" (location: (5:37)-(5:38))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (5:38)-(5:39))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── element_source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (5:39)-(6:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

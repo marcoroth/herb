@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0008_multiple consecutive trimmed tags"
+input: "{source: \"<%- if true -%>\\n<%- if true -%>\\n  <h1>Content</h1>\\n<%- end -%>\\n<%- end -%>\\n\", options: {}}"
+---
+_buf = ::String.new; if true 
+ if true 
+ _buf << '  <h1>Content</h1>
+'.freeze; end 
+ end 
+_buf.to_s

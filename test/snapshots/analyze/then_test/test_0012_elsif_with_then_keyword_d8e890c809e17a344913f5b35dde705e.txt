@@ -1,0 +1,56 @@
+---
+source: "Analyze::ThenTest#test_0012_elsif with then keyword"
+input: |2-
+<% if a then %>
+  A
+<% elsif b then %>
+  B
+<% elsif c then %>
+  C
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if a then " (location: (1:2)-(1:13))
+    │   ├── tag_closing: "%>" (location: (1:13)-(1:15))
+    │   ├── then_keyword: (location: (1:8)-(1:12))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:15)-(3:0))
+    │   │       └── content: "\n  A\n"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBIfNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " elsif b then " (location: (3:2)-(3:16))
+    │   │       ├── tag_closing: "%>" (location: (3:16)-(3:18))
+    │   │       ├── then_keyword: (location: (3:11)-(3:15))
+    │   │       ├── statements: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (3:18)-(5:0))
+    │   │       │       └── content: "\n  B\n"
+    │   │       │
+    │   │       ├── subsequent:
+    │   │       │   └── @ ERBIfNode (location: (5:0)-(7:0))
+    │   │       │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       │       ├── content: " elsif c then " (location: (5:2)-(5:16))
+    │   │       │       ├── tag_closing: "%>" (location: (5:16)-(5:18))
+    │   │       │       ├── then_keyword: (location: (5:11)-(5:15))
+    │   │       │       ├── statements: (1 item)
+    │   │       │       │   └── @ HTMLTextNode (location: (5:18)-(7:0))
+    │   │       │       │       └── content: "\n  C\n"
+    │   │       │       │
+    │   │       │       ├── subsequent: ∅
+    │   │       │       └── end_node: ∅
+    │   │       │
+    │   │       └── end_node: ∅
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

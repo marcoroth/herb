@@ -262,3 +262,20 @@ pre .twoslash-error-level-error {
   filter: brightness(0) invert(1);
 }
 
+/* Medium Zoom Styles */
+.medium-zoom-overlay {
+  z-index: 100;
+}
+
+.medium-zoom-image--opened {
+  z-index: 101;
+  cursor: zoom-out;
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+  object-fit: contain !important;
+}
+
+.vp-doc img {
+  cursor: zoom-in;
+  height: auto;
+}

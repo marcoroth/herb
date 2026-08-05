@@ -1,62 +1,45 @@
 import { ParserRule } from "../types"
-import { BaseRuleVisitor, getTagName, isHeadOnlyTag } from "./rule-utils"
+import { ElementStackVisitor, isHeadOnlyTag } from "./rule-utils"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
-class HeadOnlyElementsVisitor extends BaseRuleVisitor {
-  private elementStack: string[] = []
-
+class HeadOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node)?.toLowerCase()
-    if (!tagName) return
+    const tagName = getTagLocalName(node)
 
-    this.checkHeadOnlyElement(node, tagName)
+    if (tagName && !this.isInsideElement("head") && this.isInsideElement("body") && isHeadOnlyTag(tagName)) {
+      const isAllowedInSVG = (tagName === "title" || tagName === "style") && this.isInsideElement("svg")
+      const isMetaWithItemprop = tagName === "meta" && hasAttribute(node, "itemprop")
 
-    this.elementStack.push(tagName)
-    this.visitChildNodes(node)
-    this.elementStack.pop()
-  }
+      if (!isAllowedInSVG && !isMetaWithItemprop) {
+        this.addOffense(
+          `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
+          node.location,
+        )
+      }
+    }
 
-  private checkHeadOnlyElement(node: HTMLElementNode, tagName: string): void {
-    if (this.insideHead) return
-    if (!this.insideBody) return
-    if (!isHeadOnlyTag(tagName)) return
-    if (tagName === "title" && this.insideSVG) return
-
-    this.addOffense(
-      `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
-      node.location,
-      "error"
-    )
-  }
-
-  private get insideHead(): boolean {
-    return this.elementStack.includes("head")
-  }
-
-  private get insideBody(): boolean {
-    return this.elementStack.includes("body")
-  }
-
-  private get insideSVG(): boolean {
-    return this.elementStack.includes("svg")
+    super.visitHTMLElementNode(node)
   }
 }
 
 export class HTMLHeadOnlyElementsRule extends ParserRule {
   static autocorrectable = false
-  name = "html-head-only-elements"
+  static ruleName = "html-head-only-elements"
+  static introducedIn = this.version("0.8.0")
 
-  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml")) return false
-    if (context?.fileName?.endsWith(".xml.erb")) return false
-
-    return true
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new HeadOnlyElementsVisitor(this.name, context)
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new HeadOnlyElementsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

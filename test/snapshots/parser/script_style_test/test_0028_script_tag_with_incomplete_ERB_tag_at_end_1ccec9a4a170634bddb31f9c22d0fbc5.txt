@@ -1,16 +1,10 @@
+---
+source: "Parser::ScriptStyleTest#test_0028_script tag with incomplete ERB tag at end"
+input: "<script>console.log(\"test\"); <%</script>"
+---
 @ DocumentNode (location: (1:0)-(1:40))
-├── errors: (1 error)
-│   └── @ UnclosedElementError (location: (1:40)-(1:40))
-│       ├── message: "Tag `<script>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "script" (location: (1:1)-(1:7))
-│
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:8))
-        ├── errors: (1 error)
-        │   └── @ MissingClosingTagError (location: (1:1)-(1:7))
-        │       ├── message: "Opening tag `<script>` at (1:1) doesn't have a matching closing tag `</script>`."
-        │       └── opening_tag: "script" (location: (1:1)-(1:7))
-        │
+    └── @ HTMLElementNode (location: (1:0)-(1:40))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
@@ -24,24 +18,24 @@
         │   ├── @ LiteralNode (location: (1:8)-(1:29))
         │   │   └── content: "console.log(\"test\"); "
         │   │
-        │   └── @ ERBContentNode (location: (1:29)-(1:40))
-        │       ├── errors: (2 errors)
-        │       │   ├── @ UnexpectedTokenError (location: (1:31)-(1:40))
-        │       │   │   ├── message: "Found `TOKEN_ERROR` when expecting `TOKEN_ERB_CONTENT` at (1:31)."
-        │       │   │   ├── expected_type: "TOKEN_ERB_CONTENT"
-        │       │   │   └── found: "</script>" (location: (1:31)-(1:40))
-        │       │   │
-        │       │   └── @ UnexpectedTokenError (location: (1:40)-(1:40))
-        │       │       ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:40)."
-        │       │       ├── expected_type: "TOKEN_ERB_END"
-        │       │       └── found: "" (location: (1:40)-(1:40))
+        │   └── @ ERBContentNode (location: (1:29)-(1:31))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnclosedERBTagError (location: (1:29)-(1:31))
+        │       │       ├── message: "ERB tag `<%` at (1:29) is missing closing `%>`."
+        │       │       └── opening_tag: "<%" (location: (1:29)-(1:31))
         │       │
         │       ├── tag_opening: "<%" (location: (1:29)-(1:31))
-        │       ├── content: "</script>" (location: (1:31)-(1:40))
-        │       ├── tag_closing: "" (location: (1:40)-(1:40))
+        │       ├── content: "" (location: (1:31)-(1:31))
+        │       ├── tag_closing: ∅
         │       ├── parsed: true
-        │       └── valid: false
+        │       └── valid: true
         │
-        ├── close_tag: ∅
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:31)-(1:40))
+        │       ├── tag_opening: "</" (location: (1:31)-(1:33))
+        │       ├── tag_name: "script" (location: (1:33)-(1:39))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:39)-(1:40))
+        │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

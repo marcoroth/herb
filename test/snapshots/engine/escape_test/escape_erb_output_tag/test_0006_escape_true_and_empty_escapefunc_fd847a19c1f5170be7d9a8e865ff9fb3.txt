@@ -1,0 +1,6 @@
+---
+source: "Engine::EscapeTest::escape ERB output tag#test_0006_escape: true and empty escapefunc"
+input: "{source: \"<h1><%= value %></h1>\", options: {escape: true, escapefunc: \"\"}}"
+---
+_buf = ::String.new; _buf << '<h1>'.freeze; _buf << ((value)); _buf << '</h1>'.freeze;
+_buf.to_s

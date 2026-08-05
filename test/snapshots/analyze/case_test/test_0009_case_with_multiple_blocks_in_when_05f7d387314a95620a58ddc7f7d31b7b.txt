@@ -1,3 +1,16 @@
+---
+source: "Analyze::CaseTest#test_0009_case with multiple blocks in when"
+input: |2-
+<% case status %>
+<% when :active %>
+  <%= content_tag(:div) do %>
+    Active
+  <% end %>
+  <%= content_tag(:span) do %>
+    Badge
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(9:9))
@@ -13,6 +26,7 @@
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :active " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (5 items)
     │   │           ├── @ HTMLTextNode (location: (2:18)-(3:2))
     │   │           │   └── content: "\n  "
@@ -25,6 +39,10 @@
     │   │           │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
     │   │           │   │       └── content: "\n    Active\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
     │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
@@ -43,6 +61,10 @@
     │   │           │   │   └── @ HTMLTextNode (location: (6:30)-(8:2))
     │   │           │   │       └── content: "\n    Badge\n  "
     │   │           │   │
+    │   │           │   ├── block_arguments: []
+    │   │           │   ├── rescue_clause: ∅
+    │   │           │   ├── else_clause: ∅
+    │   │           │   ├── ensure_clause: ∅
     │   │           │   └── end_node:
     │   │           │       └── @ ERBEndNode (location: (8:2)-(8:11))
     │   │           │           ├── tag_opening: "<%" (location: (8:2)-(8:4))

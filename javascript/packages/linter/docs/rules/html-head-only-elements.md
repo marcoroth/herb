@@ -8,8 +8,9 @@ Enforce that certain elements only appear inside the `<head>` section of the doc
 
 Elements like `<title>`, `<meta>`, `<base>`, `<link>`, and `<style>` are permitted only inside the `<head>` element. They must not appear inside `<body>` or outside of `<html>`. Placing them elsewhere produces invalid HTML and relies on browser error correction.
 
-> [!NOTE] Exception
-> `<title>` elements are allowed inside `<svg>` elements for accessibility purposes.
+> [!NOTE] Exceptions
+> - `<title>` elements are allowed inside `<svg>` elements for accessibility purposes.
+> - `<meta>` elements with the `itemprop` attribute are allowed in the `<body>` for [microdata](https://html.spec.whatwg.org/multipage/microdata.html#the-itemprop-attribute) markup (e.g., Schema.org structured data).
 
 ## Rationale
 
@@ -56,6 +57,16 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
 </body>
 ```
 
+```erb
+<body>
+  <div itemscope itemtype="https://schema.org/Book">
+    <span itemprop="name">The Hobbit</span>
+    <meta itemprop="author" content="J.R.R. Tolkien">
+    <meta itemprop="isbn" content="978-0618260300">
+  </div>
+</body>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -76,6 +87,17 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
 </body>
 ```
 
+```erb
+<body>
+  <!-- Regular meta tags (name, charset, http-equiv) must be in <head> -->
+  <meta name="description" content="Page description">
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="30">
+</body>
+```
+
 ## References
 
 * [HTML Living Standard - The `head` element](https://html.spec.whatwg.org/multipage/semantics.html#the-head-element)
+* [MDN - The `<meta>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta#technical_summary)
+* [HTML Living Standard - Microdata (`itemprop`)](https://html.spec.whatwg.org/multipage/microdata.html#the-itemprop-attribute)

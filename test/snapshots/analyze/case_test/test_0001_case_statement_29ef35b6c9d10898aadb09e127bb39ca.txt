@@ -1,3 +1,11 @@
+---
+source: "Analyze::CaseTest#test_0001_case statement"
+input: |2-
+<% case variable %>
+<% when String %>
+  String
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(4:9))
@@ -13,6 +21,7 @@
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when String " (location: (2:2)-(2:15))
     │   │       ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (2:17)-(4:0))
     │   │               └── content: "\n  String\n"

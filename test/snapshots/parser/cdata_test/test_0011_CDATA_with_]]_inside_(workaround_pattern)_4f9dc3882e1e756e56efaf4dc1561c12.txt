@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0011_CDATA with ]] inside (workaround pattern)"
+input: "<![CDATA[Content with ]]]]><![CDATA[> inside]]>"
+---
 @ DocumentNode (location: (1:0)-(1:47))
 └── children: (2 items)
     ├── @ CDATANode (location: (1:0)-(1:27))

@@ -1,0 +1,55 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0016_unless statement"
+input: "<% unless hidden? %><%= content %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:43))
+└── children: (1 item)
+    └── @ ERBUnlessNode (location: (1:0)-(1:43))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " unless hidden? " (location: (1:2)-(1:18))
+        ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        ├── then_keyword: ∅
+        ├── prism_node:
+        │   └── @ UnlessNode (location: (1:3)-(1:40))
+        │       ├── keyword_loc: (1:3)-(1:9)
+        │       ├── predicate:
+        │       │   └── @ CallNode (location: (1:10)-(1:17))
+        │       │       ├── receiver: ∅
+        │       │       ├── call_operator_loc: ∅
+        │       │       ├── name: :hidden?
+        │       │       ├── message_loc: (1:10)-(1:17)
+        │       │       ├── opening_loc: ∅
+        │       │       ├── arguments: ∅
+        │       │       ├── closing_loc: ∅
+        │       │       ├── equal_loc: ∅
+        │       │       └── block: ∅
+        │       ├── then_keyword_loc: ∅
+        │       ├── statements: ∅
+        │       ├── else_clause: ∅
+        │       └── end_keyword_loc: (1:37)-(1:40)
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:20)-(1:34))
+        │       ├── tag_opening: "<%=" (location: (1:20)-(1:23))
+        │       ├── content: " content " (location: (1:23)-(1:32))
+        │       ├── tag_closing: "%>" (location: (1:32)-(1:34))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node:
+        │           └── @ CallNode (location: (1:24)-(1:31))
+        │               ├── receiver: ∅
+        │               ├── call_operator_loc: ∅
+        │               ├── name: :content
+        │               ├── message_loc: (1:24)-(1:31)
+        │               ├── opening_loc: ∅
+        │               ├── arguments: ∅
+        │               ├── closing_loc: ∅
+        │               ├── equal_loc: ∅
+        │               └── block: ∅
+        │
+        ├── else_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:34)-(1:43))
+                ├── tag_opening: "<%" (location: (1:34)-(1:36))
+                ├── content: " end " (location: (1:36)-(1:41))
+                └── tag_closing: "%>" (location: (1:41)-(1:43))

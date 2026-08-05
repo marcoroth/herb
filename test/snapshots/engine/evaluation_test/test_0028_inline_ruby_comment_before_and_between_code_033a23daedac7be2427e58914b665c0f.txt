@@ -1,0 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0028_inline ruby comment before and between code"
+input: "{source: \"<% # Comment here %><% if true %><% # Comment here %><%= \\\"hello\\\" %><% end %>\", locals: {}, options: {escape: false}}"
+---
+hello

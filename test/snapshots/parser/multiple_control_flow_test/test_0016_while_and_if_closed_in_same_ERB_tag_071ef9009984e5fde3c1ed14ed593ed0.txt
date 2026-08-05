@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0016_while and if closed in same ERB tag"
+input: |2-
+<% while running; if ready; process; end; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:48))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while running; if ready; process; end; end " (location: (1:2)-(1:46))
+    │   ├── tag_closing: "%>" (location: (1:46)-(1:48))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:48)-(2:0))
+        └── content: "\n"

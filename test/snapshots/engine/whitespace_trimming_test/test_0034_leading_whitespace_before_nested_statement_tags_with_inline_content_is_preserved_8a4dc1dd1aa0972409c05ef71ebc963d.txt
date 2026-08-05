@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0034_leading whitespace before nested statement tags with inline content is preserved"
+input: "{source: \"<p>\\n  <% if true %><% if true %>text<% end %><% end %>\\n</p>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>
+'.freeze;   if true 
+ _buf << '  '.freeze; if true 
+ _buf << 'text'.freeze; end; end; _buf << '
+</p>'.freeze;
+_buf.to_s

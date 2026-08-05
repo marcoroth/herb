@@ -3,9 +3,14 @@
 
 module Herb
   module Warnings
+    #: type serialized_warning = {
+    #|  type: String,
+    #|  location: serialized_location?,
+    #|  message: String
+    #| }
     class Warning
       attr_reader :type #: String
-      attr_reader :location #: Location
+      attr_reader :location #: Location?
       attr_reader :message #: String
 
       #: (String, Location, String) -> void

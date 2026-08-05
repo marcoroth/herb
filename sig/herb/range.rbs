@@ -1,6 +1,7 @@
 # Generated from lib/herb/range.rb with RBS::Inline
 
 module Herb
+  # : type serialized_range = [Integer, Integer]
   class Range
     attr_reader from: Integer
 
@@ -14,6 +15,9 @@ module Herb
 
     # : (Integer, Integer) -> Range
     def self.from: (Integer, Integer) -> Range
+
+    # : () -> Range
+    def self.zero: () -> Range
 
     # : () -> serialized_range
     def to_a: () -> serialized_range

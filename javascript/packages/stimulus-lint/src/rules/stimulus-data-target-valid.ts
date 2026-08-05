@@ -1,6 +1,7 @@
-import { StimulusRuleVisitor, HerbParserRule, didyoumean, getStaticAttributeValue, hasStaticAttributeValue, getAttributeName } from "./rule-utils.js"
+import { StimulusRuleVisitor, HerbParserRule } from "./rule-utils.js"
+import { getStaticAttributeValue, hasStaticAttributeValue, getAttributeName, getTokenList, didyoumean } from "@herb-tools/core"
 
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class DataTargetValidVisitor extends StimulusRuleVisitor {
@@ -27,15 +28,16 @@ class DataTargetValidVisitor extends StimulusRuleVisitor {
       return
     }
 
-    const targetNames = value.trim().split(/\s+/).filter((name: string) => name.length > 0)
+    const targetNames = getTokenList(value)
 
     for (const targetName of targetNames) {
       if (this.stimulusProject) {
         const controller = this.stimulusProject.registeredControllers.find(controller => controller.identifier === identifier)
 
         if (controller && controller.controllerDefinition.targetNames && !controller.controllerDefinition.targetNames.includes(targetName)) {
-          const suggestion = didyoumean(targetName, controller.controllerDefinition.targetNames)
-          this.addOffense(`Unknown target \`${targetName}\` on controller \`${identifier}\`.${suggestion}`, attributeNode.location, "error")
+          const match = didyoumean(targetName, controller.controllerDefinition.targetNames, 2)
+          const suggestion = match ? ` Did you mean \`${match}\`?` : ""
+          this.addOffense(`Unknown target \`${targetName}\` on controller \`${identifier}\`.${suggestion}`, attributeNode.location)
         }
       }
     }
@@ -43,10 +45,17 @@ class DataTargetValidVisitor extends StimulusRuleVisitor {
 }
 
 export class StimulusDataTargetValidRule extends HerbParserRule {
-  name = "stimulus-data-target-valid"
+  static ruleName = "stimulus-data-target-valid"
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
-    const visitor = new DataTargetValidVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
+    const visitor = new DataTargetValidVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0019_inline space between close tag and ERB control tag is preserved"
+input: "{source: \"<strong>Foo:</strong> <% if true %>Bar<% end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<strong>Foo:</strong> '.freeze; if true; _buf << 'Bar'.freeze; end;
+_buf.to_s

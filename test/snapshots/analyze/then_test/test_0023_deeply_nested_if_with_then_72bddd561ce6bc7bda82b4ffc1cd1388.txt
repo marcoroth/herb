@@ -1,0 +1,72 @@
+---
+source: "Analyze::ThenTest#test_0023_deeply nested if with then"
+input: |2-
+<% if a then %>
+  <% if b then %>
+    <% if c then %>
+      deeply nested
+    <% end %>
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if a then " (location: (1:2)-(1:13))
+    │   ├── tag_closing: "%>" (location: (1:13)-(1:15))
+    │   ├── then_keyword: (location: (1:8)-(1:12))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:15)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBIfNode (location: (2:2)-(6:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " if b then " (location: (2:4)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   ├── then_keyword: (location: (2:10)-(2:14))
+    │   │   │   ├── statements: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:17)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBIfNode (location: (3:4)-(5:13))
+    │   │   │   │   │   ├── tag_opening: "<%" (location: (3:4)-(3:6))
+    │   │   │   │   │   ├── content: " if c then " (location: (3:6)-(3:17))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:17)-(3:19))
+    │   │   │   │   │   ├── then_keyword: (location: (3:12)-(3:16))
+    │   │   │   │   │   ├── statements: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (3:19)-(5:4))
+    │   │   │   │   │   │       └── content: "\n      deeply nested\n    "
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── subsequent: ∅
+    │   │   │   │   │   └── end_node:
+    │   │   │   │   │       └── @ ERBEndNode (location: (5:4)-(5:13))
+    │   │   │   │   │           ├── tag_opening: "<%" (location: (5:4)-(5:6))
+    │   │   │   │   │           ├── content: " end " (location: (5:6)-(5:11))
+    │   │   │   │   │           └── tag_closing: "%>" (location: (5:11)-(5:13))
+    │   │   │   │   │
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (5:13)-(6:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── subsequent: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (6:2)-(6:11))
+    │   │   │           ├── tag_opening: "<%" (location: (6:2)-(6:4))
+    │   │   │           ├── content: " end " (location: (6:4)-(6:9))
+    │   │   │           └── tag_closing: "%>" (location: (6:9)-(6:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:11)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

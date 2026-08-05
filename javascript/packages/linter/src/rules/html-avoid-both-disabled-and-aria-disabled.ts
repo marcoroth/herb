@@ -1,8 +1,9 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributes, findAttributeByName } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { isHTMLAttributeValueNode, isERBContentNode, getAttributes, findAttributeByName, hasAttribute, getTagLocalName } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLAttributeValueNode, ParseResult, Node } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 const ELEMENTS_WITH_NATIVE_DISABLED_ATTRIBUTE_SUPPORT = new Set([
   "button", "fieldset", "input", "optgroup", "option", "select", "textarea"
@@ -15,7 +16,7 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
   }
 
   private checkElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (!tagName || !ELEMENTS_WITH_NATIVE_DISABLED_ATTRIBUTE_SUPPORT.has(tagName)) {
       return
@@ -32,7 +33,6 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
       this.addOffense(
         "aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.",
         node.tag_name!.location,
-        "error"
       )
     }
   }
@@ -44,20 +44,26 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
     if (!attribute) return false
 
     const valueNode = attribute.value
-    if (!valueNode || valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE") return false
+    if (!isHTMLAttributeValueNode(valueNode)) return false
+    if (!valueNode.children) return false
 
-    const htmlValueNode = valueNode as HTMLAttributeValueNode
-    if (!htmlValueNode.children) return false
-
-    return htmlValueNode.children.some((child: Node) => child.type === "AST_ERB_CONTENT_NODE")
+    return valueNode.children.some(isERBContentNode)
   }
 }
 
 export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
-  name = "html-avoid-both-disabled-and-aria-disabled"
+  static ruleName = "html-avoid-both-disabled-and-aria-disabled"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new AvoidBothDisabledAndAriaDisabledVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new AvoidBothDisabledAndAriaDisabledVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

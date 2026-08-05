@@ -1,0 +1,26 @@
+---
+source: "Parser::ERBTest#test_0059_heredoc in output tag"
+input: |2-
+<%= method_call <<~GRAPHQL, variables
+  query {
+    field
+  }
+GRAPHQL
+%>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(6:2))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " method_call <<~GRAPHQL, variables
+    │     query {
+    │       field
+    │     }
+    │   GRAPHQL
+    │   " (location: (1:3)-(6:0))
+    │   ├── tag_closing: "%>" (location: (6:0)-(6:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (6:2)-(7:0))
+        └── content: "\n"

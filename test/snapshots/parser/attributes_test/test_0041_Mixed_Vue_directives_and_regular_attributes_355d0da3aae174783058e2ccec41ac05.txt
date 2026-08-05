@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0041_Mixed Vue directives and regular attributes"
+input: "<div id=\"app\" :class=\"dynamicClass\" data-test=\"static\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:61))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:61))
@@ -79,4 +83,4 @@
         │       └── tag_closing: ">" (location: (1:60)-(1:61))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

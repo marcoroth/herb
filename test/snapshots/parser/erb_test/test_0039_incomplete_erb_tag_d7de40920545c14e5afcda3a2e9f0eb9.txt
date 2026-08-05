@@ -1,0 +1,19 @@
+---
+source: "Parser::ERBTest#test_0039_incomplete erb tag"
+input: "<%= 1 + %>"
+---
+@ DocumentNode (location: (1:0)-(1:10))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:10))
+        ├── errors: (1 error)
+        │   └── @ RubyParseError (location: (1:0)-(1:10))
+        │       ├── message: "expect_expression_after_operator: unexpected end-of-input; expected an expression after the operator"
+        │       ├── error_message: "unexpected end-of-input; expected an expression after the operator"
+        │       ├── diagnostic_id: "expect_expression_after_operator"
+        │       └── level: "syntax"
+        │
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " 1 + " (location: (1:3)-(1:8))
+        ├── tag_closing: "%>" (location: (1:8)-(1:10))
+        ├── parsed: true
+        └── valid: false

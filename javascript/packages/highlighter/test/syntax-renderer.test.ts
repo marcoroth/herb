@@ -1,13 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import { themes } from "../src/themes.js"
 
+import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
-
-// Helper function to strip ANSI color codes for testing
-function stripAnsiColors(text: string): string {
-  return text.replace(/\x1b\[[0-9;]*m/g, '')
-}
+import { ANSI_REGEX } from "../src/color.js"
 
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
@@ -34,7 +31,6 @@ describe("SyntaxRenderer", () => {
       await renderer.initialize()
       expect(renderer.initialized).toBe(true)
 
-      // Should not throw or cause issues
       await renderer.initialize()
       expect(renderer.initialized).toBe(true)
     })
@@ -52,7 +48,7 @@ describe("SyntaxRenderer", () => {
         isLoaded: false,
       }
       const uninitializedRenderer = new SyntaxRenderer(themes.onedark, uninitializedHerb as any)
-      // Don't initialize the renderer
+
       expect(() => uninitializedRenderer.highlight("<div>test</div>")).toThrow(
         "SyntaxRenderer must be initialized before use",
       )
@@ -76,8 +72,8 @@ describe("SyntaxRenderer", () => {
     it("should highlight simple HTML", () => {
       const content = "<div>hello</div>"
       const result = renderer.highlight(content)
-      expect(result).toContain("div")
-      expect(result).toContain("hello")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should handle empty content", () => {
@@ -112,7 +108,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<div>test</div>"
       const result = githubLightRenderer.highlight(content)
-      expect(result).toContain("div")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should work with simple theme", async () => {
@@ -121,7 +118,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<div>test</div>"
       const result = simpleRenderer.highlight(content)
-      expect(result).toContain("div")
+
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -136,8 +134,9 @@ describe("SyntaxRenderer", () => {
 
         const content = "<div>test</div>"
         const result = noColorRenderer.highlight(content)
-        // Should not contain ANSI escape codes
-        expect(result).not.toMatch(/\x1b\\[[0-9;]*m/)
+
+        expect(result).not.toMatch(ANSI_REGEX)
+        expect(result).toMatchSnapshot()
       } finally {
         if (originalNoColor === undefined) {
           delete process.env.NO_COLOR
@@ -155,9 +154,9 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_ERB_START", range: { start: 0, end: 2 } },
-            { type: "TOKEN_ERB_CONTENT", range: { start: 2, end: 12 } },
-            { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
+            { type: "TOKEN_ERB_START", range: Range.from(0, 2) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(2, 12) },
+            { type: "TOKEN_ERB_END", range: Range.from(12, 14) },
           ],
         }),
         isLoaded: true,
@@ -168,8 +167,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<% if true %>"
       const result = erbRenderer.highlight(content)
-      expect(result).toContain("if")
-      expect(result).toContain("true")
+
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -181,9 +180,9 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_HTML_COMMENT_START", range: { start: 0, end: 4 } },
-            { type: "TOKEN_IDENTIFIER", range: { start: 4, end: 11 } },
-            { type: "TOKEN_HTML_COMMENT_END", range: { start: 11, end: 14 } },
+            { type: "TOKEN_HTML_COMMENT_START", range: Range.from(0, 4) },
+            { type: "TOKEN_IDENTIFIER", range: Range.from(4, 11) },
+            { type: "TOKEN_HTML_COMMENT_END", range: Range.from(11, 14) },
           ],
         }),
       }
@@ -196,7 +195,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<!-- comment -->"
       const result = commentRenderer.highlight(content)
-      expect(stripAnsiColors(result)).toContain("comment")
+
+      expect(result).toMatchSnapshot()
     })
 
     it("should preserve ERB highlighting in comments", async () => {
@@ -206,11 +206,11 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_HTML_COMMENT_START", range: { start: 0, end: 4 } },
-            { type: "TOKEN_ERB_START", range: { start: 5, end: 7 } },
-            { type: "TOKEN_ERB_CONTENT", range: { start: 7, end: 12 } },
-            { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
-            { type: "TOKEN_HTML_COMMENT_END", range: { start: 15, end: 18 } },
+            { type: "TOKEN_HTML_COMMENT_START", range: Range.from(0, 4) },
+            { type: "TOKEN_ERB_START", range: Range.from(5, 7) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(7, 12) },
+            { type: "TOKEN_ERB_END", range: Range.from(12, 14) },
+            { type: "TOKEN_HTML_COMMENT_END", range: Range.from(15, 18) },
           ],
         }),
       }
@@ -223,9 +223,8 @@ describe("SyntaxRenderer", () => {
 
       const content = "<!-- <% code %> -->"
       const result = erbCommentRenderer.highlight(content)
-      expect(result).toMatchInlineSnapshot(
-        `"[38;2;92;99;112m<!--[0m [38;2;190;80;70m<%[0m code[38;2;190;80;70m %[0m>[38;2;92;99;112m --[0m>"`,
-      )
+
+      expect(result).toMatchSnapshot()
     })
   })
 })

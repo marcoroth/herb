@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0017_conditional tags"
+input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% end %></div>"
+---
 @ DocumentNode (location: (1:0)-(1:82))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:82))
@@ -15,6 +19,7 @@
         │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       ├── content: " if bold? " (location: (1:7)-(1:17))
         │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        │       ├── then_keyword: ∅
         │       ├── statements: (1 item)
         │       │   └── @ HTMLElementNode (location: (1:19)-(1:38))
         │       │       ├── open_tag:
@@ -42,7 +47,7 @@
         │       │       │       └── tag_closing: ">" (location: (1:37)-(1:38))
         │       │       │
         │       │       ├── is_void: false
-        │       │       └── source: "HTML"
+        │       │       └── element_source: "HTML"
         │       │
         │       ├── subsequent:
         │       │   └── @ ERBElseNode (location: (1:38)-(1:67))
@@ -76,7 +81,7 @@
         │       │               │       └── tag_closing: ">" (location: (1:66)-(1:67))
         │       │               │
         │       │               ├── is_void: false
-        │       │               └── source: "HTML"
+        │       │               └── element_source: "HTML"
         │       │
         │       │
         │       └── end_node:
@@ -94,4 +99,4 @@
         │       └── tag_closing: ">" (location: (1:81)-(1:82))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

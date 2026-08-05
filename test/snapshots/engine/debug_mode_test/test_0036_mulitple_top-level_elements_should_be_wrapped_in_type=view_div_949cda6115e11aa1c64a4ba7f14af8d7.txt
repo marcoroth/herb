@@ -1,5 +1,8 @@
-_buf = ::String.new;
- _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-attach-to-parent="true">Hello</h1>
+---
+source: "Engine::DebugModeTest#test_0036_mulitple top-level elements should be wrapped in type=view div"
+input: "{source: \"<h1>Hello</h1>\\n<p>World</p>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-attach-to-parent="true">Hello</h1>
 <p>World</p>
 '.freeze;
 _buf.to_s

@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0010_method calls with blocks"
+input: "{source: \"<div>\\n  <%= [1, 2, 3].map { |n| n * 2 }.join(\\\", \\\") %>\\n</div>\\n\", locals: {}, options: {escape: false}}"
+---
 <div>
   2, 4, 6
 </div>

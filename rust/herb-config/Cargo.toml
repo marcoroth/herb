@@ -1,0 +1,27 @@
+[package]
+name = "herb-config"
+version = "0.10.3"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "Shared configuration utilities for Herb tools"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+
+[lib]
+name = "herb_config"
+path = "src/lib.rs"
+
+[features]
+default = []
+yerba = ["dep:yerba"]
+
+[dependencies]
+globset = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+yerba = { version = "0.8.1", default-features = false, optional = true }
+
+[dev-dependencies]
+serde_yaml = "0.9"
+tempfile = "3"

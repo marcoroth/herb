@@ -1,0 +1,89 @@
+---
+source: tests/prism_nodes_deep_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:61))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:61))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if admin? " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── then_keyword: ∅
+        ├── prism_node: 
+        │   └── @ IfNode (location: (0,3)-(0,58))
+        │       ├── if_keyword_loc: (0,3)-(0,5) = "if"
+        │       ├── predicate:
+        │       │   @ CallNode (location: (0,6)-(0,12))
+        │       │   ├── CallNodeFlags: ignore_visibility
+        │       │   ├── receiver: nil
+        │       │   ├── call_operator_loc: nil
+        │       │   ├── name: :admin?
+        │       │   ├── message_loc: (0,6)-(0,12) = "admin?"
+        │       │   ├── opening_loc: nil
+        │       │   ├── arguments: nil
+        │       │   ├── closing_loc: nil
+        │       │   ├── equal_loc: nil
+        │       │   ├── block: nil
+        │       ├── then_keyword_loc: nil
+        │       ├── statements:
+        │       │   @ StatementsNode (location: (0,19)-(0,26))
+        │       │   ├── body: (length: 1)
+        │       │       └── @ StringNode (location: (0,19)-(0,26))
+        │       │           ├── StringFlags: nil
+        │       │           ├── opening_loc: (0,19)-(0,20) = "\""
+        │       │           ├── content_loc: (0,20)-(0,25) = "admin"
+        │       │           ├── closing_loc: (0,25)-(0,26) = "\""
+        │       │           └── unescaped: "admin"
+        │       ├── subsequent:
+        │       │   @ ElseNode (location: (0,32)-(0,58))
+        │       │   ├── else_keyword_loc: (0,32)-(0,36) = "else"
+        │       │   ├── statements:
+        │       │   │   @ StatementsNode (location: (0,43)-(0,49))
+        │       │   │   └── body: (length: 1)
+        │       │   │       └── @ StringNode (location: (0,43)-(0,49))
+        │       │   │           ├── StringFlags: nil
+        │       │   │           ├── opening_loc: (0,43)-(0,44) = "\""
+        │       │   │           ├── content_loc: (0,44)-(0,48) = "user"
+        │       │   │           ├── closing_loc: (0,48)-(0,49) = "\""
+        │       │   │           └── unescaped: "user"
+        │       │   └── end_keyword_loc: (0,55)-(0,58) = "end"
+        │       └── end_keyword_loc: (0,55)-(0,58) = "end"
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:15)-(1:29))
+        │       ├── tag_opening: "<%=" (location: (1:15)-(1:18))
+        │       ├── content: " \"admin\" " (location: (1:18)-(1:27))
+        │       ├── tag_closing: "%>" (location: (1:27)-(1:29))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ StringNode (location: (0,19)-(0,26))
+        │               ├── StringFlags: nil
+        │               ├── opening_loc: (0,19)-(0,20) = "\""
+        │               ├── content_loc: (0,20)-(0,25) = "admin"
+        │               ├── closing_loc: (0,25)-(0,26) = "\""
+        │               └── unescaped: "admin"
+        ├── subsequent: 
+        │   └── @ ERBElseNode (location: (1:29)-(1:52))
+        │       ├── tag_opening: "<%" (location: (1:29)-(1:31))
+        │       ├── content: " else " (location: (1:31)-(1:37))
+        │       ├── tag_closing: "%>" (location: (1:37)-(1:39))
+        │       └── statements: (1 item)
+        │           └── @ ERBContentNode (location: (1:39)-(1:52))
+        │               ├── tag_opening: "<%=" (location: (1:39)-(1:42))
+        │               ├── content: " \"user\" " (location: (1:42)-(1:50))
+        │               ├── tag_closing: "%>" (location: (1:50)-(1:52))
+        │               ├── parsed: true
+        │               ├── valid: true
+        │               └── prism_node: 
+        │                   └── @ StringNode (location: (0,43)-(0,49))
+        │                       ├── StringFlags: nil
+        │                       ├── opening_loc: (0,43)-(0,44) = "\""
+        │                       ├── content_loc: (0,44)-(0,48) = "user"
+        │                       ├── closing_loc: (0,48)-(0,49) = "\""
+        │                       └── unescaped: "user"
+        │   
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:52)-(1:61))
+                ├── tag_opening: "<%" (location: (1:52)-(1:54))
+                ├── content: " end " (location: (1:54)-(1:59))
+                └── tag_closing: "%>" (location: (1:59)-(1:61))

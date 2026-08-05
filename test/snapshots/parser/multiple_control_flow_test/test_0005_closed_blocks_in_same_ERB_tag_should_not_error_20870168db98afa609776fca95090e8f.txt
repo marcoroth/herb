@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0005_closed blocks in same ERB tag should not error"
+input: |2-
+<% if true; if true; puts "hello"; end; end; %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:47))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if true; if true; puts "hello"; end; end; " (location: (1:2)-(1:45))
+    │   ├── tag_closing: "%>" (location: (1:45)-(1:47))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:47)-(2:0))
+        └── content: "\n"

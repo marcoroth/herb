@@ -1,9 +1,9 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
-import { getTagName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
+import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
 
-import type { LintContext, LintOffense } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
+import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
@@ -13,7 +13,7 @@ interface NoSelfClosingAutofixContext extends BaseAutofixContext {
 
 class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagName(node) === "svg") {
+    if (getTagLocalName(node) === "svg") {
       this.visit(node.open_tag)
     } else {
       this.visitChildNodes(node)
@@ -27,8 +27,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
       this.addOffense(
         `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
-        node.location,
-        "error",
+        node.tag_closing.location,
         {
           node,
           tagName,
@@ -41,10 +40,30 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
 export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContext> {
   static autocorrectable = true
-  name = "html-no-self-closing"
+  static ruleName = "html-no-self-closing"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<NoSelfClosingAutofixContext>[] {
-    const visitor = new NoSelfClosingVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/views/**/*_mailer/**/*"]
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return { action_view_helpers: true }
+  }
+
+  private isIndentation(precedingNode: Node | null, node: Node): boolean {
+    return !!precedingNode &&
+      isWhitespaceNode(node) &&
+      isWhitespaceNode(precedingNode) &&
+      (precedingNode.value?.value?.includes("\n") || false)
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
+    const visitor = new NoSelfClosingVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
@@ -55,7 +74,7 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (!offense.autofixContext) return null
 
     const { node, tagName, isVoid } = offense.autofixContext
-    const { tag_closing } = node
+    const { tag_closing } = node
 
     if (!tag_closing) return null
 
@@ -64,8 +83,13 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (node.children && Array.isArray(node.children)) {
       const children = node.children as Node[]
 
-      if (children.length > 0 && isWhitespaceNode(children[children.length - 1])) {
-        node.children = children.slice(0, -1)
+      if (children.length > 0) {
+        const lastChild = children[children.length - 1]
+        const secondToLastChild = children[children.length - 2] ?? null
+
+        if (isWhitespaceNode(lastChild) && !this.isIndentation(secondToLastChild, lastChild)) {
+          node.children = children.slice(0, -1)
+        }
       }
     }
 

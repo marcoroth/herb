@@ -1,0 +1,19 @@
+---
+name: "error_message"
+source: "ActionView::Helpers::ActiveModelHelper#error_message"
+gem: "actionview"
+output: "text"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "error_message"
+documentation_url: ""
+
+description: |-
+  Returns the validation error message for the current field.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

@@ -1,3 +1,12 @@
+---
+source: "Parser::ScriptStyleTest#test_0039_script tag with ERB outside vs inside strings"
+input: |2-
+<script>
+  var outside = <%= @value %>;
+  var inside = "<%= @value %>";
+  var mixed = "Hello " + <%= @name %> + " world";
+</script>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:9))
@@ -52,7 +61,7 @@
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:9)-(6:0))
         └── content: "\n"

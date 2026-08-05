@@ -1,3 +1,7 @@
+---
+source: "Lexer::CDATATest#test_0004_CDATA with special characters"
+input: "<![CDATA[&lt; &gt; &amp; &#240;]]>"
+---
 #<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
 #<Herb::Token type="TOKEN_AMPERSAND" value="&" range=[9, 10] start=(1:9) end=(1:10)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="lt" range=[10, 12] start=(1:10) end=(1:12)>

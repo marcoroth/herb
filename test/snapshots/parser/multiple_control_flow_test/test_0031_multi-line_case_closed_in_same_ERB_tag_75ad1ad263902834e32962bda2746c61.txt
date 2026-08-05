@@ -1,0 +1,34 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0031_multi-line case closed in same ERB tag"
+input: |2-
+<%
+  case type
+  when :a
+    handle_a
+  when :b
+    handle_b
+  else
+    handle_default
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(10:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     case type
+    │     when :a
+    │       handle_a
+    │     when :b
+    │       handle_b
+    │     else
+    │       handle_default
+    │     end
+    │   " (location: (1:2)-(10:0))
+    │   ├── tag_closing: "%>" (location: (10:0)-(10:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (10:2)-(11:0))
+        └── content: "\n"

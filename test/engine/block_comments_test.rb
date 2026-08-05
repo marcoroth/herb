@@ -91,5 +91,19 @@ module Engine
 
       assert_evaluated_snapshot(template, { x: 1, y: 2 })
     end
+
+    test "ruby block comments with =begin and =end mutliline and no space before ERB closing tag" do
+      template = <<~ERB
+        <%
+        =begin%>
+          This, while unusual, is a legal form of commenting.
+        <%
+        =end%>
+        <div>Hey there</div>
+      ERB
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template)
+    end
   end
 end

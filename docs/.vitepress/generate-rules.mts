@@ -18,12 +18,6 @@ export function generateRuleWrappers() {
   const ruleFiles = files.filter(file => file.endsWith(".md") && file !== "README.md")
 
   ruleFiles.forEach(file => {
-    const ruleName = file.replace(".md", "")
-    const displayName = ruleName
-      .split("-")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ")
-
     const wrapperContent = `<!-- @include: ../../../../javascript/packages/linter/docs/rules/${file} -->`
 
     const targetPath = path.join(targetRulesDir, file)

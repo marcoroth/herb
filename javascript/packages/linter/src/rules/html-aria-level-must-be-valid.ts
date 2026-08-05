@@ -2,8 +2,8 @@ import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 import { getValidatableStaticContent, hasERBOutput, filterLiteralNodes, filterERBContentNodes, isERBOutputNode } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, HTMLAttributeNode, ParserOptions } from "@herb-tools/core"
 
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams) {
@@ -63,10 +63,24 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
-  name = "html-aria-level-must-be-valid"
+  static ruleName = "html-aria-level-must-be-valid"
+  static introducedIn = this.version("0.4.3")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new HTMLAriaLevelMustBeValidVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new HTMLAriaLevelMustBeValidVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

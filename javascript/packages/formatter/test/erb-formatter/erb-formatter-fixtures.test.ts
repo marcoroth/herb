@@ -167,6 +167,7 @@ describe("ERB Formatter Fixture Tests", () => {
         <% when 'admin', 'moderator' %>
           <div class="admin-panel">
             <h2>Admin Controls</h2>
+
             <% if user.permissions.include?('delete') %>
               <button class="btn-danger">Delete</button>
             <% end %>
@@ -314,13 +315,11 @@ describe("ERB Formatter Fixture Tests", () => {
 
       expect(result).toBe(dedent`
         <% if eeee then "b" else c end %>
-
         <% if eeee then a else c end %>
 
         <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>
 
         <div <% if eeee then "b" else c end %>></div>
-
         <div <% if eeee then a else c end %>></div>
 
         <div
@@ -366,6 +365,7 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div class="container">
           <h1>Welcome</h1>
+
           <% if user.present? %>
             <p>Hello <%= user.name %>!</p>
           <% else %>
@@ -409,6 +409,7 @@ describe("ERB Formatter Fixture Tests", () => {
           <head>
             <title><%= page_title %></title>
           </head>
+
           <body>
             <% content_for :navigation do %>
               <nav class="main-nav">
@@ -420,7 +421,9 @@ describe("ERB Formatter Fixture Tests", () => {
               </nav>
             <% end %>
 
-            <main><%= yield %></main>
+            <main>
+              <%= yield %>
+            </main>
           </body>
         </html>
       `)
@@ -461,7 +464,9 @@ describe("ERB Formatter Fixture Tests", () => {
 
                   <% link_to "string", path, opt: "212", options: "222sdasdasd" %>
 
-                  <div><%= react_component({ greeting: 'react-rails.' }) %></div>
+                  <div>
+                    <%= react_component({ greeting: 'react-rails.' }) %>
+                  </div>
                 </div>
               </div>
             </div>
@@ -500,6 +505,7 @@ describe("ERB Formatter Fixture Tests", () => {
                 <div class="level-4">
                   <div class="level-5">
                     <span>Deep content</span>
+
                     <% items.each_with_index do |item, index| %>
                       <div class="item-<%= index %>"><%= item.title %></div>
                     <% end %>
@@ -529,10 +535,8 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div>
           <h1>Тест UTF-8 🚀</h1>
-
           <p>Café, naïve, résumé</p>
           <span>中文测试</span>
-
           <div>🍰🎉🎊✨🌟💫⭐🔥💥🎯</div>
         </div>
       `)
@@ -563,15 +567,46 @@ describe("ERB Formatter Fixture Tests", () => {
 
       expect(result).toBe(dedent`
         <div class="layout">
-          <header><%= yield :header %></header>
+          <header>
+            <%= yield :header %>
+          </header>
 
-          <main><%= yield %></main>
+          <main>
+            <%= yield %>
+          </main>
 
-          <aside><%= yield :sidebar if content_for?(:sidebar) %></aside>
+          <aside>
+            <%= yield :sidebar if content_for?(:sidebar) %>
+          </aside>
 
-          <footer><%= yield :footer %></footer>
+          <footer>
+            <%= yield :footer %>
+          </footer>
         </div>
       `)
+    })
+
+    test("multiple erb expressions in block element preserve newlines (GH-1210)", () => {
+      const source = dedent`
+        <main>
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </main>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(source)
+    })
+
+    test("multiple erb expressions with text between them in block element stay inline", () => {
+      const source = dedent`
+        <main><%= render "shared/flash" %> <%= yield %></main>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(source)
     })
 
     test("front-matter.html.erb - handles front matter", () => {
@@ -590,7 +625,10 @@ describe("ERB Formatter Fixture Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        --- title: "My Page" layout: "application" ---
+        ---
+        title: "My Page"
+        layout: "application"
+        ---
 
         <div class="page">
           <h1><%= @title || "Default Title" %></h1>

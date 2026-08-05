@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0010_<%#= expression %>"
+input: "{source: \"<%#= render \\\"partial\\\" %>\", options: {}}"
+---
+_buf = ::String.new;
+_buf.to_s

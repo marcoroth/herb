@@ -1,7 +1,8 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class NavigationHasLabelVisitor extends BaseRuleVisitor {
@@ -11,7 +12,7 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
   }
 
   private checkNavigationElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     const isNavElement = tagName === "nav"
     const hasNavigationRole = this.hasRoleNavigation(node)
 
@@ -32,7 +33,6 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
       this.addOffense(
         message,
         node.tag_name!.location,
-        "error"
       )
     }
   }
@@ -52,10 +52,18 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNavigationHasLabelRule extends ParserRule {
-  name = "html-navigation-has-label"
+  static ruleName = "html-navigation-has-label"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new NavigationHasLabelVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: false,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new NavigationHasLabelVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

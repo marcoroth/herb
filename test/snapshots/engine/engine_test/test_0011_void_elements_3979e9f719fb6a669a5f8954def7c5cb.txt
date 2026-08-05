@@ -1,5 +1,8 @@
-_buf = ::String.new;
- _buf << '<img src="photo.jpg" alt="Photo">
+---
+source: "Engine::EngineTest#test_0011_void elements"
+input: "{source: \"<img src=\\\"photo.jpg\\\" alt=\\\"Photo\\\">\\n<br>\\n<input type=\\\"text\\\" name=\\\"email\\\">\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<img src="photo.jpg" alt="Photo">
 <br>
 <input type="text" name="email">
 '.freeze;

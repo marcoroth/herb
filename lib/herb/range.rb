@@ -2,6 +2,7 @@
 # typed: true
 
 module Herb
+  #: type serialized_range = [Integer, Integer]
   class Range
     attr_reader :from #: Integer
     attr_reader :to #: Integer

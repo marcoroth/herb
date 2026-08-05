@@ -5,12 +5,15 @@
 ## Description
 
 Enforce consistent spacing within HTML opening and closing tags. This rule ensures:
-- Exactly one space between tag name and first attribute
-- Exactly one space between attributes
+- Exactly one space between the tag name and the first attribute on the same line
+- Exactly one space between attributes on the same line
 - No extra spaces before the closing `>` in non-self-closing tags
 - Exactly one space before `/>` in self-closing tags
 - No whitespace in closing tags (e.g., `</div>`)
-- Consistent indentation in multiline tags
+- No blank lines inside a multiline tag
+- The closing `>`/`/>`, when placed on its own line, aligned with the opening tag
+
+The indentation of attribute lines in a multiline tag is intentionally **not** enforced by this rule — attributes may be aligned or hanging-indented as you prefer, and normalizing indentation is left to the formatter.
 
 ## Rationale
 
@@ -37,6 +40,11 @@ Self-closing tags (`<img />`, `<br />`) should have exactly one space before the
 >
   foo
 </div>
+
+<div class="foo"
+     data-x="bar">
+  foo
+</div>
 ```
 
 ### 🚫 Bad
@@ -46,14 +54,18 @@ Self-closing tags (`<img />`, `<br />`) should have exactly one space before the
 
 <div class="foo" ></div>
 
-<img alt="Logo" src="/logo.png"/>
-
 <div class="foo"      data-x="bar"></div>
 
 <div
-   class="foo"
-    data-x="bar"
+
+  class="foo"
 >
+  foo
+</div>
+
+<div
+  class="foo"
+  >
   foo
 </div>
 

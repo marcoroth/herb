@@ -1,8 +1,8 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ParserOptions } from "@herb-tools/core"
 
 class NoPositiveTabIndexVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
@@ -14,17 +14,30 @@ class NoPositiveTabIndexVisitor extends AttributeVisitorMixin {
       this.addOffense(
         `Do not use positive \`tabindex\` values as they are error prone and can severely disrupt navigation experience for keyboard users. Use \`tabindex="0"\` to make an element focusable or \`tabindex="-1"\` to remove it from the tab sequence.`,
         attributeNode.location,
-        "error"
       )
     }
   }
 }
 
 export class HTMLNoPositiveTabIndexRule extends ParserRule {
-  name = "html-no-positive-tab-index"
+  static ruleName = "html-no-positive-tab-index"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new NoPositiveTabIndexVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new NoPositiveTabIndexVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

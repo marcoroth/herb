@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0015_style attribute with url"
+input: "<div style=\"background-image: url('./images/image.png')\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:63))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:63))
@@ -39,4 +43,4 @@
         │       └── tag_closing: ">" (location: (1:62)-(1:63))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

@@ -85,4 +85,26 @@ describe("svg-tag-name-capitalization autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
   })
+
+  test("does not autofix ERB tag helpers", () => {
+    const input = `<svg><%= tag.lineargradient id: "grad1" do %><stop offset="0%" /><% end %></svg>`
+
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("does not autofix content_tag helpers", () => {
+    const input = `<svg><%= content_tag :lineargradient, id: "grad1" do %><stop offset="0%" /><% end %></svg>`
+
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
 })

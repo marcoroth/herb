@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBCommentsTest#test_0008_evaluation: inline ruby comment with newline"
+input: "{source: \"<% if true %><% # Comment here %>\\n<% end %>\", locals: {}, options: {}}"
+---

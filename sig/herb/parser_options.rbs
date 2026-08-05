@@ -1,0 +1,66 @@
+# Generated from lib/herb/parser_options.rb with RBS::Inline
+
+module Herb
+  class ParserOptions
+    attr_reader strict: bool
+
+    attr_reader track_whitespace: bool
+
+    attr_reader analyze: bool
+
+    attr_reader action_view_helpers: bool
+
+    attr_reader transform_conditionals: bool
+
+    attr_reader render_nodes: bool
+
+    attr_reader strict_locals: bool
+
+    attr_reader iteration_nodes: bool
+
+    attr_reader prism_program: bool
+
+    attr_reader prism_nodes: bool
+
+    attr_reader prism_nodes_deep: bool
+
+    attr_reader timeout: Numeric
+
+    attr_reader max_errors: Integer?
+
+    DEFAULT_STRICT: bool
+
+    DEFAULT_TRACK_WHITESPACE: bool
+
+    DEFAULT_ANALYZE: bool
+
+    DEFAULT_ACTION_VIEW_HELPERS: bool
+
+    DEFAULT_TRANSFORM_CONDITIONALS: bool
+
+    DEFAULT_RENDER_NODES: bool
+
+    DEFAULT_STRICT_LOCALS: bool
+
+    DEFAULT_ITERATION_NODES: bool
+
+    DEFAULT_PRISM_PROGRAM: bool
+
+    DEFAULT_PRISM_NODES: bool
+
+    DEFAULT_PRISM_NODES_DEEP: bool
+
+    DEFAULT_TIMEOUT: Numeric
+
+    DEFAULT_MAX_ERRORS: Integer
+
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?render_nodes: bool, ?strict_locals: bool, ?iteration_nodes: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?timeout: Numeric) -> void
+
+    # : () -> Hash[Symbol, (bool | Numeric | nil)]
+    def to_h: () -> Hash[Symbol, bool | Numeric | nil]
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

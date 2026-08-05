@@ -1,6 +1,0 @@
-_buf = ::String.new;
- # This file contains a comment before other content
- _buf << '
-<div>Hey there</div>
-'.freeze;
-_buf.to_s

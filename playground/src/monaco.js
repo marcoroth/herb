@@ -8,6 +8,8 @@ import {
   languages,
 } from "monaco-editor/esm/vs/editor/edcore.main.js"
 
+import "monaco-editor/esm/vs/basic-languages/ruby/ruby.contribution.js"
+
 /**
  * Replaces a textarea with a Monaco editor instance
  *
@@ -99,7 +101,7 @@ export function replaceTextareaWithMonaco(
         [/"/, { token: "string.double", next: "@string_double" }],
         [/'/, { token: "string.single", next: "@string_single" }],
         [/\d+/, "number"],
-        [/[{}()\[\]]/, "@brackets"],
+        [/[{}()[\]]/, "@brackets"],
         [/@|@@|$/, "variable"],
       ],
       string_double: [
@@ -125,7 +127,8 @@ export function replaceTextareaWithMonaco(
   })
   // }
 
-  MonacoEditor.setModelLanguage(editor.getModel(), "erb")
+  const finalLanguage = options.language || "erb"
+  MonacoEditor.setModelLanguage(editor.getModel(), finalLanguage)
 
   editor.onDidChangeModelContent(() => {
     textarea.value = editor.getValue()

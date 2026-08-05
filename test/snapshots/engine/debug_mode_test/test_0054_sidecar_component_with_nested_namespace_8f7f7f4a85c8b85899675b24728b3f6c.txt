@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0054_sidecar component with nested namespace"
+input: "{source: \"<div>Hello</div>\", options: {debug: true, filename: \"app/components/admin/user_card/component.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="component" data-herb-debug-file-name="Admin::UserCard" data-herb-debug-file-relative-path="app/components/admin/user_card/component.html.erb" data-herb-debug-file-full-path="app/components/admin/user_card/component.html.erb">Hello</div>'.freeze;
+_buf.to_s

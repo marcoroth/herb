@@ -1,8 +1,10 @@
-import { Diagnostic, DiagnosticSeverity, Range, Position } from "vscode-languageserver/node"
+import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb, Visitor } from "@herb-tools/node-wasm"
 
-import type { Node, HerbError, DocumentNode } from "@herb-tools/node-wasm"
+import type { Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/node-wasm"
+
+import { lspRangeFromLocation } from "./range_utils"
 
 class ErrorVisitor extends Visitor {
   private readonly source = "Herb Parser "
@@ -18,7 +20,7 @@ class ErrorVisitor extends Visitor {
     const diagnostic: Diagnostic = {
       source: this.source,
       severity: DiagnosticSeverity.Error,
-      range: this.rangeFromHerbError(error),
+      range: lspRangeFromLocation(error.location),
       message: error.message,
       code: error.type,
       data: {
@@ -28,13 +30,6 @@ class ErrorVisitor extends Visitor {
     }
 
     this.diagnostics.push(diagnostic)
-  }
-
-  private rangeFromHerbError(error: HerbError): Range {
-    return Range.create(
-      Position.create(error.location.start.line - 1, error.location.start.column),
-      Position.create(error.location.end.line - 1, error.location.end.column),
-    )
   }
 }
 
@@ -55,5 +50,9 @@ export class ParserService {
       document: result.value,
       diagnostics: errorVisitor.diagnostics
     }
+  }
+
+  parseContent(content: string, options?: ParseOptions): ParseResult {
+    return Herb.parse(content, options)
   }
 }

@@ -1,3 +1,11 @@
+---
+source: "Analyze::UnlessTest#test_0007_guard clause with unless modifier should not be parsed as ERBUnlessNode"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item.visible? %>
+  <div><%= item.name %></div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))
@@ -44,11 +52,21 @@
     │   │   │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:29)-(4:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+    │   │       ├── name: "item" (location: (1:18)-(1:22))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (4:0)-(4:9))
     │           ├── tag_opening: "<%" (location: (4:0)-(4:2))

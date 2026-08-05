@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0063_partial in components subfolder is not treated as component"
+input: "{source: \"<div>Hello</div>\", options: {debug: true, filename: \"app/views/page/components/_dropdowns.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="partial" data-herb-debug-file-name="_dropdowns.html.erb" data-herb-debug-file-relative-path="app/views/page/components/_dropdowns.html.erb" data-herb-debug-file-full-path="app/views/page/components/_dropdowns.html.erb">Hello</div>'.freeze;
+_buf.to_s

@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0026_postfix unless does not trigger error"
+input: |2-
+<% puts "hello" unless skip %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:30))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " puts "hello" unless skip " (location: (1:2)-(1:28))
+    │   ├── tag_closing: "%>" (location: (1:28)-(1:30))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:30)-(2:0))
+        └── content: "\n"

@@ -1,0 +1,16 @@
+---
+source: "Analyze::ThenTest#test_0021_then as method name"
+input: |2-
+<% promise.then { |value| value * 2 } %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:40))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " promise.then { |value| value * 2 } " (location: (1:2)-(1:38))
+    │   ├── tag_closing: "%>" (location: (1:38)-(1:40))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:40)-(2:0))
+        └── content: "\n"

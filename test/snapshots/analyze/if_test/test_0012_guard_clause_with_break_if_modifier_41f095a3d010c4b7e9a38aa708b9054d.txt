@@ -1,3 +1,11 @@
+---
+source: "Analyze::IfTest#test_0012_guard clause with break if modifier"
+input: |2-
+<% loop do %>
+  <% break if condition %>
+  <div>Loop content</div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))
@@ -40,11 +48,15 @@
     │   │   │   │       └── tag_closing: ">" (location: (3:24)-(3:25))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:25)-(4:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (4:0)-(4:9))
     │           ├── tag_opening: "<%" (location: (4:0)-(4:2))

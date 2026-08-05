@@ -1,3 +1,7 @@
+---
+source: "Parser::DoctypeTest#test_0004_two doctypes"
+input: "<!DOCTYPE html><!DOCTYPE html>"
+---
 @ DocumentNode (location: (1:0)-(1:30))
 └── children: (2 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))

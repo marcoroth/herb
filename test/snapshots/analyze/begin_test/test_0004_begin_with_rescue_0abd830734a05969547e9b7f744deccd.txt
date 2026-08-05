@@ -1,3 +1,12 @@
+---
+source: "Analyze::BeginTest#test_0004_begin with rescue"
+input: |2-
+<% begin %>
+  begin
+<% rescue %>
+  rescue
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBBeginNode (location: (1:0)-(5:9))

@@ -1,10 +1,11 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import { ERBToRubyStringPrinter } from "@herb-tools/printer"
 import { filterNodes, ERBContentNode, LiteralNode, isNode } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
@@ -14,7 +15,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(openTag: HTMLOpenTagNode): void {
-    const tagName = getTagName(openTag)
+    const tagName = getTagLocalName(openTag)
 
     if (tagName !== "img") return
 
@@ -36,7 +37,6 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
         this.addOffense(
           `Prefer \`image_tag\` helper over manual \`<img>\` with dynamic ERB expressions. Use \`<%= image_tag ${suggestedExpression}, alt: "..." %>\` instead.`,
           srcAttribute.location,
-          "warning"
         )
       }
     }
@@ -91,10 +91,18 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
 }
 
 export class ERBPreferImageTagHelperRule extends ParserRule {
-  name = "erb-prefer-image-tag-helper"
+  static ruleName = "erb-prefer-image-tag-helper"
+  static introducedIn = this.version("0.4.3")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new ERBPreferImageTagHelperVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new ERBPreferImageTagHelperVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

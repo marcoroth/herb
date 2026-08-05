@@ -1,12 +1,17 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { Location } from "@herb-tools/core"
 import { Linter } from "../src/linter.js"
+import { Config } from "@herb-tools/config"
 
 import { HTMLTagNameLowercaseRule } from "../src/rules/html-tag-name-lowercase.js"
+import { HTMLAttributeDoubleQuotesRule } from "../src/rules/html-attribute-double-quotes.js"
+import { HTMLAttributeValuesRequireQuotesRule } from "../src/rules/html-attribute-values-require-quotes.js"
 import { ParserRule, SourceRule } from "../src/types.js"
 
-import type { LintOffense, LintContext } from "../src/types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 describe("@herb-tools/linter", () => {
@@ -66,7 +71,7 @@ describe("@herb-tools/linter", () => {
     })
 
     test("processes complex ERB templates", () => {
-      const html = `
+      const html = dedent`
         <div class="<%= classes %>">
           <% items.each do |item| %>
             <span><%= item.name %></span>
@@ -83,72 +88,88 @@ describe("@herb-tools/linter", () => {
 
   describe("Rule enablement", () => {
     class EnabledParserRule extends ParserRule {
-      name = "enabled-parser-rule"
+      static ruleName = "enabled-parser-rule"
+      static introducedIn = "0.1.0"
 
-      check(_result: ParseResult): LintOffense[] {
+      get defaultConfig() {
+        return { enabled: true, severity: "error" as const }
+      }
+
+      check(_result: ParseResult): UnboundLintOffense[] {
         return [{
           message: "Test offense",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
-          severity: "error",
-          rule: this.name,
-          code: this.name,
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class DisabledParserRule extends ParserRule {
-      name = "disabled-parser-rule"
+      static ruleName = "disabled-parser-rule"
+      static introducedIn = "0.1.0"
+
+      get defaultConfig() {
+        return { enabled: true, severity: "error" as const }
+      }
 
       isEnabled(): boolean {
         return false
       }
 
-      check(_result: ParseResult): LintOffense[] {
+      check(_result: ParseResult): UnboundLintOffense[] {
         return [{
           message: "This should never appear",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
-          severity: "error",
-          rule: this.name,
-          code: this.name,
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class FileBasedRule extends SourceRule {
-      name = "file-based-rule"
+      static ruleName = "file-based-rule"
+      static introducedIn = "0.1.0"
+
+      get defaultConfig() {
+        return { enabled: true, severity: "info" as const }
+      }
 
       isEnabled(_source: string, context?: Partial<LintContext>): boolean {
         return context?.fileName?.endsWith('.erb') || false
       }
 
-      check(_source: string): LintOffense[] {
+      check(_source: string): UnboundLintOffense[] {
         return [{
           message: "ERB file detected",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
-          severity: "info",
-          rule: this.name,
-          code: this.name,
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class ContentBasedRule extends ParserRule {
-      name = "content-based-rule"
+      static ruleName = "content-based-rule"
+      static introducedIn = "0.1.0"
+
+      get defaultConfig() {
+        return { enabled: true, severity: "info" as const }
+      }
 
       isEnabled(result: ParseResult): boolean {
         return JSON.stringify(result.value).includes('"value":"div"')
       }
 
-      check(_result: ParseResult): LintOffense[] {
+      check(_result: ParseResult): UnboundLintOffense[] {
         return [{
           message: "Div found",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
-          severity: "info",
-          rule: this.name,
-          code: this.name,
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
@@ -195,12 +216,1047 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can disable a rule with a comment", () => {
-      const html = '<DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>'
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
       const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
       const lintResult = linter.lint(html)
 
       expect(lintResult.offenses).toHaveLength(0)
       expect(lintResult.ignored).toBe(2)
+    })
+
+    test("can disable multiple rules with a comment", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule,
+        ],
+      )
+
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(1)
+      expect(lintResult.ignored).toBe(3)
+    })
+
+    test("can disable multiple rules with a comment and whitespace between comma and rules", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase,  html-attribute-double-quotes %>
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase  ,html-attribute-double-quotes %>
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable  html-tag-name-lowercase  ,  html-attribute-double-quotes %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule,
+        ],
+      )
+
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(3)
+      expect(lintResult.ignored).toBe(9)
+    })
+
+    test("can disable all rules with a comment", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV> <%# herb:disable all %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule
+        ],
+      )
+
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.ignored).toBe(4)
+    })
+  })
+
+  describe("ignoreDisableComments option", () => {
+    test("reports offenses even when suppressed with herb:disable comment", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(2)
+      expect(lintResult.ignored).toBe(0)
+      expect(lintResult.errors).toBe(2)
+    })
+
+    test("reports multiple rule offenses even when suppressed", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule,
+        ],
+      )
+
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(4)
+      expect(lintResult.ignored).toBe(0)
+    })
+
+    test("reports all offenses even when disabled with 'all'", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV> <%# herb:disable all %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule
+        ],
+      )
+
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(4)
+      expect(lintResult.ignored).toBe(0)
+    })
+
+    test("respects ignoreDisableComments:false (default behavior)", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html, { ignoreDisableComments: false })
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.ignored).toBe(2)
+    })
+
+    test("default behavior without option still honors disable comments", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.ignored).toBe(2)
+    })
+  })
+
+  describe("Linter.from() config-based API", () => {
+    test("can create linter with Linter.from()", () => {
+      const linter = Linter.from(Herb)
+      expect(linter).toBeInstanceOf(Linter)
+    })
+
+    test("can create linter with config", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      })
+      const linter = Linter.from(Herb, config)
+      expect(linter).toBeInstanceOf(Linter)
+    })
+
+    test("filters rules based on default config", () => {
+      class EnabledByDefaultRule extends ParserRule {
+        static ruleName = "enabled-by-default-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return {
+            enabled: true,
+            severity: "error"
+          }
+        }
+
+        check(_result: ParseResult): UnboundLintOffense[] {
+          return [{
+            message: "Enabled rule triggered",
+            location: Location.from(1, 1, 1, 1),
+            rule: this.ruleName,
+            code: this.ruleName,
+            source: "linter"
+          }]
+        }
+      }
+
+      class DisabledByDefaultRule extends ParserRule {
+        static ruleName = "disabled-by-default-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return {
+            enabled: false,
+            severity: "error"
+          }
+        }
+
+        check(_result: ParseResult): UnboundLintOffense[] {
+          return [{
+            message: "This should not appear",
+            location: Location.from(1, 1, 1, 1),
+            rule: this.ruleName,
+            code: this.ruleName,
+            source: "linter"
+          }]
+        }
+      }
+
+      const html = `<div>test</div>`
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([EnabledByDefaultRule, DisabledByDefaultRule])
+      const linter = new Linter(Herb, filteredRules)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(1)
+      expect(lintResult.offenses[0].rule).toBe("enabled-by-default-rule")
+    })
+
+    test("user config can enable a disabled-by-default rule", () => {
+      class DisabledByDefaultRule extends ParserRule {
+        static ruleName = "disabled-by-default-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return {
+            enabled: false,
+            severity: "error"
+          }
+        }
+
+        check(_result: ParseResult): UnboundLintOffense[] {
+          return [{
+            message: "Rule enabled by user",
+            location: Location.from(1, 1, 1, 1),
+            rule: this.ruleName,
+            code: this.ruleName,
+            source: "linter"
+          }]
+        }
+      }
+
+      const html = '<div>test</div>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "disabled-by-default-rule": {
+              enabled: true
+            }
+          }
+        }
+      })
+
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([DisabledByDefaultRule], config.linter?.rules)
+      const linter = new Linter(Herb, filteredRules, config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(1)
+      expect(lintResult.offenses[0].rule).toBe("disabled-by-default-rule")
+    })
+
+    test("user config can disable an enabled-by-default rule", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: false
+            }
+          }
+        }
+      })
+
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.linter?.rules)
+      const linter = new Linter(Herb, filteredRules, config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(0)
+    })
+
+    test("applies severity overrides automatically", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: true,
+              severity: "warning"
+            }
+          }
+        }
+      })
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(2)
+      expect(lintResult.offenses[0].severity).toBe("warning")
+      expect(lintResult.offenses[1].severity).toBe("warning")
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+    })
+
+    test("applies multiple severity overrides", () => {
+      const html = '<DIV id=\'1\' class=<%= "hello" %>>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              severity: "warning"
+            },
+            "html-attribute-double-quotes": {
+              severity: "info"
+            },
+            "html-attribute-values-require-quotes": {
+              severity: "hint"
+            }
+          }
+        }
+      })
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule
+        ],
+        config
+      )
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(4)
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(2)
+      expect(lintResult.info).toBe(1)
+      expect(lintResult.hints).toBe(1)
+    })
+
+    test("Linter.from() with config enables and overrides severity", () => {
+      class TestRule extends ParserRule {
+        static ruleName = "test-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return {
+            enabled: false,
+            severity: "error"
+          }
+        }
+
+        check(_result: ParseResult): UnboundLintOffense[] {
+          return [{
+            message: "Test offense",
+            location: Location.from(1, 1, 1, 1),
+            rule: this.ruleName,
+            code: this.ruleName,
+            source: "linter"
+          }]
+        }
+      }
+
+      const html = '<div>test</div>'
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "test-rule": {
+              enabled: true,
+              severity: "warning"
+            }
+          }
+        }
+      })
+
+      const { enabled: filteredRules } = Linter.filterRulesByConfig([TestRule], config.linter?.rules)
+      const linter = new Linter(Herb, filteredRules, config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(1)
+      expect(lintResult.offenses[0].severity).toBe("warning")
+      expect(lintResult.errors).toBe(0)
+      expect(lintResult.warnings).toBe(1)
+    })
+
+    test("config with no rules uses default enabled rules", () => {
+      const html = '<DIV>test</DIV>'
+      const config = Config.fromObject({
+        linter: {
+          enabled: true
+        }
+      })
+
+      const linter = Linter.from(Herb, config)
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses.length).toBeGreaterThan(0)
+    })
+
+    test("Linter.filterRulesByConfig with empty config returns default enabled", () => {
+      class EnabledRule extends ParserRule {
+        static ruleName = "enabled-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return { enabled: true, severity: "error" }
+        }
+
+        check(): UnboundLintOffense[] { return [] }
+      }
+
+      class DisabledRule extends ParserRule {
+        static ruleName = "disabled-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return { enabled: false, severity: "error" }
+        }
+
+        check(): UnboundLintOffense[] { return [] }
+      }
+
+      const { enabled: filtered } = Linter.filterRulesByConfig([EnabledRule, DisabledRule])
+
+      expect(filtered).toHaveLength(1)
+      expect(filtered[0].ruleName).toBe("enabled-rule")
+    })
+
+    test("Linter.filterRulesByConfig respects user config", () => {
+      class EnabledRule extends ParserRule {
+        static ruleName = "enabled-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return { enabled: true, severity: "error" }
+        }
+
+        check(): UnboundLintOffense[] { return [] }
+      }
+
+      class DisabledRule extends ParserRule {
+        static ruleName = "disabled-rule"
+        static introducedIn = "0.1.0"
+
+        get defaultConfig(): FullRuleConfig {
+          return { enabled: false, severity: "error" }
+        }
+
+        check(): UnboundLintOffense[] { return [] }
+      }
+
+      const config = {
+        "enabled-rule": { enabled: false },
+        "disabled-rule": { enabled: true }
+      }
+
+      const { enabled: filtered } = Linter.filterRulesByConfig([EnabledRule, DisabledRule], config)
+
+      expect(filtered).toHaveLength(1)
+      expect(filtered[0].ruleName).toBe("disabled-rule")
+    })
+  })
+
+  describe("`only` rule filtering", () => {
+    class EnabledRule extends ParserRule {
+      static ruleName = "enabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledRule extends ParserRule {
+      static ruleName = "disabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class VersionGatedRule extends ParserRule {
+      static ruleName = "version-gated-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("enables exactly the requested rules", () => {
+      const { enabled } = Linter.filterRulesByConfig([EnabledRule, DisabledRule, VersionGatedRule], undefined, undefined, {
+        only: ["disabled-rule"]
+      })
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("disabled-rule")
+    })
+
+    test("ignores rules disabled in the config and version gating", () => {
+      const { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { "disabled-rule": { enabled: false } },
+        "0.8.0",
+        { only: ["disabled-rule", "version-gated-rule"] }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule", "version-gated-rule"])
+      expect(skippedByVersion).toHaveLength(0)
+      expect(disabledByConfig).toBe(0)
+      expect(notEnabledByDefault).toBe(0)
+    })
+
+    test("ignores unknown rule names", () => {
+      const { enabled } = Linter.filterRulesByConfig([EnabledRule, DisabledRule], undefined, undefined, {
+        only: ["does-not-exist"]
+      })
+
+      expect(enabled).toHaveLength(0)
+    })
+
+    test("falls back to the regular filtering when the list is empty", () => {
+      const { enabled } = Linter.filterRulesByConfig([EnabledRule, DisabledRule], undefined, undefined, { only: [] })
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("enabled-rule")
+    })
+
+    test("Linter.from() only runs the requested rules", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: { "html-tag-name-lowercase": { enabled: false } }
+        }
+      })
+
+      const linter = Linter.from(Herb, config, undefined, { only: ["html-tag-name-lowercase"] })
+      const result = linter.lint("<DIV></DIV>", { fileName: "template.html.erb" })
+
+      expect(linter.getRuleCount()).toBe(1)
+      expect(linter.onlyRules).toEqual(["html-tag-name-lowercase"])
+      expect(result.offenses.map(offense => offense.rule)).toEqual(["html-tag-name-lowercase", "html-tag-name-lowercase"])
+    })
+  })
+
+  describe("`all` rule filtering", () => {
+    class EnabledRule extends ParserRule {
+      static ruleName = "enabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledRule extends ParserRule {
+      static ruleName = "disabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class VersionGatedRule extends ParserRule {
+      static ruleName = "version-gated-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("enables every rule, regardless of the configuration", () => {
+      const { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { "enabled-rule": { enabled: false } },
+        "0.8.0",
+        { all: true }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "disabled-rule", "version-gated-rule"])
+      expect(skippedByVersion).toHaveLength(0)
+      expect(disabledByConfig).toBe(0)
+      expect(notEnabledByDefault).toBe(0)
+    })
+
+    test("falls back to the regular filtering when not requested", () => {
+      const { enabled, notEnabledByDefault } = Linter.filterRulesByConfig([EnabledRule, DisabledRule], undefined, undefined, { all: false })
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule"])
+      expect(notEnabledByDefault).toBe(1)
+    })
+
+    test("`only` takes precedence over `all`", () => {
+      const { enabled } = Linter.filterRulesByConfig([EnabledRule, DisabledRule, VersionGatedRule], undefined, undefined, {
+        only: ["disabled-rule"],
+        all: true
+      })
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("Linter.from() runs rules that are disabled in the config", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: { "html-tag-name-lowercase": { enabled: false } }
+        }
+      })
+
+      const withoutAllRules = Linter.from(Herb, config)
+      expect(withoutAllRules.lint("<DIV></DIV>", { fileName: "template.html.erb" }).offenses.map(offense => offense.rule)).not.toContain("html-tag-name-lowercase")
+
+      const linter = Linter.from(Herb, config, undefined, { all: true })
+      const result = linter.lint("<DIV></DIV>", { fileName: "template.html.erb" })
+
+      expect(linter.allRules).toBe(true)
+      expect(result.offenses.map(offense => offense.rule)).toContain("html-tag-name-lowercase")
+    })
+
+    test("Linter.from() ignores rule-level path patterns", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: { "html-tag-name-lowercase": { exclude: ["**/*.html.erb"] } }
+        }
+      })
+
+      const withoutAllRules = Linter.from(Herb, config)
+      expect(withoutAllRules.lint("<DIV></DIV>", { fileName: "template.html.erb" }).offenses.map(offense => offense.rule)).not.toContain("html-tag-name-lowercase")
+
+      const linter = Linter.from(Herb, config, undefined, { all: true })
+      const result = linter.lint("<DIV></DIV>", { fileName: "template.html.erb" })
+
+      expect(result.offenses.map(offense => offense.rule)).toContain("html-tag-name-lowercase")
+    })
+  })
+
+  describe("`all` pseudo rule in the config", () => {
+    class EnabledRule extends ParserRule {
+      static ruleName = "enabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledRule extends ParserRule {
+      static ruleName = "disabled-rule"
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class VersionGatedRule extends ParserRule {
+      static ruleName = "version-gated-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("`all: enabled: false` disables every rule that isn't explicitly configured", () => {
+      const { enabled, disabledByConfig, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { all: { enabled: false } }
+      )
+
+      expect(enabled).toHaveLength(0)
+      expect(disabledByConfig).toBe(0)
+      expect(notEnabledByDefault).toBe(3)
+    })
+
+    test("`all: enabled: false` keeps explicitly enabled rules", () => {
+      const { enabled, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule, VersionGatedRule],
+        { all: { enabled: false }, "disabled-rule": { enabled: true } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+      expect(notEnabledByDefault).toBe(2)
+    })
+
+    test("`all: enabled: false` treats a rule listed without `enabled` as enabled", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false }, "disabled-rule": { severity: "warning" } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("`all: enabled: true` enables rules that are off by default", () => {
+      const { enabled, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: true } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "disabled-rule"])
+      expect(notEnabledByDefault).toBe(0)
+    })
+
+    test("`all: enabled: true` keeps explicitly disabled rules disabled", () => {
+      const { enabled, disabledByConfig } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: true }, "enabled-rule": { enabled: false } }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+      expect(disabledByConfig).toBe(1)
+    })
+
+    test("`all: enabled: true` bypasses version gating", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        { all: { enabled: true } },
+        "0.8.0"
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "version-gated-rule"])
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("`all: enabled: false` leaves nothing for version gating to report", () => {
+      const { enabled, skippedByVersion, notEnabledByDefault } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        { all: { enabled: false } },
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(0)
+      expect(skippedByVersion).toHaveLength(0)
+      expect(notEnabledByDefault).toBe(2)
+    })
+
+    test("still applies version gating when `all` is not configured", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [EnabledRule, VersionGatedRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule"])
+      expect(skippedByVersion.map(rule => rule.ruleName)).toEqual(["version-gated-rule"])
+    })
+
+    test("`--only` takes precedence over the `all` pseudo rule", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false } },
+        undefined,
+        { only: ["disabled-rule"] }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["disabled-rule"])
+    })
+
+    test("`--all-rules` takes precedence over the `all` pseudo rule", () => {
+      const { enabled } = Linter.filterRulesByConfig(
+        [EnabledRule, DisabledRule],
+        { all: { enabled: false } },
+        undefined,
+        { all: true }
+      )
+
+      expect(enabled.map(ruleClass => ruleClass.ruleName)).toEqual(["enabled-rule", "disabled-rule"])
+    })
+
+    test("Linter.from() only runs the rules opted back in", () => {
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: {
+            all: { enabled: false },
+            "html-tag-name-lowercase": { enabled: true }
+          }
+        }
+      })
+
+      const linter = Linter.from(Herb, config)
+      const result = linter.lint("<DIV><img></DIV>", { fileName: "template.html.erb" })
+
+      expect(linter.getRuleCount()).toBe(1)
+      expect([...new Set(result.offenses.map(offense => offense.rule))]).toEqual(["html-tag-name-lowercase"])
+    })
+  })
+
+  describe("Version-gated rule filtering", () => {
+    class OldRule extends ParserRule {
+      static ruleName = "old-rule"
+      static introducedIn = "0.4.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class NewRule extends ParserRule {
+      static ruleName = "new-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "error" }
+      }
+
+      check(_result: ParseResult): UnboundLintOffense[] {
+        return [{
+          message: "New rule triggered",
+          location: Location.from(1, 1, 1, 1),
+          rule: this.ruleName,
+          code: this.ruleName,
+          source: "linter"
+        }]
+      }
+    }
+
+    class NewerRule extends ParserRule {
+      static ruleName = "newer-rule"
+      static introducedIn = "0.9.1" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: true, severity: "warning" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    class DisabledNewRule extends ParserRule {
+      static ruleName = "disabled-new-rule"
+      static introducedIn = "0.9.0" as const
+
+      get defaultConfig(): FullRuleConfig {
+        return { enabled: false, severity: "error" }
+      }
+
+      check(): UnboundLintOffense[] { return [] }
+    }
+
+    test("includes all rules when no configVersion is provided", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig([OldRule, NewRule, NewerRule])
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("skips rules introduced after the config version", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("old-rule")
+
+      expect(skippedByVersion).toHaveLength(2)
+      expect(skippedByVersion[0].ruleName).toBe("new-rule")
+      expect(skippedByVersion[0].introducedIn).toBe("0.9.0")
+      expect(skippedByVersion[1].ruleName).toBe("newer-rule")
+      expect(skippedByVersion[1].introducedIn).toBe("0.9.1")
+    })
+
+    test("includes rules matching the config version exactly", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.9.0"
+      )
+
+      expect(enabled).toHaveLength(2)
+      expect(enabled[0].ruleName).toBe("old-rule")
+      expect(enabled[1].ruleName).toBe("new-rule")
+
+      expect(skippedByVersion).toHaveLength(1)
+      expect(skippedByVersion[0].ruleName).toBe("newer-rule")
+    })
+
+    test("includes all rules when config version matches latest", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        "0.9.1"
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("user explicitly enabling a rule overrides version gating", () => {
+      const userConfig = {
+        "new-rule": { enabled: true }
+      }
+
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        userConfig,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(2)
+
+      const enabledNames = enabled.map(rule => rule.ruleName)
+      expect(enabledNames).toContain("new-rule")
+      expect(enabledNames).toContain("old-rule")
+
+      expect(skippedByVersion).toHaveLength(1)
+      expect(skippedByVersion[0].ruleName).toBe("newer-rule")
+    })
+
+    test("user explicitly disabling a rule is respected regardless of version", () => {
+      const userConfig = {
+        "old-rule": { enabled: false }
+      }
+
+      const { enabled } = Linter.filterRulesByConfig(
+        [OldRule, NewRule],
+        userConfig,
+        "0.9.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("new-rule")
+    })
+
+    test("disabled-by-default rules are not included in skippedByVersion", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, DisabledNewRule],
+        undefined,
+        "0.8.0"
+      )
+
+      expect(enabled).toHaveLength(1)
+      expect(enabled[0].ruleName).toBe("old-rule")
+
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("Linter.from() applies version gating from config", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      }, { configVersion: "0.8.0" })
+
+      const linter = Linter.from(Herb, config)
+
+      expect(linter.rulesSkippedByVersion.length).toBeGreaterThan(0)
+    })
+
+    test("Linter.from() includes all released rules when config version is current", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      const linter = Linter.from(Herb, config)
+
+      const releasedSkipped = linter.rulesSkippedByVersion.filter(
+        rule => rule.introducedIn !== "unreleased"
+      )
+
+      expect(releasedSkipped).toHaveLength(0)
+    })
+
+    test("includes unreleased rules when configVersion is undefined (no .herb.yml)", () => {
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        undefined,
+        undefined
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("includes unreleased rules when .herb.yml has no explicit version", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      expect(config.configVersion).toBeUndefined()
+
+      const { enabled, skippedByVersion } = Linter.filterRulesByConfig(
+        [OldRule, NewRule, NewerRule],
+        config.linter?.rules,
+        config.configVersion
+      )
+
+      expect(enabled).toHaveLength(3)
+      expect(skippedByVersion).toHaveLength(0)
+    })
+
+    test("Linter.from() enables unreleased rules when configVersion is undefined", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      })
+
+      expect(config.configVersion).toBeUndefined()
+
+      const linter = Linter.from(Herb, config)
+
+      expect(linter.rulesSkippedByVersion).toHaveLength(0)
+    })
+
+    test("version-gated rules do not produce offenses", () => {
+      const config = Config.fromObject({
+        linter: { enabled: true }
+      }, { configVersion: "0.8.0" })
+
+      const filteredRules = Linter.filterRulesByConfig(
+        [OldRule, NewRule],
+        config.linter?.rules,
+        config.configVersion
+      )
+
+      const linter = new Linter(Herb, filteredRules.enabled, config)
+      const result = linter.lint("<div>test</div>")
+
+      const ruleNames = result.offenses.map(offense => offense.rule)
+      expect(ruleNames).not.toContain("new-rule")
     })
   })
 })

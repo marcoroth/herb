@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0015_HTML comment with internal whitespace"
+input: |2-
+<!--     comment content     -->
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLCommentNode (location: (1:0)-(1:32))

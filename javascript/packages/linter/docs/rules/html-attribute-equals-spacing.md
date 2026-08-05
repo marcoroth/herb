@@ -17,7 +17,7 @@ Extra whitespace around the `=` in HTML attribute assignments is unnecessary, in
 ```erb
 <div class="container"></div>
 <img src="/logo.png" alt="Logo">
-<input type="text" value="<%= @value %>">
+<input type="text" value="<%= @value %>" autocomplete="off">
 ```
 
 ### 🚫 Bad
@@ -27,7 +27,7 @@ Extra whitespace around the `=` in HTML attribute assignments is unnecessary, in
 
 <img src= "/logo.png" alt="Logo">
 
-<input  type  =  "text">
+<input  type  =  "text" autocomplete="off">
 ```
 
 ## References

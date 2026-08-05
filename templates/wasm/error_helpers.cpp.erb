@@ -8,17 +8,17 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
 #include "../src/include/errors.h"
 #include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/util/hb_array.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/lib/hb_array.h"
 }
 
 using namespace emscripten;
 
-val CreateLocation(location_T* location);
+val CreateLocation(location_T location);
 val CreateToken(token_T* token);
 val NodeFromCStruct(AST_NODE_T* node);
 val NodesArrayFromCArray(hb_array_T* array);
@@ -34,21 +34,25 @@ val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("type", CreateString(error_type_to_string(&<%= error.human %>->base)));
-  result.set("message", CreateString(<%= error.human %>->base.message));
+  result.set("type", CreateStringFromHbString(error_type_to_string(&<%= error.human %>->base)));
+  result.set("message", CreateStringFromHbString(<%= error.human %>->base.message));
   result.set("location", CreateLocation(<%= error.human %>->base.location));
   <%- error.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  result.set("<%= field.name %>", CreateString(<%= error.human %>-><%= field.name %>));
+  result.set("<%= field.name %>", CreateStringFromHbString(<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::NodeField -%>
   result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*)<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::TokenField -%>
   result.set("<%= field.name %>", CreateToken(<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::TokenTypeField -%>
-  result.set("<%= field.name %>", CreateString(token_type_to_string(<%= error.human %>-><%= field.name %>)));
+  result.set("<%= field.name %>", CreateStringFromHbString(token_type_to_string(<%= error.human %>-><%= field.name %>)));
   <%- when Herb::Template::BooleanField -%>
   result.set("<%= field.name %>", <%= error.human %>-><%= field.name %>);
+  <%- when Herb::Template::PositionField -%>
+  result.set("<%= field.name %>", CreatePosition(<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::SizeTField -%>
+  result.set("<%= field.name %>", val((double)<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::ArrayField -%>
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= error.human %>-><%= field.name %>));
   <%- else -%>

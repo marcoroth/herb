@@ -1,3 +1,10 @@
+---
+source: "Parser::XMLDeclarationTest#test_0015_xml declaration in html document"
+input: |2-
+<!DOCTYPE html>
+<?xml version="1.0"?>
+<html><body>Content</body></html>
+---
 @ DocumentNode (location: (1:0)-(3:33))
 └── children: (3 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))
@@ -44,7 +51,7 @@
         │       │       └── tag_closing: ">" (location: (3:25)-(3:26))
         │       │
         │       ├── is_void: false
-        │       └── source: "HTML"
+        │       └── element_source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (3:26)-(3:33))
@@ -54,4 +61,4 @@
         │       └── tag_closing: ">" (location: (3:32)-(3:33))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

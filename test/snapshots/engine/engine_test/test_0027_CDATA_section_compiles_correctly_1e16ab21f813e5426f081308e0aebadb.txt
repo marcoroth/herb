@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0027_CDATA section compiles correctly"
+input: "{source: \"<![CDATA[ content ]]>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<![CDATA[ content ]]>'.freeze;
+_buf.to_s

@@ -1,0 +1,30 @@
+---
+source: "Analyze::StrictLocalsTest#test_0035_positional with assignment produces an error"
+input: |2-
+<%# locals: (name = "World") %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (name = "World") " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   └── locals: (1 item)
+    │       └── @ RubyParameterNode (location: (1:13)-(1:27))
+    │           ├── errors: (1 error)
+    │           │   └── @ StrictLocalsPositionalArgumentError (location: (1:13)-(1:27))
+    │           │       ├── message: "Strict locals only support keyword arguments. Positional argument `name` is not allowed. Use keyword argument format: `name:`."
+    │           │       └── name: "name"
+    │           │
+    │           ├── name: "name" (location: (1:13)-(1:17))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:20)-(1:27))
+    │           │       └── content: "\"World\""
+    │           │
+    │           ├── kind: "positional"
+    │           └── required: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

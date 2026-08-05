@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
 class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
@@ -17,16 +17,29 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
     this.addOffense(
       "ERB tag should not be empty. Remove empty ERB tags or add content.",
       node.location,
-      "error"
+      undefined,
+      undefined,
+      ["unnecessary"],
     )
   }
 }
 
 export class ERBNoEmptyTagsRule extends ParserRule {
-  name = "erb-no-empty-tags"
+  static ruleName = "erb-no-empty-tags"
+  static introducedIn = this.version("0.4.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new ERBNoEmptyTagsVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: {
+        cli: "error",
+        editor: "info",
+      }
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new ERBNoEmptyTagsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

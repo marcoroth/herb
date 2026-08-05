@@ -1,3 +1,11 @@
+---
+source: "Analyze::BlockTest#test_0006_each_with_index block"
+input: |2-
+<% [1, 2, 3].each_with_index do |item, index| %>
+  <%= item %>
+  <%= index %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))
@@ -28,6 +36,22 @@
     │   │   └── @ HTMLTextNode (location: (3:14)-(4:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (2 items)
+    │   │   ├── @ RubyParameterNode (location: (1:33)-(1:37))
+    │   │   │   ├── name: "item" (location: (1:33)-(1:37))
+    │   │   │   ├── default_value: ∅
+    │   │   │   ├── kind: "positional"
+    │   │   │   └── required: true
+    │   │   │
+    │   │   └── @ RubyParameterNode (location: (1:39)-(1:44))
+    │   │       ├── name: "index" (location: (1:39)-(1:44))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (4:0)-(4:9))
     │           ├── tag_opening: "<%" (location: (4:0)-(4:2))

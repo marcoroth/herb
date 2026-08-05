@@ -6,7 +6,7 @@
 
 Core module exporting shared interfaces, AST node definitions, and common utilities for Herb (no direct parsing functionality).
 
-### Installation
+## Installation
 
 :::code-group
 ```shell [npm]

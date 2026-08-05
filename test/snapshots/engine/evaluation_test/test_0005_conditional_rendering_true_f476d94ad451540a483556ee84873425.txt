@@ -1,5 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0005_conditional rendering true"
+input: "{source: \"<div>\\n  <% if show_message? %>\\n    <p>Message is shown</p>\\n  <% else %>\\n    <p>Message is hidden</p>\\n  <% end %>\\n</div>\\n\", locals: {show_message?: true}, options: {escape: false}}"
+---
 <div>
-  
     <p>Message is shown</p>
-  
 </div>

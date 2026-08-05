@@ -1,9 +1,19 @@
+---
+source: "Analyze::UnlessTest#test_0005_unless statement with else"
+input: |2-
+<% unless true %>
+  true
+<% else %>
+  else
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBUnlessNode (location: (1:0)-(5:9))
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " unless true " (location: (1:2)-(1:15))
     │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
     │   │   └── @ HTMLTextNode (location: (1:17)-(3:0))
     │   │       └── content: "\n  true\n"

@@ -53,10 +53,10 @@ export function maybeResolve(name: string) {
 }
 
 export async function loadIfExists<T>(name: string): Promise<T | null> {
-  let modpath = maybeResolve(name)
+  const modpath = maybeResolve(name)
 
   if (modpath) {
-    let mod = await import(name)
+    const mod = await import(name)
     return mod.default ?? mod
   }
 

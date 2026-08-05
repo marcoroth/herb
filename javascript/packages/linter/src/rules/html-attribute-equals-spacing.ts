@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 interface AttributeEqualsSpacingAutofixContext extends BaseAutofixContext {
@@ -18,7 +18,6 @@ class HTMLAttributeEqualsSpacingVisitor extends BaseRuleVisitor<AttributeEqualsS
       this.addOffense(
         "Remove whitespace before `=` in HTML attribute",
         attribute.equals.location,
-        "error",
         { node: attribute }
       )
     }
@@ -27,7 +26,6 @@ class HTMLAttributeEqualsSpacingVisitor extends BaseRuleVisitor<AttributeEqualsS
       this.addOffense(
         "Remove whitespace after `=` in HTML attribute",
         attribute.equals.location,
-        "error",
         { node: attribute }
       )
     }
@@ -36,10 +34,18 @@ class HTMLAttributeEqualsSpacingVisitor extends BaseRuleVisitor<AttributeEqualsS
 
 export class HTMLAttributeEqualsSpacingRule extends ParserRule<AttributeEqualsSpacingAutofixContext> {
   static autocorrectable = true
-  name = "html-attribute-equals-spacing"
+  static ruleName = "html-attribute-equals-spacing"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<AttributeEqualsSpacingAutofixContext>[] {
-    const visitor = new HTMLAttributeEqualsSpacingVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeEqualsSpacingAutofixContext>[] {
+    const visitor = new HTMLAttributeEqualsSpacingVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

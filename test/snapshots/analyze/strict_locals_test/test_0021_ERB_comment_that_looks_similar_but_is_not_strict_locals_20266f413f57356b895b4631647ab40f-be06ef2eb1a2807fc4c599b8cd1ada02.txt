@@ -1,0 +1,17 @@
+---
+source: "Analyze::StrictLocalsTest#test_0021_ERB comment that looks similar but is not strict locals"
+input: |2-
+<%# local_assigns[:user] %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:27))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " local_assigns[:user] " (location: (1:3)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:27)-(2:0))
+        └── content: "\n"

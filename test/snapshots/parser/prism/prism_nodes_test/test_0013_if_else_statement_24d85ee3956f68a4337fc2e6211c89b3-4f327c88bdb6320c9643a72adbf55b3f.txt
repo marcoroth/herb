@@ -1,0 +1,73 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0013_if/else statement"
+input: "<% if admin? %><%= \"admin\" %><% else %><%= \"user\" %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:61))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:61))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if admin? " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── then_keyword: ∅
+        ├── prism_node:
+        │   └── @ IfNode (location: (1:3)-(1:58))
+        │       ├── if_keyword_loc: (1:3)-(1:5)
+        │       ├── predicate:
+        │       │   └── @ CallNode (location: (1:6)-(1:12))
+        │       │       ├── receiver: ∅
+        │       │       ├── call_operator_loc: ∅
+        │       │       ├── name: :admin?
+        │       │       ├── message_loc: (1:6)-(1:12)
+        │       │       ├── opening_loc: ∅
+        │       │       ├── arguments: ∅
+        │       │       ├── closing_loc: ∅
+        │       │       ├── equal_loc: ∅
+        │       │       └── block: ∅
+        │       ├── then_keyword_loc: ∅
+        │       ├── statements: ∅
+        │       ├── subsequent:
+        │       │   └── @ ElseNode (location: (1:32)-(1:58))
+        │       │       ├── else_keyword_loc: (1:32)-(1:36)
+        │       │       ├── statements: ∅
+        │       │       └── end_keyword_loc: (1:55)-(1:58)
+        │       └── end_keyword_loc: (1:55)-(1:58)
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:15)-(1:29))
+        │       ├── tag_opening: "<%=" (location: (1:15)-(1:18))
+        │       ├── content: " "admin" " (location: (1:18)-(1:27))
+        │       ├── tag_closing: "%>" (location: (1:27)-(1:29))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node:
+        │           └── @ StringNode (location: (1:19)-(1:26))
+        │               ├── opening_loc: (1:19)-(1:20)
+        │               ├── content_loc: (1:20)-(1:25)
+        │               ├── closing_loc: (1:25)-(1:26)
+        │               └── unescaped: "admin"
+        │
+        ├── subsequent:
+        │   └── @ ERBElseNode (location: (1:29)-(1:52))
+        │       ├── tag_opening: "<%" (location: (1:29)-(1:31))
+        │       ├── content: " else " (location: (1:31)-(1:37))
+        │       ├── tag_closing: "%>" (location: (1:37)-(1:39))
+        │       └── statements: (1 item)
+        │           └── @ ERBContentNode (location: (1:39)-(1:52))
+        │               ├── tag_opening: "<%=" (location: (1:39)-(1:42))
+        │               ├── content: " "user" " (location: (1:42)-(1:50))
+        │               ├── tag_closing: "%>" (location: (1:50)-(1:52))
+        │               ├── parsed: true
+        │               ├── valid: true
+        │               └── prism_node:
+        │                   └── @ StringNode (location: (1:43)-(1:49))
+        │                       ├── opening_loc: (1:43)-(1:44)
+        │                       ├── content_loc: (1:44)-(1:48)
+        │                       ├── closing_loc: (1:48)-(1:49)
+        │                       └── unescaped: "user"
+        │
+        │
+        └── end_node:
+            └── @ ERBEndNode (location: (1:52)-(1:61))
+                ├── tag_opening: "<%" (location: (1:52)-(1:54))
+                ├── content: " end " (location: (1:54)-(1:59))
+                └── tag_closing: "%>" (location: (1:59)-(1:61))

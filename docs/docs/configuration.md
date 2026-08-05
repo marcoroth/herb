@@ -1,0 +1,555 @@
+# Configuration <Badge type="tip" text="^0.8.0" />
+
+Herb uses a `.herb.yml` configuration file to customize how the tools behave in your project. This configuration is shared across all Herb tools including the linter, formatter, and language server.
+
+## Configuration File Location
+
+The configuration file should be placed in your project root as `.herb.yml`:
+
+```
+your-project/
+├── .herb.yml    # Herb configuration
+├── Gemfile
+├── app/
+└── ...
+```
+
+::: warning Only `.herb.yml` is read
+`.herb.yml` is the only filename Herb reads, following the convention used by Rails and most other Ruby tooling. A file named `.herb.yaml`, `herb.yml`, or `herb.yaml` is ignored, and every Herb tool warns about it so it doesn't look like your configuration is being applied:
+
+```
+⚠ Ignoring /your-project/.herb.yaml: Herb only reads `.herb.yml`. Rename it to `.herb.yml` to apply it.
+```
+:::
+
+## Configuration Priority
+
+Configuration settings are applied in the following order (highest to lowest priority):
+
+1. **Project configuration** (`.herb.yml` file)
+2. **Editor settings** (VS Code workspace/user settings)
+3. **Default settings**
+
+## Basic Configuration
+
+### Default Behavior (No Config File)
+
+If no `.herb.yml` file exists in your project:
+
+- **Language Server**: Uses built-in defaults and works out-of-the-box
+- **Linter**: Enabled with all rules (automatic exclusion of `parser-no-errors` in language server only)
+- **Formatter**: Disabled by default (experimental feature)
+- **Editor settings**: VS Code user/workspace settings are respected
+
+::: tip Recommended for Projects
+If you're using Herb in a project with multiple developers, it's highly recommended to create a `.herb.yml` configuration file and commit it to your repository. This ensures all team members use consistent linting rules and formatting settings, preventing configuration drift and maintaining code quality standards across the project.
+:::
+
+### Creating a Configuration File
+
+To create a `.herb.yml` configuration file in your project, run either CLI tool with the `--init` flag.
+
+Create config using the linter:
+```bash
+herb-lint --init
+```
+
+Or create config using the formatter:
+```bash
+herb-format --init
+```
+
+This will generate a configuration file with sensible defaults:
+
+<<< @/../../javascript/packages/config/src/config-template.yml{yaml}
+
+
+## Command Line Overrides
+
+The CLIs support a `--force` flag to override project configuration.
+
+
+Force linting even if disabled in `.herb.yml`:
+```bash
+herb-lint --force app/views/
+```
+
+Force linting on a file excluded by configuration:
+```bash
+herb-lint --force app/views/excluded-file.html.erb
+```
+
+Force formatting even if disabled in `.herb.yml`:
+```bash
+herb-format --force --check app/views/
+```
+
+When using `--force` on an explicitly specified file that is excluded by configuration patterns, the CLI will show a warning but proceed with processing the file.
+
+The linter CLI also supports an `--only` flag <Badge type="info" text="^0.10.3" /> to run a specific set of rules, ignoring the rule configuration in `.herb.yml`.
+
+Only run the given rules, regardless of how they are configured:
+```bash
+herb-lint --only html-img-require-alt,html-tag-name-lowercase app/views/
+```
+
+Rules passed to `--only` run even when they are disabled, not enabled by default, gated by the `version` in your `.herb.yml`, or excluded through rule-level path patterns. Which files get linted and the configured severities are unaffected.
+
+The `--all-rules` flag <Badge type="info" text="^0.10.3" /> is the counterpart to `--only` and widens the run to every available rule, ignoring the same parts of the rule configuration in `.herb.yml`.
+
+Run every rule, regardless of how it is configured:
+```bash
+herb-lint --all-rules app/views/
+```
+
+Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
+
+Both flags also lower the [`logLevel`](#linter-options) for that run, down to the lowest severity that came up, so the rules you asked to run always get reported instead of being filtered out of the output. Passing `--log-level` explicitly keeps the level you gave it. The summary says so whenever it happens:
+
+```
+  Log level    hint | lowered from warning by --only
+```
+
+## Linter Configuration
+
+Configure the linter behavior and rules:
+
+```yaml [.herb.yml]
+linter:
+  enabled: true  # Enable/disable linter globally
+
+  # # Exit with error code when diagnostics of this severity or higher are present
+  # # Valid values: error (default), warning, info, hint
+  # failLevel: error
+
+  # # Only report diagnostics of this severity or higher
+  # # Valid values: error, warning, info, hint (default)
+  # logLevel: warning
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+    - 'custom/**/*.html'
+
+  # Glob patterns to exclude from linting
+  exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'app/views/admin/**/*'
+
+  rules:
+    # Disable a specific rule
+    erb-no-extra-newline:
+      enabled: false
+
+    # Override rule severity
+    html-tag-name-lowercase:
+      severity: warning  # Options: error, warning, info, hint
+
+    # Rule with file pattern restrictions
+    html-img-require-alt:
+      # Only apply this rule to files matching these patterns
+      only:
+        - 'app/views/**/*'
+      # Don't apply this rule to these files (even if they match 'only')
+      exclude:
+        - 'app/views/admin/**/*'
+
+    # Rule with additive include patterns
+    erb-no-extra-newline:
+      # Apply this rule to additional file patterns (ignored if 'only' is present)
+      include:
+        - 'app/components/**/*'
+      # Exclude specific files from this rule
+      exclude:
+        - 'app/components/legacy/**/*'
+```
+
+### Default File Patterns
+
+By default, Herb processes these file patterns:
+- `**/*.herb`
+- `**/*.html`
+- `**/*.html.erb`
+- `**/*.html.herb`
+- `**/*.html+*.erb`
+- `**/*.rhtml`
+- `**/*.turbo_stream.erb`
+
+And excludes these patterns by default:
+- `coverage/**/*`
+- `log/**/*`
+- `node_modules/**/*`
+- `storage/**/*`
+- `tmp/**/*`
+- `vendor/**/*`
+
+Both `include` and `exclude` patterns are **additive**, they add to the defaults rather than replacing them.
+
+### Linter Options
+
+- **`enabled`**: `true` or `false` - Enable or disable the linter globally
+- **`failLevel`** <Badge type="info" text="v0.8.7+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
+- **`logLevel`** <Badge type="info" text="^0.11.0" />: `error`, `warning`, `info`, or `hint` - Only report diagnostics of this severity or higher (default: `hint`, meaning everything is reported). This affects the CLI output only: lower-severity offenses are still counted in the summary, still respected by `failLevel`, and still shown in your editor, they just aren't printed individually or annotated in CI. Useful for keeping CI output focused on what matters. To hide a rule in the editor as well, use the rule's `severity` option with separate `editor` and `cli` values. Can also be set via `--log-level` CLI flag. Runs that pick their own rules with `--only` or `--all-rules` lower this level automatically, unless `--log-level` is passed explicitly.
+- **`include`**: Array of glob patterns - Additional file patterns to lint (additive to defaults)
+- **`exclude`**: Array of glob patterns - Additional patterns to exclude from linting (additive to defaults)
+
+### Rule Configuration Options
+
+Each rule can be configured with the following options:
+
+- **`enabled`**: `true` or `false` - Enable or disable the rule
+- **`severity`**: `error`, `warning`, `info`, or `hint` - Set the severity level
+- **`include`**: Array of glob patterns - Restrict rule to files matching these patterns (can override parent excludes)
+- **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
+- **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
+
+### Setting the Default for All Rules <Badge type="tip" text="^0.11.0" />
+
+The `all` pseudo rule sets the default `enabled` state for every rule you don't list explicitly. It's the way to opt into a fully explicit rule set without having to know (and repeat) which rules are on by default:
+
+```yaml [.herb.yml]
+linter:
+  enabled: true
+
+  rules:
+    # Turn every rule off ...
+    all:
+      enabled: false
+
+    # ... and opt back in to exactly the ones you want
+    html-no-event-handlers:
+      enabled: true
+
+    html-img-require-alt:
+      enabled: true
+```
+
+Setting `all: enabled: true` does the opposite and turns on every rule, including the ones that are off by default:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    all:
+      enabled: true
+
+    # Individual rules can still be turned back off
+    html-no-title-attribute:
+      enabled: false
+```
+
+A few details worth knowing:
+
+- **Explicit configuration always wins.** A rule that appears in `rules` follows its own `enabled` setting, no matter what `all` says.
+- **Listing a rule without `enabled` enables it.** `html-img-require-alt: { severity: warning }` under `all: enabled: false` turns the rule on, the same way it would without `all`.
+- **`all: enabled: true` bypasses version gating.** Normally the `version` in your `.herb.yml` holds back rules introduced in later releases. Enabling everything means exactly that, so nothing gets held back. Under `all: enabled: false` version gating makes no difference either way, since those rules are off regardless.
+- **`--only` and `--all-rules` still take precedence**, since both flags ignore the rule configuration entirely.
+- Only `enabled` is meaningful on `all`. Other rule options like `severity` or `exclude` aren't inherited by the individual rules.
+
+::: warning
+`all` is a reserved name inside `rules`, it's never treated as an actual rule.
+:::
+
+#### Pattern Precedence
+
+When configuring rule-level file patterns:
+
+1. If **`only`** or **`include`** matches the path: **bypasses parent-level excludes** (`linter.exclude`, `files.exclude`, defaults)
+2. If no `only`/`include` patterns or path doesn't match: respects all parent-level excludes
+3. **`exclude`** is always applied regardless of `include` or `only`
+
+::: tip Overriding Parent Excludes
+Use `rule.include` or `rule.only` to run a specific rule on files that are normally excluded. For example, to lint files in `vendor/` with a specific rule even though `vendor/**/*` is excluded by default:
+
+```yaml
+linter:
+  rules:
+    html-tag-name-lowercase:
+      include:
+        - 'vendor/**/*'
+```
+:::
+
+Example:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    # This rule only runs on component files, excluding legacy ones
+    some-rule:
+      include:
+        - 'app/components/**/*'
+      exclude:
+        - 'app/components/legacy/**/*'
+
+    # This rule only runs on views, with 'only' overriding any includes
+    another-rule:
+      include:
+        - 'app/components/**/*'  # This is ignored because 'only' is present
+      only:
+        - 'app/views/**/*'
+      exclude:
+        - 'app/views/admin/**/*'
+```
+
+## Engine Configuration <Badge type="tip" text="v0.9.0+" />
+
+Configure the template engine behavior:
+
+```yaml [.herb.yml]
+engine:
+  validators:
+    security: true       # Enable/disable security validation (default: true)
+    nesting: true        # Enable/disable HTML nesting validation (default: true)
+    accessibility: true  # Enable/disable accessibility validation (default: true)
+```
+
+The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
+
+### Validators
+
+The engine runs validators on templates during compilation. Each validator can be individually enabled or disabled:
+
+- **`security`**: Detects ERB output tags (`<%= %>`) in unsafe positions like attribute names or attribute positions. Prevents potential XSS vulnerabilities. _(default: `true`)_
+- **`nesting`**: Validates HTML nesting rules, such as block elements inside `<p>`, nested anchors, or interactive elements inside `<button>`. _(default: `true`)_
+- **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
+
+When a validator is disabled (`false`), the engine skips it entirely during compilation. This applies regardless of the `validation_mode` used by the engine.
+
+### Validation Mode
+
+The `validation_mode` controls how the engine handles validation results. This is set programmatically when creating an `Herb::Engine` instance, not in `.herb.yml`:
+
+- **`:raise`** (default): Raises an exception when validation errors are found
+- **`:overlay`**: Renders validation errors as an in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
+- **`:none`**: Skips validation entirely
+
+**Raises on validation errors (default)**
+```ruby
+Herb::Engine.new(source, validation_mode: :raise)
+```
+
+**Shows errors as in-browser overlay**
+```ruby
+Herb::Engine.new(source, validation_mode: :overlay)
+```
+
+**Skips all validation**
+```ruby
+Herb::Engine.new(source, validation_mode: :none)
+```
+
+### Overriding Validators Programmatically
+
+Validator settings from `.herb.yml` can be overridden when creating an engine instance:
+
+**Disable security validator for this template only**
+```ruby
+Herb::Engine.new(source, validators: { security: false })
+```
+
+**Disable all validators**
+```ruby
+Herb::Engine.new(source, validators: {
+  security: false,
+  nesting: false,
+  accessibility: false,
+})
+```
+
+## Formatter Configuration
+
+Configure the formatter behavior:
+
+```yaml [.herb.yml]
+formatter:
+  enabled: false     # Disabled by default (experimental)
+  indentWidth: 2     # Number of spaces for indentation
+  maxLineLength: 80  # Maximum line length before wrapping
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+
+  # Glob patterns to exclude from formatting
+  exclude:
+    - 'app/views/generated/**/*'
+    - 'vendor/**/*'
+```
+
+### Formatter Options
+
+- **`enabled`**: `true` or `false` - Enable or disable the formatter
+- **`indentWidth`**: Number (default: `2`) - Spaces per indent level
+- **`maxLineLength`**: Number (default: `80`) - Maximum line length
+- **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
+- **`exclude`**: Array of glob patterns - Additional patterns to exclude from formatting (additive to defaults)
+
+::: warning Experimental Feature
+The formatter is currently experimental. Enable it in `.herb.yml` and test thoroughly before using in production.
+:::
+
+## Top-Level File Configuration
+
+Global file configuration that applies to both linter and formatter:
+
+```yaml [.herb.yml]
+files:
+  # Additional glob patterns to include (additive to defaults, applies to all tools)
+  include:
+    - '**/*.xml.erb'
+    - '**/*.rss.erb'
+
+  # Additional global exclude patterns (additive to defaults, applies to all tools)
+  exclude:
+    - 'public/**/*'
+    - 'generated/**/*'
+```
+
+### Configuration Merging
+
+Both `include` and `exclude` patterns are **additive** at all levels - your patterns are added to the defaults rather than replacing them.
+
+File patterns are merged in the following order:
+
+1. **Defaults**: Built-in include patterns (`**/*.html.erb`, etc.) and exclude patterns (`node_modules/**/*`, `vendor/**/*`, etc.)
+2. **Top-level `files.include`/`files.exclude`**: Added to defaults
+3. **Tool-level patterns** (e.g., `linter.include`, `linter.exclude`): Added to the combined list
+
+Example:
+
+```yaml [.herb.yml]
+files:
+  include:
+    - '**/*.xml.erb'    # Applies to all tools
+  exclude:
+    - 'public/**/*'     # Added to default excludes for all tools
+
+linter:
+  include:
+    - '**/*.custom.erb' # Only applies to linter
+  exclude:
+    - 'legacy/**/*'     # Added to excludes for linter only
+```
+
+Result for linter:
+- Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
+- Excludes: All defaults + `public/**/*` + `legacy/**/*`
+
+::: tip Including Previously Excluded Files
+If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+:::
+
+## Inspecting Configuration
+
+Use the `bundle exec herb config` command to inspect the resolved configuration and see which files will be processed:
+
+Show general configuration and files:
+
+```bash
+bundle exec herb config
+```
+
+Show configuration for a specific tool:
+```bash
+bundle exec herb config --tool linter
+bundle exec herb config --tool formatter
+```
+
+If you don't specify a path it assume the current directory
+```bash
+bundle exec herb config .
+```
+
+You can also pass in a path to another directory:
+```bash
+bundle exec herb config ../other-project/
+```
+
+### General Configuration
+
+Running `bundle exec herb config .` displays:
+
+- **Project root**: The detected project root directory
+- **Config file**: Path to the `.herb.yml` file (or "(using defaults)" if none)
+- **Include patterns**: All patterns used to find files
+- **Exclude patterns**: All patterns used to exclude files
+- **Files**: List of included and excluded files with their status
+
+Example output:
+
+```
+Herb Configuration
+
+Project root: /path/to/project
+Config file:  /path/to/project/.herb.yml
+
+Include patterns:
+  + **/*.herb
+  + **/*.html.erb
+  + **/*.html
+  + **/*.turbo_stream.erb
+
+Exclude patterns:
+  - coverage/**/*
+  - node_modules/**/*
+  - vendor/**/*
+
+Files (42 included, 5 excluded):
+
+  Included:
+    ✓ app/views/home/index.html.erb
+    ✓ app/views/layouts/application.html.erb
+
+  Excluded:
+    ✗ vendor/bundle/gem/template.html.erb (vendor/**/*)]
+
+Tip: Use --tool linter or --tool formatter to see tool-specific configuration
+```
+
+### Tool-Specific Configuration
+
+Use the `--tool` flag to see configuration for a specific tool:
+
+```bash
+bundle exec herb config . --tool linter
+```
+
+This shows:
+- Combined patterns from `files.*` and `linter.*` (or `formatter.*`)
+- Files that would be processed by that specific tool
+- A warning if the tool is disabled in configuration
+
+Example output:
+
+```
+Herb Configuration for Linter
+
+Project root: /path/to/project
+Config file:  /path/to/project/.herb.yml
+
+Include patterns (files + linter):
+  + **/*.html.erb
+  + **/*.custom.erb
+
+Exclude patterns (files + linter):
+  - node_modules/**/*
+  - vendor/**/*
+  - legacy/**/*
+
+Files for linter (40 included, 7 excluded):
+
+  Included:
+    ✓ app/views/home/index.html.erb
+
+  Excluded:
+    ✗ legacy/old.html.erb (legacy/**/*)
+```
+
+::: tip Debugging Configuration
+The `bundle exec herb config` command is useful for:
+- Verifying your `.herb.yml` is being read correctly
+- Understanding why certain files are included or excluded
+- Debugging tool-specific patterns
+- Confirming the project root detection
+:::

@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0018_expression tag with right trim as no-op for newline control"
+input: "{source: \"2024-07-09 with the filters: \\\"archived:false\\\"<%= -%>.\\n\", locals: {}, options: {}}"
+---
+2024-07-09 with the filters: "archived:false".

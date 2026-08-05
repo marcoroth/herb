@@ -1,0 +1,32 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0036_multi-line begin rescue ensure closed in same ERB tag"
+input: |2-
+<%
+  begin
+    risky_operation
+  rescue StandardError => e
+    handle_error(e)
+  ensure
+    cleanup
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(10:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(9:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     begin
+    │       risky_operation
+    │     rescue StandardError => e
+    │       handle_error(e)
+    │     ensure
+    │       cleanup
+    │     end
+    │   " (location: (1:2)-(9:0))
+    │   ├── tag_closing: "%>" (location: (9:0)-(9:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (9:2)-(10:0))
+        └── content: "\n"

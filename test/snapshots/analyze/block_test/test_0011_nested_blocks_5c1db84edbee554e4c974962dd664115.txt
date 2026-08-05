@@ -1,3 +1,14 @@
+---
+source: "Analyze::BlockTest#test_0011_nested blocks"
+input: |2-
+<% block do %>
+  Level 1
+
+  <% block do %>
+    Level 2
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(7:9))
@@ -16,6 +27,10 @@
     │   │   │   │   └── @ HTMLTextNode (location: (4:16)-(6:2))
     │   │   │   │       └── content: "\n    Level 2\n  "
     │   │   │   │
+    │   │   │   ├── block_arguments: []
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
     │   │   │   └── end_node:
     │   │   │       └── @ ERBEndNode (location: (6:2)-(6:11))
     │   │   │           ├── tag_opening: "<%" (location: (6:2)-(6:4))
@@ -26,6 +41,10 @@
     │   │   └── @ HTMLTextNode (location: (6:11)-(7:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: []
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (7:0)-(7:9))
     │           ├── tag_opening: "<%" (location: (7:0)-(7:2))

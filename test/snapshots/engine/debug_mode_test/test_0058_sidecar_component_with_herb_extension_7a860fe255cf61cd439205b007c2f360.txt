@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0058_sidecar component with herb extension"
+input: "{source: \"<div>Hello</div>\", options: {debug: true, filename: \"app/components/example/component.herb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="component" data-herb-debug-file-name="Example" data-herb-debug-file-relative-path="app/components/example/component.herb" data-herb-debug-file-full-path="app/components/example/component.herb">Hello</div>'.freeze;
+_buf.to_s

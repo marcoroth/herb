@@ -1,0 +1,20 @@
+<% max = 64 -%>
+#ifndef HB_FOREACH_H
+#define HB_FOREACH_H
+
+#define HB_ARG<%= max %>(<%= (1..max).map { |i| "_#{i}" }.join(",") %>,count,...) count
+#define HB_NARGS(...) HB_ARG<%= max %>(__VA_ARGS__,<%= max.downto(1).to_a.join(",") %>)
+
+<% (1..max).each do |i| -%>
+<% if i == 1 -%>
+#define HB_FOR_EACH_1(macro, head) macro(head)
+<% else -%>
+#define HB_FOR_EACH_<%= i %>(macro, head, ...) macro(head), HB_FOR_EACH_<%= i - 1 %>(macro, __VA_ARGS__)
+<% end -%>
+<% end -%>
+
+#define HB_CONCAT(left, right) left ## right
+#define HB_FOR_EACH_N(count) HB_CONCAT(HB_FOR_EACH_, count)
+#define HB_FOR_EACH(macro, ...) HB_FOR_EACH_N(HB_NARGS(__VA_ARGS__))(macro, __VA_ARGS__)
+
+#endif

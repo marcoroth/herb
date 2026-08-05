@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0004_<%== expression %> with escape"
+input: "{source: \"<%== value %>\", options: {escape: true}}"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << (value).to_s;
+_buf.to_s

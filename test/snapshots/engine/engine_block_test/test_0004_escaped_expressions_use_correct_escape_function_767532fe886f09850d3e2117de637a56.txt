@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineBlockTest#test_0004_escaped expressions use correct escape function"
+input: "{source: \"<%== \\\"<script>alert(1)</script>\\\" %>\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << ::Herb::Engine.h(("<script>alert(1)</script>"));
+_buf.to_s

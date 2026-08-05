@@ -1,4 +1,7 @@
-_buf = ::String.new;
- _buf << '<div id=""></div>
+---
+source: "Engine::ExamplesCompilationTest#test_0001_attributes with empty value compilation"
+input: "{source: \"<div id=\\\"\\\"></div>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << '<div id=""></div>
 '.freeze;
 _buf.to_s

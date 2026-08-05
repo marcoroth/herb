@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0005_right trim with whitespace on following line"
+input: "{source: \"before\\n  <% if true -%>\\nafter\\n  <% end -%>\\nfinal\", locals: {}, options: {}}"
+---
+before
+after
+final

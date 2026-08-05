@@ -1,0 +1,111 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0015_p element implicitly closed by ul"
+input: |2-
+<div>
+  <p>Paragraph
+  <ul><li>List item</li></ul>
+</div>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (4 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(3:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:5))
+    │   │   │   │       ├── message: "Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (3:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "p" (location: (2:3)-(2:4))
+    │   │   │   │       └── insertion_point: (3:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(3:2))
+    │   │   │   │       └── content: "Paragraph\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (3:2)-(3:2))
+    │   │   │   │       └── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:29))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "ul" (location: (3:3)-(3:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "ul" (location: (3:3)-(3:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLElementNode (location: (3:6)-(3:24))
+    │   │   │   │       ├── open_tag:
+    │   │   │   │       │   └── @ HTMLOpenTagNode (location: (3:6)-(3:10))
+    │   │   │   │       │       ├── tag_opening: "<" (location: (3:6)-(3:7))
+    │   │   │   │       │       ├── tag_name: "li" (location: (3:7)-(3:9))
+    │   │   │   │       │       ├── tag_closing: ">" (location: (3:9)-(3:10))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── is_void: false
+    │   │   │   │       │
+    │   │   │   │       ├── tag_name: "li" (location: (3:7)-(3:9))
+    │   │   │   │       ├── body: (1 item)
+    │   │   │   │       │   └── @ HTMLTextNode (location: (3:10)-(3:19))
+    │   │   │   │       │       └── content: "List item"
+    │   │   │   │       │
+    │   │   │   │       ├── close_tag:
+    │   │   │   │       │   └── @ HTMLCloseTagNode (location: (3:19)-(3:24))
+    │   │   │   │       │       ├── tag_opening: "</" (location: (3:19)-(3:21))
+    │   │   │   │       │       ├── tag_name: "li" (location: (3:21)-(3:23))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── tag_closing: ">" (location: (3:23)-(3:24))
+    │   │   │   │       │
+    │   │   │   │       ├── is_void: false
+    │   │   │   │       └── element_source: "HTML"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:24)-(3:29))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:24)-(3:26))
+    │   │   │   │       ├── tag_name: "ul" (location: (3:26)-(3:28))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:29)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:6))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "div" (location: (4:2)-(4:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:6)-(5:0))
+        └── content: "\n"

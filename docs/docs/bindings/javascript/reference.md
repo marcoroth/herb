@@ -42,7 +42,7 @@ Learn more on [how to install and load the NPM packages](/bindings/javascript/#i
 - **`Herb.lexFile(path: string): LexResult`**
 - **`Herb.parse(source: string): ParseResult`**
 - **`Herb.parseFile(path: string): ParseResult`**
-- **`Herb.extractRuby(source: string): string`**
+- **`Herb.extractRuby(source: string, options?: ExtractRubyOptions): string`**
 - **`Herb.extractHTML(source: string): string`**
 - **`Herb.version: string`**
 
@@ -134,7 +134,7 @@ console.log(result)
 
 Herb allows you to extract either Ruby or HTML from mixed content.
 
-### `Herb.extractRuby(source)`
+### `Herb.extractRuby(source, options?)`
 
 The `Herb.extractRuby` method allows you to extract only the Ruby parts of an HTML document with embedded Ruby.
 
@@ -148,9 +148,65 @@ const source = "<p>Hello <%= user.name %></p>"
 const ruby = Herb.extractRuby(source)
 
 console.log(ruby);
-// Outputs: "             user.name       "
+// Outputs: "             user.name  ;    "
 ```
 :::
+
+#### Options
+
+```typescript
+interface ExtractRubyOptions {
+  semicolons?: boolean        // default: true
+  comments?: boolean          // default: false
+  preserve_positions?: boolean // default: true
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `semicolons` | `boolean` | `true` | Add ` ;` at the end of each ERB tag to separate statements |
+| `comments` | `boolean` | `false` | Include ERB comments (`<%# %>`) in the output |
+| `preserve_positions` | `boolean` | `true` | Maintain character positions by padding with whitespace |
+
+#### Examples
+
+**Default behavior** (position-preserving with semicolons):
+
+```js
+const source = "<% x = 1 %> <% y = 2 %>"
+
+Herb.extractRuby(source)
+// => "   x = 1  ;    y = 2  ;"
+```
+
+**Without semicolons:**
+
+```js
+Herb.extractRuby(source, { semicolons: false })
+// => "   x = 1       y = 2   "
+```
+
+**Including ERB comments:**
+
+```js
+const source = "<%# comment %>\n<% code %>"
+
+Herb.extractRuby(source, { comments: true })
+// => "  # comment   \n   code  ;"
+```
+
+**Without position preservation** (readable output, each tag on its own line):
+
+```js
+const source = "<%# comment %><%= something %>"
+
+Herb.extractRuby(source, { preserve_positions: false, comments: true })
+// => "# comment \n something "
+```
+
+> [!TIP]
+> Use `preserve_positions: false` when you need readable Ruby output.
+> Use `preserve_positions: true` (default) when you need accurate error position mapping.
 
 ### `Herb.extractHTML(source)`
 

@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0014_Empty CDATA with spaces"
+input: "<![CDATA[   ]]>"
+---
 @ DocumentNode (location: (1:0)-(1:15))
 └── children: (1 item)
     └── @ CDATANode (location: (1:0)-(1:15))

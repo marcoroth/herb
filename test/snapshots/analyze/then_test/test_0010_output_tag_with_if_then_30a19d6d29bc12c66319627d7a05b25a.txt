@@ -1,0 +1,16 @@
+---
+source: "Analyze::ThenTest#test_0010_output tag with if then"
+input: |2-
+<%= if condition then "yes" else "no" end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:44))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " if condition then "yes" else "no" end " (location: (1:3)-(1:42))
+    │   ├── tag_closing: "%>" (location: (1:42)-(1:44))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:44)-(2:0))
+        └── content: "\n"

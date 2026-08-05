@@ -5,7 +5,10 @@ Herb provides official JavaScript bindings as NPM packages, published under the 
 Herb supports both **browser** and **Node.js** environments with separate packages, ensuring optimized compatibility for each platform.
 
 > [!TIP] More Language Bindings
-> Herb also has [bindings for Ruby](/bindings/ruby/)
+> Herb also has bindings for:
+> - [Ruby](/bindings/ruby/)
+> - [Java](/bindings/java/)
+> - [Rust](/bindings/rust/)
 
 ## Installation
 
@@ -107,6 +110,50 @@ Herb.load().then(() => {
 :::
 
 You are now ready to parse HTML+ERB in Node.js.
+
+## Using Unreleased Commits
+
+Each commit on the `main` branch and pull requests with approved reviews are published to [pkg.pr.new](https://pkg.pr.new/~/marcoroth/herb). You can install preview packages directly from commits or PRs:
+
+:::code-group
+```shell [npm]
+npm i https://pkg.pr.new/@herb-tools/core@{commit}
+```
+
+```shell [pnpm]
+pnpm add https://pkg.pr.new/@herb-tools/core@{commit}
+```
+
+```shell [yarn]
+yarn add https://pkg.pr.new/@herb-tools/core@{commit}
+```
+
+```shell [bun]
+bun add https://pkg.pr.new/@herb-tools/core@{commit}
+```
+:::
+
+Replace `{commit}` with the short commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`).
+
+### Running CLI Tools from Previews
+
+You can also run CLI tools directly from preview releases without installing:
+
+:::code-group
+```shell [Linter]
+npx https://pkg.pr.new/@herb-tools/linter@{commit} template.html.erb
+```
+
+```shell [Formatter]
+npx https://pkg.pr.new/@herb-tools/formatter@{commit} template.html.erb
+```
+
+```shell [Language Server]
+npx https://pkg.pr.new/@herb-tools/language-server@{commit} --stdio
+```
+:::
+
+This is perfect for testing bug fixes or new features before they're officially released!
 
 ## Getting Started
 

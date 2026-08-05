@@ -2,7 +2,7 @@ import { describe, test } from "vitest"
 import { HTMLAriaLabelIsWellFormattedRule } from "../../src/rules/html-aria-label-is-well-formatted.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAriaLabelIsWellFormattedRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLAriaLabelIsWellFormattedRule)
 
 describe("html-aria-label-is-well-formatted", () => {
   test("passes for properly formatted aria-label", () => {
@@ -14,37 +14,37 @@ describe("html-aria-label-is-well-formatted", () => {
   })
 
   test("fails for aria-label starting with lowercase", () => {
-    expectError("The `aria-label` attribute value text should be formatted like visual text. Use sentence case (capitalize the first letter).")
+    expectWarning("The `aria-label` attribute value text should be formatted like visual text. Use sentence case (capitalize the first letter).")
     assertOffenses(`<button aria-label="close dialog">X</button>`)
   })
 
   test("fails for aria-label with line breaks", () => {
-    expectError("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
+    expectWarning("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
     assertOffenses(`<button aria-label="Close\ndialog">X</button>`)
   })
 
   test("fails for aria-label with carriage return", () => {
-    expectError("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
+    expectWarning("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
     assertOffenses(`<button aria-label="Close\rdialog">X</button>`)
   })
 
   test("fails for aria-label with HTML entity line breaks", () => {
-    expectError("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
+    expectWarning("The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.")
     assertOffenses(`<button aria-label="Close&#10;dialog">X</button>`)
   })
 
   test("fails for snake_case aria-label", () => {
-    expectError("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+    expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
     assertOffenses(`<button aria-label="close_dialog">X</button>`)
   })
 
   test("fails for kebab-case aria-label", () => {
-    expectError("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+    expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
     assertOffenses(`<button aria-label="close-dialog">X</button>`)
   })
 
   test("fails for camelCase aria-label", () => {
-    expectError("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+    expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
     assertOffenses(`<button aria-label="closeDialog">X</button>`)
   })
 
@@ -61,7 +61,7 @@ describe("html-aria-label-is-well-formatted", () => {
   })
 
   test("handles multiple elements", () => {
-    expectError("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+    expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
     assertOffenses(`
       <button aria-label="Close dialog">X</button>
       <input aria-label="search_field" type="text">
@@ -74,5 +74,35 @@ describe("html-aria-label-is-well-formatted", () => {
 
   test("passes for mixed case attribute name", () => {
     expectNoOffenses(`<button ARIA-LABEL="Close dialog">X</button>`)
+  })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a well-formatted aria-label", () => {
+      expectNoOffenses('<%= tag.div aria: { label: "Close dialog" } %>')
+    })
+
+    test("fails for tag.div with an ID-like aria-label", () => {
+      expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+
+      assertOffenses('<%= tag.div aria: { label: "close_button_label" } %>')
+    })
+
+    test("fails for content_tag with an ID-like aria-label", () => {
+      expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+
+      assertOffenses('<%= content_tag :div, "content", aria: { label: "close_button_label" } %>')
+    })
+
+    test("passes for a dynamic aria-label, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div aria: { label: label_text } %>')
+    })
+
+    test("passes for an interpolated aria-label", () => {
+      expectNoOffenses('<%= tag.div aria: { label: "Close #{name}" } %>')
+    })
+
+    test("passes for a nil aria-label, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div aria: { label: nil } %>')
+    })
   })
 })

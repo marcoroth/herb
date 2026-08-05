@@ -45,5 +45,9 @@ module Lexer
     test "link tag" do
       assert_lexed_snapshot(%(<link href="https://mywebsite.com/style.css" rel="stylesheet">))
     end
+
+    test "dot-notation component tag" do
+      assert_lexed_snapshot("<Dialog.Button></Dialog.Button>")
+    end
   end
 end

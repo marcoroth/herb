@@ -3,6 +3,18 @@
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
+      EXPRESSION_TOKEN_TYPES: untyped
+
+      TRAILING_WHITESPACE: ::Regexp
+
+      TRAILING_INDENTATION: ::Regexp
+
+      TRAILING_INDENTATION_CAPTURE: ::Regexp
+
+      WHITESPACE_ONLY: ::Regexp
+
+      WHITESPACE_ONLY_CAPTURE: ::Regexp
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
@@ -13,6 +25,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_html_conditional_element_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
@@ -21,7 +35,15 @@ module Herb
 
       def visit_html_attribute_value_node: (untyped node) -> untyped
 
+      def visit_erb_open_tag_node: (untyped node) -> untyped
+
+      def visit_html_virtual_close_tag_node: (untyped node) -> untyped
+
+      def visit_ruby_literal_node: (untyped node) -> untyped
+
       def visit_html_close_tag_node: (untyped node) -> untyped
+
+      def visit_html_omitted_close_tag_node: (untyped node) -> untyped
 
       def visit_html_text_node: (untyped node) -> untyped
 
@@ -73,9 +95,15 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+      def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
+
+      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
 
       def current_context: () -> untyped
 
@@ -83,11 +111,14 @@ module Herb
 
       def pop_context: () -> untyped
 
-      def add_context_aware_expression: (untyped code, untyped context) -> untyped
+      # : (untyped node) { () -> untyped } -> untyped
+      def with_element_context: (untyped node) { () -> untyped } -> untyped
 
       def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
+
+      def add_whitespace: (untyped whitespace) -> untyped
 
       def add_code: (untyped code) -> untyped
 
@@ -97,13 +128,51 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
-      def process_erb_output: (untyped opening, untyped code) -> untyped
+      def compact_whitespace_tokens: (untyped tokens) -> untyped
+
+      def adjacent_whitespace?: (untyped tokens, untyped index) -> untyped
+
+      def trailing_whitespace?: (untyped token) -> untyped
+
+      def leading_whitespace?: (untyped token) -> untyped
+
+      def whitespace_before_code_sequence?: (untyped tokens, untyped current_index) -> untyped
+
+      def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
+
+      def process_erb_output: (untyped node, untyped opening, untyped code) -> untyped
+
+      def indicator_for: (untyped type) -> untyped
+
+      def context_aware_context?: (untyped context) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
 
-      def handle_whitespace_trimming: (untyped node) -> untyped
+      def at_line_start?: () -> untyped
+
+      def preceding_token_ends_with_newline?: () -> untyped
+
+      def left_trim?: (untyped node) -> untyped
+
+      def right_trim?: (untyped node) -> untyped
+
+      def last_text_token: () -> untyped
+
+      def extract_leading_space: () -> untyped
+
+      def leading_space_follows_newline?: () -> untyped
+
+      def extract_and_remove_leading_space!: () -> untyped
+
+      def apply_trim: (untyped node, untyped code) -> untyped
+
+      def save_pending_leading_whitespace!: (untyped whitespace) -> untyped
+
+      def restore_pending_leading_whitespace!: () -> untyped
+
+      def remove_trailing_whitespace_from_last_token!: () -> untyped
     end
   end
 end

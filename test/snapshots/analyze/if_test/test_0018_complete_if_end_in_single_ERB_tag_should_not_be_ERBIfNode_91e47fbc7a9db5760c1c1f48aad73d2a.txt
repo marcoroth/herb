@@ -1,0 +1,29 @@
+---
+source: "Analyze::IfTest#test_0018_complete if/end in single ERB tag should not be ERBIfNode"
+input: |2-
+<%
+  if false
+    next
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(5:2))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (1:0)-(5:2))
+    │   │       ├── message: "`<% next %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% next %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     if false
+    │       next
+    │     end
+    │   " (location: (1:2)-(5:0))
+    │   ├── tag_closing: "%>" (location: (5:0)-(5:2))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (5:2)-(6:0))
+        └── content: "\n"

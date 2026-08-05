@@ -1,1 +1,5 @@
+---
+source: "Lexer::LexerTest#test_0002_empty file"
+input: ""
+---
 #<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[0, 0] start=(1:0) end=(1:0)>

@@ -1,8 +1,8 @@
-import { getTagName } from "@herb-tools/core"
-import { BaseRuleVisitor, getAttribute, getAttributeValue, getStaticAttributeValueContent } from "./rule-utils.js"
+import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue, hasAttribute } from "@herb-tools/core"
+import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
 
 class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
@@ -30,10 +30,9 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
   private checkInputTag(node: HTMLOpenTagNode): void {
     if (!this.isInputTag(node) || this.hasAutocomplete(node)) return
 
-    const typeAttribute = getAttribute(node, "type");
-    if (!typeAttribute) return
+    if (hasAttribute(node, "disabled")) return
 
-    const typeValue = getStaticAttributeValueContent(typeAttribute)
+    const typeValue = getStaticAttributeValue(node, "type")
     if (!typeValue) return
 
     if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.has(typeValue)) return
@@ -55,7 +54,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
   }
 
   private isInputTag(node: HTMLOpenTagNode) {
-    const tagName = getTagName(node);
+    const tagName = getTagLocalName(node);
 
     if (tagName === "input") {
       return true
@@ -66,10 +65,18 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
-  name = "html-input-require-autocomplete"
+  static ruleName = "html-input-require-autocomplete"
+  static introducedIn = this.version("0.8.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new HTMLInputRequireAutocompleteVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new HTMLInputRequireAutocompleteVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

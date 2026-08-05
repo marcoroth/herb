@@ -1,0 +1,15 @@
+---
+source: "Engine::DebugModeTest#test_0051_nested math inside div erb expressions do NOT get debug spans inside math"
+input: "{source: \"<div class=\\\"equation\\\">\\n  <p><%= @equation_name %></p>\\n  <math>\\n    <msup>\\n      <mi><%= @base %></mi>\\n      <mn><%= @exponent %></mn>\\n    </msup>\\n  </math>\\n</div>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div class="equation" data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
+  <p><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @equation_name %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="6" style="display: contents;">'.freeze; _buf << (@equation_name).to_s; _buf << '</span></p>
+  <math>
+    <msup>
+      <mi>'.freeze; _buf << (@base).to_s; _buf << '</mi>
+      <mn>'.freeze; _buf << (@exponent).to_s; _buf << '</mn>
+    </msup>
+  </math>
+</div>
+'.freeze;
+_buf.to_s

@@ -1,3 +1,12 @@
+---
+source: "Analyze::BlockTest#test_0004_block wrapped in element"
+input: |2-
+<h1>
+  <% block do %>
+    Content
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:5))
@@ -22,6 +31,10 @@
     │   │   │   │   └── @ HTMLTextNode (location: (2:16)-(4:2))
     │   │   │   │       └── content: "\n    Content\n  "
     │   │   │   │
+    │   │   │   ├── block_arguments: []
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
     │   │   │   └── end_node:
     │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
     │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
@@ -40,7 +53,7 @@
     │   │       └── tag_closing: ">" (location: (5:4)-(5:5))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:5)-(6:0))
         └── content: "\n"

@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0022_empty attributes with whitespace around equals"
+input: |2-
+<div data-empty  =  ""     title  =  "">content</div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:53))
@@ -62,7 +68,7 @@
     │   │       └── tag_closing: ">" (location: (1:52)-(1:53))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:53)-(2:0))
         └── content: "\n"

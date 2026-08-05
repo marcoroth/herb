@@ -1,0 +1,24 @@
+---
+source: "Parser::ParseRubyTest#test_0002_parse_ruby class definition"
+input: "class Foo; end"
+---
+@ ProgramNode (location: (1,0)-(1,14))
+├── flags: ∅
+├── locals: []
+└── statements:
+    @ StatementsNode (location: (1,0)-(1,14))
+    ├── flags: ∅
+    └── body: (length: 1)
+        └── @ ClassNode (location: (1,0)-(1,14))
+            ├── flags: newline
+            ├── locals: []
+            ├── class_keyword_loc: (1,0)-(1,5) = "class"
+            ├── constant_path:
+            │   @ ConstantReadNode (location: (1,6)-(1,9))
+            │   ├── flags: ∅
+            │   └── name: :Foo
+            ├── inheritance_operator_loc: ∅
+            ├── superclass: ∅
+            ├── body: ∅
+            ├── end_keyword_loc: (1,11)-(1,14) = "end"
+            └── name: :Foo

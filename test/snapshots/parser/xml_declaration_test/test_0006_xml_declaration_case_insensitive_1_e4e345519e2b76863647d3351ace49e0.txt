@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0006_xml declaration case insensitive 1"
+input: "<?xml version=\"1.0\"?>"
+---
 @ DocumentNode (location: (1:0)-(1:21))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:21))

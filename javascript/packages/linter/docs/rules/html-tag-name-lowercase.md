@@ -33,7 +33,7 @@ This rule does not apply to child elements within `<svg>` tags, as SVG element n
 ```erb
 <div class="container"></div>
 
-<input type="text" name="username">
+<input type="text" name="username" autocomplete="off">
 
 <span>Label</span>
 
@@ -45,7 +45,7 @@ This rule does not apply to child elements within `<svg>` tags, as SVG element n
 ```erb
 <DIV class="container"></DIV>
 
-<Input type="text" name="username">
+<Input type="text" name="username" autocomplete="off">
 
 <Span>Label</Span>
 

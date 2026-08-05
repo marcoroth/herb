@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0029_script tag with only ERB-like characters"
+input: "<script>var s = \"<%\"; var e = \"%>\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:44))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:44))
@@ -32,4 +36,4 @@
         │       └── tag_closing: ">" (location: (1:43)-(1:44))
         │
         ├── is_void: false
-        └── source: "HTML"
+        └── element_source: "HTML"

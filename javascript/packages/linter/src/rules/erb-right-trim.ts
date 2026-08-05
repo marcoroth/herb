@@ -1,8 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { isERBOutputNode } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBNode, ParseResult } from "@herb-tools/core"
 
 interface ERBRightTrimAutofixContext extends BaseAutofixContext {
@@ -20,7 +19,6 @@ class ERBRightTrimVisitor extends BaseRuleVisitor<ERBRightTrimAutofixContext> {
     this.addOffense(
       "Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.",
       node.tag_closing.location,
-      "error",
       { node }
     )
   }
@@ -28,10 +26,18 @@ class ERBRightTrimVisitor extends BaseRuleVisitor<ERBRightTrimAutofixContext> {
 
 export class ERBRightTrimRule extends ParserRule<ERBRightTrimAutofixContext> {
   static autocorrectable = true
-  name = "erb-right-trim"
+  static ruleName = "erb-right-trim"
+  static introducedIn = this.version("0.7.5")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<ERBRightTrimAutofixContext>[] {
-    const visitor = new ERBRightTrimVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBRightTrimAutofixContext>[] {
+    const visitor = new ERBRightTrimVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0027_ternary does not trigger error"
+input: |2-
+<%= condition ? "yes" : "no" %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:31))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " condition ? "yes" : "no" " (location: (1:3)-(1:29))
+    │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:31)-(2:0))
+        └── content: "\n"

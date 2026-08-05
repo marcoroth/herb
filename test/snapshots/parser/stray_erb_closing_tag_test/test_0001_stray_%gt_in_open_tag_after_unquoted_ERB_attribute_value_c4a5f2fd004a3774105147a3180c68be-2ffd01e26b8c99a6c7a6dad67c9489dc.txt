@@ -1,0 +1,49 @@
+---
+source: "Parser::StrayERBClosingTagTest#test_0001_stray %> in open tag after unquoted ERB attribute value"
+input: |2-
+<div id=<%= dom_id(@slot) %> %>
+options: {strict: false}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (1 item)
+    └── @ HTMLOpenTagNode (location: (1:0)-(2:0))
+        ├── errors: (2 errors)
+        │   ├── @ StrayERBClosingTagError (location: (1:29)-(1:31))
+        │   │   └── message: "Stray `%>` found at (1:29). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+        │   │
+        │   └── @ UnclosedOpenTagError (location: (1:1)-(2:0))
+        │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+        │       └── tag_name: "div" (location: (1:1)-(1:4))
+        │
+        ├── tag_opening: "<" (location: (1:0)-(1:1))
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── tag_closing: ∅
+        ├── children: (2 items)
+        │   ├── @ HTMLAttributeNode (location: (1:5)-(1:28))
+        │   │   ├── name:
+        │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:7))
+        │   │   │       └── children: (1 item)
+        │   │   │           └── @ LiteralNode (location: (1:5)-(1:7))
+        │   │   │               └── content: "id"
+        │   │   │
+        │   │   │
+        │   │   ├── equals: "=" (location: (1:7)-(1:8))
+        │   │   └── value:
+        │   │       └── @ HTMLAttributeValueNode (location: (1:8)-(1:28))
+        │   │           ├── open_quote: ∅
+        │   │           ├── children: (1 item)
+        │   │           │   └── @ ERBContentNode (location: (1:8)-(1:28))
+        │   │           │       ├── tag_opening: "<%=" (location: (1:8)-(1:11))
+        │   │           │       ├── content: " dom_id(@slot) " (location: (1:11)-(1:26))
+        │   │           │       ├── tag_closing: "%>" (location: (1:26)-(1:28))
+        │   │           │       ├── parsed: true
+        │   │           │       └── valid: true
+        │   │           │
+        │   │           ├── close_quote: ∅
+        │   │           └── quoted: false
+        │   │
+        │   │
+        │   └── @ LiteralNode (location: (1:29)-(1:31))
+        │       └── content: "%>"
+        │
+        └── is_void: false

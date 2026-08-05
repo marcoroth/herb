@@ -121,7 +121,7 @@ export class SyntaxRenderer {
     let highlighted = ""
     let lastEnd = 0
 
-    let state: SyntaxRenderState = {
+    const state: SyntaxRenderState = {
       inTag: false,
       inQuotes: false,
       quoteChar: "",
@@ -281,7 +281,7 @@ export class SyntaxRenderer {
     if (!this.colors) {
       return null
     }
-    
+
     const color = this.colors[token.type as keyof ColorScheme]
     return color !== undefined ? color : null
   }

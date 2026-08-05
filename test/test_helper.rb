@@ -9,7 +9,11 @@ require "minitest/spec"
 
 require "active_support/core_ext/string/output_safety"
 
-require_relative "fork_helper" if ENV["NO_TIMEOUT"].nil?
+if ENV["FORK_TESTS"]
+  require_relative "fork_helper"
+else
+  puts "TIP: If a segfault in the native C extension crashes the test runner, run with FORK_TESTS=true to isolate each test in a forked process and identify which test causes the crash."
+end
 require_relative "snapshot_utils"
 
 Minitest::Spec::DSL.send(:alias_method, :test, :it)

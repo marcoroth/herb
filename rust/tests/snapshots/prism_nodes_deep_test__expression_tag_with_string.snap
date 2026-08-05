@@ -1,0 +1,19 @@
+---
+source: tests/prism_nodes_deep_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:14))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:14))
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " \"hello\" " (location: (1:3)-(1:12))
+        ├── tag_closing: "%>" (location: (1:12)-(1:14))
+        ├── parsed: true
+        ├── valid: true
+        └── prism_node: 
+            └── @ StringNode (location: (0,4)-(0,11))
+                ├── StringFlags: nil
+                ├── opening_loc: (0,4)-(0,5) = "\""
+                ├── content_loc: (0,5)-(0,10) = "hello"
+                ├── closing_loc: (0,10)-(0,11) = "\""
+                └── unescaped: "hello"

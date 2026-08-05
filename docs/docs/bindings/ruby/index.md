@@ -7,7 +7,10 @@ outline: deep
 Herb is bundled and packaged up as a precompiled RubyGem and available to be installed from [RubyGems.org](https://rubygems.org).
 
 > [!TIP] More Language Bindings
-> Herb also has [bindings for JavaScript/Node.js](/bindings/javascript/)
+> Herb also has bindings for:
+> - [JavaScript/Node.js](/bindings/javascript/)
+> - [Java](/bindings/java/)
+> - [Rust](/bindings/rust/)
 
 ## Installation
 

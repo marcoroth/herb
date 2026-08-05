@@ -1,0 +1,14 @@
+---
+source: tests/snapshot_test.rs
+expression: result
+---
+<input required />
+
+               
+  <h1 class="bg-green-500 text-gray">
+                  
+  </h1>
+          
+  <h1 class="bg-red-500 text-black">
+    Invalid
+  </h1>

@@ -4,8 +4,10 @@ module Herb
   class ParseResult < Result
     attr_reader value: Herb::AST::DocumentNode
 
-    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
-    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+    attr_reader options: Herb::ParserOptions
+
+    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
+    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
 
     # : () -> Array[Herb::Errors::Error]
     def errors: () -> Array[Herb::Errors::Error]

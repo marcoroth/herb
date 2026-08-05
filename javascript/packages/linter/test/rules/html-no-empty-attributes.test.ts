@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLNoEmptyAttributesRule } from "../../src/rules/html-no-empty-attributes.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -142,5 +143,85 @@ describe("html-no-empty-attributes", () => {
   test("fails for data-turbo-permanent with explicit empty value", () => {
     expectWarning('Data attribute `data-turbo-permanent` should not have an empty value. Either provide a meaningful value or use `data-turbo-permanent` instead of `data-turbo-permanent=""`.')
     assertOffenses(`<div data-turbo-permanent="">Content</div>`)
+  })
+
+  test("passes for class with ERB control flow containing static text", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> valid <% else %> error <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("passes for class with ERB control flow containing output tags", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> <%= valid %> <% else %> <%= error %> <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("fails for class with ERB control flow containing only non-output tags", () => {
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+
+    assertOffenses(dedent`
+      <h1 class="<% if valid? %> <% no_op %> <% else %> <% no_op %> <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("passes for attribute containing an escaped ERB tag", () => {
+    expectNoOffenses(dedent`
+      <div class="<%%= form_class %>">Content</div>
+    `)
+  })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a non-empty attribute", () => {
+      expectNoOffenses('<%= tag.div class: "container" %>')
+    })
+
+    test("fails for tag.div with an empty attribute", () => {
+      expectWarning("Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= tag.div class: "" %>')
+    })
+
+    test("passes for an empty data attribute, which can't be written without a value", () => {
+      expectNoOffenses('<%= tag.div data: { foo: "" } %>')
+    })
+
+    test("passes for an empty data attribute written as a dasherized string key", () => {
+      expectNoOffenses('<%= tag.div "data-foo": "" %>')
+    })
+
+    test("fails for an empty aria attribute, which has no valueless form in HTML either", () => {
+      expectWarning("Attribute `aria-label` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= tag.div aria: { label: "" } %>')
+    })
+
+    test("fails for content_tag with an empty attribute", () => {
+      expectWarning("Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.")
+
+      assertOffenses('<%= content_tag :div, "content", class: "" %>')
+    })
+
+    test("passes for a dynamic value, which must not be read as an empty one", () => {
+      expectNoOffenses('<%= tag.div class: value %>')
+    })
+
+    test("passes for an interpolated value", () => {
+      expectNoOffenses('<%= tag.div class: "btn-#{kind}" %>')
+    })
+
+    test("passes for a nil value, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div class: nil %>')
+    })
+
+    test("passes for a nil data value, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div data: { foo: nil } %>')
+    })
   })
 })

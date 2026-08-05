@@ -32,21 +32,27 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version-file: ".node-version"
           cache: "yarn"
 
       - name: Add LLVM apt Repo
         run: |-
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
           sudo apt update
 
       - name: Install APT dependencies
-        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+        run: grep -v emscripten Aptfile | xargs sudo apt-get install -y --no-install-recommends
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.2
+          actions-cache-folder: emsdk-cache-deploy
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -65,14 +71,17 @@ jobs:
       - name: Yarn install
         run: yarn install --frozen-lockfile
 
+      - name: Build tailwind-class-sorter package
+        run: yarn nx build @herb-tools/tailwind-class-sorter
+
       - name: Build all JavaScript packages
         run: yarn build
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs/.vitepress/dist
 
@@ -89,4 +98,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

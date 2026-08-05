@@ -1,0 +1,22 @@
+---
+source: "Parser::ERBTest#test_0045_inline ruby comment with spaces"
+input: "<%  # Comment %> <% code %>"
+---
+@ DocumentNode (location: (1:0)-(1:27))
+└── children: (3 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:16))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "  # Comment " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (1:16)-(1:17))
+    │   └── content: " "
+    │
+    └── @ ERBContentNode (location: (1:17)-(1:27))
+        ├── tag_opening: "<%" (location: (1:17)-(1:19))
+        ├── content: " code " (location: (1:19)-(1:25))
+        ├── tag_closing: "%>" (location: (1:25)-(1:27))
+        ├── parsed: true
+        └── valid: true

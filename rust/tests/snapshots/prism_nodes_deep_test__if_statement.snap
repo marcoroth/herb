@@ -1,0 +1,48 @@
+---
+source: tests/prism_nodes_deep_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:34))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:34))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true " (location: (1:2)-(1:11))
+        ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── then_keyword: ∅
+        ├── prism_node: 
+        │   └── @ IfNode (location: (0,3)-(0,31))
+        │       ├── if_keyword_loc: (0,3)-(0,5) = "if"
+        │       ├── predicate:
+        │       │   @ TrueNode (location: (0,6)-(0,10))
+        │       ├── then_keyword_loc: nil
+        │       ├── statements:
+        │       │   @ StatementsNode (location: (0,17)-(0,22))
+        │       │   └── body: (length: 1)
+        │       │       └── @ StringNode (location: (0,17)-(0,22))
+        │       │           ├── StringFlags: nil
+        │       │           ├── opening_loc: (0,17)-(0,18) = "\""
+        │       │           ├── content_loc: (0,18)-(0,21) = "yes"
+        │       │           ├── closing_loc: (0,21)-(0,22) = "\""
+        │       │           └── unescaped: "yes"
+        │       ├── subsequent: nil
+        │       └── end_keyword_loc: (0,28)-(0,31) = "end"
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:13)-(1:25))
+        │       ├── tag_opening: "<%=" (location: (1:13)-(1:16))
+        │       ├── content: " \"yes\" " (location: (1:16)-(1:23))
+        │       ├── tag_closing: "%>" (location: (1:23)-(1:25))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ StringNode (location: (0,17)-(0,22))
+        │               ├── StringFlags: nil
+        │               ├── opening_loc: (0,17)-(0,18) = "\""
+        │               ├── content_loc: (0,18)-(0,21) = "yes"
+        │               ├── closing_loc: (0,21)-(0,22) = "\""
+        │               └── unescaped: "yes"
+        ├── subsequent: ∅
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:25)-(1:34))
+                ├── tag_opening: "<%" (location: (1:25)-(1:27))
+                ├── content: " end " (location: (1:27)-(1:32))
+                └── tag_closing: "%>" (location: (1:32)-(1:34))

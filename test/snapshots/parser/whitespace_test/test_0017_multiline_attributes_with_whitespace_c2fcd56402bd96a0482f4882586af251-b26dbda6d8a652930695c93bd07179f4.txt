@@ -1,3 +1,11 @@
+---
+source: "Parser::WhitespaceTest#test_0017_multiline attributes with whitespace"
+input: |2-
+<div
+  class="test"
+  id="foo"  >content</div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:26))
@@ -79,7 +87,7 @@
     │   │       └── tag_closing: ">" (location: (3:25)-(3:26))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:26)-(4:0))
         └── content: "\n"

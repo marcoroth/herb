@@ -1,3 +1,7 @@
+---
+source: "Lexer::CDATATest#test_0001_basic CDATA section"
+input: "<![CDATA[]]>"
+---
 #<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
 #<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[9, 12] start=(1:9) end=(1:12)>
 #<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[12, 12] start=(1:12) end=(1:12)>

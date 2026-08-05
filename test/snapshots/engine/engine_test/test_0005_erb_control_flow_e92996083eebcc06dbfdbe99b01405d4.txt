@@ -1,8 +1,10 @@
-_buf = ::String.new;
- if active?; _buf << '
-  <span>Active</span>
-'.freeze; else; _buf << '
-  <span>Inactive</span>
-'.freeze; end; _buf << '
-'.freeze;
+---
+source: "Engine::EngineTest#test_0005_erb control flow"
+input: "{source: \"<% if active? %>\\n  <span>Active</span>\\n<% else %>\\n  <span>Inactive</span>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; if active? 
+ _buf << '  <span>Active</span>
+'.freeze; else 
+ _buf << '  <span>Inactive</span>
+'.freeze; end 
 _buf.to_s

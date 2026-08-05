@@ -1,0 +1,79 @@
+---
+source: "Parser::Prism::PrismNodesTest#test_0027_case/in pattern matching"
+input: "<% case data %><% in { name: } %><%= name %><% end %>"
+options: {prism_nodes: true}
+---
+@ DocumentNode (location: (1:0)-(1:53))
+└── children: (1 item)
+    └── @ ERBCaseMatchNode (location: (1:0)-(1:53))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " case data " (location: (1:2)-(1:13))
+        ├── tag_closing: "%>" (location: (1:13)-(1:15))
+        ├── children: []
+        ├── prism_node:
+        │   └── @ CaseMatchNode (location: (1:3)-(1:50))
+        │       ├── predicate:
+        │       │   └── @ CallNode (location: (1:8)-(1:12))
+        │       │       ├── receiver: ∅
+        │       │       ├── call_operator_loc: ∅
+        │       │       ├── name: :data
+        │       │       ├── message_loc: (1:8)-(1:12)
+        │       │       ├── opening_loc: ∅
+        │       │       ├── arguments: ∅
+        │       │       ├── closing_loc: ∅
+        │       │       ├── equal_loc: ∅
+        │       │       └── block: ∅
+        │       ├── conditions: (1 item)
+        │       │   └── @ InNode (location: (1:18)-(1:30))
+        │       │       ├── pattern:
+        │       │       │   └── @ HashPatternNode (location: (1:21)-(1:30))
+        │       │       │       ├── constant: ∅
+        │       │       │       ├── elements: (1 item)
+        │       │       │       │   └── @ AssocNode (location: (1:23)-(1:28))
+        │       │       │       │       ├── key:
+        │       │       │       │       │   └── @ SymbolNode (location: (1:23)-(1:28))
+        │       │       │       │       │       ├── opening_loc: ∅
+        │       │       │       │       │       ├── value_loc: (1:23)-(1:27)
+        │       │       │       │       │       ├── closing_loc: (1:27)-(1:28)
+        │       │       │       │       │       └── unescaped: "name"
+        │       │       │       │       ├── value:
+        │       │       │       │       │   └── @ ImplicitNode (location: (1:23)-(1:27))
+        │       │       │       │       │       └── value:
+        │       │       │       │       │           └── @ LocalVariableTargetNode (location: (1:23)-(1:27))
+        │       │       │       │       │               ├── name: :name
+        │       │       │       │       │               └── depth: 0
+        │       │       │       │       └── operator_loc: ∅
+        │       │       │       ├── rest: ∅
+        │       │       │       ├── opening_loc: (1:21)-(1:22)
+        │       │       │       └── closing_loc: (1:29)-(1:30)
+        │       │       ├── statements: ∅
+        │       │       ├── in_loc: (1:18)-(1:20)
+        │       │       └── then_loc: ∅
+        │       ├── else_clause: ∅
+        │       ├── case_keyword_loc: (1:3)-(1:7)
+        │       └── end_keyword_loc: (1:47)-(1:50)
+        ├── conditions: (1 item)
+        │   └── @ ERBInNode (location: (1:15)-(1:33))
+        │       ├── tag_opening: "<%" (location: (1:15)-(1:17))
+        │       ├── content: " in { name: } " (location: (1:17)-(1:31))
+        │       ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        │       ├── then_keyword: ∅
+        │       └── statements: (1 item)
+        │           └── @ ERBContentNode (location: (1:33)-(1:44))
+        │               ├── tag_opening: "<%=" (location: (1:33)-(1:36))
+        │               ├── content: " name " (location: (1:36)-(1:42))
+        │               ├── tag_closing: "%>" (location: (1:42)-(1:44))
+        │               ├── parsed: true
+        │               ├── valid: true
+        │               └── prism_node:
+        │                   └── @ LocalVariableReadNode (location: (1:37)-(1:41))
+        │                       ├── name: :name
+        │                       └── depth: 0
+        │
+        │
+        ├── else_clause: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:44)-(1:53))
+                ├── tag_opening: "<%" (location: (1:44)-(1:46))
+                ├── content: " end " (location: (1:46)-(1:51))
+                └── tag_closing: "%>" (location: (1:51)-(1:53))

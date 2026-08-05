@@ -1,0 +1,25 @@
+---
+source: "Analyze::StrictLocalsTest#test_0011_optional local with integer default"
+input: |2-
+<%# locals: (count: 0) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:25))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (count: 0) " (location: (1:3)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   └── locals: (1 item)
+    │       └── @ RubyParameterNode (location: (1:13)-(1:21))
+    │           ├── name: "count" (location: (1:13)-(1:19))
+    │           ├── default_value:
+    │           │   └── @ RubyLiteralNode (location: (1:20)-(1:21))
+    │           │       └── content: "0"
+    │           │
+    │           ├── kind: "keyword"
+    │           └── required: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:25)-(2:0))
+        └── content: "\n"

@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("Document-level formatting", () => {
   beforeAll(async () => {
@@ -14,6 +16,7 @@ describe("Document-level formatting", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves newline between ERB assignment and HTML element", () => {
@@ -147,7 +150,6 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% page_title = "User Profile" %>
-
       <% user_data = { name: "John", age: 30 } %>
 
       <!DOCTYPE html>
@@ -194,23 +196,13 @@ describe("Document-level formatting", () => {
   })
 
   test("handles ERB loops with proper spacing", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <% items = [1, 2, 3] %>
 
       <% items.each do |item| %>
         <div class="item">
           <span><%= item %></span>
         </div>
-      <% end %>
-
-      <div class="footer">Done</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
-      <% items = [1, 2, 3] %>
-
-      <% items.each do |item| %>
-        <div class="item"><span><%= item %></span></div>
       <% end %>
 
       <div class="footer">Done</div>
@@ -236,9 +228,7 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <h1>Title</h1>
-
       <p>Content</p>
-
       <footer>Footer</footer>
     `)
   })
@@ -351,19 +341,14 @@ describe("Document-level formatting", () => {
     `)
   })
 
-  test("formats regular HTML elements in multiline when attributes > 3", () => {
+  test("keeps opening tag inline when attributes fit within maxLineLength", () => {
     const source = dedent`
       <div id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
     `
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div
-        id="element"
-        class="bg-gray-300"
-        another="attribute"
-        final="one"
-      >
+      <div id="element" class="bg-gray-300" another="attribute" final="one">
         Content
       </div>
     `)
@@ -484,16 +469,13 @@ describe("Document-level formatting", () => {
   })
 
   test("preserves inline opening tag for block elements with few attributes", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div class="flex flex-col">
         <h3 class="line-clamp-1">
           <pre>Content</pre>
         </h3>
       </div>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("split ERB tag if it doesn't fit on current line", () => {
@@ -692,8 +674,7 @@ describe("Document-level formatting", () => {
                 </h1>
 
                 <h2 class="text-inherit opacity-60 text-sm line-clamp-1">
-                  <%= event.static_metadata.location %> •
-                  <%= event.formatted_dates %>
+                  <%= event.static_metadata.location %> • <%= event.formatted_dates %>
                 </h2>
 
                 <h2 class="text-inherit font-medium text-sm line-clamp-3 hidden lg:block">
@@ -979,5 +960,68 @@ describe("Document-level formatting", () => {
       More text with    multiple    spaces
       </pre>
     `)
+  })
+
+  describe("text-flow run on a line after a block sibling", () => {
+    test("keeps an inline element glued to text after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<span>z</span>
+      `)
+    })
+
+    test("keeps an inline element glued inside punctuation after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y (<span>z</span>) done
+      `)
+    })
+
+    test("keeps an inline element glued after a control-flow block sibling", () => {
+      expectFormattedToMatch(dedent`
+        <% if @a %>
+          <div>x</div>
+        <% end %>
+        y and<span>z</span>
+      `)
+    })
+
+    test("keeps a short line with a trailing word intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %> tail
+      `)
+    })
+
+    test("keeps a short line with multiple output tags intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %> plus <%= @w %>
+      `)
+    })
+
+    test("keeps a line starting with an output tag intact", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        <%= @z %> trailing text
+      `)
+    })
+
+    test("keeps a blank line between the block element and the run", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+
+        y and <%= @z %> tail
+      `)
+    })
+
+    test("lays out runs between block siblings independently", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<span>z</span>
+        <div>w</div>
+        a<% if @b %>c<% end %>d
+      `)
+    })
   })
 })

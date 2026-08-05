@@ -7,6 +7,8 @@ import {
   isERBControlFlowNode,
   hasERBContent,
   hasERBOutput,
+  isDynamicOutputNode,
+  hasDynamicOutput,
   filterERBContentNodes,
   getStaticStringFromNodes,
   getStaticContentFromNodes,
@@ -15,32 +17,43 @@ import {
   getValidatableStaticContent,
   getCombinedStringFromNodes,
   hasStaticAttributeName,
-  hasDynamicAttributeName,
+  hasDynamicAttributeNameNode,
   getStaticAttributeName,
-  getCombinedAttributeName
+  getCombinedAttributeName,
+  findParentArray,
+  getAttributes,
+  getAttribute,
+  Location,
+  HTMLAttributeNameNode
 } from "../src"
 
-import type { Node, LiteralNode, ERBContentNode, HTMLAttributeNameNode } from "../src/nodes.js"
+import type { Node, LiteralNode, ERBContentNode, RubyLiteralNode } from "../src/nodes.js"
 
 describe("ast-utils", () => {
   const createLiteralNode = (content: string): LiteralNode => ({
     type: "AST_LITERAL_NODE",
     content,
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    location: Location.from(1, 1, 1, 1)
   })
 
   const createERBContentNode = (tagOpening: string, content: string = "", tagClosing: string = "%>"): ERBContentNode => ({
     type: "AST_ERB_CONTENT_NODE",
-    tag_opening: { type: "AST_TOKEN", value: tagOpening, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } },
-    content: content ? { type: "AST_TOKEN", value: content, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } } : undefined,
-    tag_closing: { type: "AST_TOKEN", value: tagClosing, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } },
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    tag_opening: { type: "AST_TOKEN", value: tagOpening, location: Location.from(1, 1, 1, 1) },
+    content: content ? { type: "AST_TOKEN", value: content, location: Location.from(1, 1, 1, 1) } : undefined,
+    tag_closing: { type: "AST_TOKEN", value: tagClosing, location: Location.from(1, 1, 1, 1) },
+    location: Location.from(1, 1, 1, 1)
+  })
+
+  const createRubyLiteralNode = (content: string): RubyLiteralNode => ({
+    type: "AST_RUBY_LITERAL_NODE",
+    content,
+    location: Location.from(1, 1, 1, 1)
   })
 
   const createAttributeNameNode = (children: Node[]): HTMLAttributeNameNode => ({
     type: "AST_HTML_ATTRIBUTE_NAME_NODE",
     children,
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    location: Location.from(1, 1, 1, 1)
   })
 
   describe("isLiteralNode", () => {
@@ -177,6 +190,60 @@ describe("ast-utils", () => {
 
       expect(hasERBOutput(nodes)).toBe(false)
     })
+
+    test("returns false for Ruby literals from Action View helper attributes", () => {
+      const nodes = [createRubyLiteralNode("user.name"), createLiteralNode("-pending")]
+
+      expect(hasERBOutput(nodes)).toBe(false)
+    })
+  })
+
+  describe("isDynamicOutputNode", () => {
+    test("returns true for output ERB nodes", () => {
+      expect(isDynamicOutputNode(createERBContentNode("<%=", "name"))).toBe(true)
+    })
+
+    test("returns true for Ruby literal nodes", () => {
+      expect(isDynamicOutputNode(createRubyLiteralNode("user.name"))).toBe(true)
+    })
+
+    test("returns false for control ERB nodes", () => {
+      expect(isDynamicOutputNode(createERBContentNode("<%", "if condition"))).toBe(false)
+    })
+
+    test("returns false for literal nodes", () => {
+      expect(isDynamicOutputNode(createLiteralNode("hello"))).toBe(false)
+    })
+  })
+
+  describe("hasDynamicOutput", () => {
+    test("returns true when array contains output ERB nodes", () => {
+      const nodes = [createLiteralNode("hello"), createERBContentNode("<%=", "name")]
+
+      expect(hasDynamicOutput(nodes)).toBe(true)
+    })
+
+    test("returns true when array contains Ruby literal nodes", () => {
+      const nodes = [createRubyLiteralNode("user.name"), createLiteralNode("-pending")]
+
+      expect(hasDynamicOutput(nodes)).toBe(true)
+    })
+
+    test("returns false when array contains only control ERB", () => {
+      const nodes = [createLiteralNode("hello"), createERBContentNode("<%", "if condition")]
+
+      expect(hasDynamicOutput(nodes)).toBe(false)
+    })
+
+    test("returns false when array contains only literals", () => {
+      const nodes = [createLiteralNode("hello"), createLiteralNode(" world")]
+
+      expect(hasDynamicOutput(nodes)).toBe(false)
+    })
+
+    test("returns false for empty array", () => {
+      expect(hasDynamicOutput([])).toBe(false)
+    })
   })
 
   describe("filterERBContentNodes", () => {
@@ -297,6 +364,18 @@ describe("ast-utils", () => {
 
       expect(getValidatableStaticContent(nodes)).toBe("")
     })
+
+    test("returns null when contains a Ruby literal, so a dynamic Action View helper value isn't mistaken for an empty one", () => {
+      const nodes = [createRubyLiteralNode("level")]
+
+      expect(getValidatableStaticContent(nodes)).toBe(null)
+    })
+
+    test("returns null when mixing literals with a Ruby literal", () => {
+      const nodes = [createLiteralNode("btn-"), createRubyLiteralNode("kind")]
+
+      expect(getValidatableStaticContent(nodes)).toBe(null)
+    })
   })
 
   describe("getCombinedStringFromNodes", () => {
@@ -321,7 +400,7 @@ describe("ast-utils", () => {
     test("handles unknown node types", () => {
       const unknownNode: Node = {
         type: "UNKNOWN_NODE" as any,
-        location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+        location: Location.from(1, 1, 1, 1)
       }
 
       const nodes = [createLiteralNode("test"), unknownNode]
@@ -357,14 +436,14 @@ describe("ast-utils", () => {
     })
   })
 
-  describe("hasDynamicAttributeName", () => {
+  describe("hasDynamicAttributeNameNode", () => {
     test("returns true for attribute with ERB children", () => {
       const attributeNode = createAttributeNameNode([
         createLiteralNode("data-"),
         createERBContentNode("<%=", "name")
       ])
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(true)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(true)
     })
 
     test("returns false for attribute with only literal children", () => {
@@ -373,14 +452,14 @@ describe("ast-utils", () => {
         createLiteralNode("-test")
       ])
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(false)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
 
     test("returns false for attribute without children", () => {
       const attributeNode = createAttributeNameNode([])
       attributeNode.children = undefined as any
 
-      expect(hasDynamicAttributeName(attributeNode)).toBe(false)
+      expect(hasDynamicAttributeNameNode(attributeNode)).toBe(false)
     })
   })
 
@@ -438,4 +517,134 @@ describe("ast-utils", () => {
       expect(getCombinedAttributeName(attributeNode)).toBe("")
     })
   })
+
+  describe("findParentArray", () => {
+    const createDocumentNode = (children: Node[]): Node => ({
+      type: "AST_DOCUMENT_NODE",
+      children,
+      location: Location.from(1, 1, 1, 1)
+    } as any)
+
+    const createElementNode = (openTagChildren: Node[], body: Node[] = []): any => ({
+      type: "AST_HTML_ELEMENT_NODE",
+      open_tag: {
+        type: "AST_HTML_OPEN_TAG_NODE",
+        children: openTagChildren,
+        location: Location.from(1, 1, 1, 1)
+      },
+      body,
+      location: Location.from(1, 1, 1, 1)
+    })
+
+    const createAttributeNode = (valueChildren: Node[]): any => ({
+      type: "AST_HTML_ATTRIBUTE_NODE",
+      name: createAttributeNameNode([createLiteralNode("class")]),
+      value: {
+        type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+        children: valueChildren,
+        location: Location.from(1, 1, 1, 1)
+      },
+      location: Location.from(1, 1, 1, 1)
+    })
+
+    test("finds a node in the document children", () => {
+      const target = createERBContentNode("<%=", "value")
+      const document = createDocumentNode([createLiteralNode("before"), target])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(1)
+      expect(result?.array).toHaveLength(2)
+    })
+
+    test("finds a node in an element body", () => {
+      const target = createERBContentNode("<%=", "value")
+      const element = createElementNode([], [target])
+      const document = createDocumentNode([element])
+
+      expect(findParentArray(document, target)?.index).toBe(0)
+    })
+
+    test("finds a node inside an open tag", () => {
+      const target = createERBContentNode("<%=", "value")
+      const element = createElementNode([createLiteralNode("attribute"), target])
+      const document = createDocumentNode([element])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(1)
+      expect(result?.array).toBe(element.open_tag.children)
+    })
+
+    test("finds a node inside an attribute value", () => {
+      const target = createERBContentNode("<%=", "value")
+      const attribute = createAttributeNode([target])
+      const element = createElementNode([attribute])
+      const document = createDocumentNode([element])
+
+      const result = findParentArray(document, target)
+
+      expect(result?.index).toBe(0)
+      expect(result?.array).toBe(attribute.value.children)
+    })
+
+    test("finds a node in a linked else branch", () => {
+      const target = createERBContentNode("<%=", "value")
+
+      const ifNode: any = {
+        type: "AST_ERB_IF_NODE",
+        statements: [],
+        subsequent: {
+          type: "AST_ERB_ELSE_NODE",
+          statements: [target],
+          location: Location.from(1, 1, 1, 1)
+        },
+        location: Location.from(1, 1, 1, 1)
+      }
+
+      const document = createDocumentNode([ifNode])
+
+      expect(findParentArray(document, target)?.array).toBe(ifNode.subsequent.statements)
+    })
+
+    test("returns null when the node is not in the tree", () => {
+      const target = createERBContentNode("<%=", "value")
+      const document = createDocumentNode([createLiteralNode("only")])
+
+      expect(findParentArray(document, target)).toBe(null)
+    })
+  })
+
+  describe("getAttributes", () => {
+    const createAttributeNode = (name: string) => ({
+      type: "AST_HTML_ATTRIBUTE_NODE",
+      location: Location.from(1, 1, 1, 1),
+      errors: [],
+      name: createAttributeNameNode([createLiteralNode(name)]),
+      equals: null,
+      value: null
+    })
+
+    const createERBOpenTagNode = (children: Node[]) => ({
+      type: "AST_ERB_OPEN_TAG_NODE",
+      location: Location.from(1, 1, 1, 1),
+      errors: [],
+      tag_opening: null,
+      content: null,
+      tag_closing: null,
+      tag_name: null,
+      children
+    })
+
+    test("reads attributes off the ERB open tag that Action View tag helpers parse into", () => {
+      const node = createERBOpenTagNode([createAttributeNode("data-turbo-permanent")]) as any
+
+      expect(getAttributes(node)).toHaveLength(1)
+      expect(getAttribute(node, "data-turbo-permanent")).not.toBe(null)
+    })
+
+    test("returns an empty list for an ERB open tag without attributes", () => {
+      expect(getAttributes(createERBOpenTagNode([]) as any)).toEqual([])
+    })
+  })  
 })

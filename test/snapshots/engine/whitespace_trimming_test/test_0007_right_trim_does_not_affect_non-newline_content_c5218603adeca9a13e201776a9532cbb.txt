@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0007_right trim does not affect non-newline content"
+input: "{source: \"<% if true -%>text<% end -%>more\", locals: {}, options: {}}"
+---
+textmore

@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBCommentsTest#test_0015_evaluation: trailing comment in output tag"
+input: "{source: \"<%= value # this is a comment %>\", locals: {value: \"Hello World\"}, options: {}}"
+---
+Hello World

@@ -1,3 +1,16 @@
+---
+source: "Parser::ScriptStyleTest#test_0027_style tag with CSS custom properties and calc"
+input: |2-
+<style>
+  :root {
+    --arrow: "<";
+    --content: ">";
+  }
+  .element {
+    width: calc(100% - 20px);
+  }
+</style>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(9:8))
@@ -22,7 +35,7 @@
     │   │       └── tag_closing: ">" (location: (9:7)-(9:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (9:8)-(10:0))
         └── content: "\n"

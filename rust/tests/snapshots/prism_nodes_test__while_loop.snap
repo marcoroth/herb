@@ -1,0 +1,53 @@
+---
+source: tests/prism_nodes_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:42))
+└── children: (1 item)
+    └── @ ERBWhileNode (location: (1:0)-(1:42))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " while running? " (location: (1:2)-(1:18))
+        ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        ├── prism_node: 
+        │   └── @ WhileNode (location: (0,3)-(0,39))
+        │       ├── LoopFlags: nil
+        │       ├── keyword_loc: (0,3)-(0,8) = "while"
+        │       ├── do_keyword_loc: nil
+        │       ├── closing_loc: (0,36)-(0,39) = "end"
+        │       ├── predicate:
+        │       │   @ CallNode (location: (0,9)-(0,17))
+        │       │   ├── CallNodeFlags: ignore_visibility
+        │       │   ├── receiver: nil
+        │       │   ├── call_operator_loc: nil
+        │       │   ├── name: :running?
+        │       │   ├── message_loc: (0,9)-(0,17) = "running?"
+        │       │   ├── opening_loc: nil
+        │       │   ├── arguments: nil
+        │       │   ├── closing_loc: nil
+        │       │   ├── equal_loc: nil
+        │       │   └── block: nil
+        │       └── statements: nil
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:20)-(1:33))
+        │       ├── tag_opening: "<%=" (location: (1:20)-(1:23))
+        │       ├── content: " status " (location: (1:23)-(1:31))
+        │       ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ CallNode (location: (0,24)-(0,30))
+        │               ├── CallNodeFlags: variable_call, ignore_visibility
+        │               ├── receiver: nil
+        │               ├── call_operator_loc: nil
+        │               ├── name: :status
+        │               ├── message_loc: (0,24)-(0,30) = "status"
+        │               ├── opening_loc: nil
+        │               ├── arguments: nil
+        │               ├── closing_loc: nil
+        │               ├── equal_loc: nil
+        │               └── block: nil
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:33)-(1:42))
+                ├── tag_opening: "<%" (location: (1:33)-(1:35))
+                ├── content: " end " (location: (1:35)-(1:40))
+                └── tag_closing: "%>" (location: (1:40)-(1:42))

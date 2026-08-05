@@ -132,6 +132,7 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% items.each do |item| %>
           <% next unless item.visible? %>
+
           <div><%= item.name %></div>
         <% end %>
       `
@@ -153,7 +154,10 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% [1, 2].each do %>
           <% return unless @content.present? %>
-          <div class="content"><%= @content %></div>
+
+          <div class="content">
+            <%= @content %>
+          </div>
         <% end %>
       `
 
@@ -172,6 +176,7 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% loop do %>
           <% break unless continue_processing? %>
+
           <div>Processing...</div>
         <% end %>
       `
@@ -198,6 +203,7 @@ describe("@herb-tools/formatter", () => {
           <% next unless item %>
           <% next unless item.active? %>
           <% next unless item.published? %>
+
           <article>
             <h2><%= item.title %></h2>
             <p><%= item.description %></p>
@@ -228,10 +234,15 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% items.each do |item| %>
           <% next unless item.visible? %>
+
           <% unless item.featured? %>
-            <div class="regular"><%= item.name %></div>
+            <div class="regular">
+              <%= item.name %>
+            </div>
           <% else %>
-            <div class="featured"><%= item.name %></div>
+            <div class="featured">
+              <%= item.name %>
+            </div>
           <% end %>
         <% end %>
       `
@@ -260,6 +271,7 @@ describe("@herb-tools/formatter", () => {
           <% next unless product.in_stock? %>
           <% next if product.price > budget %>
           <% next unless product.available_in_region? %>
+
           <div class="product">
             <h3><%= product.name %></h3>
             <span class="price">$<%= product.price %></span>
@@ -289,11 +301,14 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% categories.each do |category| %>
           <% next unless category.active? %>
+
           <section>
             <h2><%= category.name %></h2>
+
             <% category.items.each do |item| %>
               <% next if item.hidden? %>
               <% next unless item.published? %>
+
               <div><%= item.title %></div>
             <% end %>
           </section>

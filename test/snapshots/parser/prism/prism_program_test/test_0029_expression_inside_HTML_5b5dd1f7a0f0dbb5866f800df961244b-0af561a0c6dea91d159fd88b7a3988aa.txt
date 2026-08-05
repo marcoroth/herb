@@ -1,0 +1,85 @@
+---
+source: "Parser::Prism::PrismProgramTest#test_0029_expression inside HTML"
+input: "<div class=\"<%= css_class %>\"><%= content %></div>"
+options: {prism_program: true}
+---
+@ DocumentNode (location: (1:0)-(1:50))
+├── children: (1 item)
+│   └── @ HTMLElementNode (location: (1:0)-(1:50))
+│       ├── open_tag:
+│       │   └── @ HTMLOpenTagNode (location: (1:0)-(1:30))
+│       │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+│       │       ├── tag_name: "div" (location: (1:1)-(1:4))
+│       │       ├── tag_closing: ">" (location: (1:29)-(1:30))
+│       │       ├── children: (1 item)
+│       │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:29))
+│       │       │       ├── name:
+│       │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+│       │       │       │       └── children: (1 item)
+│       │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+│       │       │       │               └── content: "class"
+│       │       │       │
+│       │       │       │
+│       │       │       ├── equals: "=" (location: (1:10)-(1:11))
+│       │       │       └── value:
+│       │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:29))
+│       │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+│       │       │               ├── children: (1 item)
+│       │       │               │   └── @ ERBContentNode (location: (1:12)-(1:28))
+│       │       │               │       ├── tag_opening: "<%=" (location: (1:12)-(1:15))
+│       │       │               │       ├── content: " css_class " (location: (1:15)-(1:26))
+│       │       │               │       ├── tag_closing: "%>" (location: (1:26)-(1:28))
+│       │       │               │       ├── parsed: true
+│       │       │               │       └── valid: true
+│       │       │               │
+│       │       │               ├── close_quote: """ (location: (1:28)-(1:29))
+│       │       │               └── quoted: true
+│       │       │
+│       │       │
+│       │       └── is_void: false
+│       │
+│       ├── tag_name: "div" (location: (1:1)-(1:4))
+│       ├── body: (1 item)
+│       │   └── @ ERBContentNode (location: (1:30)-(1:44))
+│       │       ├── tag_opening: "<%=" (location: (1:30)-(1:33))
+│       │       ├── content: " content " (location: (1:33)-(1:42))
+│       │       ├── tag_closing: "%>" (location: (1:42)-(1:44))
+│       │       ├── parsed: true
+│       │       └── valid: true
+│       │
+│       ├── close_tag:
+│       │   └── @ HTMLCloseTagNode (location: (1:44)-(1:50))
+│       │       ├── tag_opening: "</" (location: (1:44)-(1:46))
+│       │       ├── tag_name: "div" (location: (1:46)-(1:49))
+│       │       ├── children: []
+│       │       └── tag_closing: ">" (location: (1:49)-(1:50))
+│       │
+│       ├── is_void: false
+│       └── element_source: "HTML"
+│
+└── prism_node:
+    └── @ ProgramNode (location: (1:16)-(1:41))
+        ├── locals: []
+        └── statements:
+            └── @ StatementsNode (location: (1:16)-(1:41))
+                └── body: (2 items)
+                    ├── @ CallNode (location: (1:16)-(1:25))
+                    │   ├── receiver: ∅
+                    │   ├── call_operator_loc: ∅
+                    │   ├── name: :css_class
+                    │   ├── message_loc: (1:16)-(1:25)
+                    │   ├── opening_loc: ∅
+                    │   ├── arguments: ∅
+                    │   ├── closing_loc: ∅
+                    │   ├── equal_loc: ∅
+                    │   └── block: ∅
+                    └── @ CallNode (location: (1:34)-(1:41))
+                        ├── receiver: ∅
+                        ├── call_operator_loc: ∅
+                        ├── name: :content
+                        ├── message_loc: (1:34)-(1:41)
+                        ├── opening_loc: ∅
+                        ├── arguments: ∅
+                        ├── closing_loc: ∅
+                        ├── equal_loc: ∅
+                        └── block: ∅

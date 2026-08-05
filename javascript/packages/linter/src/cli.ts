@@ -1,17 +1,27 @@
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { Herb } from "@herb-tools/node-wasm"
-import { HERB_FILES_GLOB } from "@herb-tools/core"
+import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { existsSync, statSync } from "fs"
-import { dirname, resolve, relative } from "path"
+import { resolve, relative } from "path"
+import { colorize } from "@herb-tools/highlighter"
+import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 
+import { Linter } from "./linter.js"
+import { rules } from "./rules.js"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
+import { version } from "../package.json"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
+import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
+import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 
 export * from "./cli/index.js"
+
+const NOT_FAILING_TIP_THRESHOLD = 10
 
 export class CLI {
   protected argumentParser = new ArgumentParser()
@@ -21,44 +31,6 @@ export class CLI {
 
   getProjectPath(): string {
     return this.projectPath
-  }
-
-  protected findProjectRoot(startPath: string): string {
-    let currentPath = resolve(startPath)
-
-    if (existsSync(currentPath) && statSync(currentPath).isFile()) {
-      currentPath = dirname(currentPath)
-    }
-
-    const projectIndicators = [
-      'package.json',
-      'Gemfile',
-      '.git',
-      'tsconfig.json',
-      'composer.json',
-      'pyproject.toml',
-      'requirements.txt',
-      '.herb.yml'
-    ]
-
-    while (currentPath !== '/') {
-      for (const indicator of projectIndicators) {
-        if (existsSync(resolve(currentPath, indicator))) {
-          return currentPath
-        }
-      }
-
-      const parentPath = dirname(currentPath)
-      if (parentPath === currentPath) {
-        break
-      }
-
-      currentPath = parentPath
-    }
-
-    return existsSync(startPath) && statSync(startPath).isDirectory()
-      ? startPath
-      : dirname(startPath)
   }
 
   protected exitWithError(message: string, formatOption: FormatOption, exitCode: number = 1) {
@@ -91,25 +63,20 @@ export class CLI {
     process.exit(exitCode)
   }
 
-  protected determineProjectPath(pattern: string | undefined): void {
+  protected determineProjectPath(patterns: string[]): void {
+    const pattern = patterns[0]
     if (pattern) {
       const resolvedPattern = resolve(pattern)
 
       if (existsSync(resolvedPattern)) {
-        const stats = statSync(resolvedPattern)
-
-        if (stats.isDirectory()) {
-          this.projectPath = resolvedPattern
-        } else {
-          this.projectPath = this.findProjectRoot(resolvedPattern)
-        }
+        this.projectPath = Config.findProjectRootSync(resolvedPattern)
       }
     }
   }
 
-  protected adjustPattern(pattern: string | undefined): string {
+  protected adjustPattern(pattern: string | undefined, configGlobPatterns: string[]): string {
     if (!pattern) {
-      return HERB_FILES_GLOB
+      return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
     }
 
     const resolvedPattern = resolve(pattern)
@@ -118,7 +85,15 @@ export class CLI {
       const stats = statSync(resolvedPattern)
 
       if (stats.isDirectory()) {
-        return HERB_FILES_GLOB
+        const relativeDir = relative(this.projectPath, resolvedPattern)
+
+        if (relativeDir) {
+          const scopedPatterns = configGlobPatterns.map(pattern => `${relativeDir}/${pattern}`)
+
+          return scopedPatterns.length === 1 ? scopedPatterns[0] : `{${scopedPatterns.join(',')}}`
+        }
+
+        return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
       } else if (stats.isFile()) {
         return relative(this.projectPath, resolvedPattern)
       }
@@ -127,12 +102,71 @@ export class CLI {
     return pattern
   }
 
+  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean): Promise<{ files: string[], explicitFile: string | undefined }> {
+    const resolvedPattern = resolve(pattern)
+    const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
+    let explicitFile: string | undefined
+
+    if (isExplicitFile) {
+      explicitFile = pattern
+    }
+
+    const filesConfig = config.getFilesConfigForTool('linter')
+    const configGlobPatterns = filesConfig.include && filesConfig.include.length > 0
+      ? filesConfig.include
+      : ['**/*.html.erb']
+
+    const adjustedPattern = this.adjustPattern(pattern, configGlobPatterns)
+
+    let files = await glob(adjustedPattern, {
+      cwd: this.projectPath,
+      ignore: filesConfig.exclude || []
+    })
+
+    if (explicitFile && files.length === 0) {
+      if (!force) {
+        console.error(`⚠️  File ${explicitFile} is excluded by configuration patterns.`)
+        console.error(`   Use --force to lint it anyway.\n`)
+        process.exit(0)
+      } else {
+        console.log(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
+        console.log()
+        files = [adjustedPattern]
+      }
+    }
+
+    return { files, explicitFile }
+  }
+
   protected async beforeProcess(): Promise<void> {
     // Hook for subclasses to add custom output before processing
   }
 
+  protected additionalRuleNames(): string[] {
+    return []
+  }
+
   protected async afterProcess(_results: any, _outputOptions: any): Promise<void> {
     // Hook for subclasses to add custom output after processing
+  }
+
+  /**
+   * Returns the severity `--only` or `--all-rules` should lower the log level to, together with the flag
+   * that asked for it, or `undefined` when the log level stays as configured.
+   */
+  protected loweredLogLevel(counts: Record<DiagnosticSeverity, number>, effectiveLogLevel: DiagnosticSeverity, options: { only?: string[], allRules?: boolean, logLevelFlag?: DiagnosticSeverity }): { severity: DiagnosticSeverity, flag: RuleFilterFlag } | undefined {
+    const { only, allRules, logLevelFlag } = options
+    const flag: RuleFilterFlag | undefined = (only && only.length > 0) ? "--only" : (allRules ? "--all-rules" : undefined)
+
+    if (!flag) return undefined
+    if (logLevelFlag !== undefined) return undefined
+
+    const lowestSeverity = DIAGNOSTIC_SEVERITIES.filter(severity => counts[severity] > 0).pop()
+
+    if (!lowestSeverity) return undefined
+    if (meetsSeverityThreshold(lowestSeverity, effectiveLogLevel)) return undefined
+
+    return { severity: lowestSeverity, flag }
   }
 
   async run() {
@@ -141,11 +175,212 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
-    this.determineProjectPath(pattern)
+    this.determineProjectPath(patterns)
 
-    pattern = this.adjustPattern(pattern)
+    if (init) {
+      const configPath = configFile || this.projectPath
+
+      if (Config.exists(configPath)) {
+        const fullPath = configFile || Config.configPathFromProjectPath(this.projectPath)
+        console.error(`\n✗ Configuration file already exists at ${fullPath}`)
+        console.error(`  Use --config-file to specify a different location.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.loadForCLI(configPath, version, true)
+      const extensionAdded = addHerbExtensionRecommendation(this.projectPath)
+
+      console.log(`\n✓ Configuration initialized at ${config.path}`)
+
+      if (extensionAdded) {
+        console.log(`✓ VSCode extension recommended in ${getExtensionsJsonRelativePath()}`)
+      }
+
+      console.log(`  Edit this file to customize linter and formatter settings.\n`)
+      process.exit(0)
+    }
+
+    if (upgrade) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+      const configVersion = config.configVersion
+
+      if (configVersion === version) {
+        console.log(`\n✓ Your .herb.yml is already at version ${version}. Nothing to upgrade.\n`)
+        process.exit(0)
+      }
+
+      const { skippedByVersion } = Linter.filterRulesByConfig(rules, config.linter?.rules, configVersion)
+
+      let rulesToDisable: typeof skippedByVersion = []
+      let rulesToEnable: typeof skippedByVersion = []
+      const ruleOffenseCounts = new Map<string, number>()
+
+      if (skippedByVersion.length > 0) {
+        console.log(`\n${colorize("↻", "cyan")} Checking ${colorize(String(skippedByVersion.length), "bold")} new ${skippedByVersion.length === 1 ? "rule" : "rules"} against your codebase...`)
+
+        const skippedRulesConfig: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of skippedByVersion) {
+          skippedRulesConfig[rule.ruleName] = { enabled: true }
+        }
+
+        const upgradeConfig = Config.fromObject({
+          ...config.options,
+          linter: {
+            ...config.options.linter,
+            rules: { ...config.options.linter?.rules, ...skippedRulesConfig }
+          }
+        }, { projectPath: this.projectPath, configVersion: version })
+
+        const upgradeContext: ProcessingContext = {
+          projectPath: this.projectPath,
+          config: upgradeConfig,
+          jobs: 1,
+        }
+
+        await Herb.load()
+
+        const files = await config.findFilesForTool('linter', this.projectPath)
+        const upgradeProcessor = new FileProcessor()
+        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+
+        for (const { offense } of results.allOffenses) {
+          if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+          const ruleName = offense.code || ""
+          ruleOffenseCounts.set(ruleName, (ruleOffenseCounts.get(ruleName) || 0) + 1)
+        }
+
+        rulesToDisable = skippedByVersion.filter(rule => ruleOffenseCounts.has(rule.ruleName))
+        rulesToEnable = skippedByVersion.filter(rule => !ruleOffenseCounts.has(rule.ruleName))
+
+        const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+        for (const rule of rulesToDisable) {
+          rulesMutation[rule.ruleName] = { enabled: false }
+        }
+
+        if (Object.keys(rulesMutation).length > 0) {
+          await Config.mutateConfigFile(config.path, {
+            linter: { rules: rulesMutation }
+          })
+        }
+      }
+
+      const { promises: fs } = await import("fs")
+      let content = await fs.readFile(config.path, "utf-8")
+      content = content.replace(/^version:\s*.+$/m, `version: ${version}`)
+      await fs.writeFile(config.path, content, "utf-8")
+
+      console.log(`\n${colorize("✓", "brightGreen")} Updated ${colorize(".herb.yml", "cyan")} version from ${colorize(configVersion ?? "unversioned", "cyan")} to ${colorize(version, "cyan")}`)
+
+      if (rulesToEnable.length > 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} Enabled ${colorize(String(rulesToEnable.length), "bold")} new ${rulesToEnable.length === 1 ? "rule" : "rules"} (no offenses found):\n`)
+
+        for (const rule of rulesToEnable) {
+          console.log(`  ${colorize("✓", "brightGreen")} ${colorize(rule.ruleName, "white")}`)
+        }
+      }
+
+      if (rulesToDisable.length > 0) {
+        const totalOffenses = Array.from(ruleOffenseCounts.values()).reduce((sum, count) => sum + count, 0)
+
+        console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(rulesToDisable.length), "bold")} new ${rulesToDisable.length === 1 ? "rule" : "rules"}. Disabled to ease the upgrade:\n`)
+
+        for (const rule of rulesToDisable) {
+          const offenseCount = ruleOffenseCounts.get(rule.ruleName) || 0
+          console.log(`  ${colorize("✗", "red")} ${colorize(rule.ruleName, "white")} ${colorize(`(${offenseCount} ${offenseCount === 1 ? "offense" : "offenses"})`, "gray")}`)
+        }
+
+        console.log(`\n  When you're ready, review the disabled ${rulesToDisable.length === 1 ? "rule" : "rules"} in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.`)
+      }
+
+      if (skippedByVersion.length === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No new rules to configure.`)
+      }
+
+      console.log("")
+      process.exit(0)
+    }
+
+    if (disableFailing) {
+      const configPath = configFile || this.projectPath
+
+      if (!Config.exists(configPath)) {
+        console.error(`\n✗ No .herb.yml found. Run ${colorize("herb-lint --init", "cyan")} first.\n`)
+        process.exit(1)
+      }
+
+      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: false, silent: true })
+
+      console.log(`\n${colorize("↻", "cyan")} Linting codebase to find rules with offenses...`)
+
+      await Herb.load()
+
+      const files = await config.findFilesForTool('linter', this.projectPath)
+
+      const disableFailingContext: ProcessingContext = {
+        projectPath: this.projectPath,
+        config,
+        jobs,
+      }
+
+      const processor = new FileProcessor()
+      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const failingRules = new Map<string, number>()
+      const PROTECTED_RULES = new Set(["parser-no-errors"])
+
+      for (const { offense } of results.allOffenses) {
+        if (PROTECTED_RULES.has(offense.code || "")) continue
+        if (offense.severity !== "error" && offense.severity !== "warning") continue
+
+        failingRules.set(offense.code || "", (failingRules.get(offense.code || "") || 0) + 1)
+      }
+
+      if (failingRules.size === 0) {
+        console.log(`\n${colorize("✓", "brightGreen")} No offenses found. All rules are passing!\n`)
+        process.exit(0)
+      }
+
+      const rulesMutation: Record<string, { enabled: boolean }> = {}
+
+      for (const ruleName of failingRules.keys()) {
+        rulesMutation[ruleName] = { enabled: false }
+      }
+
+      await Config.mutateConfigFile(config.path, {
+        linter: { rules: rulesMutation }
+      })
+
+      const totalOffenses = Array.from(failingRules.values()).reduce((sum, count) => sum + count, 0)
+      const sortedRules = Array.from(failingRules.entries()).sort((a, b) => b[1] - a[1])
+
+      console.log(`\n${colorize("!", "yellow")} Found ${colorize(String(totalOffenses), "bold")} ${totalOffenses === 1 ? "offense" : "offenses"} across ${colorize(String(failingRules.size), "bold")} ${failingRules.size === 1 ? "rule" : "rules"}. Disabled in ${colorize(".herb.yml", "cyan")}:\n`)
+
+      for (const [ruleName, count] of sortedRules) {
+        console.log(`  ${colorize("✗", "red")} ${colorize(ruleName, "white")} ${colorize(`(${count} ${count === 1 ? "offense" : "offenses"})`, "gray")}`)
+      }
+
+      console.log(`\n  When you're ready, review the disabled rules in your ${colorize(".herb.yml", "cyan")} and re-enable them after fixing the offenses.\n`)
+      process.exit(0)
+    }
+
+    const silent = formatOption === 'json'
+    const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
+    const linterConfig = config.options.linter || {}
+
+    const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"
+    const effectiveLogLevel = logLevel || linterConfig.logLevel || "hint"
+    const hasLogLevel = logLevel !== undefined || linterConfig.logLevel !== undefined
 
     const outputOptions = {
       formatOption,
@@ -155,30 +390,151 @@ export class CLI {
       showTiming,
       useGitHubActions,
       startTime,
-      startDate
+      startDate,
+      toolVersion: version,
+      failLevel: effectiveFailLevel,
+      logLevel: effectiveLogLevel
     }
 
     try {
       await this.beforeProcess()
 
-      const files = await glob(pattern, { cwd: this.projectPath })
-
-      if (files.length === 0) {
-        this.exitWithInfo(`No files found matching pattern: ${pattern}`, formatOption, 0, { startTime, startDate, showTiming })
+      if (linterConfig.enabled === false && !force) {
+        this.exitWithInfo("Linter is disabled in .herb.yml configuration. Use --force to lint anyway.", formatOption, 0, { startTime, startDate, showTiming })
       }
 
-      const context = {
+      if (force && linterConfig.enabled === false) {
+        console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
+        console.log()
+      }
+
+      if (only) {
+        const unknownRules = await this.fileProcessor.findUnknownRules(only, { projectPath: this.projectPath, loadCustomRules }, formatOption, this.additionalRuleNames())
+
+        if (unknownRules.length > 0) {
+          const messages = unknownRules.map(({ name, suggestion }) => {
+            const suggestionText = suggestion ? ` Did you mean ${colorize(suggestion, "cyan")}?` : ""
+
+            return `✗ Unknown rule ${colorize(name, "cyan")} passed to --only.${suggestionText}`
+          })
+
+          this.exitWithError(messages.join("\n"), formatOption)
+        }
+      }
+
+      let files: string[]
+      const explicitFiles: string[] = []
+
+      if (patterns.length === 0) {
+        files = await config.findFilesForTool('linter', this.projectPath)
+      } else {
+        const allFiles: string[] = []
+
+        for (const pattern of patterns) {
+          const { files: patternFiles, explicitFile } = await this.resolvePatternToFiles(pattern, config, force)
+
+          if (patternFiles.length === 0) {
+            console.error(`✗ No files found matching pattern: ${pattern}`)
+            process.exit(1)
+          }
+
+          allFiles.push(...patternFiles)
+          if (explicitFile) {
+            explicitFiles.push(explicitFile)
+          }
+        }
+
+        files = [...new Set(allFiles)]
+      }
+
+      if (files.length === 0) {
+        this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
+      }
+
+      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+        console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
+      }
+
+      let processingConfig = config
+
+      if (force && explicitFiles.length > 0) {
+        const modifiedConfig = Object.create(Object.getPrototypeOf(config))
+        Object.assign(modifiedConfig, config)
+
+        modifiedConfig.config = {
+          ...config.config,
+          linter: {
+            ...config.config.linter,
+            exclude: []
+          }
+        }
+
+        processingConfig = modifiedConfig
+      }
+
+      const hasConfigFile = Config.exists(configFile || this.projectPath)
+
+      const context: ProcessingContext = {
         projectPath: this.projectPath,
-        pattern,
-        fix
+        configPath: configFile,
+        pattern: patterns.join(' '),
+        fix,
+        fixUnsafe,
+        ignoreDisableComments,
+        linterConfig,
+        config: processingConfig,
+        hasConfigFile,
+        loadCustomRules,
+        jobs,
+        only,
+        allRules
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
-      await this.outputManager.outputResults({ ...results, files }, outputOptions)
+      const counts: Record<DiagnosticSeverity, number> = {
+        error: results.totalErrors,
+        warning: results.totalWarnings,
+        info: results.totalInfo,
+        hint: results.totalHints
+      }
+
+      const lowered = this.loweredLogLevel(counts, effectiveLogLevel, { only, allRules, logLevelFlag: logLevel })
+
+      await this.outputManager.outputResults({ ...results, files }, {
+        ...outputOptions,
+        logLevel: lowered?.severity ?? effectiveLogLevel,
+        logLevelLoweredFrom: lowered ? effectiveLogLevel : undefined,
+        logLevelLoweredBy: lowered?.flag
+      })
+
+      const showTips = formatOption !== 'json' && !useGitHubActions
+
+      if (!Config.exists(this.projectPath) && showTips) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
+        console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
+      }
+
+      const notFailingSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, effectiveFailLevel) && counts[severity] > 0)
+      const notFailingCount = notFailingSeverities.reduce((sum, severity) => sum + counts[severity], 0)
+      const lowestNotFailingSeverity = notFailingSeverities[notFailingSeverities.length - 1]
+
+      // TODO: once we have `yerba` and the config mutation features on the JavaScript
+      // side, offer to write `linter.logLevel` into `.herb.yml` from here instead of
+      // asking the user to edit it by hand.
+      if (showTips && !hasLogLevel && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} ${colorize(String(notFailingCount), "bold")} of the logged offenses don't fail the build.`)
+        console.log(`      Run ${colorize(`herb-lint --log-level=${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("linter.logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      To start enforcing them instead, set ${colorize("linter.failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+      }
+
       await this.afterProcess(results, outputOptions)
 
-      if (results.totalErrors > 0) {
+      const shouldFail = DIAGNOSTIC_SEVERITIES.some(severity => counts[severity] > 0 && meetsSeverityThreshold(severity, effectiveFailLevel))
+
+      if (shouldFail) {
         process.exit(1)
       }
 

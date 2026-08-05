@@ -1,0 +1,6 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0015_<%#- code %>"
+input: "{source: \"<%#- x = 1 %>\", options: {}}"
+---
+_buf = ::String.new;
+_buf.to_s

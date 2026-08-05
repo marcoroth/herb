@@ -1,0 +1,156 @@
+---
+source: tests/prism_nodes_deep_test.rs
+expression: result.inspect()
+---
+@ DocumentNode (location: (1:0)-(1:114))
+└── children: (1 item)
+    └── @ ERBBeginNode (location: (1:0)-(1:114))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " begin " (location: (1:2)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── prism_node: 
+        │   └── @ BeginNode (location: (0,3)-(0,111))
+        │       ├── begin_keyword_loc: (0,3)-(0,8) = "begin"
+        │       ├── statements:
+        │       │   @ StatementsNode (location: (0,15)-(0,29))
+        │       │   ├── body: (length: 1)
+        │       │       └── @ CallNode (location: (0,15)-(0,29))
+        │       │           ├── CallNodeFlags: variable_call, ignore_visibility
+        │       │           ├── receiver: nil
+        │       │           ├── call_operator_loc: nil
+        │       │           ├── name: :dangerous_call
+        │       │           ├── message_loc: (0,15)-(0,29) = "dangerous_call"
+        │       │           ├── opening_loc: nil
+        │       │           ├── arguments: nil
+        │       │           ├── closing_loc: nil
+        │       │           ├── equal_loc: nil
+        │       │           └── block: nil
+        │       ├── rescue_clause:
+        │       │   @ RescueNode (location: (0,35)-(0,76))
+        │       │   ├── keyword_loc: (0,35)-(0,41) = "rescue"
+        │       │   ├── exceptions: (length: 1)
+        │       │   │   ├── @ ConstantReadNode (location: (0,42)-(0,55))
+        │       │   │       ├── name: :StandardError
+        │       │   ├── operator_loc: (0,56)-(0,58) = "=>"
+        │       │   ├── reference:
+        │       │   │   @ LocalVariableTargetNode (location: (0,59)-(0,60))
+        │       │   │   ├── name: :e
+        │       │   │   ├── depth: 0
+        │       │   ├── then_keyword_loc: nil
+        │       │   ├── statements:
+        │       │   │   @ StatementsNode (location: (0,67)-(0,76))
+        │       │   │   ├── body: (length: 1)
+        │       │   │       ├── @ CallNode (location: (0,67)-(0,76))
+        │       │   │           ├── CallNodeFlags: nil
+        │       │   │           ├── receiver:
+        │       │   │           │   @ LocalVariableReadNode (location: (0,67)-(0,68))
+        │       │   │           │   ├── name: :e
+        │       │   │           │   └── depth: 0
+        │       │   │           ├── call_operator_loc: (0,68)-(0,69) = "."
+        │       │   │           ├── name: :message
+        │       │   │           ├── message_loc: (0,69)-(0,76) = "message"
+        │       │   │           ├── opening_loc: nil
+        │       │   │           ├── arguments: nil
+        │       │   │           ├── closing_loc: nil
+        │       │   │           ├── equal_loc: nil
+        │       │   │           ├── block: nil
+        │       │   ├── subsequent: nil
+        │       ├── else_clause: nil
+        │       ├── ensure_clause:
+        │       │   @ EnsureNode (location: (0,82)-(0,111))
+        │       │   ├── ensure_keyword_loc: (0,82)-(0,88) = "ensure"
+        │       │   ├── statements:
+        │       │   │   @ StatementsNode (location: (0,95)-(0,102))
+        │       │   │   └── body: (length: 1)
+        │       │   │       └── @ CallNode (location: (0,95)-(0,102))
+        │       │   │           ├── CallNodeFlags: variable_call, ignore_visibility
+        │       │   │           ├── receiver: nil
+        │       │   │           ├── call_operator_loc: nil
+        │       │   │           ├── name: :cleanup
+        │       │   │           ├── message_loc: (0,95)-(0,102) = "cleanup"
+        │       │   │           ├── opening_loc: nil
+        │       │   │           ├── arguments: nil
+        │       │   │           ├── closing_loc: nil
+        │       │   │           ├── equal_loc: nil
+        │       │   │           └── block: nil
+        │       │   └── end_keyword_loc: (0,108)-(0,111) = "end"
+        │       └── end_keyword_loc: (0,108)-(0,111) = "end"
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:11)-(1:32))
+        │       ├── tag_opening: "<%=" (location: (1:11)-(1:14))
+        │       ├── content: " dangerous_call " (location: (1:14)-(1:30))
+        │       ├── tag_closing: "%>" (location: (1:30)-(1:32))
+        │       ├── parsed: true
+        │       ├── valid: true
+        │       └── prism_node: 
+        │           └── @ CallNode (location: (0,15)-(0,29))
+        │               ├── CallNodeFlags: variable_call, ignore_visibility
+        │               ├── receiver: nil
+        │               ├── call_operator_loc: nil
+        │               ├── name: :dangerous_call
+        │               ├── message_loc: (0,15)-(0,29) = "dangerous_call"
+        │               ├── opening_loc: nil
+        │               ├── arguments: nil
+        │               ├── closing_loc: nil
+        │               ├── equal_loc: nil
+        │               └── block: nil
+        ├── rescue_clause: 
+        │   └── @ ERBRescueNode (location: (1:32)-(1:79))
+        │       ├── tag_opening: "<%" (location: (1:32)-(1:34))
+        │       ├── content: " rescue StandardError => e " (location: (1:34)-(1:61))
+        │       ├── tag_closing: "%>" (location: (1:61)-(1:63))
+        │       ├── statements: (1 item)
+        │       │   └── @ ERBContentNode (location: (1:63)-(1:79))
+        │       │       ├── tag_opening: "<%=" (location: (1:63)-(1:66))
+        │       │       ├── content: " e.message " (location: (1:66)-(1:77))
+        │       │       ├── tag_closing: "%>" (location: (1:77)-(1:79))
+        │       │       ├── parsed: true
+        │       │       ├── valid: true
+        │       │       └── prism_node: 
+        │       │           └── @ CallNode (location: (0,67)-(0,76))
+        │       │               ├── CallNodeFlags: nil
+        │       │               ├── receiver:
+        │       │               │   @ LocalVariableReadNode (location: (0,67)-(0,68))
+        │       │               │   ├── name: :e
+        │       │               │   └── depth: 0
+        │       │               ├── call_operator_loc: (0,68)-(0,69) = "."
+        │       │               ├── name: :message
+        │       │               ├── message_loc: (0,69)-(0,76) = "message"
+        │       │               ├── opening_loc: nil
+        │       │               ├── arguments: nil
+        │       │               ├── closing_loc: nil
+        │       │               ├── equal_loc: nil
+        │       │               └── block: nil
+        │       └── subsequent: ∅
+        │   
+        ├── else_clause: ∅
+        ├── ensure_clause: 
+        │   └── @ ERBEnsureNode (location: (1:79)-(1:91))
+        │       ├── tag_opening: "<%" (location: (1:79)-(1:81))
+        │       ├── content: " ensure " (location: (1:81)-(1:89))
+        │       ├── tag_closing: "%>" (location: (1:89)-(1:91))
+        │       └── statements: (1 item)
+        │           └── @ ERBContentNode (location: (1:91)-(1:105))
+        │               ├── tag_opening: "<%=" (location: (1:91)-(1:94))
+        │               ├── content: " cleanup " (location: (1:94)-(1:103))
+        │               ├── tag_closing: "%>" (location: (1:103)-(1:105))
+        │               ├── parsed: true
+        │               ├── valid: true
+        │               └── prism_node: 
+        │                   └── @ CallNode (location: (0,95)-(0,102))
+        │                       ├── CallNodeFlags: variable_call, ignore_visibility
+        │                       ├── receiver: nil
+        │                       ├── call_operator_loc: nil
+        │                       ├── name: :cleanup
+        │                       ├── message_loc: (0,95)-(0,102) = "cleanup"
+        │                       ├── opening_loc: nil
+        │                       ├── arguments: nil
+        │                       ├── closing_loc: nil
+        │                       ├── equal_loc: nil
+        │                       └── block: nil
+        │   
+        └── end_node: 
+            └── @ ERBEndNode (location: (1:105)-(1:114))
+                ├── tag_opening: "<%" (location: (1:105)-(1:107))
+                ├── content: " end " (location: (1:107)-(1:112))
+                └── tag_closing: "%>" (location: (1:112)-(1:114))

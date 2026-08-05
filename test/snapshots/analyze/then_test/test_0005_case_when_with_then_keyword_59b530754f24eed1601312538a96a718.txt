@@ -1,0 +1,39 @@
+---
+source: "Analyze::ThenTest#test_0005_case when with then keyword"
+input: |2-
+<% case variable %>
+<% when String then %>
+  String
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case variable " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:19)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:22))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when String then " (location: (2:2)-(2:20))
+    │   │       ├── tag_closing: "%>" (location: (2:20)-(2:22))
+    │   │       ├── then_keyword: (location: (2:15)-(2:19))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (2:22)-(4:0))
+    │   │               └── content: "\n  String\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

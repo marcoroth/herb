@@ -1,0 +1,6 @@
+---
+source: "Engine::GraphQLTest#test_0006_graphql variable assignment is not omitted"
+input: "{source: \"<% graphql = \\\"query\\\" %>\", options: {}}"
+---
+_buf = ::String.new; graphql = "query" 
+_buf.to_s

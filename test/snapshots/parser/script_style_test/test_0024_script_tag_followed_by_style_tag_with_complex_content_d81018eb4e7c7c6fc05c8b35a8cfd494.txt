@@ -1,3 +1,17 @@
+---
+source: "Parser::ScriptStyleTest#test_0024_script tag followed by style tag with complex content"
+input: |2-
+<script>
+  if (window.width < 768) {
+    document.body.className = "mobile";
+  }
+</script>
+<style>
+  .mobile > .header {
+    font-size: 14px;
+  }
+</style>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:9))
@@ -22,7 +36,7 @@
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     ├── @ HTMLTextNode (location: (5:9)-(6:0))
     │   └── content: "\n"
@@ -49,7 +63,7 @@
     │   │       └── tag_closing: ">" (location: (10:7)-(10:8))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (10:8)-(11:0))
         └── content: "\n"

@@ -19,15 +19,20 @@ class StimulusFileProcessor extends FileProcessor {
     this.stimulusProject = stimulusProject
   }
 
+  async findUnknownRules(ruleNames: string[], context?: any, formatOption: any = 'detailed', additionalRuleNames: string[] = []) {
+    return this.parentProcessor.findUnknownRules(ruleNames, context, formatOption, additionalRuleNames)
+  }
+
   async processFiles(files: string[], formatOption: any = 'detailed', context?: any) {
     const lintStartTime = Date.now()
 
     const baseResults = await this.parentProcessor.processFiles(files, formatOption, context)
 
-    const stimulusLinter = new StimulusLinter(Herb, defaultRules, this.stimulusProject)
+    const stimulusRules = context?.only ? defaultRules.filter(rule => context.only.includes(rule.ruleName)) : defaultRules
+    const stimulusLinter = new StimulusLinter(Herb, stimulusRules, this.stimulusProject)
 
     for (const filename of files) {
-      const filePath = resolve(filename)
+      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       const content = readFileSync(filePath, "utf-8")
       const result = stimulusLinter.lint(content, { fileName: filename, stimulusProject: this.stimulusProject })
 
@@ -62,7 +67,7 @@ class StimulusFileProcessor extends FileProcessor {
     let templatesWithStimulus = 0
 
     for (const filename of files) {
-      const filePath = resolve(filename)
+      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       const content = readFileSync(filePath, "utf-8")
       const hasStimulus = this.trackControllerUsage(content, usedControllers, controllerUsageStats)
 
@@ -110,11 +115,11 @@ class StimulusFileProcessor extends FileProcessor {
       }
     }
 
-    let totalTargets = 0, usedTargets = 0
-    let totalActions = 0, usedActions = 0
-    let totalValues  = 0, usedValues  = 0
-    let totalClasses = 0, usedClasses = 0
-    let totalOutlets = 0, usedOutlets = 0
+    const totalTargets = 0, usedTargets = 0
+    const totalActions = 0, usedActions = 0
+    const totalValues  = 0, usedValues  = 0
+    const totalClasses = 0, usedClasses = 0
+    const totalOutlets = 0, usedOutlets = 0
 
     return {
       targets: { total: totalTargets, used: usedTargets, unused: totalTargets - usedTargets },
@@ -138,6 +143,10 @@ export class CLI extends HerbLinterCLI {
     super()
   }
 
+  protected additionalRuleNames(): string[] {
+    return defaultRules.map(rule => rule.ruleName)
+  }
+
   protected async beforeProcess(): Promise<void> {
     let controllerCount = 0
 
@@ -153,7 +162,7 @@ export class CLI extends HerbLinterCLI {
       console.log(`Found ${controllerCount} Stimulus controllers`)
 
       this.fileProcessor = new StimulusFileProcessor(this.fileProcessor, this.stimulusProject)
-    } catch (error) {
+    } catch (_error) {
       console.log("No Stimulus project found, running without controller validation")
       this.stimulusProject = undefined
 

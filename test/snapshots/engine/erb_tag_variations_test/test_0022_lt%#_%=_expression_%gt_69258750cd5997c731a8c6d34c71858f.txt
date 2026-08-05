@@ -1,0 +1,4 @@
+---
+source: "Engine::ERBTagVariationsTest#test_0022_<%# %= expression %>"
+input: "{source: \"<%# %= expression %>\", locals: {}, options: {}}"
+---

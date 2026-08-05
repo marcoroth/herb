@@ -1,3 +1,12 @@
+---
+source: "Analyze::BeginTest#test_0003_begin statement wrapped in element"
+input: |2-
+<h1>
+  <% begin %>
+    begin
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:5))
@@ -43,7 +52,7 @@
     │   │       └── tag_closing: ">" (location: (5:4)-(5:5))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:5)-(6:0))
         └── content: "\n"

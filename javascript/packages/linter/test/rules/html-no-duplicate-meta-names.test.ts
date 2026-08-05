@@ -549,4 +549,86 @@ describe("html-no-duplicate-meta-names", () => {
       </head>
     `)
   })
+
+  test("allows multiple theme-color meta tags with different media attributes", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <meta
+            name="theme-color"
+            content="#ffffff"
+            media="(prefers-color-scheme: light)"
+          >
+          <meta
+            name="theme-color"
+            content="#212529"
+            media="(prefers-color-scheme: dark)"
+          >
+        </head>
+        <body>
+          <h1>Welcome</h1>
+        </body>
+      </html>
+    `)
+  })
+
+  test("allows multiple meta tags with same name but different media attributes", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <meta name="viewport" content="width=device-width" media="screen">
+        <meta name="viewport" content="width=800" media="print">
+      </head>
+    `)
+  })
+
+  test("detects duplicate meta tags with same name and same media attribute", () => {
+    expectError('Duplicate `<meta>` tag with `name="theme-color"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)">
+      </head>
+    `)
+  })
+
+  test("detects duplicate meta tags with same name and no media attribute", () => {
+    expectError('Duplicate `<meta>` tag with `name="theme-color"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="theme-color" content="#ffffff">
+        <meta name="theme-color" content="#000000">
+      </head>
+    `)
+  })
+
+  test("allows meta tag with media and another without media for same name", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <meta name="theme-color" content="#ffffff">
+        <meta name="theme-color" content="#212529" media="(prefers-color-scheme: dark)">
+      </head>
+    `)
+  })
+
+  test("handles media attribute case insensitivity", () => {
+    expectError('Duplicate `<meta>` tag with `name="theme-color"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: LIGHT)">
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)">
+      </head>
+    `)
+  })
+
+  test("allows different meta names with same media attribute", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+        <meta name="description" content="Light mode page" media="(prefers-color-scheme: light)">
+      </head>
+    `)
+  })
 })

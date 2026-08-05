@@ -9,7 +9,7 @@ module Engine
       template = <<~ERB
         <div>
           <h1>Title</h1>
-          <p>Some text
+          <section>Some text
         </span>
       ERB
 
@@ -18,9 +18,10 @@ module Engine
       end
 
       assert_includes error.message, "HTML+ERB Compilation Errors"
-      assert_includes error.message, "TagNamesMismatch"
-      assert_includes error.message, "Opening tag `<p>`"
-      assert_includes error.message, "closed with `</span>`"
+      assert_includes error.message, "MissingClosingTag"
+      assert_includes error.message, "Opening tag `<section>`"
+      assert_includes error.message, "MissingOpeningTag"
+      assert_includes error.message, "Found closing tag `</span>`"
     end
 
     test "unclosed html element" do
@@ -36,8 +37,8 @@ module Engine
         Herb::Engine.new(template)
       end
 
-      assert_includes error.message, "UnclosedElement"
-      assert_includes error.message, "never closed before the end of document"
+      assert_includes error.message, "MissingClosingTag"
+      assert_includes error.message, "doesn't have a matching closing tag"
     end
 
     test "missing opening tag" do
@@ -146,7 +147,10 @@ module Engine
         Herb::Engine.new(template, filename: "test_template.erb")
       end
 
-      assert_includes error.message, "TagNamesMismatch: Opening tag `<div>` at (1:1) closed with `</span>` at (3:2)."
+      assert_includes error.message, "MissingClosingTag"
+      assert_includes error.message, "Opening tag `<div>`"
+      assert_includes error.message, "MissingOpeningTag"
+      assert_includes error.message, "Found closing tag `</span>`"
     end
 
     test "multiple errors reported" do
@@ -188,7 +192,7 @@ module Engine
       template = <<~ERB
         <div>
           <h1>Working title</h1>
-          <p>Text content
+          <section>Text content
         </wrong_tag>
       ERB
 
@@ -196,9 +200,17 @@ module Engine
         Herb::Engine.new(template)
       end
 
-      assert_includes error.message, "Working"
-      assert_includes error.message, "wrong_tag"
-      assert_includes error.message, "→"
+      assert_includes error.message, "HTML+ERB Compilation Errors:"
+
+      assert_includes error.message, "MissingClosingTag"
+      assert_includes error.message, "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
+      assert_includes error.message, "Opening tag `<section>` at (3:3) doesn't have a matching closing tag `</section>` in the same scope."
+
+      assert_includes error.message, "MissingOpeningTag"
+      assert_includes error.message, "Found closing tag `</wrong_tag>` at (4:2) without a matching opening tag in the same scope."
+
+      assert_includes error.message, "Total errors: 3"
+      assert_includes error.message, "Compilation failed. Please fix the errors above."
     end
 
     test "unclosed quotes in attributes" do
@@ -323,6 +335,117 @@ module Engine
       rescue Herb::Engine::CompilationError => e
         assert_includes e.message, "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
       end
+    end
+
+    test "tags spanning erb control flow boundaries are recognized as conditional elements" do
+      template = <<~ERB
+        <% if condition? %>
+          <div>
+        <% end %>
+
+        <% if condition? %>
+          </div>
+        <% end %>
+      ERB
+
+      engine = Herb::Engine.new(template)
+      assert_kind_of Herb::Engine, engine
+    end
+
+    test "invalid erb control flow structure - else outside scope" do
+      template = <<~ERB
+        <div
+          <% if some_condition %>
+            class="a"
+        >
+          <% else %>
+          <% end %>
+        </div>
+      ERB
+
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_includes error.message, "ERBControlFlowScope"
+      assert_includes error.message, "`<% else %>`"
+      assert_includes error.message, "outside its control flow block"
+      assert_includes error.message, "Keep ERB control flow statements together"
+    end
+
+    test "invalid erb control flow structure - end outside scope" do
+      template = <<~ERB
+        <div
+          <% if some_condition %>
+            class="a"
+        >
+          <% else %>
+          <% end %>
+        </div>
+      ERB
+
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_includes error.message, "ERBControlFlowScope"
+      assert_includes error.message, "`<% end %>`"
+      assert_includes error.message, "outside its control flow block"
+    end
+
+    test "invalid erb control flow structure - elsif outside scope" do
+      template = <<~ERB
+        <div
+          <% if some_condition %>
+        >
+          <% elsif other_condition %>
+          <% end %>
+        </div>
+      ERB
+
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_includes error.message, "ERBControlFlowScope"
+      assert_includes error.message, "`<% elsif %>`"
+    end
+
+    test "invalid erb structure - else outside scope before tag closing" do
+      template = <<~ERB
+        <div
+          <% if some_condition %>
+            class="a"
+          <% else %>
+        >
+        <% end %>
+
+        </div>
+      ERB
+
+      error = assert_raises(Herb::Engine::CompilationError) do
+        Herb::Engine.new(template)
+      end
+
+      assert_includes error.message, "ERBControlFlowScope"
+      assert_includes error.message, "`<% end %>`"
+    end
+
+    test "valid erb structure - if/else/end inside tag attributes" do
+      template = <<~ERB
+        <div
+          <% if some_condition %>
+            class="a"
+          <% else %>
+            class="b"
+          <% end %>
+        ></div>
+      ERB
+
+      engine = Herb::Engine.new(template)
+
+      assert_instance_of Herb::Engine, engine
+      assert_instance_of String, engine.src
     end
   end
 end

@@ -1,3 +1,12 @@
+---
+source: "Analyze::BlockTest#test_0016_block with multiple nested control structures"
+input: |2-
+<%= items.select { |item| item.valid? }.map do |item| %>
+  <div class="<%= item.active? ? 'active' : 'inactive' %>">
+    <%= item.name %>
+  </div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(5:9))
@@ -64,11 +73,21 @@
     │   │   │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:48)-(1:52))
+    │   │       ├── name: "item" (location: (1:48)-(1:52))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
     │   └── end_node:
     │       └── @ ERBEndNode (location: (5:0)-(5:9))
     │           ├── tag_opening: "<%" (location: (5:0)-(5:2))

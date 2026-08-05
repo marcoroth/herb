@@ -1,0 +1,7 @@
+---
+source: "Engine::GraphQLTest#test_0001_graphql tag is omitted from compilation"
+input: "{source: \"<%graphql\\n  fragment HumanFragment on Human {\\n    name\\n    homePlanet\\n  }\\n%>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '
+'.freeze;
+_buf.to_s

@@ -8,7 +8,7 @@ import {
   extractErrorCode,
   formatDiagnostics,
   EnvironmentInfo,
-  HerbSettings
+  PersonalHerbSettings
 } from "./utils"
 
 function createEnvironmentSection(env: EnvironmentInfo): string {
@@ -21,13 +21,27 @@ function createEnvironmentSection(env: EnvironmentInfo): string {
   `
 }
 
-function createSettingsSection(settings: HerbSettings): string {
-  return dedent`
-    **Herb Settings:**
+function createSettingsSection(settings: PersonalHerbSettings): string {
+  let section = dedent`
+    **VS Code Settings:**
     \`\`\`json
-    ${JSON.stringify(settings, null, 2)}
+    ${JSON.stringify(settings.vscodeSettings, null, 2)}
     \`\`\`
   `
+  
+  if (settings.projectConfig) {
+    section += `\n\n**Herb Configuration (.herb.yml):**
+    \`\`\`yaml
+    ${settings.projectConfig}
+    \`\`\`
+    `
+  } else {
+    section += `\n\n**Herb Configuration (.herb.yml):**
+    No .herb.yml file found in workspace.
+    `
+  }
+  
+  return section
 }
 
 function createStandardIssueSection(): string {
@@ -101,7 +115,7 @@ export async function reportDetailedIssue(item?: any): Promise<void> {
 
   const diagnostics = vscode.languages.getDiagnostics(uri)
   const env = getEnvironmentInfo()
-  const settings = getHerbSettings()
+  const settings = await getHerbSettings()
 
   const issueTitle = `Detailed issue report`
   const issueBody = dedent`
@@ -129,7 +143,7 @@ export async function reportDetailedIssue(item?: any): Promise<void> {
 
 export async function reportGeneralIssue(): Promise<void> {
   const env = getEnvironmentInfo()
-  const settings = getHerbSettings()
+  const settings = await getHerbSettings()
 
   const issueTitle = `Issue with Herb VS Code Extension`
   const issueBody = dedent`
@@ -151,7 +165,7 @@ export async function reportDiagnosticIssue(uri: vscode.Uri, diagnostic: vscode.
   const lineNumber = diagnostic.range.start.line + 1
 
   const env = getEnvironmentInfo()
-  const settings = getHerbSettings()
+  const settings = await getHerbSettings()
   const errorCode = extractErrorCode(diagnostic)
 
   const issueTitle = `Diagnostic issue: \`${errorCode}\``

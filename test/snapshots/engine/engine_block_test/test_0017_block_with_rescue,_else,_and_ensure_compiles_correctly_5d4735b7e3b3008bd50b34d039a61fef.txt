@@ -1,0 +1,14 @@
+---
+source: "Engine::EngineBlockTest#test_0017_block with rescue, else, and ensure compiles correctly"
+input: "{source: \"<% 5.times do %>\\n  <%= \\\"foo\\\" %>\\n<% rescue %>\\n  <%= \\\"error\\\" %>\\n<% else %>\\n  <%= \\\"no error\\\" %>\\n<% ensure %>\\n  <%= \\\"cleanup\\\" %>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new; 5.times do 
+ _buf << '  '.freeze; _buf << ("foo").to_s; _buf << '
+'.freeze; rescue 
+ _buf << '  '.freeze; _buf << ("error").to_s; _buf << '
+'.freeze; else 
+ _buf << '  '.freeze; _buf << ("no error").to_s; _buf << '
+'.freeze; ensure 
+ _buf << '  '.freeze; _buf << ("cleanup").to_s; _buf << '
+'.freeze; end 
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::EscapeTest::javascript#test_0002_escape: true"
+input: "{source: \"<script><%= value %></script>\", options: {escape: true}}"
+---
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<script>'.freeze; _buf << __herb.js((value)); _buf << '</script>'.freeze;
+_buf.to_s

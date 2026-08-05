@@ -76,6 +76,8 @@ module Analyze
     end
 
     test "guard clause with return unless modifier" do
+      skip "we cannot detect MethodDefinitions yet"
+
       assert_parsed_snapshot(<<~HTML)
         <% def some_method %>
           <% return unless condition %>

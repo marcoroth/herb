@@ -43,22 +43,16 @@ async function getNodeTypes() {
   }))
 }
 
+function underscore(name) {
+  return name
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+    .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+}
+
 function generateNodeTest(nodeInfo) {
   const { name: nodeName, fields } = nodeInfo
 
-  let astType = nodeName
-
-  if (astType.startsWith('HTML')) {
-    astType = astType.replace(/^HTML/, 'HTML_')
-  } else if (astType.startsWith('ERB')) {
-    astType = astType.replace(/^ERB/, 'ERB_')
-  }
-
-  astType = astType
-    .replace(/([a-z])([A-Z])/g, '$1_$2')
-    .toUpperCase()
-
-  astType = 'AST_' + astType
+  const astType = 'AST_' + underscore(nodeName).toUpperCase()
 
   const standardProperties = [
     `type: "${astType}"`,
@@ -145,13 +139,9 @@ async function main() {
     for (const nodeInfo of nodeTypes) {
       const { name: nodeTypeName } = nodeInfo
 
-      const kebabCase = nodeTypeName
-        .replace(/^HTML/, 'html-')
-        .replace(/^ERB/, 'erb-')
-        .replace(/([A-Z])/g, '-$1')
+      const kebabCase = underscore(nodeTypeName)
         .toLowerCase()
-        .replace(/^-/, '')
-        .replace(/--/g, '-')
+        .replace(/_/g, '-')
 
       const testFile = path.join(testDir, `${kebabCase}.test.ts`)
 

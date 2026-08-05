@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 import { HTMLAriaRoleMustBeValidRule } from "../../src/rules/html-aria-role-must-be-valid.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAriaRoleMustBeValidRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLAriaRoleMustBeValidRule)
 
 describe("html-aria-role-must-be-valid", () => {
   it("should not show an error for valid attributes", () => {
@@ -10,7 +10,7 @@ describe("html-aria-role-must-be-valid", () => {
   })
 
   it("should show an error for an invalid attrbute", () => {
-    expectError("The `role` attribute must be a valid ARIA role. Role `invalid-role` is not recognized.")
+    expectWarning("The `role` attribute must be a valid ARIA role. Role `invalid-role` is not recognized.")
 
     assertOffenses(`<div role="invalid-role"></div>`)
   })
@@ -21,5 +21,35 @@ describe("html-aria-role-must-be-valid", () => {
 
   it("should not show an error for static and ERB content", () => {
     expectNoOffenses(`<div role="invalid-role-<%= role %>"></div>`)
+  })
+
+  describe("ActionView tag helpers", () => {
+    it("passes for tag.div with a valid role", () => {
+      expectNoOffenses('<%= tag.div role: "button" %>')
+    })
+
+    it("fails for tag.div with an invalid role", () => {
+      expectWarning("The `role` attribute must be a valid ARIA role. Role `buton` is not recognized.")
+
+      assertOffenses('<%= tag.div role: "buton" %>')
+    })
+
+    it("fails for content_tag with an invalid role", () => {
+      expectWarning("The `role` attribute must be a valid ARIA role. Role `buton` is not recognized.")
+
+      assertOffenses('<%= content_tag :div, "content", role: "buton" %>')
+    })
+
+    it("passes for a dynamic role, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div role: role_name %>')
+    })
+
+    it("passes for a nil role, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div role: nil %>')
+    })
+
+    it("passes for an interpolated role", () => {
+      expectNoOffenses('<%= tag.div role: "but#{suffix}" %>')
+    })
   })
 })

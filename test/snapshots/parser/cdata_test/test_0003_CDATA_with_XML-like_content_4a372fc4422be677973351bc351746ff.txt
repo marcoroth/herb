@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0003_CDATA with XML-like content"
+input: "<![CDATA[<sender>John Smith</sender>]]>"
+---
 @ DocumentNode (location: (1:0)-(1:39))
 └── children: (1 item)
     └── @ CDATANode (location: (1:0)-(1:39))

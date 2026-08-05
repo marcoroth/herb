@@ -1,3 +1,15 @@
+---
+source: "Analyze::WhileTest#test_0005_while statement with multiple children and multiple while"
+input: |2-
+<% while true %>
+  <h1>true</h1>
+  <h2>true</h2>
+
+  <% while false %>
+    <h3>false</h3>
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(9:0))
 └── children: (2 items)
     ├── @ ERBWhileNode (location: (1:0)-(8:9))
@@ -30,7 +42,7 @@
     │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:15)-(3:2))
     │   │   │   └── content: "\n  "
@@ -57,7 +69,7 @@
     │   │   │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (3:15)-(5:2))
     │   │   │   └── content: "\n\n  "
@@ -92,7 +104,7 @@
     │   │   │   │   │   │       └── tag_closing: ">" (location: (6:17)-(6:18))
     │   │   │   │   │   │
     │   │   │   │   │   ├── is_void: false
-    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │   └── element_source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (6:18)-(7:2))
     │   │   │   │       └── content: "\n  "

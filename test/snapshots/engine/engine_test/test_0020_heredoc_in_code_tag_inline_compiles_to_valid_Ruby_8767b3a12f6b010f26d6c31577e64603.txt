@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineTest#test_0020_heredoc in code tag inline compiles to valid Ruby"
+input: "{source: \"<div><% text = <<~TEXT\\n    Hello, world!\\n  TEXT\\n%></div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div>'.freeze; text = <<~TEXT
+    Hello, world!
+  TEXT
+ _buf << '</div>
+'.freeze;
+_buf.to_s

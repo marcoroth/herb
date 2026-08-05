@@ -1,7 +1,8 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 const INTERACTIVE_ELEMENTS = new Set([
@@ -21,7 +22,6 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Elements that are focusable should not have \`aria-hidden="true"\` because it will cause confusion for assistive technology users.`,
         node.tag_name!.location,
-        "error"
       )
     }
   }
@@ -38,7 +38,7 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
   }
 
   private isFocusable(node: HTMLOpenTagNode): boolean {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     if (!tagName) return false
 
     const tabIndexValue = this.getTabIndexValue(node)
@@ -78,10 +78,18 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
-  name = "html-no-aria-hidden-on-focusable"
+  static ruleName = "html-no-aria-hidden-on-focusable"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new NoAriaHiddenOnFocusableVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new NoAriaHiddenOnFocusableVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

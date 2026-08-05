@@ -1,7 +1,8 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, getAttribute, getAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getStaticAttributeValue, getAttribute, getAttributeValue, getTagLocalName } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class IframeHasTitleVisitor extends BaseRuleVisitor {
@@ -11,18 +12,14 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
   }
 
   private checkIframeElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "iframe") {
       return
     }
 
-    const ariaHiddenAttribute = getAttribute(node, "aria-hidden")
-    if (ariaHiddenAttribute) {
-      const ariaHiddenValue = getAttributeValue(ariaHiddenAttribute)
-      if (ariaHiddenValue === "true") {
-        return
-      }
+    if (getStaticAttributeValue(node, "aria-hidden") === "true") {
+      return
     }
 
     const attribute = getAttribute(node, "title")
@@ -31,7 +28,6 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
       this.addOffense(
         "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
         node.location,
-        "error"
       )
 
       return
@@ -43,17 +39,24 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
       this.addOffense(
         "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
         node.location,
-        "error"
       )
     }
   }
 }
 
 export class HTMLIframeHasTitleRule extends ParserRule {
-  name = "html-iframe-has-title"
+  static ruleName = "html-iframe-has-title"
+  static introducedIn = this.version("0.6.0")
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new IframeHasTitleVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new IframeHasTitleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

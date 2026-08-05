@@ -32,6 +32,8 @@ export function createViteConfig() {
       browser: "vscode-icons:file-type-js",
       "Node.js": "vscode-icons:file-type-js",
       ".js": "vscode-icons:file-type-js",
+      ".java": "vscode-icons:file-type-java",
+      ".rs": "vscode-icons:file-type-rust",
       javascript: "vscode-icons:file-type-js",
       shell: "vscode-icons:file-type-shell",
       ".erb": localIconLoader(import.meta.url, "../assets/herb.svg"),

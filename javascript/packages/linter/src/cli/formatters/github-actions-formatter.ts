@@ -12,8 +12,9 @@ export class GitHubActionsFormatter extends BaseFormatter {
   private wrapLines: boolean
   private truncateLines: boolean
 
-  constructor(wrapLines: boolean = true, truncateLines: boolean = false) {
-    super()
+  constructor(wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string) {
+    super(projectPath)
+
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
     this.highlighter = new Highlighter()
@@ -44,11 +45,15 @@ export class GitHubActionsFormatter extends BaseFormatter {
       await this.highlighter.initialize()
     }
 
-    for (const { filename, offense, content } of allDiagnostics) {
+    for (const processedFile of allDiagnostics) {
+      const { filename, offense } = processedFile
+      const content = this.contentFor(processedFile)
       const originalNoColor = process.env.NO_COLOR
+
       process.env.NO_COLOR = "1"
 
       let plainCodePreview = ""
+
       try {
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,
@@ -79,7 +84,23 @@ export class GitHubActionsFormatter extends BaseFormatter {
   // ::{level} file={file},line={line},col={col},title={title}::{message}
   //
   private formatDiagnostic(filename: string, diagnostic: Diagnostic, codePreview: string = ""): void {
-    const level = diagnostic.severity === "error" ? "error" : "warning"
+    let level: string
+
+    switch (diagnostic.severity) {
+      case "error":
+        level = "error"
+        break
+      case "warning":
+        level = "warning"
+        break
+      case "info":
+      case "hint":
+        level = "notice"
+        break
+      default:
+        level = "warning"
+    }
+
     const { line, column } = diagnostic.location.start
 
     const escapedFilename = this.escapeParam(filename)

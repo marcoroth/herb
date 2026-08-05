@@ -1,0 +1,33 @@
+---
+source: "Analyze::StrictLocalsTest#test_0060_block with keyword produces error for block only"
+input: |2-
+<%# locals: (title:, &callback) %>
+options: {strict_locals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBStrictLocalsNode (location: (1:0)-(1:34))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " locals: (title:, &callback) " (location: (1:3)-(1:32))
+    │   ├── tag_closing: "%>" (location: (1:32)-(1:34))
+    │   └── locals: (2 items)
+    │       ├── @ RubyParameterNode (location: (1:13)-(1:19))
+    │       │   ├── name: "title" (location: (1:13)-(1:19))
+    │       │   ├── default_value: ∅
+    │       │   ├── kind: "keyword"
+    │       │   └── required: true
+    │       │
+    │       └── @ RubyParameterNode (location: (1:21)-(1:30))
+    │           ├── errors: (1 error)
+    │           │   └── @ StrictLocalsBlockArgumentError (location: (1:21)-(1:30))
+    │           │       ├── message: "Strict locals only support keyword arguments. Block argument `&callback` is not allowed."
+    │           │       └── name: "callback"
+    │           │
+    │           ├── name: "callback" (location: (1:22)-(1:30))
+    │           ├── default_value: ∅
+    │           ├── kind: "block"
+    │           └── required: false
+    │
+    │
+    └── @ HTMLTextNode (location: (1:34)-(2:0))
+        └── content: "\n"

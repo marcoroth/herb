@@ -1,30 +1,51 @@
-#include <stdio.h>
-#include "include/test.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/html_util.h"
+#include "../../src/include/util/html_util.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "include/test.h"
+#include <stdio.h>
 
 TEST(html_util_html_closing_tag_string)
-  ck_assert_str_eq(html_closing_tag_string(NULL), "</>");
-  ck_assert_str_eq(html_closing_tag_string(""), "</>");
-  ck_assert_str_eq(html_closing_tag_string(" "), "</ >");
-  ck_assert_str_eq(html_closing_tag_string("div"), "</div>");
-  ck_assert_str_eq(html_closing_tag_string("somelongerstring"), "</somelongerstring>");
+  hb_allocator_T alloc = hb_allocator_with_malloc();
+  ck_assert(hb_string_equals(html_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }, &alloc), hb_string("</>")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string(""), &alloc), hb_string("</>")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string(" "), &alloc), hb_string("</ >")));
+  ck_assert(hb_string_equals(html_closing_tag_string(hb_string("div"), &alloc), hb_string("</div>")));
+
+  ck_assert(hb_string_equals(
+    html_closing_tag_string(hb_string("somelongerstring"), &alloc),
+    hb_string("</somelongerstring>")
+  ));
 END
 
 TEST(html_util_html_self_closing_tag_string)
-  ck_assert_str_eq(html_self_closing_tag_string(NULL), "< />");
-  ck_assert_str_eq(html_self_closing_tag_string(""), "< />");
-  ck_assert_str_eq(html_self_closing_tag_string(" "), "<  />");
-  ck_assert_str_eq(html_self_closing_tag_string("br"), "<br />");
-  ck_assert_str_eq(html_self_closing_tag_string("somelongerstring"), "<somelongerstring />");
+  hb_allocator_T alloc = hb_allocator_with_malloc();
+  ck_assert(hb_string_equals(html_self_closing_tag_string((hb_string_T) { .data = NULL, .length = 0 }, &alloc), hb_string("< />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string(""), &alloc), hb_string("< />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string(" "), &alloc), hb_string("<  />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("br"), &alloc), hb_string("<br />")));
+  ck_assert(hb_string_equals(html_self_closing_tag_string(hb_string("somelongerstring"), &alloc), hb_string("<somelongerstring />")));
 END
 
-TCase *html_util_tests(void) {
-  TCase *html_util = tcase_create("HTML Util");
+TEST(html_util_is_whitespace_preserving_element)
+  ck_assert(is_whitespace_preserving_element(hb_string("pre")));
+  ck_assert(is_whitespace_preserving_element(hb_string("textarea")));
+  ck_assert(is_whitespace_preserving_element(hb_string("script")));
+  ck_assert(is_whitespace_preserving_element(hb_string("style")));
+  ck_assert(is_whitespace_preserving_element(hb_string("PRE")));
+
+  ck_assert(!is_whitespace_preserving_element((hb_string_T) { .data = NULL, .length = 0 }));
+  ck_assert(!is_whitespace_preserving_element(hb_string("")));
+  ck_assert(!is_whitespace_preserving_element(hb_string("div")));
+  ck_assert(!is_whitespace_preserving_element(hb_string("prefix")));
+END
+
+TCase* html_util_tests(void) {
+  TCase* html_util = tcase_create("HTML Util");
 
   tcase_add_test(html_util, html_util_html_closing_tag_string);
   tcase_add_test(html_util, html_util_html_closing_tag_string);
   tcase_add_test(html_util, html_util_html_self_closing_tag_string);
+  tcase_add_test(html_util, html_util_is_whitespace_preserving_element);
 
   return html_util;
 }

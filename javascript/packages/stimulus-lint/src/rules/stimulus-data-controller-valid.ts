@@ -1,6 +1,7 @@
-import { StimulusRuleVisitor, HerbParserRule, getAttributeName, getAttributeValue, getStaticAttributeValue, hasStaticAttributeValue } from "./rule-utils.js"
+import { StimulusRuleVisitor, HerbParserRule } from "./rule-utils.js"
+import { getAttributeName, getStaticAttributeValue, hasStaticAttributeValue, getAttributeValue } from "@herb-tools/core"
 
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class DataControllerValidVisitor extends StimulusRuleVisitor {
@@ -23,16 +24,23 @@ class DataControllerValidVisitor extends StimulusRuleVisitor {
     const controllers = this.getControllerIdentifiers(value)
 
     for (const controller of controllers) {
-      this.validateControllerIdentifier(controller, attributeNode.value?.location || attributeNode.location)
+      this.validateControllerIdentifier(controller, attributeNode.value?.location || attributeNode.location)
     }
   }
 }
 
 export class StimulusDataControllerValidRule extends HerbParserRule {
-  name = "stimulus-data-controller-valid"
+  static ruleName = "stimulus-data-controller-valid"
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
-    const visitor = new DataControllerValidVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
+    const visitor = new DataControllerValidVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

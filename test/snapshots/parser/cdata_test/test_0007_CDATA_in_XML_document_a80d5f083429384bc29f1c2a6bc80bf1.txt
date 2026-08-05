@@ -1,3 +1,11 @@
+---
+source: "Parser::CDATATest#test_0007_CDATA in XML document"
+input: |2-
+<?xml version="1.0"?>
+<root>
+  <data><![CDATA[Some data here]]></data>
+</root>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (4 items)
     ├── @ XMLDeclarationNode (location: (1:0)-(1:21))
@@ -52,7 +60,7 @@
     │   │   │   │       └── tag_closing: ">" (location: (3:40)-(3:41))
     │   │   │   │
     │   │   │   ├── is_void: false
-    │   │   │   └── source: "HTML"
+    │   │   │   └── element_source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:41)-(4:0))
     │   │       └── content: "\n"
@@ -65,7 +73,7 @@
     │   │       └── tag_closing: ">" (location: (4:6)-(4:7))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (4:7)-(5:0))
         └── content: "\n"

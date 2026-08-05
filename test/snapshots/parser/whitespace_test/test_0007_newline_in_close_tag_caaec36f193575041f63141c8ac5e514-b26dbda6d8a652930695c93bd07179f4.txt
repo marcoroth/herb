@@ -1,3 +1,11 @@
+---
+source: "Parser::WhitespaceTest#test_0007_newline in close tag"
+input: |2-
+<div>
+</div
+>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:1))
@@ -26,7 +34,7 @@
     │   │       └── tag_closing: ">" (location: (3:0)-(3:1))
     │   │
     │   ├── is_void: false
-    │   └── source: "HTML"
+    │   └── element_source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:1)-(4:0))
         └── content: "\n"

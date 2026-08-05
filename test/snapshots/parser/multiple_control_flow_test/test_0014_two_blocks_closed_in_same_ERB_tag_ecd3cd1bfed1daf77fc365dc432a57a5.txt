@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0014_two blocks closed in same ERB tag"
+input: |2-
+<% items.each do |item|; item.parts.each do |part|; puts part; end; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:74))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each do |item|; item.parts.each do |part|; puts part; end; end " (location: (1:2)-(1:72))
+    │   ├── tag_closing: "%>" (location: (1:72)-(1:74))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:74)-(2:0))
+        └── content: "\n"
