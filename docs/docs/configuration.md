@@ -14,6 +14,14 @@ your-project/
 └── ...
 ```
 
+::: warning Only `.herb.yml` is read
+`.herb.yml` is the only filename Herb reads, following the convention used by Rails and most other Ruby tooling. A file named `.herb.yaml`, `herb.yml`, or `herb.yaml` is ignored, and every Herb tool warns about it so it doesn't look like your configuration is being applied:
+
+```
+⚠ Ignoring /your-project/.herb.yaml: Herb only reads `.herb.yml`. Rename it to `.herb.yml` to apply it.
+```
+:::
+
 ## Configuration Priority
 
 Configuration settings are applied in the following order (highest to lowest priority):
@@ -289,6 +297,8 @@ engine:
     nesting: true        # Enable/disable HTML nesting validation (default: true)
     accessibility: true  # Enable/disable accessibility validation (default: true)
 ```
+
+The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
 
 ### Validators
 

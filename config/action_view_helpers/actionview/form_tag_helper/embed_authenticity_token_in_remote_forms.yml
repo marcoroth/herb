@@ -1,16 +1,19 @@
 ---
-name: embed_authenticity_token_in_remote_forms
+name: "embed_authenticity_token_in_remote_forms"
 source: "ActionView::Helpers::FormTagHelper#embed_authenticity_token_in_remote_forms"
-gem: actionview
-output: boolean
-visibility: internal
+gem: "actionview"
+output: "boolean"
+visibility: "internal"
 supported: false
 supports_block: false
-description: |-
-  Returns whether remote forms embed the CSRF authenticity token as a hidden field.
 signature: "embed_authenticity_token_in_remote_forms"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html"
+
+description: |-
+  Returns whether remote forms embed the CSRF authenticity token as a hidden field.
+
 tag: null
 arguments: []
 options: []
+block_arguments: []
 special_behaviors: []

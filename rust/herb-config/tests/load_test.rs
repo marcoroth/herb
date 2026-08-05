@@ -72,6 +72,51 @@ fn load_returns_error_for_unknown_keys() {
 }
 
 #[test]
+fn load_accepts_engine_options_it_does_not_know_about() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yml");
+
+  fs::write(
+    &config_path,
+    r#"
+version: 0.10.3
+engine:
+  slots: true
+  parser_options:
+    timeout: 5
+"#,
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+  let engine = config.config.engine.unwrap();
+
+  assert_eq!(engine.get("slots").unwrap().as_bool(), Some(true));
+  assert_eq!(engine.get("parser_options").unwrap().get("timeout").unwrap().as_u64(), Some(5));
+}
+
+#[test]
+fn load_accepts_an_empty_engine_section() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\nengine:\n").unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+
+  assert!(config.is_linter_enabled());
+}
+
+#[test]
+fn load_returns_error_when_the_engine_section_is_not_a_mapping() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yml");
+
+  fs::write(&config_path, "engine: true\n").unwrap();
+
+  assert!(Config::load(&config_path, None).is_err());
+}
+
+#[test]
 fn load_from_explicit_path_returns_error_when_missing() {
   assert!(Config::load(Path::new("/nonexistent/.herb.yml"), None).is_err());
 }

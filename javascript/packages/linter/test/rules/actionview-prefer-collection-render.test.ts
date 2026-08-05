@@ -31,6 +31,54 @@ describe("actionview-prefer-collection-render", () => {
     assertOffenses(html)
   })
 
+  it("suggests `as:` when the local is not named after the partial", () => {
+    const html = dedent`
+      <% @gems.each do |topic_gem| %>
+        <%= render partial: "gem_card", locals: { topic_gem: topic_gem } %>
+      <% end %>
+    `
+
+    expectError('Prefer `<%= render partial: "gem_card", collection: @gems, as: :topic_gem %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `as:` when the local is not named after the partial in the shorthand form", () => {
+    const html = dedent`
+      <% @gems.each do |topic_gem| %>
+        <%= render "gem_card", topic_gem: topic_gem %>
+      <% end %>
+    `
+
+    expectError('Prefer `<%= render partial: "gem_card", collection: @gems, as: :topic_gem %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
+
+    assertOffenses(html)
+  })
+
+  it("does not suggest `as:` when the local matches the partial name in a nested path", () => {
+    const html = dedent`
+      <% @gems.each do |gem_card| %>
+        <%= render partial: "gems/gem_card", locals: { gem_card: gem_card } %>
+      <% end %>
+    `
+
+    expectError('Prefer `<%= render partial: "gems/gem_card", collection: @gems %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
+
+    assertOffenses(html)
+  })
+
+  it("suggests `as:` when the local does not match the partial name in a nested path", () => {
+    const html = dedent`
+      <% @gems.each do |topic_gem| %>
+        <%= render partial: "gems/gem_card", locals: { topic_gem: topic_gem } %>
+      <% end %>
+    `
+
+    expectError('Prefer `<%= render partial: "gems/gem_card", collection: @gems, as: :topic_gem %>` over rendering a partial once per iteration. Collection rendering builds the partial once instead of for every item.')
+
+    assertOffenses(html)
+  })
+
   it("flags the object shorthand and suggests the shorthand collection form", () => {
     const html = dedent`
       <% @users.each do |user| %>

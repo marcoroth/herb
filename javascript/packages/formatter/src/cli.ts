@@ -1,17 +1,22 @@
 import dedent from "dedent"
+
 import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
+import { parseArgs } from "util"
+import { name, version, dependencies } from "../package.json"
+
+import { colorize } from "@herb-tools/highlighter"
+import { addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
-import { colorize } from "@herb-tools/highlighter"
+import { Config } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
+import { SummaryReporter } from "./cli/summary-reporter.js"
 import { ASTRewriter, StringRewriter, CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
-import { parseArgs } from "util"
 
-import { name, version, dependencies } from "../package.json"
+import type { SkippedFile } from "./cli/summary-reporter.js"
 
 const pluralize = (count: number, singular: string, plural: string = singular + 's'): string => {
   return count === 1 ? singular : plural
@@ -136,6 +141,9 @@ export class CLI {
   async run() {
     const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, maxLineLength } = this.parseArguments()
 
+    const startTime = Date.now()
+    const startDate = new Date()
+
     try {
       await Herb.load()
 
@@ -213,6 +221,7 @@ export class CLI {
         console.error()
       }
 
+      console.error()
       console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.error()
 
@@ -411,45 +420,7 @@ export class CLI {
           process.exit(0)
         }
 
-        let formattedCount = 0
-        const unformattedFiles: string[] = []
-
-        for (const filePath of files) {
-          const displayPath = relative(process.cwd(), filePath)
-
-          try {
-            const source = readFileSync(filePath, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                unformattedFiles.push(displayPath)
-              } else {
-                writeFileSync(filePath, output, "utf-8")
-                console.log(`Formatted: ${displayPath}`)
-              }
-              formattedCount++
-            }
-          } catch (error) {
-            console.error(`Error formatting ${displayPath}:`, error)
-          }
-        }
-
-        if (isCheckMode) {
-          if (unformattedFiles.length > 0) {
-            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-            unformattedFiles.forEach(file => console.log(`  ${file}`))
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-            process.exit(1)
-          } else {
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
-          }
-        } else {
-          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
-        }
-
-        process.exit(0)
+        this.processFiles(files, formatter, isCheckMode, startTime, startDate)
       } else {
         const files = await config.findFilesForTool('formatter', process.cwd())
 
@@ -459,50 +430,73 @@ export class CLI {
           process.exit(0)
         }
 
-        let formattedCount = 0
-        const unformattedFiles: string[] = []
-
-        for (const filePath of files) {
-          const displayPath = relative(process.cwd(), filePath)
-
-          try {
-            const source = readFileSync(filePath, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                unformattedFiles.push(displayPath)
-              } else {
-                writeFileSync(filePath, output, "utf-8")
-                console.log(`Formatted: ${displayPath}`)
-              }
-              formattedCount++
-            }
-          } catch (error) {
-            console.error(`Error formatting ${displayPath}:`, error)
-          }
-        }
-
-        if (isCheckMode) {
-          if (unformattedFiles.length > 0) {
-            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-            unformattedFiles.forEach(file => console.log(`  ${file}`))
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-
-            process.exit(1)
-          } else {
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
-          }
-        } else {
-          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
-        }
+        this.processFiles(files, formatter, isCheckMode, startTime, startDate)
       }
     } catch (error) {
       console.error(error)
 
       process.exit(1)
     }
+  }
+
+  private processFiles(files: string[], formatter: Formatter, isCheckMode: boolean = false, startTime: number = Date.now(), startDate: Date = new Date()): void {
+    const changedFiles: string[] = []
+    const skippedFiles: SkippedFile[] = []
+
+    let erroredCount = 0
+
+    for (const filePath of files) {
+      const displayPath = relative(process.cwd(), filePath)
+
+      try {
+        const source = readFileSync(filePath, "utf-8")
+        const { output: formatted, skipped, errorCount } = formatter.formatWithResult(source, {}, filePath)
+
+        if (skipped) {
+          skippedFiles.push({ path: displayPath, reason: skipped, errorCount })
+
+          continue
+        }
+
+        const output = formatted.endsWith("\n") ? formatted : formatted + "\n"
+
+        if (output !== source) {
+          changedFiles.push(displayPath)
+
+          if (!isCheckMode) {
+            writeFileSync(filePath, output, "utf-8")
+            console.log(`${colorize("✓", "brightGreen")} ${colorize("Formatted:", "green")} ${colorize(displayPath, "cyan")}`)
+          }
+        }
+      } catch (error) {
+        erroredCount++
+
+        console.error(`Error formatting ${displayPath}:`, error)
+      }
+    }
+
+    const reporter = new SummaryReporter()
+
+    const data = {
+      fileCount: files.length,
+      changedFiles,
+      skippedFiles,
+      erroredCount,
+      isCheckMode,
+      startTime,
+      startDate,
+      showTiming: true
+    }
+
+    if (isCheckMode && changedFiles.length > 0) {
+      console.log(`\nThe following ${pluralize(changedFiles.length, "file is", "files are")} not formatted:`)
+      changedFiles.forEach(file => console.log(`  ${colorize(file, "cyan")}`))
+    }
+
+    reporter.displaySkipped(data)
+    reporter.displaySummary(data)
+
+    process.exit(isCheckMode && changedFiles.length > 0 ? 1 : 0)
   }
 
   private async readStdin(): Promise<string> {

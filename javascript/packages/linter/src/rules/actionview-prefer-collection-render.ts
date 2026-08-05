@@ -73,10 +73,21 @@ class PreferCollectionRenderVisitor extends BaseRuleVisitor {
     const locals = keywords.locals ?? []
     if (locals.length !== 1) return null
 
-    const [local] = locals as Array<{ value?: { content?: string } }>
+    const [local] = locals as Array<{ name?: { value?: string }, value?: { content?: string } }>
     if (local.value?.content !== blockArgument) return null
 
-    return `<%= render partial: "${partial}", collection: ${receiver} %>`
+    const localName = local.name?.value
+    if (!localName) return null
+
+    const as = localName === this.collectionLocalNameFor(partial) ? "" : `, as: :${localName}`
+
+    return `<%= render partial: "${partial}", collection: ${receiver}${as} %>`
+  }
+
+  private collectionLocalNameFor(partial: string): string {
+    const name = partial.split("/").pop() ?? partial
+
+    return name.startsWith("_") ? name.slice(1) : name
   }
 }
 

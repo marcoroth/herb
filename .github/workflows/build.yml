@@ -47,6 +47,9 @@ jobs:
       - name: RuboCop
         run: bundle exec rubocop
 
+      - name: Yerba
+        run: bundle exec yerba check
+
       - name: clang-format version
         run: clang-format-21 --version
 

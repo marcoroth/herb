@@ -983,7 +983,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const rawInner = node.children && node.children.length > 0
       ? extractHTMLCommentContent(node.children)
       : ""
-    const inner = rawInner ? formatHTMLCommentInner(rawInner, this.indentWidth) : ""
+    const inner = rawInner ? formatHTMLCommentInner(rawInner, this.indentWidth, this.indent) : ""
 
     this.pushWithIndent(open + inner + close)
   }

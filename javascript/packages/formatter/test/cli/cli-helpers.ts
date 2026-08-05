@@ -11,6 +11,7 @@ export type ExecResult = {
 export type ExecOptions = {
   cwd?: string
   stdin?: "pipe" | "ignore"
+  color?: boolean
 }
 
 export const expectExitCode = (result: ExecResult, expectedCode: number) => {
@@ -30,9 +31,12 @@ export const execBinary = (args: string[] = [], input?: string, options: ExecOpt
   const binary = resolve(process.cwd(), "bin/herb-format")
 
   return new Promise((resolvePromise) => {
+    const { NO_COLOR: _noColor, FORCE_COLOR: _forceColor, ...env } = process.env
+
     const child = spawn("node", [binary, ...args], {
       cwd: options.cwd,
-      stdio: [options.stdin || "pipe", "pipe", "pipe"]
+      stdio: [options.stdin || "pipe", "pipe", "pipe"],
+      env: options.color ? env : { ...env, NO_COLOR: "1" }
     })
 
     let stdout = ""

@@ -45,6 +45,15 @@ pub struct HelperOption {
 }
 
 #[derive(Debug, Clone)]
+pub struct HelperBlockArgument {
+  pub name: &'static str,
+  pub position: usize,
+  pub argument_type: &'static str,
+  pub optional: bool,
+  pub description: &'static str,
+}
+
+#[derive(Debug, Clone)]
 pub struct HelperImplicitAttribute {
   pub name: &'static str,
   pub source: &'static str,
@@ -73,6 +82,7 @@ pub struct HelperEntry {
   pub implicit_attribute: Option<&'static HelperImplicitAttribute>,
   pub arguments: &'static [HelperArgument],
   pub options: &'static [HelperOption],
+  pub block_arguments: &'static [HelperBlockArgument],
   pub special_behaviors: &'static [&'static str],
   pub aliases: &'static [&'static str],
 }
@@ -117,6 +127,11 @@ static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
     options: &[
     <%- helper.options.each do |opt| -%>
       HelperOption { name: "<%= opt.name %>", option_type: "<%= opt.type_display %>", maps_to: <%= opt.maps_to ? "Some(\"#{opt.maps_to}\")" : "None" %>, description: "<%= opt.escaped_description %>" },
+    <%- end -%>
+    ],
+    block_arguments: &[
+    <%- helper.block_arguments.each do |arg| -%>
+      HelperBlockArgument { name: "<%= arg.name %>", position: <%= arg.position %>, argument_type: "<%= arg.type_display %>", optional: <%= arg.optional %>, description: "<%= arg.escaped_description %>" },
     <%- end -%>
     ],
     special_behaviors: &[<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],

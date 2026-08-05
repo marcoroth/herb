@@ -259,21 +259,21 @@ describe("erb-no-unused-block-argument", () => {
   })
 
   it("does not rewrite a tag that spans multiple lines", () => {
-    expectError('Block argument `form` is never used. Remove it, or prefix it with an underscore as `_form` to show it is intentionally unused.')
+    expectError('Block argument `panel` is never used. Remove it, or prefix it with an underscore as `_panel` to show it is intentionally unused.')
 
     assertOffenses(dedent`
-      <%= form_with model: @user,
-            url: profile_path do |form| %>
+      <%= panel title: "Hello",
+            subtitle: "World" do |panel| %>
         <p>Nothing</p>
       <% end %>
     `)
   })
 
   it("does not rewrite a tag that would make the message unwieldy", () => {
-    expectError('Block argument `form` is never used. Remove it, or prefix it with an underscore as `_form` to show it is intentionally unused.')
+    expectError('Block argument `panel` is never used. Remove it, or prefix it with an underscore as `_panel` to show it is intentionally unused.')
 
     assertOffenses(dedent`
-      <%= form_with model: @user, url: profile_path(@user, @account), html: { class: "form" } do |form| %>
+      <%= panel title: "Hello", subtitle: "World", classes: "border rounded shadow" do |panel| %>
         <p>Nothing</p>
       <% end %>
     `)
@@ -297,14 +297,14 @@ describe("erb-no-unused-block-argument", () => {
     `)
   })
 
-  it("flags an unused builder block argument", () => {
-    expectError('Block argument `form` is never used. Remove it and write `<%= form_with model: @user do %>`, or prefix it with an underscore as `_form` to show it is intentionally unused.')
+  it("names what the helper yields for an unused builder block argument", () => {
+    expectError('Block argument `form` is never used. It is the `ActionView::Helpers::FormBuilder` yielded by `form_with`, so prefix it with an underscore as `_form` to show it is intentionally unused.')
 
     assertOffenses(dedent`
       <%= form_with model: @user do |form| %>
         <p>Nothing</p>
       <% end %>
-    `)
+    `, { framework: "actionview" })
   })
 
   it("does not flag a builder block argument that is used", () => {
@@ -423,6 +423,107 @@ describe("erb-no-unused-block-argument", () => {
     assertOffenses(dedent`
       <% 3.times do |index| %>
         <div class="page"></div>
+      <% end %>
+    `)
+  })
+
+  it("does not use the helper registry without an Action View project", () => {
+    expectError('Block argument `form` is never used. Remove it and write `<%= form_with model: @user do %>`, or prefix it with an underscore as `_form` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= form_with model: @user do |form| %>
+        <p>Nothing</p>
+      <% end %>
+    `)
+  })
+
+  it("does not use the helper registry for another framework", () => {
+    expectError('Block argument `entry` is never used. Remove it and write `<% cache @post do %>`, or prefix it with an underscore as `_entry` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <% cache @post do |entry| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "hanami" })
+  })
+
+  it("names what the helper yields for a nested form builder", () => {
+    expectError('Block argument `fields` is never used. It is the `ActionView::Helpers::FormBuilder` yielded by `fields_for`, so prefix it with an underscore as `_fields` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= fields_for :address do |fields| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("names what the `tag` builder yields", () => {
+    expectError('Block argument `builder` is never used. It is the `ActionView::Helpers::TagHelper::TagBuilder` yielded by `tag`, so prefix it with an underscore as `_builder` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= tag.div do |builder| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("reports an argument of a helper that yields nothing as always `nil`", () => {
+    expectError('Block argument `entry` is never used. `cache` yields nothing to its block, so it is always `nil`. Remove it and write `<% cache @post do %>`, or prefix it with an underscore as `_entry` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <% cache @post do |entry| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("reports a `content_tag` argument as always `nil`", () => {
+    expectError('Block argument `builder` is never used. `content_tag` yields nothing to its block, so it is always `nil`. Remove it and write `<%= content_tag :div do %>`, or prefix it with an underscore as `_builder` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= content_tag :div do |builder| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("reports an argument past what the helper yields as always `nil`", () => {
+    expectError('Block argument `extra` is never used. `form_with` yields 1 argument, so it is always `nil`. Remove it, or prefix it with an underscore as `_extra` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= form_with model: @user do |form, extra| %>
+        <%= form.text_field :name %>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("does not claim anything about a block the rendered template drives", () => {
+    expectError('Block argument `box` is never used. Remove it and write `<%= render layout: "box" do %>`, or prefix it with an underscore as `_box` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= render layout: "box" do |box| %>
+        <p>Nothing</p>
+      <% end %>
+    `, { framework: "actionview" })
+  })
+
+  it("does not use the helper registry for a call with a receiver", () => {
+    expectError('Block argument `entry` is never used. Remove it and write `<% @view.cache do %>`, or prefix it with an underscore as `_entry` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <% @view.cache do |entry| %>
+        <p>Nothing</p>
+      <% end %>
+    `)
+  })
+
+  it("does not line a destructured argument up with what the helper yields", () => {
+    expectError('Block argument `key` is never used. Remove it and write `<%= content_tag :div do %>`, or prefix it with an underscore as `_key` to show it is intentionally unused.')
+    expectError('Block argument `value` is never used. Remove it and write `<%= content_tag :div do %>`, or prefix it with an underscore as `_value` to show it is intentionally unused.')
+
+    assertOffenses(dedent`
+      <%= content_tag :div do |(key, value)| %>
+        <p>Nothing</p>
       <% end %>
     `)
   })

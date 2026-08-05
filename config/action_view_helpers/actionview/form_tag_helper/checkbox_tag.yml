@@ -1,45 +1,57 @@
 ---
-name: checkbox_tag
+name: "checkbox_tag"
 source: "ActionView::Helpers::FormTagHelper#checkbox_tag"
-gem: actionview
-output: html
-visibility: public
+gem: "actionview"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Creates a check box form input tag.
 signature: "checkbox_tag(name, value = \"1\", checked = false, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-checkbox_tag"
+
+description: |-
+  Creates a check box form input tag.
+
 tag:
-  name: input
+  name: "input"
   is_void: true
   preferred: false
-  detect_style: call_name
+  detect_style: "call_name"
+
 arguments:
-  - name: name
+  - name: "name"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Name attribute for the checkbox."
-  - name: value
+    description: |-
+      Name attribute for the checkbox.
+
+  - name: "value"
     position: 2
-    type: string
+    type: "string"
     optional: true
     default: "1"
-    description: "Value submitted when checked."
-  - name: checked
+    description: |-
+      Value submitted when checked.
+
+  - name: "checked"
     position: 3
-    type: boolean
+    type: "boolean"
     optional: true
     default: "false"
-    description: "Whether the checkbox is checked by default."
-  - name: options
+    description: |-
+      Whether the checkbox is checked by default.
+
+  - name: "options"
     position: 4
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "HTML attributes hash."
+    description: |-
+      HTML attributes hash.
+
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
-  - check_box_tag
+  - "check_box_tag"
