@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
 import { ElementStackVisitor } from "./rule-utils.js"
-import { PrismVisitor, isERBOutputNode, locationFromByteOffset } from "@herb-tools/core"
+import { PrismVisitor, isERBOutputNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, ERBContentNode, PrismNode, Location } from "@herb-tools/core"
@@ -18,6 +18,10 @@ const RAW_TEXT_ELEMENTS = new Set([
   "plaintext",
 ])
 
+function isHTMLSafeOnStringLiteral(node: PrismNode): boolean {
+  return isPrismNodeType(node.receiver, "StringNode")
+}
+
 class UnsafeRawCallCollector extends PrismVisitor {
   public readonly rawCalls: PrismNode[] = []
   public readonly htmlSafeCalls: PrismNode[] = []
@@ -33,7 +37,7 @@ class UnsafeRawCallCollector extends PrismVisitor {
       this.rawCalls.push(node)
     }
 
-    if (node.name === "html_safe") {
+    if (node.name === "html_safe" && !isHTMLSafeOnStringLiteral(node)) {
       this.htmlSafeCalls.push(node)
     }
 
