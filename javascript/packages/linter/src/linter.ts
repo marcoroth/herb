@@ -659,7 +659,7 @@ export class Linter {
         }
 
         if (offense.autofixContext) {
-          const originalNodeType = offense.autofixContext.node.type
+          const originalNodeType = offense.autofixContext.nodeType ?? offense.autofixContext.node.type
           const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
