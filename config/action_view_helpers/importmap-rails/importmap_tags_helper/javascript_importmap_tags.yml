@@ -1,0 +1,35 @@
+---
+name: "javascript_importmap_tags"
+source: "Importmap::ImportmapTagsHelper#javascript_importmap_tags"
+gem: "importmap-rails"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "javascript_importmap_tags(entry_point = \"application\", importmap: Rails.application.importmap)"
+documentation_url: "https://www.rubydoc.info/gems/importmap-rails/Importmap/ImportmapTagsHelper#javascript_importmap_tags-instance_method"
+
+description: |-
+  Sets up all `<script>` tags needed to use an importmap-powered entrypoint, which defaults to `application`. Renders the inline importmap `<script>`, the `modulepreload` `<link>` tags for all preloaded modules, and the module import `<script>`.
+
+tag: null
+
+arguments:
+  - name: "entry_point"
+    position: 1
+    type: "string"
+    optional: true
+    default: "\"application\""
+    description: |-
+      Name of the JavaScript module to import as the entry point.
+
+options:
+  - name: "importmap"
+    type: "object"
+    description: |-
+      The `Importmap::Map` to render. Defaults to `Rails.application.importmap`.
+
+block_arguments: []
+
+special_behaviors:
+  - "produces_multiple_elements"
