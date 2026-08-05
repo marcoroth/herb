@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0039_a component nested inside a partial is still transformed"
+input: "{source: \"<Users.Card><Button>Go</Button></Users.Card>\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render layout: "users/card" do; _buf << (render Button.new do; _buf << 'Go'.freeze; end); end);
+_buf.to_s

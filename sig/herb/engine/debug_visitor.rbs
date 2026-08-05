@@ -49,6 +49,9 @@ module Herb
 
       def create_debug_attribute: (untyped name, untyped value) -> untyped
 
+      # TODO: replace all create_token with Herb::Token.from
+      # TODO: replace all dummy_location with Locataion.zero
+      # TODO: replace all dummy_range with Range.zero
       def create_token: (untyped type, untyped value) -> untyped
 
       def create_debug_span_for_erb: (untyped erb_node) -> untyped

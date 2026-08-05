@@ -38,16 +38,11 @@ module Herb
           "HTMLCloseTagNode",
           location,
           [],
-          token("</", "TOKEN_HTML_TAG_START_CLOSE", location),
+          Herb::Token.from("TOKEN_HTML_TAG_START_CLOSE", "</", location: location),
           tag_name,
           [],
-          token(">", "TOKEN_HTML_TAG_END", location)
+          Herb::Token.from("TOKEN_HTML_TAG_END", ">", location: location)
         )
-      end
-
-      #: (String, String, Herb::Location) -> Herb::Token
-      def token(value, type, location)
-        Herb::Token.new(value.dup, Herb::Range.from(0, 0), location, type)
       end
     end
   end

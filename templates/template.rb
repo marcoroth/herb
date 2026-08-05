@@ -9,7 +9,7 @@ module Herb
   module Template
     def self.underscore(name)
       name
-        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([A-Z])(?=[A-Z][a-z])/, '\1_')
         .gsub(/([a-z\d])([A-Z])/, '\1_\2')
     end
 
@@ -17,12 +17,28 @@ module Herb
     CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
     ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
 
+    NON_NILABLE_RUBY_TYPES = [
+      "Array[Herb::AST::Node]",
+      "Array[Herb::AST::ERBWhenNode]",
+      "Array[Herb::AST::ERBInNode]",
+      "bool",
+      "nil"
+    ].freeze
+
     class Field
       attr_reader :name, :options
 
       def initialize(name:, **options)
         @name = name
         @options = options
+      end
+
+      def nilable?
+        !NON_NILABLE_RUBY_TYPES.include?(ruby_type)
+      end
+
+      def nilable_ruby_type
+        nilable? ? "#{ruby_type}?" : ruby_type
       end
 
       def writable?
