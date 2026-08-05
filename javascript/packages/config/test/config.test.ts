@@ -1598,6 +1598,28 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("YAML anchors and aliases", () => {
+    test("loads configuration using YAML anchors and aliases", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        files:
+          include: &patterns
+            - "**/*.custom.erb"
+            - "**/*.other.erb"
+          exclude: *patterns
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+      const files = config.getFilesConfigForTool("linter")
+
+      expect(files.include).toContain("**/*.custom.erb")
+      expect(files.include).toContain("**/*.other.erb")
+      expect(files.exclude).toContain("**/*.custom.erb")
+      expect(files.exclude).toContain("**/*.other.erb")
+    })
+  })
+
   describe("version skew", () => {
     const invalidForOlderVersions = dedent`
       version: 0.10.3
