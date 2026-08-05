@@ -40,8 +40,8 @@ Learn more on [how to install and load the NPM packages](/bindings/javascript/#i
 
 - **`Herb.lex(source: string): LexResult`**
 - **`Herb.lexFile(path: string): LexResult`**
-- **`Herb.parse(source: string): ParseResult`**
-- **`Herb.parseFile(path: string): ParseResult`**
+- **`Herb.parse(source: string, options?: ParseOptions): ParseResult`**
+- **`Herb.parseFile(path: string, options?: ParseOptions): ParseResult`**
 - **`Herb.extractRuby(source: string, options?: ExtractRubyOptions): string`**
 - **`Herb.extractHTML(source: string): string`**
 - **`Herb.version: string`**
@@ -92,7 +92,7 @@ console.log(result)
 
 The `Herb.parse` and `Herb.parseFile` methods allow you to parse an HTML document with embedded Ruby and returns you a parsed result of your document containing an Abstract Syntax Tree (AST) that you can use to structurally traverse the parsed document.
 
-### `Herb.parse(source)`
+### `Herb.parse(source, options?)`
 
 :::code-group
 ```js twoslash [javascript]
@@ -107,9 +107,33 @@ console.log(result)
 ```
 :::
 
+#### Options
+
+The most commonly used parser options are:
+
+| Option             | Type      | Default | Description                                                                                            |
+|--------------------|-----------|---------|--------------------------------------------------------------------------------------------------------|
+| `strict`           | `boolean` | `true`  | Report diagnostics for patterns that are valid HTML+ERB but ambiguous for tooling                      |
+| `analyze`          | `boolean` | `true`  | Run the post-parse analysis passes (ERB control-flow structure, HTML tag matching, Ruby syntax errors) |
+| `track_whitespace` | `boolean` | `false` | Keep insignificant whitespace in the syntax tree as `WhitespaceNode`s                                  |
+
+
+```js
+Herb.parse(source, { strict: false, track_whitespace: true })
+```
+
+The options used for a parse are available on the result:
+
+```js
+Herb.parse(source).options.strict
+// => true
+```
+
+See [Parser Options](/parser-options) for the full list and detailed descriptions.
+
 <br />
 
-### `Herb.parseFile(path)`
+### `Herb.parseFile(path, options?)`
 
 > [!WARNING]
 > File operations are not supported in the `@herb-tools/browser` package and will throw an error when called.

@@ -4,10 +4,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "../macros.h"
 #include "hb_arena.h"
 
 #ifndef HB_ALLOCATOR_DEFAULT_ARENA_SIZE
-#  define HB_ALLOCATOR_DEFAULT_ARENA_SIZE (1024 * 16)
+#  define HB_ALLOCATOR_DEFAULT_ARENA_SIZE KB(128)
 #endif
 
 typedef enum {

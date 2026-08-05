@@ -1026,7 +1026,7 @@ hb_array_T* extract_parameters_from_prism(
 hb_array_T* extract_block_arguments_from_erb_node(
   const AST_ERB_CONTENT_NODE_T* erb_node,
   const char* source,
-  hb_array_T* errors,
+  hb_array_T** errors,
   hb_allocator_T* allocator
 ) {
   if (!erb_node || !erb_node->analyzed_ruby || !erb_node->analyzed_ruby->parsed) { return hb_array_init(0, allocator); }
@@ -1062,7 +1062,7 @@ hb_array_T* extract_block_arguments_from_erb_node(
       RUBY_PARSE_ERROR_T* parse_error =
         ruby_parse_error_from_prism_error_with_positions(error, error_start, error_end, allocator);
 
-      hb_array_append(errors, parse_error);
+      hb_array_append_lazy(errors, parse_error, allocator);
     }
   }
 
