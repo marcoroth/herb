@@ -75,6 +75,17 @@ export function isDebugOutputCall(node: PrismNode): boolean {
   return false
 }
 
+export function isSleepCall(node: PrismNode): boolean {
+  if (!isPrismNodeType(node, "CallNode")) return false
+  if (node.name !== "sleep") return false
+
+  const receiver = node.receiver
+
+  if (!receiver) return true
+
+  return isPrismNodeType(receiver, "ConstantReadNode") && receiver.name === "Kernel"
+}
+
 export function rootReceiver(node: PrismNode): PrismNode {
   let current = node
 

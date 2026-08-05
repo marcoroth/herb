@@ -45,6 +45,7 @@ import { ERBNoRawOutputInAttributeValueRule } from "./rules/erb-no-raw-output-in
 import { ERBNoShadowedBlockArgumentRule } from "./rules/erb-no-shadowed-block-argument.js"
 import { ERBNoSilentStatementRule } from "./rules/erb-no-silent-statement.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
+import { ERBNoSleepRule } from "./rules/erb-no-sleep.js"
 import { ERBNoStatementInScriptRule } from "./rules/erb-no-statement-in-script.js"
 import { ERBNoThenInControlFlowRule } from "./rules/erb-no-then-in-control-flow.js"
 import { ERBNoTrailingWhitespaceRule } from "./rules/erb-no-trailing-whitespace.js"
@@ -171,6 +172,7 @@ export const rules: RuleClass[] = [
   ERBNoUnusedExpressionsRule,
   ERBNoUnusedLiteralsRule,
   ERBNoSilentTagInAttributeNameRule,
+  ERBNoSleepRule,
   ERBNoStatementInScriptRule,
   ERBNoThenInControlFlowRule,
   ERBNoTrailingWhitespaceRule,

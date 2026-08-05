@@ -290,6 +290,14 @@ describe("ERBNoUnusedExpressionsRule", () => {
         <% binding.irb %>
       `)
     })
+
+    test("passes for sleep calls (handled by erb-no-sleep)", () => {
+      expectNoOffenses(dedent`
+        <% sleep %>
+        <% sleep 1 %>
+        <% Kernel.sleep(0.5) %>
+      `)
+    })
   })
 
   describe("invalid cases", () => {
