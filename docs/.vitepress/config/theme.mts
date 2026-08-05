@@ -7,6 +7,7 @@ const defaultSidebar = [
     items: [
       { text: "Overview", link: "/overview" },
       { text: "Configuration", link: "/configuration" },
+      { text: "Parser Options", link: "/parser-options" },
       { text: "Projects", link: "/projects" },
     ],
   },
