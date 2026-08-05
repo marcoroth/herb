@@ -299,7 +299,7 @@ export class SummaryReporter {
       for (const ruleName of ruleNames) {
         const ruleText = colorize(ruleName, "white")
         const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(ruleName))
-        console.log(`  ${ruleLink} ${colorize(`(introduced in ${versionLabel})`, "gray")}`)
+        console.log(`  ${ruleLink}${colorize(` (introduced in ${versionLabel})`, "gray")}`)
       }
     }
 
