@@ -77,11 +77,11 @@ describe("CompletionService", () => {
       const divItem = result!.items.find(item => item.label === "div")
       expect(divItem).toBeDefined()
       expect(divItem!.kind).toBe(CompletionItemKind.Property)
-      expect(divItem!.detail).toBe("tag.div — Generic container")
+      expect(divItem!.detail).toBe("tag.div - Generic container")
     })
 
-    it("preselects common tags", () => {
-      const result = getCompletions("<%= tag. %>", 0, 8)
+    it("preselects the common tag among the matches", () => {
+      const result = getCompletions("<%= tag.d %>", 0, 9)
 
       expect(result).not.toBeNull()
 
@@ -89,7 +89,14 @@ describe("CompletionService", () => {
       const datalistItem = result!.items.find(item => item.label === "datalist")
 
       expect(divItem!.preselect).toBe(true)
-      expect(datalistItem!.preselect).toBe(false)
+      expect(datalistItem!.preselect).toBeUndefined()
+    })
+
+    it("preselects at most one item", () => {
+      const result = getCompletions("<%= tag. %>", 0, 8)
+
+      expect(result).not.toBeNull()
+      expect(result!.items.filter(item => item.preselect)).toHaveLength(1)
     })
 
     it("sorts common tags before uncommon ones", () => {
@@ -245,11 +252,11 @@ describe("CompletionService", () => {
       expect(result!.items.every(item => item.sortText!.startsWith("!"))).toBe(true)
     })
 
-    it("preselects all helpers", () => {
+    it("preselects at most one helper", () => {
       const result = getCompletions("<%= ", 0, 4)
 
       expect(result).not.toBeNull()
-      expect(result!.items.every(item => item.preselect)).toBe(true)
+      expect(result!.items.filter(item => item.preselect)).toHaveLength(1)
     })
 
     it("returns null when no helpers match prefix", () => {
@@ -308,7 +315,7 @@ describe("CompletionService", () => {
 
       const divItem = result!.items.find(item => item.label === ":div")
       expect(divItem).toBeDefined()
-      expect(divItem!.detail).toBe("content_tag :div — Generic container")
+      expect(divItem!.detail).toBe("content_tag :div - Generic container")
     })
 
     it("inserts tag name with trailing space when no space after cursor", () => {
@@ -335,8 +342,8 @@ describe("CompletionService", () => {
       expect(labels).toContain(":div")
     })
 
-    it("preselects common tags", () => {
-      const result = getCompletions("<%= content_tag :", 0, 17)
+    it("preselects the common tag among the matches", () => {
+      const result = getCompletions("<%= content_tag :d", 0, 18)
 
       expect(result).not.toBeNull()
 
@@ -344,7 +351,14 @@ describe("CompletionService", () => {
       const datalistItem = result!.items.find(item => item.label === ":datalist")
 
       expect(divItem!.preselect).toBe(true)
-      expect(datalistItem!.preselect).toBe(false)
+      expect(datalistItem!.preselect).toBeUndefined()
+    })
+
+    it("preselects at most one item", () => {
+      const result = getCompletions("<%= content_tag :", 0, 17)
+
+      expect(result).not.toBeNull()
+      expect(result!.items.filter(item => item.preselect)).toHaveLength(1)
     })
   })
 
@@ -376,7 +390,7 @@ describe("CompletionService", () => {
 
       const divItem = result!.items.find(item => item.label === "div")
       expect(divItem).toBeDefined()
-      expect(divItem!.detail).toBe("<div> — Generic container")
+      expect(divItem!.detail).toBe("<div> - Generic container")
     })
 
     it("uses snippet with closing tag for non-void tags", () => {
@@ -408,8 +422,8 @@ describe("CompletionService", () => {
       expect(labels).not.toContain("div")
     })
 
-    it("preselects common tags", () => {
-      const result = getCompletions("<", 0, 1)
+    it("preselects the common tag among the matches", () => {
+      const result = getCompletions("<d", 0, 2)
 
       expect(result).not.toBeNull()
 
@@ -417,7 +431,14 @@ describe("CompletionService", () => {
       const datalistItem = result!.items.find(item => item.label === "datalist")
 
       expect(divItem!.preselect).toBe(true)
-      expect(datalistItem!.preselect).toBe(false)
+      expect(datalistItem!.preselect).toBeUndefined()
+    })
+
+    it("preselects at most one item", () => {
+      const result = getCompletions("<", 0, 1)
+
+      expect(result).not.toBeNull()
+      expect(result!.items.filter(item => item.preselect)).toHaveLength(1)
     })
   })
 
@@ -539,11 +560,17 @@ describe("CompletionService", () => {
       expect(labels).toContain("span")
     })
 
-    it("returns helper completions for <%", () => {
-      const labels = completionLabels("<% ", 0, 3)
+    it("returns helper completions for <% once a prefix is typed", () => {
+      const labels = completionLabels("<% content_", 0, 11)
 
-      expect(labels).toContain("tag")
       expect(labels).toContain("content_tag")
+      expect(labels).toContain("content_for")
+    })
+
+    it("returns null for a bare <% with nothing to filter on", () => {
+      const result = getCompletions("<% ", 0, 3)
+
+      expect(result).toBeNull()
     })
 
     it("returns null for plain text", () => {

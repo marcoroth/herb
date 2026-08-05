@@ -8,7 +8,7 @@ import {
 } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, isERBContentNode, isHTMLOpenTagNode, isHTMLTextNode, getHelperEntries, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
+import { Visitor, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, getHelperEntries, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
 
@@ -42,6 +42,20 @@ function publicHelpers(): HelperEntry[] {
 }
 
 const HELPERS = publicHelpers()
+
+function preselectBest(items: CompletionItem[]): CompletionItem[] {
+  let best: CompletionItem | null = null
+
+  for (const item of items) {
+    if (!best || item.sortText! < best.sortText!) best = item
+  }
+
+  if (best) {
+    best.preselect = true
+  }
+
+  return items
+}
 
 class NodeAtPositionCollector extends Visitor {
   public matches: { node: Node; range: Range }[] = []
@@ -177,7 +191,11 @@ export class CompletionService {
     const erbMatch = textBeforeCursor.match(ERB_EXPRESSION_PATTERN)
 
     if (erbMatch) {
-      return this.getHelperCompletions(erbMatch[1])
+      const prefix = erbMatch[1]
+
+      if (prefix === "" && !isERBOutputNode(node)) return null
+
+      return this.getHelperCompletions(prefix)
     }
 
     return null
@@ -253,15 +271,14 @@ export class CompletionService {
         return {
           label: tag.name,
           kind: CompletionItemKind.Property,
-          detail: `tag.${tag.name} — ${tag.description}`,
+          detail: `tag.${tag.name} - ${tag.description}`,
           sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
           insertTextFormat: hasClosingERBTag ? InsertTextFormat.PlainText : InsertTextFormat.Snippet,
           insertText,
-          preselect: isCommon,
         }
       })
 
-    return CompletionList.create(items, false)
+    return CompletionList.create(preselectBest(items), false)
   }
 
   private getContentTagCompletions(prefix: string, hasSpaceAfterCursor: boolean): CompletionList {
@@ -273,16 +290,15 @@ export class CompletionService {
         return {
           label: `:${tag.name}`,
           kind: CompletionItemKind.Property,
-          detail: `content_tag :${tag.name} — ${tag.description}`,
+          detail: `content_tag :${tag.name} - ${tag.description}`,
           sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
           insertTextFormat: InsertTextFormat.PlainText,
           filterText: tag.name,
           insertText: hasSpaceAfterCursor ? tag.name : `${tag.name} `,
-          preselect: isCommon,
         }
       })
 
-    return CompletionList.create(items, false)
+    return CompletionList.create(preselectBest(items), false)
   }
 
   private getHTMLTagCompletions(prefix: string): CompletionList {
@@ -297,15 +313,14 @@ export class CompletionService {
         return {
           label: tag.name,
           kind: CompletionItemKind.Property,
-          detail: `<${tag.name}> — ${tag.description}`,
+          detail: `<${tag.name}> - ${tag.description}`,
           sortText: `!0${isCommon ? "0" : "1"}${String(index).padStart(3, "0")}`,
           insertTextFormat: InsertTextFormat.Snippet,
           insertText,
-          preselect: isCommon,
         }
       })
 
-    return CompletionList.create(items, false)
+    return CompletionList.create(preselectBest(items), false)
   }
 
   private getCharacterReferenceCompletions(prefix: string): CompletionList {
@@ -372,7 +387,6 @@ export class CompletionService {
           sortText: `!00${String(index).padStart(3, "0")}`,
           insertTextFormat: InsertTextFormat.PlainText,
           insertText: helper.name,
-          preselect: true,
         }
       })
 
@@ -380,6 +394,6 @@ export class CompletionService {
       return null
     }
 
-    return CompletionList.create(items, false)
+    return CompletionList.create(preselectBest(items), false)
   }
 }
