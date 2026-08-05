@@ -450,6 +450,127 @@ test-file-with-errors.html.erb:
   Rules        92 enabled | 16 not enabled | 1 disabled"
 `;
 
+exports[`CLI Output Formatting > --log-level > with --all-rules > keeps the log level when it is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Not shown    1 offense hidden, show it with --log-level=hint
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        109 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --all-rules > lowers the log level to report the rules it was asked for 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Log level    hint | lowered from warning by --all-rules
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        109 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > keeps the log level when it is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Not shown    1 offense hidden, show it with --log-level=hint
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to report the rules it was asked for 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Log level    hint | lowered from warning by --only
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to the lowest severity of the run 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
+  Log level    info | lowered from error by --only
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > stays quiet when the configured log level hides nothing 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        1 enabled | filtered by --only"
+`;
+
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
 ⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.

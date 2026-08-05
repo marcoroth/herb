@@ -67,6 +67,7 @@ export class ArgumentParser {
       --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]
                                     lower-severity offenses are still counted in the summary, but aren't
                                     printed or annotated in CI
+                                    --only and --all-rules lower this level unless it's passed explicitly
       --format                      output format (simple|detailed|json) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
