@@ -113,6 +113,30 @@ function hasERBStatements(node: Node): node is Node & { statements: Node[] } {
   return Array.isArray((node as any).statements)
 }
 
+type NodeWithElseClause = ERBBlockNode | ERBIterationBlockNode | ERBCaseNode | ERBCaseMatchNode | ERBBeginNode | ERBUnlessNode | ERBRenderNode
+type NodeWithRescueAndEnsureClauses = ERBBlockNode | ERBIterationBlockNode | ERBBeginNode | ERBRenderNode
+
+function hasElseClause(node: Node): node is NodeWithElseClause {
+  return (
+    isNode(node, ERBBlockNode) ||
+    isNode(node, ERBIterationBlockNode) ||
+    isNode(node, ERBCaseNode) ||
+    isNode(node, ERBCaseMatchNode) ||
+    isNode(node, ERBBeginNode) ||
+    isNode(node, ERBUnlessNode) ||
+    isNode(node, ERBRenderNode)
+  )
+}
+
+function hasRescueAndEnsureClauses(node: Node): node is NodeWithRescueAndEnsureClauses {
+  return (
+    isNode(node, ERBBlockNode) ||
+    isNode(node, ERBIterationBlockNode) ||
+    isNode(node, ERBBeginNode) ||
+    isNode(node, ERBRenderNode)
+  )
+}
+
 /**
  * Gets the children of an open tag, narrowing from the union type.
  * Returns empty array for conditional open tags.
@@ -221,16 +245,22 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    */
   private inlineFlowBranches(node: Node): Node[] {
     const branches: Node[] = []
-    const candidates = [
-      (node as any).subsequent,
-      (node as any).else_clause,
-      (node as any).rescue_clause,
-      (node as any).ensure_clause,
-      ...((node as any).conditions ?? []),
-    ]
 
-    for (const candidate of candidates) {
-      if (candidate) branches.push(candidate as Node)
+    if (isNode(node, ERBIfNode) || isNode(node, ERBRescueNode)) {
+      if (node.subsequent) branches.push(node.subsequent)
+    }
+
+    if (isNode(node, ERBCaseNode) || isNode(node, ERBCaseMatchNode)) {
+      branches.push(...node.conditions)
+    }
+
+    if (hasRescueAndEnsureClauses(node)) {
+      if (node.rescue_clause) branches.push(node.rescue_clause)
+      if (node.ensure_clause) branches.push(node.ensure_clause)
+    }
+
+    if (hasElseClause(node)) {
+      if (node.else_clause) branches.push(node.else_clause)
     }
 
     return branches
