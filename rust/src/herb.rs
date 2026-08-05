@@ -321,11 +321,7 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
   diff_with_options(old_source, new_source, &DiffOptions::default())
 }
 
-pub fn diff_with_options(
-  old_source: &str,
-  new_source: &str,
-  options: &DiffOptions,
-) -> Result<DiffResult, String> {
+pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptions) -> Result<DiffResult, String> {
   unsafe {
     let old_c_source = CString::new(old_source).map_err(|error| error.to_string())?;
     let new_c_source = CString::new(new_source).map_err(|error| error.to_string())?;
