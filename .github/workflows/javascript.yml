@@ -255,7 +255,7 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           cd javascript/packages/vscode
-          npx @vscode/vsce publish --no-dependencies
+          npx @vscode/vsce@^3.9.2 publish --no-dependencies
 
       - name: Publish to Open VSX Registry
         env:
