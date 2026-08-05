@@ -25,15 +25,12 @@
     "@herb-tools/rewriter": "0.10.3",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.7.2",
-    "express": "^5.2.1",
     "lz-string": "^1.5.0",
     "monaco-editor": "^0.55.1",
     "prismjs": "^1.30.0",
     "vite": "^8.2.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.1.2",
-    "@vitejs/plugin-vue": "^6.0.8"
+    "@types/node": "^26.1.2"
   }
 }
