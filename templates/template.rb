@@ -25,6 +25,10 @@ module Herb
         @options = options
       end
 
+      def writable?
+        options.fetch(:writable, false)
+      end
+
       def always_invisible?
         ALWAYS_INVISIBLE_FIELD_CLASSES.include?(self.class.name.split("::").last)
       end
@@ -412,7 +416,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind)
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
       end
 

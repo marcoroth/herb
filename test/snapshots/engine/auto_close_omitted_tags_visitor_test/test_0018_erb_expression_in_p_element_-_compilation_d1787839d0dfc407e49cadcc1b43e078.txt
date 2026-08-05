@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0018_erb expression in p element - compilation"
+input: "{source: \"<p><%= message %>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (message).to_s; _buf << '</p>'.freeze;
+_buf.to_s
