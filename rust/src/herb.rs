@@ -312,7 +312,16 @@ pub struct DiffResult {
   pub operations: Vec<DiffOperation>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct DiffOptions {
+  pub track_whitespace_changes: bool,
+}
+
 pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
+  diff_with_options(old_source, new_source, &DiffOptions::default())
+}
+
+pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptions) -> Result<DiffResult, String> {
   unsafe {
     let old_c_source = CString::new(old_source).map_err(|error| error.to_string())?;
     let new_c_source = CString::new(new_source).map_err(|error| error.to_string())?;
@@ -377,7 +386,11 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       return Err("Failed to parse source".to_string());
     }
 
-    let diff_result = crate::ffi::herb_diff(old_root, new_root, &mut diff_allocator);
+    let diff_options = crate::bindings::herb_diff_options_T {
+      track_whitespace_changes: options.track_whitespace_changes,
+    };
+
+    let diff_result = crate::ffi::herb_diff(old_root, new_root, &diff_options, &mut diff_allocator);
 
     let identical = crate::ffi::herb_diff_trees_identical(diff_result);
     let operation_count = crate::ffi::herb_diff_operation_count(diff_result);

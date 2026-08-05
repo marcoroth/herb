@@ -63,6 +63,32 @@ bool hb_string_is_blank(hb_string_T string) {
   return true;
 }
 
+bool hb_string_equals_collapsing_whitespace(hb_string_T a, hb_string_T b) {
+  uint32_t a_offset = 0;
+  uint32_t b_offset = 0;
+
+  while (a_offset < a.length && b_offset < b.length) {
+    if (is_whitespace(a.data[a_offset]) && is_whitespace(b.data[b_offset])) {
+      while (a_offset < a.length && is_whitespace(a.data[a_offset])) {
+        a_offset++;
+      }
+
+      while (b_offset < b.length && is_whitespace(b.data[b_offset])) {
+        b_offset++;
+      }
+
+      continue;
+    }
+
+    if (a.data[a_offset] != b.data[b_offset]) { return false; }
+
+    a_offset++;
+    b_offset++;
+  }
+
+  return a_offset == a.length && b_offset == b.length;
+}
+
 hb_string_T hb_string_copy(hb_string_T string, hb_allocator_T* allocator) {
   if (hb_string_is_null(string)) { return HB_STRING_NULL; }
   if (hb_string_is_empty(string)) { return HB_STRING_EMPTY; }

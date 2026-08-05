@@ -675,6 +675,16 @@
                       class="px-2 py-1 text-xs rounded font-mono font-medium"
                       style="color: #abb2bf; background: rgba(171, 178, 191, 0.1)"
                     >Checkpoint</button>
+
+                    <label class="flex items-center gap-1.5 text-gray-300 text-sm ml-2" title="Report whitespace changes that HTML collapses away as `whitespace_changed` operations instead of leaving them out">
+                      <input
+                        type="checkbox"
+                        data-playground-target="diffWhitespaceCheckbox"
+                        data-action="change->playground#onDiffOptionChange"
+                        class="rounded border-gray-600 text-green-600 focus:ring-green-500 bg-gray-700"
+                      />
+                      <span class="select-none">Track insignificant whitespace changes</span>
+                    </label>
                   </div>
 
                   <div class="flex items-center gap-2">
