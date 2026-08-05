@@ -106,6 +106,19 @@ import {
 } from "@herb-tools/core"
 
 /**
+ * The subset of `ERBNode` that carries the given property.
+ */
+type ERBNodeWith<Property extends string> = Extract<ERBNode, Record<Property, unknown>>
+
+/**
+ * Narrows a node to the ERB nodes carrying the given property, so that node types
+ * added to `ERBNode` are picked up without maintaining a list of classes here.
+ */
+function hasERBProperty<Property extends string>(node: Node, property: Property): node is ERBNodeWith<Property> {
+  return isERBNode(node) && property in node
+}
+
+/**
  * Gets the children of an open tag, narrowing from the union type.
  * Returns empty array for conditional open tags.
  */
@@ -201,10 +214,26 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private inlineFlowChildren(node: Node): Node[] | null {
     if (isNode(node, DocumentNode)) return node.children
     if (isNode(node, HTMLElementNode)) return node.body
-    if (isERBControlFlowNode(node) && Array.isArray((node as any).statements)) return (node as any).statements
+    if (hasERBProperty(node, "statements")) return node.statements
     if (Array.isArray((node as any).body)) return (node as any).body
 
     return null
+  }
+
+  /**
+   * Alternative branches (`else`, `elsif`, `when`, `rescue`, ...) hold their own inline flow,
+   * but are not part of the parent's `statements` list.
+   */
+  private inlineFlowBranches(node: Node): Node[] {
+    const branches: Node[] = []
+
+    if (hasERBProperty(node, "subsequent") && node.subsequent) branches.push(node.subsequent)
+    if (hasERBProperty(node, "conditions")) branches.push(...node.conditions)
+    if (hasERBProperty(node, "rescue_clause") && node.rescue_clause) branches.push(node.rescue_clause)
+    if (hasERBProperty(node, "ensure_clause") && node.ensure_clause) branches.push(node.ensure_clause)
+    if (hasERBProperty(node, "else_clause") && node.else_clause) branches.push(node.else_clause)
+
+    return branches
   }
 
   private collectInlineFlowContext(node: Node, inheritedBefore: boolean, inheritedAfter: boolean): void {
@@ -218,6 +247,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       return
     }
 
+    for (const branch of this.inlineFlowBranches(node)) {
+      this.collectInlineFlowContext(branch, inheritedBefore, inheritedAfter)
+    }
+
     const firstIndex = list.findIndex(child => !isPureWhitespaceNode(child))
     const lastIndex = list.reduce((found, child, index) => isPureWhitespaceNode(child) ? found : index, -1)
 
@@ -229,7 +262,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
       const staysInline =
         (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) ||
-        isERBControlFlowNode(child)
+        isERBControlFlowNode(child) ||
+        hasERBProperty(child, "statements")
 
       this.collectInlineFlowContext(child, staysInline && before, staysInline && after)
     })
@@ -1096,7 +1130,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBInNode(node: ERBInNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
     })
   }
 
@@ -1123,7 +1157,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       if (this.isContentPreservingBlock(node)) {
         this.visitPreservedERBBlockBody(node)
       } else {
-        this.withIndent(() => {
+        const visitBody = () => {
           const hasTextFlow = this.textFlow.isInTextFlowContext(node.body)
 
           if (hasTextFlow) {
@@ -1131,7 +1165,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           } else {
             this.visitElementChildren(node.body, null)
           }
-        })
+        }
+
+        if (this.inlineMode) {
+          visitBody()
+        } else {
+          this.withIndent(visitBody)
+        }
       }
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
@@ -1252,19 +1292,26 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     })
   }
 
+  /**
+   * Visits the statements of an ERB control flow node or one of its branches.
+   * Indenting them would inject whitespace into the surrounding text flow when inline.
+   */
+  private visitBranchStatements(statements: Node[]) {
+    if (this.inlineMode) {
+      this.visitAll(statements)
+    } else {
+      this.withIndent(() => this.visitStatements(statements))
+    }
+  }
+
   visitERBElseNode(node: ERBElseNode) {
     this.printERBNode(node)
-
-    if (this.inlineMode) {
-      this.visitAll(node.statements)
-    } else {
-      this.withIndent(() => this.visitStatements(node.statements))
-    }
+    this.visitBranchStatements(node.statements)
   }
 
   visitERBWhenNode(node: ERBWhenNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitStatements(node.statements))
+    this.visitBranchStatements(node.statements)
   }
 
   visitERBCaseNode(node: ERBCaseNode) {
@@ -1282,7 +1329,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBBeginNode(node: ERBBeginNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
 
       if (node.rescue_clause) this.visit(node.rescue_clause)
       if (node.else_clause) this.visit(node.else_clause)
@@ -1294,7 +1341,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBWhileNode(node: ERBWhileNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1303,7 +1350,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBUntilNode(node: ERBUntilNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1312,7 +1359,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBForNode(node: ERBForNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
 
       if (node.end_node) this.visit(node.end_node)
     })
@@ -1320,18 +1367,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
   visitERBRescueNode(node: ERBRescueNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitStatements(node.statements))
+    this.visitBranchStatements(node.statements)
   }
 
   visitERBEnsureNode(node: ERBEnsureNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitStatements(node.statements))
+    this.visitBranchStatements(node.statements)
   }
 
   visitERBUnlessNode(node: ERBUnlessNode) {
     this.trackBoundary(node, () => {
       this.printERBNode(node)
-      this.withIndent(() => this.visitStatements(node.statements))
+      this.visitBranchStatements(node.statements)
 
       if (node.else_clause) this.visit(node.else_clause)
       if (node.end_node) this.visit(node.end_node)
