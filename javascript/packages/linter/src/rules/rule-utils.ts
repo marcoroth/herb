@@ -1,8 +1,7 @@
 import {
   Visitor,
   Location,
-  hasERBOutput,
-  isEffectivelyStatic,
+  hasDynamicOutput,
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
@@ -16,6 +15,7 @@ import {
 } from "@herb-tools/core"
 
 import type {
+  ERBOpenTagNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLElementNode,
@@ -425,7 +425,7 @@ export interface StaticAttributeStaticValueParams {
   attributeValue: string
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
@@ -433,7 +433,7 @@ export interface StaticAttributeDynamicValueParams {
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedValue?: string | null
 }
 
@@ -441,7 +441,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
 }
 
@@ -449,7 +449,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -560,15 +560,20 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkAttributesOnNode(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkAttributesOnNode(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
-      const hasOutputERB = hasERBOutput(valueNodes)
-      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+      const hasOutputERB = hasDynamicOutput(valueNodes)
+      const isEffectivelyStaticValue = !hasDynamicOutput(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
         this.checkStaticAttributeStaticValue({
