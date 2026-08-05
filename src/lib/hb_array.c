@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -33,6 +34,8 @@ hb_array_T* hb_array_init(const size_t capacity, hb_allocator_T* allocator) {
 }
 
 bool hb_array_append(hb_array_T* array, void* item) {
+  assert(array != NULL);
+
   if (!array) { return false; }
 
   if (array->size >= array->capacity) {
