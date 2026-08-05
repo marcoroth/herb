@@ -20,6 +20,8 @@ import { analyzeRuby } from "../analyze-ruby"
 window.Herb = Herb
 window.analyze = analyze
 
+const URL_UPDATE_THROTTLE = 100
+
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
 
@@ -143,6 +145,11 @@ export default class extends Controller {
     "diffWhitespaceCheckbox",
     "diffParseError",
   ]
+
+  pendingHash = null
+  pendingSearch = null
+  urlUpdateTimeout = null
+  lastURLUpdateAt = 0
 
   get isRubyMode() {
     return this.modeValue === "ruby"
@@ -287,6 +294,13 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
+
+    if (this.urlUpdateTimeout !== null) {
+      clearTimeout(this.urlUpdateTimeout)
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }
+
     this.removeTooltip()
     this.removeAutofixTooltip()
     this.removeAutofixUnsafeTooltip()
@@ -310,7 +324,7 @@ export default class extends Controller {
   }
 
   updateURL() {
-    window.parent.location.hash = this.compressedValue
+    this.queueURLUpdate({ hash: this.compressedValue })
 
     if (!this.isRubyMode) {
       const options = this.getParserOptions()
@@ -322,6 +336,61 @@ export default class extends Controller {
       this.setFormatterOptionsInURL(formatterOptions)
       this.setAutofixOptionsInURL(autofixOptions)
     }
+  }
+
+  updateSearchParams(update) {
+    const params = new URLSearchParams(
+      this.pendingSearch !== null ? this.pendingSearch : window.parent.location.search,
+    )
+
+    update(params)
+
+    this.queueURLUpdate({ search: params.toString() })
+  }
+
+  queueURLUpdate({ hash, search }) {
+    if (hash !== undefined) this.pendingHash = hash
+    if (search !== undefined) this.pendingSearch = search
+
+    if (this.urlUpdateTimeout !== null) return
+    if (!this.hasPendingURLUpdate) return
+
+    const elapsed = Date.now() - this.lastURLUpdateAt
+
+    this.urlUpdateTimeout = setTimeout(() => {
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }, Math.max(0, URL_UPDATE_THROTTLE - elapsed))
+  }
+
+  get hasPendingURLUpdate() {
+    const location = window.parent.location
+
+    if (this.pendingHash !== null && this.pendingHash !== location.hash.slice(1)) return true
+    if (this.pendingSearch !== null && this.pendingSearch !== new URLSearchParams(location.search).toString()) return true
+
+    return false
+  }
+
+  flushURLUpdate() {
+    const location = window.parent.location
+    const hash = this.pendingHash
+    const search = this.pendingSearch
+
+    this.pendingHash = null
+    this.pendingSearch = null
+    this.lastURLUpdateAt = Date.now()
+
+    if (hash !== null && hash !== location.hash.slice(1)) {
+      location.hash = hash
+    }
+
+    if (search === null || search === new URLSearchParams(location.search).toString()) return
+
+    const url = new URL(location)
+    url.search = search
+
+    window.parent.history.replaceState({}, '', url)
   }
 
   async insert(event) {
@@ -607,19 +676,17 @@ export default class extends Controller {
   }
 
   updateTabInURL(tabName) {
-    const url = new URL(window.parent.location)
+    this.updateSearchParams((params) => {
+      if (tabName && tabName !== 'parse') {
+        params.set('tab', tabName)
+      } else {
+        params.delete('tab')
+      }
 
-    if (tabName && tabName !== 'parse') {
-      url.searchParams.set('tab', tabName)
-    } else {
-      url.searchParams.delete('tab')
-    }
-
-    if (tabName !== 'diagnostics') {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+      if (tabName !== 'diagnostics') {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   getClosestButton(element) {
@@ -2034,8 +2101,6 @@ export default class extends Controller {
   }
 
   setOptionsInURL(options) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       track_whitespace: false,
       analyze: true,
@@ -2063,18 +2128,16 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultOptions).length > 0) {
-      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
-    } else {
-      url.searchParams.delete('options')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultOptions).length > 0) {
+        params.set('options', JSON.stringify(nonDefaultOptions))
+      } else {
+        params.delete('options')
+      }
+    })
   }
 
   setPrinterOptionsInURL(printerOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       ignoreErrors: false,
     }
@@ -2090,13 +2153,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultPrinterOptions).length > 0) {
-      url.searchParams.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
-    } else {
-      url.searchParams.delete('printerOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultPrinterOptions).length > 0) {
+        params.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
+      } else {
+        params.delete('printerOptions')
+      }
+    })
   }
 
   getPrinterOptionsFromURL() {
@@ -2115,8 +2178,6 @@ export default class extends Controller {
   }
 
   setFormatterOptionsInURL(formatterOptions) {
-    const url = new URL(window.parent.location)
-
     const nonDefaultFormatterOptions = {}
 
     Object.keys(formatterOptions).forEach(key => {
@@ -2125,13 +2186,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
-      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
-    } else {
-      url.searchParams.delete('formatterOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+        params.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+      } else {
+        params.delete('formatterOptions')
+      }
+    })
   }
 
   getFormatterOptionsFromURL() {
@@ -2150,8 +2211,6 @@ export default class extends Controller {
   }
 
   setAutofixOptionsInURL(autofixOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       includeUnsafe: false,
     }
@@ -2167,13 +2226,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultAutofixOptions).length > 0) {
-      url.searchParams.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
-    } else {
-      url.searchParams.delete('autofixOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultAutofixOptions).length > 0) {
+        params.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
+      } else {
+        params.delete('autofixOptions')
+      }
+    })
   }
 
   getAutofixOptionsFromURL() {
@@ -2203,15 +2262,13 @@ export default class extends Controller {
   }
 
   updateDiagnosticsFilterInURL(filter) {
-    const url = new URL(window.parent.location)
-
-    if (filter && filter !== 'all') {
-      url.searchParams.set('diagnosticsFilter', filter)
-    } else {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (filter && filter !== 'all') {
+        params.set('diagnosticsFilter', filter)
+      } else {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   updateDiagnosticsViewer(diagnostics) {
