@@ -1,0 +1,13 @@
+# Generated from lib/herb/ast/erb_content_node.rb with RBS::Inline
+
+module Herb
+  module AST
+    class ERBContentNode < Node
+      # : () -> Prism::node?
+      def parsed_prism_node: () -> Prism::node?
+
+      # : () -> Prism::node?
+      def prism: () -> Prism::node?
+    end
+  end
+end

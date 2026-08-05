@@ -1,0 +1,51 @@
+---
+source: "Analyze::ActionView::TagHelper::ContentTagTest#test_0039_content_tag with mixed array and conditional hash class"
+input: |2-
+<%= content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:95))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:95))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) " (location: (1:3)-(1:93))
+    │   │       ├── tag_closing: "%>" (location: (1:93)-(1:95))
+    │   │       ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:38)-(1:91))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:38)-(1:43))
+    │   │               │       └── children: (1 item)
+    │   │               │           └── @ LiteralNode (location: (1:38)-(1:43))
+    │   │               │               └── content: "class"
+    │   │               │
+    │   │               │
+    │   │               ├── equals: ": " (location: (1:43)-(1:45))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:45)-(1:91))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:45)-(1:91))
+    │   │                       │       └── content: "token_list([\"strong\", { highlight: current_user.admin? }])"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: true
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:4)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:95))
+    │   │       └── content: "Hello world!"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:95)-(1:95))
+    │   │       └── tag_name: "div" (location: (1:4)-(1:15))
+    │   │
+    │   ├── is_void: false
+    │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
+    │
+    └── @ HTMLTextNode (location: (1:95)-(2:0))
+        └── content: "\n"

@@ -1,14 +1,18 @@
 import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
-import type { DiagnosticTag } from "@herb-tools/core"
+import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node, ParserOptions } from "@herb-tools/core"
-import type { RuleConfig } from "@herb-tools/config"
+import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
+import type { RuleVersion } from "@herb-tools/core"
 
 export type { Mutable } from "@herb-tools/rewriter"
+export type { RuleVersion } from "@herb-tools/core"
+export type { Framework, SeverityConfig, LinterMode } from "@herb-tools/config"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
+
 
 export const DEFAULT_LINTER_PARSER_OPTIONS: Partial<ParserOptions> = {
   track_whitespace: true,
@@ -33,6 +37,8 @@ export interface BaseAutofixContext {
   node: Mutable<Node>
   /** If true, this fix requires --fix-unsafely to be applied */
   unsafe?: boolean
+  /** Node type to match when re-finding the node in the re-parsed tree. Defaults to the type of `node` */
+  nodeType?: string
 }
 
 /**
@@ -93,12 +99,18 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "parser" as const
   static ruleName: string
+  /** The version in which this rule was introduced. Used for version-gated rule filtering. */
+  static introducedIn: RuleVersion
+
+  static version(version: RuleVersion): RuleVersion { return version }
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
   static unsafeAutocorrectable = false
   /** Indicates whether the source should be re-indented after autofix. Defaults to false. */
   static reindentAfterAutofix = false
+  /** Indicates whether this rule consumes parser errors (like parser-no-errors). Rules with this flag are not skipped when parse results contain errors. */
+  static consumesParserErrors = false
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName
@@ -122,6 +134,17 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
       autofixContext,
       severity,
       tags,
+    }
+  }
+
+  protected herbErrorToLintOffense(error: HerbError): LintOffense {
+    return {
+      message: error.message,
+      location: error.location,
+      severity: error.severity,
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "linter"
     }
   }
 
@@ -153,6 +176,11 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
 export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "lexer" as const
   static ruleName: string
+  /** The version in which this rule was introduced. Used for version-gated rule filtering. */
+  static introducedIn: RuleVersion
+
+  static version(version: RuleVersion): RuleVersion { return version }
+
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
@@ -205,6 +233,9 @@ export interface LexerRuleConstructor {
   type: "lexer"
   new (): LexerRule
   ruleName: string
+  introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
 }
 
 /**
@@ -216,6 +247,8 @@ export interface LintContext {
   validRuleNames: string[] | undefined
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
+  indentWidth: number | undefined
+  framework: Framework | undefined
 }
 
 /**
@@ -225,12 +258,19 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   fileName: undefined,
   validRuleNames: undefined,
   ignoredOffensesByLine: undefined,
-  ignoreDisableComments: undefined
+  ignoreDisableComments: undefined,
+  indentWidth: undefined,
+  framework: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "source" as const
   static ruleName: string
+  /** The version in which this rule was introduced. Used for version-gated rule filtering. */
+  static introducedIn: RuleVersion
+
+  static version(version: RuleVersion): RuleVersion { return version }
+
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
@@ -283,6 +323,9 @@ export interface SourceRuleConstructor {
   type: "source"
   new (): SourceRule
   ruleName: string
+  introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
 }
 
 /**
@@ -293,7 +336,11 @@ export interface SourceRuleConstructor {
 export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
   ruleName: string
+  introducedIn: RuleVersion
+  autocorrectable?: boolean
+  unsafeAutocorrectable?: boolean
   reindentAfterAutofix?: boolean
+  consumesParserErrors?: boolean
 }
 
 export type LexerRuleClass = LexerRuleConstructor

@@ -1,0 +1,18 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0026_complex table with optional closing tags - compilation"
+input: "{source: \"<table>\\n  <thead>\\n    <tr>\\n      <th>Name\\n      <th>Age\\n  <tbody>\\n    <% users.each do |user| %>\\n      <tr>\\n        <td><%= user[:name] %>\\n        <td><%= user[:age] %>\\n    <% end %>\\n</table>\\n\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<table>
+  <thead>
+    <tr>
+      <th>Name
+      </th><th>Age
+  </th></tr></thead><tbody>
+'.freeze;     users.each do |user| 
+ _buf << '      <tr>
+        <td>'.freeze; _buf << (user[:name]).to_s; _buf << '
+        </td><td>'.freeze; _buf << (user[:age]).to_s; _buf << '
+    </td></tr>'.freeze; end; _buf << '
+</tbody></table>
+'.freeze;
+_buf.to_s

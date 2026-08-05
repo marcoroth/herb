@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, VALID_ARIA_ROLES, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { ParseResult, ParserOptions } from "@herb-tools/core"
 
 class AriaRoleMustBeValid extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
@@ -19,11 +19,18 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
 
 export class HTMLAriaRoleMustBeValidRule extends ParserRule {
   static ruleName = "html-aria-role-must-be-valid"
+  static introducedIn = this.version("0.4.1")
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

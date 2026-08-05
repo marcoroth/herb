@@ -23,6 +23,7 @@ class ERBNoOutputInAttributeNameVisitor extends BaseRuleVisitor {
 
 export class ERBNoOutputInAttributeNameRule extends ParserRule {
   static ruleName = "erb-no-output-in-attribute-name"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

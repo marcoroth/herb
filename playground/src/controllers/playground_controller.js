@@ -10,6 +10,7 @@ import Prism from "prismjs"
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
+import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
 import { Linter } from "@herb-tools/linter"
@@ -18,6 +19,8 @@ import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
 window.analyze = analyze
+
+const URL_UPDATE_THROTTLE = 100
 
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
@@ -76,6 +79,10 @@ export default class extends Controller {
     "parserOptions",
     "rubyViewer",
     "htmlViewer",
+    "rewriteViewer",
+    "rewriteOutput",
+    "rewriteStatus",
+    "rewriteActionViewHelpers",
     "lexViewer",
     "formatViewer",
     "formatSuccess",
@@ -85,6 +92,14 @@ export default class extends Controller {
     "formatTooltip",
     "autofixButton",
     "autofixTooltip",
+    "autofixUnsafeWrapper",
+    "autofixUnsafeButton",
+    "autofixUnsafeTooltip",
+    "autofixViewer",
+    "autofixOutput",
+    "autofixError",
+    "autofixVerification",
+    "autofixIncludeUnsafe",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -120,7 +135,21 @@ export default class extends Controller {
     "commitHash",
     "prismNodesDeepLabel",
     "switchLink",
+    "diffViewer",
+    "diffOutput",
+    "diffStatus",
+    "diffLiveButton",
+    "diffCheckpointButton",
+    "diffSnapshotButton",
+    "diffCheckButton",
+    "diffWhitespaceCheckbox",
+    "diffParseError",
   ]
+
+  pendingHash = null
+  pendingSearch = null
+  urlUpdateTimeout = null
+  lastURLUpdateAt = 0
 
   get isRubyMode() {
     return this.modeValue === "ruby"
@@ -142,6 +171,11 @@ export default class extends Controller {
       icon.style.display = 'none'
     })
 
+    this.diffMode = "live"
+    this.diffSnapshotSource = null
+    this.previousSource = null
+    this.diffFeedEntries = []
+
     this.restoreInput()
     this.restoreActiveTab()
 
@@ -149,6 +183,7 @@ export default class extends Controller {
       this.restoreParserOptions()
       this.restorePrinterOptions()
       this.restoreFormatterOptions()
+      this.restoreAutofixOptions()
     }
 
     this.inputTarget.focus()
@@ -174,6 +209,7 @@ export default class extends Controller {
       )
 
       if (range) {
+        revealTreeLine(range.element)
         range.element.classList.add("tree-location-highlight")
         range.element.scrollIntoView({
           behavior: "smooth",
@@ -198,6 +234,7 @@ export default class extends Controller {
     this.setupThemeListener()
     this.setupTooltip()
     this.setupAutofixTooltip()
+    this.setupAutofixUnsafeTooltip()
     this.setupShareTooltip()
     this.setupGitHubTooltip()
     this.setupCopyTooltip()
@@ -257,8 +294,16 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
+
+    if (this.urlUpdateTimeout !== null) {
+      clearTimeout(this.urlUpdateTimeout)
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }
+
     this.removeTooltip()
     this.removeAutofixTooltip()
+    this.removeAutofixUnsafeTooltip()
     this.removeShareTooltip()
     this.removeGitHubTooltip()
     this.removeCopyTooltip()
@@ -279,16 +324,73 @@ export default class extends Controller {
   }
 
   updateURL() {
-    window.parent.location.hash = this.compressedValue
+    this.queueURLUpdate({ hash: this.compressedValue })
 
     if (!this.isRubyMode) {
       const options = this.getParserOptions()
       const printerOptions = this.getPrinterOptions()
       const formatterOptions = this.getFormatterOptions()
+      const autofixOptions = this.getAutofixOptions()
       this.setOptionsInURL(options)
       this.setPrinterOptionsInURL(printerOptions)
       this.setFormatterOptionsInURL(formatterOptions)
+      this.setAutofixOptionsInURL(autofixOptions)
     }
+  }
+
+  updateSearchParams(update) {
+    const params = new URLSearchParams(
+      this.pendingSearch !== null ? this.pendingSearch : window.parent.location.search,
+    )
+
+    update(params)
+
+    this.queueURLUpdate({ search: params.toString() })
+  }
+
+  queueURLUpdate({ hash, search }) {
+    if (hash !== undefined) this.pendingHash = hash
+    if (search !== undefined) this.pendingSearch = search
+
+    if (this.urlUpdateTimeout !== null) return
+    if (!this.hasPendingURLUpdate) return
+
+    const elapsed = Date.now() - this.lastURLUpdateAt
+
+    this.urlUpdateTimeout = setTimeout(() => {
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }, Math.max(0, URL_UPDATE_THROTTLE - elapsed))
+  }
+
+  get hasPendingURLUpdate() {
+    const location = window.parent.location
+
+    if (this.pendingHash !== null && this.pendingHash !== location.hash.slice(1)) return true
+    if (this.pendingSearch !== null && this.pendingSearch !== new URLSearchParams(location.search).toString()) return true
+
+    return false
+  }
+
+  flushURLUpdate() {
+    const location = window.parent.location
+    const hash = this.pendingHash
+    const search = this.pendingSearch
+
+    this.pendingHash = null
+    this.pendingSearch = null
+    this.lastURLUpdateAt = Date.now()
+
+    if (hash !== null && hash !== location.hash.slice(1)) {
+      location.hash = hash
+    }
+
+    if (search === null || search === new URLSearchParams(location.search).toString()) return
+
+    const url = new URL(location)
+    url.search = search
+
+    window.parent.history.replaceState({}, '', url)
   }
 
   async insert(event) {
@@ -371,11 +473,22 @@ export default class extends Controller {
       case 'html':
         content = this.htmlViewerTarget.textContent
         break
+      case 'rewrite':
+        content = this.rewriteOutputTarget.textContent
+        break
       case 'format':
         if (!this.formatSuccessTarget.classList.contains('hidden')) {
           content = this.formatSuccessTarget.textContent
         } else if (!this.formatErrorTarget.classList.contains('hidden')) {
           const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
+          content = blurredPre ? blurredPre.textContent : ''
+        }
+        break
+      case 'autofix':
+        if (!this.autofixOutputTarget.classList.contains('hidden')) {
+          content = this.autofixOutputTarget.textContent
+        } else if (!this.autofixErrorTarget.classList.contains('hidden')) {
+          const blurredPre = this.autofixErrorTarget.querySelector('pre.language-html')
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
@@ -507,6 +620,20 @@ export default class extends Controller {
     }
   }
 
+  restoreAutofixOptions() {
+    const autofixOptionsFromURL = this.getAutofixOptionsFromURL()
+
+    if (Object.keys(autofixOptionsFromURL).length > 0) {
+      this.setAutofixOptions(autofixOptionsFromURL)
+    }
+  }
+
+  setAutofixOptions(autofixOptions) {
+    if (this.hasAutofixIncludeUnsafeTarget && autofixOptions.hasOwnProperty('includeUnsafe')) {
+      this.autofixIncludeUnsafeTarget.checked = Boolean(autofixOptions.includeUnsafe)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
@@ -520,7 +647,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
     return validTabs.includes(tab)
   }
 
@@ -549,19 +676,17 @@ export default class extends Controller {
   }
 
   updateTabInURL(tabName) {
-    const url = new URL(window.parent.location)
+    this.updateSearchParams((params) => {
+      if (tabName && tabName !== 'parse') {
+        params.set('tab', tabName)
+      } else {
+        params.delete('tab')
+      }
 
-    if (tabName && tabName !== 'parse') {
-      url.searchParams.set('tab', tabName)
-    } else {
-      url.searchParams.delete('tab')
-    }
-
-    if (tabName !== 'diagnostics') {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+      if (tabName !== 'diagnostics') {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   getClosestButton(element) {
@@ -643,6 +768,557 @@ export default class extends Controller {
     })
 
     element.classList.add("hover-highlight")
+  }
+
+  expandAllNodes() {
+    if (this.hasParseOutputTarget) {
+      expandAll(this.parseOutputTarget)
+    }
+  }
+
+  collapseAllNodes() {
+    if (this.hasParseOutputTarget) {
+      collapseAll(this.parseOutputTarget)
+    }
+  }
+
+  setDiffModeLive() {
+    this.diffMode = "live"
+    this.diffSnapshotSource = null
+
+    if (this.hasDiffLiveButtonTarget) {
+      this.diffLiveButtonTarget.style.color = "#e5c07b"
+      this.diffLiveButtonTarget.style.background = "rgba(229, 192, 123, 0.2)"
+    }
+
+    if (this.hasDiffCheckpointButtonTarget) {
+      this.diffCheckpointButtonTarget.style.color = "#abb2bf"
+      this.diffCheckpointButtonTarget.style.background = "rgba(171, 178, 191, 0.1)"
+    }
+
+    if (this.hasDiffSnapshotButtonTarget) {
+      this.diffSnapshotButtonTarget.classList.add("hidden")
+    }
+
+    if (this.hasDiffCheckButtonTarget) {
+      this.diffCheckButtonTarget.classList.add("hidden")
+    }
+
+    this.updateDiff()
+  }
+
+  setDiffModeCheckpoint() {
+    this.diffMode = "checkpoint"
+
+    if (this.hasDiffCheckpointButtonTarget) {
+      this.diffCheckpointButtonTarget.style.color = "#e5c07b"
+      this.diffCheckpointButtonTarget.style.background = "rgba(229, 192, 123, 0.2)"
+    }
+
+    if (this.hasDiffLiveButtonTarget) {
+      this.diffLiveButtonTarget.style.color = "#abb2bf"
+      this.diffLiveButtonTarget.style.background = "rgba(171, 178, 191, 0.1)"
+    }
+
+    if (this.hasDiffSnapshotButtonTarget) {
+      this.diffSnapshotButtonTarget.classList.remove("hidden")
+    }
+
+    if (this.hasDiffCheckButtonTarget) {
+      this.diffCheckButtonTarget.classList.remove("hidden")
+    }
+
+    if (!this.diffSnapshotSource) {
+      this.diffTakeSnapshot()
+    }
+
+    this.updateDiffStatus("Checkpoint mode - click Snapshot then edit and Diff")
+  }
+
+  diffTakeSnapshot() {
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+    this.diffSnapshotSource = value
+    this.updateDiffStatus("Snapshot taken - edit the code then click Diff")
+
+    if (this.hasDiffOutputTarget) {
+      this.diffOutputTarget.innerHTML = '<span class="text-gray-400">Snapshot captured. Edit the code and click "Diff" to compare.</span>'
+    }
+  }
+
+  diffCheckpoint() {
+    if (!this.diffSnapshotSource) {
+      this.updateDiffStatus("No snapshot - click Snapshot first")
+      return
+    }
+
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    try {
+      const result = Herb.diff(this.diffSnapshotSource, value, this.diffOptions())
+      this.renderDiffResult(result, this.diffSnapshotSource !== value)
+    } catch (error) {
+      console.error("Diff error:", error)
+      this.updateDiffStatus("Error computing diff")
+    }
+  }
+
+  diffOptions() {
+    if (!this.hasDiffWhitespaceCheckboxTarget) return {}
+
+    return { track_whitespace_changes: this.diffWhitespaceCheckboxTarget.checked }
+  }
+
+  onDiffOptionChange(_event) {
+    this.updateURL()
+    this.diffNoChangeset = false
+
+    if (this.diffMode === "checkpoint") {
+      if (this.diffSnapshotSource) { this.diffCheckpoint() }
+
+      return
+    }
+
+    this.diffFeedEntries = []
+    this.previousSource = null
+
+    this.updateDiff()
+  }
+
+  // alias for data-action naming
+  diffSnapshot() {
+    this.diffTakeSnapshot()
+  }
+
+  diffCheck() {
+    this.diffCheckpoint()
+  }
+
+  clearDiffFeed() {
+    this.diffFeedEntries = []
+    this.diffNoChangeset = false
+    this.previousSource = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.hasDiffOutputTarget) {
+      this.diffOutputTarget.innerHTML = '<span class="diff-empty">Feed cleared. Start typing to see live differences...</span>'
+    }
+
+    this.hideDiffParseError()
+    this.updateDiffStatus("Cleared")
+  }
+
+  updateDiff(parseSuccess = true) {
+    if (!this.hasDiffViewerTarget) return
+    if (this.diffMode !== "live") return
+
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    if (this.previousSource === null) {
+      this.previousSource = value
+      this.diffFeedEntries = []
+
+      if (this.hasDiffOutputTarget) {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">Start typing to see live differences...</span>'
+      }
+
+      return
+    }
+
+    if (this.previousSource === value) return
+
+    if (!parseSuccess) {
+      this.showDiffParseError()
+      this.updateDiffStatus("Paused")
+      return
+    }
+
+    this.hideDiffParseError()
+
+    try {
+      const result = Herb.diff(this.previousSource, value, this.diffOptions())
+
+      if (result.identical) {
+        this.diffNoChangeset = true
+      } else {
+        this.diffNoChangeset = false
+
+        if (!this.diffFeedEntries) { this.diffFeedEntries = [] }
+
+        this.diffFeedEntries.unshift({
+          timestamp: new Date(),
+          operations: result.operations,
+          source: value,
+          previousSource: this.previousSource,
+        })
+
+        if (this.diffFeedEntries.length > 50) {
+          this.diffFeedEntries = this.diffFeedEntries.slice(0, 50)
+        }
+      }
+
+      this.renderDiffFeed(result)
+      this.previousSource = value
+    } catch (error) {
+      console.error("Diff error:", error)
+    }
+  }
+
+  renderDiffFeed(latestResult) {
+    if (!this.hasDiffOutputTarget) return
+
+    if (!this.diffFeedEntries || this.diffFeedEntries.length === 0) {
+      if (this.diffNoChangeset) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else if (latestResult && latestResult.identical) {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">No changes detected.</span>'
+        this.updateDiffStatus("Identical")
+      }
+
+      return
+    }
+
+    const totalOperations = this.diffFeedEntries.reduce((sum, entry) => sum + entry.operations.length, 0)
+    this.updateDiffStatus(`${totalOperations} change${totalOperations === 1 ? "" : "s"} in ${this.diffFeedEntries.length} edit${this.diffFeedEntries.length === 1 ? "" : "s"}`)
+
+    let html = this.diffNoChangeset ? this.renderNoChangesetNotice() : ""
+
+    this.diffFeedEntries.forEach((entry, entryIndex) => {
+      const time = entry.timestamp.toLocaleTimeString()
+      const isCurrent = entryIndex === 0
+
+      html += `<div class="${isCurrent ? "diff-feed-current" : "diff-feed-past"} mb-4">`
+      html += `<div class="diff-feed-header flex items-center gap-2 text-xs font-mono">`
+      html += `<span>${isCurrent ? "Latest" : time}</span>`
+      html += `<span class="diff-location">${entry.operations.length} operation${entry.operations.length === 1 ? "" : "s"}</span>`
+
+      if (!isCurrent && entry.source) {
+        html += `<button class="diff-rollback-button ml-auto" data-diff-rollback-index="${entryIndex}" title="Restore editor to this point">`
+        html += `<i class="fas fa-rotate-left"></i> Rollback to this`
+        html += `</button>`
+      } else if (isCurrent && entry.previousSource) {
+        html += `<button class="diff-rollback-button ml-auto" data-diff-undo-index="${entryIndex}" title="Undo this change">`
+        html += `<i class="fas fa-rotate-left"></i> Undo`
+        html += `</button>`
+      }
+
+      html += `</div>`
+      html += this.renderOperations(entry.operations)
+      html += `</div>`
+    })
+
+    this.diffOutputTarget.innerHTML = html
+    this.bindDiffRollbackButtons()
+  }
+
+  bindDiffRollbackButtons() {
+    if (!this.hasDiffOutputTarget) return
+
+    this.diffOutputTarget.querySelectorAll("[data-diff-rollback-index]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault()
+        const entryIndex = parseInt(button.dataset.diffRollbackIndex)
+        this.diffRollbackTo(entryIndex)
+      })
+    })
+
+    this.diffOutputTarget.querySelectorAll("[data-diff-undo-index]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault()
+        const entryIndex = parseInt(button.dataset.diffUndoIndex)
+        this.diffUndo(entryIndex)
+      })
+    })
+  }
+
+  diffRollbackTo(entryIndex) {
+    const entry = this.diffFeedEntries[entryIndex]
+    if (!entry || !entry.source) return
+
+    this.diffFeedEntries = this.diffFeedEntries.slice(entryIndex)
+    this.previousSource = entry.source
+
+    if (this.editor) {
+      this.editor.setValue(entry.source)
+    } else {
+      this.inputTarget.value = entry.source
+    }
+
+    this.analyze()
+  }
+
+  diffUndo(entryIndex) {
+    const entry = this.diffFeedEntries[entryIndex]
+    if (!entry || !entry.previousSource) return
+
+    this.diffFeedEntries.shift()
+    this.previousSource = entry.previousSource
+
+    if (this.editor) {
+      this.editor.setValue(entry.previousSource)
+    } else {
+      this.inputTarget.value = entry.previousSource
+    }
+
+    this.analyze()
+  }
+
+  renderDiffResult(result, sourceChanged = false) {
+    if (!this.hasDiffOutputTarget) return
+
+    if (result.identical) {
+      if (sourceChanged) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
+        this.updateDiffStatus("Identical")
+      }
+
+      return
+    }
+
+    const operations = result.operations
+    this.updateDiffStatus(`${operations.length} difference${operations.length === 1 ? "" : "s"}`)
+    this.diffOutputTarget.innerHTML = this.renderOperations(operations)
+  }
+
+  renderNoChangesetNotice() {
+    const tracking = this.diffOptions().track_whitespace_changes
+
+    const hint = tracking
+      ? "The edit does not affect the syntax tree."
+      : "Whitespace that HTML collapses is not reported. Enable \"Track insignificant whitespace changes\" to see it."
+
+    let html = `<div class="diff-no-changeset">`
+    html += `<div class="text-sm font-semibold"><i class="fas fa-circle-info mr-2"></i>Source changed, but no changeset was emitted.</div>`
+    html += `<div class="text-xs diff-no-changeset-hint">${hint}</div>`
+    html += `</div>`
+
+    return html
+  }
+
+  renderOperations(operations) {
+    const typeStyles = {
+      node_inserted:          { css: "inserted",   icon: "fa-plus" },
+      node_removed:           { css: "removed",    icon: "fa-minus" },
+      node_replaced:          { css: "replaced",   icon: "fa-right-left" },
+      text_changed:           { css: "changed",    icon: "fa-pen" },
+      whitespace_changed:     { css: "whitespace", icon: "fa-arrows-left-right-to-line" },
+      erb_content_changed:    { css: "erb",        icon: "fa-code" },
+      attribute_added:        { css: "attribute",  icon: "fa-plus" },
+      attribute_removed:      { css: "removed",    icon: "fa-minus" },
+      attribute_value_changed:{ css: "attribute",  icon: "fa-pen" },
+      tag_name_changed:       { css: "tag",        icon: "fa-tag" },
+      node_moved:             { css: "moved",      icon: "fa-arrows-alt" },
+      node_wrapped:           { css: "wrapped",    icon: "fa-compress" },
+      node_unwrapped:         { css: "unwrapped",  icon: "fa-expand" },
+    }
+
+    let html = ""
+
+    operations.forEach((operation, index) => {
+      const style = typeStyles[operation.type] || { css: "changed", icon: "fa-circle" }
+      const typeLabel = operation.type.replace(/_/g, " ")
+
+      html += `<div class="diff-operation diff-op-${style.css}">`
+      html += `<div class="flex items-center gap-2">`
+      html += `<span class="diff-index text-xs font-mono">#${index + 1}</span>`
+      html += `<i class="fas ${style.icon} diff-label-${style.css} text-xs"></i>`
+      html += `<span class="diff-label-${style.css} font-semibold text-sm">${typeLabel}</span>`
+      html += `<span class="diff-path text-xs font-mono ml-auto">[${operation.path.join(", ")}]</span>`
+      html += `</div>`
+
+      const oldNode = operation.oldNode || operation.old_node
+      const newNode = operation.newNode || operation.new_node
+
+      if (operation.type === "node_wrapped" && oldNode && newNode) {
+        const oldLabel = this.describeNode(oldNode, operation.type)
+        const newLabel = this.describeNode(newNode, operation.type)
+
+        html += `<div class="text-xs mt-1 font-mono">`
+        html += `<span class="diff-value-old">${this.escapeHtml(oldLabel)}</span>`
+        html += ` wrapped in `
+        html += `<span class="diff-value-new">${this.escapeHtml(newLabel)}</span>`
+        html += `</div>`
+      } else if (operation.type === "node_unwrapped" && oldNode && newNode) {
+        const oldLabel = this.describeNode(oldNode, operation.type)
+        const newLabel = this.describeNode(newNode, operation.type)
+
+        html += `<div class="text-xs mt-1 font-mono">`
+        html += `<span class="diff-value-new">${this.escapeHtml(newLabel)}</span>`
+        html += ` unwrapped from `
+        html += `<span class="diff-value-old">${this.escapeHtml(oldLabel)}</span>`
+        html += `</div>`
+      } else {
+        if (oldNode) {
+          html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-removed">-</span> <span class="diff-node-type">${oldNode.type}</span>`
+
+          if (oldNode.location) {
+            html += ` <span class="diff-location">(${oldNode.location.start.line}:${oldNode.location.start.column})</span>`
+          }
+
+          html += `</div>`
+
+          const oldValue = this.extractNodeValue(oldNode, operation.type)
+          if (oldValue !== null) {
+            html += `<div class="text-xs font-mono diff-value-old">${this.escapeHtml(oldValue)}</div>`
+          }
+        }
+
+        if (newNode) {
+          html += `<div class="text-xs mt-1 font-mono"><span class="diff-label-inserted">+</span> <span class="diff-node-type">${newNode.type}</span>`
+
+          if (newNode.location) {
+            html += ` <span class="diff-location">(${newNode.location.start.line}:${newNode.location.start.column})</span>`
+          }
+
+          html += `</div>`
+
+          const newValue = this.extractNodeValue(newNode, operation.type)
+
+          if (newValue !== null) {
+            html += `<div class="text-xs font-mono diff-value-new">${this.escapeHtml(newValue)}</div>`
+          }
+        }
+      }
+
+      html += `</div>`
+    })
+
+    return html
+  }
+
+  visualizeWhitespace(value) {
+    return value.replace(/\t/g, "\u2192").replace(/\n/g, "\u23ce").replace(/ /g, "\u00b7")
+  }
+
+  extractNodeValue(node, operationType) {
+    if (!node) return null
+
+    if (operationType === "whitespace_changed") {
+      return node.content ? this.visualizeWhitespace(node.content) : null
+    }
+
+    if (operationType === "text_changed" || node.type === "AST_HTML_TEXT_NODE") {
+      return node.content || null
+    }
+
+    if (operationType === "erb_content_changed" || node.type === "AST_ERB_CONTENT_NODE") {
+      if (node.content && node.content.value) {
+        return node.content.value
+      }
+
+      return null
+    }
+
+    if (operationType === "attribute_value_changed" || operationType === "attribute_added" || operationType === "attribute_removed") {
+      if (node.type === "AST_HTML_ATTRIBUTE_NODE") {
+        let result = ""
+
+        if (node.name && node.name.children) {
+          const nameParts = node.name.children.map(child => child.content || child.value || "").join("")
+          result += nameParts
+        }
+
+        if (node.value && node.value.children) {
+          const valueParts = node.value.children.map(child => child.content || child.value || "").join("")
+          result += `="${valueParts}"`
+        }
+
+        return result || null
+      }
+    }
+
+    if (node.type === "AST_HTML_ELEMENT_NODE" || node.type === "AST_HTML_CONDITIONAL_ELEMENT_NODE") {
+      if (node.tag_name && node.tag_name.value) {
+        return `<${node.tag_name.value}>`
+      }
+
+      return null
+    }
+
+    if (node.type === "AST_LITERAL_NODE" || node.type === "AST_RUBY_LITERAL_NODE") {
+      return node.content || null
+    }
+
+    return null
+  }
+
+  describeNode(node, operationType) {
+    if (!node) return "unknown"
+
+    if (node.type === "AST_HTML_ELEMENT_NODE" || node.type === "AST_HTML_CONDITIONAL_ELEMENT_NODE") {
+      if (node.tag_name && node.tag_name.value) {
+        return `<${node.tag_name.value}>`
+      }
+    }
+
+    if (node.type === "AST_HTML_TEXT_NODE") {
+      const text = node.content || ""
+      const trimmed = text.trim()
+
+      return trimmed.length > 30 ? `"${trimmed.slice(0, 30)}..."` : `"${trimmed}"`
+    }
+
+    if (node.type === "AST_ERB_CONTENT_NODE" && node.content && node.content.value) {
+      return `<%= ${node.content.value.trim()} %>`
+    }
+
+    if (node.type === "AST_ERB_IF_NODE" || node.type === "AST_ERB_UNLESS_NODE") {
+      const keyword = node.type === "AST_ERB_IF_NODE" ? "if" : "unless"
+      const condition = node.content && node.content.value ? node.content.value.trim().replace(/^(if|unless)\s+/, "") : ""
+
+      return condition ? `<% ${keyword} ${condition} %>` : `<% ${keyword} %>`
+    }
+
+    if (node.type && node.type.startsWith("AST_ERB_")) {
+      const keyword = node.type.replace("AST_ERB_", "").replace("_NODE", "").toLowerCase().replace(/_/g, " ")
+      const condition = node.content && node.content.value ? node.content.value.trim() : ""
+
+      return condition ? `<% ${condition} %>` : `<% ${keyword} %>`
+    }
+
+    const value = this.extractNodeValue(node, operationType)
+    if (value) return value
+
+    return node.type.replace("AST_", "").replace("_NODE", "").toLowerCase().replace(/_/g, " ")
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div")
+    div.textContent = text
+    return div.innerHTML
+  }
+
+  updateDiffStatus(text) {
+    if (this.hasDiffStatusTarget) {
+      this.diffStatusTarget.className = "px-2 py-1 text-xs rounded font-mono font-medium"
+
+      if (text.includes("Identical") || text.includes("Cleared")) {
+        this.diffStatusTarget.style.color = "#90b874"
+        this.diffStatusTarget.style.background = "rgba(144, 184, 116, 0.15)"
+      } else if (text.includes("change") || text.includes("difference")) {
+        this.diffStatusTarget.style.color = "#e5c07b"
+        this.diffStatusTarget.style.background = "rgba(229, 192, 123, 0.15)"
+      } else {
+        this.diffStatusTarget.style.color = "#abb2bf"
+        this.diffStatusTarget.style.background = "rgba(171, 178, 191, 0.1)"
+      }
+
+      this.diffStatusTarget.textContent = text
+    }
+  }
+
+  showDiffParseError() {
+    if (this.hasDiffParseErrorTarget) {
+      this.diffParseErrorTarget.classList.remove("hidden")
+    }
+  }
+
+  hideDiffParseError() {
+    if (this.hasDiffParseErrorTarget) {
+      this.diffParseErrorTarget.classList.add("hidden")
+    }
   }
 
   clearTreeLocationHighlights() {
@@ -764,6 +1440,60 @@ export default class extends Controller {
     }
   }
 
+  async autofixUnsafeEditor(event) {
+    if (this.isRubyMode) return
+
+    const button = this.getClosestButton(event.target)
+
+    if (button.disabled) {
+      return
+    }
+
+    const warningIcon = button.querySelector(".fa-triangle-exclamation")
+    const checkIcon = button.querySelector(".fa-circle-check")
+
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const linter = new Linter(Herb)
+      const result = linter.autofix(value, undefined, undefined, { includeUnsafe: true })
+
+      if (result && typeof result === "object" && "source" in result) {
+        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+
+        if (fixedCount > 0 && typeof result.source === "string") {
+          if (this.editor) {
+            this.editor.setValue(result.source)
+          } else {
+            this.inputTarget.value = result.source
+          }
+
+          if (warningIcon && checkIcon) {
+            warningIcon.classList.add("hidden")
+            checkIcon.classList.remove("hidden")
+            checkIcon.style.display = ""
+
+            setTimeout(() => {
+              this.resetAutofixUnsafeButtonIcons()
+            }, 1000)
+          }
+
+          const offensesLabel = fixedCount === 1 ? "offense" : "offenses"
+          this.showTemporaryMessage(`Autofixed ${fixedCount} unsafe linter ${offensesLabel}`, "success")
+
+          await this.analyze()
+          this.resetAutofixUnsafeButtonIcons()
+        } else {
+          this.showTemporaryMessage("No unsafe autocorrectable linter offenses found", "info")
+        }
+      } else {
+        this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+      }
+    } catch (error) {
+      console.error("Autofix unsafe error:", error)
+      this.showTemporaryMessage("Failed to autofix unsafe linter offenses", "error")
+    }
+  }
+
   async analyze() {
     this.updateURL()
 
@@ -776,7 +1506,8 @@ export default class extends Controller {
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
+    const autofixOptions = this.getAutofixOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -901,6 +1632,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -917,6 +1649,28 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasRewriteViewerTarget) {
+      const options = this.getParserOptions()
+
+      if (this.hasRewriteActionViewHelpersTarget) {
+        this.rewriteActionViewHelpersTarget.checked = !!options.action_view_helpers
+      }
+
+      if (!options.action_view_helpers) {
+        this.rewriteStatusTarget.textContent = '⚠ Enable "Action View helpers" option'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+        this.rewriteOutputTarget.classList.remove("language-html")
+        this.rewriteOutputTarget.textContent = ''
+      } else {
+        this.rewriteStatusTarget.textContent = 'ActionView Tag Helper → HTML'
+        this.rewriteStatusTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+        this.rewriteOutputTarget.classList.add("language-html")
+        this.rewriteOutputTarget.textContent = result.rewritten || 'No rewritten output available'
+
+        Prism.highlightElement(this.rewriteOutputTarget)
+      }
     }
 
     const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
@@ -957,6 +1711,50 @@ export default class extends Controller {
       }
     }
 
+    if (this.hasAutofixViewerTarget) {
+      const autofixResult = result.autofixResult
+      const autofixedSource = autofixResult && typeof autofixResult.source === "string" ? autofixResult.source : null
+      const fixedCount = autofixResult && Array.isArray(autofixResult.fixed) ? autofixResult.fixed.length : 0
+      const offenseCount = result.lintResult && Array.isArray(result.lintResult.offenses) ? result.lintResult.offenses.length : 0
+
+      if (hasParserErrors || autofixedSource === null) {
+        this.autofixOutputTarget.classList.add('hidden')
+        this.autofixErrorTarget.classList.remove('hidden')
+
+        const pre = this.autofixErrorTarget.querySelector('pre.language-html')
+        pre.textContent = autofixedSource || currentSource
+
+        Prism.highlightElement(pre)
+
+        if (this.hasAutofixVerificationTarget) {
+          this.autofixVerificationTarget.textContent = '⚠ Autofix Unavailable'
+          this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
+        }
+      } else {
+        this.autofixErrorTarget.classList.add('hidden')
+        this.autofixOutputTarget.classList.remove('hidden')
+
+        this.autofixOutputTarget.textContent = autofixedSource
+
+        Prism.highlightElement(this.autofixOutputTarget)
+
+        if (this.hasAutofixVerificationTarget) {
+          const offensesLabel = fixedCount === 1 ? 'offense' : 'offenses'
+
+          if (fixedCount > 0) {
+            this.autofixVerificationTarget.textContent = `✓ Autofixed ${fixedCount} ${offensesLabel}`
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          } else if (offenseCount > 0) {
+            this.autofixVerificationTarget.textContent = '⚠ No autofixes available'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-orange-600 text-orange-100'
+          } else {
+            this.autofixVerificationTarget.textContent = '✓ No Herb Linter offenses found'
+            this.autofixVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          }
+        }
+      }
+    }
+
     if (this.hasFormatButtonTarget) {
       const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
 
@@ -989,6 +1787,20 @@ export default class extends Controller {
       } else {
         this.enableAutofixButton()
         this.updateAutofixTooltipText('Autocorrect autocorrectable Herb Linter offenses')
+      }
+    }
+
+    if (this.hasAutofixUnsafeWrapperTarget) {
+      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+      const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
+        result.lintResult.offenses.some(offense => offense.autofixContext && offense.autofixContext.unsafe === true))
+
+      if (hasParserErrors || !hasUnsafeOffenses) {
+        this.autofixUnsafeWrapperTarget.classList.add('hidden')
+      } else {
+        this.autofixUnsafeWrapperTarget.classList.remove('hidden')
+        this.enableAutofixUnsafeButton()
+        this.updateAutofixUnsafeTooltipText('Autocorrect unsafe Herb Linter offenses')
       }
     }
 
@@ -1058,6 +1870,8 @@ export default class extends Controller {
       this.updateDiagnosticsFilterButtons(this.currentDiagnosticsFilter)
       this.updateDiagnosticsViewer(this.getFilteredDiagnostics())
     }
+
+    this.updateDiff(!hasParserErrors)
   }
 
   async analyzeRuby(value) {
@@ -1137,6 +1951,7 @@ export default class extends Controller {
       this.parseOutputTarget.textContent = result.string
 
       Prism.highlightElement(this.parseOutputTarget)
+      makeTreeCollapsible(this.parseOutputTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -1216,7 +2031,24 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onRewriteActionViewHelpersChange(event) {
+    const checked = event.target.checked
+    const parserCheckbox = this.parserOptionsTarget.querySelector('input[data-option="action_view_helpers"]')
+
+    if (parserCheckbox) {
+      parserCheckbox.checked = checked
+    }
+
+    this.updateURL()
+    this.analyze()
+  }
+
   onFormatterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  onAutofixOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
@@ -1243,6 +2075,16 @@ export default class extends Controller {
     return options
   }
 
+  getAutofixOptions() {
+    const options = {}
+
+    if (this.hasAutofixIncludeUnsafeTarget) {
+      options.includeUnsafe = this.autofixIncludeUnsafeTarget.checked
+    }
+
+    return options
+  }
+
   getOptionsFromURL() {
     const urlParams = new URLSearchParams(window.parent.location.search)
     const optionsString = urlParams.get('options')
@@ -1259,18 +2101,20 @@ export default class extends Controller {
   }
 
   setOptionsInURL(options) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       track_whitespace: false,
       analyze: true,
       strict: true,
       action_view_helpers: false,
+      transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
+      dot_notation_tags: false,
+      html: true,
     }
 
     const nonDefaultOptions = {}
@@ -1284,18 +2128,16 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultOptions).length > 0) {
-      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
-    } else {
-      url.searchParams.delete('options')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultOptions).length > 0) {
+        params.set('options', JSON.stringify(nonDefaultOptions))
+      } else {
+        params.delete('options')
+      }
+    })
   }
 
   setPrinterOptionsInURL(printerOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       ignoreErrors: false,
     }
@@ -1311,13 +2153,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultPrinterOptions).length > 0) {
-      url.searchParams.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
-    } else {
-      url.searchParams.delete('printerOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultPrinterOptions).length > 0) {
+        params.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
+      } else {
+        params.delete('printerOptions')
+      }
+    })
   }
 
   getPrinterOptionsFromURL() {
@@ -1336,8 +2178,6 @@ export default class extends Controller {
   }
 
   setFormatterOptionsInURL(formatterOptions) {
-    const url = new URL(window.parent.location)
-
     const nonDefaultFormatterOptions = {}
 
     Object.keys(formatterOptions).forEach(key => {
@@ -1346,13 +2186,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
-      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
-    } else {
-      url.searchParams.delete('formatterOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+        params.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+      } else {
+        params.delete('formatterOptions')
+      }
+    })
   }
 
   getFormatterOptionsFromURL() {
@@ -1364,6 +2204,46 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(formatterOptionsString))
       } catch (e) {
         console.warn('Failed to parse formatter options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setAutofixOptionsInURL(autofixOptions) {
+    const defaults = {
+      includeUnsafe: false,
+    }
+
+    const nonDefaultAutofixOptions = {}
+
+    Object.keys(autofixOptions).forEach(key => {
+      const value = autofixOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultAutofixOptions[key] = value
+      }
+    })
+
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultAutofixOptions).length > 0) {
+        params.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
+      } else {
+        params.delete('autofixOptions')
+      }
+    })
+  }
+
+  getAutofixOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const autofixOptionsString = urlParams.get('autofixOptions')
+
+    if (autofixOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(autofixOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse autofix options from URL:', e)
       }
     }
 
@@ -1382,15 +2262,13 @@ export default class extends Controller {
   }
 
   updateDiagnosticsFilterInURL(filter) {
-    const url = new URL(window.parent.location)
-
-    if (filter && filter !== 'all') {
-      url.searchParams.set('diagnosticsFilter', filter)
-    } else {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (filter && filter !== 'all') {
+        params.set('diagnosticsFilter', filter)
+      } else {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   updateDiagnosticsViewer(diagnostics) {
@@ -1650,6 +2528,72 @@ export default class extends Controller {
 
     if (wandIcon) {
       wandIcon.classList.remove("hidden")
+    }
+
+    if (checkIcon) {
+      checkIcon.classList.add("hidden")
+      checkIcon.style.display = ""
+    }
+  }
+
+  setupAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.addEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.addEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+    }
+  }
+
+  removeAutofixUnsafeTooltip() {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseenter', this.showAutofixUnsafeTooltip)
+      this.autofixUnsafeButtonTarget.removeEventListener('mouseleave', this.hideAutofixUnsafeTooltip)
+
+      this.hideAutofixUnsafeTooltip()
+    }
+  }
+
+  showAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideAutofixUnsafeTooltip = () => {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      this.autofixUnsafeTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  updateAutofixUnsafeTooltipText(text) {
+    if (this.hasAutofixUnsafeTooltipTarget) {
+      const textNode = this.autofixUnsafeTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  enableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = false
+    this.autofixUnsafeButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+  }
+
+  disableAutofixUnsafeButton() {
+    this.autofixUnsafeButtonTarget.disabled = true
+    this.autofixUnsafeButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+    this.autofixUnsafeButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+    this.resetAutofixUnsafeButtonIcons()
+  }
+
+  resetAutofixUnsafeButtonIcons() {
+    if (!this.hasAutofixUnsafeButtonTarget) return
+
+    const warningIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-triangle-exclamation")
+    const checkIcon = this.autofixUnsafeButtonTarget.querySelector(".fa-circle-check")
+
+    if (warningIcon) {
+      warningIcon.classList.remove("hidden")
     }
 
     if (checkIcon) {

@@ -4,8 +4,10 @@
 #include <prism.h>
 #include <stdbool.h>
 
-#include "../ast_node.h"
-#include "../util/hb_allocator.h"
+#include "../ast/ast_node.h"
+#include "../ast/ast_nodes.h"
+#include "../lib/hb_allocator.h"
+#include "../lib/hb_array.h"
 #include "analyzed_ruby.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);
@@ -61,5 +63,21 @@ bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed);
 
 void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_allocator_T* allocator);
+
+hb_array_T* extract_parameters_from_prism(
+  pm_parameters_node_t* parameters,
+  pm_parser_t* parser,
+  const char* source,
+  size_t source_base_offset,
+  const uint8_t* prism_source_start,
+  hb_allocator_T* allocator
+);
+
+hb_array_T* extract_block_arguments_from_erb_node(
+  const AST_ERB_CONTENT_NODE_T* erb_node,
+  const char* source,
+  hb_array_T* errors,
+  hb_allocator_T* allocator
+);
 
 #endif

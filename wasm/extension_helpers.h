@@ -5,12 +5,12 @@
 #include <string>
 
 extern "C" {
-#include "../src/include/position.h"
-#include "../src/include/location.h"
-#include "../src/include/range.h"
-#include "../src/include/token.h"
-#include "../src/include/ast_node.h"
-#include "../src/include/ast_nodes.h"
+#include "../src/include/location/position.h"
+#include "../src/include/location/location.h"
+#include "../src/include/location/range.h"
+#include "../src/include/lexer/token.h"
+#include "../src/include/ast/ast_node.h"
+#include "../src/include/ast/ast_nodes.h"
 #include "../src/include/herb.h"
 }
 

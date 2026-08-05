@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0024_whitespace between nested end tags after expression block is trimmed"
+input: "{source: \"<% 1.times do %>\\n  <% 1.times do %>\\n    <%= tag.p do %>\\n      text\\n    <% end %>\\n  <% end %>\\n<% end %>\\n\", locals: {}, options: {}}"
+---
+    <p>
+      text
+</p>

@@ -1,6 +1,6 @@
 #include "include/test.h"
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_array.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_array.h"
 
 static hb_allocator_T test_allocator;
 

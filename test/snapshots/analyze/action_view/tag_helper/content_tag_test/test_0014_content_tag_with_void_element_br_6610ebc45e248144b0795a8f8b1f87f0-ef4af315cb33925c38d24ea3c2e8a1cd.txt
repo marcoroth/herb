@@ -17,11 +17,8 @@ options: {action_view_helpers: true}
     │   │
     │   ├── tag_name: "br" (location: (1:4)-(1:15))
     │   ├── body: []
-    │   ├── close_tag:
-    │   │   └── @ HTMLVirtualCloseTagNode (location: (1:22)-(1:22))
-    │   │       └── tag_name: "br" (location: (1:4)-(1:15))
-    │   │
-    │   ├── is_void: false
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
     │   └── element_source: "ActionView::Helpers::TagHelper#content_tag"
     │
     └── @ HTMLTextNode (location: (1:22)-(2:0))

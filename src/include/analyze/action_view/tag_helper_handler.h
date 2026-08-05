@@ -1,9 +1,9 @@
 #ifndef TAG_HELPER_HANDLER_H
 #define TAG_HELPER_HANDLER_H
 
-#include "../../util/hb_allocator.h"
-#include "../../util/hb_array.h"
-#include "../../util/hb_string.h"
+#include "../../lib/hb_allocator.h"
+#include "../../lib/hb_array.h"
+#include "../../lib/hb_string.h"
 #include <prism.h>
 #include <stdbool.h>
 
@@ -39,5 +39,8 @@ tag_helper_handler_T* get_tag_helper_handlers(void);
 size_t get_tag_helper_handlers_count(void);
 
 char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator);
+
+struct AST_NODE_STRUCT;
+bool wrap_javascript_tag_body_visitor(const struct AST_NODE_STRUCT* node, void* data);
 
 #endif

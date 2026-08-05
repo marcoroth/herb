@@ -1,7 +1,7 @@
 #ifndef HERB_ANALYZE_RENDER_NODES_H
 #define HERB_ANALYZE_RENDER_NODES_H
 
-#include "../ast_nodes.h"
+#include "../ast/ast_nodes.h"
 #include "analyze.h"
 
 #include <stdbool.h>

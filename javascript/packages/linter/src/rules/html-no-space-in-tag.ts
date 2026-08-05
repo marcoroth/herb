@@ -78,26 +78,75 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
   }
 
   private checkMultilineTag(node: HTMLOpenTagNode): void {
-    const whitespaceNodes = filterWhitespaceNodes(node.children)
+    const { children, tag_closing } = node
+    const isSelfClosing = tag_closing ? this.isSelfClosing(tag_closing) : false
+    const lastChild = children[children.length - 1]
+
     let previousWhitespace: WhitespaceNode | null = null
 
-    whitespaceNodes.forEach((whitespace, index) => {
+    for (const child of children) {
+      if (!isWhitespaceNode(child)) {
+        previousWhitespace = null
+
+        continue
+      }
+
+      const whitespace = child as WhitespaceNode
       const content = this.getWhitespaceContent(whitespace)
-      if (!content) return
+      if (!content) {
+        previousWhitespace = whitespace
+
+        continue
+      }
 
       if (this.hasConsecutiveNewlines(content, previousWhitespace)) {
         this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_BREAK, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_BREAK })
         previousWhitespace = whitespace
 
-        return
+        continue
       }
 
       if (this.isNonNewlineWhitespace(content)) {
-        this.checkIndentation(whitespace, index, whitespaceNodes.length, node)
+        const isLineLeading = previousWhitespace ? this.containsNewline(previousWhitespace) : false
+        const isLastChild = whitespace === lastChild
+
+        if (isLineLeading) {
+          if (isLastChild) {
+            this.checkClosingBracketIndentation(whitespace, node)
+          }
+        } else {
+          this.checkInlineWhitespace(whitespace, content, isLastChild, isSelfClosing)
+        }
       }
 
       previousWhitespace = whitespace
-    })
+    }
+  }
+
+  private checkClosingBracketIndentation(whitespace: WhitespaceNode, node: HTMLOpenTagNode): void {
+    if (whitespace.location.end.column === node.location.start.column) return
+
+    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
+  }
+
+  private checkInlineWhitespace(whitespace: WhitespaceNode, content: string, isLastChild: boolean, isSelfClosing: boolean): void {
+    if (isLastChild) {
+      if (isSelfClosing) {
+        if (content !== ' ') {
+          this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_SPACE })
+        }
+
+        return
+      }
+
+      this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
+
+      return
+    }
+
+    if (content.length > 1) {
+      this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_SPACE })
+    }
   }
 
   private hasConsecutiveNewlines(content: string, previousWhitespace: WhitespaceNode | null): boolean {
@@ -113,13 +162,8 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
     return !content.includes("\n")
   }
 
-  private checkIndentation(whitespace: WhitespaceNode, index: number, totalWhitespaceNodes: number, node: HTMLOpenTagNode): void {
-    const isLastWhitespace = index === totalWhitespaceNodes - 1
-    const expectedIndent = isLastWhitespace ? node.location.start.column : node.location.start.column + 2
-
-    if (whitespace.location.end.column === expectedIndent) return
-
-    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
+  private containsNewline(whitespace: WhitespaceNode): boolean {
+    return whitespace.value?.value?.includes("\n") ?? false
   }
 
   private isSelfClosing(tag_closing: Token): boolean {
@@ -142,13 +186,14 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 }
 
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
-  // TODO: enable and fix autofix
-  static autocorrectable = false
+  static autocorrectable = true
   static ruleName = "html-no-space-in-tag"
+  // Initially introduced in 0.8.0 (#559)
+  static introducedIn = this.version("0.10.3")
 
   get defaultConfig(): FullRuleConfig {
     return {
-      enabled: false,
+      enabled: true,
       severity: "error"
     }
   }
@@ -180,17 +225,19 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
 
     switch (message) {
       case MESSAGES.EXTRA_SPACE_NO_SPACE: {
-        let selfClosing = false
-        let beginningOfLine = false
-
         const parent = findParent(result.value, node)
+        const parentTag = parent && isHTMLOpenTagNode(parent) ? parent : null
+        const beginningOfLine = node.location.start.column === 0
 
-        if (parent && isHTMLOpenTagNode(parent)) {
-          selfClosing = parent.tag_closing?.value === "/>"
-          beginningOfLine = node.location.start.column === 0
+        if (parentTag && beginningOfLine) {
+          whitespaceNode.value.value = " ".repeat(parentTag.location.start.column)
+
+          return result
         }
 
-        whitespaceNode.value.value = selfClosing && !beginningOfLine ? " " : ""
+        const selfClosing = parentTag?.tag_closing?.value === "/>"
+
+        whitespaceNode.value.value = selfClosing ? " " : ""
 
         return result
       }

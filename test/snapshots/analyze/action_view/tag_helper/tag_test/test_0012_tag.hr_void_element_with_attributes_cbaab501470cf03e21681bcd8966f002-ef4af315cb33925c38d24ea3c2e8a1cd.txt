@@ -14,23 +14,23 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:28)-(1:30))
     │   │       ├── tag_name: "hr" (location: (1:8)-(1:10))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:11)-(1:18))
+    │   │           └── @ HTMLAttributeNode (location: (1:11)-(1:27))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:18))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:16))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:11)-(1:18))
+    │   │               │           └── @ LiteralNode (location: (1:11)-(1:16))
     │   │               │               └── content: "class"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:11)-(1:18))
+    │   │               ├── equals: ": " (location: (1:16)-(1:18))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:11)-(1:18))
-    │   │                       ├── open_quote: """ (location: (1:11)-(1:18))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:18)-(1:27))
+    │   │                       ├── open_quote: """ (location: (1:18)-(1:19))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:11)-(1:18))
+    │   │                       │   └── @ LiteralNode (location: (1:19)-(1:26))
     │   │                       │       └── content: "divider"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:18)-(1:18))
+    │   │                       ├── close_quote: """ (location: (1:26)-(1:27))
     │   │                       └── quoted: true
     │   │
     │   │

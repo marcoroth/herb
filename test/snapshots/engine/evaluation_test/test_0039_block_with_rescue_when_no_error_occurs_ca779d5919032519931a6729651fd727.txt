@@ -1,0 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0039_block with rescue when no error occurs"
+input: "{source: \"<% 3.times do |i| %>\\n  <p><%= i %></p>\\n<% rescue %>\\n  <p>Error</p>\\n<% end %>\\n\", locals: {}, options: {escape: false}}"
+---
+  <p>0</p>
+  <p>1</p>
+  <p>2</p>

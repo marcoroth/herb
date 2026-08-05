@@ -1,0 +1,19 @@
+---
+name: "request"
+source: "ActionView::Helpers::ControllerHelper#request"
+gem: "actionview"
+output: "object"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "request"
+documentation_url: ""
+
+description: |-
+  Returns the current `ActionDispatch::Request` object. Delegated from `ActionView::Helpers::ControllerHelper`.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

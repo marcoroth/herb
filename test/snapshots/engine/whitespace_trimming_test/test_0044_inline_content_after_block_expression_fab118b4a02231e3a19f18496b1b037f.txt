@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0044_inline content after block expression"
+input: "{source: \"<p>\\n  <%= [1].map { |x| x } %><% if true %>text<% end %>\\n</p>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>
+  '.freeze; _buf << ([1].map { |x| x }).to_s; if true; _buf << 'text'.freeze; end; _buf << '
+</p>'.freeze;
+_buf.to_s

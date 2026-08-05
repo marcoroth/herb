@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "include/test.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/lex_helpers.h"
-#include "../../src/include/token.h"
-#include "../../src/include/util/hb_allocator.h"
-#include "../../src/include/util/hb_string.h"
+#include "../../src/include/lexer/lex_helpers.h"
+#include "../../src/include/lexer/token.h"
+#include "../../src/include/lib/hb_allocator.h"
+#include "../../src/include/lib/hb_string.h"
 
 TEST(test_token)
   ck_assert(hb_string_equals(token_type_to_string(TOKEN_IDENTIFIER), hb_string("TOKEN_IDENTIFIER")));

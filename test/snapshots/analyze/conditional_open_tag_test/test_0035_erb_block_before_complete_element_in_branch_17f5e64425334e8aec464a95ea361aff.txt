@@ -24,6 +24,16 @@ input: |2-
     │   │   │   ├── content: " items.each do |item| " (location: (2:4)-(2:26))
     │   │   │   ├── tag_closing: "%>" (location: (2:26)-(2:28))
     │   │   │   ├── body: []
+    │   │   │   ├── block_arguments: (1 item)
+    │   │   │   │   └── @ RubyParameterNode (location: (2:20)-(2:24))
+    │   │   │   │       ├── name: "item" (location: (2:20)-(2:24))
+    │   │   │   │       ├── default_value: ∅
+    │   │   │   │       ├── kind: "positional"
+    │   │   │   │       └── required: true
+    │   │   │   │
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
     │   │   │   └── end_node:
     │   │   │       └── @ ERBEndNode (location: (2:28)-(2:37))
     │   │   │           ├── tag_opening: "<%" (location: (2:28)-(2:30))

@@ -1,12 +1,12 @@
 #include "../include/analyze/prism_annotate.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/extract.h"
-#include "../include/herb_prism_node.h"
-#include "../include/prism_context.h"
-#include "../include/util/hb_allocator.h"
-#include "../include/util/hb_buffer.h"
-#include "../include/util/hb_narray.h"
+#include "../include/lib/hb_allocator.h"
+#include "../include/lib/hb_buffer.h"
+#include "../include/lib/hb_narray.h"
+#include "../include/prism/herb_prism_node.h"
+#include "../include/prism/prism_context.h"
 #include "../include/visitor.h"
 
 #include <prism.h>
@@ -171,6 +171,7 @@ static token_T* get_content_token(const AST_NODE_T* node) {
     case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->content;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->content;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->content;
+    case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->content;
     case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->content;
     case AST_ERB_CASE_MATCH_NODE: return ((AST_ERB_CASE_MATCH_NODE_T*) node)->content;
     case AST_ERB_WHILE_NODE: return ((AST_ERB_WHILE_NODE_T*) node)->content;
@@ -188,6 +189,7 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
     case AST_ERB_RENDER_NODE: ((AST_ERB_RENDER_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_IF_NODE: ((AST_ERB_IF_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_BLOCK_NODE: ((AST_ERB_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
+    case AST_ERB_ITERATION_BLOCK_NODE: ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_CASE_NODE: ((AST_ERB_CASE_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_CASE_MATCH_NODE: ((AST_ERB_CASE_MATCH_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_WHILE_NODE: ((AST_ERB_WHILE_NODE_T*) node)->prism_node = prism_ref; break;

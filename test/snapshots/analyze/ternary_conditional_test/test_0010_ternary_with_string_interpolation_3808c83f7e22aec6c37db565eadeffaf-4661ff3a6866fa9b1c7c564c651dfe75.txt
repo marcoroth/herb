@@ -1,0 +1,44 @@
+---
+source: "Analyze::TernaryConditionalTest#test_0010_ternary with string interpolation"
+input: |2-
+<%= cond ? "hello #{name}" : "goodbye" %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(1:41))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:0))
+    │   ├── content: " if cond " (location: (1:0)-(1:41))
+    │   ├── tag_closing: "%>" (location: (1:41)-(1:41))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (1 item)
+    │   │   └── @ ERBContentNode (location: (1:0)-(1:41))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " "hello #{name}" " (location: (1:10)-(1:27))
+    │   │       ├── tag_closing: "%>" (location: (1:39)-(1:41))
+    │   │       ├── parsed: false
+    │   │       └── valid: true
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (1:41)-(1:41))
+    │   │       ├── tag_opening: "<%" (location: (1:41)-(1:41))
+    │   │       ├── content: " else " (location: (1:41)-(1:41))
+    │   │       ├── tag_closing: "%>" (location: (1:41)-(1:41))
+    │   │       └── statements: (1 item)
+    │   │           └── @ ERBContentNode (location: (1:0)-(1:41))
+    │   │               ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │               ├── content: " "goodbye" " (location: (1:28)-(1:39))
+    │   │               ├── tag_closing: "%>" (location: (1:39)-(1:41))
+    │   │               ├── parsed: false
+    │   │               └── valid: true
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (1:41)-(1:41))
+    │           ├── tag_opening: "<%" (location: (1:41)-(1:41))
+    │           ├── content: " end " (location: (1:41)-(1:41))
+    │           └── tag_closing: "%>" (location: (1:41)-(1:41))
+    │
+    │
+    └── @ HTMLTextNode (location: (1:41)-(2:0))
+        └── content: "\n"

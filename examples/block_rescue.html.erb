@@ -1,0 +1,7 @@
+<% items.each do |item| %>
+  <li><%= item %></li>
+<% rescue StandardError => e %>
+  <li><%= e.message %></li>
+<% ensure %>
+  <li>Done</li>
+<% end %>

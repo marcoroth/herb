@@ -14,23 +14,23 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:74)-(1:76))
     │   │       ├── tag_name: "script" (location: (1:4)-(1:15))
     │   │       └── children: (1 item)
-    │   │           └── @ HTMLAttributeNode (location: (1:43)-(1:49))
+    │   │           └── @ HTMLAttributeNode (location: (1:43)-(1:73))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:43)-(1:49))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:43)-(1:47))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:43)-(1:49))
+    │   │               │           └── @ LiteralNode (location: (1:43)-(1:47))
     │   │               │               └── content: "type"
     │   │               │
     │   │               │
-    │   │               ├── equals: "=" (location: (1:43)-(1:49))
+    │   │               ├── equals: ": " (location: (1:47)-(1:49))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:43)-(1:49))
-    │   │                       ├── open_quote: """ (location: (1:43)-(1:49))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:49)-(1:73))
+    │   │                       ├── open_quote: """ (location: (1:49)-(1:50))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:43)-(1:49))
+    │   │                       │   └── @ LiteralNode (location: (1:50)-(1:72))
     │   │                       │       └── content: "application/javascript"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:49)-(1:49))
+    │   │                       ├── close_quote: """ (location: (1:72)-(1:73))
     │   │                       └── quoted: true
     │   │
     │   │

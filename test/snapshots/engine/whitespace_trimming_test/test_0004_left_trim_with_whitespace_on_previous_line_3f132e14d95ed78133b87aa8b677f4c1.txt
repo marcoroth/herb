@@ -3,8 +3,8 @@ source: "Engine::WhitespaceTrimmingTest#test_0004_left trim with whitespace on p
 input: "{source: \"before\\n  <%- if true %>\\nafter\\n  <%- end %>\\nfinal\", options: {}}"
 ---
 _buf = ::String.new; _buf << 'before
-'.freeze; if true 
+'.freeze;   if true 
  _buf << 'after
-'.freeze; end 
+'.freeze;   end 
  _buf << 'final'.freeze;
 _buf.to_s

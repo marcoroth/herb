@@ -1,8 +1,7 @@
-import { PrismVisitor, PrismNodes } from "@herb-tools/core"
+import { PrismVisitor, PrismNodes , locationFromByteOffset } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
 import { isPartialFile } from "./file-utils.js"
-import { locationFromOffset } from "./rule-utils.js"
 
 import type { ParseResult, ParserOptions, PrismLocation } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -60,6 +59,7 @@ class InstanceVariableCollector extends PrismVisitor {
 
 export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
   static ruleName = "erb-no-instance-variables-in-partials"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -90,7 +90,7 @@ export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
     collector.visit(prismNode)
 
     return collector.instanceVariables.map(ivar => {
-      const location = locationFromOffset(source, ivar.startOffset, ivar.length)
+      const location = locationFromByteOffset(source, ivar.startOffset, ivar.length)
       const message = ivar.usage === "read"
         ? `Avoid using instance variables in partials. Pass \`${ivar.name}\` as a local variable instead.`
         : `Avoid setting instance variables in partials. Use a local variable instead of \`${ivar.name}\`.`

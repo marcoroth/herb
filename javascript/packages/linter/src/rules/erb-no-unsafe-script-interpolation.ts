@@ -98,6 +98,7 @@ class ERBNoUnsafeScriptInterpolationVisitor extends BaseRuleVisitor {
 
 export class ERBNoUnsafeScriptInterpolationRule extends ParserRule {
   static ruleName = "erb-no-unsafe-script-interpolation"
+  static introducedIn = this.version("0.9.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

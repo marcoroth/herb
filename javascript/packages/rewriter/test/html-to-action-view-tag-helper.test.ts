@@ -184,7 +184,7 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
 
     test("img with attributes", () => {
       expect(transform('<img src="image.png" alt="Photo">')).toBe(
-        '<%= tag.img src: "image.png", alt: "Photo" %>'
+        '<%= image_tag "image.png", alt: "Photo" %>'
       )
     })
   })
@@ -421,6 +421,44 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     test("script with src and type", () => {
       expect(transform(`<script src="app.js" type="module"></script>`)).toBe(
         `<%= javascript_include_tag "app.js", type: "module" %>`
+      )
+    })
+  })
+
+  describe("image_tag for img elements", () => {
+    test("img with src attribute", () => {
+      expect(transform('<img src="icon.png">')).toBe(
+        '<%= image_tag "icon.png" %>'
+      )
+    })
+
+    test("img with src and alt", () => {
+      expect(transform('<img src="icon.png" alt="Icon">')).toBe(
+        '<%= image_tag "icon.png", alt: "Icon" %>'
+      )
+    })
+
+    test("img with src, alt and class", () => {
+      expect(transform('<img src="photo.jpg" alt="Photo" class="avatar">')).toBe(
+        '<%= image_tag "photo.jpg", alt: "Photo", class: "avatar" %>'
+      )
+    })
+
+    test("img with src and data attributes", () => {
+      expect(transform('<img src="icon.png" data-controller="image">')).toBe(
+        '<%= image_tag "icon.png", data: { controller: "image" } %>'
+      )
+    })
+
+    test("img self-closing", () => {
+      expect(transform('<img src="icon.png" />')).toBe(
+        '<%= image_tag "icon.png" %>'
+      )
+    })
+
+    test("img without src", () => {
+      expect(transform('<img alt="Photo">')).toBe(
+        '<%= image_tag alt: "Photo" %>'
       )
     })
   })

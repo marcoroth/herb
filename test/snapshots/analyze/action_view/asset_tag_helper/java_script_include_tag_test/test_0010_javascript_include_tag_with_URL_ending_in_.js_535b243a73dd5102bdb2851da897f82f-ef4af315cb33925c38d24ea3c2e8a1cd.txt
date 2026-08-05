@@ -25,7 +25,7 @@ options: {action_view_helpers: true}
     │   │               ├── equals: "=" (location: (1:27)-(1:60))
     │   │               └── value:
     │   │                   └── @ HTMLAttributeValueNode (location: (1:27)-(1:60))
-    │   │                       ├── open_quote: """ (location: (1:27)-(1:60))
+    │   │                       ├── open_quote: """ (location: (1:27)-(1:27))
     │   │                       ├── children: (1 item)
     │   │                       │   └── @ LiteralNode (location: (1:27)-(1:60))
     │   │                       │       └── content: "http://www.example.com/xmlhr.js"

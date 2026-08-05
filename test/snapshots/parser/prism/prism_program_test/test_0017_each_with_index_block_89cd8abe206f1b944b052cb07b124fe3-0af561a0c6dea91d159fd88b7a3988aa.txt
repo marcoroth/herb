@@ -17,6 +17,22 @@ options: {prism_program: true}
 │       │       ├── parsed: true
 │       │       └── valid: true
 │       │
+│       ├── block_arguments: (2 items)
+│       │   ├── @ RubyParameterNode (location: (1:29)-(1:33))
+│       │   │   ├── name: "item" (location: (1:29)-(1:33))
+│       │   │   ├── default_value: ∅
+│       │   │   ├── kind: "positional"
+│       │   │   └── required: true
+│       │   │
+│       │   └── @ RubyParameterNode (location: (1:35)-(1:40))
+│       │       ├── name: "index" (location: (1:35)-(1:40))
+│       │       ├── default_value: ∅
+│       │       ├── kind: "positional"
+│       │       └── required: true
+│       │
+│       ├── rescue_clause: ∅
+│       ├── else_clause: ∅
+│       ├── ensure_clause: ∅
 │       └── end_node:
 │           └── @ ERBEndNode (location: (1:55)-(1:64))
 │               ├── tag_opening: "<%" (location: (1:55)-(1:57))

@@ -14,6 +14,194 @@ export interface ValidationData {
   timestamp: string;
 }
 
+const optimizationMismatches: Set<string> = new Set();
+let optimizationBadgeInitialized = false;
+
+function scanForOptimizationMismatches() {
+  const templates = document.querySelectorAll('template[data-herb-optimization-mismatch]') as NodeListOf<HTMLTemplateElement>;
+
+  templates.forEach((template) => {
+    optimizationMismatches.add(template.getAttribute('data-filename') || '(unknown)');
+    template.remove();
+  });
+
+  if (optimizationMismatches.size > 0) {
+    renderOptimizationBadge();
+  }
+}
+
+function renderOptimizationBadge() {
+  document.querySelector('.herb-optimization-badge')?.remove();
+  document.querySelector('.herb-optimization-panel')?.remove();
+
+  const filenames = Array.from(optimizationMismatches);
+  const projectPath = document.querySelector('meta[name="herb-project-path"]')?.getAttribute('content') || '';
+  const displayNames = filenames.map(f => projectPath && f.startsWith(projectPath) ? f.slice(projectPath.length).replace(/^\//, '') : f);
+  const title = `\u26A0\uFE0F ${filenames.length} Compile-Time Optimization Mismatch${filenames.length === 1 ? '' : 'es'}`;
+
+  if (!optimizationBadgeInitialized) {
+    optimizationBadgeInitialized = true;
+
+    const style = document.createElement('style');
+    style.className = 'herb-optimization-badge-style';
+
+    style.textContent = `
+      .herb-floating-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      .herb-optimization-badge {
+        background: #fffbeb;
+        color: #92400e;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 7px;
+        border-radius: 0 0 0 10px;
+        border: 1px solid #f59e0b;
+        border-top: none;
+        border-right: none;
+        cursor: pointer;
+        text-align: center;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+        z-index: 2147483640;
+        transition: all 0.2s ease;
+        order: -1;
+      }
+
+      .herb-optimization-badge:hover {
+        background: #fef3c7;
+        border-color: #d97706;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .herb-floating-menu .herb-optimization-badge + .herb-menu-trigger {
+        border-radius: 0 0 0 0;
+      }
+
+      .herb-optimization-panel {
+        position: fixed;
+        top: 30px;
+        right: 8px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        width: 420px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 2147483642;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 12px;
+        color: #374151;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: none;
+      }
+
+      .herb-optimization-panel.visible {
+        display: block;
+      }
+
+      .herb-optimization-panel-header {
+        background: #fffbeb;
+        padding: 10px 14px;
+        color: #92400e;
+        font-weight: 600;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #fde68a;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .herb-optimization-panel-close {
+        background: none;
+        border: none;
+        color: #92400e;
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 4px;
+      }
+
+      .herb-optimization-panel-close:hover {
+        color: #78350f;
+      }
+
+      .herb-optimization-panel-list {
+        padding: 4px 0;
+      }
+
+      .herb-optimization-panel-item {
+        padding: 6px 14px;
+        color: #6b7280;
+        border-bottom: 1px solid #f3f4f6;
+        word-break: break-all;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .herb-optimization-panel-item:last-child {
+        border-bottom: none;
+      }
+
+      .herb-optimization-panel-hint {
+        padding: 8px 14px;
+        color: #9ca3af;
+        font-size: 11px;
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+        border-radius: 0 0 8px 8px;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  const panel = document.createElement('div');
+  panel.className = 'herb-optimization-panel';
+
+  panel.innerHTML = `
+    <div class="herb-optimization-panel-header">
+      <span>${title}</span>
+      <button class="herb-optimization-panel-close">&times;</button>
+    </div>
+
+    <div class="herb-optimization-panel-list">
+      ${displayNames.map(f => `<div class="herb-optimization-panel-item">${f.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`).join('')}
+    </div>
+
+    <div class="herb-optimization-panel-hint">
+      Check Rails log for details. Disable with <code>config.verify_optimizations = false</code>.
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  panel.querySelector('.herb-optimization-panel-close')?.addEventListener('click', () => {
+    panel.classList.remove('visible');
+  });
+
+  const badge = document.createElement('div');
+  badge.className = 'herb-optimization-badge';
+  badge.textContent = `\u26A0\uFE0F ${filenames.length}`;
+  badge.title = title;
+
+  badge.addEventListener('click', () => {
+    panel.classList.toggle('visible');
+  });
+
+  const menu = document.querySelector('.herb-floating-menu');
+  if (menu) {
+    menu.prepend(badge);
+  } else {
+    badge.style.position = 'fixed';
+    badge.style.top = '0';
+    badge.style.right = '0';
+    document.body.appendChild(badge);
+  }
+}
+
 export class ErrorOverlay {
   private overlay: HTMLElement | null = null;
   private allValidationData: ValidationData[] = [];
@@ -25,6 +213,7 @@ export class ErrorOverlay {
 
   private init() {
     this.detectValidationErrors();
+    scanForOptimizationMismatches();
 
     const hasParserErrors = document.querySelector('.herb-parser-error-overlay') !== null;
 
@@ -411,6 +600,34 @@ export class ErrorOverlay {
 
   public getErrorCount(): number {
     return this.getTotalErrorCount();
+  }
+
+  public showErrors(errors: ValidationError[], filename: string): void {
+    this.allValidationData = this.allValidationData.filter(data => data.filename !== filename);
+
+    this.allValidationData.push({
+      validationErrors: errors,
+      filename,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+
+    this.createOverlay();
+    this.show();
+  }
+
+  public clearErrors(): void {
+    this.allValidationData = [];
+
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+      this.isVisible = false;
+    }
   }
 
   private displayParserErrorOverlay(htmlContent: string) {

@@ -1,17 +1,11 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
+import { isAssignmentNode, isControlFlowNode, isSideEffectCall, unwrapModifierStatement } from "./prism-rule-utils.js"
 import { ParserRule } from "../types.js"
 
-import { isERBOutputNode, PrismNode } from "@herb-tools/core"
+import { isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ParserOptions } from "@herb-tools/core"
-
-function isAssignmentNode(prismNode: PrismNode): boolean {
-  const type: string = prismNode?.constructor?.name
-  if (!type) return false
-
-  return type.endsWith("WriteNode")
-}
 
 class ERBNoSilentStatementVisitor extends BaseRuleVisitor {
   visitERBContentNode(node: ERBContentNode): void {
@@ -21,6 +15,11 @@ class ERBNoSilentStatementVisitor extends BaseRuleVisitor {
     if (!prismNode) return
 
     if (isAssignmentNode(prismNode)) return
+
+    const statement = unwrapModifierStatement(prismNode)
+
+    if (isControlFlowNode(statement)) return
+    if (isSideEffectCall(statement)) return
 
     const content = node.content?.value?.trim()
     if (!content) return
@@ -34,6 +33,7 @@ class ERBNoSilentStatementVisitor extends BaseRuleVisitor {
 
 export class ERBNoSilentStatementRule extends ParserRule {
   static ruleName = "erb-no-silent-statement"
+  static introducedIn = this.version("0.9.1")
 
   get defaultConfig(): FullRuleConfig {
     return {

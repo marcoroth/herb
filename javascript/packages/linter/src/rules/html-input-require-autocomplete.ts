@@ -1,4 +1,4 @@
-import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue } from "@herb-tools/core"
+import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue, hasAttribute } from "@herb-tools/core"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
@@ -29,6 +29,8 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 
   private checkInputTag(node: HTMLOpenTagNode): void {
     if (!this.isInputTag(node) || this.hasAutocomplete(node)) return
+
+    if (hasAttribute(node, "disabled")) return
 
     const typeValue = getStaticAttributeValue(node, "type")
     if (!typeValue) return
@@ -64,6 +66,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
   static ruleName = "html-input-require-autocomplete"
+  static introducedIn = this.version("0.8.0")
 
   get defaultConfig(): FullRuleConfig {
     return {

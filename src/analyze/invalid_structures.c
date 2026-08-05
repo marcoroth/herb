@@ -2,12 +2,12 @@
 #include "../include/analyze/analyze.h"
 #include "../include/analyze/analyzed_ruby.h"
 #include "../include/analyze/helpers.h"
-#include "../include/ast_node.h"
-#include "../include/ast_nodes.h"
+#include "../include/ast/ast_node.h"
+#include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
-#include "../include/token_struct.h"
-#include "../include/util/hb_array.h"
-#include "../include/util/hb_string.h"
+#include "../include/lexer/token_struct.h"
+#include "../include/lib/hb_array.h"
+#include "../include/lib/hb_string.h"
 #include "../include/visitor.h"
 
 #include <stdbool.h>
@@ -21,7 +21,7 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   bool is_begin_node = (node->type == AST_ERB_BEGIN_NODE);
   bool is_loop_node =
     (node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE || node->type == AST_ERB_FOR_NODE
-     || node->type == AST_ERB_BLOCK_NODE);
+     || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ITERATION_BLOCK_NODE);
 
   if (is_loop_node) { context->loop_depth++; }
   if (is_begin_node) { context->rescue_depth++; }
@@ -162,13 +162,15 @@ bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     herb_visit_child_nodes(node, detect_invalid_erb_structures, context);
   }
 
   if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
       || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
-      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE
+      || node->type == AST_ERB_ITERATION_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
     check_erb_node_for_missing_end(node, context->allocator);
 
     if (is_loop_node) { context->loop_depth--; }

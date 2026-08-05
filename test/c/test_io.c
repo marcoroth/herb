@@ -1,6 +1,6 @@
 #include "include/test.h"
-#include "../../src/include/io.h"
-#include "../../src/include/util/hb_allocator.h"
+#include "../../src/include/util/io.h"
+#include "../../src/include/lib/hb_allocator.h"
 
 // Create a temporary file for testing
 void create_test_file(const char* filename, const char* content) {

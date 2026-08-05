@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0044_inline content after block expression"
+input: "{source: \"<p>\\n  <%= [1].map { |x| x } %><% if true %>text<% end %>\\n</p>\", locals: {}, options: {}}"
+---
+<p>
+  [1]text
+</p>

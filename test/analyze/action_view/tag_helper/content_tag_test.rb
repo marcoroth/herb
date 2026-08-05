@@ -217,5 +217,94 @@ module Analyze::ActionView::TagHelper
         <%= content_tag :script, "alert('Hello')", type: "application/javascript" %>
       HTML
     end
+
+    test "content_tag nested as argument to another method is not incorrectly detected as top-level tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= t(".terms_notice", link: content_tag(:a, t(".terms_of_service"), href: terms_path)).html_safe %>
+      HTML
+    end
+
+    test "content_tag :script with HTML-like content in block (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          n <o.length
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
+
+    test "content_tag :script with less-than in for loop condition (gh-1426)" do
+      template = <<~HTML
+        <%= content_tag :script do %>
+          for (let i = 0; i<items.length; i++) { console.log(items[i]) }
+        <% end %>
+      HTML
+
+      assert_parsed_snapshot(template, action_view_helpers: true)
+      assert_parsed_snapshot(template)
+    end
+
+    test "content_tag :script with nonce true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: true) %>
+      HTML
+    end
+
+    test "content_tag :script with nonce false" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:script, "alert('Hello')", nonce: false) %>
+      HTML
+    end
+
+    test "content_tag with void element img and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img, "hello" %>
+      HTML
+    end
+
+    test "content_tag with void element br and content argument reports error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :br, "hello" %>
+      HTML
+    end
+
+    test "content_tag with mixed array and conditional hash class" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, "Hello world!", class: ["strong", { highlight: current_user.admin? }]) %>
+      HTML
+    end
+
+    # TODO: The outer content_tag(:div) is correctly detected, but the inner content_tag(:p, "Hello world!")
+    # remains as a RubyLiteralNode in the body instead of being resolved to <p>Hello world!</p>.
+    # Rails renders: <div class="strong"><p>Hello world!</p></div>
+    test "content_tag with nested content_tag as content argument" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:div, content_tag(:p, "Hello world!"), class: "strong") %>
+      HTML
+    end
+
+    test "content_tag :input with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :input do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :img with do...end block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag :img do %>
+          content
+        <% end %>
+      HTML
+    end
+
+    test "content_tag :br with inline block reports void element content error" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= content_tag(:br) { "content" } %>
+      HTML
+    end
   end
 end
