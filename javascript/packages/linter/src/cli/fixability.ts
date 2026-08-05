@@ -9,6 +9,7 @@ const NOT_FIXABLE: Fixability = { autocorrectable: false, unsafeAutocorrectable:
 
 export function fixabilityFor(offense: LintOffense, ruleClass: RuleClass | undefined): Fixability {
   if (!ruleClass) return NOT_FIXABLE
+  if (ruleClass.autofixRequiresContext === true && !offense.autofixContext) return NOT_FIXABLE
 
   const correctable = ruleClass.autocorrectable === true
   const unsafe = ruleClass.unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true

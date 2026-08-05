@@ -109,6 +109,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static unsafeAutocorrectable = false
   /** Indicates whether the source should be re-indented after autofix. Defaults to false. */
   static reindentAfterAutofix = false
+  /** Indicates that `autofix` can only fix offenses that carry an `autofixContext`. Offenses without one are reported as not correctable. Defaults to false. */
+  static autofixRequiresContext = false
   /** Indicates whether this rule consumes parser errors (like parser-no-errors). Rules with this flag are not skipped when parse results contain errors. */
   static consumesParserErrors = false
 
@@ -185,6 +187,8 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
   static unsafeAutocorrectable = false
+  /** Indicates that `autofix` can only fix offenses that carry an `autofixContext`. Offenses without one are reported as not correctable. Defaults to false. */
+  static autofixRequiresContext = false
 
   get ruleName(): string {
     return (this.constructor as typeof LexerRule).ruleName
@@ -236,6 +240,7 @@ export interface LexerRuleConstructor {
   introducedIn: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
+  autofixRequiresContext?: boolean
 }
 
 /**
@@ -275,6 +280,8 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
   static unsafeAutocorrectable = false
+  /** Indicates that `autofix` can only fix offenses that carry an `autofixContext`. Offenses without one are reported as not correctable. Defaults to false. */
+  static autofixRequiresContext = false
 
   get ruleName(): string {
     return (this.constructor as typeof SourceRule).ruleName
@@ -326,6 +333,7 @@ export interface SourceRuleConstructor {
   introducedIn: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
+  autofixRequiresContext?: boolean
 }
 
 /**
@@ -339,6 +347,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   introducedIn: RuleVersion
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
+  autofixRequiresContext?: boolean
   reindentAfterAutofix?: boolean
   consumesParserErrors?: boolean
 }
