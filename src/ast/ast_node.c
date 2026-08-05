@@ -54,14 +54,6 @@ ast_node_type_T ast_node_type(const AST_NODE_T* node) {
   return node->type;
 }
 
-size_t ast_node_errors_count(const AST_NODE_T* node) {
-  return hb_array_size(node->errors);
-}
-
-hb_array_T* ast_node_errors(const AST_NODE_T* node) {
-  return node->errors;
-}
-
 void ast_node_set_start(AST_NODE_T* node, position_T position) {
   node->location.start = position;
 }
