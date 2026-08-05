@@ -18,7 +18,7 @@ static herb_diff_result_T* diff_sources(const char* old_source, const char* new_
   return herb_diff(old_document, new_document, NULL, allocator);
 }
 
-static herb_diff_result_T* diff_sources_detecting_whitespace(
+static herb_diff_result_T* diff_sources_tracking_whitespace(
   const char* old_source,
   const char* new_source,
   hb_allocator_T* allocator
@@ -34,7 +34,7 @@ static herb_diff_result_T* diff_sources_detecting_whitespace(
   AST_DOCUMENT_NODE_T* new_document = herb_parse(new_source, &options, &new_allocator);
 
   herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
-  diff_options.detect_whitespace_changes = true;
+  diff_options.track_whitespace_changes = true;
 
   return herb_diff(old_document, new_document, &diff_options, allocator);
 }
@@ -480,7 +480,7 @@ TEST(test_diff_whitespace_change_detected_when_opted_in)
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
 
   herb_diff_result_T* result =
-    diff_sources_detecting_whitespace("<div>Hello World</div>", "<div>Hello    World</div>", &allocator);
+    diff_sources_tracking_whitespace("<div>Hello World</div>", "<div>Hello    World</div>", &allocator);
 
   ck_assert(!herb_diff_trees_identical(result));
   ck_assert_uint_eq(herb_diff_operation_count(result), 1);
@@ -494,7 +494,7 @@ TEST(test_diff_significant_change_stays_text_changed_when_opted_in)
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
 
   herb_diff_result_T* result =
-    diff_sources_detecting_whitespace("<div>Hello World</div>", "<div>HelloWorld</div>", &allocator);
+    diff_sources_tracking_whitespace("<div>Hello World</div>", "<div>HelloWorld</div>", &allocator);
 
   ck_assert_uint_eq(herb_diff_operation_count(result), 1);
   ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);
@@ -507,7 +507,7 @@ TEST(test_diff_preserving_element_stays_text_changed_when_opted_in)
   hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
 
   herb_diff_result_T* result =
-    diff_sources_detecting_whitespace("<pre>Hello World</pre>", "<pre>Hello    World</pre>", &allocator);
+    diff_sources_tracking_whitespace("<pre>Hello World</pre>", "<pre>Hello    World</pre>", &allocator);
 
   ck_assert_uint_eq(herb_diff_operation_count(result), 1);
   ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);

@@ -297,13 +297,13 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
   if (options != NULL) {
     jclass optionsClass = (*env)->GetObjectClass(env, options);
     jmethodID getDetectWhitespaceChanges =
-        (*env)->GetMethodID(env, optionsClass, "isDetectWhitespaceChanges", "()Z");
+        (*env)->GetMethodID(env, optionsClass, "isTrackWhitespaceChanges", "()Z");
 
     if (getDetectWhitespaceChanges != NULL) {
-      jboolean detectWhitespaceChanges = (*env)->CallBooleanMethod(env, options, getDetectWhitespaceChanges);
+      jboolean trackWhitespaceChanges = (*env)->CallBooleanMethod(env, options, getDetectWhitespaceChanges);
 
-      if (detectWhitespaceChanges == JNI_TRUE) {
-        diff_options.detect_whitespace_changes = true;
+      if (trackWhitespaceChanges == JNI_TRUE) {
+        diff_options.track_whitespace_changes = true;
       }
     }
   }

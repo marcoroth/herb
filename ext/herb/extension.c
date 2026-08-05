@@ -511,12 +511,12 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
   herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
 
   if (!NIL_P(options)) {
-    VALUE detect_whitespace_changes = rb_hash_lookup(options, rb_utf8_str_new_cstr("detect_whitespace_changes"));
-    if (NIL_P(detect_whitespace_changes)) {
-      detect_whitespace_changes = rb_hash_lookup(options, ID2SYM(rb_intern("detect_whitespace_changes")));
+    VALUE track_whitespace_changes = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace_changes"));
+    if (NIL_P(track_whitespace_changes)) {
+      track_whitespace_changes = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace_changes")));
     }
-    if (!NIL_P(detect_whitespace_changes) && RTEST(detect_whitespace_changes)) {
-      diff_options.detect_whitespace_changes = true;
+    if (!NIL_P(track_whitespace_changes) && RTEST(track_whitespace_changes)) {
+      diff_options.track_whitespace_changes = true;
     }
   }
 

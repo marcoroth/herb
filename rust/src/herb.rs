@@ -314,7 +314,7 @@ pub struct DiffResult {
 
 #[derive(Debug, Clone, Default)]
 pub struct DiffOptions {
-  pub detect_whitespace_changes: bool,
+  pub track_whitespace_changes: bool,
 }
 
 pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
@@ -387,7 +387,7 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
     }
 
     let diff_options = crate::bindings::herb_diff_options_T {
-      detect_whitespace_changes: options.detect_whitespace_changes,
+      track_whitespace_changes: options.track_whitespace_changes,
     };
 
     let diff_result = crate::ffi::herb_diff(old_root, new_root, &diff_options, &mut diff_allocator);

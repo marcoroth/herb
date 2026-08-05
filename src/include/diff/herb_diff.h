@@ -48,7 +48,7 @@ typedef struct {
 } herb_diff_operation_T;
 
 typedef struct {
-  bool detect_whitespace_changes;
+  bool track_whitespace_changes;
 } herb_diff_options_T;
 
 extern const herb_diff_options_T HERB_DEFAULT_DIFF_OPTIONS;

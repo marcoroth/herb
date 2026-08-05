@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-const herb_diff_options_T HERB_DEFAULT_DIFF_OPTIONS = { .detect_whitespace_changes = false };
+const herb_diff_options_T HERB_DEFAULT_DIFF_OPTIONS = { .track_whitespace_changes = false };
 
 herb_diff_path_T herb_diff_path_empty(void) {
   herb_diff_path_T path;

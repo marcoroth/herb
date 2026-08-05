@@ -177,7 +177,7 @@ void herb_diff_node(
         }
       } else if (!hb_string_equals_collapsing_whitespace(old_text_node->content, new_text_node->content)) {
         herb_diff_emit_operation(result, HERB_DIFF_TEXT_CHANGED, path, old_node, new_node, 0, 0);
-      } else if (result->options.detect_whitespace_changes
+      } else if (result->options.track_whitespace_changes
                  && !hb_string_equals(old_text_node->content, new_text_node->content)) {
         herb_diff_emit_operation(result, HERB_DIFF_WHITESPACE_CHANGED, path, old_node, new_node, 0, 0);
       }

@@ -697,8 +697,8 @@ module Diff
       assert_equal :text_changed, result.first.type
     end
 
-    test "detect_whitespace_changes reports a whitespace_changed operation" do
-      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", detect_whitespace_changes: true)
+    test "track_whitespace_changes reports a whitespace_changed operation" do
+      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", track_whitespace_changes: true)
 
       refute result.identical?
       assert_equal 1, result.operation_count
@@ -707,43 +707,43 @@ module Diff
       assert_kind_of Herb::AST::HTMLTextNode, result.first.new_node
     end
 
-    test "detect_whitespace_changes accepts a string key" do
-      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", "detect_whitespace_changes" => true)
+    test "track_whitespace_changes accepts a string key" do
+      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", "track_whitespace_changes" => true)
 
       assert_equal [:whitespace_changed], result.operations.map(&:type)
     end
 
-    test "detect_whitespace_changes reports changed indentation" do
+    test "track_whitespace_changes reports changed indentation" do
       result = Herb.diff(
         "<div>\n  <span>Hello</span>\n</div>",
         "<div>\n      <span>Hello</span>\n</div>",
-        detect_whitespace_changes: true
+        track_whitespace_changes: true
       )
 
       assert_equal [:whitespace_changed], result.operations.map(&:type)
     end
 
-    test "detect_whitespace_changes leaves identical documents identical" do
-      result = Herb.diff("<div>Hello World</div>", "<div>Hello World</div>", detect_whitespace_changes: true)
+    test "track_whitespace_changes leaves identical documents identical" do
+      result = Herb.diff("<div>Hello World</div>", "<div>Hello World</div>", track_whitespace_changes: true)
 
       assert result.identical?
       assert_equal 0, result.operation_count
     end
 
-    test "detect_whitespace_changes still reports significant changes as text_changed" do
-      result = Herb.diff("<div>Hello World</div>", "<div>HelloWorld</div>", detect_whitespace_changes: true)
+    test "track_whitespace_changes still reports significant changes as text_changed" do
+      result = Herb.diff("<div>Hello World</div>", "<div>HelloWorld</div>", track_whitespace_changes: true)
 
       assert_equal [:text_changed], result.operations.map(&:type)
     end
 
-    test "detect_whitespace_changes still reports pre content as text_changed" do
-      result = Herb.diff("<pre>Hello World</pre>", "<pre>Hello     World</pre>", detect_whitespace_changes: true)
+    test "track_whitespace_changes still reports pre content as text_changed" do
+      result = Herb.diff("<pre>Hello World</pre>", "<pre>Hello     World</pre>", track_whitespace_changes: true)
 
       assert_equal [:text_changed], result.operations.map(&:type)
     end
 
-    test "detect_whitespace_changes defaults to off" do
-      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", detect_whitespace_changes: false)
+    test "track_whitespace_changes defaults to off" do
+      result = Herb.diff("<div>Hello World</div>", "<div>Hello     World</div>", track_whitespace_changes: false)
 
       assert result.identical?
       assert_equal 0, result.operation_count

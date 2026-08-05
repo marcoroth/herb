@@ -222,8 +222,8 @@ val Herb_diff(const std::string& old_source, const std::string& new_source, val 
   herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
-    if (options.hasOwnProperty("detect_whitespace_changes")) {
-      diff_options.detect_whitespace_changes = options["detect_whitespace_changes"].as<bool>();
+    if (options.hasOwnProperty("track_whitespace_changes")) {
+      diff_options.track_whitespace_changes = options["track_whitespace_changes"].as<bool>();
     }
   }
 

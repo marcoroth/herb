@@ -1,16 +1,16 @@
 package org.herb;
 
 public class DiffOptions {
-  private boolean detectWhitespaceChanges = false;
+  private boolean trackWhitespaceChanges = false;
 
   public DiffOptions() {}
 
-  public DiffOptions detectWhitespaceChanges(boolean value) {
-    this.detectWhitespaceChanges = value;
+  public DiffOptions trackWhitespaceChanges(boolean value) {
+    this.trackWhitespaceChanges = value;
     return this;
   }
 
-  public boolean isDetectWhitespaceChanges() {
-    return detectWhitespaceChanges;
+  public boolean isTrackWhitespaceChanges() {
+    return trackWhitespaceChanges;
   }
 }

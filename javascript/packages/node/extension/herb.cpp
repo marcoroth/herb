@@ -401,17 +401,17 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
     napi_typeof(env, args[2], &valuetype);
 
     if (valuetype == napi_object) {
-      napi_value detect_whitespace_changes_prop;
-      bool has_detect_whitespace_changes_prop;
-      napi_has_named_property(env, args[2], "detect_whitespace_changes", &has_detect_whitespace_changes_prop);
+      napi_value track_whitespace_changes_prop;
+      bool has_track_whitespace_changes_prop;
+      napi_has_named_property(env, args[2], "track_whitespace_changes", &has_track_whitespace_changes_prop);
 
-      if (has_detect_whitespace_changes_prop) {
-        napi_get_named_property(env, args[2], "detect_whitespace_changes", &detect_whitespace_changes_prop);
-        bool detect_whitespace_changes_value;
-        napi_get_value_bool(env, detect_whitespace_changes_prop, &detect_whitespace_changes_value);
+      if (has_track_whitespace_changes_prop) {
+        napi_get_named_property(env, args[2], "track_whitespace_changes", &track_whitespace_changes_prop);
+        bool track_whitespace_changes_value;
+        napi_get_value_bool(env, track_whitespace_changes_prop, &track_whitespace_changes_value);
 
-        if (detect_whitespace_changes_value) {
-          diff_options.detect_whitespace_changes = true;
+        if (track_whitespace_changes_value) {
+          diff_options.track_whitespace_changes = true;
         }
       }
     }

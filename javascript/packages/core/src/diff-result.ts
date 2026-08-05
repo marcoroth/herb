@@ -30,5 +30,5 @@ export interface DiffResult {
 }
 
 export interface DiffOptions {
-  detect_whitespace_changes?: boolean
+  track_whitespace_changes?: boolean
 }
