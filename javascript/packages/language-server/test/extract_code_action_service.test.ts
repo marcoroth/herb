@@ -155,6 +155,32 @@ describe("ExtractCodeActionService", () => {
       expect(result.uri).toBe("file:///project/app/views/users/_greeting.html.erb")
     })
 
+    it("tolerates surrounding slashes, dots and whitespace in the name", () => {
+      const result = extract(`<div>Hello</div>`, `<div>Hello</div>`, "  ./shared//greeting/  ")
+
+      expect(result.uri).toBe("file:///project/app/views/shared/_greeting.html.erb")
+      expect(result.renderKey).toBe("shared/greeting")
+    })
+
+    it("rejects a name made only of separators", () => {
+      const document = createDocument(`<div>Hello</div>`)
+      const result = createService().extractToPartial(document, selectionOf(`<div>Hello</div>`, `<div>Hello</div>`), "/".repeat(50))
+
+      expect(isExtractToPartialFailure(result)).toBe(true)
+    })
+
+    it("handles a long run of separators without backtracking", () => {
+      const document = createDocument(`<div>Hello</div>`)
+      const range = selectionOf(`<div>Hello</div>`, `<div>Hello</div>`)
+      const name = `shared${"/".repeat(100_000)}greeting`
+      const started = performance.now()
+
+      const result = createService().extractToPartial(document, range, name)
+
+      expect(performance.now() - started).toBeLessThan(500)
+      expect(isExtractToPartialFailure(result)).toBe(false)
+    })
+
     it("rejects an invalid name", () => {
       const document = createDocument(`<div>Hello</div>`)
       const result = createService().extractToPartial(document, selectionOf(`<div>Hello</div>`, `<div>Hello</div>`), "../etc/passwd")

@@ -12,6 +12,7 @@ import type { ExtractedLocal } from "./extract_partial_analyzer"
 const VIEWS_DIRECTORY = "/app/views/"
 const DEFAULT_TEMPLATE_EXTENSION = "html.erb"
 const EXTRACT_TO_PARTIAL_COMMAND = "herb.extractToPartial"
+const SEGMENT_NAME = /^[a-zA-Z0-9_-]+$/
 
 export interface ExtractCodeActionCapabilities {
   supportsCreateFile: boolean
@@ -170,16 +171,12 @@ export class ExtractCodeActionService {
   }
 
   private normalizeName(name: string): string | null {
-    const trimmed = name.trim().replace(/^\.\//, "").replace(/^\/+|\/+$/g, "")
+    const segments = name.trim().split("/").filter(segment => segment.length > 0 && segment !== ".")
+    const base = segments.pop()?.replace(/^_/, "").split(".")[0]
 
-    if (trimmed.length === 0) return null
-
-    const segments = trimmed.split("/")
-    const base = segments.pop()!.replace(/^_/, "").split(".")[0]
-
-    if (base.length === 0) return null
-    if (!/^[a-zA-Z0-9_-]+$/.test(base)) return null
-    if (!segments.every(segment => /^[a-zA-Z0-9_-]+$/.test(segment))) return null
+    if (!base) return null
+    if (!SEGMENT_NAME.test(base)) return null
+    if (!segments.every(segment => SEGMENT_NAME.test(segment))) return null
 
     return [...segments, base].join("/")
   }
