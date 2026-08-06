@@ -1620,6 +1620,26 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("YAML merge keys", () => {
+    test("merges a mapping that uses a merge key", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        linter:
+          rules:
+            html-tag-name-lowercase: &disabled
+              enabled: false
+            html-no-self-closing:
+              <<: *disabled
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+      expect(config.isRuleDisabled("html-no-self-closing")).toBe(true)
+    })
+  })
+
   describe("version skew", () => {
     const invalidForOlderVersions = dedent`
       version: 0.10.3

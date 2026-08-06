@@ -500,6 +500,10 @@ impl Config {
     let mut parsed: serde_yaml::Value =
       serde_yaml::from_str(&content).map_err(|error| format!("Invalid YAML syntax in {}: {}", config_path.display(), error))?;
 
+    parsed
+      .apply_merge()
+      .map_err(|error| format!("Invalid merge key in {}: {}", config_path.display(), error))?;
+
     if parsed.is_null() {
       parsed = serde_yaml::Value::Mapping(Default::default());
     }

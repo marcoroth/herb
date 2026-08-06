@@ -1151,7 +1151,7 @@ export class Config {
     let parsed: any
 
     try {
-      parsed = parse(text)
+      parsed = parse(text, { merge: true })
     } catch (error: any) {
       let line: number | undefined
       let column: number | undefined
@@ -1222,7 +1222,7 @@ export class Config {
     let parsed: any
 
     try {
-      parsed = parse(content)
+      parsed = parse(content, { merge: true })
     } catch (error) {
       if (exitOnError) {
         console.error(`\n✗ Invalid YAML syntax in ${configPath}`)
