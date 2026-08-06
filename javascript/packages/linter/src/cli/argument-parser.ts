@@ -82,7 +82,7 @@ export class ArgumentParser {
       --no-timing                   hide timing information
       --no-wrap-lines               disable line wrapping
       --truncate-lines              enable line truncation (mutually exclusive with line wrapping)
-      --show-fix-diff               preview the autocorrection for each correctable offense as a diff
+      --show-fix-diff               preview every correctable offense as a diff, past the point they are shown anyway
   `
 
   parse(argv: string[]): ParsedArguments {

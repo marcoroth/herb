@@ -328,7 +328,8 @@ The `--fix` flag automatically corrects offenses that have safe, deterministic f
 Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
 :::
 
-Preview what `--fix` would change, without changing anything:
+Corrections are previewed automatically while a run has at most 20 correctable offenses, so most runs show them without being asked. Past that the diffs would crowd out the offenses themselves, and a tip points at the flag instead:
+
 ```bash
 npx @herb-tools/linter --show-fix-diff
 ```

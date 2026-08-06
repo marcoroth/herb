@@ -49,7 +49,7 @@ export class OutputManager {
       if (options.formatOption !== "json") {
         const regularFormatter = options.formatOption === "simple"
           ? new SimpleFormatter()
-          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
+          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath, context?.showFixDiff)
 
         await regularFormatter.format(reportedOffenses, files.length === 1)
 
@@ -94,7 +94,7 @@ export class OutputManager {
     } else {
       const formatter = options.formatOption === "simple"
         ? new SimpleFormatter()
-        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
+        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath, context?.showFixDiff)
 
       await formatter.format(reportedOffenses, files.length === 1)
 

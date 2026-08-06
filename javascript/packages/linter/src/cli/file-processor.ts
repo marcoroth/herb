@@ -1,17 +1,16 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { Config } from "@herb-tools/config"
+import { Worker } from "node:worker_threads"
+
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
-import { Config } from "@herb-tools/config"
-
-import { Worker } from "node:worker_threads"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
-
 import { fixabilityFor } from "./fixability.js"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -21,6 +20,8 @@ import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "./fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
+
+const AUTOMATIC_FIX_DIFF_LIMIT = 20
 
 export interface ProcessedFile {
   filename: string
@@ -166,12 +167,12 @@ export class FileProcessor {
   }
 
   private async attachFixPreviews(allOffenses: ProcessedFile[], formatOption: FormatOption, context?: ProcessingContext): Promise<void> {
-    if (!context?.showFixDiff) return
     if (formatOption === "json") return
 
     const correctable = allOffenses.filter(item => item.autocorrectable || item.unsafeAutocorrectable)
 
     if (correctable.length === 0) return
+    if (!context?.showFixDiff && correctable.length > AUTOMATIC_FIX_DIFF_LIMIT) return
 
     if (!this.linter) {
       const customRules = await this.loadCustomRulesOnce(context, formatOption)

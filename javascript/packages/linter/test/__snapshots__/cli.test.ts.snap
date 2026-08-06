@@ -257,6 +257,15 @@ test/fixtures/ignored.html.erb:6:3
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
 
@@ -270,6 +279,15 @@ test/fixtures/ignored.html.erb:6:14
         │               ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
@@ -285,6 +303,15 @@ test/fixtures/ignored.html.erb:7:3
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
       9 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              6 │   <DIV>hello</DIV>
+          -   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+          +     │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+              8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
 
@@ -298,6 +325,15 @@ test/fixtures/ignored.html.erb:7:14
         │               ~~~
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
       9 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              6 │   <DIV>hello</DIV>
+          -   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+          +     │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+              8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
@@ -610,6 +646,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -622,6 +667,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
         │                       ~~~~
       3 │   <img src="test.jpg">
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
 
 
 
@@ -650,6 +704,13 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   →   1 │ <div>No trailing newline</div>
         │                              ~
 
+        Running --fix would correct this to:
+
+        test/fixtures/no-trailing-newline.html.erb
+
+              1 │ <div>No trailing newline</div>
+          +     │
+
 
 
  Rule offenses:
@@ -675,6 +736,14 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
       2 │ 
       3 │ <%
 
+        Running --fix would correct this to:
+
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
+
+          -   1 │ <%  extra_whitespace  %>
+          +     │ <% extra_whitespace  %>
+              2 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
 
@@ -686,6 +755,14 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
         │                     ~~
       2 │ 
       3 │ <%
+
+        Running --fix would correct this to:
+
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
+
+          -   1 │ <%  extra_whitespace  %>
+          +     │ <%  extra_whitespace %>
+              2 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
@@ -700,6 +777,15 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
         │    ~~
      10 │            as: :post
      11 │ %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
+
+              8 │ 
+          -   9 │ <%=  render partial: "post",
+          +     │ <%= render partial: "post",
+             10 │            as: :post
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
@@ -741,6 +827,15 @@ test/fixtures/ignored.html.erb:6:3
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -754,6 +849,15 @@ test/fixtures/ignored.html.erb:6:14
         │               ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
 
 
 
@@ -781,6 +885,17 @@ test/fixtures/tag-attributes.html.erb:1:0
       2 │   Content
       3 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/tag-attributes.html.erb
+
+          -   1 │ <div <%= tag.attributes(class: ["one", "two", "three"]) %>>
+          +     │ <%= tag.div(class: ["one", "two", "three"]) do %>
+              2 │   Content
+          -   3 │ </div>
+          +     │ <% end %>
+              4 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -794,6 +909,15 @@ test/fixtures/tag-attributes.html.erb:5:0
         │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       6 │ 
       7 │ <button class="primary" <%= tag.attributes(id: "cta", aria: { expanded: false }) %>>Click</button>
+
+        Running --fix would correct this to:
+
+        test/fixtures/tag-attributes.html.erb
+
+              4 │ 
+          -   5 │ <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+          +     │ <%= tag.input(type: :text, aria: { label: "Search" }) %>
+              6 │
 
 
 
@@ -891,6 +1015,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id=test1 class="" data-value=bar>
+              4 │   <img />
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/14] ⎯⎯⎯⎯
 
@@ -905,6 +1038,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id="test1" class='' data-value=bar>
+              4 │   <img />
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/14] ⎯⎯⎯⎯
 
@@ -918,6 +1060,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
         │                                   ~~~
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
+
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id=test1 class='' data-value="bar">
+              4 │   <img />
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/14] ⎯⎯⎯⎯
@@ -1031,6 +1182,15 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
       5 │   <a class="" class="">Link 1</a>
       6 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              3 │ <div id=test1 class='' data-value=bar>
+          -   4 │   <img />
+          +     │   <img>
+              5 │   <a class="" class="">Link 1</a>
+
 
 
  Most frequent rule offenses:
@@ -1064,6 +1224,15 @@ test/fixtures/few-rule-offenses.html.erb:2:8
       3 │   <img src=image>
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
+          -   2 │ <div id=test class=foo>
+          +     │ <div id="test" class=foo>
+              3 │   <img src=image>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
 
@@ -1076,6 +1245,15 @@ test/fixtures/few-rule-offenses.html.erb:2:19
         │                    ~~~
       3 │   <img src=image>
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
+          -   2 │ <div id=test class=foo>
+          +     │ <div id=test class="foo">
+              3 │   <img src=image>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
@@ -1090,6 +1268,15 @@ test/fixtures/few-rule-offenses.html.erb:3:11
         │            ~~~~~
       4 │ </div>
       5 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              2 │ <div id=test class=foo>
+          -   3 │   <img src=image>
+          +     │   <img src="image">
+              4 │ </div>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
@@ -1164,6 +1351,14 @@ test/fixtures/bad-file.html.erb:1:1
         │  ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1174,6 +1369,14 @@ test/fixtures/bad-file.html.erb:1:16
   →   1 │ <SPAN>Bad file</SPAN>
         │                 ~~~~
       2 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
 
 
 
@@ -1233,6 +1436,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -1245,6 +1457,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
         │                       ~~~~
       3 │   <img src="test.jpg">
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
 
 
 
@@ -1274,6 +1495,15 @@ test/fixtures/test-file-simple.html.erb:2:3
       3 │ </div>
       4 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1286,6 +1516,15 @@ test/fixtures/test-file-simple.html.erb:2:22
         │                       ~~~~
       3 │ </div>
       4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
 
 
 
@@ -1480,6 +1719,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -1492,6 +1740,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
         │                       ~~~~
       3 │   <img src="test.jpg">
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
 
 
 
@@ -1581,6 +1838,14 @@ test/fixtures/bad-file.html.erb:1:1
         │  ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1591,6 +1856,14 @@ test/fixtures/bad-file.html.erb:1:16
   →   1 │ <SPAN>Bad file</SPAN>
         │                 ~~~~
       2 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
 
 
 
@@ -1618,6 +1891,15 @@ test/fixtures/disabled-1.html.erb:12:19
         │                    ~~~~~~~~~~~~~~~~~~~~
      13 │ 
      14 │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-1.html.erb
+
+             11 │ 
+          -  12 │   <div>hello</div> <% # herb:disable %>
+          +     │   <div>hello</div> <%# herb:disable %>
+             13 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/8] ⎯⎯⎯⎯
@@ -1841,6 +2123,15 @@ test/fixtures/disabled-2.html.erb:4:3
       5 │ 
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              3 │ 
+          -   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+          +     │   <div></div><%# herb:disable this-rule-doesnt-exist %>
+              5 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/13] ⎯⎯⎯⎯
 
@@ -1854,6 +2145,15 @@ test/fixtures/disabled-2.html.erb:4:9
         │          ~~~
       5 │ 
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              3 │ 
+          -   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+          +     │   <div></div><%# herb:disable this-rule-doesnt-exist %>
+              5 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/13] ⎯⎯⎯⎯
@@ -1870,6 +2170,15 @@ test/fixtures/disabled-2.html.erb:10:3
      11 │ 
      12 │   <DIV></DIV><%# herb:disable disable %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              9 │ 
+          -  10 │   <DIV></DIV><%# herb:disable herb %>
+          +     │   <div></div><%# herb:disable herb %>
+             11 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/13] ⎯⎯⎯⎯
 
@@ -1885,6 +2194,15 @@ test/fixtures/disabled-2.html.erb:10:9
      11 │ 
      12 │   <DIV></DIV><%# herb:disable disable %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              9 │ 
+          -  10 │   <DIV></DIV><%# herb:disable herb %>
+          +     │   <div></div><%# herb:disable herb %>
+             11 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/13] ⎯⎯⎯⎯
 
@@ -1899,6 +2217,15 @@ test/fixtures/disabled-2.html.erb:12:3
      13 │ </div>
      14 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+             11 │ 
+          -  12 │   <DIV></DIV><%# herb:disable disable %>
+          +     │   <div></div><%# herb:disable disable %>
+             13 │ </div>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [11/13] ⎯⎯⎯⎯
 
@@ -1912,6 +2239,15 @@ test/fixtures/disabled-2.html.erb:12:9
         │          ~~~
      13 │ </div>
      14 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+             11 │ 
+          -  12 │   <DIV></DIV><%# herb:disable disable %>
+          +     │   <div></div><%# herb:disable disable %>
+             13 │ </div>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [12/13] ⎯⎯⎯⎯
@@ -2125,6 +2461,159 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
+  Rules        98 enabled | 16 not enabled"
+`;
+
+exports[`CLI Output Formatting > points at the flag instead of previewing once there are too many corrections 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/many-correctable.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>item 1</SPAN>
+        │    ~~~~
+      3 │   <SPAN>item 2</SPAN>
+      4 │   <SPAN>item 3</SPAN>
+
+        Tip: run with --show-fix-diff to preview the correction"
+`;
+
+exports[`CLI Output Formatting > previews every correction when --show-fix-diff is passed, however many there are 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/many-correctable.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>item 1</SPAN>
+        │    ~~~~
+      3 │   <SPAN>item 2</SPAN>
+      4 │   <SPAN>item 3</SPAN>
+
+        Running --fix would correct this to:
+
+        test/fixtures/many-correctable.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>item 1</SPAN>
+          +     │   <span>item 1</span>
+              3 │   <SPAN>item 2</SPAN>"
+`;
+
+exports[`CLI Output Formatting > previews the correction the same way when --show-fix-diff is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        98 enabled | 16 not enabled"
+`;
+
+exports[`CLI Output Formatting > previews the correction under each correctable offense 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
   Rules        98 enabled | 16 not enabled"
 `;
 
@@ -2389,6 +2878,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -2401,6 +2899,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
         │                       ~~~~
       3 │   <img src="test.jpg">
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
 
 
 
