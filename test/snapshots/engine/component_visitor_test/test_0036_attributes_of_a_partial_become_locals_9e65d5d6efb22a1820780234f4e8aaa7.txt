@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0036_attributes of a partial become locals"
+input: "{source: \"<Users.Card name=\\\"hello\\\" :count=\\\"@count\\\" />\", options: {parser_options: {dot_notation_tags: true}, visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render "users/card", name: "hello", count: @count).to_s;
+_buf.to_s

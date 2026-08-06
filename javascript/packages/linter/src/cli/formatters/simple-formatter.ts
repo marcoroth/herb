@@ -3,7 +3,6 @@ import { colorize, hyperlink, TextFormatter } from "@herb-tools/highlighter"
 import { BaseFormatter } from "./base-formatter.js"
 import { ruleDocumentationUrl } from "../../urls.js"
 import { fileUrl } from "../file-url.js"
-import { formatDiff } from "../diff.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -50,7 +49,7 @@ export class SimpleFormatter extends BaseFormatter {
     const filenameLink = hyperlink(filenameText, fileUrl(filename))
     console.log(`${filenameLink}:`)
 
-    for (const { offense, autocorrectable, autofixDiff } of processedFiles) {
+    for (const { offense, autocorrectable, unsafeAutocorrectable } of processedFiles) {
       const isError = offense.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
       const ruleText = `(${offense.code})`
@@ -58,16 +57,13 @@ export class SimpleFormatter extends BaseFormatter {
       const { line, column } = offense.location.start
       const locationString = `${line}:${column}`
       const paddedLocation = colorize(locationString.padEnd(4), "gray")
-      const correctable = autocorrectable ? colorize(colorize(" [Correctable]", "green"), "bold") : ""
       const message = TextFormatter.highlightBackticks(offense.message)
 
+      const correctable = autocorrectable
+        ? colorize(colorize(" [Correctable]", "green"), "bold")
+        : unsafeAutocorrectable ? colorize(colorize(" [Correctable with --fix-unsafely]", "yellow"), "bold") : ""
+
       console.log(`  ${paddedLocation} ${severity} ${message} ${rule}${correctable}`)
-
-      if (autofixDiff && autofixDiff.length > 0) {
-        const diffOutput = formatDiff(autofixDiff, "         ")
-
-        console.log(diffOutput)
-      }
     }
   }
 }

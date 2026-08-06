@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagTest#test_0038_tag.div with false boolean attribute"
+input: "{source: \"<%= tag.div disabled: false %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div></div>'.freeze;
+_buf.to_s

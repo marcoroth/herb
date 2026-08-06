@@ -1,37 +1,9 @@
-#include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/lib/hb_allocator.h"
 #include "../../include/lib/hb_buffer.h"
 
 #include <prism.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
-
-bool detect_javascript_include_tag(pm_call_node_t* call_node, pm_parser_t* parser) {
-  if (!call_node || !call_node->name) { return false; }
-
-  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
-  return constant && constant->length == 22
-      && strncmp((const char*) constant->start, "javascript_include_tag", 22) == 0;
-}
-
-char* extract_javascript_include_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
-  (void) call_node;
-  (void) parser;
-
-  return hb_allocator_strdup(allocator, "script");
-}
-
-char* extract_javascript_include_tag_content(
-  pm_call_node_t* call_node,
-  pm_parser_t* parser,
-  hb_allocator_T* allocator
-) {
-  (void) call_node;
-  (void) parser;
-  (void) allocator;
-
-  return NULL;
-}
 
 char* extract_javascript_include_tag_src(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
   (void) parser;
@@ -87,16 +59,3 @@ char* wrap_in_javascript_path(
 
   return result;
 }
-
-bool javascript_include_tag_supports_block(void) {
-  return false;
-}
-
-const tag_helper_handler_T javascript_include_tag_handler = {
-  .name = "javascript_include_tag",
-  .source = HB_STRING_LITERAL("ActionView::Helpers::AssetTagHelper#javascript_include_tag"),
-  .detect = detect_javascript_include_tag,
-  .extract_tag_name = extract_javascript_include_tag_name,
-  .extract_content = extract_javascript_include_tag_content,
-  .supports_block = javascript_include_tag_supports_block
-};

@@ -17,6 +17,7 @@ import { DocumentHighlightService } from "./document_highlight_service"
 import { HoverService } from "./hover_service"
 import { RewriteCodeActionService } from "./rewrite_code_action_service"
 import { CommentService } from "./comment_service"
+import { CompletionService } from "./completion_service"
 
 import { version } from "../package.json"
 
@@ -40,6 +41,7 @@ export class Service {
   hoverService: HoverService
   rewriteCodeActionService: RewriteCodeActionService
   commentService: CommentService
+  completionService: CompletionService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -59,6 +61,7 @@ export class Service {
     this.hoverService = new HoverService(this.parserService)
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
     this.commentService = new CommentService(this.parserService)
+    this.completionService = new CompletionService(this.parserService)
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings

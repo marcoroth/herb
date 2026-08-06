@@ -1,0 +1,38 @@
+---
+source: "Parser::InlineInTest#test_0001_one-line pattern match against regexp as if condition"
+input: |2-
+<% if attribute in /...+/ %>
+  <%= attribute %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if attribute in /...+/ " (location: (1:2)-(1:26))
+    │   ├── tag_closing: "%>" (location: (1:26)-(1:28))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:28)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:18))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " attribute " (location: (2:5)-(2:16))
+    │   │   │   ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:18)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

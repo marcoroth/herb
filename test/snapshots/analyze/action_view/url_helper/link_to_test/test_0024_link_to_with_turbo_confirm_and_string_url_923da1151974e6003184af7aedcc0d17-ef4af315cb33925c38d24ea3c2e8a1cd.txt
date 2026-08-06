@@ -14,43 +14,43 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:101)-(1:103))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:32)-(1:58))
+    │   │           ├── @ HTMLAttributeNode (location: (1:68)-(1:98))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:58))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:68)-(1:81))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:32)-(1:58))
-    │   │           │   │               └── content: "href"
+    │   │           │   │           └── @ LiteralNode (location: (1:68)-(1:81))
+    │   │           │   │               └── content: "data-turbo-confirm"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:32)-(1:58))
+    │   │           │   ├── equals: ": " (location: (1:81)-(1:83))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:32)-(1:58))
-    │   │           │           ├── open_quote: """ (location: (1:32)-(1:32))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:83)-(1:98))
+    │   │           │           ├── open_quote: """ (location: (1:83)-(1:84))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:32)-(1:58))
-    │   │           │           │       └── content: "https://rubyonrails.org/"
+    │   │           │           │   └── @ LiteralNode (location: (1:84)-(1:97))
+    │   │           │           │       └── content: "Are you sure?"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:58)-(1:58))
+    │   │           │           ├── close_quote: """ (location: (1:97)-(1:98))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:68)-(1:98))
+    │   │           └── @ HTMLAttributeNode (location: (1:32)-(1:58))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:68)-(1:81))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:58))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:68)-(1:81))
-    │   │               │               └── content: "data-turbo-confirm"
+    │   │               │           └── @ LiteralNode (location: (1:32)-(1:58))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: ": " (location: (1:81)-(1:83))
+    │   │               ├── equals: "=" (location: (1:32)-(1:58))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:83)-(1:98))
-    │   │                       ├── open_quote: """ (location: (1:83)-(1:84))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:32)-(1:58))
+    │   │                       ├── open_quote: """ (location: (1:32)-(1:32))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:84)-(1:97))
-    │   │                       │       └── content: "Are you sure?"
+    │   │                       │   └── @ LiteralNode (location: (1:32)-(1:58))
+    │   │                       │       └── content: "https://rubyonrails.org/"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:97)-(1:98))
+    │   │                       ├── close_quote: """ (location: (1:58)-(1:58))
     │   │                       └── quoted: true
     │   │
     │   │

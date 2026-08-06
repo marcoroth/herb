@@ -1,0 +1,7 @@
+---
+source: "Engine::ComponentVisitorTest#test_0017_an ERB expression in an attribute value is interpolated into the string"
+input: "{source: \"<MyComponent name=\\\"<%= @user.name %>\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "#{@user.name}")
+).to_s;
+_buf.to_s

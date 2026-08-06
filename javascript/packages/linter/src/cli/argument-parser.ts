@@ -5,6 +5,8 @@ import { parseArgs } from "util"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
+import { DIAGNOSTIC_SEVERITIES, isDiagnosticSeverity } from "@herb-tools/core"
+
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
@@ -30,7 +32,10 @@ export interface ParsedArguments {
   disableFailing: boolean
   loadCustomRules: boolean
   failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   jobs: number
+  only?: string[]
+  allRules: boolean
 }
 
 export class ArgumentParser {
@@ -49,10 +54,20 @@ export class ArgumentParser {
       --disable-failing             lint the codebase and disable all rules that have offenses in .herb.yml
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
+      --only <rules>                only run the given rules, ignoring the rule configuration in .herb.yml
+                                    accepts a comma-separated list and can be passed multiple times
+                                    (e.g., herb-lint --only html-img-require-alt,html-tag-name-lowercase)
+      --all-rules                   run every rule, ignoring the rule configuration in .herb.yml
+                                    including rules that are disabled, not enabled by default,
+                                    or introduced after the version in .herb.yml
       --fix                         automatically fix auto-correctable offenses
       --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
+      --log-level <severity>        only report diagnostics of this severity or higher (error|warning|info|hint) [default: hint]
+                                    lower-severity offenses are still counted in the summary, but aren't
+                                    printed or annotated in CI
+                                    --only and --all-rules lower this level unless it's passed explicitly
       --format                      output format (simple|detailed|json) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
@@ -79,10 +94,13 @@ export class ArgumentParser {
         "disable-failing": { type: "boolean" },
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
+        only: { type: "string", multiple: true },
+        "all-rules": { type: "boolean" },
         fix: { type: "boolean" },
         "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
         "fail-level": { type: "string" },
+        "log-level": { type: "string" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -165,16 +183,26 @@ export class ArgumentParser {
     const disableFailing = values["disable-failing"] || false
     const loadCustomRules = !values["no-custom-rules"]
 
-    let failLevel: DiagnosticSeverity | undefined
-    if (values["fail-level"]) {
-      const level = values["fail-level"]
-      if (level === "error" || level === "warning" || level === "info" || level === "hint") {
-        failLevel = level
-      } else {
-        console.error(`Error: Invalid --fail-level value "${level}". Must be one of: error, warning, info, hint`)
+    const allRules = values["all-rules"] || false
+
+    let only: string[] | undefined
+
+    if (values.only) {
+      only = [...new Set(values.only.flatMap(value => value.split(",")).map(ruleName => ruleName.trim()).filter(Boolean))]
+
+      if (only.length === 0) {
+        console.error(`Error: --only requires at least one rule name.`)
+        process.exit(1)
+      }
+
+      if (allRules) {
+        console.error(`Error: --only and --all-rules can't be combined.`)
         process.exit(1)
       }
     }
+
+    const failLevel = this.parseSeverity(values["fail-level"], "--fail-level")
+    const logLevel = this.parseSeverity(values["log-level"], "--log-level")
 
     let jobs = availableParallelism()
 
@@ -189,7 +217,18 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+  }
+
+  private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {
+    if (!value) return undefined
+
+    if (!isDiagnosticSeverity(value)) {
+      console.error(`Error: Invalid ${flag} value "${value}". Must be one of: ${DIAGNOSTIC_SEVERITIES.join(", ")}`)
+      process.exit(1)
+    }
+
+    return value
   }
 
   private getFilePatterns(positionals: string[]): string[] {

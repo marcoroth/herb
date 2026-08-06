@@ -44,6 +44,13 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (2:13)-(3:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:17)-(1:21))
+    │   │       ├── name: "item" (location: (1:17)-(1:21))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

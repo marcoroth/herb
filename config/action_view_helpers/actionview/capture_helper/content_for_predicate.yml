@@ -1,0 +1,27 @@
+---
+name: "content_for?"
+source: "ActionView::Helpers::CaptureHelper#content_for?"
+gem: "actionview"
+output: "boolean"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "content_for?(name)"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/CaptureHelper.html#method-i-content_for-3F"
+
+description: |-
+  Checks whether any content has been captured yet using `content_for`. Useful in layouts to conditionally render sections.
+
+tag: null
+
+arguments:
+  - name: "name"
+    position: 1
+    type: "symbol"
+    optional: false
+    description: |-
+      Identifier for the content block to check.
+
+options: []
+block_arguments: []
+special_behaviors: []

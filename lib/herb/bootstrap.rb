@@ -18,7 +18,6 @@ module Herb
 
     def self.generate_templates
       require "pathname"
-      require "set"
       require_relative "../../templates/template"
 
       Dir.chdir(ROOT_PATH) do

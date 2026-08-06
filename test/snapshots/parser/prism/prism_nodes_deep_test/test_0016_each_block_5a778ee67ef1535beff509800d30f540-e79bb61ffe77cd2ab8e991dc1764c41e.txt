@@ -69,6 +69,13 @@ options: {prism_nodes: true, prism_nodes_deep: true}
         │               ├── name: :item
         │               └── depth: 0
         │
+        ├── block_arguments: (1 item)
+        │   └── @ RubyParameterNode (location: (1:18)-(1:22))
+        │       ├── name: "item" (location: (1:18)-(1:22))
+        │       ├── default_value: ∅
+        │       ├── kind: "positional"
+        │       └── required: true
+        │
         ├── rescue_clause: ∅
         ├── else_clause: ∅
         ├── ensure_clause: ∅

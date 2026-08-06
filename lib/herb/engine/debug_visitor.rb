@@ -26,7 +26,7 @@ module Herb
         @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
-        @erb_block_stack = [] #: Array[Herb::AST::ERBBlockNode]
+        @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
         @debug_attributes_applied = false
         @in_attribute = false
         @in_html_comment = false
@@ -87,6 +87,12 @@ module Herb
       end
 
       def visit_erb_block_node(node)
+        @erb_block_stack.push(node)
+        super
+        @erb_block_stack.pop
+      end
+
+      def visit_erb_iteration_block_node(node)
         @erb_block_stack.push(node)
         super
         @erb_block_stack.pop
@@ -205,8 +211,11 @@ module Herb
         Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", dummy_location, [], name_node, equals_token, value_node)
       end
 
+      # TODO: replace all create_token with Herb::Token.from
+      # TODO: replace all dummy_location with Locataion.zero
+      # TODO: replace all dummy_range with Range.zero
       def create_token(type, value)
-        Herb::Token.new(value.dup, dummy_range, dummy_location, type.to_s)
+        Herb::Token.from(type, value, location: dummy_location, range: dummy_range)
       end
 
       def create_debug_span_for_erb(erb_node)
@@ -336,7 +345,7 @@ module Herb
       end
 
       def in_excluded_context?
-        excluded_tags = ["script", "style", "head", "textarea", "pre", "svg", "math"]
+        excluded_tags = ["script", "style", "head", "title", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
         if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) || include_debug_disable_comment?(node.content.value.strip) }

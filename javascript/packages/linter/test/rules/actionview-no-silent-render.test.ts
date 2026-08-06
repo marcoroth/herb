@@ -91,4 +91,20 @@ describe("ActionViewNoSilentRenderRule", () => {
       <% render("shared/error") %>
     `)
   })
+
+  test("valid escaped render in a generator template", () => {
+    expectNoOffenses(dedent`
+      <%% cache [menu, @page] do %>
+        <ul class="nav">
+          <%%= render partial: menu.to_partial_path, collection: menu.children %>
+        </ul>
+      <%% end %>
+    `)
+  })
+
+  test("valid escaped silent render", () => {
+    expectNoOffenses(dedent`
+      <%% render "shared/error" %>
+    `)
+  })
 })

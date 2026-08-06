@@ -1,0 +1,19 @@
+# Generated from lib/herb/engine/component_visitor/component_resolver.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ComponentVisitor < Herb::Visitor
+      # Resolves a tag name that is a Ruby constant, so `<Card />` becomes `render Card.new` and
+      # `<Users::Card />` becomes `render Users::Card.new`.
+      class ComponentResolver < Resolver
+        TAG_NAME: ::Regexp
+
+        # : (String) -> bool
+        def handles?: (String) -> bool
+
+        # : (String, Hash[String, String], block: bool) -> String
+        def render_code: (String, Hash[String, String], block: bool) -> String
+      end
+    end
+  end
+end

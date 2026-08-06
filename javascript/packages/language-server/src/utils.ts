@@ -1,6 +1,13 @@
+import * as path from "path"
+
 import { DiagnosticSeverity, DiagnosticTag } from "vscode-languageserver/node"
+import { Config } from "@herb-tools/config"
 import type { LintSeverity } from "@herb-tools/linter"
 import type { DiagnosticSeverity as HerbDiagnosticSeverity, DiagnosticTag as HerbDiagnosticTag } from "@herb-tools/core"
+
+export function isConfigDocument(uriOrPath: string): boolean {
+  return path.basename(uriOrPath) === Config.configPath || Config.isMisnamedConfigPath(uriOrPath)
+}
 
 export function camelize(value: string) {
   return value.replace(/(?:[_-])([a-z0-9])/g, (_, char) => char.toUpperCase())

@@ -15,6 +15,7 @@ import {
   FoldingRangeParams,
   DocumentHighlightParams,
   HoverParams,
+  CompletionParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
@@ -22,6 +23,8 @@ import {
 import { Service } from "./service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
+import { isConfigDocument } from "./utils"
+import { version } from "../package.json"
 
 export class Server {
   private service!: Service
@@ -43,6 +46,10 @@ export class Server {
       })
 
       const result: InitializeResult = {
+        serverInfo: {
+          name: "Herb Language Server",
+          version,
+        },
         capabilities: {
           textDocumentSync: {
             openClose: true,
@@ -61,6 +68,9 @@ export class Server {
           foldingRangeProvider: true,
           documentHighlightProvider: true,
           hoverProvider: true,
+          completionProvider: {
+            triggerCharacters: [".", ":", "<", "&"],
+          },
         },
       }
 
@@ -93,7 +103,8 @@ export class Server {
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
           ...patterns,
-          { globPattern: `**/.herb.yml` },
+          { globPattern: `**/${Config.configPath}` },
+          ...Config.misnamedConfigPaths.map(misnamedPath => ({ globPattern: `**/${misnamedPath}` })),
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
@@ -123,7 +134,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        const isConfigChange = event.uri.endsWith("/.herb.yml")
+        const isConfigChange = isConfigDocument(event.uri)
         const isCustomRuleChange = event.uri.includes("/.herb/rules/")
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 
@@ -179,6 +190,14 @@ export class Server {
       if (!document) return null
 
       return this.service.hoverService.getHover(document, params.position)
+    })
+
+    this.connection.onCompletion((params: CompletionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return null
+
+      return this.service.completionService.getCompletions(document, params.position)
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {

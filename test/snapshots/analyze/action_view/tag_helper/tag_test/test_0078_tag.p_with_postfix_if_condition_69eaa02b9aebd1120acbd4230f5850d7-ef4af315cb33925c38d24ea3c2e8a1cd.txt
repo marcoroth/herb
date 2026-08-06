@@ -16,7 +16,7 @@ options: {action_view_helpers: true}
     │   │       ├── open_tag:
     │   │       │   └── @ ERBOpenTagNode (location: (1:0)-(1:52))
     │   │       │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
-    │   │       │       ├── content: " tag.p message, class: "text" if show_message? " (location: (1:3)-(1:50))
+    │   │       │       ├── content: " tag.p message, class: "text" " (location: (1:3)-(1:33))
     │   │       │       ├── tag_closing: "%>" (location: (1:50)-(1:52))
     │   │       │       ├── tag_name: "p" (location: (1:8)-(1:9))
     │   │       │       └── children: (1 item)

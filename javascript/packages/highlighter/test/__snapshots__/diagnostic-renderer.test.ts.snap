@@ -1,0 +1,264 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DiagnosticRenderer > ANSI-aware truncation preserves styling > should preserve colors when extracting from end of styled line 1`] = `
+"[[1m[91merror[0m[0m] End content issue (end-content)
+
+[36m/test/file.erb[0m:[36m1:95[0m
+
+[91m  → [0m[1m  1[0m [90m│[0m [2m…[0m-too-long[0m[38;2;152;195;121m"[0m[38;2;224;108;117m>[0m[38;2;171;178;191mShortEnd[0m[38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m[2m…[0m
+        [90m│[0m             [91m~~~~~~~~[0m
+"
+`;
+
+exports[`DiagnosticRenderer > ANSI-aware truncation preserves styling > should preserve colors when extracting from middle of styled line 1`] = `
+"[[1m[91merror[0m[0m] Middle issue (middle-content)
+
+[36m/test/file.erb[0m:[36m1:30[0m
+
+[91m  → [0m[1m  1[0m [90m│[0m [2m…[0maaaaaaaaa-MIDDLE_TARGET-bbbbbbbbbb[2m…[0m
+        [90m│[0m             [91m~~~~~~~~~~~~~~[0m
+"
+`;
+
+exports[`DiagnosticRenderer > ANSI-aware truncation preserves styling > should preserve syntax highlighting colors in truncated output 1`] = `
+"[[1m[91merror[0m[0m] Line too long (line-length)
+
+[36m/test/file.erb[0m:[36m1:1[0m
+
+[91m  → [0m[1m  1[0m [90m│[0m [38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m [38;2;209;154;102mclass[0m[38;2;86;182;194m=[0m[38;2;152;195;121m"[0m[38;2;152;195;121mthis-is-a-very-long-cl[2m…[0m
+        [90m│[0m  [91m~~~~[0m
+"
+`;
+
+exports[`DiagnosticRenderer > NO_COLOR environment > should respect NO_COLOR environment variable 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > error handling > should handle invalid column numbers gracefully 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:2:999
+
+      1 │ line 1
+  →   2 │ short
+        │                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > error handling > should handle invalid line numbers gracefully 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:999:1
+
+
+"
+`;
+
+exports[`DiagnosticRenderer > multi-line diagnostics > aligns markers to the content when line numbers are hidden 1`] = `
+"[warning] Multi-line offense (multi-line-rule)
+
+
+  <div id="gems">
+    <% @gems.each do |topic_gem| %>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      <%= render partial: "gem_card" %>
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    <% end %>
+    ~~~~~~~~~
+  </div>
+"
+`;
+
+exports[`DiagnosticRenderer > multi-line diagnostics > does not mark blank lines inside the span 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:1:0
+
+  →   1 │ <% if true %>
+        │ ~~~~~~~~~~~~~
+      2 │ 
+  →   3 │ <% end %>
+        │ ~~~~~~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > multi-line diagnostics > keeps a single marker for single-line diagnostics 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > multi-line diagnostics > marks every line the diagnostic spans and expands the trailing context off the end line 1`] = `
+"[warning] Multi-line offense (multi-line-rule)
+
+/test/file.erb:4:4
+
+      2 │ 
+      3 │   <div id="gems">
+  →   4 │     <% @gems.each do |topic_gem| %>
+        │     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   5 │       <%= render partial: "gem_card" %>
+        │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   6 │     <% end %>
+        │     ~~~~~~~~~
+      7 │   </div>
+      8 │
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should handle custom context lines 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:5:1
+
+      4 │ line 4
+  →   5 │ line 5 error
+        │  ~~~~
+      6 │ line 6
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should handle edge cases for line boundaries 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:1:1
+
+  →   1 │ single line
+        │  ~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should handle multi-character error ranges 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <long error> content
+        │      ~~~~~~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should hide line numbers when requested 1`] = `
+"[error] Test error message (test-rule)
+
+line 1
+line <error> content
+     ~~~~~
+line 3
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should highlight backticks in messages 1`] = `
+"[error] Error with \`code\` in message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should render a single error diagnostic 1`] = `
+"[error] Test error message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > renderSingle > should render a single warning diagnostic 1`] = `
+"[warning] Test error message (test-rule)
+
+/test/file.erb:2:5
+
+      1 │ line 1
+  →   2 │ line <warn> content
+        │      ~~~~~
+      3 │ line 3
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should adjust pointer position correctly for truncated diagnostics 1`] = `
+"[error] Test diagnostic positioning (test-positioning)
+
+/test/file.erb:1:50
+
+  →   1 │ …ame-that-should-be-truncated">Cont…
+        │             ~~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should handle truncation with context lines 1`] = `
+"[error] Long class name detected (class-name-length)
+
+/test/file.erb:2:13
+
+      1 │ <div class="short-line">Short</div>
+  →   2 │ <div class="this-is-a-very-long-class-name-t…
+        │              ~~~~~~~~~~~~~~~~~
+      3 │ <div class="another-short-line">Short</div>
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should not truncate when maxWidth is sufficient 1`] = `
+"[error] Test short line (test-short)
+
+/test/file.erb:1:13
+
+  →   1 │ <div class="short">Content</div>
+        │              ~~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should show ellipsis at beginning when diagnostic is at end of long line 1`] = `
+"[warning] Content should be more descriptive (content-description)
+
+/test/file.erb:1:95
+
+  →   1 │ …ncated-when-the-line-is-too-long">Content</div>
+        │                                    ~~~~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should show ellipsis at end when diagnostic is at start of long line 1`] = `
+"[error] Class name should be shorter (class-name-length)
+
+/test/file.erb:1:13
+
+  →   1 │ <div class="this-is-a-very-long-class-name-t…
+        │              ~~~~~~~~~~~~~~~~~~~~
+"
+`;
+
+exports[`DiagnosticRenderer > smart diagnostic truncation > should show ellipsis on both sides when diagnostic is in middle of long line 1`] = `
+"[error] Avoid 'should-be' in class names (class-naming-convention)
+
+/test/file.erb:1:45
+
+  →   1 │ …-class-name-that-should-be-truncated-when-th…
+        │                ~~~~~~~~~
+"
+`;

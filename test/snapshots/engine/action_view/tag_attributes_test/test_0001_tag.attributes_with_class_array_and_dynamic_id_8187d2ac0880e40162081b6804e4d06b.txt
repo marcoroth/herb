@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0001_tag.attributes with class array and dynamic id"
+input: "{source: \"<div data-controller=\\\"one\\\" <%= tag.attributes(class: [\\\"one\\\", \\\"two\\\", name], id: dom_id) %>>Content</div>\", locals: {name: \"three\", dom_id: \"post_1\"}, options: {action_view_helpers: true}}"
+---
+<div data-controller="one" class="one two three" id="post_1">Content</div>

@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0019_a directive attribute is used as Ruby code"
+input: "{source: \"<MyComponent :count=\\\"@count\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(count: @count)).to_s;
+_buf.to_s

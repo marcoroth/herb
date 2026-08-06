@@ -1,3 +1,6 @@
+framework: ruby
+template_engine: erubi
+
 files:
   include:
     - "**/*.herb"

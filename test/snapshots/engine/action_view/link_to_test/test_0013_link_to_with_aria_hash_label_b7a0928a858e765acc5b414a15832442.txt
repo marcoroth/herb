@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0013_link_to with aria hash label"
+input: "{source: \"<%= link_to \\\"More\\\", \\\"#\\\", aria: { label: \\\"Learn more about GitHub\\\" } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<a aria-label="Learn more about GitHub" href="#">More</a>'.freeze;
+_buf.to_s

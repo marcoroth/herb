@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TernaryConditionalTest#test_0002_ternary with different element types"
+input: "{source: \"<%= condition ? tag.strong(\\\"Yes\\\") : tag.em(\\\"No\\\") %>\", locals: {condition: false}, options: {action_view_helpers: true}}"
+---
+<em>No</em>

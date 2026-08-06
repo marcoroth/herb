@@ -195,7 +195,7 @@ describe("text-flow-helpers", () => {
       expect(merged).toBe(true)
       expect(result[0].unit.content).toBe('<%= tag %>text')
       expect(result.length).toBe(2)
-      expect(result[1].unit.content).toBe('more')
+      expect(result[1].unit.content).toBe(' more')
     })
 
     test("still merges when raw content has leading space (normalizeAndSplitWords trims)", () => {
@@ -254,7 +254,7 @@ describe("text-flow-helpers", () => {
 
       expect(merged).toBe(true)
       expect(result.length).toBe(2)
-      expect(result[0].unit.content).toBe('hello')
+      expect(result[0].unit.content).toBe('hello ')
       expect(result[0].unit.type).toBe('text')
       expect(result[1].unit.content).toBe('world<%= tag %>')
       expect(result[1].unit.type).toBe('erb')

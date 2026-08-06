@@ -13,6 +13,8 @@ The HTML `autocomplete` attribute helps users complete forms by using data store
 
 If you prefer not to specify a specific autocomplete value, use `autocomplete="on"` to enable browser defaults or `autocomplete="off"` to explicitly disable it.
 
+Inputs with a `disabled` attribute are exempt from this rule. Disabled inputs are never autofilled, so an `autocomplete` attribute doesn't improve accessibility for them. Adding `autocomplete="off"` can even change behavior in some browsers compared to omitting the attribute entirely.
+
 ## Affected Input Types
 
 This rule applies to the following input types:
@@ -43,6 +45,8 @@ This rule applies to the following input types:
 <input type="url" autocomplete="off">
 
 <input type="password" autocomplete="on">
+
+<input type="email" disabled>
 ```
 
 

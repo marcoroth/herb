@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0022_mixed explicit and omitted closing tags - compilation"
+input: "{source: \"<ul><li>One</li><li>Two<li>Three</li></ul>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<ul><li>One</li><li>Two</li><li>Three</li></ul>'.freeze;
+_buf.to_s

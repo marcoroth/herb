@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0013_tr and td elements without closing tags - render"
+input: "{source: \"<table><tr><td>A<td>B<tr><td>C<td>D</table>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table>

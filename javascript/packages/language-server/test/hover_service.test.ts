@@ -54,8 +54,10 @@ describe("HoverService", () => {
       expect(hover!.contents).toHaveProperty("kind", MarkupKind.Markdown)
       expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
         "\`\`\`ruby
-        tag.<tag name>(optional content, options)
+        tag.<tag_name>(content = nil, **options, &block)
         \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
         **HTML equivalent**
         \`\`\`erb
@@ -64,7 +66,7 @@ describe("HoverService", () => {
         </div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -85,15 +87,17 @@ describe("HoverService", () => {
 
       expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
         "\`\`\`ruby
-        tag.<tag name>(optional content, options)
+        tag.<tag_name>(content = nil, **options, &block)
         \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
         **HTML equivalent**
         \`\`\`erb
         <div class="container"></div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -114,15 +118,17 @@ describe("HoverService", () => {
 
       expect(hoverValue(content, 0, 5)).toMatchInlineSnapshot(`
         "\`\`\`ruby
-        tag.<tag name>(optional content, options)
+        tag.<tag_name>(content = nil, **options, &block)
         \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
         **HTML equivalent**
         \`\`\`erb
         <p>Hello</p>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -148,12 +154,14 @@ describe("HoverService", () => {
         content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
         \`\`\`
 
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
+
         **HTML equivalent**
         \`\`\`erb
         <div></div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -177,12 +185,14 @@ describe("HoverService", () => {
         content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
         \`\`\`
 
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
+
         **HTML equivalent**
         \`\`\`erb
         <div>Hello</div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -208,12 +218,14 @@ describe("HoverService", () => {
         link_to(name = nil, options = nil, html_options = nil, &block)
         \`\`\`
 
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
+
         **HTML equivalent**
         \`\`\`erb
         <a href="<%= root_path %>">Home</a>
         \`\`\`
 
-        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -272,6 +284,8 @@ describe("HoverService", () => {
         link_to(name = nil, options = nil, html_options = nil, &block)
         \`\`\`
 
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
+
         **HTML equivalent**
         \`\`\`erb
         <a href="Devices">
@@ -279,7 +293,7 @@ describe("HoverService", () => {
         </a>
         \`\`\`
 
-        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -296,15 +310,17 @@ describe("HoverService", () => {
 
       expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
         "\`\`\`ruby
-        tag.<tag name>(optional content, options)
+        tag.<tag_name>(content = nil, **options, &block)
         \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
         **HTML equivalent**
         \`\`\`erb
         <div class="hello"></div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
       `)
       expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
         {
@@ -344,6 +360,8 @@ describe("HoverService", () => {
         link_to(name = nil, options = nil, html_options = nil, &block)
         \`\`\`
 
+        Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If \`nil\` is passed as the name the value of the link itself will become the name.
+
         **HTML equivalent**
         \`\`\`erb
         <a href="Devices">
@@ -351,7 +369,7 @@ describe("HoverService", () => {
         </a>
         \`\`\`
 
-        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)"
+        [ActionView::Helpers::UrlHelper#link_to](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to) · Action View"
       `)
       expect(hoverRange(content, 0, 5)).toMatchInlineSnapshot(`
         {
@@ -368,8 +386,10 @@ describe("HoverService", () => {
 
       expect(hoverValue(content, 1, 6)).toMatchInlineSnapshot(`
         "\`\`\`ruby
-        tag.<tag name>(optional content, options)
+        tag.<tag_name>(content = nil, **options, &block)
         \`\`\`
+
+        Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with \`tag.<tag name>(optional content, options)\`. Supports \`data-*\` and \`aria-*\` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.
 
         **HTML equivalent**
         \`\`\`erb
@@ -378,7 +398,7 @@ describe("HoverService", () => {
         </div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag)"
+        [ActionView::Helpers::TagHelper#tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-tag) · Action View"
       `)
       expect(hoverRange(content, 1, 6)).toMatchInlineSnapshot(`
         {
@@ -398,12 +418,14 @@ describe("HoverService", () => {
         content_tag(name, content_or_options_with_block = nil, options = nil, escape = true, &block)
         \`\`\`
 
+        Returns an HTML block tag of type name surrounding the content. Add HTML attributes by passing an attributes hash to options. Instead of passing the content as an argument, you can also use a block. This is legacy syntax; see the \`tag\` method for the modern equivalent.
+
         **HTML equivalent**
         \`\`\`erb
         <div>Inner</div>
         \`\`\`
 
-        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag)"
+        [ActionView::Helpers::TagHelper#content_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/TagHelper.html#method-i-content_tag) · Action View"
       `)
       expect(hoverRange(content, 2, 8)).toMatchInlineSnapshot(`
         {
@@ -416,6 +438,44 @@ describe("HoverService", () => {
             "line": 2,
           },
         }
+      `)
+    })
+  })
+
+  describe("ERB helper hover (unsupported helpers)", () => {
+    it("shows hover for csp_meta_tag", () => {
+      expect(hoverValue("<%= csp_meta_tag %>", 0, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        csp_meta_tag(**options)
+        \`\`\`
+
+        Returns a \`<meta>\` tag \`"csp-nonce"\` with the per-session nonce value for allowing inline \`<script>\` tags. Used by the Rails UJS helper to create dynamically loaded inline \`<script>\` elements.
+
+        [ActionView::Helpers::CspHelper#csp_meta_tag](https://api.rubyonrails.org/classes/ActionView/Helpers/CspHelper.html#method-i-csp_meta_tag) · Action View"
+      `)
+    })
+
+    it("shows hover for helper without documentation URL", () => {
+      expect(hoverValue("<%= params %>", 0, 6)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        params
+        \`\`\`
+
+        Returns the request parameters as an \`ActionController::Parameters\` object. Delegated to the controller.
+
+        ActionView::Helpers::ControllerHelper#params · Action View"
+      `)
+    })
+
+    it("shows hover for nested helper in transformed element", () => {
+      expect(hoverValue('<%= turbo_frame_tag dom_id(@user) do %><% end %>', 0, 21)).toMatchInlineSnapshot(`
+        "\`\`\`ruby
+        dom_id(record_or_class, prefix = nil)
+        \`\`\`
+
+        Returns a unique DOM id for the record following the convention of the singular form with the id appended. If no id is found, prefixes with \`"new_"\` instead.
+
+        [ActionView::RecordIdentifier#dom_id](https://api.rubyonrails.org/classes/ActionView/RecordIdentifier.html#method-i-dom_id) · Action View"
       `)
     })
   })

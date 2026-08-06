@@ -5,6 +5,7 @@ import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath }
 import { existsSync, statSync } from "fs"
 import { resolve, relative } from "path"
 import { colorize } from "@herb-tools/highlighter"
+import { DIAGNOSTIC_SEVERITIES, meetsSeverityThreshold } from "@herb-tools/core"
 
 import { Linter } from "./linter.js"
 import { rules } from "./rules.js"
@@ -13,10 +14,14 @@ import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 import { version } from "../package.json"
 
+import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
+import type { RuleFilterFlag } from "./cli/summary-reporter.js"
 
 export * from "./cli/index.js"
+
+const NOT_FAILING_TIP_THRESHOLD = 10
 
 export class CLI {
   protected argumentParser = new ArgumentParser()
@@ -137,8 +142,31 @@ export class CLI {
     // Hook for subclasses to add custom output before processing
   }
 
+  protected additionalRuleNames(): string[] {
+    return []
+  }
+
   protected async afterProcess(_results: any, _outputOptions: any): Promise<void> {
     // Hook for subclasses to add custom output after processing
+  }
+
+  /**
+   * Returns the severity `--only` or `--all-rules` should lower the log level to, together with the flag
+   * that asked for it, or `undefined` when the log level stays as configured.
+   */
+  protected loweredLogLevel(counts: Record<DiagnosticSeverity, number>, effectiveLogLevel: DiagnosticSeverity, options: { only?: string[], allRules?: boolean, logLevelFlag?: DiagnosticSeverity }): { severity: DiagnosticSeverity, flag: RuleFilterFlag } | undefined {
+    const { only, allRules, logLevelFlag } = options
+    const flag: RuleFilterFlag | undefined = (only && only.length > 0) ? "--only" : (allRules ? "--all-rules" : undefined)
+
+    if (!flag) return undefined
+    if (logLevelFlag !== undefined) return undefined
+
+    const lowestSeverity = DIAGNOSTIC_SEVERITIES.filter(severity => counts[severity] > 0).pop()
+
+    if (!lowestSeverity) return undefined
+    if (meetsSeverityThreshold(lowestSeverity, effectiveLogLevel)) return undefined
+
+    return { severity: lowestSeverity, flag }
   }
 
   async run() {
@@ -147,7 +175,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, jobs } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -216,7 +244,7 @@ export class CLI {
         const upgradeContext: ProcessingContext = {
           projectPath: this.projectPath,
           config: upgradeConfig,
-          jobs,
+          jobs: 1,
         }
 
         await Herb.load()
@@ -350,6 +378,10 @@ export class CLI {
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
 
+    const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"
+    const effectiveLogLevel = logLevel || linterConfig.logLevel || "hint"
+    const hasLogLevel = logLevel !== undefined || linterConfig.logLevel !== undefined
+
     const outputOptions = {
       formatOption,
       theme,
@@ -359,7 +391,9 @@ export class CLI {
       useGitHubActions,
       startTime,
       startDate,
-      toolVersion: version
+      toolVersion: version,
+      failLevel: effectiveFailLevel,
+      logLevel: effectiveLogLevel
     }
 
     try {
@@ -372,6 +406,20 @@ export class CLI {
       if (force && linterConfig.enabled === false) {
         console.log("⚠️  Forcing linter run (disabled in .herb.yml)")
         console.log()
+      }
+
+      if (only) {
+        const unknownRules = await this.fileProcessor.findUnknownRules(only, { projectPath: this.projectPath, loadCustomRules }, formatOption, this.additionalRuleNames())
+
+        if (unknownRules.length > 0) {
+          const messages = unknownRules.map(({ name, suggestion }) => {
+            const suggestionText = suggestion ? ` Did you mean ${colorize(suggestion, "cyan")}?` : ""
+
+            return `✗ Unknown rule ${colorize(name, "cyan")} passed to --only.${suggestionText}`
+          })
+
+          this.exitWithError(messages.join("\n"), formatOption)
+        }
       }
 
       let files: string[]
@@ -401,6 +449,10 @@ export class CLI {
 
       if (files.length === 0) {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
+      }
+
+      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+        console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
       }
 
       let processingConfig = config
@@ -433,33 +485,54 @@ export class CLI {
         config: processingConfig,
         hasConfigFile,
         loadCustomRules,
-        jobs
+        jobs,
+        only,
+        allRules
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
-      await this.outputManager.outputResults({ ...results, files }, outputOptions)
+      const counts: Record<DiagnosticSeverity, number> = {
+        error: results.totalErrors,
+        warning: results.totalWarnings,
+        info: results.totalInfo,
+        hint: results.totalHints
+      }
 
-      if (!Config.exists(this.projectPath) && formatOption !== 'json' && !useGitHubActions) {
+      const lowered = this.loweredLogLevel(counts, effectiveLogLevel, { only, allRules, logLevelFlag: logLevel })
+
+      await this.outputManager.outputResults({ ...results, files }, {
+        ...outputOptions,
+        logLevel: lowered?.severity ?? effectiveLogLevel,
+        logLevelLoweredFrom: lowered ? effectiveLogLevel : undefined,
+        logLevelLoweredBy: lowered?.flag
+      })
+
+      const showTips = formatOption !== 'json' && !useGitHubActions
+
+      if (!Config.exists(this.projectPath) && showTips) {
         console.log("")
         console.log(` ${colorize("TIP:", "bold")} Run ${colorize("herb-lint --init", "cyan")} to create a ${colorize(".herb.yml", "cyan")} and lock the ${colorize("version", "cyan")}.`)
         console.log(`      This ensures upgrading Herb won't enable new rules until you update the ${colorize("version", "cyan")} in ${colorize(".herb.yml", "cyan")}.`)
       }
 
+      const notFailingSeverities = DIAGNOSTIC_SEVERITIES.filter(severity => !meetsSeverityThreshold(severity, effectiveFailLevel) && counts[severity] > 0)
+      const notFailingCount = notFailingSeverities.reduce((sum, severity) => sum + counts[severity], 0)
+      const lowestNotFailingSeverity = notFailingSeverities[notFailingSeverities.length - 1]
+
+      // TODO: once we have `yerba` and the config mutation features on the JavaScript
+      // side, offer to write `linter.logLevel` into `.herb.yml` from here instead of
+      // asking the user to edit it by hand.
+      if (showTips && !hasLogLevel && notFailingCount > NOT_FAILING_TIP_THRESHOLD) {
+        console.log("")
+        console.log(` ${colorize("TIP:", "bold")} ${colorize(String(notFailingCount), "bold")} of the logged offenses don't fail the build.`)
+        console.log(`      Run ${colorize(`herb-lint --log-level=${effectiveFailLevel}`, "cyan")} to stop logging them, or set ${colorize("linter.logLevel", "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+        console.log(`      To start enforcing them instead, set ${colorize("linter.failLevel", "cyan")} to ${colorize(lowestNotFailingSeverity, "cyan")} in your ${colorize(".herb.yml", "cyan")}.`)
+      }
+
       await this.afterProcess(results, outputOptions)
 
-      const effectiveFailLevel = failLevel || linterConfig.failLevel
-
-      const errors = results.totalErrors > 0
-      const warnings = results.totalWarnings > 0
-      const info = results.totalInfo > 0
-      const hints = results.totalHints > 0
-
-      const shouldFailOnWarnings = effectiveFailLevel === "warning" && warnings
-      const shouldFailOnInfo = effectiveFailLevel === "info" && (warnings || info)
-      const shouldFailOnHints = effectiveFailLevel === "hint" && (warnings || info || hints)
-
-      const shouldFail = errors || shouldFailOnWarnings || shouldFailOnInfo || shouldFailOnHints
+      const shouldFail = DIAGNOSTIC_SEVERITIES.some(severity => counts[severity] > 0 && meetsSeverityThreshold(severity, effectiveFailLevel))
 
       if (shouldFail) {
         process.exit(1)

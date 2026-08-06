@@ -121,6 +121,26 @@ TEST(test_hb_array_size)
   hb_array_free(&array);
 END
 
+// Test lazy appending allocates on first use
+TEST(test_hb_array_append_lazy)
+  setup();
+  hb_array_T* array = NULL;
+
+  size_t item1 = 42, item2 = 99;
+
+  ck_assert(hb_array_append_lazy(&array, &item1, &test_allocator));
+  ck_assert_ptr_nonnull(array);
+  ck_assert_int_eq(hb_array_size(array), 1);
+  ck_assert_ptr_eq(hb_array_get(array, 0), &item1);
+
+  hb_array_T* allocated = array;
+  ck_assert(hb_array_append_lazy(&array, &item2, &test_allocator));
+  ck_assert_ptr_eq(array, allocated);
+  ck_assert_int_eq(hb_array_size(array), 2);
+
+  hb_array_free(&array);
+END
+
 // Register test cases
 TCase *hb_array_tests(void) {
   TCase *array = tcase_create("Herb Array");
@@ -132,6 +152,7 @@ TCase *hb_array_tests(void) {
   tcase_add_test(array, test_hb_array_remove);
   tcase_add_test(array, test_hb_array_free);
   tcase_add_test(array, test_hb_array_size);
+  tcase_add_test(array, test_hb_array_append_lazy);
 
   return array;
 }

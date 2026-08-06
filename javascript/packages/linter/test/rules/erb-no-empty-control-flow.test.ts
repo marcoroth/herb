@@ -274,6 +274,18 @@ describe("ERBNoEmptyControlFlowRule", () => {
         <% end %>
       `)
     })
+
+    test("detects empty when block with a ternary condition containing then in a string", () => {
+      expectHint("Empty when block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% case value %>
+        <% when a == "then" ? 1 : 2 %>
+        <% when "b" %>
+          <p>B</p>
+        <% end %>
+      `)
+    })
   })
 
   describe("in statements", () => {
@@ -302,6 +314,18 @@ describe("ERBNoEmptyControlFlowRule", () => {
       expectNoOffenses(dedent`
         <% case value %>
         <% in { then: x } then x %>
+        <% end %>
+      `)
+    })
+
+    test("detects empty in block with a ternary guard containing then in a string", () => {
+      expectHint("Empty in block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <% case value %>
+        <% in Integer if x == "then" ? a : b %>
+        <% in String %>
+          <p>String</p>
         <% end %>
       `)
     })
@@ -451,6 +475,34 @@ describe("ERBNoEmptyControlFlowRule", () => {
           <% if inner %>
           <% end %>
         <% end %>
+      `)
+    })
+  })
+
+  describe("escaped ERB tags", () => {
+    test("detects empty escaped if block", () => {
+      expectHint("Empty if block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <%% if condition %>
+        <%% end %>
+      `)
+    })
+
+    test("detects empty escaped do block", () => {
+      expectHint("Empty do block: this control flow statement has no content")
+
+      assertOffenses(dedent`
+        <%% items.each do |item| %>
+        <%% end %>
+      `)
+    })
+
+    test("does not flag escaped block with content", () => {
+      expectNoOffenses(dedent`
+        <%% items.each do |item| %>
+          <p>Content</p>
+        <%% end %>
       `)
     })
   })

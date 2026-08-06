@@ -40,4 +40,7 @@ size_t get_tag_helper_handlers_count(void);
 
 char* extract_inline_block_content(pm_call_node_t* call_node, hb_allocator_T* allocator);
 
+struct AST_NODE_STRUCT;
+bool wrap_javascript_tag_body_visitor(const struct AST_NODE_STRUCT* node, void* data);
+
 #endif
