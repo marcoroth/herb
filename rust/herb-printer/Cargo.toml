@@ -20,7 +20,7 @@ required-features = ["cli"]
 cli = ["dep:colored", "dep:herb-config", "dep:rayon"]
 
 [dependencies]
-herb = { path = ".." }
+herb = { path = "..", default-features = false }
 colored = { version = "3", optional = true }
 herb-config = { path = "../herb-config", optional = true }
 rayon = { version = "1.10", optional = true }
