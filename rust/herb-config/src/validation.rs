@@ -82,6 +82,8 @@ pub fn validate_config_text(text: &str, options: &ValidateOptions) -> Vec<Config
     return errors;
   }
 
+  crate::merge::strip_anchor_definitions(&mut parsed);
+
   if parsed.is_null() {
     parsed = serde_yaml::Value::Mapping(Default::default());
   }
