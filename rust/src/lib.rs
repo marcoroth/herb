@@ -9,6 +9,7 @@ pub mod location;
 pub mod nodes;
 pub mod parse_result;
 pub mod position;
+pub mod prism;
 pub mod range;
 pub mod token;
 pub mod union_types;
