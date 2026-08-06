@@ -49,15 +49,19 @@ interface JSONFormatOptions {
 }
 
 export class JSONFormatter extends BaseFormatter {
-  async format(allOffenses: ProcessedFile[]): Promise<void> {
-    const jsonOffenses: JSONOffense[] = allOffenses.map(({ filename, offense }) => ({
+  private offenseFor({ filename, offense }: ProcessedFile): JSONOffense {
+    return {
       filename,
       message: offense.message,
       location: offense.location.toJSON(),
       severity: offense.severity,
       code: offense.code,
       source: offense.source
-    }))
+    }
+  }
+
+  async format(allOffenses: ProcessedFile[]): Promise<void> {
+    const jsonOffenses: JSONOffense[] = allOffenses.map(processed => this.offenseFor(processed))
 
     const output: JSONOutput = {
       offenses: jsonOffenses,
@@ -72,14 +76,7 @@ export class JSONFormatter extends BaseFormatter {
   }
 
   async formatWithSummary(allOffenses: ProcessedFile[], options: JSONFormatOptions): Promise<void> {
-    const jsonOffenses: JSONOffense[] = allOffenses.map(({ filename, offense }) => ({
-      filename,
-      message: offense.message,
-      location: offense.location.toJSON(),
-      severity: offense.severity,
-      code: offense.code,
-      source: offense.source
-    }))
+    const jsonOffenses: JSONOffense[] = allOffenses.map(processed => this.offenseFor(processed))
 
     const summary: JSONSummary = {
       filesChecked: options.files.length,

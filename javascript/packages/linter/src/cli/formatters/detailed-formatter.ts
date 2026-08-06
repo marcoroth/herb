@@ -23,6 +23,31 @@ export class DetailedFormatter extends BaseFormatter {
     this.truncateLines = truncateLines
   }
 
+  private fixDiffFor(processed: ProcessedFile): string | undefined {
+    const { filename, fixedContent, unsafeAutocorrectable } = processed
+
+    if (!fixedContent || !this.highlighter) return undefined
+
+    const content = this.contentFor(processed)
+    if (!content) return undefined
+
+    const indent = "        "
+
+    const diff = this.highlighter.highlightDiff(filename, content, fixedContent, {
+      contextLines: 1,
+      wrapLines: this.wrapLines,
+      truncateLines: this.truncateLines,
+      indent,
+    })
+
+    if (!diff) return undefined
+
+    const flag = unsafeAutocorrectable ? "--fix-unsafely" : "--fix"
+    const heading = `${colorize("Running ", "gray")}${colorize(flag, "bold")}${colorize(" would correct this to:", "gray")}`
+
+    return `\n${indent}${heading}\n\n${diff}\n`
+  }
+
   async format(allOffenses: ProcessedFile[], isSingleFile: boolean = false): Promise<void> {
     if (allOffenses.length === 0) return
 
@@ -81,6 +106,9 @@ export class DetailedFormatter extends BaseFormatter {
         })
 
         console.log(`\n${formatted}`)
+
+        const fixDiff = this.fixDiffFor(allOffenses[i])
+        if (fixDiff) console.log(fixDiff)
 
         const width = LineWrapper.getTerminalWidth()
         const progressText = `[${i + 1}/${totalMessageCount}]`

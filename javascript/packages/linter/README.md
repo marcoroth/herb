@@ -328,6 +328,26 @@ The `--fix` flag automatically corrects offenses that have safe, deterministic f
 Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
 :::
 
+Preview what `--fix` would change, without changing anything:
+```bash
+npx @herb-tools/linter --show-fix-diff
+```
+
+Each correctable offense is followed by a syntax-highlighted diff of the correction, with the characters that would actually change picked out. Nothing is written to disk, the heading names the flag that would apply it:
+
+```
+        Running --fix would correct this to:
+
+        app/views/gems/index.html.erb
+
+              2 │   <img src="a.png">
+          -   3 │   <span class='card'>Hello</span>
+          +     │   <span class="card">Hello</span>
+              4 │ </div>
+```
+
+Offenses that need `--fix-unsafely` say so instead, so the heading always names the flag that applies. `--show-fix-diff` has no effect on `--json` output.
+
 **Help and Version:**
 ```bash
 # Show help
