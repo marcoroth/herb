@@ -16,6 +16,7 @@ import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
 import { HoverService } from "./hover_service"
 import { RewriteCodeActionService } from "./rewrite_code_action_service"
+import { ExtractCodeActionService } from "./extract_code_action_service"
 import { CommentService } from "./comment_service"
 import { CompletionService } from "./completion_service"
 
@@ -40,6 +41,7 @@ export class Service {
   documentHighlightService: DocumentHighlightService
   hoverService: HoverService
   rewriteCodeActionService: RewriteCodeActionService
+  extractCodeActionService: ExtractCodeActionService
   commentService: CommentService
   completionService: CompletionService
 
@@ -62,6 +64,11 @@ export class Service {
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
     this.commentService = new CommentService(this.parserService)
     this.completionService = new CompletionService(this.parserService)
+
+    this.extractCodeActionService = new ExtractCodeActionService(this.parserService, {
+      supportsCreateFile: this.settings.supportsResourceCreation,
+      supportsPromptCommand: this.settings.supportsExtractToPartialCommand,
+    })
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings

@@ -1,7 +1,7 @@
 import * as path from "path"
 
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
 import { Config } from "@herb-tools/config"
 
 export class Client {
@@ -67,6 +67,12 @@ export class Client {
 
   async sendRequest<T>(method: string, params: any): Promise<T> {
     return await this.client.sendRequest(method, params)
+  }
+
+  async applyWorkspaceEdit(edit: WorkspaceEdit): Promise<boolean> {
+    const workspaceEdit = await this.client.protocol2CodeConverter.asWorkspaceEdit(edit)
+
+    return await workspace.applyEdit(workspaceEdit)
   }
 
   async updateConfiguration() {
@@ -166,6 +172,12 @@ export class Client {
     }
   }
 
+  private get experimentalCapabilities() {
+    return {
+      extractToPartialCommand: true,
+    }
+  }
+
   private async getInitializationOptions() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
 
@@ -188,6 +200,7 @@ export class Client {
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
+          experimental: this.experimentalCapabilities,
         }
       } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
@@ -204,6 +217,7 @@ export class Client {
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
+          experimental: this.experimentalCapabilities,
         }
       }
     } else {
@@ -211,6 +225,7 @@ export class Client {
         linter: { enabled: true },
         formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
         trace: { server: 'verbose' },
+        experimental: this.experimentalCapabilities,
       }
     }
   }

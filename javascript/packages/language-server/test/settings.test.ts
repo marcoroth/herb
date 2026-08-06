@@ -137,4 +137,51 @@ describe("Settings", () => {
       expect(result.linter?.fixOnSave).toBe(false)
     })
   })
+
+  describe("supportsResourceCreation", () => {
+    test("is false when the client doesn't advertise resource operations", () => {
+      const settings = new Settings(mockParams, mockConnection)
+
+      expect(settings.supportsResourceCreation).toBe(false)
+    })
+
+    test("is true when the client can create files", () => {
+      const params: InitializeParams = {
+        ...mockParams,
+        capabilities: {
+          workspace: {
+            workspaceEdit: {
+              documentChanges: true,
+              resourceOperations: ["create", "rename", "delete"]
+            }
+          }
+        }
+      }
+
+      const settings = new Settings(params, mockConnection)
+
+      expect(settings.supportsResourceCreation).toBe(true)
+    })
+  })
+
+  describe("supportsExtractToPartialCommand", () => {
+    test("is false without initialization options", () => {
+      const settings = new Settings(mockParams, mockConnection)
+
+      expect(settings.supportsExtractToPartialCommand).toBe(false)
+    })
+
+    test("is true when the client registers the command", () => {
+      const params: InitializeParams = {
+        ...mockParams,
+        initializationOptions: {
+          experimental: { extractToPartialCommand: true }
+        }
+      }
+
+      const settings = new Settings(params, mockConnection)
+
+      expect(settings.supportsExtractToPartialCommand).toBe(true)
+    })
+  })
 })

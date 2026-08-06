@@ -150,6 +150,11 @@
         "when": "editorLangId == erb"
       },
       {
+        "command": "herb.extractToPartial",
+        "title": "Herb: Extract to Partial",
+        "when": "editorLangId == erb"
+      },
+      {
         "command": "herb.toggleLinter",
         "title": "Herb: Toggle Linter",
         "icon": "$(symbol-boolean)"
