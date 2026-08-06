@@ -26,6 +26,8 @@ import { Config } from "@herb-tools/config"
 import { isConfigDocument } from "./utils"
 import { version } from "../package.json"
 
+import type { ExtractToPartialResult } from "./extract_code_action_service"
+
 export class Server {
   private service!: Service
   private connection: Connection
@@ -63,7 +65,7 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
@@ -219,8 +221,17 @@ export class Server {
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
       const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
+      const extractCodeActions = this.service.extractCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
+    })
+
+    this.connection.onRequest<ExtractToPartialResult, void>('herb/extractToPartial', (params: { textDocument: TextDocumentIdentifier, range: Range, name: string }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return { error: "The document isn't open." }
+
+      return this.service.extractCodeActionService.extractToPartial(document, params.range, params.name)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {
