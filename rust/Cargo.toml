@@ -36,9 +36,10 @@ path = "src/main.rs"
 required-features = ["cli"]
 
 [features]
-default = []
+default = ["prism"]
 color = ["dep:colored"]
 cli = ["color"]
+prism = []
 
 [dependencies]
 colored = { version = "3", optional = true }
