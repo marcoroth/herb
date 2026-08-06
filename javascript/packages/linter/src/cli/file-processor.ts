@@ -1,17 +1,16 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { Config } from "@herb-tools/config"
+import { Worker } from "node:worker_threads"
+
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
-import { Config } from "@herb-tools/config"
-
-import { Worker } from "node:worker_threads"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
-
 import { fixabilityFor } from "./fixability.js"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -22,12 +21,15 @@ import type { Fixability } from "./fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
 
+const AUTOMATIC_FIX_DIFF_LIMIT = 20
+
 export interface ProcessedFile {
   filename: string
   offense: Diagnostic
   content?: string
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
+  fixedContent?: string
 }
 
 export interface ProcessingContext {
@@ -37,6 +39,7 @@ export interface ProcessingContext {
   fix?: boolean
   fixUnsafe?: boolean
   ignoreDisableComments?: boolean
+  showFixDiff?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
   hasConfigFile?: boolean
@@ -161,6 +164,52 @@ export class FileProcessor {
     if (partialMatches.length > 0) return partialMatches[0]
 
     return didyoumean(ruleName, availableRuleNames, SUGGESTION_DISTANCE_THRESHOLD) ?? undefined
+  }
+
+  private async attachFixPreviews(allOffenses: ProcessedFile[], formatOption: FormatOption, context?: ProcessingContext): Promise<void> {
+    if (formatOption === "json") return
+
+    const correctable = allOffenses.filter(item => item.autocorrectable || item.unsafeAutocorrectable)
+
+    if (correctable.length === 0) return
+    if (!context?.showFixDiff && correctable.length > AUTOMATIC_FIX_DIFF_LIMIT) return
+
+    if (!this.linter) {
+      const customRules = await this.loadCustomRulesOnce(context, formatOption)
+
+      this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only, all: context?.allRules })
+    }
+
+    const contents = new Map<string, string>()
+
+    for (const item of correctable) {
+      if (!contents.has(item.filename)) {
+        const filePath = context?.projectPath ? resolve(context.projectPath, item.filename) : resolve(item.filename)
+
+        try {
+          contents.set(item.filename, item.content ?? readFileSync(filePath, "utf-8"))
+        } catch {
+          continue
+        }
+      }
+
+      const content = contents.get(item.filename)
+
+      if (content === undefined) continue
+
+      try {
+        const result = this.linter.autofix(content, {
+          fileName: item.filename,
+          ignoreDisableComments: context?.ignoreDisableComments,
+        }, [item.offense as LintOffense], { includeUnsafe: true })
+
+        if (result.fixed.length > 0 && result.source !== content) {
+          item.fixedContent = result.source
+        }
+      } catch {
+        continue
+      }
+    }
   }
 
   private fixabilityFor(offense: LintOffense): Fixability {
@@ -300,6 +349,8 @@ export class FileProcessor {
       result.totalWouldBeIgnored = totalWouldBeIgnored
     }
 
+    await this.attachFixPreviews(allOffenses, formatOption, context)
+
     return result
   }
 
@@ -324,6 +375,8 @@ export class FileProcessor {
     aggregated.rulesSkippedByVersion = filterResult.skippedByVersion
     aggregated.rulesDisabledByConfig = filterResult.disabledByConfig
     aggregated.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
+
+    await this.attachFixPreviews(aggregated.allOffenses, formatOption, context)
 
     return aggregated
   }

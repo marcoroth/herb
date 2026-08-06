@@ -33,11 +33,41 @@ describe("CLI Output Formatting", () => {
     }
   }
 
+  function firstOffense(output: string): string {
+    return output.split("\u23AF".repeat(10))[0].trim()
+  }
+
   test("formats detailed error output correctly", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
+  })
+
+  test("previews the correction under each correctable offense", () => {
+    const { output } = runLinter("test-file-simple.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+  })
+
+  test("previews the correction the same way when --show-fix-diff is passed explicitly", () => {
+    const { output } = runLinter("test-file-simple.html.erb", "--no-wrap-lines", "--show-fix-diff")
+
+    expect(output).toMatchSnapshot()
+  })
+
+  test("points at the flag instead of previewing once there are too many corrections", () => {
+    const { output } = runLinter("many-correctable.html.erb", "--no-wrap-lines")
+
+    expect(output).not.toContain("would correct this to")
+    expect(firstOffense(output)).toMatchSnapshot()
+  })
+
+  test("previews every correction when --show-fix-diff is passed, however many there are", () => {
+    const { output } = runLinter("many-correctable.html.erb", "--no-wrap-lines", "--show-fix-diff")
+
+    expect(output).not.toContain("Tip: run with")
+    expect(firstOffense(output)).toMatchSnapshot()
   })
 
   test("formats simple output correctly", () => {

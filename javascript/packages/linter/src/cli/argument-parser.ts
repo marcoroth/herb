@@ -22,6 +22,7 @@ export interface ParsedArguments {
   theme: ThemeInput
   wrapLines: boolean
   truncateLines: boolean
+  showFixDiff: boolean
   useGitHubActions: boolean
   fix: boolean
   fixUnsafe: boolean
@@ -81,6 +82,7 @@ export class ArgumentParser {
       --no-timing                   hide timing information
       --no-wrap-lines               disable line wrapping
       --truncate-lines              enable line truncation (mutually exclusive with line wrapping)
+      --show-fix-diff               preview every correctable offense as a diff, past the point they are shown anyway
   `
 
   parse(argv: string[]): ParsedArguments {
@@ -111,6 +113,7 @@ export class ArgumentParser {
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
         "truncate-lines": { type: "boolean" },
+        "show-fix-diff": { type: "boolean" },
         "no-custom-rules": { type: "boolean" },
         jobs: { type: "string", short: "j" }
       },
@@ -217,7 +220,7 @@ export class ArgumentParser {
       jobs = parsed
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, showFixDiff: values["show-fix-diff"] === true, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, upgrade, disableFailing, loadCustomRules, failLevel, logLevel, jobs, only, allRules }
   }
 
   private parseSeverity(value: string | undefined, flag: string): DiagnosticSeverity | undefined {
