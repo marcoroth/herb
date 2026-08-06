@@ -790,7 +790,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
 
-[error] Avoid unused expressions in silent ERB tags. \`extra_whitespace\` is evaluated but its return value is discarded. Use \`<%= ... %>\` to output the value or remove the expression. (erb-no-unused-expressions)
+[error] Avoid unused expressions in silent ERB tags. \`<% extra_whitespace %>\` is evaluated but its return value is discarded. Use \`<%= extra_whitespace %>\` to output the value or remove the expression. (erb-no-unused-expressions)
 
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 

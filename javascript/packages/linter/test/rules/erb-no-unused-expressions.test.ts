@@ -303,7 +303,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
   describe("invalid cases", () => {
     test("fails for bare method call on instance variable", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -313,7 +313,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare method call with arguments", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `helper_method(arg)` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) %>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -323,7 +323,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for chained method calls", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `foo.bar.baz` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% foo.bar.baz %>` is evaluated but its return value is discarded. Use `<%= foo.bar.baz %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -333,7 +333,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare instance variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user %>` is evaluated but its return value is discarded. Use `<%= @user %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -343,7 +343,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare class variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@@count` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @@count %>` is evaluated but its return value is discarded. Use `<%= @@count %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -353,7 +353,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare global variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `$global` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% $global %>` is evaluated but its return value is discarded. Use `<%= $global %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -363,7 +363,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare constant read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `CONSTANT` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% CONSTANT %>` is evaluated but its return value is discarded. Use `<%= CONSTANT %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -373,7 +373,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare constant path", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `Foo::Bar` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% Foo::Bar %>` is evaluated but its return value is discarded. Use `<%= Foo::Bar %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -383,7 +383,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare method call without receiver", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `some_method` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% some_method %>` is evaluated but its return value is discarded. Use `<%= some_method %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -393,10 +393,10 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for multiple unused expressions", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
       )
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@title` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @title %>` is evaluated but its return value is discarded. Use `<%= @title %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -407,7 +407,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for method call on constant", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `User.count` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% User.count %>` is evaluated but its return value is discarded. Use `<%= User.count %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -417,7 +417,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("still fails for non-block-local calls inside render block", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -429,7 +429,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("still fails for bare block local read inside render block", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `component` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% component %>` is evaluated but its return value is discarded. Use `<%= component %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -441,7 +441,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("still fails for calls on an arbitrary (non-slot) block local", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `x.slot_setter(\"d\")` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% x.slot_setter(\"d\") %>` is evaluated but its return value is discarded. Use `<%= x.slot_setter(\"d\") %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -453,7 +453,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("still fails for calls on a receiver other than a slot builder inside a slot block", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `other_receiver.slot_setter(\"c\")` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% other_receiver.slot_setter(\"c\") %>` is evaluated but its return value is discarded. Use `<%= other_receiver.slot_setter(\"c\") %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -465,9 +465,33 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("suggests the expression with the original tag closing", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) -%>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) -%>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <% helper_method(arg) -%>
+      `)
+    })
+
+    test("collapses newlines in the suggestion for multi-line expressions", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% helper_method( arg ) %>` is evaluated but its return value is discarded. Use `<%= helper_method( arg ) %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%
+          helper_method(
+            arg
+          )
+        %>
+      `)
+    })
+
     test("reports the correct message and location when preceded by a multi-byte character", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `helper_method(arg)` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) %>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) %>` to output the value or remove the expression.",
         [2, 3],
       )
 
@@ -479,7 +503,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("reports the correct message and location when the multi-byte character is on the same line", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `link_to('→ next', path)` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% link_to('→ next', path) %>` is evaluated but its return value is discarded. Use `<%= link_to('→ next', path) %>` to output the value or remove the expression.",
         [1, 6],
       )
 
