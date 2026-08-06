@@ -1669,6 +1669,55 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("Config.aliasedMutationTargets", () => {
+    const shared = dedent`
+      version: 0.10.3
+
+      linter:
+        enabled: &flag true
+
+      formatter:
+        enabled: *flag
+    `
+
+    test("reports a mutation target whose value is aliased elsewhere", () => {
+      const targets = Config.aliasedMutationTargets(shared, { linter: { enabled: false } })
+
+      expect(targets).toEqual(["linter.enabled"])
+    })
+
+    test("reports nothing when the mutation target is not anchored", () => {
+      const targets = Config.aliasedMutationTargets(shared, { formatter: { indentWidth: 4 } })
+
+      expect(targets).toEqual([])
+    })
+
+    test("reports nothing when the anchor is never aliased", () => {
+      const unaliased = dedent`
+        version: 0.10.3
+
+        linter:
+          enabled: &flag true
+      `
+
+      expect(Config.aliasedMutationTargets(unaliased, { linter: { enabled: false } })).toEqual([])
+    })
+
+    test("reports nothing for a config without anchors", () => {
+      const plain = "version: 0.10.3\n\nlinter:\n  enabled: true\n"
+
+      expect(Config.aliasedMutationTargets(plain, { linter: { enabled: false } })).toEqual([])
+    })
+
+    test("mutateConfigFile returns the affected paths", async () => {
+      const configPath = createTestFile(testDir, ".herb.yml", shared)
+
+      const targets = await Config.mutateConfigFile(configPath, { linter: { enabled: false } })
+
+      expect(targets).toEqual(["linter.enabled"])
+    })
+  })
+
   describe("version skew", () => {
     const invalidForOlderVersions = dedent`
       version: 0.10.3

@@ -4,7 +4,7 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
-import { stringify, parse, parseDocument, isMap } from "yaml"
+import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
 import { semverGreaterThan } from "@herb-tools/core"
 import { promises as fs } from "fs"
 import { fromZodError } from "zod-validation-error"
@@ -793,16 +793,75 @@ export class Config {
    *   }
    * })
    */
+  /**
+   * Find mutation targets whose value carries a YAML anchor that is aliased
+   * elsewhere in the config.
+   *
+   * Writing to such a value also changes every key aliasing it. That is what
+   * the alias asks for, but it is easy to miss, so callers can surface it.
+   *
+   * @param yamlContent - The raw YAML content of the config file
+   * @param mutation - The mutation about to be applied
+   * @returns The affected paths, as dot-separated strings
+   */
+  static aliasedMutationTargets(
+    yamlContent: string,
+    mutation: Partial<HerbConfigOptions>
+  ): string[] {
+    let document
+
+    try {
+      document = parseDocument(yamlContent, { merge: true })
+    } catch {
+      return []
+    }
+
+    const aliased = new Set<string>()
+
+    visit(document, {
+      Alias(_key, node) {
+        if (node.source) aliased.add(node.source)
+      }
+    })
+
+    if (aliased.size === 0) return []
+
+    const affected: string[] = []
+
+    const walk = (value: any, pathParts: string[]) => {
+      if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        const node = document.getIn(pathParts, true)
+
+        if (isScalar(node) && node.anchor && aliased.has(node.anchor)) {
+          affected.push(pathParts.join("."))
+        }
+
+        return
+      }
+
+      for (const [key, nested] of Object.entries(value)) {
+        walk(nested, [...pathParts, key])
+      }
+    }
+
+    walk(mutation, [])
+
+    return affected
+  }
+
   static async mutateConfigFile(
     configPath: string,
     mutation: Partial<HerbConfigOptions>
-  ): Promise<void> {
+  ): Promise<string[]> {
     let yamlContent: string
+    let aliasedTargets: string[] = []
 
     try {
       const existingContent = await fs.readFile(configPath, 'utf-8')
 
       if (Object.keys(mutation).length > 0) {
+        aliasedTargets = this.aliasedMutationTargets(existingContent, mutation)
+
         const document = parseDocument(existingContent)
 
         const validation = HerbConfigSchema.safeParse(document.toJSON())
@@ -849,6 +908,8 @@ export class Config {
     }
 
     await fs.writeFile(configPath, yamlContent, 'utf-8')
+
+    return aliasedTargets
   }
 
   /**
