@@ -1,0 +1,71 @@
+# Generated from lib/herb/engine/query_tracker_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Wraps every ERB tag in a call that records which tag is rendering, so that queries can be
+    # attributed to the exact tag that caused them.
+    #
+    # This visitor is not loaded by default and only rewrites the AST. Reporting is left to
+    # `Herb::Engine::QueryTracker`, which is what actually subscribes to the queries.
+    #
+    #     require "herb/engine/query_tracker_visitor"
+    #
+    #     Herb::Engine.new(source, visitors: [Herb::Engine::QueryTrackerVisitor.new])
+    class QueryTrackerVisitor < Herb::Visitor
+      TRACKER: ::String
+
+      ARRAY_PROPERTIES: untyped
+
+      NODE_PROPERTIES: untyped
+
+      def self.experimental_warning_issued: () -> bool
+
+      def self.experimental_warning_issued=: (bool) -> bool
+
+      attr_accessor experimental_warning_issued: bool
+
+      # : (?filename: String?) -> void
+      def initialize: (?filename: String?) -> void
+
+      def visit_document_node: (untyped node) -> untyped
+
+      # : () -> String
+      def inspect: () -> String
+
+      private
+
+      def instrument: (untyped node) -> untyped
+
+      def rewrite: (untyped nodes) -> untyped
+
+      # : (Herb::AST::Node) -> bool
+      def output?: (Herb::AST::Node) -> bool
+
+      # : (Herb::AST::Node) -> bool
+      def statement?: (Herb::AST::Node) -> bool
+
+      # : (Herb::AST::Node) -> bool
+      def block?: (Herb::AST::Node) -> bool
+
+      # : (Herb::AST::Node) -> String
+      def opening: (Herb::AST::Node) -> String
+
+      def wrapped_output: (untyped node) -> untyped
+
+      def wrapped_statement: (untyped node) -> untyped
+
+      def enter_node: (untyped node) -> untyped
+
+      def leave_node: (untyped node) -> untyped
+
+      # : (Herb::AST::Node) -> String
+      def position: (Herb::AST::Node) -> String
+
+      # : (Herb::AST::Node) -> String
+      def code: (Herb::AST::Node) -> String
+
+      # : (Herb::AST::Node, String, String) -> Herb::AST::ERBContentNode
+      def erb_node: (Herb::AST::Node, String, String) -> Herb::AST::ERBContentNode
+    end
+  end
+end

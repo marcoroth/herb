@@ -1,0 +1,6 @@
+---
+source: "Engine::QueryTrackerTest#test_0002_a statement tag is inlined so assignments stay visible"
+input: "{source: \"<% total = items.sum %>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::QueryTracker.enter("index.html.erb", 1, 0); total = items.sum; ::Herb::Engine::QueryTracker.leave 
+_buf.to_s

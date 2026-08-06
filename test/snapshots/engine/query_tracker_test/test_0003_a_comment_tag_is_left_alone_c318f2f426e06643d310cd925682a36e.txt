@@ -1,0 +1,6 @@
+---
+source: "Engine::QueryTrackerTest#test_0003_a comment tag is left alone"
+input: "{source: \"<%# nothing to see %>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
+---
+_buf = ::String.new;
+_buf.to_s

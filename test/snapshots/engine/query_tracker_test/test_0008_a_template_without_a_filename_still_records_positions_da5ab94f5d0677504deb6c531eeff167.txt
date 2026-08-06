@@ -1,0 +1,6 @@
+---
+source: "Engine::QueryTrackerTest#test_0008_a template without a filename still records positions"
+input: "{source: \"<%= title %>\", options: {escape: false, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
+---
+_buf = ::String.new; _buf << (::Herb::Engine::QueryTracker.at(nil, 1, 0) { title }).to_s;
+_buf.to_s
