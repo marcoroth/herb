@@ -4,7 +4,7 @@ import { RubyReferenceCollector } from "./ruby_reference_collector"
 import { StrictLocalsCollector } from "./strict_locals_collector"
 import { RootElementCollector } from "./root_element_collector"
 
-import { helperExists, stringIndexFromByteOffset, getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
+import { RUBY_KEYWORDS, helperExists, stringIndexFromByteOffset, getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { DocumentNode, HTMLElementNode } from "@herb-tools/core"
@@ -16,13 +16,6 @@ const LOCAL_ASSIGNS = "local_assigns"
 const ROUTE_HELPER = /_(path|url)$/
 const PREDICATE_OR_BANG = /[?!]$/
 const LOCAL_NAME = /^[a-z_][a-zA-Z0-9_]*$/
-
-const RUBY_KEYWORDS = new Set([
-  "alias", "and", "begin", "break", "case", "class", "def", "defined?", "do", "else", "elsif",
-  "end", "ensure", "false", "for", "if", "in", "module", "next", "nil", "not", "or", "redo",
-  "rescue", "retry", "return", "self", "super", "then", "true", "undef", "unless", "until",
-  "when", "while", "yield",
-])
 
 export interface ExtractedLocal {
   name: string
