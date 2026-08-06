@@ -656,7 +656,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
     );
   }
 
-  if (layout && !partial && !template_path) {
+  if (layout && !partial && !template_path && !(block_fields && block_fields->end_node)) {
     append_render_layout_without_block_error(
       layout->value,
       erb_node->base.location.start,
