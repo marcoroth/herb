@@ -32,7 +32,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
 
   AST_NODE_T* node = &<%= node.human %>->base;
 
-  VALUE type = rb_string_from_hb_string(ast_node_type_to_string(node));
+  VALUE type = rb_interned_string_from_hb_string(ast_node_type_to_string(node));
   VALUE location = rb_location_from_c_struct(node->location);
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 

@@ -18,7 +18,7 @@ require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
+    attr_reader :src, :filename, :project_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors, :enabled_validators
 
     # @rbs!
@@ -59,12 +59,10 @@ module Herb
       @filename = properties[:filename] ? ::Pathname.new(properties[:filename]) : nil
       @project_path = ::Pathname.new(properties[:project_path] || Dir.pwd)
 
-      if @filename
-        absolute_filename = @filename.absolute? ? @filename : @project_path + @filename
-        @relative_file_path = absolute_filename.relative_path_from(@project_path).to_s
-      else
-        @relative_file_path = "unknown"
-      end
+      # @relative_file_path is only referenced when emitting errors, overlays,
+      # or debug output. Computing it eagerly runs Pathname#relative_path_from
+      # (and a #to_s) on every compile, even for valid templates that never use
+      # it, so it is derived lazily in #relative_file_path instead.
 
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
@@ -182,6 +180,19 @@ module Herb
 
       @src.freeze
       freeze
+    end
+
+    # Path of the template relative to the project root, used for error,
+    # overlay, and debug output. Derived on demand rather than in #initialize
+    # because Pathname#relative_path_from is comparatively expensive and is
+    # unnecessary on the common, error-free render path. Not memoized: the
+    # engine freezes itself after compiling, and this is only consulted on the
+    # rare error/debug paths, so recomputation is immaterial.
+    def relative_file_path
+      return "unknown" unless @filename
+
+      absolute_filename = @filename.absolute? ? @filename : @project_path + @filename
+      absolute_filename.relative_path_from(@project_path).to_s
     end
 
     def self.h(value)
@@ -464,7 +475,7 @@ module Herb
         column = location&.start&.column || 0
 
         source = input || @src
-        overlay_generator = ValidationErrorOverlay.new(source, error, filename: @relative_file_path)
+        overlay_generator = ValidationErrorOverlay.new(source, error, filename: relative_file_path)
         html_fragment = overlay_generator.generate_fragment
 
         escaped_message = escape_attr(error[:message])
@@ -478,7 +489,7 @@ module Herb
             data-code="#{error[:code]}"
             data-line="#{line}"
             data-column="#{column}"
-            data-filename="#{escape_attr(@relative_file_path)}"
+            data-filename="#{escape_attr(relative_file_path)}"
             data-message="#{escaped_message}"
             #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
             data-timestamp="#{Time.now.utc.iso8601}"
@@ -507,7 +518,7 @@ module Herb
       overlay_generator = ParserErrorOverlay.new(
         input,
         parser_errors,
-        filename: @relative_file_path
+        filename: relative_file_path
       )
 
       error_html = overlay_generator.generate_html
