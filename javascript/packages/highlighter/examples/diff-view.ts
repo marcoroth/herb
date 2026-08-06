@@ -5,8 +5,10 @@
 
 import dedent from "dedent"
 
+import { pathToFileURL } from "node:url"
+
 import { Herb } from "@herb-tools/node-wasm"
-import { Highlighter } from "@herb-tools/highlighter"
+import { Highlighter } from "../src/highlighter.js"
 
 const EXAMPLES: { title: string, note: string, before: string, after: string }[] = [
   {
@@ -260,52 +262,51 @@ const SPLIT: { title: string, note: string, before: string, after: string }[] = 
 const heading = (text: string) => `\x1b[1m${text}\x1b[0m`
 const subtle = (text: string) => `\x1b[90m${text}\x1b[0m`
 
-const main = async () => {
-  await Herb.load()
-
-  const highlighter = new Highlighter("onedark", Herb)
-  await highlighter.initialize()
+export const renderDiffExamples = (highlighter: Highlighter): string => {
+  const output: string[] = []
 
   for (const { title, note, before, after } of EXAMPLES) {
-    console.log(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
+    output.push(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
 
-    console.log(highlighter.highlightDiff("app/views/gems/index.html.erb", before, after, {
+    output.push(highlighter.highlightDiff("app/views/gems/index.html.erb", before, after, {
       contextLines: 1,
       wrapLines: false,
+      maxWidth: 120,
     }))
   }
 
-  console.log(`\n\n${heading("Single-line collapsing")} ${subtle("(singleLineStyle)")}`)
-  console.log(subtle("  auto collapses a pair only when the composite reads better than two lines: always for a pure"))
-  console.log(subtle("  insertion or deletion, and for a replacement only while the change stays short, stays a"))
-  console.log(subtle("  minority of the line, and still fits the width."))
-  console.log(subtle("  Needs color: without it every style falls back to split, since only the tinting tells old from new.\n"))
+  output.push(`\n\n${heading("Single-line collapsing")} ${subtle("(singleLineStyle)")}`)
+  output.push(subtle("  auto collapses a pair only when the composite reads better than two lines: always for a pure"))
+  output.push(subtle("  insertion or deletion, and for a replacement only while the change stays short, stays a"))
+  output.push(subtle("  minority of the line, and still fits the width."))
+  output.push(subtle("  Needs color: without it every style falls back to split, since only the tinting tells old from new.\n"))
 
   for (const { title, note, before, after } of COLLAPSING) {
-    console.log(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
+    output.push(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
 
     for (const style of ["split", "inline", "auto"] as const) {
-      console.log(subtle(`  ${style}`))
+      output.push(subtle(`  ${style}`))
 
-      console.log(highlighter.highlightDiff("", before, after, {
+      output.push(highlighter.highlightDiff("", before, after, {
         contextLines: 1,
         wrapLines: false,
         singleLineStyle: style,
+        maxWidth: 120,
         indent: "  ",
       }))
 
-      console.log()
+      output.push("")
     }
   }
 
-  console.log(`\n${heading("Split layout")} ${subtle("(layout: \"split\", original on the left, modified on the right)")}`)
-  console.log(subtle("  Each column is numbered from its own version of the file, so the two drift apart after a"))
-  console.log(subtle("  change in line count. Falls back to the unified layout when the terminal is too narrow.\n"))
+  output.push(`\n${heading("Split layout")} ${subtle("(layout: \"split\", original on the left, modified on the right)")}`)
+  output.push(subtle("  Each column is numbered from its own version of the file, so the two drift apart after a"))
+  output.push(subtle("  change in line count. Falls back to the unified layout when the terminal is too narrow.\n"))
 
   for (const { title, note, before, after } of SPLIT) {
-    console.log(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
+    output.push(`\n${heading(title)} ${subtle(`— ${note}`)}\n`)
 
-    console.log(highlighter.highlightDiff("", before, after, {
+    output.push(highlighter.highlightDiff("", before, after, {
       contextLines: 1,
       layout: "split",
       maxWidth: 140,
@@ -313,16 +314,28 @@ const main = async () => {
     }))
   }
 
-  console.log(`\n${heading("Split layout, narrow terminal")} ${subtle("— 70 columns, falls back to unified")}\n`)
+  output.push(`\n${heading("Split layout, narrow terminal")} ${subtle("— 70 columns, falls back to unified")}\n`)
 
-  console.log(highlighter.highlightDiff("", SPLIT[0].before, SPLIT[0].after, {
+  output.push(highlighter.highlightDiff("", SPLIT[0].before, SPLIT[0].after, {
     contextLines: 1,
     layout: "split",
     maxWidth: 70,
     indent: "  ",
   }))
 
+  return output.join("\n")
+}
+
+const main = async () => {
+  await Herb.load()
+
+  const highlighter = new Highlighter("onedark", Herb)
+  await highlighter.initialize()
+
+  console.log(renderDiffExamples(highlighter))
   console.log()
 }
 
-main()
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+}

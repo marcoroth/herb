@@ -60,22 +60,28 @@ Focus on line 10 and show 3 lines before and after:
 herb-highlight app/views/users/show.html.erb --focus=10 --context-lines=3
 ```
 
+Diff two files:
+
+```bash
+herb-highlight diff before.html.erb after.html.erb
+```
+
 Render a `git diff`, piped in on stdin:
 
 ```bash
-git diff -- app/views | herb-highlight --diff
+git diff -- app/views | herb-highlight diff
 ```
 
 Render a diff, passed as a JSON string:
 
 ```bash
-herb-highlight --diff '{"original": "<img src=\"a.png\">", "modified": "<img src=\"a.png\" alt=\"\">"}'
+herb-highlight diff '{"original": "<img src=\"a.png\">", "modified": "<img src=\"a.png\" alt=\"\">"}'
 ```
 
 Render a diff from a file:
 
 ```bash
-herb-highlight --diff fix.json
+herb-highlight diff fix.json
 ```
 
 ## Usage
@@ -117,7 +123,7 @@ The line number column refers to the original source throughout, so it stays mon
 
 ## Rendering a Diff That Came From Elsewhere
 
-`highlightDiffHunks` renders hunks that arrived without their sources, and the CLI exposes the same thing through `--diff`, which takes a JSON string, a file path, or `-` for stdin. It accepts unified diff text as produced by `git diff`, along with `{"original": "...", "modified": "..."}` and `{"hunks": [...]}`:
+`highlightDiffHunks` renders hunks that arrived without their sources, and the CLI exposes the same thing through `herb-highlight diff`, which takes two files, a JSON string, a file path, or stdin. It accepts unified diff text as produced by `git diff`, along with `{"original": "...", "modified": "..."}` and `{"hunks": [...]}`:
 
 ```bash
 git diff -- app/views | herb-highlight --diff
@@ -162,16 +168,18 @@ removed background, `dim` fades it the way context lines are faded, `none` leave
 marker alone.
 
 `singleLineStyle` controls whether a one-for-one line replacement is stacked or collapsed onto a
-single `±` line. `auto` collapses only where that reads better: always for a pure insertion or
-deletion, whose composite is a real line from one of the two versions, and for a replacement only
-while the change stays short, stays a minority of the line, and still fits the width.
+single `±` line. `auto` collapses only where that reads better: a pure insertion or deletion, whose
+composite is a real line from one of the two versions, and a replacement only while the change stays
+short, stays a minority of the line, and still fits the width.
 
 `layout` chooses between stacking the two sides and putting the original in a left column with the
 modified in a right one. Split falls back to unified when the terminal is too narrow to give each
 column readable width.
 
-Collapsing and tinting both need color. With `NO_COLOR` set, diffs render stacked and untinted,
-since only the tinting tells the old text from the new.
+Collapsing and tinting both need color. With `NO_COLOR` set nothing collapses and nothing is tinted,
+whatever `singleLineStyle` says. A collapsed replacement would read as text belonging to neither
+version, and even a collapsed insertion would show the resulting line without showing which part was
+added, so the stacked pair carries more.
 
 ## Themes and Diffs
 
