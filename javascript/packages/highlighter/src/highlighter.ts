@@ -3,12 +3,15 @@ import { DiagnosticRenderer } from "./diagnostic-renderer.js"
 import { FileRenderer } from "./file-renderer.js"
 import { InitializationManager } from "./initialization-manager.js"
 import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
+import { DiffRenderer } from "./diff-renderer.js"
 import { FileReader } from "./file-reader.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
+import type { DiffRenderOptions } from "./diff-renderer.js"
+import type { DiffHunk } from "./diff-computer.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -43,6 +46,7 @@ export class Highlighter {
   private fileRenderer: FileRenderer
   private initManager: InitializationManager
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
+  private diffRenderer: DiffRenderer
   private fileReader: FileReader
 
   constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
@@ -52,6 +56,7 @@ export class Highlighter {
     this.fileRenderer = new FileRenderer(this.syntaxRenderer)
     this.initManager = new InitializationManager(herb)
     this.inlineDiagnosticRenderer = new InlineDiagnosticRenderer(this.syntaxRenderer)
+    this.diffRenderer = new DiffRenderer(this.syntaxRenderer, colors)
     this.fileReader = new FileReader(this)
   }
 
@@ -204,6 +209,42 @@ export class Highlighter {
       content,
       options,
     )
+  }
+
+  /**
+   * Render the change between two sources as a syntax-highlighted diff
+   * @param path - File path shown above the diff (display only)
+   * @param original - The source before the change
+   * @param modified - The source after the change
+   * @param options - Optional configuration
+   * @returns The rendered diff, or an empty string when the sources are identical
+   */
+  highlightDiff(
+    path: string,
+    original: string,
+    modified: string,
+    options: DiffRenderOptions = {},
+  ): string {
+    this.requireInitialized()
+
+    return this.diffRenderer.render(path, original, modified, options)
+  }
+
+  /**
+   * Render pre-computed diff hunks, such as those in the Linter CLI's JSON output
+   * @param path - File path shown above the diff (display only)
+   * @param hunks - The hunks to render
+   * @param options - Optional configuration
+   * @returns The rendered diff, or an empty string when there are no hunks
+   */
+  highlightDiffHunks(
+    path: string,
+    hunks: DiffHunk[],
+    options: DiffRenderOptions = {},
+  ): string {
+    this.requireInitialized()
+
+    return this.diffRenderer.renderFromHunks(path, hunks, options)
   }
 
   // File reading wrapper functions

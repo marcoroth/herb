@@ -10,6 +10,9 @@ import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
 
+import type { DiffHunk } from "./diff-computer.js"
+import type { ThemeInput } from "./themes.js"
+
 import type { Diagnostic } from "@herb-tools/core"
 
 export class CLI {
@@ -32,6 +35,12 @@ export class CLI {
       --max-width      maximum width for line wrapping/truncation [default: terminal width]
       --diagnostics    JSON string or file path containing diagnostics to render
       --split-diagnostics  render each diagnostic individually (requires --diagnostics)
+      --diff           JSON string, file path, or - for stdin, containing a diff to render
+
+    Diff input accepts {"original": "...", "modified": "..."}, {"hunks": [...]}, or the
+    Linter CLI's own output, so its autocorrections can be piped straight in:
+
+      herb-lint --json --show-fix-diff | herb-highlight --diff -
       `
 
   private parseArguments() {
@@ -50,6 +59,7 @@ export class CLI {
         "max-width": { type: "string" },
         "diagnostics": { type: "string" },
         "split-diagnostics": { type: "boolean" },
+        "diff": { type: "string" },
       },
       allowPositionals: true,
     })
@@ -168,6 +178,7 @@ export class CLI {
     return {
       values,
       positionals,
+      diffInput: values["diff"],
       theme,
       focusLine,
       contextLines,
@@ -180,9 +191,71 @@ export class CLI {
     }
   }
 
+  private readDiffInput(input: string): string {
+    if (input === "-") return readFileSync(0, "utf-8")
+    if (input.trimStart().startsWith("{") || input.trimStart().startsWith("[")) return input
+
+    return readFileSync(resolve(input), "utf-8")
+  }
+
+  private diffsFrom(parsed: any): { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[] {
+    if (Array.isArray(parsed?.offenses)) {
+      return parsed.offenses
+        .filter((offense: any) => offense?.autofix?.hunks?.length)
+        .map((offense: any) => ({ path: offense.filename ?? "", hunks: offense.autofix.hunks }))
+    }
+
+    if (Array.isArray(parsed?.hunks)) {
+      return [{ path: parsed.filename ?? "", hunks: parsed.hunks }]
+    }
+
+    if (typeof parsed?.original === "string" && typeof parsed?.modified === "string") {
+      return [{ path: parsed.filename ?? "", original: parsed.original, modified: parsed.modified }]
+    }
+
+    throw new Error(`Expected {"original", "modified"}, {"hunks"}, or Linter CLI output with an "offenses" array`)
+  }
+
+  private async runDiff(input: string, options: { theme: ThemeInput, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number }): Promise<void> {
+    const { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } = options
+
+    let diffs: { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[]
+
+    try {
+      diffs = this.diffsFrom(JSON.parse(this.readDiffInput(input)))
+    } catch (error) {
+      console.error(`Error parsing diff: ${error instanceof Error ? error.message : error}`)
+      process.exit(1)
+    }
+
+    const highlighter = new Highlighter(theme)
+    await highlighter.initialize()
+
+    const renderOptions = { contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth }
+
+    const rendered = diffs
+      .map(diff => diff.hunks
+        ? highlighter.highlightDiffHunks(diff.path, diff.hunks, renderOptions)
+        : highlighter.highlightDiff(diff.path, diff.original!, diff.modified!, renderOptions))
+      .filter(diff => diff !== "")
+
+    if (rendered.length === 0) {
+      console.error("No differences to render.")
+      process.exit(1)
+    }
+
+    console.log(rendered.join("\n\n"))
+  }
+
   async run() {
-    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
+    const { positionals, diffInput, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
       this.parseArguments()
+
+    if (diffInput !== undefined) {
+      await this.runDiff(diffInput, { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth })
+
+      return
+    }
 
     if (positionals.length === 0) {
       console.error("Please specify an input file.")

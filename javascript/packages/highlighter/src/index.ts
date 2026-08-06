@@ -1,4 +1,6 @@
 export * from "./color.js"
+export * from "./diff-computer.js"
+export * from "./diff-renderer.js"
 export * from "./diagnostic-markers.js"
 export * from "./diagnostic-renderer.js"
 export * from "./file-renderer.js"
