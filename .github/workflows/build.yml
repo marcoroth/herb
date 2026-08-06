@@ -88,5 +88,8 @@ jobs:
       - name: Run C tests
         run: ./run_herb_tests
 
+      - name: Run allocation benchmark
+        run: make bench_allocs
+
       - name: Run valgrind on examples/
         run: ./bin/valgrind_check_examples
