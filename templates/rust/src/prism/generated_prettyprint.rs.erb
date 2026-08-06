@@ -1,0 +1,153 @@
+#[allow(clippy::too_many_arguments)]
+fn prettyprint_body(
+  buffer: &mut SerializationBuffer,
+  type_id: u8,
+  pool: usize,
+  output: &mut String,
+  prefix: &mut String,
+  start_offset: usize,
+  end_offset: usize,
+  newlines: &[usize],
+) {
+  match type_id {
+<%- prism_nodes.each do |prism_node| -%>
+  <%- entries = prism_node.entries -%>
+    <%= prism_node.type_id %> => {
+    <%- if prism_node.name == "DefNode" -%>
+      buffer.read_uint32();
+    <%- end -%>
+      #[allow(unused_variables)]
+      let flags = buffer.read_var_int() as u32;
+      output.push_str(&format!("@ <%= prism_node.name %> (location: {})\n", location_string(start_offset, end_offset, newlines)));
+  <%- entries.each_with_index do |field, position| -%>
+    <%- preadd = position == entries.size - 1 ? "    " : "|   " -%>
+      output.push_str(prefix);
+      output.push_str("+-- <%= field.name %>:");
+
+  <%- case field.type -%>
+  <%- when "__flags" -%>
+      {
+        let mut found = false;
+      <%- (prism_flags[field.name] || []).each_with_index do |value, bit| -%>
+        if flags & (1 << <%= bit + 2 %>) != 0 {
+          if found {
+            output.push(',');
+          }
+
+          output.push_str(" <%= value.downcase %>");
+          found = true;
+        }
+      <%- end -%>
+
+        if !found {
+          output.push_str(" nil");
+        }
+
+        output.push('\n');
+      }
+  <%- when "node" -%>
+      output.push('\n');
+
+      {
+        let saved = prefix.len();
+        prefix.push_str("<%= preadd %>");
+        let copy = prefix.clone();
+        output.push_str(&copy);
+        prettyprint_node(buffer, pool, output, prefix, newlines);
+        prefix.truncate(saved);
+      }
+  <%- when "node?" -%>
+      if buffer.peek_byte() == 0 {
+        buffer.read_byte();
+        output.push_str(" nil\n");
+      } else {
+        output.push('\n');
+        let saved = prefix.len();
+        prefix.push_str("<%= preadd %>");
+        let copy = prefix.clone();
+        output.push_str(&copy);
+        prettyprint_node(buffer, pool, output, prefix, newlines);
+        prefix.truncate(saved);
+      }
+  <%- when "node[]" -%>
+      {
+        let count = buffer.read_var_int();
+        output.push_str(&format!(" (length: {count})\n"));
+
+        for index in 0..count {
+          let saved = prefix.len();
+          prefix.push_str("<%= preadd %>");
+          let copy = prefix.clone();
+          output.push_str(&copy);
+          output.push_str("+-- ");
+          prefix.push_str(if index == count - 1 { "    " } else { "|   " });
+          prettyprint_node(buffer, pool, output, prefix, newlines);
+          prefix.truncate(saved);
+        }
+      }
+  <%- when "string" -%>
+      {
+        let value = buffer.read_string_field(0);
+        output.push_str(&format!(" \"{}\"\n", crate::prism::buffer::escape_ruby(value.as_bytes())));
+      }
+  <%- when "constant" -%>
+      output.push_str(&format!(" :{}\n", buffer.read_required_constant(pool)));
+  <%- when "constant?" -%>
+      match buffer.read_optional_constant(pool) {
+        Some(name) => output.push_str(&format!(" :{name}\n")),
+        None => output.push_str(" nil\n"),
+      }
+  <%- when "constant[]" -%>
+      {
+        let count = buffer.read_var_int();
+        output.push_str(" [");
+
+        for index in 0..count {
+          if index != 0 {
+            output.push_str(", ");
+          }
+
+          output.push_str(&format!(":{}", buffer.read_required_constant(pool)));
+        }
+
+        output.push_str("]\n");
+      }
+
+  <%- when "location" -%>
+      {
+        let (start, length) = buffer.read_location();
+
+        output.push_str(&format!(
+          " {} = \"{}\"\n",
+          location_string(start, start + length, newlines),
+          crate::prism::buffer::escape_ruby(buffer.source_slice(start, length))
+        ));
+      }
+
+  <%- when "location?" -%>
+      match buffer.read_optional_location() {
+        None => output.push_str(" nil\n"),
+        Some((start, length)) => output.push_str(&format!(
+          " {} = \"{}\"\n",
+          location_string(start, start + length, newlines),
+          crate::prism::buffer::escape_ruby(buffer.source_slice(start, length))
+        )),
+      }
+
+  <%- when "uint8" -%>
+      output.push_str(&format!(" {}\n", buffer.read_byte()));
+  <%- when "uint32" -%>
+      output.push_str(&format!(" {}\n", buffer.read_var_int()));
+  <%- when "integer" -%>
+      output.push_str(&format!(" {}\n", buffer.read_integer_string()));
+  <%- when "double" -%>
+      output.push_str(&format!(" {:.6}\n", buffer.read_double()));
+  <%- else -%>
+    <%- raise "unhandled prism field type in prettyprint: #{field.type}" -%>
+  <%- end -%>
+<%- end -%>
+    }
+<%- end -%>
+    _ => {}
+  }
+}
