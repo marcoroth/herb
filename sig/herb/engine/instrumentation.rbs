@@ -1,0 +1,119 @@
+# Generated from lib/herb/engine/instrumentation.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Records which ERB tag is rendering, so that what happens during a render can be attributed
+    # to the tag that caused it. The calls are emitted by `Herb::Engine::InstrumentationVisitor`.
+    #
+    # An instrumented template only ever calls `rendering`, `at`, `enter` and `leave`. What gets
+    # collected is decided at render time, so adding a collector never requires recompiling a
+    # template, and outside of `track` the calls do almost nothing.
+    #
+    #     require "herb/engine/instrumentation"
+    #     require "herb/engine/instrumentation/query_collector"
+    #
+    #     collectors = [Herb::Engine::Instrumentation::QueryCollector.new]
+    #
+    #     report = Herb::Engine::Instrumentation.track(collectors: collectors) { render_the_template }
+    #
+    #     report.each { |entry| puts entry }
+    class Instrumentation
+      class Frame
+        attr_reader filename: String?
+
+        attr_reader line: Integer
+
+        attr_reader column: Integer
+
+        # : (String?, Integer, Integer) -> void
+        def initialize: (String?, Integer, Integer) -> void
+
+        # : () -> [String?, Integer, Integer]
+        def key: () -> [ String?, Integer, Integer ]
+      end
+
+      class Entry
+        attr_reader filename: String?
+
+        attr_reader line: Integer
+
+        attr_reader column: Integer
+
+        attr_reader observations: Hash[Symbol, Array[untyped]]
+
+        # : (String?, Integer, Integer) -> void
+        def initialize: (String?, Integer, Integer) -> void
+
+        # : (Symbol) -> Array[untyped]
+        def []: (Symbol) -> Array[untyped]
+
+        # : (Symbol, untyped) -> void
+        def record: (Symbol, untyped) -> void
+
+        # : () -> Integer
+        def count: () -> Integer
+
+        # : () -> String
+        def to_s: () -> String
+      end
+
+      # Attaches a collector for the life of the process, so that a scope can be opened and
+      # closed without naming its collectors every time.
+      # : (untyped) -> Array[untyped]
+      def self.register: (untyped) -> Array[untyped]
+
+      # : () -> Array[untyped]
+      def self.registered: () -> Array[untyped]
+
+      # : () -> void
+      def self.unregister_all: () -> void
+
+      # Opens a recording scope. Anything left behind by a scope that never finished is
+      # discarded, so a leaked scope heals on the next one rather than growing.
+      # : (?collectors: Array[untyped]) -> void
+      def self.start: (?collectors: Array[untyped]) -> void
+
+      # Closes the scope and returns what was collected.
+      # : () -> Array[untyped]
+      def self.finish: () -> Array[untyped]
+
+      # Sugar over `start` and `finish` for scripts and tests. Collectors passed here are
+      # attached for the duration of the block, on top of anything already registered.
+      # : (?collectors: Array[untyped]) { () -> untyped } -> Array[untyped]
+      def self.track: (?collectors: Array[untyped]) { () -> untyped } -> Array[untyped]
+
+      # : (String?) -> void
+      def self.rendering: (String?) -> void
+
+      # : (String?, Integer, Integer) { () -> untyped } -> untyped
+      def self.at: (String?, Integer, Integer) { () -> untyped } -> untyped
+
+      # : (String?, Integer, Integer) -> void
+      def self.enter: (String?, Integer, Integer) -> void
+
+      # : () -> void
+      def self.leave: () -> void
+
+      # : (Symbol, untyped) -> void
+      def self.record: (Symbol, untyped) -> void
+
+      # : () -> Array[untyped]
+      def self.report: () -> Array[untyped]
+
+      # : () -> Array[untyped]
+      def self.stack: () -> Array[untyped]
+
+      # : () -> bool
+      def self.tracking?: () -> bool
+
+      # A scope belongs to the thread that opened it, so that concurrent requests don't collect
+      # into each other.
+      # : () -> Hash[Symbol, untyped]
+      def self.state: () -> Hash[Symbol, untyped]
+
+      private def self.each_collector: () ?{ (?) -> untyped } -> untyped
+
+      private def self.attached: (untyped collectors) ?{ (?) -> untyped } -> untyped
+    end
+  end
+end

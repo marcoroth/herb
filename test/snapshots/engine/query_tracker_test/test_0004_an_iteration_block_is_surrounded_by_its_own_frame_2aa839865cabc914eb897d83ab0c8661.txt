@@ -1,8 +1,0 @@
----
-source: "Engine::QueryTrackerTest#test_0004_an iteration block is surrounded by its own frame"
-input: "{source: \"<% items.each do |item| %><%= item %><% end %>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
----
-_buf = ::String.new; ::Herb::Engine::QueryTracker.enter("index.html.erb", 1, 0) 
- items.each do |item| 
- _buf << (::Herb::Engine::QueryTracker.at("index.html.erb", 1, 26) { item }).to_s; end; ::Herb::Engine::QueryTracker.leave;
-_buf.to_s

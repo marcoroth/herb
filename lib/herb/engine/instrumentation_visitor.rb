@@ -4,18 +4,18 @@ require_relative "../../herb"
 
 module Herb
   class Engine
-    # Wraps every ERB tag in a call that records which tag is rendering, so that queries can be
-    # attributed to the exact tag that caused them.
+    # Wraps every ERB tag in a call that records which tag is rendering, so that what happens
+    # during a render can be attributed to the exact tag that caused it.
     #
-    # This visitor is not loaded by default and only rewrites the AST. Reporting is left to
-    # `Herb::Engine::QueryTracker`, which is what actually subscribes to the queries.
+    # This visitor is not loaded by default and only rewrites the AST. What gets collected is a
+    # render time decision, see `Herb::Engine::Instrumentation`.
     #
-    #     require "herb/engine/query_tracker_visitor"
+    #     require "herb/engine/instrumentation_visitor"
     #
-    #     Herb::Engine.new(source, visitors: [Herb::Engine::QueryTrackerVisitor.new])
+    #     Herb::Engine.new(source, visitors: [Herb::Engine::InstrumentationVisitor.new])
     #
-    class QueryTrackerVisitor < Herb::Visitor
-      TRACKER = "::Herb::Engine::QueryTracker"
+    class InstrumentationVisitor < Herb::Visitor
+      INSTRUMENTATION = "::Herb::Engine::Instrumentation"
 
       ARRAY_PROPERTIES = [:children, :body, :statements].freeze
       NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze
@@ -30,6 +30,8 @@ module Herb
 
       self.experimental_warning_issued = false
 
+      attr_accessor :filename #: String?
+
       #: (?filename: String?) -> void
       def initialize(filename: nil)
         super()
@@ -40,13 +42,14 @@ module Herb
 
         self.class.experimental_warning_issued = true
 
-        warn "[Herb] The Query Tracker is experimental. It instruments every ERB tag and is not meant for production."
+        warn "[Herb] Instrumentation is experimental. It instruments every ERB tag and is not meant for production."
       end
 
       def visit_document_node(node)
         super
 
         instrument(node)
+        announce(node)
       end
 
       #: () -> String
@@ -68,6 +71,12 @@ module Herb
 
           instrument(node.send(property))
         end
+      end
+
+      def announce(node)
+        return unless node.respond_to?(:children) && node.children.is_a?(Array)
+
+        node.children.unshift(erb_node(node, "<%", "#{INSTRUMENTATION}.rendering(#{filename_literal})"))
       end
 
       def rewrite(nodes)
@@ -118,26 +127,31 @@ module Herb
       end
 
       def wrapped_output(node)
-        erb_node(node, "<%=", "#{TRACKER}.at(#{position(node)}) { #{code(node)} }")
+        erb_node(node, "<%=", "#{INSTRUMENTATION}.at(#{position(node)}) { #{code(node)} }")
       end
 
       def wrapped_statement(node)
-        erb_node(node, "<%", "#{TRACKER}.enter(#{position(node)}); #{code(node)}; #{TRACKER}.leave")
+        erb_node(node, "<%", "#{INSTRUMENTATION}.enter(#{position(node)}); #{code(node)}; #{INSTRUMENTATION}.leave")
       end
 
       def enter_node(node)
-        erb_node(node, "<%", "#{TRACKER}.enter(#{position(node)})")
+        erb_node(node, "<%", "#{INSTRUMENTATION}.enter(#{position(node)})")
       end
 
       def leave_node(node)
-        erb_node(node, "<%", "#{TRACKER}.leave")
+        erb_node(node, "<%", "#{INSTRUMENTATION}.leave")
       end
 
       #: (Herb::AST::Node) -> String
       def position(node)
         location = node.location
 
-        [@filename&.dump || "nil", location.start.line, location.start.column].join(", ")
+        [filename_literal, location.start.line, location.start.column].join(", ")
+      end
+
+      #: () -> String
+      def filename_literal
+        filename&.dump || "nil"
       end
 
       #: (Herb::AST::Node) -> String

@@ -1,0 +1,9 @@
+---
+source: "Engine::InstrumentationTest#test_0008_a template without a filename still records positions"
+input: "{source: \"<%= title %>\", options: {escape: false, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("unknown") 
+ _buf << (::Herb::Engine::Instrumentation.at("unknown", 1, 0) {
+title
+}).to_s;
+_buf.to_s

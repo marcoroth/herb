@@ -1,0 +1,7 @@
+---
+source: "Engine::InstrumentationTest#test_0001_the template announces itself"
+input: "{source: \"<div>static</div>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ _buf << '<div>static</div>'.freeze;
+_buf.to_s

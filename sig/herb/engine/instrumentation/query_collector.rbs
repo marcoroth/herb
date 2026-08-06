@@ -1,0 +1,33 @@
+# Generated from lib/herb/engine/instrumentation/query_collector.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Instrumentation
+      class QueryCollector
+        EVENT: ::String
+
+        KEY: ::Symbol
+
+        IGNORED_NAMES: untyped
+
+        # With a block the subscription lasts for the block, which is what `track` uses. Without
+        # one it lasts until `detach`, which is what `register` uses.
+        # : () ?{ () -> untyped } -> untyped
+        def attach: () ?{ () -> untyped } -> untyped
+
+        # : () -> void
+        def detach: () -> void
+
+        # : (*untyped) -> void
+        def handle_event: (*untyped) -> void
+
+        private
+
+        # : () -> void
+        def subscribe: () -> void
+
+        def notifications: () -> untyped
+      end
+    end
+  end
+end

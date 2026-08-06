@@ -1,6 +1,0 @@
----
-source: "Engine::QueryTrackerTest#test_0007_html around the tags is untouched"
-input: "{source: \"<div><%= title %></div>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
----
-_buf = ::String.new; _buf << '<div>'.freeze; _buf << (::Herb::Engine::QueryTracker.at("index.html.erb", 1, 5) { title }).to_s; _buf << '</div>'.freeze;
-_buf.to_s

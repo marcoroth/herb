@@ -1,0 +1,11 @@
+---
+source: "Engine::InstrumentationTest#test_0006_a conditional is surrounded by its own frame"
+input: "{source: \"<% if admin? %><%= secret %><% end %>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ ::Herb::Engine::Instrumentation.enter("index.html.erb", 1, 0) 
+ if admin? 
+ _buf << (::Herb::Engine::Instrumentation.at("index.html.erb", 1, 15) {
+secret
+}).to_s; end; ::Herb::Engine::Instrumentation.leave;
+_buf.to_s

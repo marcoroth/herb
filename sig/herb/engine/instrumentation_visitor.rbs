@@ -1,18 +1,18 @@
-# Generated from lib/herb/engine/query_tracker_visitor.rb with RBS::Inline
+# Generated from lib/herb/engine/instrumentation_visitor.rb with RBS::Inline
 
 module Herb
   class Engine
-    # Wraps every ERB tag in a call that records which tag is rendering, so that queries can be
-    # attributed to the exact tag that caused them.
+    # Wraps every ERB tag in a call that records which tag is rendering, so that what happens
+    # during a render can be attributed to the exact tag that caused it.
     #
-    # This visitor is not loaded by default and only rewrites the AST. Reporting is left to
-    # `Herb::Engine::QueryTracker`, which is what actually subscribes to the queries.
+    # This visitor is not loaded by default and only rewrites the AST. What gets collected is a
+    # render time decision, see `Herb::Engine::Instrumentation`.
     #
-    #     require "herb/engine/query_tracker_visitor"
+    #     require "herb/engine/instrumentation_visitor"
     #
-    #     Herb::Engine.new(source, visitors: [Herb::Engine::QueryTrackerVisitor.new])
-    class QueryTrackerVisitor < Herb::Visitor
-      TRACKER: ::String
+    #     Herb::Engine.new(source, visitors: [Herb::Engine::InstrumentationVisitor.new])
+    class InstrumentationVisitor < Herb::Visitor
+      INSTRUMENTATION: ::String
 
       ARRAY_PROPERTIES: untyped
 
@@ -23,6 +23,10 @@ module Herb
       def self.experimental_warning_issued=: (bool) -> bool
 
       attr_accessor experimental_warning_issued: bool
+
+      # The engine sets this before the visitor runs, so that a single instance can be shared
+      # across templates.
+      attr_accessor filename: String?
 
       # : (?filename: String?) -> void
       def initialize: (?filename: String?) -> void
@@ -35,6 +39,10 @@ module Herb
       private
 
       def instrument: (untyped node) -> untyped
+
+      # Every instrumented template announces itself, so that a collector can pair what a tag
+      # asked for with what actually rendered.
+      def announce: (untyped node) -> untyped
 
       def rewrite: (untyped nodes) -> untyped
 
@@ -60,6 +68,9 @@ module Herb
 
       # : (Herb::AST::Node) -> String
       def position: (Herb::AST::Node) -> String
+
+      # : () -> String
+      def filename_literal: () -> String
 
       # : (Herb::AST::Node) -> String
       def code: (Herb::AST::Node) -> String

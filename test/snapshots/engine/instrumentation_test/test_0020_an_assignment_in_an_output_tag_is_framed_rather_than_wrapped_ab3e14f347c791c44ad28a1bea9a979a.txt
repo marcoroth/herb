@@ -1,0 +1,8 @@
+---
+source: "Engine::InstrumentationTest#test_0020_an assignment in an output tag is framed rather than wrapped"
+input: "{source: \"<%= total = items.sum %>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ ::Herb::Engine::Instrumentation.enter("index.html.erb", 1, 0) 
+ _buf << (total = items.sum).to_s; ::Herb::Engine::Instrumentation.leave;
+_buf.to_s

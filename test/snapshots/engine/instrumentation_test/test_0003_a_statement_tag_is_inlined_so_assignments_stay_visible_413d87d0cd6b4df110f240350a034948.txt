@@ -1,0 +1,9 @@
+---
+source: "Engine::InstrumentationTest#test_0003_a statement tag is inlined so assignments stay visible"
+input: "{source: \"<% total = items.sum %>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ ::Herb::Engine::Instrumentation.enter("index.html.erb", 1, 0); begin
+total = items.sum
+ensure; ::Herb::Engine::Instrumentation.leave; end 
+_buf.to_s

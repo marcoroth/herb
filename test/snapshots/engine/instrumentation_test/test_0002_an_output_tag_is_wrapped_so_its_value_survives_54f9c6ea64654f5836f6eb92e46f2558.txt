@@ -1,0 +1,9 @@
+---
+source: "Engine::InstrumentationTest#test_0002_an output tag is wrapped so its value survives"
+input: "{source: \"<%= user.name %>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ _buf << (::Herb::Engine::Instrumentation.at("index.html.erb", 1, 0) {
+user.name
+}).to_s;
+_buf.to_s

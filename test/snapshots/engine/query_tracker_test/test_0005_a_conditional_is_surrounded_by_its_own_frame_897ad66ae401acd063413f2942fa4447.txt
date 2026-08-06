@@ -1,8 +1,0 @@
----
-source: "Engine::QueryTrackerTest#test_0005_a conditional is surrounded by its own frame"
-input: "{source: \"<% if admin? %><%= secret %><% end %>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
----
-_buf = ::String.new; ::Herb::Engine::QueryTracker.enter("index.html.erb", 1, 0) 
- if admin? 
- _buf << (::Herb::Engine::QueryTracker.at("index.html.erb", 1, 15) { secret }).to_s; end; ::Herb::Engine::QueryTracker.leave;
-_buf.to_s

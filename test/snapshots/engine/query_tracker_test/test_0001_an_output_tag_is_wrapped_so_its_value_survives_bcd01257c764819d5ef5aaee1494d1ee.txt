@@ -1,6 +1,0 @@
----
-source: "Engine::QueryTrackerTest#test_0001_an output tag is wrapped so its value survives"
-input: "{source: \"<%= user.name %>\", options: {escape: false, parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::QueryTrackerVisitor>]}}"
----
-_buf = ::String.new; _buf << (::Herb::Engine::QueryTracker.at("index.html.erb", 1, 0) { user.name }).to_s;
-_buf.to_s

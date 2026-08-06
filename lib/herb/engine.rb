@@ -156,6 +156,8 @@ module Herb
         end
 
         @visitors.each do |visitor|
+          visitor.filename = @relative_file_path if visitor.respond_to?(:filename=)
+
           ast.accept(visitor)
         end
 

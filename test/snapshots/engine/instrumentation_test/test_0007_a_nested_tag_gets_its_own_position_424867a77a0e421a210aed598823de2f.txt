@@ -1,0 +1,13 @@
+---
+source: "Engine::InstrumentationTest#test_0007_a nested tag gets its own position"
+input: "{source: \"<% users.each do |user| %>\\n  <%= user.name %>\\n<% end %>\", options: {escape: false, filename: \"index.html.erb\", parser_options: {iteration_nodes: true}, visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
+---
+_buf = ::String.new; ::Herb::Engine::Instrumentation.rendering("index.html.erb") 
+ ::Herb::Engine::Instrumentation.enter("index.html.erb", 1, 0) 
+ users.each do |user| 
+ _buf << '  '.freeze; _buf << (::Herb::Engine::Instrumentation.at("index.html.erb", 2, 2) {
+user.name
+}).to_s; _buf << '
+'.freeze; end 
+ ::Herb::Engine::Instrumentation.leave 
+_buf.to_s
