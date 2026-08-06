@@ -6,7 +6,7 @@ gemspec
 
 gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
-gem "actionview", "~> 8.1"
+gem "actionview", "~> 8.1", require: "action_view"
 gem "benchmark"
 gem "charm"
 gem "cruise"
@@ -25,7 +25,7 @@ gem "reactionview", "~> 0.3.0"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
-gem "turbo-rails", "~> 2.0"
+gem "turbo-rails", "~> 2.0", require: false
 gem "yerba", "~> 0.9"
 
 # TODO: remove once https://github.com/soutaro/steep/pull/2255 ships
