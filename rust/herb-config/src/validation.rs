@@ -69,6 +69,21 @@ pub fn validate_config_text(text: &str, options: &ValidateOptions) -> Vec<Config
     }
   };
 
+  if let Err(error) = parsed.apply_merge() {
+    errors.push(ConfigValidationError {
+      message: error.to_string(),
+      path: Vec::new(),
+      code: "yaml_merge_key_error".to_string(),
+      severity: Some(ValidationSeverity::Error),
+      line: None,
+      column: None,
+    });
+
+    return errors;
+  }
+
+  crate::merge::strip_anchor_definitions(&mut parsed);
+
   if parsed.is_null() {
     parsed = serde_yaml::Value::Mapping(Default::default());
   }

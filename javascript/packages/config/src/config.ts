@@ -123,6 +123,36 @@ export type FromObjectOptions = {
   configVersion?: string
 }
 
+export const ANCHOR_DEFINITION_PREFIX = "x-"
+
+/**
+ * Remove top-level keys that only exist to hold YAML anchors.
+ *
+ * Anchors have to be declared somewhere before they can be aliased. Keys
+ * prefixed with `x-` are reserved for that and are not validated as config:
+ *
+ * ```yaml
+ * x-defaults: &defaults
+ *   enabled: false
+ *
+ * formatter:
+ *   <<: *defaults
+ * ```
+ */
+function stripAnchorDefinitions(parsed: any): any {
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return parsed
+  }
+
+  for (const key of Object.keys(parsed)) {
+    if (key.startsWith(ANCHOR_DEFINITION_PREFIX)) {
+      delete parsed[key]
+    }
+  }
+
+  return parsed
+}
+
 export class Config {
   static configPath = ".herb.yml"
 
@@ -1151,7 +1181,7 @@ export class Config {
     let parsed: any
 
     try {
-      parsed = parse(text)
+      parsed = stripAnchorDefinitions(parse(text, { merge: true }))
     } catch (error: any) {
       let line: number | undefined
       let column: number | undefined
@@ -1222,7 +1252,7 @@ export class Config {
     let parsed: any
 
     try {
-      parsed = parse(content)
+      parsed = stripAnchorDefinitions(parse(content, { merge: true }))
     } catch (error) {
       if (exitOnError) {
         console.error(`\n✗ Invalid YAML syntax in ${configPath}`)

@@ -1620,6 +1620,55 @@ describe("@herb-tools/config", () => {
     })
   })
 
+  describe("YAML merge keys", () => {
+    test("merges a mapping that uses a merge key", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        linter:
+          rules:
+            html-tag-name-lowercase: &disabled
+              enabled: false
+            html-no-self-closing:
+              <<: *disabled
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isRuleDisabled("html-tag-name-lowercase")).toBe(true)
+      expect(config.isRuleDisabled("html-no-self-closing")).toBe(true)
+    })
+  })
+
+  describe("anchor definition keys", () => {
+    test("ignores `x-` prefixed keys used to declare anchors", async () => {
+      createTestFile(testDir, ".herb.yml", dedent`
+        version: 0.10.3
+
+        x-defaults: &defaults
+          enabled: false
+
+        formatter:
+          <<: *defaults
+          indentWidth: 2
+      `)
+
+      const config = await Config.load(testDir, { version: "0.10.3", silent: true })
+
+      expect(config.isFormatterEnabled).toBe(false)
+      expect(config.config.formatter?.indentWidth).toBe(2)
+      expect((config.config as any)["x-defaults"]).toBeUndefined()
+    })
+
+    test("still rejects unknown top-level keys without the prefix", async () => {
+      createTestFile(testDir, ".herb.yml", "version: 0.10.3\ndefaults: true\n")
+
+      await expect(
+        Config.load(testDir, { version: "0.10.3", silent: true })
+      ).rejects.toThrow()
+    })
+  })
+
   describe("version skew", () => {
     const invalidForOlderVersions = dedent`
       version: 0.10.3

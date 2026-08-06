@@ -440,6 +440,56 @@ Result for linter:
 If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
 :::
 
+## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />
+
+`.herb.yml` supports YAML anchors (`&name`), aliases (`*name`), and merge keys (`<<:`), which are useful when the same block is repeated across rules or tools.
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    html-tag-name-lowercase: &disabled
+      enabled: false
+
+    html-no-self-closing:
+      <<: *disabled
+```
+
+An anchor has to be declared before it can be aliased. To declare one without attaching it to a real setting, use a top-level key prefixed with `x-`. These keys are ignored when the configuration is validated:
+
+```yaml [.herb.yml]
+x-strict: &strict
+  enabled: true
+  severity: error
+
+linter:
+  rules:
+    html-no-event-handlers:
+      <<: *strict
+
+    html-no-duplicate-ids:
+      <<: *strict
+```
+
+Keys declared locally still win over merged ones, so a merged block can be overridden per rule:
+
+```yaml [.herb.yml]
+x-strict: &strict
+  enabled: true
+  severity: error
+
+linter:
+  rules:
+    html-no-event-handlers:
+      <<: *strict
+      severity: warning # overrides the merged `error`
+```
+
+::: warning Editing aliased values
+Commands that write to `.herb.yml`, such as the VS Code settings commands and `herb lint --disable`, change the value in place. If that value carries an anchor, every key aliasing it changes too. Herb reports the affected keys when this happens.
+:::
+
+Top-level keys that are not prefixed with `x-` are still validated, so a typo like `linterr:` is reported rather than silently ignored.
+
 ## Inspecting Configuration
 
 Use the `bundle exec herb config` command to inspect the resolved configuration and see which files will be processed:

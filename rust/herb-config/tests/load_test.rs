@@ -242,3 +242,85 @@ files:
   assert!(files.exclude.as_ref().unwrap().contains(&"**/*.custom.erb".to_string()));
   assert!(files.exclude.as_ref().unwrap().contains(&"**/*.other.erb".to_string()));
 }
+
+#[test]
+fn load_supports_yaml_merge_keys() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(
+    dir.path().join(".herb.yml"),
+    r#"
+version: 0.10.3
+linter:
+  rules: &rules
+    html-tag-name-lowercase:
+      enabled: false
+formatter:
+  enabled: false
+  indentWidth: 4
+"#,
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+
+  assert!(config.is_rule_disabled("html-tag-name-lowercase"));
+  assert!(!config.is_formatter_enabled());
+}
+
+#[test]
+fn load_merges_a_mapping_that_uses_a_merge_key() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(
+    dir.path().join(".herb.yml"),
+    r#"
+version: 0.10.3
+linter:
+  rules:
+    html-tag-name-lowercase: &disabled
+      enabled: false
+    html-no-self-closing:
+      <<: *disabled
+"#,
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+
+  assert!(config.is_rule_disabled("html-tag-name-lowercase"));
+  assert!(config.is_rule_disabled("html-no-self-closing"));
+}
+
+#[test]
+fn load_ignores_anchor_definition_keys() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(
+    dir.path().join(".herb.yml"),
+    r#"
+version: 0.10.3
+x-defaults: &defaults
+  enabled: false
+formatter:
+  <<: *defaults
+  indentWidth: 2
+"#,
+  )
+  .unwrap();
+
+  let config = Config::load(dir.path(), None).unwrap();
+
+  assert!(!config.is_formatter_enabled());
+  assert_eq!(config.formatter().unwrap().indent_width, Some(2));
+}
+
+#[test]
+fn load_still_rejects_unknown_top_level_keys() {
+  let dir = tempfile::tempdir().unwrap();
+  let config_path = dir.path().join(".herb.yml");
+
+  fs::write(&config_path, "version: 0.10.3\ndefaults: true\n").unwrap();
+
+  assert!(Config::load(&config_path, None).is_err());
+}
