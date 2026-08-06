@@ -9,6 +9,7 @@ import { Highlighter } from "./highlighter.js"
 import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
+import { parseUnifiedDiff } from "./diff-computer.js"
 
 import type { DiffHunk } from "./diff-computer.js"
 import type { ThemeInput } from "./themes.js"
@@ -35,12 +36,16 @@ export class CLI {
       --max-width      maximum width for line wrapping/truncation [default: terminal width]
       --diagnostics    JSON string or file path containing diagnostics to render
       --split-diagnostics  render each diagnostic individually (requires --diagnostics)
-      --diff           JSON string, file path, or - for stdin, containing a diff to render
+      --diff           render a diff instead of a file, read from the argument or from stdin
 
-    Diff input accepts {"original": "...", "modified": "..."}, {"hunks": [...]}, or the
-    Linter CLI's own output, so its autocorrections can be piped straight in:
+    The diff is taken from the argument after --diff, which may be a JSON string or a file
+    path, and otherwise from stdin:
 
-      herb-lint --json --show-fix-diff | herb-highlight --diff -
+      git diff -- app/views | herb-highlight --diff
+      herb-highlight --diff fix.json
+
+    It accepts unified diff text as produced by \`git diff\`, or JSON as
+    {"original": "...", "modified": "..."} or {"hunks": [...]}
       `
 
   private parseArguments() {
@@ -59,7 +64,7 @@ export class CLI {
         "max-width": { type: "string" },
         "diagnostics": { type: "string" },
         "split-diagnostics": { type: "boolean" },
-        "diff": { type: "string" },
+        "diff": { type: "boolean" },
       },
       allowPositionals: true,
     })
@@ -178,7 +183,7 @@ export class CLI {
     return {
       values,
       positionals,
-      diffInput: values["diff"],
+      diffMode: values["diff"] === true,
       theme,
       focusLine,
       contextLines,
@@ -191,20 +196,22 @@ export class CLI {
     }
   }
 
-  private readDiffInput(input: string): string {
-    if (input === "-") return readFileSync(0, "utf-8")
+  private readDiffInput(input: string | undefined): string {
+    if (input === undefined || input === "-") {
+      if (input === undefined && process.stdin.isTTY) {
+        console.error("Error: --diff needs a JSON string, a file path, or input piped in on stdin.")
+        process.exit(1)
+      }
+
+      return readFileSync(0, "utf-8")
+    }
+
     if (input.trimStart().startsWith("{") || input.trimStart().startsWith("[")) return input
 
     return readFileSync(resolve(input), "utf-8")
   }
 
   private diffsFrom(parsed: any): { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[] {
-    if (Array.isArray(parsed?.offenses)) {
-      return parsed.offenses
-        .filter((offense: any) => offense?.autofix?.hunks?.length)
-        .map((offense: any) => ({ path: offense.filename ?? "", hunks: offense.autofix.hunks }))
-    }
-
     if (Array.isArray(parsed?.hunks)) {
       return [{ path: parsed.filename ?? "", hunks: parsed.hunks }]
     }
@@ -213,16 +220,23 @@ export class CLI {
       return [{ path: parsed.filename ?? "", original: parsed.original, modified: parsed.modified }]
     }
 
-    throw new Error(`Expected {"original", "modified"}, {"hunks"}, or Linter CLI output with an "offenses" array`)
+    throw new Error(`Expected {"original", "modified"} or {"hunks"}`)
   }
 
-  private async runDiff(input: string, options: { theme: ThemeInput, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number }): Promise<void> {
+  private async runDiff(input: string | undefined, options: { theme: ThemeInput, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number }): Promise<void> {
     const { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } = options
 
     let diffs: { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[]
 
     try {
-      diffs = this.diffsFrom(JSON.parse(this.readDiffInput(input)))
+      const text = this.readDiffInput(input)
+      const trimmed = text.trimStart()
+
+      diffs = trimmed.startsWith("{") || trimmed.startsWith("[")
+        ? this.diffsFrom(JSON.parse(text))
+        : parseUnifiedDiff(text)
+
+      if (diffs.length === 0) throw new Error(`Found no hunks. Expected JSON, or unified diff text as produced by \`git diff\``)
     } catch (error) {
       console.error(`Error parsing diff: ${error instanceof Error ? error.message : error}`)
       process.exit(1)
@@ -248,11 +262,11 @@ export class CLI {
   }
 
   async run() {
-    const { positionals, diffInput, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
+    const { positionals, diffMode, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
       this.parseArguments()
 
-    if (diffInput !== undefined) {
-      await this.runDiff(diffInput, { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth })
+    if (diffMode) {
+      await this.runDiff(positionals[0], { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth })
 
       return
     }

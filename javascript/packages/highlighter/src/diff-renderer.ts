@@ -86,7 +86,7 @@ export class DiffRenderer {
    * Render hunks without the sources they came from, reconstructing each side from the line
    * contents the hunks carry.
    *
-   * Use this for hunks that arrived over a wire, such as the Linter CLI's JSON output. Each
+   * Use this for hunks that arrived over a wire or were parsed from a unified diff. Each
    * side is highlighted as a standalone block, so a hunk that begins part-way through a tag
    * may lex slightly differently than it would with the whole file in hand.
    *

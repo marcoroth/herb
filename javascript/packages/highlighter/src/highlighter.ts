@@ -231,7 +231,7 @@ export class Highlighter {
   }
 
   /**
-   * Render pre-computed diff hunks, such as those in the Linter CLI's JSON output
+   * Render pre-computed diff hunks
    * @param path - File path shown above the diff (display only)
    * @param hunks - The hunks to render
    * @param options - Optional configuration

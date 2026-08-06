@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import dedent from "dedent"
 
-import { computeDiffHunks, computeInlineRanges } from "../src/diff-computer.js"
+import { computeDiffHunks, computeInlineRanges, parseUnifiedDiff } from "../src/diff-computer.js"
 
 describe("computeDiffHunks", () => {
   it("returns no hunks for identical sources", () => {
@@ -138,5 +138,104 @@ describe("computeInlineRanges", () => {
     const long = "a".repeat(600)
 
     expect(computeInlineRanges(long, `${long}b`)).toEqual({ removed: [], added: [] })
+  })
+})
+
+describe("parseUnifiedDiff", () => {
+  const gitDiff = dedent`
+    diff --git a/app/views/gems/index.html.erb b/app/views/gems/index.html.erb
+    index 1a2b3c4..5d6e7f8 100644
+    --- a/app/views/gems/index.html.erb
+    +++ b/app/views/gems/index.html.erb
+    @@ -1,4 +1,4 @@
+     <div id="gems">
+    -  <span class='card'>x</span>
+    +  <span class="card">x</span>
+     </div>
+  `
+
+  it("reads the path and the hunk out of git diff output", () => {
+    const files = parseUnifiedDiff(gitDiff)
+
+    expect(files).toHaveLength(1)
+    expect(files[0].path).toBe("app/views/gems/index.html.erb")
+    expect(files[0].hunks[0].lines).toEqual([
+      { type: "context", content: `<div id="gems">`, oldLineNumber: 1, newLineNumber: 1 },
+      { type: "removed", content: `  <span class='card'>x</span>`, oldLineNumber: 2, newLineNumber: null },
+      { type: "added", content: `  <span class="card">x</span>`, oldLineNumber: null, newLineNumber: 2 },
+      { type: "context", content: "</div>", oldLineNumber: 3, newLineNumber: 3 },
+    ])
+  })
+
+  it("carries the line numbers from the hunk header", () => {
+    const [file] = parseUnifiedDiff(dedent`
+      --- a/x.erb
+      +++ b/x.erb
+      @@ -40,3 +58,3 @@
+       <div>
+      -  old
+      +  new
+    `)
+
+    expect(file.hunks[0].oldStart).toBe(40)
+    expect(file.hunks[0].newStart).toBe(58)
+    expect(file.hunks[0].lines.map(line => [line.oldLineNumber, line.newLineNumber])).toEqual([
+      [40, 58],
+      [41, null],
+      [null, 59],
+    ])
+  })
+
+  it("keeps each file of a multi-file diff separate", () => {
+    const files = parseUnifiedDiff(dedent`
+      --- a/one.erb
+      +++ b/one.erb
+      @@ -1 +1 @@
+      -<P>a</P>
+      +<p>a</p>
+      --- a/two.erb
+      +++ b/two.erb
+      @@ -1 +1 @@
+      -<B>b</B>
+      +<b>b</b>
+    `)
+
+    expect(files.map(file => file.path)).toEqual(["one.erb", "two.erb"])
+    expect(files.every(file => file.hunks.length === 1)).toBe(true)
+  })
+
+  it("handles several hunks in one file", () => {
+    const [file] = parseUnifiedDiff(dedent`
+      --- a/x.erb
+      +++ b/x.erb
+      @@ -1,2 +1,2 @@
+      -<a>
+      +<A>
+       <p>
+      @@ -20,2 +20,2 @@
+      -<b>
+      +<B>
+       <q>
+    `)
+
+    expect(file.hunks).toHaveLength(2)
+    expect(file.hunks[1].oldStart).toBe(20)
+  })
+
+  it("skips the no-newline marker rather than treating it as content", () => {
+    const [file] = parseUnifiedDiff(dedent`
+      --- a/x.erb
+      +++ b/x.erb
+      @@ -1 +1 @@
+      -<p>a</p>
+      \\ No newline at end of file
+      +<p>b</p>
+    `)
+
+    expect(file.hunks[0].lines.map(line => line.type)).toEqual(["removed", "added"])
+  })
+
+  it("returns nothing for text that holds no hunks", () => {
+    expect(parseUnifiedDiff("just some prose\nwith no diff in it")).toEqual([])
   })
 })

@@ -60,6 +60,12 @@ Focus on line 10 and show 3 lines before and after:
 herb-highlight app/views/users/show.html.erb --focus=10 --context-lines=3
 ```
 
+Render a `git diff`, piped in on stdin:
+
+```bash
+git diff -- app/views | herb-highlight --diff
+```
+
 Render a diff, passed as a JSON string:
 
 ```bash
@@ -70,12 +76,6 @@ Render a diff from a file:
 
 ```bash
 herb-highlight --diff fix.json
-```
-
-Render the Linter's autocorrections, piped in through stdin:
-
-```bash
-herb-lint --json --show-fix-diff | herb-highlight --diff -
 ```
 
 ## Usage
@@ -96,7 +96,7 @@ highlighter.highlight(
 
 ## Rendering a Diff
 
-`highlightDiff` renders the change between two sources as a syntax-highlighted diff, with the characters that actually changed picked out within each line. It is what the Linter CLI uses to preview an autocorrection.
+`highlightDiff` renders the change between two sources as a syntax-highlighted diff, with the characters that actually changed picked out within each line.
 
 ```typescript
 highlighter.highlightDiff(
@@ -115,12 +115,12 @@ filename.html.erb
 
 The line number column refers to the original source throughout, so it stays monotonic even when a fix changes the line count. Added lines have no counterpart there and are left blank.
 
-## Rendering a Diff from JSON
+## Rendering a Diff That Came From Elsewhere
 
-`highlightDiffHunks` renders hunks that arrived without their sources, and the CLI exposes the same thing through `--diff`, which takes a JSON string, a file path, or `-` for stdin. It accepts `{"original": "...", "modified": "..."}`, `{"hunks": [...]}`, or the Linter CLI's own output, so autocorrections can be piped straight through:
+`highlightDiffHunks` renders hunks that arrived without their sources, and the CLI exposes the same thing through `--diff`, which takes a JSON string, a file path, or `-` for stdin. It accepts unified diff text as produced by `git diff`, along with `{"original": "...", "modified": "..."}` and `{"hunks": [...]}`:
 
 ```bash
-echo '{"original": "<span class=\'a\'>", "modified": "<span class=\"a\">"}' | herb-highlight --diff -
+git diff -- app/views | herb-highlight --diff
 ```
 
 ## Configuration Options
