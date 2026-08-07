@@ -60,3 +60,11 @@ pub fn leading_whitespace_length(content: &str) -> usize {
 pub fn trailing_whitespace_length(content: &str) -> usize {
   content.len() - content.trim_end().len()
 }
+
+pub fn is_output_render(node: &herb::nodes::ERBRenderNode) -> bool {
+  node
+    .tag_opening
+    .as_ref()
+    .map(|token| token.value == "<%=" || token.value == "<%==")
+    .unwrap_or(false)
+}

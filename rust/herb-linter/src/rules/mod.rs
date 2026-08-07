@@ -7,16 +7,21 @@ pub mod a11y_no_aria_unsupported_elements;
 pub mod a11y_no_autofocus_attribute;
 pub mod a11y_no_redundant_image_alt;
 pub mod a11y_svg_has_accessible_text;
+pub mod actionview_no_dynamic_partial_path;
 pub mod actionview_no_helper_shadowing;
+pub mod actionview_no_implicit_partial;
 pub mod actionview_no_implicit_polymorphic_url;
 pub mod actionview_no_redundant_local_assigns;
+pub mod actionview_no_render_option_shadowing;
 pub mod actionview_no_silent_helper;
 pub mod actionview_no_silent_render;
+pub mod actionview_no_strict_locals_error;
 pub mod actionview_no_unnecessary_html_safe;
 pub mod actionview_no_unnecessary_tag_attributes;
 pub mod actionview_no_unused_strict_locals;
 pub mod actionview_no_void_element_content;
 pub mod actionview_prefer_collection_render;
+pub mod actionview_prefer_qualified_partial_path;
 pub mod actionview_strict_locals_first_line;
 pub mod actionview_strict_locals_partial_only;
 pub mod erb_comment_syntax;
@@ -51,6 +56,7 @@ pub mod erb_no_unsafe_script_interpolation;
 pub mod erb_no_unused_block_argument;
 pub mod erb_no_unused_expressions;
 pub mod erb_no_unused_literals;
+pub mod erb_no_unused_local_variable;
 pub mod erb_prefer_direct_output;
 pub mod erb_prefer_do_end_blocks;
 pub mod erb_prefer_each_over_map;
@@ -95,11 +101,15 @@ pub mod html_no_duplicate_ids;
 pub mod html_no_duplicate_meta_names;
 pub mod html_no_empty_attributes;
 pub mod html_no_empty_headings;
+pub mod html_no_event_handler_attributes;
+pub mod html_no_inline_script_elements;
 pub mod html_no_nested_forms;
 pub mod html_no_nested_links;
 pub mod html_no_positive_tab_index;
 pub mod html_no_self_closing;
 pub mod html_no_space_in_tag;
+pub mod html_no_style_attributes;
+pub mod html_no_style_elements;
 pub mod html_no_title_attribute;
 pub mod html_no_underscores_in_attribute_names;
 pub mod html_no_unescaped_entities;
@@ -243,5 +253,15 @@ pub fn all_rules() -> Vec<AnyRule> {
     parser_rule!(erb_no_unused_literals::ERBNoUnusedLiteralsRule),
     parser_rule!(erb_no_unused_block_argument::ERBNoUnusedBlockArgumentRule),
     parser_rule!(erb_no_unused_expressions::ERBNoUnusedExpressionsRule),
+    parser_rule!(html_no_event_handler_attributes::HTMLNoEventHandlerAttributesRule),
+    parser_rule!(html_no_inline_script_elements::HTMLNoInlineScriptElementsRule),
+    parser_rule!(html_no_style_attributes::HTMLNoStyleAttributesRule),
+    parser_rule!(html_no_style_elements::HTMLNoStyleElementsRule),
+    parser_rule!(actionview_no_dynamic_partial_path::ActionViewNoDynamicPartialPathRule),
+    parser_rule!(actionview_no_implicit_partial::ActionViewNoImplicitPartialRule),
+    parser_rule!(actionview_no_render_option_shadowing::ActionViewNoRenderOptionShadowingRule),
+    parser_rule!(erb_no_unused_local_variable::ERBNoUnusedLocalVariableRule),
+    parser_rule!(actionview_no_strict_locals_error::ActionViewNoStrictLocalsErrorRule),
+    parser_rule!(actionview_prefer_qualified_partial_path::ActionViewPreferQualifiedPartialPathRule),
   ]
 }

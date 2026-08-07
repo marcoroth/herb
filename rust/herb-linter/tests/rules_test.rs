@@ -168,7 +168,7 @@ fn test_trailing_newline_no_file_name() {
 #[test]
 fn test_linter_rule_count() {
   let linter = Linter::default();
-  assert_eq!(linter.rule_count(), 97);
+  assert_eq!(linter.rule_count(), 103);
 }
 
 #[test]

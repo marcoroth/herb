@@ -68,7 +68,7 @@ fn test_ffi_herb_lint_with_config() {
 #[test]
 fn test_ffi_rule_count() {
   let count = herb_linter::ffi::herb_lint_rule_count();
-  assert_eq!(count, 114);
+  assert_eq!(count, 124);
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn test_ffi_rule_names() {
   unsafe {
     let mut count: usize = 0;
     let names = herb_linter::ffi::herb_lint_rule_names(&mut count);
-    assert_eq!(count, 114);
+    assert_eq!(count, 124);
     assert!(!names.is_null());
 
     let name_strings: Vec<String> = (0..count)

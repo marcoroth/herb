@@ -503,3 +503,26 @@ pub fn has_aria_hidden_true(node: &HTMLOpenTagNode) -> bool {
     .map(|value| value == "true")
     .unwrap_or(false)
 }
+
+pub fn open_tag_location(element: &HTMLElementNode) -> Location {
+  match &element.open_tag {
+    Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLOpenTagNode(node)) => node.location.clone(),
+    Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::ERBOpenTagNode(node)) => node.location.clone(),
+    Some(ERBOpenTagNodeOrHTMLConditionalOpenTagNodeOrHTMLOpenTagNode::HTMLConditionalOpenTagNode(node)) => node.location.clone(),
+    None => element.location.clone(),
+  }
+}
+
+const NON_JS_SCRIPT_TYPES: &[&str] = &["application/json", "application/ld+json", "text/template", "text/html", "text/x-template"];
+
+pub fn is_javascript_tag_element(element: &HTMLElementNode) -> bool {
+  let type_attribute = match get_element_attribute(element, "type") {
+    Some(attribute) => attribute,
+    None => return true,
+  };
+
+  match get_static_attribute_value(type_attribute) {
+    None => true,
+    Some(value) => !NON_JS_SCRIPT_TYPES.contains(&value.to_lowercase().as_str()),
+  }
+}
