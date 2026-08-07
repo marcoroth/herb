@@ -153,6 +153,7 @@ fn main() {
     .allowlist_var("HB_ALLOCATOR_.*")
     .allowlist_var("HERB_EXTRACT_.*")
     .derive_debug(true)
+    .generate_comments(false)
     .derive_default(false)
     .prepend_enum_name(false)
     .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
