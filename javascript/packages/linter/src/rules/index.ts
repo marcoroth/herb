@@ -14,6 +14,7 @@ export * from "./file-utils.js"
 export * from "./string-utils.js"
 export * from "./action-view-utils.js"
 export * from "./herb-disable-comment-base.js"
+export * from "./ujs-base.js"
 
 export * from "./actionview-no-dynamic-partial-path.js"
 export * from "./actionview-no-helper-shadowing.js"
@@ -129,3 +130,8 @@ export * from "./html-tag-name-lowercase.js"
 export * from "./source-indentation.js"
 
 export * from "./svg-tag-name-capitalization.js"
+
+export * from "./ujs-no-remote-attribute.js"
+export * from "./ujs-prefer-turbo-confirm.js"
+export * from "./ujs-prefer-turbo-method.js"
+export * from "./ujs-prefer-turbo-submits-with.js"

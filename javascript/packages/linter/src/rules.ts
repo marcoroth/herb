@@ -133,6 +133,11 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
+import { UJSNoRemoteAttributeRule } from "./rules/ujs-no-remote-attribute.js"
+import { UJSPreferTurboConfirmRule } from "./rules/ujs-prefer-turbo-confirm.js"
+import { UJSPreferTurboMethodRule } from "./rules/ujs-prefer-turbo-method.js"
+import { UJSPreferTurboSubmitsWithRule } from "./rules/ujs-prefer-turbo-submits-with.js"
+
 export const rules: RuleClass[] = [
   A11yAvoidGenericLinkTextRule,
   A11yDisabledAttributeRule,
@@ -266,4 +271,9 @@ export const rules: RuleClass[] = [
 
   TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,
+
+  UJSNoRemoteAttributeRule,
+  UJSPreferTurboConfirmRule,
+  UJSPreferTurboMethodRule,
+  UJSPreferTurboSubmitsWithRule,
 ]

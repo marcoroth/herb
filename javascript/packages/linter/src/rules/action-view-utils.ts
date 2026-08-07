@@ -1,4 +1,4 @@
-import { isPrismNodeType, getHelperEntries } from "@herb-tools/core"
+import { isPrismNodeType, getHelperEntries, getHelpersForTag } from "@herb-tools/core"
 import type { PrismNode } from "@herb-tools/core"
 
 const ACTION_VIEW_HELPER_NAMES = new Set(
@@ -6,6 +6,15 @@ const ACTION_VIEW_HELPER_NAMES = new Set(
     .filter(helper => helper.output === "html" && helper.visibility === "public" && helper.name !== "tag")
     .flatMap(helper => [helper.name, ...helper.aliases])
 )
+
+export function helperNamesForTags(...tagNames: string[]): ReadonlySet<string> {
+  return new Set(
+    tagNames
+      .flatMap(tagName => getHelpersForTag(tagName))
+      .filter(helper => helper.visibility === "public")
+      .flatMap(helper => [helper.name, ...helper.aliases])
+  )
+}
 
 export function isTagBuilderCall(prismNode: PrismNode): boolean {
   if (!isPrismNodeType(prismNode, "CallNode")) return false
