@@ -237,7 +237,15 @@ impl<'rule> ERBNoDuplicateBranchElementsVisitor<'rule> {
 
     let bodies_match = self.have_identical_bodies(elements);
 
+    // a group that cannot be extracted is not reported, but its bodies are
+    // still worth descending into
     if !bodies_match && !can_wrap_conditional {
+      if elements.iter().all(|element| !element.body.is_empty()) {
+        let bodies: Vec<&[AnyNode]> = elements.iter().map(|element| element.body.as_slice()).collect();
+
+        self.check_branches(&bodies, is_first_offense);
+      }
+
       return;
     }
 

@@ -204,7 +204,10 @@ pub fn print_attribute(attribute: &HTMLAttributeNode) -> String {
             result.push_str(&closing.value);
           }
         }
-        _ => {}
+
+        // `action_view_helpers` can parse ERB inside a value into a whole
+        // element, so anything else is printed back the way it was written
+        other => result.push_str(&herb_printer::IdentityPrinter::print_nodes(std::slice::from_ref(other))),
       }
     }
     if value_node.quoted {
