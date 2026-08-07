@@ -65,10 +65,12 @@ impl ParserRule for ERBNoInstanceVariablesInPartialsRule {
       if is_read || is_write {
         let name = node.name.clone().unwrap_or_default();
 
+        let local = name.strip_prefix('@').unwrap_or(&name);
+
         let message = if is_read {
-          format!("Avoid using instance variables in partials. Pass `{}` as a local variable instead.", name)
+          format!("Avoid using instance variables in partials. Use the local variable `{local}` instead of `{name}` and pass it in via `locals`.")
         } else {
-          format!("Avoid setting instance variables in partials. Use a local variable instead of `{}`.", name)
+          format!("Avoid setting instance variables in partials. Assign the local variable `{local}` instead of `{name}`.")
         };
 
         offenses.push(UnboundOffense::new(

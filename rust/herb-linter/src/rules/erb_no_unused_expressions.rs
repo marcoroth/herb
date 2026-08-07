@@ -1,7 +1,7 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call};
+use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call, is_sleep_call};
 
 use crate::utils::source_slice::location_from_offset;
 use herb::prism::PrismNode as PrismNodeRef;
@@ -72,7 +72,7 @@ impl<'node> UnusedExpressionCollector<'node> {
 
   fn is_unused_expression(&self, node: &PrismNode) -> bool {
     if node.is("CallNode") {
-      if node.has_block || Self::is_mutation_call(node) || is_side_effect_call(node) || is_debug_output_call(node) {
+      if node.has_block || Self::is_mutation_call(node) || is_side_effect_call(node) || is_debug_output_call(node) || is_sleep_call(node) {
         return false;
       }
 
@@ -162,14 +162,17 @@ impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
 
     collector.visit(prism_node);
 
+    let tag_closing = node.tag_closing.as_ref().map(|token| token.value.as_str()).unwrap_or("%>");
+    let tag_opening_value = if tag_opening.is_empty() { "<%" } else { tag_opening };
+
     for expression in collector.expressions {
       let expression_source = self.source.get(expression.start_offset..expression.end_offset).unwrap_or("");
+      let collapsed = collapse_newlines(expression_source);
 
       self.offenses.push(UnboundOffense::with_tags(
         self.rule_name,
         format!(
-          "Avoid unused expressions in silent ERB tags. `{}` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
-          expression_source
+          "Avoid unused expressions in silent ERB tags. `{tag_opening_value} {collapsed} {tag_closing}` is evaluated but its return value is discarded. Use `<%= {collapsed} {tag_closing}` to output the value or remove the expression."
         ),
         location_from_offset(self.source, expression.start_offset, expression.end_offset),
         vec!["unnecessary".to_string()],
@@ -218,4 +221,32 @@ impl ParserRule for ERBNoUnusedExpressionsRule {
 
     visitor.offenses
   }
+}
+
+/// Collapses newline runs the way the JavaScript rule does before quoting an
+/// expression back to the user.
+fn collapse_newlines(value: &str) -> String {
+  let mut result = String::with_capacity(value.len());
+  let mut chars = value.chars().peekable();
+
+  while let Some(character) = chars.next() {
+    if character.is_whitespace() {
+      let mut sawnewline = character == '\n';
+
+      while chars.peek().is_some_and(|next| next.is_whitespace()) {
+        if *chars.peek().unwrap() == '\n' {
+          sawnewline = true;
+        }
+
+        chars.next();
+      }
+
+      result.push(if sawnewline { ' ' } else { character });
+      continue;
+    }
+
+    result.push(character);
+  }
+
+  result
 }

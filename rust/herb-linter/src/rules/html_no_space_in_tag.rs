@@ -90,14 +90,29 @@ impl HTMLNoSpaceInTagVisitor {
   }
 
   fn check_multiline_tag(&mut self, node: &HTMLOpenTagNode) {
-    let whitespace_nodes = get_whitespace_nodes(&node.children);
-    let total_whitespace_nodes = whitespace_nodes.len();
+    let last_child_index = node.children.len().saturating_sub(1);
+    let self_closing = node.tag_closing.as_ref().map(is_self_closing).unwrap_or(false);
     let mut previous_content: Option<String> = None;
 
-    for (whitespace_index, (_child_index, whitespace)) in whitespace_nodes.iter().enumerate() {
+    for (index, child) in node.children.iter().enumerate() {
+      // a non-whitespace child breaks the run, so two newlines separated by an
+      // attribute are not consecutive
+      let whitespace = match child {
+        AnyNode::WhitespaceNode(whitespace) => whitespace.as_ref(),
+        _ => {
+          previous_content = None;
+          continue;
+        }
+      };
+
+      let child_index = &index;
+
       let content = match get_whitespace_content(whitespace) {
         Some(content) => content,
-        None => continue,
+        None => {
+          previous_content = Some(String::new());
+          continue;
+        }
       };
 
       if self.has_consecutive_newlines(content, previous_content.as_deref()) {
@@ -108,20 +123,41 @@ impl HTMLNoSpaceInTagVisitor {
       }
 
       if !content.contains('\n') {
-        let is_last_whitespace = whitespace_index == total_whitespace_nodes - 1;
+        let is_line_leading = previous_content.as_deref().map(|previous| previous.contains('\n')).unwrap_or(false);
+        let is_last_child = *child_index == last_child_index;
 
-        let expected_indent = if is_last_whitespace {
-          node.location.start.column
+        if is_line_leading {
+          // only the whitespace before the closing bracket has to line up with
+          // the tag itself; attributes may hang at any indent
+          if is_last_child && whitespace.location.end.column != node.location.start.column {
+            self.add_offense(EXTRA_SPACE_NO_SPACE.to_string(), whitespace.location.clone());
+          }
         } else {
-          node.location.start.column + 2
-        };
-
-        if whitespace.location.end.column != expected_indent {
-          self.add_offense(EXTRA_SPACE_NO_SPACE.to_string(), whitespace.location.clone());
+          self.check_inline_whitespace(whitespace, content, is_last_child, self_closing);
         }
       }
 
       previous_content = Some(content.to_string());
+    }
+  }
+
+  fn check_inline_whitespace(&mut self, whitespace: &WhitespaceNode, content: &str, is_last_child: bool, self_closing: bool) {
+    if is_last_child {
+      if self_closing {
+        if content != " " {
+          self.add_offense(EXTRA_SPACE_SINGLE_SPACE.to_string(), whitespace.location.clone());
+        }
+
+        return;
+      }
+
+      self.add_offense(EXTRA_SPACE_NO_SPACE.to_string(), whitespace.location.clone());
+
+      return;
+    }
+
+    if content.len() > 1 {
+      self.add_offense(EXTRA_SPACE_SINGLE_SPACE.to_string(), whitespace.location.clone());
     }
   }
 

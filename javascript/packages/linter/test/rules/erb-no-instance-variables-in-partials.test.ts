@@ -163,7 +163,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("reports only the write for an assignment, not reads on the right-hand side", () => {
-    expectError("Avoid setting instance variables in partials. Use a local variable instead of `@grouping`.")
+    expectError("Avoid setting instance variables in partials. Assign the local variable `grouping` instead of `@grouping`.")
 
     assertOffenses('<% @grouping = @current_role.accepted_grouping_for(@assignment.id) %>', { fileName: "_card.html.erb" })
   })
