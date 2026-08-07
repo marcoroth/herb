@@ -7,10 +7,10 @@ import { Config } from "@herb-tools/config"
 
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
-import { fixabilityFor } from "./fixability.js"
+import { fixabilityFor } from "../fixability.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
-import type { Fixability } from "./fixability.js"
+import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
 
 export interface WorkerInput {

@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest"
 import { Location } from "@herb-tools/core"
 
-import { fixabilityFor } from "../src/cli/fixability.js"
+import { fixabilityFor } from "../src/fixability.js"
 
 import type { BaseAutofixContext, LintOffense, RuleClass } from "../src/types.js"
 
