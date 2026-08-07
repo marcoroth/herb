@@ -3,7 +3,7 @@ use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::erb_utils::is_output_tag_opening;
 use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call, is_sleep_call};
 
-use crate::utils::source_slice::location_from_offset;
+use crate::utils::source_slice::{collapse_newline_runs, location_from_offset};
 use herb::prism::PrismNode as PrismNodeRef;
 
 use herb::nodes::{AnyNode, ERBBlockNode, ERBContentNode, ERBRenderNode};
@@ -167,7 +167,7 @@ impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
 
     for expression in collector.expressions {
       let expression_source = self.source.get(expression.start_offset..expression.end_offset).unwrap_or("");
-      let collapsed = collapse_newlines(expression_source);
+      let collapsed = collapse_newline_runs(expression_source);
 
       self.offenses.push(UnboundOffense::with_tags(
         self.rule_name,
@@ -221,32 +221,4 @@ impl ParserRule for ERBNoUnusedExpressionsRule {
 
     visitor.offenses
   }
-}
-
-/// Collapses newline runs the way the JavaScript rule does before quoting an
-/// expression back to the user.
-fn collapse_newlines(value: &str) -> String {
-  let mut result = String::with_capacity(value.len());
-  let mut chars = value.chars().peekable();
-
-  while let Some(character) = chars.next() {
-    if character.is_whitespace() {
-      let mut sawnewline = character == '\n';
-
-      while chars.peek().is_some_and(|next| next.is_whitespace()) {
-        if *chars.peek().unwrap() == '\n' {
-          sawnewline = true;
-        }
-
-        chars.next();
-      }
-
-      result.push(if sawnewline { ' ' } else { character });
-      continue;
-    }
-
-    result.push(character);
-  }
-
-  result
 }

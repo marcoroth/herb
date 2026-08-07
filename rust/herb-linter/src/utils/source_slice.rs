@@ -82,3 +82,31 @@ pub fn location_from_content_offset(start_line: u32, start_column: u32, content:
 
   Location::new(Position::new(line, column), Position::new(line, column + 1))
 }
+
+/// Collapses each whitespace run that contains a newline into a single space,
+/// mirroring `replace(/\s*\n\s*/g, " ")`. Runs without a newline are left as
+/// written, so `<%=  value %>` keeps its spacing.
+pub fn collapse_newline_runs(value: &str) -> String {
+  let mut result = String::with_capacity(value.len());
+  let mut rest = value;
+
+  while let Some(start) = rest.find(char::is_whitespace) {
+    result.push_str(&rest[..start]);
+
+    let run = &rest[start..];
+    let length = run.find(|character: char| !character.is_whitespace()).unwrap_or(run.len());
+    let (run, remainder) = run.split_at(length);
+
+    if run.contains('\n') {
+      result.push(' ');
+    } else {
+      result.push_str(run);
+    }
+
+    rest = remainder;
+  }
+
+  result.push_str(rest);
+
+  result
+}

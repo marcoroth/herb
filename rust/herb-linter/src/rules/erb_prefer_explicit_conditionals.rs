@@ -1,6 +1,7 @@
 use crate::autofix::location_matches;
 use crate::offense::{Offense, UnboundOffense};
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::utils::source_slice::collapse_newline_runs;
 
 use herb::nodes::{AnyNode, DocumentNode, ERBIfNode, ERBUnlessNode};
 use herb::Location;
@@ -49,28 +50,8 @@ fn is_synthesized(tag_opening: &Option<Token>) -> bool {
   }
 }
 
-fn collapse_whitespace(value: &str) -> String {
-  let mut result = String::with_capacity(value.len());
-  let mut chars = value.chars().peekable();
-
-  while let Some(character) = chars.next() {
-    if character == '\n' || ((character == ' ' || character == '\t') && chars.peek().is_some_and(|next| *next == '\n' || *next == ' ' || *next == '\t')) {
-      while chars.peek().is_some_and(|next| next.is_whitespace()) {
-        chars.next();
-      }
-
-      result.push(' ');
-      continue;
-    }
-
-    result.push(character);
-  }
-
-  result
-}
-
 fn suggestion_for(node: AnyNode) -> String {
-  collapse_whitespace(&IdentityPrinter::print_nodes(&[node]))
+  collapse_newline_runs(&IdentityPrinter::print_nodes(&[node]))
 }
 
 rule_visitor!(PreferExplicitConditionalsVisitor);

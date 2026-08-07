@@ -1,3 +1,4 @@
+use crate::utils::source_slice::collapse_newline_runs;
 use herb::nodes::{ERBElseNode, ERBEndNode, ERBIfNode, ERBUnlessNode};
 use herb::{Token, Visitor};
 
@@ -14,7 +15,7 @@ impl NoOutputControlFlowVisitor {
       _ => return,
     };
 
-    let collapsed = content.map(|token| collapse_newlines(&token.value)).unwrap_or_default();
+    let collapsed = content.map(|token| collapse_newline_runs(&token.value)).unwrap_or_default();
 
     let keyword = collapsed
       .trim()
@@ -47,7 +48,7 @@ impl NoOutputControlFlowVisitor {
     let method = node.message.as_ref().map(|token| token.value.as_str()).unwrap_or("each");
     let content = node.content.as_ref().map(|token| token.value.as_str()).unwrap_or(" ");
     let closing = node.tag_closing.as_ref().map(|token| token.value.as_str()).unwrap_or("%>");
-    let suggestion = collapse_newlines(&format!("<%{content}{closing}"));
+    let suggestion = collapse_newline_runs(&format!("<%{content}{closing}"));
 
     self.add_offense(
       format!(
@@ -83,34 +84,4 @@ impl Visitor for NoOutputControlFlowVisitor {
     self.check_output_control_flow(node.tag_opening.as_ref(), node.content.as_ref(), node.tag_closing.as_ref(), "end");
     self.walk_erb_end_node(node);
   }
-}
-
-fn collapse_newlines(value: &str) -> String {
-  let mut result = String::with_capacity(value.len());
-  let mut chars = value.chars().peekable();
-
-  while let Some(character) = chars.next() {
-    if character.is_whitespace() {
-      let mut saw_newline = character == '\n';
-
-      while let Some(next) = chars.peek() {
-        if !next.is_whitespace() {
-          break;
-        }
-
-        if *next == '\n' {
-          saw_newline = true;
-        }
-
-        chars.next();
-      }
-
-      result.push(if saw_newline { ' ' } else { character });
-      continue;
-    }
-
-    result.push(character);
-  }
-
-  result
 }
