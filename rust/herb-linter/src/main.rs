@@ -41,6 +41,7 @@ struct CliArguments {
   no_color: bool,
   show_timing: bool,
   show_rules: bool,
+  show_fix_diff: bool,
   only_rules: Vec<String>,
   all_rules: bool,
   log_level: Option<FailLevel>,
@@ -186,6 +187,7 @@ fn main() {
     arguments.ignore_disable_comments,
     &arguments.only_rules,
     arguments.all_rules,
+    arguments.show_fix_diff,
   );
   let duration = start_time.elapsed();
 
@@ -232,6 +234,7 @@ fn parse_arguments() -> CliArguments {
   let mut github_actions_flag: Option<bool> = None;
   let mut no_color = false;
   let mut show_timing = true;
+  let mut show_fix_diff = false;
   let mut only_rules: Vec<String> = Vec::new();
   let mut all_rules = false;
   let mut log_level: Option<FailLevel> = None;
@@ -307,6 +310,7 @@ fn parse_arguments() -> CliArguments {
       "--no-color" => no_color = true,
       "--no-timing" => show_timing = false,
       "--all-rules" => all_rules = true,
+      "--show-fix-diff" => show_fix_diff = true,
       "--only" => {
         index += 1;
 
@@ -386,6 +390,7 @@ fn parse_arguments() -> CliArguments {
     no_color,
     show_timing,
     show_rules,
+    show_fix_diff,
     only_rules,
     all_rules,
     log_level,
@@ -422,6 +427,7 @@ fn print_usage() {
   println!("  --no-timing                   hide timing information");
   println!("  --only <rules>                run only the given comma separated rules");
   println!("  --all-rules                   run every rule, ignoring config and defaults");
+  println!("  --show-fix-diff               show what `--fix` would change, without writing");
   println!("  --log-level <severity>        hide offenses below this severity (error|warning|info|hint)");
 }
 
@@ -525,6 +531,7 @@ fn lint_files(
   ignore_disable_comments: bool,
   only_rules: &[String],
   all_rules: bool,
+  show_fix_diff: bool,
 ) -> ProcessingResult {
   let linter = Linter::new(config.clone()).with_only(only_rules.to_vec()).with_all_rules(all_rules);
   let rule_count = linter.rule_count();
@@ -561,6 +568,14 @@ fn lint_files(
 
         linter.lint(&autofixed.source, &context)
       } else {
+        if show_fix_diff {
+          let preview = linter.autofix(&source, &context, fix_unsafe);
+
+          if preview.source != source {
+            print_fix_diff(&file_path, &source, &preview.source);
+          }
+        }
+
         linter.lint(&source, &context)
       };
 
@@ -686,6 +701,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration:
       display_most_offending_files(result);
       display_most_violated_rules(result);
       display_summary(result, arguments, duration);
+      display_no_enabled_rules(result);
     }
   } else if arguments.format == OutputFormat::Json {
     format_json(result, arguments, duration);
@@ -694,6 +710,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration:
     display_most_offending_files(result);
     display_most_violated_rules(result);
     display_summary(result, arguments, duration);
+    display_no_enabled_rules(result);
   }
 }
 
@@ -896,6 +913,65 @@ fn escape_github_param(input: &str) -> String {
     .replace('\r', "%0D")
     .replace(':', "%3A")
     .replace(',', "%2C")
+}
+
+/// Every rule being off is easy to do by accident and impossible to notice
+/// from a clean report, so say so explicitly.
+const RULE_CONFIGURATION_DOCUMENTATION_URL: &str = "https://herb-tools.dev/configuration#setting-the-default-for-all-rules";
+
+fn display_no_enabled_rules(result: &ProcessingResult) {
+  if result.rule_count > 0 {
+    return;
+  }
+
+  let no_color = std::env::var("NO_COLOR").is_ok();
+  let bold = |text: &str| if no_color { text.to_string() } else { format!("\x1b[1m{text}\x1b[0m") };
+  let cyan = |text: &str| if no_color { text.to_string() } else { format!("\x1b[36m{text}\x1b[0m") };
+  let gray = |text: &str| if no_color { text.to_string() } else { format!("\x1b[90m{text}\x1b[0m") };
+
+  println!();
+  println!(" {}", bold("No rules enabled:"));
+  println!("  Every linter rule is turned off, so no offenses can be reported.");
+  println!();
+  println!(
+    "  Enable rules under {} in your {}, or run {}",
+    cyan("linter.rules"),
+    cyan(".herb.yml"),
+    cyan("herb-lint --all-rules")
+  );
+  println!("  to lint with every rule for a single run.");
+  println!();
+  println!("  {}", gray(RULE_CONFIGURATION_DOCUMENTATION_URL));
+}
+
+/// Shows what `--fix` would change, line by line, without touching the file.
+fn print_fix_diff(file_path: &str, before: &str, after: &str) {
+  let no_color = std::env::var("NO_COLOR").is_ok();
+  let removed = |text: &str| if no_color { format!("-{text}") } else { format!("\x1b[31m-{text}\x1b[0m") };
+  let added = |text: &str| if no_color { format!("+{text}") } else { format!("\x1b[32m+{text}\x1b[0m") };
+
+  let before_lines: Vec<&str> = before.lines().collect();
+  let after_lines: Vec<&str> = after.lines().collect();
+
+  println!();
+  println!("{file_path}");
+
+  for index in 0..before_lines.len().max(after_lines.len()) {
+    let old_line = before_lines.get(index).copied();
+    let new_line = after_lines.get(index).copied();
+
+    if old_line == new_line {
+      continue;
+    }
+
+    if let Some(old_line) = old_line {
+      println!("  {}", removed(old_line));
+    }
+
+    if let Some(new_line) = new_line {
+      println!("  {}", added(new_line));
+    }
+  }
 }
 
 fn display_summary(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
