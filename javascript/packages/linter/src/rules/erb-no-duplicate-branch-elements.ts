@@ -12,6 +12,7 @@ import {
   isERBWhenNode,
   isEquivalentElement,
   isPureWhitespaceNode,
+  getTagLocalName,
   findParentArray,
   removeNodeFromArray,
   replaceNodeWithBody,
@@ -25,6 +26,8 @@ import type { ParseResult, Node, ERBIfNode, ERBUnlessNode, ERBCaseNode, ERBElseN
 import type { Mutable } from "@herb-tools/rewriter"
 
 type ConditionalNode = ERBIfNode | ERBUnlessNode | ERBCaseNode
+
+const CONTENT_PRESERVING_TAGS = new Set(["pre", "textarea", "script", "style"])
 
 interface DuplicateBranchAutofixContext extends BaseAutofixContext {
   node: Mutable<ConditionalNode>
@@ -41,6 +44,12 @@ function trimWhitespaceNodes(nodes: Node[]): Node[] {
   while (start < end && isPureWhitespaceNode(nodes[start])) start++
   while (end > start && isPureWhitespaceNode(nodes[end - 1])) end--
   return nodes.slice(start, end)
+}
+
+function isContentPreserving(element: HTMLElementNode): boolean {
+  const tagName = getTagLocalName(element)
+
+  return tagName !== null && CONTENT_PRESERVING_TAGS.has(tagName)
 }
 
 function haveIdenticalBodies(elements: HTMLElementNode[]): boolean {
@@ -190,7 +199,7 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
       this.addOffense(
         "All branches of this conditional have identical content. The conditional can be removed.",
         node.location,
-        { node: node as Mutable<ConditionalNode>, allIdentical: true },
+        { node: node as Mutable<ConditionalNode>, allIdentical: true, unsafe: true },
         "warning",
       )
 
@@ -243,8 +252,8 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
     }
 
     const sharedElementsSpanBranches = significantBranches.every(branch => branch.length === prefixCount + suffixCount)
-    const divergingGroupCount = groups.filter(elements => !haveIdenticalBodies(elements)).length
-    const canWrapConditional = sharedElementsSpanBranches && divergingGroupCount === 1
+    const divergingGroups = groups.filter(elements => !haveIdenticalBodies(elements))
+    const canWrapConditional = sharedElementsSpanBranches && divergingGroups.length === 1 && !isContentPreserving(divergingGroups[0][0])
 
     for (const elements of groups) {
       this.reportAndRecurse(elements, conditionalNode, state, canWrapConditional)
@@ -387,7 +396,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
       } else {
         if (hasWrapped) return
 
-        const canWrap = branches.every((branch, index) => {
+        const canWrap = !isContentPreserving(elements[0]) && branches.every((branch, index) => {
           const remaining = getSignificantNodes(branch)
 
           return remaining.length === 1 && remaining[0] === elements[index]
@@ -429,7 +438,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
         const elements = remaining.map(b => b[0] as HTMLElementNode)
         const bodiesMatch = elements.every(el => IdentityPrinter.print(el) === IdentityPrinter.print(elements[0]))
 
-        if (!bodiesMatch && elements.every(el => el.body.length > 0)) {
+        if (!bodiesMatch && !isContentPreserving(elements[0]) && elements.every(el => el.body.length > 0)) {
           for (let i = 0; i < branches.length; i++) {
             replaceNodeWithBody(branches[i] as Node[], elements[i])
           }
