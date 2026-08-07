@@ -1,34 +1,28 @@
-import { getTagLocalName, isERBOpenTagNode } from "@herb-tools/core"
+import { getTagLocalName } from "@herb-tools/core"
 import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import { ParserRule } from "../types.js"
 
-const STYLESHEET_LINK_TAG_ELEMENT_SOURCE = "ActionView::Helpers::AssetTagHelper#stylesheet_link_tag"
-
 class HTMLNoStyleElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagLocalName(node) === "style") {
-      this.checkInlineStyle(node)
+      this.addOffense(
+        `Avoid inline \`<style>\` tags. ${this.suggestion()}`,
+        node.open_tag!.location,
+      )
     }
 
     super.visitHTMLElementNode(node)
   }
 
-  private checkInlineStyle(node: HTMLElementNode): void {
-    if (this.isStylesheetLinkTagElement(node)) return
+  private suggestion(): string {
+    if (this.context.framework === "actionview") {
+      return "Extract the CSS into a separate `.css` file and include it with `stylesheet_link_tag`."
+    }
 
-    this.addOffense(
-      "Avoid inline `<style>` tags. Use `stylesheet_link_tag` to include external stylesheets instead.",
-      node.open_tag!.location,
-    )
-  }
-
-  private isStylesheetLinkTagElement(node: HTMLElementNode): boolean {
-    if (!isERBOpenTagNode(node.open_tag)) return false
-
-    return node.element_source === STYLESHEET_LINK_TAG_ELEMENT_SOURCE
+    return "Extract the CSS into a separate `.css` file and deliver it through your framework's asset pipeline."
   }
 }
 
