@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../../herb"
+
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
@@ -96,6 +98,11 @@ module Herb
         @erb_block_stack.push(node)
         super
         @erb_block_stack.pop
+      end
+
+      #: () -> String
+      def inspect
+        "#<#{self.class.name}>"
       end
 
       private

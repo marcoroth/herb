@@ -5,7 +5,6 @@ require "json"
 require "time"
 require "pathname"
 
-require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"
@@ -18,8 +17,7 @@ require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug,
-                :validation_error_template, :visitors, :enabled_validators
+    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :validation_error_template, :visitors, :enabled_validators
 
     # @rbs!
     #   def self.optimize_warning_issued: () -> bool
@@ -74,8 +72,8 @@ module Herb
       @cssfunc = properties.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
+
       @buffer_on_stack = false
-      @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
@@ -89,15 +87,6 @@ module Herb
       end
 
       @visitors = properties.fetch(:visitors, default_visitors)
-
-      if @debug && @visitors.empty?
-        debug_visitor = DebugVisitor.new(
-          file_path: @filename,
-          project_path: @project_path
-        )
-
-        @visitors << debug_visitor
-      end
 
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,

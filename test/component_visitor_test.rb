@@ -3,6 +3,7 @@
 require_relative "test_helper"
 require_relative "snapshot_utils"
 require_relative "../lib/herb/engine/component_visitor"
+require_relative "../lib/herb/engine/debug_visitor"
 
 module Engine
   class ComponentVisitorTest < Minitest::Spec

@@ -3,6 +3,7 @@
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
 require_relative "../../lib/herb/engine"
+require_relative "../../lib/herb/engine/debug_visitor"
 
 module Engine
   class ERBCommentsTest < Minitest::Spec
@@ -101,7 +102,7 @@ module Engine
     test "evaluation: trailing comment in output tag with debug mode" do
       template = %(<%= value # this is a comment %>)
 
-      assert_evaluated_snapshot(template, { value: "Hello World" }, debug: true)
+      assert_evaluated_snapshot(template, { value: "Hello World" }, visitors: [Herb::Engine::DebugVisitor.new])
     end
 
     test "trailing comment in escaped output tag" do

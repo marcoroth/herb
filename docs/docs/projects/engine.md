@@ -48,7 +48,6 @@ In addition to Erubi options, `Herb::Engine` supports:
 | `project_path`    | `Dir.pwd` | Project root for relative path resolution                                             |
 | `validate_ruby`   | `false`   | Raise if the compiled output isn't valid Ruby                                         |
 | `optimize`        | `false`   | Compile-time optimizations for Action View helpers (experimental)                     |
-| `debug`           | `false`   | Enable debug mode                                                                     |
 
 Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`, together with any other [parser option](/parser-options):
 
@@ -91,6 +90,7 @@ Herb ships the following transform visitors:
 |-------------------------------|--------------------------------------------------------------|
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones             |
 | `ContentForVisitor`           | Appends HTML to the end of every matching element            |
+| `DebugVisitor`                | Annotates elements and ERB output with debug attributes      |
 | `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
@@ -179,6 +179,34 @@ The engine renders:
 ```
 
 The content is emitted as a Ruby string literal marked `html_safe`, so it is never escaped, and quotes, backslashes and `#{}` in it are not interpreted.
+
+### `DebugVisitor`
+
+Annotates top level elements and ERB output with `data-herb-debug-*` attributes, so that the [Dev Tools](/projects/dev-tools) can map rendered HTML back to the template it came from.
+
+```ruby
+require "herb/engine/debug_visitor"
+
+Herb::Engine.new(source, visitors: [
+  Herb::Engine::DebugVisitor.new(file_path: "app/views/users/show.html.erb")
+])
+```
+
+Given this template:
+
+```html+erb
+<h1>Hello <%= @name %></h1>
+```
+
+The engine renders:
+
+```html
+<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="show.html.erb" ...>Hello <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @name %&gt;" ... style="display: contents;">Marco</span></h1>
+```
+
+ERB output is wrapped in a `display: contents` span so the annotation doesn't affect layout.
+
+`file_path` is what the attributes report, and `project_path` (defaulting to `Dir.pwd`) is what the relative path is calculated against.
 
 ### `ComponentVisitor`
 

@@ -685,38 +685,6 @@ class ConfigurationTest < Minitest::Spec
     assert_kind_of String, engine.src
   end
 
-  test "engine debug defaults to false" do
-    config = Herb::Configuration.load(@temp_dir)
-
-    assert_equal false, config.engine_option("debug", false)
-  end
-
-  test "engine debug reads from config file" do
-    write_config(<<~YAML)
-      engine:
-        debug: true
-    YAML
-
-    Herb.configure(@temp_dir)
-
-    engine = Herb::Engine.new("<div>Hello</div>")
-
-    assert_equal true, engine.debug
-  end
-
-  test "engine debug property overrides config" do
-    write_config(<<~YAML)
-      engine:
-        debug: true
-    YAML
-
-    Herb.configure(@temp_dir)
-
-    engine = Herb::Engine.new("<div>Hello</div>", debug: false)
-
-    assert_equal false, engine.debug
-  end
-
   test "framework defaults to ruby" do
     config = Herb::Configuration.load(@temp_dir)
 

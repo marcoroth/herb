@@ -682,8 +682,9 @@ class Herb::CLI
       options[:strict] = strict.nil? || strict
 
       if debug
-        options[:debug] = true
-        options[:debug_filename] = @file if @file
+        require_relative "engine/debug_visitor"
+
+        options[:visitors] = [Herb::Engine::DebugVisitor.new(file_path: @file)]
       end
 
       options[:optimize] = true if optimize
@@ -771,8 +772,9 @@ class Herb::CLI
       options[:strict] = strict.nil? || strict
 
       if debug
-        options[:debug] = true
-        options[:debug_filename] = @file if @file
+        require_relative "engine/debug_visitor"
+
+        options[:visitors] = [Herb::Engine::DebugVisitor.new(file_path: @file)]
       end
 
       options[:optimize] = true if optimize
