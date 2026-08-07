@@ -14,21 +14,18 @@ export class Token {
   readonly location: Location
   readonly type: string
 
-  static from(token: SerializedToken) {
-    return new Token(
-      token.value,
-      Range.from(token.range),
-      Location.from(token.location),
-      token.type,
-    )
-  }
+  static from(token: SerializedToken): Token
+  static from(type: string, value: string): Token
+  static from(tokenOrType: SerializedToken | string, value?: string): Token {
+    if (typeof tokenOrType === "string") {
+      return new Token(value!, Range.zero, Location.zero, tokenOrType)
+    }
 
-  static synthetic(value: string, type: string = "SYNTETHIC") {
     return new Token(
-      value,
-      Range.zero,
-      Location.zero,
-      type
+      tokenOrType.value,
+      Range.from(tokenOrType.range),
+      Location.from(tokenOrType.location),
+      tokenOrType.type,
     )
   }
 

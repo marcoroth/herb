@@ -1066,9 +1066,69 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   visitERBContentNode(node: ERBContentNode) {
     if (isERBCommentNode(node)) {
       this.visitERBCommentNode(node)
+    } else if (!this.inlineMode && this.shouldExpandERBContent(node)) {
+      this.printExpandedERBNode(node)
     } else {
       this.printERBNode(node)
     }
+  }
+
+  /**
+   * An ERB content tag is kept expanded (delimiters on their own lines) when
+   * the author placed a newline directly after the opening tag and the
+   * content spans multiple lines, mirroring how Prettier preserves
+   * user-authored expansion of object literals.
+   *
+   * Non-squiggly heredocs (`<<` and `<<-`) are excluded: their bodies are
+   * whitespace-significant, so re-indenting them would change the string
+   * value. Those fall back to the default single-header rendering.
+   *
+   * @todo revisit once we have access to Prism nodes
+   */
+  private shouldExpandERBContent(node: ERBContentNode): boolean {
+    const content = node.content?.value ?? ""
+
+    if (!/^[ \t]*\r?\n/.test(content)) return false
+    if (!content.trim().includes("\n")) return false
+
+    return !/<<(?!~)-?['"`]?[A-Za-z_]/.test(content)
+  }
+
+  /**
+   * Print an ERB tag expanded across multiple lines:
+   *
+   *   <%=
+   *     content
+   *   %>
+   *
+   * Content lines are dedented by their common leading whitespace, then
+   * re-indented one level below the tag.
+   */
+  private printExpandedERBNode(node: ERBContentNode) {
+    const open = node.tag_opening?.value ?? "<%"
+    const close = node.tag_closing?.value ?? "%>"
+    const content = node.content?.value ?? ""
+
+    const lines = content.replace(/\r\n/g, "\n").split("\n").map(line => line.trimEnd())
+
+    while (lines.length > 0 && lines[0] === "") lines.shift()
+    while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop()
+
+    const commonIndent = lines
+      .filter(line => line !== "")
+      .reduce((minimum, line) => Math.min(minimum, line.match(/^[ \t]*/)![0].length), Infinity)
+
+    const dedentedLines = lines.map(line => line === "" ? "" : line.slice(commonIndent))
+
+    this.pushWithIndent(open)
+
+    this.withIndent(() => {
+      dedentedLines.forEach(line => {
+        this.push(line === "" ? "" : this.indent + line)
+      })
+    })
+
+    this.pushWithIndent(close)
   }
 
   visitERBOpenTagNode(node: ERBOpenTagNode) {

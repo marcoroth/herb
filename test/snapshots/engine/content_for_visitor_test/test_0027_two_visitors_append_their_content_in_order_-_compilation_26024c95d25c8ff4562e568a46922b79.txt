@@ -1,0 +1,6 @@
+---
+source: "Engine::ContentForVisitorTest#test_0027_two visitors append their content in order - compilation"
+input: "{source: \"<head><title>Hello</title></head>\", options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"head\" attributes={} content=\"<meta name=\\\"first\\\" content=\\\"1\\\">\">, #<Herb::Engine::ContentForVisitor tag_name=\"head\" attributes={} content=\"<meta name=\\\"second\\\" content=\\\"2\\\">\">]}}"
+---
+_buf = ::String.new; _buf << '<head><title>Hello</title>'.freeze; _buf << ("<meta name=\"first\" content=\"1\">".html_safe).to_s; _buf << ("<meta name=\"second\" content=\"2\">".html_safe).to_s; _buf << '</head>'.freeze;
+_buf.to_s

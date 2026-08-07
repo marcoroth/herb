@@ -11,10 +11,8 @@ describe("ERBEndNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBEndNode.from({
-      type: "AST_ERB_END_NODE",
+    const node = ERBEndNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " end "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

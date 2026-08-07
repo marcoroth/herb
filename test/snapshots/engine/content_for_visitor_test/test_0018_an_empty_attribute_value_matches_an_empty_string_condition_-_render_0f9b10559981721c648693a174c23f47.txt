@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0018_an empty attribute value matches an empty string condition - render"
+input: "{source: \"<main id=\\\"\\\">Content</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="">Content<p>Appended</p></main>

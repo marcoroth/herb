@@ -3,53 +3,39 @@ import { expect } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "../../src/index.js"
 
-import { HTMLTextNode, ERBContentNode, ERBEndNode, LiteralNode } from "@herb-tools/core"
+import { HTMLTextNode, ERBContentNode, ERBEndNode, LiteralNode, Location, Range, Token } from "@herb-tools/core"
 
 import type { Node, ParseResult, ParseOptions } from "@herb-tools/core"
 
-export function createLocation(line = 1, column = 1) {
-  return {
-    start: { line, column },
-    end: { line, column }
-  }
+export function createLocation(line = 1, column = 1): Location {
+  return Location.from(line, column, line, column)
 }
 
-export function createRange(start = 1, end = 2): [number, number] {
-  return [start, end]
+export function createRange(start = 1, end = 2): Range {
+  return Range.from(start, end)
 }
 
-export function createToken(type = "", value = "", range = createRange(), location = createLocation()) {
-  return {
-    type,
-    value,
-    range,
-    location
-  }
+export function createToken(type = "", value = "", range = createRange(), location = createLocation()): Token {
+  return new Token(value, range, location, type)
 }
 
 export function createTextNode(content: string): HTMLTextNode {
-  return HTMLTextNode.from({
-    type: "AST_HTML_TEXT_NODE",
+  return HTMLTextNode.build({
     location,
-    errors: [],
     content
   })
 }
 
 export function createLiteralNode(content: string): LiteralNode {
-  return LiteralNode.from({
-    type: "AST_LITERAL_NODE",
+  return LiteralNode.build({
     location,
-    errors: [],
     content
   })
 }
 
 export function createERBContentNode(content: string, opening: string = "<%", closing: string = "%>"): ERBContentNode {
-  return ERBContentNode.from({
-    type: "AST_ERB_CONTENT_NODE",
+  return ERBContentNode.build({
     location,
-    errors: [],
     tag_opening: createToken("TOKEN_ERB_START", opening),
     content: createToken("TOKEN_ERB_CONTENT", content),
     tag_closing: createToken("TOKEN_ERB_END", closing),
@@ -63,10 +49,8 @@ export const range = createRange()
 export const singleQuote = createToken("TOKEN_QUOTE", `'`)
 export const doubleQuote = createToken("TOKEN_QUOTE", `"`)
 
-export const end_node = ERBEndNode.from({
-  type: "AST_ERB_END_NODE",
+export const end_node = ERBEndNode.build({
   location,
-  errors: [],
   tag_opening: createToken("TOKEN_ERB_START", "<%"),
   content: createToken("TOKEN_ERB_CONTENT", " end "),
   tag_closing: createToken("TOKEN_ERB_END", "%>"),

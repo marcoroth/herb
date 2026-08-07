@@ -5,6 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { LinterService } from "../src/linter_service"
 import { Settings } from "../src/settings"
 import { Project } from "../src/project"
+import { PartialIndexService } from "../src/partial_index_service"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
@@ -37,6 +38,8 @@ describe("LinterService", () => {
     projectPath: process.cwd()
   } as Project
 
+  const partialIndexService = new PartialIndexService(mockConnection, mockProject)
+
   const createTestDocument = (content: string) => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
@@ -46,7 +49,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -62,7 +65,7 @@ describe("LinterService", () => {
         // linter is undefined
       })
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -77,7 +80,7 @@ describe("LinterService", () => {
         linter: { enabled: false }
       })
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -91,7 +94,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<DIV><SPAN>Hello</SPAN></DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -103,7 +106,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.hasConfigurationCapability = false
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<DIV>Test</DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -117,7 +120,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<h2>Content<h3>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -153,7 +156,7 @@ describe("LinterService", () => {
         projectPath: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath, new PartialIndexService(mockConnection, mockProjectWithPath))
       const textDocument = TextDocument.create("file:///test/project/vendor/cache/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
 
@@ -182,7 +185,7 @@ describe("LinterService", () => {
         projectPath: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath, new PartialIndexService(mockConnection, mockProjectWithPath))
       const textDocument = TextDocument.create("file:///test/project/something/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
 
@@ -213,7 +216,7 @@ describe("LinterService", () => {
         projectPath: "/test/project"
       } as Project
 
-      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath, new PartialIndexService(mockConnection, mockProjectWithPath))
       const textDocument = TextDocument.create("file:///test/project/app/views/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
 
@@ -244,7 +247,7 @@ describe("LinterService", () => {
         applySeverityOverrides: (offenses: any) => offenses
       } as any
 
-      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
       const textDocument = createTestDocument("<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
 

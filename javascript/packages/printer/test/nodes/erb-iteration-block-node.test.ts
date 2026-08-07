@@ -21,10 +21,8 @@ describe("ERBIterationBlockNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBIterationBlockNode.from({
-      type: "AST_ERB_ITERATION_BLOCK_NODE",
+    const node = ERBIterationBlockNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " users.each do |user| "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

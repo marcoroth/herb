@@ -11,10 +11,8 @@ describe("DocumentNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = DocumentNode.from({
-      type: "AST_DOCUMENT_NODE",
+    const node = DocumentNode.build({
       location: Location.from(1, 1, 1, 1),
-      errors: [],
       children: []
     })
 

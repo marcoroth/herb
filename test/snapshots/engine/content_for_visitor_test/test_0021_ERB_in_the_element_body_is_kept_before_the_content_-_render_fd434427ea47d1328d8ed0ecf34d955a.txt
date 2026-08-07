@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0021_ERB in the element body is kept before the content - render"
+input: "{source: \"<main><h1><%= @title %></h1></main>\", locals: {\"@title\": \"Hello\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={} content=\"<p>Appended</p>\">]}}"
+---
+<main><h1>Hello</h1><p>Appended</p></main>

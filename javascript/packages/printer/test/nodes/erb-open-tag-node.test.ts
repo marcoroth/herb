@@ -11,10 +11,8 @@ describe("ERBOpenTagNode Printing", () => {
   })
 
   test("can print from node with output tag", () => {
-    const node = ERBOpenTagNode.from({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const node = ERBOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", " content_tag :div do "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -26,10 +24,8 @@ describe("ERBOpenTagNode Printing", () => {
   })
 
   test("can print from node with silent tag", () => {
-    const node = ERBOpenTagNode.from({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const node = ERBOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " content_tag :div do "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -41,10 +37,8 @@ describe("ERBOpenTagNode Printing", () => {
   })
 
   test("can print from node with content_tag and content argument", () => {
-    const node = ERBOpenTagNode.from({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const node = ERBOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", ' content_tag :div, "Content" '),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -56,10 +50,8 @@ describe("ERBOpenTagNode Printing", () => {
   })
 
   test("can print from node with tag.div helper", () => {
-    const node = ERBOpenTagNode.from({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const node = ERBOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", " tag.div do "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -71,10 +63,8 @@ describe("ERBOpenTagNode Printing", () => {
   })
 
   test("can print from node with null tokens", () => {
-    const node = ERBOpenTagNode.from({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const node = ERBOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: null,
       content: null,
       tag_closing: null,

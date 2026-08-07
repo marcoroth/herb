@@ -47,7 +47,6 @@ import {
 } from "./node-type-guards.js"
 
 import { Location } from "./location.js"
-import { Range } from "./range.js"
 import { Token } from "./token.js"
 
 import type { Position } from "./position.js"
@@ -596,12 +595,7 @@ export function splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
       const parts = node.content.match(/(\S+|\s+)/g) || []
 
       for (const part of parts) {
-        result.push(new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: part,
-          errors: [],
-          location: node.location
-        }))
+        result.push(LiteralNode.build({ content: part, location: node.location }))
       }
     } else {
       result.push(node)
@@ -923,51 +917,27 @@ export function replaceNodeWithBody(array: Node[], element: HTMLElementNode): vo
  * Useful for inserting whitespace or newlines during AST mutations.
  */
 export function createLiteral(content: string): LiteralNode {
-  return new LiteralNode({
-    type: "AST_LITERAL_NODE",
-    content,
-    location: Location.zero,
-    errors: [],
-  })
-}
-
-export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): Token {
-  return new Token(value, Range.zero, Location.zero, type)
+  return LiteralNode.build({ content })
 }
 
 export function createWhitespaceNode(): WhitespaceNode {
-  return new WhitespaceNode({
-    type: "AST_WHITESPACE_NODE",
-    location: Location.zero,
-    errors: [],
-    value: createSyntheticToken(" "),
-  })
+  return WhitespaceNode.build({ value: Token.from("TOKEN_WHITESPACE", " ") })
 }
 
 export function createERBOutputNode(expression: string, tagOpening = "<%=", tagClosing = "%>"): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
-    tag_opening: createSyntheticToken(tagOpening),
-    content: createSyntheticToken(expression),
-    tag_closing: createSyntheticToken(tagClosing),
-    parsed: false,
+  return ERBContentNode.build({
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
     valid: true,
-    prism_node: null,
-    location: Location.zero,
-    errors: [],
   })
 }
 
 export function createERBSilentNode(expression: string, tagOpening = "<%", tagClosing = "%>"): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
-    tag_opening: createSyntheticToken(tagOpening),
-    content: createSyntheticToken(expression),
-    tag_closing: createSyntheticToken(tagClosing),
-    parsed: false,
+  return ERBContentNode.build({
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
     valid: true,
-    prism_node: null,
-    location: Location.zero,
-    errors: [],
   })
 }

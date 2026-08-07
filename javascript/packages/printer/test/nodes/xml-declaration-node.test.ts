@@ -12,17 +12,13 @@ describe("XMLDeclarationNode Printing", () => {
   })
 
   test("can print basic XML declaration from node", () => {
-    const literalNode = LiteralNode.from({
-      type: "AST_LITERAL_NODE",
+    const literalNode = LiteralNode.build({
       location: createLocation(),
-      errors: [],
       content: " version=\"1.0\""
     })
 
-    const node = XMLDeclarationNode.from({
-      type: "AST_XML_DECLARATION_NODE",
+    const node = XMLDeclarationNode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_XML_DECLARATION", "<?xml"),
       children: [literalNode],
       tag_closing: createToken("TOKEN_HTML_TAG_END", "?>")
@@ -32,17 +28,13 @@ describe("XMLDeclarationNode Printing", () => {
   })
 
   test("can print XML declaration with encoding from node", () => {
-    const literalNode = LiteralNode.from({
-      type: "AST_LITERAL_NODE",
+    const literalNode = LiteralNode.build({
       location: createLocation(),
-      errors: [],
       content: " version=\"1.0\" encoding=\"UTF-8\""
     })
 
-    const node = XMLDeclarationNode.from({
-      type: "AST_XML_DECLARATION_NODE",
+    const node = XMLDeclarationNode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_XML_DECLARATION", "<?xml"),
       children: [literalNode],
       tag_closing: createToken("TOKEN_HTML_TAG_END", "?>")

@@ -10,6 +10,7 @@ import { Linter } from "../linter.js"
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "../partial-index-builder.js"
 
 import { compareBackendOffenses } from "../backend-comparison.js"
 
@@ -17,6 +18,7 @@ import type { BackendMismatch } from "../backend-comparison.js"
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
+import type { SerializedPartialIndex } from "@herb-tools/core"
 
 export interface WorkerInput {
   files: string[]
@@ -30,6 +32,7 @@ export interface WorkerInput {
   only?: string[]
   allRules: boolean
   compareBackends: boolean
+  partials?: SerializedPartialIndex
 }
 
 export interface WorkerOffense {
@@ -94,6 +97,8 @@ async function run() {
     rustLinter = buildLinter()
     rustLinter.backendMode = "rust"
   }
+  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
+  const partials = partialIndexFrom(data.partials)
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -124,17 +129,20 @@ async function run() {
 
     const lintResult = linter.lint(content, {
       fileName: filename,
-      ignoreDisableComments: data.ignoreDisableComments
+      ignoreDisableComments: data.ignoreDisableComments,
+      partials
     })
 
     if (data.fix && lintResult.offenses.length > 0) {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
-        ignoreDisableComments: data.ignoreDisableComments
+        ignoreDisableComments: data.ignoreDisableComments,
+        partials
       }, undefined, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
         writeFileSync(filePath, autofixResult.source, "utf-8")
+        refreshPartialAfterFix(Herb, partials, filename, content, autofixResult.source)
         filesFixed++
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }

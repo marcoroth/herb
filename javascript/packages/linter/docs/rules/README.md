@@ -18,16 +18,21 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-dynamic-partial-path`](./actionview-no-dynamic-partial-path.md) - Disallow partial paths that are built at runtime
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
+- [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
 - [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
 - [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
+- [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
+- [`actionview-no-strict-locals-error`](./actionview-no-strict-locals-error.md) - Disallow `render` calls that would raise an `ActionView::StrictLocalsError`
 - [`actionview-no-unnecessary-html-safe`](./actionview-no-unnecessary-html-safe.md) - Disallow calling `.html_safe` on String literals
 - [`actionview-no-unnecessary-tag-attributes`](./actionview-no-unnecessary-tag-attributes.md) - Disallow unnecessary attributes on Action View tag helpers
 - [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
+- [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
@@ -66,6 +71,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-unused-block-argument`](./erb-no-unused-block-argument.md) - Disallow unused block arguments in ERB blocks
 - [`erb-no-unused-expressions`](./erb-no-unused-expressions.md) - Disallow unused expressions in silent ERB tags
 - [`erb-no-unused-literals`](./erb-no-unused-literals.md) - Disallow Ruby literals in ERB without output
+- [`erb-no-unused-local-variable`](./erb-no-unused-local-variable.md) - Disallow unused local variables in ERB templates
 - [`erb-prefer-direct-output`](./erb-prefer-direct-output.md) - Prefer direct ERB output over string interpolation
 - [`erb-prefer-do-end-blocks`](./erb-prefer-do-end-blocks.md) - Prefer `do ... end` over `{ ... }` for blocks that span multiple ERB tags
 - [`erb-prefer-each-over-map`](./erb-prefer-each-over-map.md) - Prefer `each` over `map` when the result is discarded
@@ -118,15 +124,19 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
 - [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
+- [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
+- [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
 - [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
-- [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
-- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
+- [`html-no-style-attributes`](./html-no-style-attributes.md) - Disallow inline `style` attributes
+- [`html-no-style-elements`](./html-no-style-elements.md) - Disallow inline `<style>` tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
+- [`html-no-unescaped-entities`](./html-no-unescaped-entities.md) - Disallow unescaped HTML entities
+- [`html-no-unknown-tag`](./html-no-unknown-tag.md) - Disallow unknown HTML tags
 - [`html-require-closing-tags`](./html-require-closing-tags.md) - Require closing tags for non-void HTML elements
 - [`html-require-script-nonce`](./html-require-script-nonce.md) - Require `nonce` attribute on script tags and helpers
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML

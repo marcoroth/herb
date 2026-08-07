@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0017_an ERB attribute value still matches a presence condition - render"
+input: "{source: \"<main id=\\\"<%= @id %>\\\">Content</main>\", locals: {\"@id\": \"content\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => true} content=\"<p>Appended</p>\">]}}"
+---
+<main id="content">Content<p>Appended</p></main>

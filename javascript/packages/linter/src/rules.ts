@@ -10,16 +10,21 @@ import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribut
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
+import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
+import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoStrictLocalsErrorRule } from "./rules/actionview-no-strict-locals-error.js"
 import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnecessary-html-safe.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-prefer-qualified-partial-path.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -55,6 +60,7 @@ import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script
 import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argument.js"
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
+import { ERBNoUnusedLocalVariableRule } from "./rules/erb-no-unused-local-variable.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
 import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
 import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
@@ -101,15 +107,19 @@ import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
+import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
+import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
-import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
-import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
+import { HTMLNoStyleAttributesRule } from "./rules/html-no-style-attributes.js"
+import { HTMLNoStyleElementsRule } from "./rules/html-no-style-elements.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
+import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
+import { HTMLNoUnknownTagRule } from "./rules/html-no-unknown-tag.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLRequireScriptNonceRule } from "./rules/html-require-script-nonce.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
@@ -134,16 +144,21 @@ export const rules: RuleClass[] = [
   A11yNoRedundantImageAltRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoDynamicPartialPathRule,
   ActionViewNoHelperShadowingRule,
+  ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
   ActionViewNoRedundantLocalAssignsRule,
+  ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoStrictLocalsErrorRule,
   ActionViewNoUnnecessaryHTMLSafeRule,
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewPreferQualifiedPartialPathRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
@@ -171,6 +186,7 @@ export const rules: RuleClass[] = [
   ERBNoUnusedBlockArgumentRule,
   ERBNoUnusedExpressionsRule,
   ERBNoUnusedLiteralsRule,
+  ERBNoUnusedLocalVariableRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoSleepRule,
   ERBNoStatementInScriptRule,
@@ -225,15 +241,19 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
   HTMLNoEmptyHeadingsRule,
+  HTMLNoEventHandlerAttributesRule,
+  HTMLNoInlineScriptElementsRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
-  HTMLNoUnescapedEntitiesRule,
-  HTMLNoUnknownTagRule,
   HTMLNoSpaceInTagRule,
+  HTMLNoStyleAttributesRule,
+  HTMLNoStyleElementsRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
+  HTMLNoUnescapedEntitiesRule,
+  HTMLNoUnknownTagRule,
   HTMLRequireClosingTagsRule,
   HTMLRequireScriptNonceRule,
   HTMLTagNameLowercaseRule,
