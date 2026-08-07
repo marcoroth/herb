@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag};
+use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag, has_attribute};
 
 use herb::nodes::HTMLOpenTagNode;
 use herb::Visitor;
@@ -39,6 +39,13 @@ static INPUT_TYPES_REQUIRING_AUTOCOMPLETE: LazyLock<HashSet<&'static str>> = Laz
 impl Visitor for InputRequireAutocompleteVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
     if get_tag_name_from_open_tag(node).map(|n| n.eq_ignore_ascii_case("input")).unwrap_or(false) {
+      // a disabled input is never autofilled, so autocomplete has nothing to do
+      if has_attribute(node, "disabled") {
+        self.walk_html_open_tag_node(node);
+
+        return;
+      }
+
       let has_autocomplete = get_attribute(node, "autocomplete")
         .and_then(|attribute| get_static_attribute_value(attribute))
         .is_some();
