@@ -1,0 +1,30 @@
+# Generated from lib/herb/engine/component_visitor/partial_resolver.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ComponentVisitor < Herb::Visitor
+      # Resolves a dot separated tag name to a partial path, so `<Users.ProfileCard />` becomes
+      # `render "users/profile_card"`.
+      #
+      # The tag name has to parse first, which needs the `dot_notation_tags` parser option.
+      class PartialResolver < Resolver
+        TAG_NAME: ::Regexp
+
+        # : (String) -> bool
+        def handles?: (String) -> bool
+
+        # : (String, Hash[String, String], block: bool) -> String
+        def render_code: (String, Hash[String, String], block: bool) -> String
+
+        private
+
+        # `Users.ProfileCard` -> `users/profile_card`
+        # : (String) -> String
+        def partial_path: (String) -> String
+
+        # : (String) -> String
+        def underscore: (String) -> String
+      end
+    end
+  end
+end

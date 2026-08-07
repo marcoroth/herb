@@ -1,49 +1,67 @@
 ---
-name: select_tag
+name: "select_tag"
 source: "ActionView::Helpers::FormTagHelper#select_tag"
-gem: actionview
-output: html
-visibility: public
+gem: "actionview"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Creates a dropdown selection box, or if the `:multiple` option is set to `true`, a multiple choice selection box.
 signature: "select_tag(name, option_tags = nil, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-select_tag"
+
+description: |-
+  Creates a dropdown selection box, or if the `:multiple` option is set to `true`, a multiple choice selection box.
+
 tag:
-  name: select
+  name: "select"
   is_void: false
   preferred: false
-  detect_style: call_name
+  detect_style: "call_name"
+
 arguments:
-  - name: name
+  - name: "name"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Name attribute for the `<select>` element."
-  - name: option_tags
+    description: |-
+      Name attribute for the `<select>` element.
+
+  - name: "option_tags"
     position: 2
-    type: string
+    type: "string"
     optional: true
     default: "nil"
-    description: "HTML string of `<option>` tags."
-  - name: options
+    description: |-
+      HTML string of `<option>` tags.
+
+  - name: "options"
     position: 3
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "HTML attributes hash."
+    description: |-
+      HTML attributes hash.
+
 options:
-  - name: multiple
-    type: boolean
-    description: "If `true`, allows multiple selections."
-  - name: disabled
-    type: boolean
-    description: "If `true`, the select is disabled."
-  - name: include_blank
-    type: [boolean, string]
-    description: "Include a blank option at the top."
-  - name: prompt
-    type: string
-    description: "Prompt text for the first option."
+  - name: "multiple"
+    type: "boolean"
+    description: |-
+      If `true`, allows multiple selections.
+
+  - name: "disabled"
+    type: "boolean"
+    description: |-
+      If `true`, the select is disabled.
+
+  - name: "include_blank"
+    type: ["boolean", "string"]
+    description: |-
+      Include a blank option at the top.
+
+  - name: "prompt"
+    type: "string"
+    description: |-
+      Prompt text for the first option.
+
+block_arguments: []
 special_behaviors: []

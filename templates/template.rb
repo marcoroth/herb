@@ -9,7 +9,7 @@ module Herb
   module Template
     def self.underscore(name)
       name
-        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([A-Z])(?=[A-Z][a-z])/, '\1_')
         .gsub(/([a-z\d])([A-Z])/, '\1_\2')
     end
 
@@ -17,12 +17,48 @@ module Herb
     CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
     ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
 
+    NON_NILABLE_RUBY_TYPES = [
+      "Array[Herb::AST::Node]",
+      "Array[Herb::AST::ERBWhenNode]",
+      "Array[Herb::AST::ERBInNode]",
+      "bool",
+      "nil"
+    ].freeze
+
+    PrismConfigField = Data.define(:name, :type)
+
+    PrismConfigNode = Data.define(:name, :type_id, :fields, :flags) do
+      def entries
+        flags ? [PrismConfigField.new(flags, "__flags")] + fields : fields
+      end
+    end
+
     class Field
       attr_reader :name, :options
 
       def initialize(name:, **options)
         @name = name
         @options = options
+      end
+
+      def nilable?
+        !NON_NILABLE_RUBY_TYPES.include?(ruby_type)
+      end
+
+      def nilable_ruby_type
+        nilable? ? "#{ruby_type}?" : ruby_type
+      end
+
+      def default_ruby_value
+        case ruby_type
+        when "bool" then "false"
+        when /\AArray\[/ then "[]"
+        else "nil"
+        end
+      end
+
+      def writable?
+        options.fetch(:writable, false)
       end
 
       def always_invisible?
@@ -412,7 +448,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind)
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
       end
 
@@ -482,6 +518,26 @@ module Herb
 
       def escaped_default
         @default ? Template.escape_string(@default) : nil
+      end
+    end
+
+    class HelperBlockArgument
+      attr_reader :name, :position, :type, :optional, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @position = config.fetch("position")
+        @type = Array(config.fetch("type"))
+        @optional = config.fetch("optional", false)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
       end
     end
 
@@ -618,7 +674,7 @@ module Herb
                   :supported, :description, :signature, :documentation_url, :tag,
                   :content, :attributes_arg, :attributes_arg_with_block,
                   :transform_style, :custom_transform,
-                  :arguments, :options, :special_behaviors, :aliases
+                  :arguments, :options, :block_arguments, :special_behaviors, :aliases
 
       def initialize(config)
         @name = config.fetch("name")
@@ -645,6 +701,7 @@ module Herb
 
         @arguments = (config.fetch("arguments", []) || []).map { |arg| HelperArgument.new(arg) }
         @options = (config.fetch("options", []) || []).map { |opt| HelperOption.new(opt) }
+        @block_arguments = (config.fetch("block_arguments", []) || []).map { |arg| HelperBlockArgument.new(arg) }
 
         raw_behaviors = config.fetch("special_behaviors", []) || []
         @special_behaviors = raw_behaviors.map { |b| HelperSpecialBehavior.new(b) }
@@ -872,7 +929,9 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers })
+      rendered_template = read_template(template_path.to_s).result_with_hash(
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags }
+      )
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -943,6 +1002,34 @@ module Herb
 
     def self.config
       YAML.load_file("config.yml")
+    end
+
+    def self.prism_config_path
+      require_relative "../lib/herb/bootstrap"
+
+      vendored = File.join(Herb::Bootstrap::PRISM_VENDOR_DIR, "config.yml")
+
+      return vendored if File.exist?(vendored)
+
+      File.join(Herb::Bootstrap.find_prism_gem_path, "config.yml")
+    end
+
+    def self.prism_config
+      @prism_config ||= YAML.load_file(prism_config_path)
+    end
+
+    def self.prism_nodes
+      (prism_config["nodes"] || []).each_with_index.map do |node, index|
+        fields = (node["fields"] || []).map { |field| PrismConfigField.new(field["name"], field["type"]) }
+
+        PrismConfigNode.new(node["name"], index + 1, fields, node["flags"])
+      end
+    end
+
+    def self.prism_flags
+      (prism_config["flags"] || []).to_h do |group|
+        [group["name"], (group["values"] || []).map { |value| value["name"] }]
+      end
     end
   end
 end

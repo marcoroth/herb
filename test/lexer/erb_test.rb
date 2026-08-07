@@ -90,5 +90,45 @@ module Lexer
     test "erb tag followed by literal closing delimiter" do
       assert_lexed_snapshot(%(<% content %> %>))
     end
+
+    test "erb <%%>" do
+      assert_lexed_snapshot(%(<%%>))
+    end
+
+    test "erb tag closed with > instead of %>" do
+      assert_lexed_snapshot(%(<h1><%= title ></h1>))
+    end
+
+    test "erb tag closed with % instead of %>" do
+      assert_lexed_snapshot(%(<h1><%= title %</h1>))
+    end
+
+    test "erb tag closed with -% instead of -%>" do
+      assert_lexed_snapshot(%(<h1><%= title -%</h1>))
+    end
+
+    test "erb tag closed with =% instead of =%>" do
+      assert_lexed_snapshot(%(<h1><%= title =%</h1>))
+    end
+
+    test "erb escaped tag closed with %% instead of %%>" do
+      assert_lexed_snapshot(%(<h1><%% title %%</h1>))
+    end
+
+    test "erb tag closed with a space between % and >" do
+      assert_lexed_snapshot(%(<h1><%= title % ></h1>))
+    end
+
+    test "erb tag without any closing delimiter before a closing html tag" do
+      assert_lexed_snapshot(%(<h1><%= title </h1>))
+    end
+
+    test "erb tag keeps greater-than comparison in the ruby" do
+      assert_lexed_snapshot(%(<p><%= count > 10 ></p>))
+    end
+
+    test "erb tag with no recoverable closing delimiter" do
+      assert_lexed_snapshot(%(<%= items.select { |item| item.size > 3 ))
+    end
   end
 end

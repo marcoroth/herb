@@ -158,6 +158,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (NIL_P(strict_locals)) { strict_locals = rb_hash_lookup(options, ID2SYM(rb_intern("strict_locals"))); }
     if (!NIL_P(strict_locals) && RTEST(strict_locals)) { parser_options.strict_locals = true; }
 
+    VALUE iteration_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("iteration_nodes"));
+    if (NIL_P(iteration_nodes)) { iteration_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("iteration_nodes"))); }
+    if (!NIL_P(iteration_nodes) && RTEST(iteration_nodes)) { parser_options.iteration_nodes = true; }
+
     VALUE prism_nodes = rb_hash_lookup(options, rb_utf8_str_new_cstr("prism_nodes"));
     if (NIL_P(prism_nodes)) { prism_nodes = rb_hash_lookup(options, ID2SYM(rb_intern("prism_nodes"))); }
     if (!NIL_P(prism_nodes) && RTEST(prism_nodes)) { parser_options.prism_nodes = true; }
@@ -495,8 +499,8 @@ static VALUE diff_cleanup(VALUE arg) {
 }
 
 static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
-  VALUE old_source, new_source;
-  rb_scan_args(argc, argv, "2", &old_source, &new_source);
+  VALUE old_source, new_source, options;
+  rb_scan_args(argc, argv, "2:", &old_source, &new_source, &options);
 
   char* old_string = (char*) check_string(old_source);
   char* new_string = (char*) check_string(new_source);
@@ -504,6 +508,17 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
   diff_args_T args = { 0 };
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (!NIL_P(options)) {
+    VALUE track_whitespace_changes = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace_changes"));
+    if (NIL_P(track_whitespace_changes)) {
+      track_whitespace_changes = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace_changes")));
+    }
+    if (!NIL_P(track_whitespace_changes) && RTEST(track_whitespace_changes)) {
+      diff_options.track_whitespace_changes = true;
+    }
+  }
 
   if (!hb_allocator_init(&args.old_allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
 
@@ -529,7 +544,7 @@ static VALUE Herb_diff(int argc, VALUE* argv, VALUE self) {
     return Qnil;
   }
 
-  args.diff_result = herb_diff(args.old_root, args.new_root, &args.diff_allocator);
+  args.diff_result = herb_diff(args.old_root, args.new_root, &diff_options, &args.diff_allocator);
 
   return rb_ensure(diff_convert_body, (VALUE) &args, diff_cleanup, (VALUE) &args);
 }

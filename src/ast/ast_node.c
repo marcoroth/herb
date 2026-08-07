@@ -29,8 +29,10 @@ void ast_node_init(
   node->location.start = start;
   node->location.end = end;
 
+  (void) allocator;
+
   if (errors == NULL) {
-    node->errors = hb_array_init(0, allocator);
+    node->errors = NULL;
   } else {
     node->errors = errors;
   }
@@ -50,18 +52,6 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_al
 
 ast_node_type_T ast_node_type(const AST_NODE_T* node) {
   return node->type;
-}
-
-size_t ast_node_errors_count(const AST_NODE_T* node) {
-  return hb_array_size(node->errors);
-}
-
-hb_array_T* ast_node_errors(const AST_NODE_T* node) {
-  return node->errors;
-}
-
-void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error) {
-  hb_array_append(node->errors, error);
 }
 
 void ast_node_set_start(AST_NODE_T* node, position_T position) {

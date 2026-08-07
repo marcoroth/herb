@@ -1,6 +1,7 @@
 import * as vscode from 'vscode'
 
 import type { LintOffense, LintSeverity, LinterRule } from '@herb-tools/linter'
+import type { Range, WorkspaceEdit } from 'vscode-languageclient'
 
 export type Status = 'processing' | 'ok' | 'failed' | 'timeout' | 'formatter'
 
@@ -125,6 +126,25 @@ export type TreeNode =
   | NoParseErrorsNode
   | NoLintIssuesNode
   | NoFormatterIssuesNode
+
+export interface ExtractToPartialArguments {
+  uri: string
+  range: Range
+  suggestedName: string
+  locals: string[]
+}
+
+export interface ExtractToPartialSuccess {
+  edit: WorkspaceEdit
+  uri: string
+  renderKey: string
+}
+
+export interface ExtractToPartialFailure {
+  error: string
+}
+
+export type ExtractToPartialResult = ExtractToPartialSuccess | ExtractToPartialFailure
 
 export interface AnalysisResult {
   status: Status

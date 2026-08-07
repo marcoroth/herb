@@ -1,23 +1,29 @@
 ---
-name: video_path
+name: "video_path"
 source: "ActionView::Helpers::AssetUrlHelper#video_path"
-gem: actionview
-output: url
-visibility: public
+gem: "actionview"
+output: "url"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Computes the path to a video asset.
 signature: "video_path(source, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetUrlHelper.html#method-i-video_path"
+
+description: |-
+  Computes the path to a video asset.
+
 tag: null
+
 arguments:
-  - name: source
+  - name: "source"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Video file name or path."
+    description: |-
+      Video file name or path.
+
 options: []
+block_arguments: []
 special_behaviors: []
 aliases:
-  - path_to_video
+  - "path_to_video"

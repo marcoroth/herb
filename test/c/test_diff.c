@@ -15,7 +15,28 @@ static herb_diff_result_T* diff_sources(const char* old_source, const char* new_
   AST_DOCUMENT_NODE_T* old_document = herb_parse(old_source, &options, &old_allocator);
   AST_DOCUMENT_NODE_T* new_document = herb_parse(new_source, &options, &new_allocator);
 
-  return herb_diff(old_document, new_document, allocator);
+  return herb_diff(old_document, new_document, NULL, allocator);
+}
+
+static herb_diff_result_T* diff_sources_tracking_whitespace(
+  const char* old_source,
+  const char* new_source,
+  hb_allocator_T* allocator
+) {
+  parser_options_T options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  hb_allocator_T old_allocator;
+  hb_allocator_T new_allocator;
+  hb_allocator_init(&old_allocator, HB_ALLOCATOR_ARENA);
+  hb_allocator_init(&new_allocator, HB_ALLOCATOR_ARENA);
+
+  AST_DOCUMENT_NODE_T* old_document = herb_parse(old_source, &options, &old_allocator);
+  AST_DOCUMENT_NODE_T* new_document = herb_parse(new_source, &options, &new_allocator);
+
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+  diff_options.track_whitespace_changes = true;
+
+  return herb_diff(old_document, new_document, &diff_options, allocator);
 }
 
 TEST(test_diff_identical_documents)
@@ -416,12 +437,91 @@ TEST(test_diff_move_with_unchanged_middle)
   hb_allocator_destroy(&allocator);
 END
 
+TEST(test_diff_insignificant_whitespace_change)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Hello World</div>", "<div>Hello    World</div>", &allocator);
+
+  ck_assert(herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 0);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_significant_whitespace_change)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<div>Hello World</div>", "<div>HelloWorld</div>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_whitespace_change_in_preserving_element)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result = diff_sources("<pre>Hello World</pre>", "<pre>Hello    World</pre>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_whitespace_change_detected_when_opted_in)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result =
+    diff_sources_tracking_whitespace("<div>Hello World</div>", "<div>Hello    World</div>", &allocator);
+
+  ck_assert(!herb_diff_trees_identical(result));
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_WHITESPACE_CHANGED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_significant_change_stays_text_changed_when_opted_in)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result =
+    diff_sources_tracking_whitespace("<div>Hello World</div>", "<div>HelloWorld</div>", &allocator);
+
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);
+
+  hb_allocator_destroy(&allocator);
+END
+
+TEST(test_diff_preserving_element_stays_text_changed_when_opted_in)
+  hb_allocator_T allocator;
+  hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+
+  herb_diff_result_T* result =
+    diff_sources_tracking_whitespace("<pre>Hello World</pre>", "<pre>Hello    World</pre>", &allocator);
+
+  ck_assert_uint_eq(herb_diff_operation_count(result), 1);
+  ck_assert_uint_eq(herb_diff_operation_at(result, 0)->type, HERB_DIFF_TEXT_CHANGED);
+
+  hb_allocator_destroy(&allocator);
+END
+
 TEST(test_diff_operation_type_to_string)
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_INSERTED), "node_inserted");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_REMOVED), "node_removed");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_REPLACED), "node_replaced");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_NODE_MOVED), "node_moved");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_TEXT_CHANGED), "text_changed");
+  ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_WHITESPACE_CHANGED), "whitespace_changed");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_ERB_CONTENT_CHANGED), "erb_content_changed");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_ATTRIBUTE_ADDED), "attribute_added");
   ck_assert_str_eq(herb_diff_operation_type_to_string(HERB_DIFF_ATTRIBUTE_REMOVED), "attribute_removed");
@@ -457,6 +557,12 @@ TCase *diff_tests(void) {
   tcase_add_test(diff, test_diff_move_among_other_changes);
   tcase_add_test(diff, test_diff_no_move_without_attributes);
   tcase_add_test(diff, test_diff_move_with_unchanged_middle);
+  tcase_add_test(diff, test_diff_insignificant_whitespace_change);
+  tcase_add_test(diff, test_diff_significant_whitespace_change);
+  tcase_add_test(diff, test_diff_whitespace_change_in_preserving_element);
+  tcase_add_test(diff, test_diff_whitespace_change_detected_when_opted_in);
+  tcase_add_test(diff, test_diff_significant_change_stays_text_changed_when_opted_in);
+  tcase_add_test(diff, test_diff_preserving_element_stays_text_changed_when_opted_in);
   tcase_add_test(diff, test_diff_operation_type_to_string);
 
   return diff;

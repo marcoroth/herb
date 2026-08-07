@@ -16,6 +16,11 @@ module Herb
     attr_reader :location #: Location
     attr_reader :type #: String
 
+    #: (String | Symbol, String, ?location: Location, ?range: Range) -> Token
+    def self.from(type, value, location: Location.zero, range: Range.zero)
+      new(value.dup, range, location, type.to_s)
+    end
+
     #: (String, Range, Location, String) -> void
     def initialize(value, range, location, type)
       @value = value

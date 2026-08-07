@@ -1,37 +1,47 @@
 ---
-name: text_field_tag
+name: "text_field_tag"
 source: "ActionView::Helpers::FormTagHelper#text_field_tag"
-gem: actionview
-output: html
-visibility: public
+gem: "actionview"
+output: "html"
+visibility: "public"
 supported: false
 supports_block: false
-description: |-
-  Creates a standard text field; use these text fields to input smaller chunks of text like a username or a search query.
 signature: "text_field_tag(name, value = nil, options = {})"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-text_field_tag"
+
+description: |-
+  Creates a standard text field; use these text fields to input smaller chunks of text like a username or a search query.
+
 tag:
-  name: input
+  name: "input"
   is_void: true
   preferred: false
-  detect_style: call_name
+  detect_style: "call_name"
+
 arguments:
-  - name: name
+  - name: "name"
     position: 1
-    type: string
+    type: "string"
     optional: false
-    description: "Name attribute for the input."
-  - name: value
+    description: |-
+      Name attribute for the input.
+
+  - name: "value"
     position: 2
-    type: string
+    type: "string"
     optional: true
     default: "nil"
-    description: "Default value for the input."
-  - name: options
+    description: |-
+      Default value for the input.
+
+  - name: "options"
     position: 3
-    type: hash
+    type: "hash"
     optional: true
     default: "{}"
-    description: "HTML attributes hash."
+    description: |-
+      HTML attributes hash.
+
 options: []
+block_arguments: []
 special_behaviors: []

@@ -95,6 +95,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.strict_locals = (strictLocals == JNI_TRUE);
     }
 
+    jmethodID getIterationNodes =
+        (*env)->GetMethodID(env, optionsClass, "isIterationNodes", "()Z");
+
+    if (getIterationNodes != NULL) {
+      jboolean iterationNodes = (*env)->CallBooleanMethod(env, options, getIterationNodes);
+      parser_options.iteration_nodes = (iterationNodes == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 
@@ -280,9 +288,25 @@ Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source) {
+Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source, jobject options) {
   const char* old_src = (*env)->GetStringUTFChars(env, old_source, 0);
   const char* new_src = (*env)->GetStringUTFChars(env, new_source, 0);
+
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (options != NULL) {
+    jclass optionsClass = (*env)->GetObjectClass(env, options);
+    jmethodID getDetectWhitespaceChanges =
+        (*env)->GetMethodID(env, optionsClass, "isTrackWhitespaceChanges", "()Z");
+
+    if (getDetectWhitespaceChanges != NULL) {
+      jboolean trackWhitespaceChanges = (*env)->CallBooleanMethod(env, options, getDetectWhitespaceChanges);
+
+      if (trackWhitespaceChanges == JNI_TRUE) {
+        diff_options.track_whitespace_changes = true;
+      }
+    }
+  }
 
   hb_allocator_T old_allocator;
   hb_allocator_T new_allocator;
@@ -332,7 +356,7 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
     return NULL;
   }
 
-  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_options, &diff_allocator);
 
   jclass diff_result_class = (*env)->FindClass(env, "org/herb/DiffResult");
   jclass diff_operation_class = (*env)->FindClass(env, "org/herb/DiffOperation");

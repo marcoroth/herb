@@ -12,6 +12,7 @@ pub struct ParserOptions {
   pub transform_conditionals: bool,
   pub render_nodes: bool,
   pub strict_locals: bool,
+  pub iteration_nodes: bool,
   pub prism_nodes: bool,
   pub prism_nodes_deep: bool,
   pub prism_program: bool,
@@ -31,6 +32,7 @@ impl Default for ParserOptions {
       transform_conditionals: false,
       render_nodes: false,
       strict_locals: false,
+      iteration_nodes: false,
       prism_nodes: false,
       prism_nodes_deep: false,
       prism_program: false,
@@ -117,6 +119,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       transform_conditionals: options.transform_conditionals,
       render_nodes: options.render_nodes,
       strict_locals: options.strict_locals,
+      iteration_nodes: options.iteration_nodes,
       prism_program: options.prism_program,
       prism_nodes: options.prism_nodes,
       prism_nodes_deep: options.prism_nodes_deep,
@@ -137,7 +140,9 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       return Err("Failed to parse source".to_string());
     }
 
-    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void).ok_or_else(|| {
+    let shared_source: std::sync::Arc<str> = std::sync::Arc::from(source);
+
+    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void, &shared_source).ok_or_else(|| {
       crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
       crate::ffi::hb_allocator_destroy(&mut allocator);
       "Failed to convert AST".to_string()
@@ -309,7 +314,16 @@ pub struct DiffResult {
   pub operations: Vec<DiffOperation>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct DiffOptions {
+  pub track_whitespace_changes: bool,
+}
+
 pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
+  diff_with_options(old_source, new_source, &DiffOptions::default())
+}
+
+pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptions) -> Result<DiffResult, String> {
   unsafe {
     let old_c_source = CString::new(old_source).map_err(|error| error.to_string())?;
     let new_c_source = CString::new(new_source).map_err(|error| error.to_string())?;
@@ -340,6 +354,7 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       action_view_helpers: false,
       render_nodes: false,
       strict_locals: false,
+      iteration_nodes: false,
       prism_program: false,
       prism_nodes: false,
       prism_nodes_deep: false,
@@ -373,7 +388,14 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       return Err("Failed to parse source".to_string());
     }
 
-    let diff_result = crate::ffi::herb_diff(old_root, new_root, &mut diff_allocator);
+    let diff_options = crate::bindings::herb_diff_options_T {
+      track_whitespace_changes: options.track_whitespace_changes,
+    };
+
+    let shared_old_source: std::sync::Arc<str> = std::sync::Arc::from(old_source);
+    let shared_new_source: std::sync::Arc<str> = std::sync::Arc::from(new_source);
+
+    let diff_result = crate::ffi::herb_diff(old_root, new_root, &diff_options, &mut diff_allocator);
 
     let identical = crate::ffi::herb_diff_trees_identical(diff_result);
     let operation_count = crate::ffi::herb_diff_operation_count(diff_result);
@@ -398,13 +420,13 @@ pub fn diff(old_source: &str, new_source: &str) -> Result<DiffResult, String> {
       }
 
       let old_node = if !operation_ref.old_node.is_null() {
-        crate::ast::nodes::convert_node(operation_ref.old_node as *const std::ffi::c_void)
+        crate::ast::nodes::convert_node(operation_ref.old_node as *const std::ffi::c_void, &shared_old_source)
       } else {
         None
       };
 
       let new_node = if !operation_ref.new_node.is_null() {
-        crate::ast::nodes::convert_node(operation_ref.new_node as *const std::ffi::c_void)
+        crate::ast::nodes::convert_node(operation_ref.new_node as *const std::ffi::c_void, &shared_new_source)
       } else {
         None
       };

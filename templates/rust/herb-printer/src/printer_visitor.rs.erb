@@ -1,0 +1,14 @@
+macro_rules! impl_printer_visitor {
+  ($printer:ty) => {
+    impl herb::Visitor for $printer {
+      <%- nodes.each do |node| -%>
+      fn visit_<%= node.human %>(&mut self, node: &herb::nodes::<%= node.name %>) {
+        $crate::printer::Printer::emit_<%= node.human.delete_suffix("_node") %>(self, node);
+      }
+
+      <%- end -%>
+    }
+  };
+}
+
+pub(crate) use impl_printer_visitor;

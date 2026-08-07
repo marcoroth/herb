@@ -26,7 +26,7 @@ module Herb
         @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
-        @erb_block_stack = [] #: Array[Herb::AST::ERBBlockNode]
+        @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
         @debug_attributes_applied = false
         @in_attribute = false
         @in_html_comment = false
@@ -92,6 +92,12 @@ module Herb
         @erb_block_stack.pop
       end
 
+      def visit_erb_iteration_block_node(node)
+        @erb_block_stack.push(node)
+        super
+        @erb_block_stack.pop
+      end
+
       private
 
       def calculate_relative_path
@@ -108,18 +114,6 @@ module Herb
 
       def wrap_all_erb_nodes(node)
         replace_erb_nodes_recursive(node)
-      end
-
-      # Creates a dummy location for AST nodes that don't need real location info
-      #: () -> Herb::Location
-      def dummy_location
-        @dummy_location ||= Herb::Location.from(0, 0, 0, 0)
-      end
-
-      # Creates a dummy range for tokens that don't need real range info
-      #: () -> Herb::Range
-      def dummy_range
-        @dummy_range ||= Herb::Range.from(0, 0)
       end
 
       def replace_erb_nodes_recursive(node)
@@ -193,20 +187,22 @@ module Herb
       end
 
       def create_debug_attribute(name, value)
-        name_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], name.dup)
-        name_node = Herb::AST::HTMLAttributeNameNode.new("HTMLAttributeNameNode", dummy_location, [], [name_literal])
+        name_literal = Herb::AST::LiteralNode.build(content: name.dup)
+        name_node = Herb::AST::HTMLAttributeNameNode.build(children: [name_literal])
 
-        value_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], value.dup)
-        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode", dummy_location, [], create_token(:quote, '"'),
-                                                           [value_literal], create_token(:quote, '"'), true)
+        value_literal = Herb::AST::LiteralNode.build(content: value.dup)
+        value_node = Herb::AST::HTMLAttributeValueNode.build(
+          open_quote: Herb::Token.from(:quote, '"'),
+          children: [value_literal],
+          close_quote: Herb::Token.from(:quote, '"'),
+          quoted: true
+        )
 
-        equals_token = create_token(:equals, "=")
-
-        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", dummy_location, [], name_node, equals_token, value_node)
-      end
-
-      def create_token(type, value)
-        Herb::Token.new(value.dup, dummy_range, dummy_location, type.to_s)
+        Herb::AST::HTMLAttributeNode.build(
+          name: name_node,
+          equals: Herb::Token.from(:equals, "="),
+          value: value_node
+        )
       end
 
       def create_debug_span_for_erb(erb_node)
@@ -241,31 +237,28 @@ module Herb
         debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
-        tag_name_token = create_token(:tag_name, "span")
+        tag_name_token = Herb::Token.from(:tag_name, "span")
 
-        open_tag = Herb::AST::HTMLOpenTagNode.new(
-          "HTMLOpenTagNode",
-          dummy_location,
-          [],
-          create_token(:tag_opening, "<"),
-          tag_name_token,
-          create_token(:tag_closing, ">"),
-          debug_attributes,
-          false
+        open_tag = Herb::AST::HTMLOpenTagNode.build(
+          tag_opening: Herb::Token.from(:tag_opening, "<"),
+          tag_name: tag_name_token,
+          tag_closing: Herb::Token.from(:tag_closing, ">"),
+          children: debug_attributes
         )
 
-        close_tag = Herb::AST::HTMLCloseTagNode.new(
-          "HTMLCloseTagNode",
-          dummy_location,
-          [],
-          create_token(:tag_opening, "</"),
-          create_token(:tag_name, "span"),
-          [],
-          create_token(:tag_closing, ">")
+        close_tag = Herb::AST::HTMLCloseTagNode.build(
+          tag_opening: Herb::Token.from(:tag_opening, "</"),
+          tag_name: Herb::Token.from(:tag_name, "span"),
+          tag_closing: Herb::Token.from(:tag_closing, ">")
         )
 
-        Herb::AST::HTMLElementNode.new("HTMLElementNode", dummy_location, [], open_tag, tag_name_token, [erb_node], close_tag,
-                                       false, "Debug")
+        Herb::AST::HTMLElementNode.build(
+          open_tag: open_tag,
+          tag_name: tag_name_token,
+          body: [erb_node],
+          close_tag: close_tag,
+          element_source: "Debug"
+        )
       end
 
       def determine_view_type

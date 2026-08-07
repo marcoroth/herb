@@ -1,0 +1,7 @@
+---
+source: "Engine::ComponentVisitorTest#test_0032_a component inside an ERB block is transformed"
+input: "{source: \"<% items.each do |item| %><Item /><% end %>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; items.each do |item| 
+ _buf << (render Item.new).to_s; end;
+_buf.to_s

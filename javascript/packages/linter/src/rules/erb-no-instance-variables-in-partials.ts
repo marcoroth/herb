@@ -91,9 +91,10 @@ export class ERBNoInstanceVariablesInPartialsRule extends ParserRule {
 
     return collector.instanceVariables.map(ivar => {
       const location = locationFromByteOffset(source, ivar.startOffset, ivar.length)
+      const local = ivar.name.replace(/^@/, "")
       const message = ivar.usage === "read"
-        ? `Avoid using instance variables in partials. Pass \`${ivar.name}\` as a local variable instead.`
-        : `Avoid setting instance variables in partials. Use a local variable instead of \`${ivar.name}\`.`
+        ? `Avoid using instance variables in partials. Use the local variable \`${local}\` instead of \`${ivar.name}\` and pass it in via \`locals\`.`
+        : `Avoid setting instance variables in partials. Assign the local variable \`${local}\` instead of \`${ivar.name}\`.`
 
       return this.createOffense(message, location)
     })

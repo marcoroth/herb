@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0031_inline-block li elements - single line maintains no whitespace - render"
+input: "{source: \"<ul><li style=\\\"display: inline-block\\\">Foo<li style=\\\"display: inline-block\\\">Bar</ul>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul><li style="display: inline-block">Foo</li><li style="display: inline-block">Bar</li></ul>

@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { Config } from "@herb-tools/config"
+import { Config, ALL_RULES_KEY } from "@herb-tools/config"
 
 export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<ConfigItem | undefined | null | void> = new vscode.EventEmitter<ConfigItem | undefined | null | void>()
@@ -139,14 +139,18 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
       const linterEnabled = this.config.isLinterEnabled
       const disabledRulesCount = this.config.linter?.rules
-        ? Object.values(this.config.linter.rules).filter(r => r.enabled === false).length
+        ? Object.entries(this.config.linter.rules).filter(([name, rule]) => name !== ALL_RULES_KEY && rule.enabled === false).length
         : 0
+
+      const rulesDisabledByDefault = this.config.defaultRuleEnabled === false
 
       const linterItem = new ConfigItem(
         `Herb Linter: ${linterEnabled ? 'Enabled' : 'Disabled'}`,
-        disabledRulesCount
-          ? `${disabledRulesCount} rules disabled`
-          : "All rules enabled",
+        rulesDisabledByDefault
+          ? "All rules disabled by default"
+          : disabledRulesCount
+            ? `${disabledRulesCount} rules disabled`
+            : "All rules enabled",
         vscode.TreeItemCollapsibleState.None,
         'linterSetting'
       )

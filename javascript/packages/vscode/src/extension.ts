@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
@@ -20,6 +21,8 @@ import {
   reportDiagnosticIssue
 } from "./issue-reporter"
 
+import type { ExtractToPartialArguments, ExtractToPartialResult } from "./types"
+
 let client: Client
 let analysisProvider: HerbAnalysisProvider
 let configProvider: HerbConfigProvider
@@ -32,6 +35,36 @@ function getFileGlobPattern(): string {
   return Config.getDefaultFilePatterns().join(",")
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(vscode.Uri.file(filePath))
+
+    return true
+  } catch (_error) {
+    return false
+  }
+}
+
+async function findMisnamedConfigPaths(workspaceRoot: string): Promise<string[]> {
+  const misnamedPaths: string[] = []
+
+  for (const misnamedConfigPath of Config.misnamedConfigPaths) {
+    const candidate = path.join(workspaceRoot, misnamedConfigPath)
+
+    if (await fileExists(candidate)) {
+      misnamedPaths.push(candidate)
+    }
+  }
+
+  const activeDocumentPath = vscode.window.activeTextEditor?.document.uri.fsPath
+
+  if (activeDocumentPath && Config.isMisnamedConfigPath(activeDocumentPath) && !misnamedPaths.includes(activeDocumentPath)) {
+    misnamedPaths.unshift(activeDocumentPath)
+  }
+
+  return misnamedPaths
+}
+
 async function updateConfigStatusBarItem() {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
 
@@ -41,23 +74,43 @@ async function updateConfigStatusBarItem() {
     return
   }
 
+  const misnamedPaths = await findMisnamedConfigPaths(workspaceRoot)
+
+  if (misnamedPaths.length > 0) {
+    const misnamedPath = misnamedPaths[0]
+    const misnamedNames = misnamedPaths.map(misnamedConfigPath => path.basename(misnamedConfigPath)).join(', ')
+    const verb = misnamedPaths.length === 1 ? 'is' : 'are'
+
+    configStatusBarItem.text = `$(warning) ${path.basename(misnamedPath)} (Not Read)`
+    configStatusBarItem.tooltip = `Herb only reads ${Config.configPath}, so ${misnamedNames} ${verb} ignored.\n\nRename to ${Config.configPath} to apply the configuration.\n\nClick to open ${path.basename(misnamedPath)}`
+    configStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground')
+    configStatusBarItem.color = new vscode.ThemeColor('statusBarItem.errorForeground')
+    configStatusBarItem.command = {
+      title: `Open ${path.basename(misnamedPath)}`,
+      command: 'vscode.open',
+      arguments: [vscode.Uri.file(misnamedPath)]
+    }
+
+    configStatusBarItem.show()
+
+    return
+  }
+
   const configPath = Config.configPathFromProjectPath(workspaceRoot)
 
-  try {
-    await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
+  configStatusBarItem.backgroundColor = undefined
+  configStatusBarItem.color = undefined
+  configStatusBarItem.command = 'herb.showConfigDetails'
 
-    configStatusBarItem.text = '$(file-code) .herb.yml (Project Settings)'
-    configStatusBarItem.tooltip = 'Herb configuration loaded from .herb.yml (overrides VS Code settings)\n\nClick to view configuration details'
-    configStatusBarItem.command = 'herb.showConfigDetails'
-
-    configStatusBarItem.show()
-  } catch (_error) {
+  if (await fileExists(configPath)) {
+    configStatusBarItem.text = `$(file-code) ${Config.configPath} (Project Settings)`
+    configStatusBarItem.tooltip = `Herb configuration loaded from ${Config.configPath} (overrides VS Code settings)\n\nClick to view configuration details`
+  } else {
     configStatusBarItem.text = '$(settings-gear) Herb (Personal Settings)'
-    configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yml'
-    configStatusBarItem.command = 'herb.showConfigDetails'
-
-    configStatusBarItem.show()
+    configStatusBarItem.tooltip = `Herb using personal VS Code settings\n\nClick to view configuration details or create ${Config.configPath}`
   }
+
+  configStatusBarItem.show()
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -67,6 +120,12 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(configStatusBarItem)
 
   client = new Client(context)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('herb.extractToPartial', async (args?: ExtractToPartialArguments) => {
+      await extractToPartial(args)
+    })
+  )
 
   await client.start()
 
@@ -196,7 +255,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(fileWatcher)
 
-  const configWatcher = vscode.workspace.createFileSystemWatcher('**/.herb.yml')
+  const configWatcher = vscode.workspace.createFileSystemWatcher(`**/{${Config.configPath},${Config.misnamedConfigPaths.join(",")}}`)
 
   configWatcher.onDidCreate(async () => {
     await updateConfigStatusBarItem()
@@ -211,6 +270,10 @@ export async function activate(context: vscode.ExtensionContext) {
   })
 
   context.subscriptions.push(configWatcher)
+
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async () => {
+    await updateConfigStatusBarItem()
+  }))
 
   await updateConfigStatusBarItem()
   await runAutoAnalysis()
@@ -240,6 +303,71 @@ async function sendCommentRequest(editor: vscode.TextEditor, method: string) {
       }
     })
   }
+}
+
+async function extractToPartial(args?: ExtractToPartialArguments) {
+  const request = args ?? selectionArguments()
+
+  if (!request) {
+    await vscode.window.showErrorMessage("Herb: Select the markup you want to extract into a partial first.")
+
+    return
+  }
+
+  await promptAndExtract(request)
+}
+
+function selectionArguments(): ExtractToPartialArguments | null {
+  const editor = vscode.window.activeTextEditor
+
+  if (!editor || editor.selection.isEmpty) return null
+
+  return {
+    uri: editor.document.uri.toString(),
+    range: {
+      start: { line: editor.selection.start.line, character: editor.selection.start.character },
+      end: { line: editor.selection.end.line, character: editor.selection.end.character }
+    },
+    suggestedName: "",
+    locals: []
+  }
+}
+
+async function promptAndExtract(args: ExtractToPartialArguments) {
+  const locals = args.locals.length > 0 ? ` Locals: ${args.locals.map(local => `${local}:`).join(", ")}` : ""
+
+  const name = await vscode.window.showInputBox({
+    title: "Extract to partial",
+    prompt: `Name for the new partial, optionally with a path relative to app/views.${locals}`,
+    value: args.suggestedName,
+    validateInput: (value) => {
+      return /^[a-zA-Z0-9_\-/]+$/.test(value.trim()) ? null : "Use letters, numbers, underscores, dashes and slashes."
+    }
+  })
+
+  if (!name) return
+
+  const result = await client.sendRequest<ExtractToPartialResult>('herb/extractToPartial', {
+    textDocument: { uri: args.uri },
+    range: args.range,
+    name
+  })
+
+  if (!result || "error" in result) {
+    await vscode.window.showErrorMessage(`Herb: ${result?.error ?? "Could not extract the selection into a partial."}`)
+
+    return
+  }
+
+  const applied = await client.applyWorkspaceEdit(result.edit)
+
+  if (!applied) {
+    await vscode.window.showErrorMessage("Herb: Could not apply the extraction.")
+
+    return
+  }
+
+  await vscode.window.showTextDocument(vscode.Uri.parse(result.uri))
 }
 
 async function runAutoAnalysis() {

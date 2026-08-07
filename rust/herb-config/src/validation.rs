@@ -2,6 +2,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
+use crate::config::{Config, CONFIG_PATH};
 use crate::config_schema::HerbConfig;
 use crate::defaults::DEFAULT_VERSION;
 
@@ -35,9 +36,11 @@ pub fn validate_config_text(text: &str, options: &ValidateOptions) -> Vec<Config
   let mut errors = Vec::new();
 
   if let Some(project_path) = options.project_path {
-    if project_path.join(".herb.yaml").exists() {
+    for misnamed_path in Config::find_misnamed_config_paths(project_path) {
+      let file_name = misnamed_path.file_name().and_then(|file_name| file_name.to_str()).unwrap_or_default();
+
       errors.push(ConfigValidationError {
-        message: "Found .herb.yaml file. Please rename to .herb.yml".to_string(),
+        message: format!("Found {} file. Please rename to {}", file_name, CONFIG_PATH),
         path: Vec::new(),
         code: "wrong_file_extension".to_string(),
         severity: Some(ValidationSeverity::Warning),
@@ -65,6 +68,21 @@ pub fn validate_config_text(text: &str, options: &ValidateOptions) -> Vec<Config
       return errors;
     }
   };
+
+  if let Err(error) = parsed.apply_merge() {
+    errors.push(ConfigValidationError {
+      message: error.to_string(),
+      path: Vec::new(),
+      code: "yaml_merge_key_error".to_string(),
+      severity: Some(ValidationSeverity::Error),
+      line: None,
+      column: None,
+    });
+
+    return errors;
+  }
+
+  crate::merge::strip_anchor_definitions(&mut parsed);
 
   if parsed.is_null() {
     parsed = serde_yaml::Value::Mapping(Default::default());

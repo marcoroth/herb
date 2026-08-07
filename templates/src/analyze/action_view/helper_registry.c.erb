@@ -33,6 +33,14 @@ static const helper_option_T <%= helper.safe_name %>_options[] = {
 };
 
 <%- end -%>
+<%- if helper.block_arguments.any? -%>
+static const helper_block_argument_T <%= helper.safe_name %>_block_arguments[] = {
+<%- helper.block_arguments.each do |arg| -%>
+  { .name = "<%= arg.name %>", .type = "<%= arg.type_display %>", .optional = <%= arg.optional %>, .description = "<%= arg.escaped_description %>" },
+<%- end -%>
+};
+
+<%- end -%>
 <%- end -%>
 static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
 <%- helpers.each do |helper| -%>
@@ -58,6 +66,8 @@ static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
     .arguments_count = <%= helper.arguments.size %>,
     .options = <%= helper.options.any? ? "#{helper.safe_name}_options" : "NULL" %>,
     .options_count = <%= helper.options.size %>,
+    .block_arguments = <%= helper.block_arguments.any? ? "#{helper.safe_name}_block_arguments" : "NULL" %>,
+    .block_arguments_count = <%= helper.block_arguments.size %>,
   },
 <%- end -%>
 };

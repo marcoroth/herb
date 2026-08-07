@@ -44,15 +44,74 @@ fn validate_config_text_warns_on_a_version_mismatch() {
 fn validate_config_text_warns_about_a_stray_herb_yaml() {
   let dir = tempfile::tempdir().unwrap();
 
-  fs::write(dir.path().join(".herb.yaml"), "version: 0.10.2\n").unwrap();
+  fs::write(dir.path().join(".herb.yaml"), "version: 0.10.3\n").unwrap();
 
   let errors = validate_config_text(
-    "version: 0.10.2\n",
+    "version: 0.10.3\n",
     &ValidateOptions {
-      version: Some("0.10.2"),
+      version: Some("0.10.3"),
       project_path: Some(dir.path()),
     },
   );
 
   assert!(errors.iter().any(|error| error.code == "wrong_file_extension"));
+}
+
+#[test]
+fn validate_config_text_warns_about_a_config_file_missing_the_leading_dot() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join("herb.yml"), "version: 0.10.3\n").unwrap();
+
+  let errors = validate_config_text(
+    "version: 0.10.3\n",
+    &ValidateOptions {
+      version: Some("0.10.3"),
+      project_path: Some(dir.path()),
+    },
+  );
+
+  let warning = errors
+    .iter()
+    .find(|error| error.code == "wrong_file_extension")
+    .expect("expected a wrong_file_extension");
+
+  assert_eq!(warning.message, "Found herb.yml file. Please rename to .herb.yml");
+  assert_eq!(warning.severity, Some(ValidationSeverity::Warning));
+}
+
+#[test]
+fn validate_config_text_warns_once_per_misnamed_config_file() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join(".herb.yaml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join("herb.yml"), "version: 0.10.3\n").unwrap();
+  fs::write(dir.path().join("herb.yaml"), "version: 0.10.3\n").unwrap();
+
+  let errors = validate_config_text(
+    "version: 0.10.3\n",
+    &ValidateOptions {
+      version: Some("0.10.3"),
+      project_path: Some(dir.path()),
+    },
+  );
+
+  assert_eq!(errors.iter().filter(|error| error.code == "wrong_file_extension").count(), 3);
+}
+
+#[test]
+fn validate_config_text_does_not_warn_without_a_misnamed_config_file() {
+  let dir = tempfile::tempdir().unwrap();
+
+  fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n").unwrap();
+
+  let errors = validate_config_text(
+    "version: 0.10.3\n",
+    &ValidateOptions {
+      version: Some("0.10.3"),
+      project_path: Some(dir.path()),
+    },
+  );
+
+  assert!(!errors.iter().any(|error| error.code == "wrong_file_extension"));
 }

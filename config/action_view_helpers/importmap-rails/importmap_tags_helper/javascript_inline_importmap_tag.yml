@@ -1,0 +1,32 @@
+---
+name: "javascript_inline_importmap_tag"
+source: "Importmap::ImportmapTagsHelper#javascript_inline_importmap_tag"
+gem: "importmap-rails"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "javascript_inline_importmap_tag(importmap_json = Rails.application.importmap.to_json(resolver: self))"
+documentation_url: "https://www.rubydoc.info/gems/importmap-rails/Importmap/ImportmapTagsHelper#javascript_inline_importmap_tag-instance_method"
+
+description: |-
+  Generates an inline importmap `<script type="importmap">` tag using the passed `importmap_json` JSON string. Defaults to `Rails.application.importmap.to_json(resolver: self)`. Includes `data-turbo-track="reload"` and the Content Security Policy nonce when one is present.
+
+tag:
+  name: "script"
+  is_void: false
+  preferred: false
+  detect_style: "call_name"
+
+arguments:
+  - name: "importmap_json"
+    position: 1
+    type: "string"
+    optional: true
+    default: "Rails.application.importmap.to_json(resolver: self)"
+    description: |-
+      JSON string of the importmap to inline.
+
+options: []
+block_arguments: []
+special_behaviors: []

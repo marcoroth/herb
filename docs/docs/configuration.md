@@ -14,6 +14,14 @@ your-project/
 └── ...
 ```
 
+::: warning Only `.herb.yml` is read
+`.herb.yml` is the only filename Herb reads, following the convention used by Rails and most other Ruby tooling. A file named `.herb.yaml`, `herb.yml`, or `herb.yaml` is ignored, and every Herb tool warns about it so it doesn't look like your configuration is being applied:
+
+```
+⚠ Ignoring /your-project/.herb.yaml: Herb only reads `.herb.yml`. Rename it to `.herb.yml` to apply it.
+```
+:::
+
 ## Configuration Priority
 
 Configuration settings are applied in the following order (highest to lowest priority):
@@ -96,6 +104,12 @@ herb-lint --all-rules app/views/
 
 Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
 
+Both flags also lower the [`logLevel`](#linter-options) for that run, down to the lowest severity that came up, so the rules you asked to run always get reported instead of being filtered out of the output. Passing `--log-level` explicitly keeps the level you gave it. The summary says so whenever it happens:
+
+```
+  Log level    hint | lowered from warning by --only
+```
+
 ## Linter Configuration
 
 Configure the linter behavior and rules:
@@ -107,6 +121,10 @@ linter:
   # # Exit with error code when diagnostics of this severity or higher are present
   # # Valid values: error (default), warning, info, hint
   # failLevel: error
+
+  # # Only report diagnostics of this severity or higher
+  # # Valid values: error, warning, info, hint (default)
+  # logLevel: warning
 
   # Additional glob patterns to include (additive to defaults)
   include:
@@ -172,6 +190,7 @@ Both `include` and `exclude` patterns are **additive**, they add to the defaults
 
 - **`enabled`**: `true` or `false` - Enable or disable the linter globally
 - **`failLevel`** <Badge type="info" text="v0.8.7+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
+- **`logLevel`** <Badge type="info" text="^0.11.0" />: `error`, `warning`, `info`, or `hint` - Only report diagnostics of this severity or higher (default: `hint`, meaning everything is reported). This affects the CLI output only: lower-severity offenses are still counted in the summary, still respected by `failLevel`, and still shown in your editor, they just aren't printed individually or annotated in CI. Useful for keeping CI output focused on what matters. To hide a rule in the editor as well, use the rule's `severity` option with separate `editor` and `cli` values. Can also be set via `--log-level` CLI flag. Runs that pick their own rules with `--only` or `--all-rules` lower this level automatically, unless `--log-level` is passed explicitly.
 - **`include`**: Array of glob patterns - Additional file patterns to lint (additive to defaults)
 - **`exclude`**: Array of glob patterns - Additional patterns to exclude from linting (additive to defaults)
 
@@ -184,6 +203,52 @@ Each rule can be configured with the following options:
 - **`include`**: Array of glob patterns - Restrict rule to files matching these patterns (can override parent excludes)
 - **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
 - **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
+
+### Setting the Default for All Rules <Badge type="tip" text="^0.11.0" />
+
+The `all` pseudo rule sets the default `enabled` state for every rule you don't list explicitly. It's the way to opt into a fully explicit rule set without having to know (and repeat) which rules are on by default:
+
+```yaml [.herb.yml]
+linter:
+  enabled: true
+
+  rules:
+    # Turn every rule off ...
+    all:
+      enabled: false
+
+    # ... and opt back in to exactly the ones you want
+    html-no-event-handlers:
+      enabled: true
+
+    html-img-require-alt:
+      enabled: true
+```
+
+Setting `all: enabled: true` does the opposite and turns on every rule, including the ones that are off by default:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    all:
+      enabled: true
+
+    # Individual rules can still be turned back off
+    html-no-title-attribute:
+      enabled: false
+```
+
+A few details worth knowing:
+
+- **Explicit configuration always wins.** A rule that appears in `rules` follows its own `enabled` setting, no matter what `all` says.
+- **Listing a rule without `enabled` enables it.** `html-img-require-alt: { severity: warning }` under `all: enabled: false` turns the rule on, the same way it would without `all`.
+- **`all: enabled: true` bypasses version gating.** Normally the `version` in your `.herb.yml` holds back rules introduced in later releases. Enabling everything means exactly that, so nothing gets held back. Under `all: enabled: false` version gating makes no difference either way, since those rules are off regardless.
+- **`--only` and `--all-rules` still take precedence**, since both flags ignore the rule configuration entirely.
+- Only `enabled` is meaningful on `all`. Other rule options like `severity` or `exclude` aren't inherited by the individual rules.
+
+::: warning
+`all` is a reserved name inside `rules`, it's never treated as an actual rule.
+:::
 
 #### Pattern Precedence
 
@@ -238,6 +303,8 @@ engine:
     nesting: true        # Enable/disable HTML nesting validation (default: true)
     accessibility: true  # Enable/disable accessibility validation (default: true)
 ```
+
+The `engine` section is only read by `Herb::Engine` when it compiles templates. The tools that don't compile templates (`herb-lint`, `herb-format`, and the Language Server) pass it through without validating it, so an engine option they don't know about won't make them reject your configuration file.
 
 ### Validators
 
@@ -372,6 +439,56 @@ Result for linter:
 ::: tip Including Previously Excluded Files
 If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
 :::
+
+## Anchors, Aliases, and Merge Keys <Badge type="tip" text="^0.11.0" />
+
+`.herb.yml` supports YAML anchors (`&name`), aliases (`*name`), and merge keys (`<<:`), which are useful when the same block is repeated across rules or tools.
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    html-tag-name-lowercase: &disabled
+      enabled: false
+
+    html-no-self-closing:
+      <<: *disabled
+```
+
+An anchor has to be declared before it can be aliased. To declare one without attaching it to a real setting, use a top-level key prefixed with `x-`. These keys are ignored when the configuration is validated:
+
+```yaml [.herb.yml]
+x-strict: &strict
+  enabled: true
+  severity: error
+
+linter:
+  rules:
+    html-no-event-handlers:
+      <<: *strict
+
+    html-no-duplicate-ids:
+      <<: *strict
+```
+
+Keys declared locally still win over merged ones, so a merged block can be overridden per rule:
+
+```yaml [.herb.yml]
+x-strict: &strict
+  enabled: true
+  severity: error
+
+linter:
+  rules:
+    html-no-event-handlers:
+      <<: *strict
+      severity: warning # overrides the merged `error`
+```
+
+::: warning Editing aliased values
+Commands that write to `.herb.yml`, such as the VS Code settings commands and `herb lint --disable`, change the value in place. If that value carries an anchor, every key aliasing it changes too. Herb reports the affected keys when this happens.
+:::
+
+Top-level keys that are not prefixed with `x-` are still validated, so a typo like `linterr:` is reported rather than silently ignored.
 
 ## Inspecting Configuration
 

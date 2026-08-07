@@ -1,4 +1,4 @@
-import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
+import { ClientCapabilities, Connection, InitializeParams, ResourceOperationKind } from "vscode-languageserver/node"
 import { Config } from "@herb-tools/config"
 
 import { defaultFormatOptions } from "@herb-tools/formatter"
@@ -17,6 +17,12 @@ export interface PersonalHerbSettings {
     enabled?: boolean
     indentWidth?: number
     maxLineLength?: number
+  }
+}
+
+export interface HerbInitializationOptions extends PersonalHerbSettings {
+  experimental?: {
+    extractToPartialCommand?: boolean
   }
 }
 
@@ -116,6 +122,20 @@ export class Settings {
         maxLineLength: projectConfig.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
       }
     }
+  }
+
+  get supportsDefinitionLinks(): boolean {
+    return this.capabilities.textDocument?.definition?.linkSupport === true
+  }
+
+  get supportsResourceCreation(): boolean {
+    return this.capabilities.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
+  }
+
+  get supportsExtractToPartialCommand(): boolean {
+    const options = this.params.initializationOptions as HerbInitializationOptions | undefined | null
+
+    return options?.experimental?.extractToPartialCommand === true
   }
 
   get projectPath(): string {

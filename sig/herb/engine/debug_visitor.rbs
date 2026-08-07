@@ -21,19 +21,13 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
       private
 
       def calculate_relative_path: () -> untyped
 
       def wrap_all_erb_nodes: (untyped node) -> untyped
-
-      # Creates a dummy location for AST nodes that don't need real location info
-      # : () -> Herb::Location
-      def dummy_location: () -> Herb::Location
-
-      # Creates a dummy range for tokens that don't need real range info
-      # : () -> Herb::Range
-      def dummy_range: () -> Herb::Range
 
       def replace_erb_nodes_recursive: (untyped node) -> untyped
 
@@ -46,8 +40,6 @@ module Herb
       def add_debug_attributes_to_element: (untyped open_tag_node) -> untyped
 
       def create_debug_attribute: (untyped name, untyped value) -> untyped
-
-      def create_token: (untyped type, untyped value) -> untyped
 
       def create_debug_span_for_erb: (untyped erb_node) -> untyped
 

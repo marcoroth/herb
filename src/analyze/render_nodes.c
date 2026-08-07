@@ -507,7 +507,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (!locals) { locals = hb_array_init(0, allocator); }
 
-  hb_array_T* errors = hb_array_init(0, allocator);
+  hb_array_T* errors = NULL;
 
   if (!has_keyword_partial && partial && keyword_hash) {
     keyword_result_T locals_keyword = find_keyword_value(keyword_hash, "locals", allocator);
@@ -520,7 +520,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
 
       hb_allocator_dealloc(allocator, locals_keyword.value);
@@ -593,7 +593,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
 
       hb_allocator_dealloc(allocator, keywords_buffer);
@@ -602,7 +602,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
 
   if (!partial && !template_path && !layout && !file && !inline_template && !body && !plain && !html && !renderable
       && !has_positional_partial && !object) {
-    append_render_no_arguments_error(erb_node->base.location.start, erb_node->base.location.end, allocator, errors);
+    append_render_no_arguments_error(erb_node->base.location.start, erb_node->base.location.end, allocator, &errors);
   }
 
   if (has_positional_partial && has_keyword_partial && keyword_hash) {
@@ -614,7 +614,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
 
     if (keyword_partial.value) { hb_allocator_dealloc(allocator, keyword_partial.value); }
@@ -642,7 +642,7 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
         erb_node->base.location.start,
         erb_node->base.location.end,
         allocator,
-        errors
+        &errors
       );
     }
   }
@@ -652,17 +652,17 @@ static AST_ERB_RENDER_NODE_T* create_render_node_from_call(
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
   }
 
-  if (layout && !partial && !template_path) {
+  if (layout && !partial && !template_path && !(block_fields && block_fields->end_node)) {
     append_render_layout_without_block_error(
       layout->value,
       erb_node->base.location.start,
       erb_node->base.location.end,
       allocator,
-      errors
+      &errors
     );
   }
 
