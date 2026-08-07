@@ -15,6 +15,7 @@ import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-im
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
+import { ActionViewNoStrictLocalsErrorRule } from "./rules/actionview-no-strict-locals-error.js"
 import { ActionViewNoUnnecessaryHTMLSafeRule } from "./rules/actionview-no-unnecessary-html-safe.js"
 import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-unnecessary-tag-attributes.js"
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
@@ -139,6 +140,7 @@ export const rules: RuleClass[] = [
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
+  ActionViewNoStrictLocalsErrorRule,
   ActionViewNoUnnecessaryHTMLSafeRule,
   ActionViewNoUnnecessaryTagAttributesRule,
   ActionViewNoUnusedStrictLocalsRule,
