@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0010_a true condition matches on attribute presence - render"
+input: "{source: \"<main data-role>One</main><main>Two</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"data-role\" => true} content=\"<p>Appended</p>\">]}}"
+---
+<main data-role>One<p>Appended</p></main><main>Two</main>

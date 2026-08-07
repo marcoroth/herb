@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0016_an ERB attribute value has no compile time value so a string condition does not match - render"
+input: "{source: \"<main id=\\\"<%= @id %>\\\">Content</main>\", locals: {\"@id\": \"content\"}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="content">Content</main>
