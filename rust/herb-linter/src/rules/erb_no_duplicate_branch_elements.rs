@@ -6,12 +6,27 @@ use std::collections::HashSet;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::source_slice::identity_print;
-use crate::utils::tag_utils::{get_open_tag, is_equivalent_element};
+use crate::utils::tag_utils::{get_open_tag, get_tag_local_name, is_equivalent_element};
 
 use herb::nodes::*;
 use herb::union_types::ERBElseNodeOrERBIfNode;
 use herb::{Location, ParseResult, Visitor};
 use herb_config::{Severity, SeverityConfig};
+
+/// Wrapping a conditional inside one of these would change the content they
+/// render verbatim, so they are never extracted.
+const CONTENT_PRESERVING_TAGS: &[&str] = &["pre", "textarea", "script", "style"];
+
+fn is_content_preserving(element: &HTMLElementNode) -> bool {
+  get_tag_local_name(element).is_some_and(|tag_name| CONTENT_PRESERVING_TAGS.contains(&tag_name.as_str()))
+}
+
+fn is_content_preserving_node(node: &AnyNode) -> bool {
+  match node {
+    AnyNode::HTMLElementNode(element) => is_content_preserving(element),
+    _ => false,
+  }
+}
 
 pub struct ERBNoDuplicateBranchElementsRule;
 
@@ -130,12 +145,16 @@ impl<'rule> ERBNoDuplicateBranchElementsVisitor<'rule> {
     };
 
     if self.all_branches_identical(&branches) {
-      self.offenses.push(UnboundOffense::with_severity(
-        self.rule_name,
-        "All branches of this conditional have identical content. The conditional can be removed.",
-        location.clone(),
-        Severity::Warning,
-      ));
+      self.offenses.push(
+        UnboundOffense::with_severity(
+          self.rule_name,
+          "All branches of this conditional have identical content. The conditional can be removed.",
+          location.clone(),
+          Severity::Warning,
+        )
+        // removing the conditional drops its condition, which may have side effects
+        .unsafe_fix(),
+      );
 
       return;
     }
@@ -191,8 +210,9 @@ impl<'rule> ERBNoDuplicateBranchElementsVisitor<'rule> {
     // wrapping the conditional in the shared tag only works when the shared
     // elements account for the whole branch and exactly one group differs
     let shared_elements_span_branches = significant.iter().all(|branch| branch.len() == prefix_count + suffix_count);
-    let diverging_group_count = groups.iter().filter(|elements| !self.have_identical_bodies(elements)).count();
-    let can_wrap_conditional = shared_elements_span_branches && diverging_group_count == 1;
+    let diverging_groups: Vec<&Vec<&HTMLElementNode>> = groups.iter().filter(|elements| !self.have_identical_bodies(elements)).collect();
+    let can_wrap_conditional =
+      shared_elements_span_branches && diverging_groups.len() == 1 && !diverging_groups[0].first().is_some_and(|element| is_content_preserving(element));
 
     for elements in groups {
       self.report_and_recurse(&elements, is_first_offense, can_wrap_conditional);
@@ -481,7 +501,10 @@ fn hoist(conditional: &mut AnyNode, offense: &Offense, source: &str) -> Option<V
       if all_equivalent_elements(&nodes) {
         let elements: Vec<AnyNode> = remaining.iter().map(|branch| branch[0].clone()).collect();
 
-        if !bodies_match(&elements, source) && elements.iter().all(|element| element_body_len(element) > 0) {
+        if !bodies_match(&elements, source)
+          && !elements.first().is_some_and(is_content_preserving_node)
+          && elements.iter().all(|element| element_body_len(element) > 0)
+        {
           if let Some(template) = wrap_into(conditional, &elements) {
             state.wrapper = Some(template);
             state.inner_before.push(AnyNode::LiteralNode(Box::new(literal_node("\n"))));
@@ -663,10 +686,11 @@ fn hoist_element(conditional: &mut AnyNode, elements: &[AnyNode], position: Posi
     None => return,
   };
 
-  let can_wrap = current
-    .iter()
-    .zip(elements.iter())
-    .all(|(branch, element)| branch.len() == 1 && same_location(branch[0].location(), element.location()));
+  let can_wrap = !elements.first().is_some_and(is_content_preserving_node)
+    && current
+      .iter()
+      .zip(elements.iter())
+      .all(|(branch, element)| branch.len() == 1 && same_location(branch[0].location(), element.location()));
 
   if !can_wrap {
     if position == Position::Before {
