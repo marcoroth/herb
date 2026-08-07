@@ -109,6 +109,8 @@ import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
+import { HTMLNoStyleAttributesRule } from "./rules/html-no-style-attributes.js"
+import { HTMLNoStyleElementsRule } from "./rules/html-no-style-elements.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLNoUnescapedEntitiesRule } from "./rules/html-no-unescaped-entities.js"
@@ -236,6 +238,8 @@ export const rules: RuleClass[] = [
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,
+  HTMLNoStyleAttributesRule,
+  HTMLNoStyleElementsRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLNoUnescapedEntitiesRule,
