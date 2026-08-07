@@ -32,7 +32,7 @@ function createCustomTwoslashFunction(_options) {
     let diagnostics
     try {
       const linter = new Linter(Herb)
-      const result = linter.lint(code, { fileName })
+      const result = linter.lint(code, { fileName, framework: "actionview" })
 
       diagnostics = result.offenses.map(offense => {
         const startLine = offense.location?.start?.line || 1

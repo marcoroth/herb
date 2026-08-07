@@ -15,6 +15,8 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(openTag: HTMLOpenTagNode): void {
+    if (this.context.framework !== "actionview") return
+
     const tagName = getTagLocalName(openTag)
 
     if (tagName !== "img") return
