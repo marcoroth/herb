@@ -1,7 +1,7 @@
 import { join } from "node:path"
 import { glob } from "tinyglobby"
 import { readFileSync } from "node:fs"
-import { PARTIAL_GLOB_PATTERN, PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, outranksTemplate, partialNameForFile } from "@herb-tools/core"
+import { PARTIAL_GLOB_PATTERN, PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, isPartialPath, outranksTemplate, partialNameForFile } from "@herb-tools/core"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { PartialDeclaration, SerializedPartialIndex } from "@herb-tools/core"
@@ -58,4 +58,24 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
 
 export function partialIndexFrom(data: SerializedPartialIndex | undefined): PartialIndex | undefined {
   return data ? PartialIndex.from(data) : undefined
+}
+
+export function refreshPartialAfterFix(herb: HerbBackend, index: PartialIndex | undefined, file: string, before: string, after: string): boolean {
+  if (!index) return false
+  if (!isPartialPath(file)) return false
+
+  const previous = declarationFromSource(herb, file, before)
+  const current = declarationFromSource(herb, file, after)
+
+  if (declarationsMatch(previous, current)) return false
+
+  return index.update(current) !== null
+}
+
+function declarationsMatch(a: PartialDeclaration, b: PartialDeclaration): boolean {
+  if (a.hasDeclaration !== b.hasDeclaration) return false
+  if (a.hasKeywordRest !== b.hasKeywordRest) return false
+  if (a.locals.length !== b.locals.length) return false
+
+  return a.locals.every((local, index) => local.name === b.locals[index].name && local.required === b.locals[index].required)
 }
