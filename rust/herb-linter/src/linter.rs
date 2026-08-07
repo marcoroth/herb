@@ -153,6 +153,7 @@ impl Linter {
 
     lint_context.valid_rule_names = valid_rule_names;
     lint_context.source = source.to_string();
+    lint_context.framework = lint_context.framework.or(self.config.config.framework);
 
     let skipped_rules: HashSet<&str> = if let Some(ref file_name) = context.file_name {
       self

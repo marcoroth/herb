@@ -1,4 +1,6 @@
-use crate::utils::tag_utils::{element_tag_name_location, get_element_attribute, get_static_attribute_value, get_tag_local_name, has_attribute_value};
+use crate::utils::tag_utils::{
+  element_tag_name_location, get_element_attribute, get_static_attribute_value, get_tag_local_name, has_attribute_value, is_javascript_tag_element,
+};
 
 use herb::nodes::{HTMLAttributeNode, HTMLElementNode};
 use herb::Visitor;
@@ -43,18 +45,6 @@ impl RequireScriptNonceVisitor {
     }
   }
 
-  fn is_javascript_tag(node: &HTMLElementNode) -> bool {
-    let type_attribute = match get_element_attribute(node, "type") {
-      Some(attribute) => attribute,
-      None => return true,
-    };
-
-    match get_static_attribute_value(type_attribute) {
-      None => true,
-      Some(value) => value == "text/javascript" || value == "application/javascript",
-    }
-  }
-
   fn check_literal_nonce_on_tag_helper(&mut self, node: &HTMLElementNode, nonce_attribute: &HTMLAttributeNode) {
     if node.element_source.is_empty() || helpers_with_csp_nonce_support().contains(&node.element_source.as_str()) {
       return;
@@ -83,7 +73,7 @@ impl RequireScriptNonceVisitor {
   }
 
   fn check_script_nonce(&mut self, node: &HTMLElementNode) {
-    if !Self::is_javascript_tag(node) {
+    if !is_javascript_tag_element(node) {
       return;
     }
 
