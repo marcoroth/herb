@@ -4,7 +4,7 @@ import { describe, test } from "vitest"
 import { HTMLNoEventHandlersRule } from "../../src/rules/html-no-event-handlers.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoEventHandlersRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoEventHandlersRule)
 
 describe("html-no-event-handlers", () => {
   test("passes with regular element attributes", () => {
@@ -20,7 +20,7 @@ describe("html-no-event-handlers", () => {
   })
 
   test("fails with disallowed event handler attribute", () => {
-    expectWarning("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
+    expectError("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
 
     assertOffenses(dedent`
       <button onclick="doSomething()">Click</button>
@@ -28,7 +28,7 @@ describe("html-no-event-handlers", () => {
   })
 
   test("fails with ERB output in event handler attribute", () => {
-    expectWarning("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
+    expectError("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
 
     assertOffenses(dedent`
       <a onclick="<%= action %>">Link</a>
@@ -36,7 +36,7 @@ describe("html-no-event-handlers", () => {
   })
 
   test("fails with onload event handler", () => {
-    expectWarning("Avoid inline event handler `onload`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
+    expectError("Avoid inline event handler `onload`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
 
     assertOffenses(dedent`
       <body onload="init()"></body>
@@ -44,7 +44,7 @@ describe("html-no-event-handlers", () => {
   })
 
   test("fails with onsubmit event handler", () => {
-    expectWarning("Avoid inline event handler `onsubmit`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
+    expectError("Avoid inline event handler `onsubmit`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
 
     assertOffenses(dedent`
       <form onsubmit="validate()"></form>
@@ -59,7 +59,7 @@ describe("html-no-event-handlers", () => {
     })
 
     test("fails with tag helper with onclick", () => {
-      expectWarning("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
+      expectError("Avoid inline event handler `onclick`. Use external JavaScript with `addEventListener` instead or an external library like Stimulus.")
 
       assertOffenses(dedent`
         <%= tag.button "Submit", onclick: "doSomething()" %>

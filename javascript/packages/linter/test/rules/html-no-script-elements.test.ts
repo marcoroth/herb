@@ -4,7 +4,7 @@ import { describe, test } from "vitest"
 import { HTMLNoScriptElementsRule } from "../../src/rules/html-no-script-elements.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoScriptElementsRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoScriptElementsRule)
 
 describe("html-no-script-elements", () => {
   test("passes with script tag with allowed type", () => {
@@ -26,7 +26,7 @@ describe("html-no-script-elements", () => {
   })
 
   test("fails with script tag with src and inline body", () => {
-    expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+    expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
     assertOffenses(dedent`
       <script src="https://example.com/app.js">
@@ -36,19 +36,19 @@ describe("html-no-script-elements", () => {
   })
 
   test("fails with empty inline script tag", () => {
-    expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+    expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
     assertOffenses("<script></script>")
   })
 
   test("fails with inline script tag", () => {
-    expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+    expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
     assertOffenses("<script>alert('hello')</script>")
   })
 
   test("fails with script tag with unallowed type", () => {
-    expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+    expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
     assertOffenses(dedent`
       <script type="text/javascript">alert("hello")</script>
@@ -71,7 +71,7 @@ describe("html-no-script-elements", () => {
     })
 
     test("fails with tag.script helper", () => {
-      expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+      expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
       assertOffenses(dedent`
         <%= tag.script %>
@@ -79,7 +79,7 @@ describe("html-no-script-elements", () => {
     })
 
     test("fails with content_tag :script helper", () => {
-      expectWarning("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
+      expectError("Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.")
 
       assertOffenses(dedent`
         <%= content_tag(:script, "alert(1)") %>
