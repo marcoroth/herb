@@ -60,6 +60,7 @@ import { ERBNoUnsafeScriptInterpolationRule } from "./rules/erb-no-unsafe-script
 import { ERBNoUnusedBlockArgumentRule } from "./rules/erb-no-unused-block-argument.js"
 import { ERBNoUnusedExpressionsRule } from "./rules/erb-no-unused-expressions.js"
 import { ERBNoUnusedLiteralsRule } from "./rules/erb-no-unused-literals.js"
+import { ERBNoUnusedLocalVariableRule } from "./rules/erb-no-unused-local-variable.js"
 import { ERBPreferDirectOutputRule } from "./rules/erb-prefer-direct-output.js"
 import { ERBPreferDoEndBlocksRule } from "./rules/erb-prefer-do-end-blocks.js"
 import { ERBPreferEachOverMapRule } from "./rules/erb-prefer-each-over-map.js"
@@ -185,6 +186,7 @@ export const rules: RuleClass[] = [
   ERBNoUnusedBlockArgumentRule,
   ERBNoUnusedExpressionsRule,
   ERBNoUnusedLiteralsRule,
+  ERBNoUnusedLocalVariableRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoSleepRule,
   ERBNoStatementInScriptRule,
