@@ -4,7 +4,7 @@ import { describe, test } from "vitest"
 import { HTMLNoStyleAttributesRule } from "../../src/rules/html-no-style-attributes.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoStyleAttributesRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoStyleAttributesRule)
 
 describe("html-no-style-attributes", () => {
   test("passes with class attribute", () => {
@@ -20,7 +20,7 @@ describe("html-no-style-attributes", () => {
   })
 
   test("fails with inline style attribute", () => {
-    expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+    expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
     assertOffenses(dedent`
       <button style="color: red;">Submit</button>
@@ -28,7 +28,7 @@ describe("html-no-style-attributes", () => {
   })
 
   test("fails with ERB tag in style attribute", () => {
-    expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+    expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
     assertOffenses(dedent`
       <div style="<%= custom_styles %>">Content</div>
@@ -36,7 +36,7 @@ describe("html-no-style-attributes", () => {
   })
 
   test("fails with ERB interpolation within style value", () => {
-    expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+    expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
     assertOffenses(dedent`
       <div style="max-width: <%= yield(:content_max_width).presence || "600px" %>;">Content</div>
@@ -44,7 +44,7 @@ describe("html-no-style-attributes", () => {
   })
 
   test("fails with url() containing ERB in style attribute", () => {
-    expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+    expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
     assertOffenses(dedent`
       <div style="background-image: url(<%= asset_path('bg.svg') %>); width: 593px;">Content</div>
@@ -57,7 +57,7 @@ describe("html-no-style-attributes", () => {
     })
 
     test("fails for tag.div with style", () => {
-      expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+      expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
       assertOffenses('<%= tag.div style: "color: red" %>')
     })
@@ -67,7 +67,7 @@ describe("html-no-style-attributes", () => {
     })
 
     test("fails for content_tag with style", () => {
-      expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+      expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
       assertOffenses('<%= content_tag :div, "content", style: "color: red" %>')
     })
@@ -77,13 +77,13 @@ describe("html-no-style-attributes", () => {
     })
 
     test("fails for link_to with style", () => {
-      expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+      expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
       assertOffenses('<%= link_to "About", "/about", style: "color: red" %>')
     })
 
     test("fails for link_to block with style", () => {
-      expectWarning("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
+      expectError("Avoid inline `style` attribute. Use CSS classes or an external stylesheet instead.")
 
       assertOffenses(dedent`
         <%= link_to "https://example.com", style: "display: inline-block;" do %>

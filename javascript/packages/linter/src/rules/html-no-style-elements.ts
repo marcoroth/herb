@@ -39,7 +39,7 @@ export class HTMLNoStyleElementsRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: false,
-      severity: "warning"
+      severity: "error"
     }
   }
 
