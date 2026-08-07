@@ -21,6 +21,11 @@ pub struct PrismNode {
   pub unescaped: Option<String>,
   pub has_block: bool,
   pub children: Vec<PrismNode>,
+  /// `(field name, start, end)` spans into `children`, so the node-typed fields
+  /// prism declares in `config.yml` stay addressable by name after flattening
+  pub(crate) field_spans: Vec<(&'static str, usize, usize)>,
+  /// `(field name, start offset, end offset)` for the location-typed fields
+  pub(crate) location_spans: Vec<(&'static str, usize, usize)>,
 }
 
 #[cfg(feature = "prism")]
@@ -31,6 +36,34 @@ impl PrismNode {
 
   pub fn receiver(&self) -> Option<&PrismNode> {
     self.receiver_index.map(|index| &self.children[index])
+  }
+
+  /// The children prism serialized for `name`, in declaration order.
+  pub fn field(&self, name: &str) -> &[PrismNode] {
+    self
+      .field_spans
+      .iter()
+      .find(|(field, _, _)| *field == name)
+      .map(|(_, start, end)| &self.children[*start..*end])
+      .unwrap_or(&[])
+  }
+
+  /// The single child prism serialized for `name`, when the field holds one.
+  pub fn field_one(&self, name: &str) -> Option<&PrismNode> {
+    self.field(name).first()
+  }
+
+  pub fn has_field(&self, name: &str) -> bool {
+    !self.field(name).is_empty()
+  }
+
+  /// The `(start offset, end offset)` prism recorded for a location field.
+  pub fn field_location(&self, name: &str) -> Option<(usize, usize)> {
+    self
+      .location_spans
+      .iter()
+      .find(|(field, _, _)| *field == name)
+      .map(|(_, start, end)| (*start, *end))
   }
 
   pub fn root_receiver(&self) -> &PrismNode {

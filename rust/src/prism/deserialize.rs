@@ -99,6 +99,8 @@ fn read_node(buffer: &mut SerializationBuffer, pool: usize) -> PrismNode {
     unescaped: None,
     has_block: false,
     children: Vec::new(),
+    field_spans: Vec::new(),
+    location_spans: Vec::new(),
   };
 
   read_node_body(buffer, type_id, pool, &mut node);

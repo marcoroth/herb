@@ -13,8 +13,10 @@ fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, no
     <%- case field.type -%>
     <%- when "node" -%>
       {
+        let start = node.children.len();
         let child = read_node(buffer, pool);
         node.children.push(child);
+        node.field_spans.push(("<%= field.name %>", start, node.children.len()));
       }
 
       <%- if field.name == "receiver" -%>
@@ -25,8 +27,10 @@ fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, no
 
     <%- when "node?" -%>
       if buffer.peek_byte() != 0 {
+        let start = node.children.len();
         let child = read_node(buffer, pool);
         node.children.push(child);
+        node.field_spans.push(("<%= field.name %>", start, node.children.len()));
       <%- if field.name == "block" -%>
         node.has_block = true;
       <%- end -%>
@@ -43,11 +47,14 @@ fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, no
   <%- when "node[]" -%>
       {
         let count = buffer.read_var_int();
+        let start = node.children.len();
 
         for _ in 0..count {
           let child = read_node(buffer, pool);
           node.children.push(child);
         }
+
+        node.field_spans.push(("<%= field.name %>", start, node.children.len()));
       }
 
   <%- when "string" -%>
@@ -77,9 +84,14 @@ fn read_node_body(buffer: &mut SerializationBuffer, type_id: u8, pool: usize, no
         }
       }
     <%- when "location" -%>
-      buffer.read_location();
+      {
+        let (start, length) = buffer.read_location();
+        node.location_spans.push(("<%= field.name %>", start, start + length));
+      }
     <%- when "location?" -%>
-      buffer.read_optional_location();
+      if let Some((start, length)) = buffer.read_optional_location() {
+        node.location_spans.push(("<%= field.name %>", start, start + length));
+      }
     <%- when "uint8" -%>
       buffer.read_byte();
     <%- when "uint32" -%>
