@@ -12,7 +12,7 @@ import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
-import { buildPartialIndex } from "./partial-index-builder.js"
+import { buildPartialIndex } from "../partial-index-builder.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"

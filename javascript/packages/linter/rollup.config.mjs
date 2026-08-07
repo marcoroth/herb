@@ -111,6 +111,28 @@ export default [
     ],
   },
 
+  // Partial index builder entry point (node only, used by the language server)
+  {
+    input: "src/partial-index-builder.ts",
+    output: {
+      file: "dist/partial-index-builder.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external,
+    plugins: [
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
+        rootDir: "src/",
+      }),
+    ],
+  },
+
   // Loader entry point (includes custom rule loader)
   {
     input: "src/loader.ts",
