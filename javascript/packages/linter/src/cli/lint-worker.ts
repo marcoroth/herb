@@ -8,7 +8,7 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
-import { partialIndexFrom } from "./partial-index-builder.js"
+import { partialIndexFrom } from "../partial-index-builder.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"

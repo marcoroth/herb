@@ -20,6 +20,7 @@ import { ExtractCodeActionService } from "./extract_code_action_service"
 import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
 import { CompletionService } from "./completion_service"
+import { PartialIndexService } from "./partial_index_service"
 
 import { version } from "../package.json"
 
@@ -31,6 +32,7 @@ export class Service {
 
   diagnostics: Diagnostics
   documentService: DocumentService
+  partialIndexService: PartialIndexService
   parserService: ParserService
   linterService: LinterService
   formattingService: FormattingService
@@ -53,11 +55,12 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
-    this.linterService = new LinterService(this.connection, this.settings, this.project)
+    this.partialIndexService = new PartialIndexService(this.connection, this.project)
+    this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService)
     this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
-    this.autofixService = new AutofixService(this.connection, this.config)
+    this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService)
     this.configService = new ConfigService(this.project.projectPath)
-    this.codeActionService = new CodeActionService(this.project, this.config)
+    this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
@@ -81,6 +84,7 @@ export class Service {
   async init() {
     await this.project.initialize()
     await this.formattingService.initialize()
+    await this.partialIndexService.initialize()
 
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
@@ -115,12 +119,19 @@ export class Service {
     })
 
     this.documentService.onDidChangeContent(async (change) => {
+      if (this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())) {
+        await this.diagnostics.refreshAllDocuments()
+
+        return
+      }
+
       await this.diagnostics.refreshDocument(change.document)
     })
   }
 
   async refresh() {
     await this.project.refresh()
+    await this.partialIndexService.initialize()
     await this.formattingService.refreshConfig(this.config)
     await this.diagnostics.refreshAllDocuments()
   }

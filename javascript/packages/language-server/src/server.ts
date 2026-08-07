@@ -19,6 +19,7 @@ import {
   DefinitionParams,
   TextDocumentIdentifier,
   Range,
+  FileChangeType,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -28,6 +29,7 @@ import { Config } from "@herb-tools/config"
 import { isConfigDocument } from "./utils"
 import { version } from "../package.json"
 
+import type { FileEvent } from "vscode-languageserver/node"
 import type { ExtractToPartialResult } from "./extract_code_action_service"
 
 export class Server {
@@ -165,6 +167,8 @@ export class Server {
           await Promise.all(documents.map(document =>
             this.service.diagnostics.refreshDocument(document)
           ))
+        } else if (this.updatePartialIndex(event)) {
+          await this.service.diagnostics.refreshAllDocuments()
         }
       }
     })
@@ -272,6 +276,16 @@ export class Server {
 
       return this.service.commentService.toggleBlockComment(document, params.range)
     })
+  }
+
+  private updatePartialIndex(event: FileEvent): boolean {
+    const partials = this.service.partialIndexService
+
+    if (event.type === FileChangeType.Deleted) return partials.remove(event.uri)
+
+    if (this.service.documentService.get(event.uri)) return false
+
+    return partials.updateFromDisk(event.uri)
   }
 
   listen() {
