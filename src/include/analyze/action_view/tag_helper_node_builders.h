@@ -87,6 +87,13 @@ AST_HTML_ATTRIBUTE_NODE_T* create_href_attribute(
   hb_allocator_T* allocator
 );
 
+AST_CDATA_NODE_T* create_javascript_cdata_node(
+  hb_array_T* children,
+  position_T start,
+  position_T end,
+  hb_allocator_T* allocator
+);
+
 void append_body_content_node(
   hb_array_T* body,
   const char* content,

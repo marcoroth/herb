@@ -1,9 +1,7 @@
 import {
   Visitor,
   Location,
-  Position,
-  hasERBOutput,
-  isEffectivelyStatic,
+  hasDynamicOutput,
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
@@ -16,9 +14,11 @@ import {
   getAttribute,
   findAttributeByName,
   isERBOpenTagNode,
+  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
+  ERBOpenTagNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLElementNode,
@@ -155,6 +155,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
@@ -230,6 +234,13 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 
   /**
+   * All ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestors(): readonly HTMLElementNode[] {
+    return this.elementStack
+  }
+
+  /**
    * The current nesting depth (number of ancestor HTML elements).
    */
   protected get elementDepth(): number {
@@ -254,45 +265,8 @@ export const HTML_BLOCK_ELEMENTS = new Set([
   "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
 ])
 
-export const HTML_VOID_ELEMENTS = new Set([
-  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
-  "param", "source", "track", "wbr",
-])
-
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
-
-export const HTML_KNOWN_ELEMENTS = new Set([
-  "html", "head", "body",
-  "base", "link", "meta", "style", "title",
-  "script", "noscript", "template", "slot", "selectedcontent",
-  "address", "article", "aside", "footer", "header", "hgroup",
-  "main", "nav", "section", "search",
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "blockquote", "dd", "details", "dialog", "div", "dl", "dt",
-  "figcaption", "figure", "hr", "li", "menu", "ol", "p", "pre",
-  "summary", "ul",
-  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data",
-  "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt", "ruby",
-  "s", "samp", "small", "span", "strong", "sub", "sup", "time",
-  "u", "var", "wbr",
-  "del", "ins",
-  "area", "audio", "canvas", "embed", "iframe", "img", "map",
-  "math", "object", "param", "picture", "source", "svg", "track", "video",
-  "caption", "col", "colgroup", "table", "tbody", "td", "tfoot",
-  "th", "thead", "tr",
-  "button", "datalist", "fieldset", "form", "input", "label",
-  "legend", "meter", "optgroup", "option", "output", "progress",
-  "select", "textarea",
-  "acronym", "big", "tt",
-])
-
-export function isKnownHTMLElement(tagName: string): boolean {
-  return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
-}
-
-export function isCustomElement(tagName: string): boolean {
-  return tagName.includes("-")
-}
+export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, isKnownHTMLElement, isVoidElement, isCustomElement } from "@herb-tools/core"
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
@@ -343,6 +317,38 @@ export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
   Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
 )
 
+/**
+ * All known SVG elements (lowercase), including both camelCase and lowercase-only elements
+ */
+export const SVG_KNOWN_ELEMENTS = new Set([
+  ...Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => element.toLowerCase()),
+  "a", "animate", "circle", "defs", "desc", "ellipse", "g", "image", "line",
+  "marker", "mask", "metadata", "path", "pattern", "polygon", "polyline",
+  "rect", "stop", "switch", "symbol", "text", "title", "tspan", "use",
+  "filter", "set", "style",
+])
+
+export function isKnownSVGElement(tagName: string): boolean {
+  return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * All known MathML elements
+ */
+export const MATHML_KNOWN_ELEMENTS = new Set([
+  "annotation", "annotation-xml",
+  "maction", "math", "menclose", "merror", "mfenced", "mfrac",
+  "mglyph", "mi", "mlabeledtr", "mmultiscripts", "mn", "mo",
+  "mover", "mpadded", "mphantom", "mprescripts", "mroot", "mrow",
+  "ms", "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup",
+  "mtable", "mtd", "mtext", "mtr", "munder", "munderover",
+  "none", "semantics",
+])
+
+export function isKnownMathMLElement(tagName: string): boolean {
+  return MATHML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
+}
+
 export const VALID_ARIA_ROLES = new Set([
   "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
   "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",
@@ -353,7 +359,8 @@ export const VALID_ARIA_ROLES = new Set([
   "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
   "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
   "treegrid", "treeitem",
-  "log", "marquee"
+  "log", "marquee",
+  "graphics-document", "graphics-object", "graphics-symbol"
 ]);
 
 /**
@@ -384,7 +391,7 @@ export interface StaticAttributeStaticValueParams {
   attributeValue: string
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
@@ -392,7 +399,7 @@ export interface StaticAttributeDynamicValueParams {
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedValue?: string | null
 }
 
@@ -400,7 +407,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
 }
 
@@ -408,7 +415,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -493,13 +500,6 @@ export function isBlockElement(tagName: string): boolean {
 }
 
 /**
- * Checks if an element is a void element
- */
-export function isVoidElement(tagName: string): boolean {
-  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
-}
-
-/**
  * Attribute visitor that provides granular processing based on both
  * attribute name type (static/dynamic) and value type (static/dynamic)
  *
@@ -519,15 +519,20 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkAttributesOnNode(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkAttributesOnNode(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
-      const hasOutputERB = hasERBOutput(valueNodes)
-      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+      const hasOutputERB = hasDynamicOutput(valueNodes)
+      const isEffectivelyStaticValue = !hasDynamicOutput(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
         this.checkStaticAttributeStaticValue({
@@ -926,40 +931,8 @@ export function isHeadTag(tagName: string): boolean {
 }
 
 /**
- * Converts a character offset in a source string to a Position (line, column).
- * Lines are 1-based, columns are 0-based.
- */
-export function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
-}
-
-/**
- * Creates a Location from a source string, a start offset, and a length.
- */
-export function locationFromOffset(source: string, startOffset: number, length: number): Location {
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, startOffset + length)
-  return Location.from(start.line, start.column, end.line, end.column)
-}
-
-/**
  * Creates a Location from a known start line/column and a character offset within content.
- * Unlike `locationFromOffset`, this does not require the full source string — it computes
+ * Unlike `locationFromByteOffset`, this does not require the full source string, it computes
  * the position relative to a node's start position.
  */
 export function locationFromContentOffset(startLine: number, startColumn: number, content: string, offset: number): Location {

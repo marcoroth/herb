@@ -11,6 +11,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
+  hb_array_T* tag_helper_locals;
   hb_allocator_T* allocator;
   const char* source;
   bool found_strict_locals;
@@ -44,7 +45,12 @@ typedef struct {
   hb_allocator_T* allocator;
 } invalid_erb_context_T;
 
-void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source, hb_allocator_T* allocator);
+void herb_analyze_parse_errors(
+  AST_DOCUMENT_NODE_T* document,
+  const char* source,
+  const parser_options_T* options,
+  hb_allocator_T* allocator
+);
 void herb_analyze_parse_tree(
   AST_DOCUMENT_NODE_T* document,
   const char* source,

@@ -14,43 +14,43 @@ options: {action_view_helpers: true}
     │   │       ├── tag_closing: "%>" (location: (1:55)-(1:57))
     │   │       ├── tag_name: "a" (location: (1:4)-(1:11))
     │   │       └── children: (2 items)
-    │   │           ├── @ HTMLAttributeNode (location: (1:26)-(1:33))
+    │   │           ├── @ HTMLAttributeNode (location: (1:36)-(1:54))
     │   │           │   ├── name:
-    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:36)-(1:41))
     │   │           │   │       └── children: (1 item)
-    │   │           │   │           └── @ LiteralNode (location: (1:26)-(1:33))
-    │   │           │   │               └── content: "href"
+    │   │           │   │           └── @ LiteralNode (location: (1:36)-(1:41))
+    │   │           │   │               └── content: "class"
     │   │           │   │
     │   │           │   │
-    │   │           │   ├── equals: "=" (location: (1:26)-(1:33))
+    │   │           │   ├── equals: " => " (location: (1:41)-(1:45))
     │   │           │   └── value:
-    │   │           │       └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
-    │   │           │           ├── open_quote: """ (location: (1:26)-(1:26))
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:45)-(1:54))
+    │   │           │           ├── open_quote: """ (location: (1:45)-(1:46))
     │   │           │           ├── children: (1 item)
-    │   │           │           │   └── @ LiteralNode (location: (1:26)-(1:33))
-    │   │           │           │       └── content: "/path"
+    │   │           │           │   └── @ LiteralNode (location: (1:46)-(1:53))
+    │   │           │           │       └── content: "classes"
     │   │           │           │
-    │   │           │           ├── close_quote: """ (location: (1:33)-(1:33))
+    │   │           │           ├── close_quote: """ (location: (1:53)-(1:54))
     │   │           │           └── quoted: true
     │   │           │
     │   │           │
-    │   │           └── @ HTMLAttributeNode (location: (1:36)-(1:54))
+    │   │           └── @ HTMLAttributeNode (location: (1:26)-(1:33))
     │   │               ├── name:
-    │   │               │   └── @ HTMLAttributeNameNode (location: (1:36)-(1:41))
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:26)-(1:33))
     │   │               │       └── children: (1 item)
-    │   │               │           └── @ LiteralNode (location: (1:36)-(1:41))
-    │   │               │               └── content: "class"
+    │   │               │           └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │               │               └── content: "href"
     │   │               │
     │   │               │
-    │   │               ├── equals: " => " (location: (1:41)-(1:45))
+    │   │               ├── equals: "=" (location: (1:26)-(1:33))
     │   │               └── value:
-    │   │                   └── @ HTMLAttributeValueNode (location: (1:45)-(1:54))
-    │   │                       ├── open_quote: """ (location: (1:45)-(1:46))
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:26)-(1:33))
+    │   │                       ├── open_quote: """ (location: (1:26)-(1:26))
     │   │                       ├── children: (1 item)
-    │   │                       │   └── @ LiteralNode (location: (1:46)-(1:53))
-    │   │                       │       └── content: "classes"
+    │   │                       │   └── @ LiteralNode (location: (1:26)-(1:33))
+    │   │                       │       └── content: "/path"
     │   │                       │
-    │   │                       ├── close_quote: """ (location: (1:53)-(1:54))
+    │   │                       ├── close_quote: """ (location: (1:33)-(1:33))
     │   │                       └── quoted: true
     │   │
     │   │

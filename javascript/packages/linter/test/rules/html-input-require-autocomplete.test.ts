@@ -28,6 +28,24 @@ describe("HTMLInputRequireAutocompleteRule", () => {
     `)
   })
 
+  test("when input is disabled", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled>
+    `)
+  })
+
+  test("when input is disabled with a value", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled="disabled">
+    `)
+  })
+
+  test("when input is dynamically disabled", () => {
+    expectNoOffenses(dedent`
+      <input type="email" disabled="<%= disabled? %>">
+    `)
+  })
+
   describe.todo("Action View Helpers", () => {
     const formHelpersRequiringAutocomplete = [
       'date_field_tag',

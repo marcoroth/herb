@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-import { getTagLocalName, isERBOpenTagNode } from "@herb-tools/core"
+import { getTagLocalName, isERBOpenTagNode, HELPER_REGISTRY } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
 
-const JAVASCRIPT_TAG_ELEMENT_SOURCE = "ActionView::Helpers::JavaScriptHelper#javascript_tag"
+const JAVASCRIPT_TAG_ELEMENT_SOURCE = HELPER_REGISTRY["javascript_tag"].source
 
 class ERBNoJavascriptTagHelperVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {

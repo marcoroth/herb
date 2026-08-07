@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineTest#test_0031_compilation with optimize for tag with data attributes"
+input: "{source: \"<%= tag.div data: { controller: \\\"content\\\", count: 42 } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<div data-controller="content" data-count="42"></div>'.freeze;
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0054_expression tag with right trim does not affect newline inside expression"
+input: "{source: \"<%= \\\"Hello\\n\\\" -%>\\nworld\", locals: {}, options: {}}"
+---
+Hello
+world

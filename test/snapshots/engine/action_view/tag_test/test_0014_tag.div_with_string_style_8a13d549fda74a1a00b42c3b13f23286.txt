@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0014_tag.div with string style"
+input: "{source: \"<%= tag.div style: \\\"color: red\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div style="color: red"></div>

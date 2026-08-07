@@ -16,6 +16,11 @@ export function generateRuleWrappers() {
 
   const files = fs.readdirSync(sourceRulesDir)
   const ruleFiles = files.filter(file => file.endsWith(".md") && file !== "README.md")
+  const expectedFiles = new Set([...ruleFiles, "index.md"])
+
+  fs.readdirSync(targetRulesDir)
+    .filter(file => file.endsWith(".md") && !expectedFiles.has(file))
+    .forEach(file => fs.unlinkSync(path.join(targetRulesDir, file)))
 
   ruleFiles.forEach(file => {
     const wrapperContent = `<!-- @include: ../../../../javascript/packages/linter/docs/rules/${file} -->`

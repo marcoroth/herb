@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::ContentTagTest#test_0007_content_tag with inline block and attributes"
+input: "{source: \"<%= content_tag(:div, class: \\\"container\\\") { \\\"Hello\\\" } %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<div class="container">Hello</div>

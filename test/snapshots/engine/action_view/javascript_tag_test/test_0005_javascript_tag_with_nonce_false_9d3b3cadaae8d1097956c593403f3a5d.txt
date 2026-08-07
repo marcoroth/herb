@@ -1,0 +1,11 @@
+---
+source: "Engine::ActionView::JavascriptTagTest#test_0005_javascript_tag with nonce false"
+input: "{source: \"<%= javascript_tag nonce: false do %>\\n  alert('Hello')\\n<% end %>\\n\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script>
+//<![CDATA[
+
+  alert('Hello')
+
+//]]>
+</script>

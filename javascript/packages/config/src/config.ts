@@ -1,19 +1,21 @@
 import path from "path"
-
-import { promises as fs } from "fs"
-import { stringify, parse, parseDocument, isMap } from "yaml"
-import { ZodError } from "zod"
-import { fromZodError } from "zod-validation-error"
 import picomatch from "picomatch"
-import { glob } from "tinyglobby"
-
-import { DiagnosticSeverity } from "@herb-tools/core"
-import { HerbConfigSchema } from "./config-schema.js"
-import { deepMerge } from "./merge.js"
-
 import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
+
+import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
+import { semverGreaterThan } from "@herb-tools/core"
+import { promises as fs } from "fs"
+import { fromZodError } from "zod-validation-error"
+import { deepMerge } from "./merge.js"
+
+import { ZodError, z } from "zod"
+import { HerbConfigSchema } from "./config-schema.js"
+
+import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+
+import type { DiagnosticSeverity } from "@herb-tools/core"
 
 const DEFAULT_VERSION = packageJson.version
 const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
@@ -44,6 +46,22 @@ export function resolveSeverity(severity: SeverityConfig, mode: LinterMode): Dia
   return severity[mode]
 }
 
+/**
+ * Pseudo rule name used inside `linter.rules` to set the default `enabled`
+ * state for every rule that isn't explicitly configured.
+ *
+ * ```yaml
+ * linter:
+ *   rules:
+ *     all:
+ *       enabled: false
+ *
+ *     html-no-event-handlers:
+ *       enabled: true
+ * ```
+ */
+export const ALL_RULES_KEY = "all"
+
 export type RuleConfig = {
   enabled?: boolean
   severity?: SeverityConfig
@@ -56,6 +74,7 @@ export type RuleConfig = {
 export type LinterConfig = {
   enabled?: boolean
   failLevel?: DiagnosticSeverity
+  logLevel?: DiagnosticSeverity
   include?: string[]
   exclude?: string[]
   rules?: Record<string, RuleConfig>
@@ -73,15 +92,7 @@ export type FormatterConfig = {
   }
 }
 
-export type ValidatorsConfig = {
-  security?: boolean
-  nesting?: boolean
-  accessibility?: boolean
-}
-
-export type EngineConfig = {
-  validators?: ValidatorsConfig
-}
+export type EngineConfig = Record<string, unknown>
 
 export type HerbConfigOptions = {
   files?: FilesConfig
@@ -90,8 +101,13 @@ export type HerbConfigOptions = {
   formatter?: FormatterConfig
 }
 
+export type Framework = z.infer<typeof FrameworkSchema>
+export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
+
 export type HerbConfig = HerbConfigOptions & {
   version: string
+  framework?: Framework
+  template_engine?: TemplateEngine
 }
 
 export type LoadOptions = {
@@ -107,8 +123,40 @@ export type FromObjectOptions = {
   configVersion?: string
 }
 
+export const ANCHOR_DEFINITION_PREFIX = "x-"
+
+/**
+ * Remove top-level keys that only exist to hold YAML anchors.
+ *
+ * Anchors have to be declared somewhere before they can be aliased. Keys
+ * prefixed with `x-` are reserved for that and are not validated as config:
+ *
+ * ```yaml
+ * x-defaults: &defaults
+ *   enabled: false
+ *
+ * formatter:
+ *   <<: *defaults
+ * ```
+ */
+function stripAnchorDefinitions(parsed: any): any {
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return parsed
+  }
+
+  for (const key of Object.keys(parsed)) {
+    if (key.startsWith(ANCHOR_DEFINITION_PREFIX)) {
+      delete parsed[key]
+    }
+  }
+
+  return parsed
+}
+
 export class Config {
   static configPath = ".herb.yml"
+
+  static misnamedConfigPaths = [".herb.yaml", "herb.yml", "herb.yaml"]
 
   private static PROJECT_INDICATORS = [
     '.git',
@@ -148,6 +196,10 @@ export class Config {
     }
   }
 
+  get framework() {
+    return this.config.framework
+  }
+
   get linter() {
     return this.config.linter
   }
@@ -177,12 +229,38 @@ export class Config {
   }
 
   /**
+   * The default `enabled` state for rules that aren't explicitly configured,
+   * set via the `all` pseudo rule in `linter.rules`.
+   *
+   * `false` disables every rule that isn't explicitly listed, `true` enables
+   * every rule that isn't explicitly listed (including rules that are off by
+   * default). Returns `undefined` when `all` isn't configured, in which case
+   * each rule falls back to its own default.
+   *
+   * @returns The configured default, or undefined when `all` isn't configured
+   */
+  public get defaultRuleEnabled(): boolean | undefined {
+    return this.config.linter?.rules?.[ALL_RULES_KEY]?.enabled
+  }
+
+  /**
    * Check if a specific rule is disabled.
+   *
+   * A rule that appears in `linter.rules` is disabled only when it sets
+   * `enabled: false`. A rule that doesn't appear falls back to the `all`
+   * pseudo rule, if configured.
+   *
    * @param ruleName - The name of the rule to check
-   * @returns true if the rule is explicitly disabled, false otherwise
+   * @returns true if the rule is disabled, false otherwise
    */
   public isRuleDisabled(ruleName: string): boolean {
-    return this.config.linter?.rules?.[ruleName]?.enabled === false
+    const ruleConfig = this.config.linter?.rules?.[ruleName]
+
+    if (ruleConfig !== undefined) {
+      return ruleConfig.enabled === false
+    }
+
+    return this.defaultRuleEnabled === false
   }
 
   /**
@@ -255,6 +333,8 @@ export class Config {
       return []
     }
 
+    const { glob } = await import("tinyglobby")
+
     return await glob(patterns, {
       cwd: searchDir,
       absolute: true,
@@ -286,12 +366,25 @@ export class Config {
    * @param excludePatterns - Array of glob patterns to check against
    * @returns true if the path matches any exclude pattern
    */
+  private normalizeFilePath(filePath: string): string {
+    if (path.isAbsolute(filePath)) {
+      const projectDir = this.projectPath + path.sep
+
+      if (filePath.startsWith(projectDir)) {
+        return filePath.slice(projectDir.length)
+      }
+    }
+
+    return filePath
+  }
+
   private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
     if (!excludePatterns || excludePatterns.length === 0) {
       return false
     }
 
-    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**
@@ -305,7 +398,8 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
+    const normalized = this.normalizeFilePath(filePath)
+    return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
   }
 
   /**
@@ -469,6 +563,46 @@ export class Config {
     }
   }
 
+  static isMisnamedConfigPath(pathOrFile: string): boolean {
+    return this.misnamedConfigPaths.includes(path.basename(pathOrFile))
+  }
+
+  static async findMisnamedConfigPaths(projectPath: string): Promise<string[]> {
+    const candidates = await Promise.all(
+      this.misnamedConfigPaths.map(async filename => {
+        const candidate = path.join(projectPath, filename)
+
+        try {
+          await fs.access(candidate)
+
+          return candidate
+        } catch {
+          return null
+        }
+      })
+    )
+
+    return candidates.filter((candidate): candidate is string => candidate !== null)
+  }
+
+  static misnamedConfigWarning(misnamedPath: string): string {
+    return `⚠ Ignoring ${misnamedPath}: Herb only reads \`${this.configPath}\`. Rename it to \`${this.configPath}\` to apply it.`
+  }
+
+  private static async warnAboutMisnamedConfigFiles(projectPath: string, additionalPaths: string[] = []) {
+    const misnamedPaths = new Set(await this.findMisnamedConfigPaths(projectPath))
+
+    for (const additionalPath of additionalPaths) {
+      if (this.isMisnamedConfigPath(additionalPath)) {
+        misnamedPaths.add(path.resolve(additionalPath))
+      }
+    }
+
+    for (const misnamedPath of misnamedPaths) {
+      console.error(this.misnamedConfigWarning(misnamedPath))
+    }
+  }
+
   /**
    * Find the project root by walking up from a given path.
    * Looks for .herb.yml first, then falls back to project indicators
@@ -503,6 +637,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -514,20 +650,23 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      for (const indicator of this.PROJECT_INDICATORS) {
-        try {
-          fsSync.accessSync(path.join(currentPath, indicator))
+      if (!firstIndicatorMatch) {
+        for (const indicator of this.PROJECT_INDICATORS) {
+          try {
+            fsSync.accessSync(path.join(currentPath, indicator))
 
-          return currentPath
-        } catch {
-          // Indicator not found, continue checking
+            firstIndicatorMatch = currentPath
+            break
+          } catch {
+            // Indicator not found, continue checking
+          }
         }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return process.cwd()
+        return firstIndicatorMatch || process.cwd()
       }
 
       currentPath = parentPath
@@ -575,6 +714,10 @@ export class Config {
       }
 
       const { configPath, projectRoot } = await this.findConfigFile(pathOrFile)
+
+      if (!silent) {
+        await this.warnAboutMisnamedConfigFiles(projectRoot, [pathOrFile])
+      }
 
       if (configPath) {
         return await this.loadFromPath(configPath, projectRoot, silent, version, exitOnError)
@@ -650,16 +793,75 @@ export class Config {
    *   }
    * })
    */
+  /**
+   * Find mutation targets whose value carries a YAML anchor that is aliased
+   * elsewhere in the config.
+   *
+   * Writing to such a value also changes every key aliasing it. That is what
+   * the alias asks for, but it is easy to miss, so callers can surface it.
+   *
+   * @param yamlContent - The raw YAML content of the config file
+   * @param mutation - The mutation about to be applied
+   * @returns The affected paths, as dot-separated strings
+   */
+  static aliasedMutationTargets(
+    yamlContent: string,
+    mutation: Partial<HerbConfigOptions>
+  ): string[] {
+    let document
+
+    try {
+      document = parseDocument(yamlContent, { merge: true })
+    } catch {
+      return []
+    }
+
+    const aliased = new Set<string>()
+
+    visit(document, {
+      Alias(_key, node) {
+        if (node.source) aliased.add(node.source)
+      }
+    })
+
+    if (aliased.size === 0) return []
+
+    const affected: string[] = []
+
+    const walk = (value: any, pathParts: string[]) => {
+      if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        const node = document.getIn(pathParts, true)
+
+        if (isScalar(node) && node.anchor && aliased.has(node.anchor)) {
+          affected.push(pathParts.join("."))
+        }
+
+        return
+      }
+
+      for (const [key, nested] of Object.entries(value)) {
+        walk(nested, [...pathParts, key])
+      }
+    }
+
+    walk(mutation, [])
+
+    return affected
+  }
+
   static async mutateConfigFile(
     configPath: string,
     mutation: Partial<HerbConfigOptions>
-  ): Promise<void> {
+  ): Promise<string[]> {
     let yamlContent: string
+    let aliasedTargets: string[] = []
 
     try {
       const existingContent = await fs.readFile(configPath, 'utf-8')
 
       if (Object.keys(mutation).length > 0) {
+        aliasedTargets = this.aliasedMutationTargets(existingContent, mutation)
+
         const document = parseDocument(existingContent)
 
         const validation = HerbConfigSchema.safeParse(document.toJSON())
@@ -706,6 +908,8 @@ export class Config {
     }
 
     await fs.writeFile(configPath, yamlContent, 'utf-8')
+
+    return aliasedTargets
   }
 
   /**
@@ -864,6 +1068,8 @@ export class Config {
       currentPath = path.resolve(process.cwd())
     }
 
+    let firstIndicatorMatch: string | undefined
+
     while (true) {
       const configPath = path.join(currentPath, this.configPath)
 
@@ -875,16 +1081,18 @@ export class Config {
         // Config not in this directory, continue
       }
 
-      const isProjectRoot = await this.isProjectRoot(currentPath)
+      if (!firstIndicatorMatch) {
+        const isProjectRoot = await this.isProjectRoot(currentPath)
 
-      if (isProjectRoot) {
-        return { configPath: null, projectRoot: currentPath }
+        if (isProjectRoot) {
+          firstIndicatorMatch = currentPath
+        }
       }
 
       const parentPath = path.dirname(currentPath)
 
       if (parentPath === currentPath) {
-        return { configPath: null, projectRoot: process.cwd() }
+        return { configPath: null, projectRoot: firstIndicatorMatch || process.cwd() }
       }
 
       currentPath = parentPath
@@ -948,6 +1156,8 @@ export class Config {
     const config = await this.readAndValidateConfig(resolvedPath, projectRoot, version, exitOnError)
 
     if (!silent) {
+      await this.warnAboutMisnamedConfigFiles(projectRoot)
+
       console.error(`✓ Using Herb config file at ${resolvedPath}`)
     }
 
@@ -981,19 +1191,6 @@ export class Config {
     silent: boolean,
     version: string
   ): Promise<Config> {
-    const yamlPath = path.join(projectRoot, '.herb.yaml')
-
-    try {
-      await fs.access(yamlPath)
-
-      console.error(`\n✗ Found \`.herb.yaml\` file at ${yamlPath}`)
-      console.error(`  Please rename it to \`.herb.yml\`\n`)
-
-      process.exit(1)
-    } catch {
-      // File doesn't exist
-    }
-
     const configPath = this.configPathFromProjectPath(projectRoot)
 
     try {
@@ -1030,27 +1227,22 @@ export class Config {
     const projectPath = options?.projectPath
 
     if (projectPath) {
-      try {
-        const yamlPath = path.join(projectPath, '.herb.yaml')
-        await fs.access(yamlPath)
-
+      for (const misnamedPath of await this.findMisnamedConfigPaths(projectPath)) {
         errors.push({
-          message: 'Found .herb.yaml file. Please rename to .herb.yml',
+          message: `Found ${path.basename(misnamedPath)} file. Please rename to ${this.configPath}`,
           path: [],
           code: 'wrong_file_extension',
           severity: 'warning',
           line: 0,
           column: 0
         })
-      } catch {
-        // .herb.yaml doesn't exist
       }
     }
 
     let parsed: any
 
     try {
-      parsed = parse(text)
+      parsed = stripAnchorDefinitions(parse(text, { merge: true }))
     } catch (error: any) {
       let line: number | undefined
       let column: number | undefined
@@ -1121,7 +1313,7 @@ export class Config {
     let parsed: any
 
     try {
-      parsed = parse(content)
+      parsed = stripAnchorDefinitions(parse(content, { merge: true }))
     } catch (error) {
       if (exitOnError) {
         console.error(`\n✗ Invalid YAML syntax in ${configPath}`)
@@ -1140,6 +1332,7 @@ export class Config {
     }
 
     const hasExplicitVersion = !!parsed.version
+    const declaredVersion = hasExplicitVersion ? String(parsed.version) : undefined
 
     if (!parsed.version) {
       parsed.version = version
@@ -1153,26 +1346,28 @@ export class Config {
           prefix: `Configuration errors in ${configPath}`,
         })
 
+        const message = declaredVersion && semverGreaterThan(declaredVersion, version)
+          ? `${validationError.toString()}\n\n  This configuration declares version ${declaredVersion}, but Herb ${version} is running. Options added after ${version} aren't recognized. Upgrade Herb to ${declaredVersion} or newer.`
+          : validationError.toString()
+
         if (exitOnError) {
-          console.error(`\n✗ ${validationError.toString()}\n`)
+          console.error(`\n✗ ${message}\n`)
 
           process.exit(1)
         } else {
-          throw new Error(validationError.toString())
+          throw new Error(message)
         }
       }
 
       throw error
     }
 
-    const userConfigVersion = hasExplicitVersion ? parsed.version : undefined
-
     const defaults = this.getDefaultConfig(version)
     const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved, userConfigVersion)
+    return new Config(projectRoot, resolved, declaredVersion)
   }
 
   /**

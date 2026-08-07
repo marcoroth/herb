@@ -14,6 +14,11 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
     return linter.autofix(input)
   }
 
+  function autofixUnsafe(input: string) {
+    const linter = new Linter(Herb, [ERBNoDuplicateBranchElementsRule])
+    return linter.autofix(input, undefined, undefined, { includeUnsafe: true })
+  }
+
   describe("wrapping element (bodies differ, single element per branch)", () => {
     test("basic if/else with same wrapping div", () => {
       const input = dedent`
@@ -482,7 +487,7 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
         <% end %>
       `
 
-      const result = autofix(input)
+      const result = autofixUnsafe(input)
 
       expect(result.source).toBe("\n123\n")
       expect(result.fixed).toHaveLength(1)
@@ -498,7 +503,7 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
         <% end %>
       `
 
-      const result = autofix(input)
+      const result = autofixUnsafe(input)
 
       expect(result.source).toBe("<div><%= hello %></div>")
       expect(result.fixed).toHaveLength(1)
@@ -518,7 +523,7 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
         <% end %>
       `
 
-      const result = autofix(input)
+      const result = autofixUnsafe(input)
 
       expect(result.source).toBe(dedent`
         <h1>Hello</h1>
@@ -527,6 +532,80 @@ describe("erb-no-duplicate-branch-elements autofix", () => {
       `)
       expect(result.fixed).toHaveLength(1)
       expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("is not applied without includeUnsafe, because the condition would be dropped", () => {
+      const input = dedent`
+        <% if (result = compute) %>
+          <div>Same</div>
+        <% else %>
+          <div>Same</div>
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(1)
+    })
+  })
+
+  describe("content-preserving elements", () => {
+    test("does not wrap the conditional in a `pre`", () => {
+      const input = dedent`
+        <% if condition %>
+          <pre>Hello</pre>
+        <% else %>
+          <pre>World</pre>
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not wrap the conditional in a `textarea`", () => {
+      const input = dedent`
+        <% if condition %>
+          <textarea>Hello</textarea>
+        <% else %>
+          <textarea>World</textarea>
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("still hoists an identical `pre` out of the conditional", () => {
+      const input = dedent`
+        <% if condition %>
+          <pre>Same</pre>
+          Hello
+        <% else %>
+          <pre>Same</pre>
+          World
+        <% end %>
+      `
+
+      const result = autofix(input)
+
+      expect(result.source).toBe(dedent`
+        <pre>Same</pre>
+        <% if condition %>
+          Hello
+        <% else %>
+          World
+        <% end %>
+      `)
+      expect(result.fixed).toHaveLength(1)
     })
   })
 })

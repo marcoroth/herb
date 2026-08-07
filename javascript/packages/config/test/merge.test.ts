@@ -57,6 +57,15 @@ describe("deepMerge", () => {
     expect(result).toEqual({ a: null, b: 2 })
   })
 
+  test("keeps the target object when the source value is null", () => {
+    const target = { engine: { validators: { security: true } }, b: 2 }
+    const source = { engine: null }
+
+    const result = deepMerge(target, source)
+
+    expect(result).toEqual({ engine: { validators: { security: true } }, b: 2 })
+  })
+
   test("merges deeply nested objects", () => {
     const target = {
       linter: {

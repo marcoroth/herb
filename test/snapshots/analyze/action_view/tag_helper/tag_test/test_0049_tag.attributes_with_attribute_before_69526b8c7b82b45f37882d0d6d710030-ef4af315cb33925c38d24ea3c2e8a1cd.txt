@@ -70,7 +70,7 @@ options: {action_view_helpers: true}
     │   │       │               │       └── content: "false"
     │   │       │               │
     │   │       │               ├── close_quote: ∅
-    │   │       │               └── quoted: false
+    │   │       │               └── quoted: true
     │   │       │
     │   │       │
     │   │       └── is_void: false

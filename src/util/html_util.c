@@ -27,6 +27,9 @@ static hb_string_T void_tags[] = HB_STRING_LIST(
   "wbr"
 );
 
+// https://html.spec.whatwg.org/multipage/rendering.html#the-page
+static hb_string_T whitespace_preserving_tags[] = HB_STRING_LIST("pre", "script", "style", "textarea");
+
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#boolean-attributes
 static hb_string_T boolean_attributes[] = HB_STRING_LIST(
   "allowfullscreen",
@@ -147,6 +150,16 @@ bool is_void_element(hb_string_T tag_name) {
 
   for (size_t i = 0; i < sizeof(void_tags) / sizeof(void_tags[0]); i++) {
     if (hb_string_equals_case_insensitive(tag_name, void_tags[i])) { return true; }
+  }
+
+  return false;
+}
+
+bool is_whitespace_preserving_element(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return false; }
+
+  for (size_t i = 0; i < sizeof(whitespace_preserving_tags) / sizeof(whitespace_preserving_tags[0]); i++) {
+    if (hb_string_equals_case_insensitive(tag_name, whitespace_preserving_tags[i])) { return true; }
   }
 
   return false;

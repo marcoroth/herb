@@ -88,6 +88,61 @@ describe("ERBNoUnusedExpressionsRule", () => {
       `)
     })
 
+    test("passes for content_for with arguments", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title, "Status" %>
+        <% content_for :description, page_description %>
+      `)
+    })
+
+    test("passes for content_for with single argument", () => {
+      expectNoOffenses(dedent`
+        <% content_for :title %>
+      `)
+    })
+
+    test("passes for content_for with curly brace block", () => {
+      expectNoOffenses(dedent`
+        <% content_for(:head) { %>
+          <title>Page Title</title>
+        <% } %>
+      `)
+    })
+
+    test("passes for provide with arguments", () => {
+      expectNoOffenses(dedent`
+        <% provide :title, "Status" %>
+        <% provide :description, page_description %>
+      `)
+    })
+
+    test("passes for flush", () => {
+      expectNoOffenses(dedent`
+        <% flush %>
+      `)
+    })
+
+    test("passes for Turbo helpers", () => {
+      expectNoOffenses(dedent`
+        <% turbo_refreshes_with method: :morph, scroll: :preserve %>
+        <% turbo_exempts_page_from_cache %>
+        <% turbo_exempts_page_from_preview %>
+        <% turbo_page_requires_reload %>
+      `)
+    })
+
+    test("passes for assert_valid_keys", () => {
+      expectNoOffenses(dedent`
+        <%
+          link.assert_valid_keys(:href, :name, :leading_icon, :target)
+          href = link.fetch(:href)
+          name = link.fetch(:name)
+          icon = link[:leading_icon]
+          target = link[:target]
+        %>
+      `)
+    })
+
     test("passes for ERB comments", () => {
       expectNoOffenses(dedent`
         <%# This is a comment %>
@@ -104,6 +159,87 @@ describe("ERBNoUnusedExpressionsRule", () => {
       expectNoOffenses(dedent`
         <% render partial: "header" %>
         <% render "footer" %>
+      `)
+    })
+
+    test("passes for method calls on render block locals", () => {
+      expectNoOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component.with_header(classes: "title").with_content("My blog") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for simple method call on render block local", () => {
+      expectNoOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component.with_header %>
+        <% end %>
+      `)
+    })
+
+    test("passes for multiple block locals in render", () => {
+      expectNoOffenses(dedent`
+        <%= render TableComponent.new do |table, index| %>
+          <% table.with_header %>
+          <% index.to_s %>
+        <% end %>
+      `)
+    })
+
+    test("passes for method calls on outer block local inside nested render block", () => {
+      expectNoOffenses(dedent`
+        <%= render LayoutComponent.new do |layout| %>
+          <%= render CardComponent.new do |card| %>
+            <% layout.with_sidebar %>
+            <% card.with_header %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a builder yielded by a nested slot block", () => {
+      expectNoOffenses(dedent`
+        <%= render ListComponent.new do |list| %>
+          <% list.with_item do |item| %>
+            <% item.with_icon("home") %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for deeply nested slot builders", () => {
+      expectNoOffenses(dedent`
+        <%= render(Ui::Page::Component.new(styles: "overflow-auto")) do |c| %>
+          <% c.with_header do |h| %>
+            <% h.with_title_content "Data Sources" %>
+            <% h.with_description_content "Manage your data sources" %>
+            <% h.with_action_button(text: "Integrations", url: integrations_path, variant: :secondary) %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot setters on a builder yielded by an assigned component", () => {
+      expectNoOffenses(dedent`
+        <% component = CardComponent.new %>
+        <% component.with_header do |header| %>
+          <% header.with_title("Hello") %>
+        <% end %>
+      `)
+    })
+
+    test("passes for slot builder locals shadowing across sibling slot blocks", () => {
+      expectNoOffenses(dedent`
+        <%= render ListComponent.new do |list| %>
+          <% list.with_item do |item| %>
+            <% item.with_icon("home") %>
+          <% end %>
+
+          <% list.with_footer do |footer| %>
+            <% footer.with_link("More") %>
+          <% end %>
+        <% end %>
       `)
     })
 
@@ -154,12 +290,20 @@ describe("ERBNoUnusedExpressionsRule", () => {
         <% binding.irb %>
       `)
     })
+
+    test("passes for sleep calls (handled by erb-no-sleep)", () => {
+      expectNoOffenses(dedent`
+        <% sleep %>
+        <% sleep 1 %>
+        <% Kernel.sleep(0.5) %>
+      `)
+    })
   })
 
   describe("invalid cases", () => {
     test("fails for bare method call on instance variable", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -169,7 +313,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare method call with arguments", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `helper_method(arg)` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) %>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -179,7 +323,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for chained method calls", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `foo.bar.baz` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% foo.bar.baz %>` is evaluated but its return value is discarded. Use `<%= foo.bar.baz %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -189,7 +333,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare instance variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user %>` is evaluated but its return value is discarded. Use `<%= @user %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -199,7 +343,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare class variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@@count` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @@count %>` is evaluated but its return value is discarded. Use `<%= @@count %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -209,7 +353,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare global variable read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `$global` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% $global %>` is evaluated but its return value is discarded. Use `<%= $global %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -219,7 +363,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare constant read", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `CONSTANT` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% CONSTANT %>` is evaluated but its return value is discarded. Use `<%= CONSTANT %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -229,7 +373,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare constant path", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `Foo::Bar` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% Foo::Bar %>` is evaluated but its return value is discarded. Use `<%= Foo::Bar %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -239,7 +383,7 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for bare method call without receiver", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `some_method` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% some_method %>` is evaluated but its return value is discarded. Use `<%= some_method %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -249,10 +393,10 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for multiple unused expressions", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@user.name` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
       )
       expectError(
-        "Avoid unused expressions in silent ERB tags. `@title` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% @title %>` is evaluated but its return value is discarded. Use `<%= @title %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
@@ -263,12 +407,107 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
     test("fails for method call on constant", () => {
       expectError(
-        "Avoid unused expressions in silent ERB tags. `User.count` is evaluated but its return value is discarded. Use `<%= ... %>` to output the value or remove the expression.",
+        "Avoid unused expressions in silent ERB tags. `<% User.count %>` is evaluated but its return value is discarded. Use `<%= User.count %>` to output the value or remove the expression.",
       )
 
       assertOffenses(dedent`
         <% User.count %>
       `)
+    })
+
+    test("still fails for non-block-local calls inside render block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% @user.name %>` is evaluated but its return value is discarded. Use `<%= @user.name %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% @user.name %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for bare block local read inside render block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% component %>` is evaluated but its return value is discarded. Use `<%= component %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render BlogComponent.new do |component| %>
+          <% component %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for calls on an arbitrary (non-slot) block local", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% x.slot_setter(\"d\") %>` is evaluated but its return value is discarded. Use `<%= x.slot_setter(\"d\") %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <% plain_method do |x| %>
+          <% x.slot_setter("d") %>
+        <% end %>
+      `)
+    })
+
+    test("still fails for calls on a receiver other than a slot builder inside a slot block", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% other_receiver.slot_setter(\"c\") %>` is evaluated but its return value is discarded. Use `<%= other_receiver.slot_setter(\"c\") %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%= render Outer.new do |outer| %>
+          <% outer.with_item do |item| %>
+            <% other_receiver.slot_setter("c") %>
+          <% end %>
+        <% end %>
+      `)
+    })
+
+    test("suggests the expression with the original tag closing", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) -%>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) -%>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <% helper_method(arg) -%>
+      `)
+    })
+
+    test("collapses newlines in the suggestion for multi-line expressions", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% helper_method( arg ) %>` is evaluated but its return value is discarded. Use `<%= helper_method( arg ) %>` to output the value or remove the expression.",
+      )
+
+      assertOffenses(dedent`
+        <%
+          helper_method(
+            arg
+          )
+        %>
+      `)
+    })
+
+    test("reports the correct message and location when preceded by a multi-byte character", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% helper_method(arg) %>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) %>` to output the value or remove the expression.",
+        [2, 3],
+      )
+
+      assertOffenses(dedent`
+        <%# é %>
+        <% helper_method(arg) %>
+      `)
+    })
+
+    test("reports the correct message and location when the multi-byte character is on the same line", () => {
+      expectError(
+        "Avoid unused expressions in silent ERB tags. `<% link_to('→ next', path) %>` is evaluated but its return value is discarded. Use `<%= link_to('→ next', path) %>` to output the value or remove the expression.",
+        [1, 6],
+      )
+
+      assertOffenses(`<p><% link_to('→ next', path) %></p>`)
     })
   })
 })

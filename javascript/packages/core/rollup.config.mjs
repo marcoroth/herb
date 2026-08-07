@@ -10,7 +10,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["node-addon-api", "fs", "path", "url"],
+    external: ["node-addon-api", "fs", "path", "url", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       json(),
@@ -30,7 +30,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["node-addon-api", "fs", "path"],
+    external: ["node-addon-api", "fs", "path", /@ruby\/prism/],
     plugins: [
       nodeResolve(),
       json(),
@@ -48,6 +48,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
+    external: [/@ruby\/prism/],
     plugins: [
       nodeResolve({ browser: true }),
       json(),
@@ -66,6 +67,7 @@ export default [
       name: "Herb",
       sourcemap: true,
     },
+    external: [/@ruby\/prism/],
     plugins: [
       nodeResolve({ browser: true }),
       json(),

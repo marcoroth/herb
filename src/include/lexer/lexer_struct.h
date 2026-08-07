@@ -28,6 +28,7 @@ typedef struct LEXER_STRUCT {
 
   char current_character;
   lexer_state_T state;
+  uint8_t malformed_erb_close_length;
   uint32_t stall_counter;
   uint32_t last_position;
   bool stalled;

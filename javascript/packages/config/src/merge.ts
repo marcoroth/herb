@@ -24,6 +24,10 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Deep
         continue
       }
 
+      if (sourceValue === null && isObject(targetValue)) {
+        continue
+      }
+
       if (Array.isArray(sourceValue)) {
         if ((key === 'include' || key === 'exclude') && Array.isArray(targetValue)) {
           ;(output as any)[key] = [...targetValue, ...sourceValue]

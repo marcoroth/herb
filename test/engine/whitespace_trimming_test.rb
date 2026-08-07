@@ -364,5 +364,83 @@ module Engine
       assert_compiled_snapshot(template)
       assert_evaluated_snapshot(template, enforce_erubi_equality: true)
     end
+
+    test "leading whitespace preserved when control tag with inline output follows a trimmed code-only line" do
+      template = "<a>\n  <% if true %>\n    <strong>Title</strong>\n  <% end %>\n  <% unless false %><%= \"content\" %>#L<%= 1 %><% end %>\n</a>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "leading whitespace preserved after multiple consecutive trimmed code-only lines" do
+      template = "<div>\n  <% if true %>\n    <% if true %>\n      <strong>inner</strong>\n    <% end %>\n  <% end %>\n  <% if true %><%= \"output\" %><% end %>\n</div>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "right trim on expression block opening tag removes following newline" do
+      template = "<%= foo do -%>\nbar\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { foo: "captured" })
+      assert_evaluated_actionview_snapshot(template, { foo: "captured" })
+    end
+
+    test "right trim on expression block opening tag with capture removes following newline" do
+      template = "<%= capture do -%>\nbar\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "expression block without right trim preserves following newline" do
+      template = "<%= capture do %>\nbar\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "indented expression block with right trim removes following newline" do
+      template = "<div>\n  <%= capture do -%>\n    bar\n  <% end %>\n</div>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "content_tag expression block with right trim removes following newline" do
+      template = "<%= content_tag :div do -%>\n  <span>text</span>\n<% end %>"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_actionview_snapshot(template)
+    end
+
+    test "expression tag with right trim on variable removes following newline" do
+      template = "<%= name -%>\nworld"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { name: "hello" }, enforce_erubi_equality: true)
+    end
+
+    test "expression tag with right trim on method call removes following newline" do
+      template = "<%= name.upcase -%>\nworld"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, { name: "hello" }, enforce_erubi_equality: true)
+    end
+
+    test "expression tag with right trim does not affect newline inside expression" do
+      template = "<%= \"Hello\n\" -%>\nworld"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
+
+    test "expression tag with right trim without following newline is a no-op" do
+      template = "<%= \"Hello\n\" -%>world"
+
+      assert_compiled_snapshot(template)
+      assert_evaluated_snapshot(template, enforce_erubi_equality: true)
+    end
   end
 end

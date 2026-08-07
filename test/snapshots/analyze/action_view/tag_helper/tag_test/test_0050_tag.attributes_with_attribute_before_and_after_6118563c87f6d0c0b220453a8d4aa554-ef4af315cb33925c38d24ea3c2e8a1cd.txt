@@ -72,7 +72,7 @@ options: {action_view_helpers: true}
     │   │       │   │           │       └── content: "false"
     │   │       │   │           │
     │   │       │   │           ├── close_quote: ∅
-    │   │       │   │           └── quoted: false
+    │   │       │   │           └── quoted: true
     │   │       │   │
     │   │       │   │
     │   │       │   └── @ HTMLAttributeNode (location: (1:112)-(1:135))

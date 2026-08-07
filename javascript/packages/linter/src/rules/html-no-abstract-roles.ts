@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, ABSTRACT_ARIA_ROLES, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { ParseResult, ParserOptions } from "@herb-tools/core"
 
 class NoAbstractRolesVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
@@ -28,6 +28,12 @@ export class HTMLNoAbstractRolesRule extends ParserRule {
     return {
       enabled: true,
       severity: "warning"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

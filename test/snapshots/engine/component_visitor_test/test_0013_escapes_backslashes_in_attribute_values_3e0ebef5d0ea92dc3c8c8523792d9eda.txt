@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0013_escapes backslashes in attribute values"
+input: "{source: \"<MyComponent path=\\\"C:\\\\temp\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(path: "C:\\temp")).to_s;
+_buf.to_s

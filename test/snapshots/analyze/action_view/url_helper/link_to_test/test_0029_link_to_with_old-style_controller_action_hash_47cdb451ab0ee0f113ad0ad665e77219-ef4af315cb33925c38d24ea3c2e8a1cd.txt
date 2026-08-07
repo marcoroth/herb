@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "url_for(controller: \"profiles\", action: \"show\", id: @profile)"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

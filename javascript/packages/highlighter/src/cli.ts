@@ -1,6 +1,6 @@
 import dedent from "dedent"
 
-import { readFileSync } from "fs"
+import { readFileSync, existsSync } from "fs"
 import { parseArgs } from "util"
 import { resolve } from "path"
 
@@ -9,6 +9,10 @@ import { Highlighter } from "./highlighter.js"
 import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
+import { parseUnifiedDiff } from "./diff-computer.js"
+
+import type { DiffHunk } from "./diff-computer.js"
+import type { ThemeInput } from "./themes.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -17,21 +21,35 @@ export class CLI {
     Usage: herb-highlight [file] [options]
 
     Arguments:
-      file             File to highlight (required)
+      file                   File to highlight (required)
 
     Options:
-      -h, --help       show help
-      -v, --version    show version
-      --theme          color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
-      --focus          line number to focus on (shows only that line with context)
-      --context-lines  number of context lines around focus line [default: 2]
-      --no-line-numbers hide line numbers and file path header
-      --wrap-lines     enable line wrapping [default: true]
-      --no-wrap-lines  disable line wrapping
-      --truncate-lines enable line truncation (mutually exclusive with --wrap-lines)
-      --max-width      maximum width for line wrapping/truncation [default: terminal width]
-      --diagnostics    JSON string or file path containing diagnostics to render
-      --split-diagnostics  render each diagnostic individually (requires --diagnostics)
+      -h, --help             how help
+      -v, --version          show version
+      --theme                color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --focus                line number to focus on (shows only that line with context)
+      --context-lines        number of context lines around focus line [default: 2]
+      --no-line-numbers      hide line numbers and file path header
+      --wrap-lines           enable line wrapping [default: true]
+      --no-wrap-lines        disable line wrapping
+      --truncate-lines       enable line truncation (mutually exclusive with --wrap-lines)
+      --max-width            maximum width for line wrapping/truncation [default: terminal width]
+      --diagnostics          JSON string or file path containing diagnostics to render
+      --split-diagnostics    render each diagnostic individually (requires --diagnostics)
+      --diff                 render a diff instead of a file
+
+    Diff two files, which can also be spelled as the \`diff\` subcommand:
+
+      herb-highlight diff before.html.erb after.html.erb
+      herb-highlight --diff before.html.erb after.html.erb
+
+    Or render a diff that was made elsewhere, taken from the argument or from stdin:
+
+      git diff -- app/views | herb-highlight diff
+      herb-highlight diff fix.json
+
+    That accepts unified diff text as produced by \`git diff\`, or JSON as
+    {"original": "...", "modified": "..."} or {"hunks": [...]}
       `
 
   private parseArguments() {
@@ -50,6 +68,7 @@ export class CLI {
         "max-width": { type: "string" },
         "diagnostics": { type: "string" },
         "split-diagnostics": { type: "boolean" },
+        "diff": { type: "boolean" },
       },
       allowPositionals: true,
     })
@@ -168,6 +187,7 @@ export class CLI {
     return {
       values,
       positionals,
+      diffMode: values["diff"] === true,
       theme,
       focusLine,
       contextLines,
@@ -180,9 +200,108 @@ export class CLI {
     }
   }
 
+  private readDiffInput(input: string | undefined): string {
+    if (input === undefined || input === "-") {
+      if (input === undefined && process.stdin.isTTY) {
+        console.error("Error: --diff needs a JSON string, a file path, or input piped in on stdin.")
+        process.exit(1)
+      }
+
+      return readFileSync(0, "utf-8")
+    }
+
+    if (input.trimStart().startsWith("{") || input.trimStart().startsWith("[")) return input
+
+    return readFileSync(resolve(input), "utf-8")
+  }
+
+  private diffsFrom(parsed: any): { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[] {
+    if (Array.isArray(parsed?.hunks)) {
+      return [{ path: parsed.filename ?? "", hunks: parsed.hunks }]
+    }
+
+    if (typeof parsed?.original === "string" && typeof parsed?.modified === "string") {
+      return [{ path: parsed.filename ?? "", original: parsed.original, modified: parsed.modified }]
+    }
+
+    throw new Error(`Expected {"original", "modified"} or {"hunks"}`)
+  }
+
+  private diffOfFiles(first: string, second: string): { path: string, original: string, modified: string } {
+    for (const file of [first, second]) {
+      if (!existsSync(resolve(file))) {
+        console.error(`File not found: ${file}`)
+        process.exit(1)
+      }
+    }
+
+    return {
+      path: `${first} → ${second}`,
+      original: readFileSync(resolve(first), "utf-8"),
+      modified: readFileSync(resolve(second), "utf-8"),
+    }
+  }
+
+  private async runDiff(inputs: string[], options: { theme: ThemeInput, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number }): Promise<void> {
+    const { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } = options
+
+    let diffs: { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[]
+
+    if (inputs.length > 2) {
+      console.error("Error: --diff takes at most two files.")
+      process.exit(1)
+    }
+
+    try {
+      if (inputs.length === 2) {
+        diffs = [this.diffOfFiles(inputs[0], inputs[1])]
+      } else {
+        const text = this.readDiffInput(inputs[0])
+        const trimmed = text.trimStart()
+
+        diffs = trimmed.startsWith("{") || trimmed.startsWith("[")
+          ? this.diffsFrom(JSON.parse(text))
+          : parseUnifiedDiff(text)
+      }
+
+      if (diffs.length === 0) throw new Error(`Found no hunks. Expected two files, JSON, or unified diff text as produced by \`git diff\``)
+    } catch (error) {
+      console.error(`Error parsing diff: ${error instanceof Error ? error.message : error}`)
+      process.exit(1)
+    }
+
+    const highlighter = new Highlighter(theme)
+    await highlighter.initialize()
+
+    const renderOptions = { contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth }
+
+    const rendered = diffs
+      .map(diff => diff.hunks
+        ? highlighter.highlightDiffHunks(diff.path, diff.hunks, renderOptions)
+        : highlighter.highlightDiff(diff.path, diff.original!, diff.modified!, renderOptions))
+      .filter(diff => diff !== "")
+
+    if (rendered.length === 0) {
+      console.error("No differences to render.")
+      process.exit(1)
+    }
+
+    console.log(rendered.join("\n\n"))
+  }
+
   async run() {
-    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
+    const { positionals, diffMode, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
       this.parseArguments()
+
+    const isDiffSubcommand = positionals[0] === "diff"
+
+    if (diffMode || isDiffSubcommand) {
+      const inputs = isDiffSubcommand ? positionals.slice(1) : positionals
+
+      await this.runDiff(inputs, { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth })
+
+      return
+    }
 
     if (positionals.length === 0) {
       console.error("Please specify an input file.")

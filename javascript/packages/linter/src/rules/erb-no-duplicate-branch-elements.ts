@@ -12,6 +12,7 @@ import {
   isERBWhenNode,
   isEquivalentElement,
   isPureWhitespaceNode,
+  getTagLocalName,
   findParentArray,
   removeNodeFromArray,
   replaceNodeWithBody,
@@ -25,6 +26,8 @@ import type { ParseResult, Node, ERBIfNode, ERBUnlessNode, ERBCaseNode, ERBElseN
 import type { Mutable } from "@herb-tools/rewriter"
 
 type ConditionalNode = ERBIfNode | ERBUnlessNode | ERBCaseNode
+
+const CONTENT_PRESERVING_TAGS = new Set(["pre", "textarea", "script", "style"])
 
 interface DuplicateBranchAutofixContext extends BaseAutofixContext {
   node: Mutable<ConditionalNode>
@@ -41,6 +44,16 @@ function trimWhitespaceNodes(nodes: Node[]): Node[] {
   while (start < end && isPureWhitespaceNode(nodes[start])) start++
   while (end > start && isPureWhitespaceNode(nodes[end - 1])) end--
   return nodes.slice(start, end)
+}
+
+function isContentPreserving(element: HTMLElementNode): boolean {
+  const tagName = getTagLocalName(element)
+
+  return tagName !== null && CONTENT_PRESERVING_TAGS.has(tagName)
+}
+
+function haveIdenticalBodies(elements: HTMLElementNode[]): boolean {
+  return elements.every(element => IdentityPrinter.print(element) === IdentityPrinter.print(elements[0]))
 }
 
 function allEquivalentElements(nodes: Node[]): nodes is HTMLElementNode[] {
@@ -186,7 +199,7 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
       this.addOffense(
         "All branches of this conditional have identical content. The conditional can be removed.",
         node.location,
-        { node: node as Mutable<ConditionalNode>, allIdentical: true },
+        { node: node as Mutable<ConditionalNode>, allIdentical: true, unsafe: true },
         "warning",
       )
 
@@ -228,51 +241,55 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
     const prefixCount = findCommonPrefixCount(significantBranches, minLength)
     const suffixCount = findCommonSuffixCount(significantBranches, minLength, prefixCount)
 
+    const groups: HTMLElementNode[][] = []
+
     for (let index = 0; index < prefixCount; index++) {
-      const elements = significantBranches.map(branch => branch[index] as HTMLElementNode)
-      this.reportAndRecurse(elements, conditionalNode, state)
+      groups.push(significantBranches.map(branch => branch[index] as HTMLElementNode))
     }
 
     for (let offset = 0; offset < suffixCount; offset++) {
-      const elements = significantBranches.map(branch => branch[branch.length - 1 - offset] as HTMLElementNode)
-      this.reportAndRecurse(elements, conditionalNode, state)
+      groups.push(significantBranches.map(branch => branch[branch.length - 1 - offset] as HTMLElementNode))
+    }
+
+    const sharedElementsSpanBranches = significantBranches.every(branch => branch.length === prefixCount + suffixCount)
+    const divergingGroups = groups.filter(elements => !haveIdenticalBodies(elements))
+    const canWrapConditional = sharedElementsSpanBranches && divergingGroups.length === 1 && !isContentPreserving(divergingGroups[0][0])
+
+    for (const elements of groups) {
+      this.reportAndRecurse(elements, conditionalNode, state, canWrapConditional)
     }
   }
 
-  private reportAndRecurse(elements: HTMLElementNode[], conditionalNode: ConditionalNode, state: { isFirstOffense: boolean }): void {
+  private reportAndRecurse(elements: HTMLElementNode[], conditionalNode: ConditionalNode, state: { isFirstOffense: boolean }, canWrapConditional: boolean): void {
     const bodies = elements.map(element => element.body)
-    const bodiesMatch = elements.every(element => IdentityPrinter.print(element) === IdentityPrinter.print(elements[0]))
+    const bodiesMatch = haveIdenticalBodies(elements)
 
-    for (const element of elements) {
-      const printed = IdentityPrinter.print(element.open_tag)
+    if (bodiesMatch || canWrapConditional) {
+      for (const element of elements) {
+        const printed = IdentityPrinter.print(element.open_tag)
 
-      if (bodiesMatch) {
         const autofixContext = state.isFirstOffense
           ? { node: conditionalNode as Mutable<ConditionalNode> }
           : undefined
 
-        this.addOffense(
-          `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
-          element.location,
-          autofixContext,
-        )
+        if (bodiesMatch) {
+          this.addOffense(
+            `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
+            element.location,
+            autofixContext,
+          )
+        } else {
+          const tagNameLocation = isHTMLOpenTagNode(element.open_tag) && element.open_tag.tag_name?.location
+            ? element.open_tag.tag_name.location
+            : element?.open_tag?.location || element.location
 
-        state.isFirstOffense = false
-      } else {
-        const autofixContext = state.isFirstOffense
-          ? { node: conditionalNode as Mutable<ConditionalNode> }
-          : undefined
-
-        const tagNameLocation = isHTMLOpenTagNode(element.open_tag) && element.open_tag.tag_name?.location
-          ? element.open_tag.tag_name.location
-          : element?.open_tag?.location || element.location
-
-        this.addOffense(
-          `The \`${printed}\` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.`,
-          tagNameLocation,
-          autofixContext,
-          "hint",
-        )
+          this.addOffense(
+            `The \`${printed}\` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.`,
+            tagNameLocation,
+            autofixContext,
+            "hint",
+          )
+        }
 
         state.isFirstOffense = false
       }
@@ -288,6 +305,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
   static ruleName = "erb-no-duplicate-branch-elements"
   static introducedIn = this.version("0.9.0")
   static autocorrectable = true
+  static autofixRequiresContext = true
   static reindentAfterAutofix = true
 
   get defaultConfig(): FullRuleConfig {
@@ -378,7 +396,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
       } else {
         if (hasWrapped) return
 
-        const canWrap = branches.every((branch, index) => {
+        const canWrap = !isContentPreserving(elements[0]) && branches.every((branch, index) => {
           const remaining = getSignificantNodes(branch)
 
           return remaining.length === 1 && remaining[0] === elements[index]
@@ -420,7 +438,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
         const elements = remaining.map(b => b[0] as HTMLElementNode)
         const bodiesMatch = elements.every(el => IdentityPrinter.print(el) === IdentityPrinter.print(elements[0]))
 
-        if (!bodiesMatch && elements.every(el => el.body.length > 0)) {
+        if (!bodiesMatch && !isContentPreserving(elements[0]) && elements.every(el => el.body.length > 0)) {
           for (let i = 0; i < branches.length; i++) {
             replaceNodeWithBody(branches[i] as Node[], elements[i])
           }

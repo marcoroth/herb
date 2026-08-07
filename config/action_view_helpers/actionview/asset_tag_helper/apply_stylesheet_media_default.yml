@@ -1,0 +1,19 @@
+---
+name: "apply_stylesheet_media_default"
+source: "ActionView::Helpers::AssetTagHelper#apply_stylesheet_media_default"
+gem: "actionview"
+output: "text"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "apply_stylesheet_media_default"
+documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/AssetTagHelper.html"
+
+description: |-
+  Returns whether `stylesheet_link_tag` applies a default `media` attribute.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []

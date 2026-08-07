@@ -6,6 +6,7 @@ import {
   HTMLElementNode,
   HTMLTextNode,
   ERBContentNode,
+  RubyParameterNode,
 } from "../src/index.js"
 
 import type { Node } from "../src/index.js"
@@ -72,5 +73,47 @@ describe("Visitor", () => {
       "HTMLTextNode",
       "ERBContentNode",
     ])
+  })
+
+  test("accept does not crash when visitor is missing a visit method", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
+    const node = new RubyParameterNode({
+      type: "AST_RUBY_PARAMETER_NODE",
+      location,
+      errors: [],
+      name: null,
+      default_value: null,
+      kind: "required",
+      required: true,
+    })
+
+    const incompleteVisitor = new Visitor()
+    delete (incompleteVisitor as any).visitRubyParameterNode
+
+    expect(() => {
+      node.accept(incompleteVisitor)
+    }).not.toThrow()
+  })
+
+  test("accept calls the visitor method when it exists", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
+    const node = new RubyParameterNode({
+      type: "AST_RUBY_PARAMETER_NODE",
+      location,
+      errors: [],
+      name: null,
+      default_value: null,
+      kind: "required",
+      required: true,
+    })
+
+    const visitor = new RecordingVisitor()
+    node.accept(visitor)
+
+    expect(visitor.visited).toContain("RubyParameterNode")
   })
 })

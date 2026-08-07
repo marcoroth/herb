@@ -105,6 +105,52 @@ describe("html-no-space-in-tag autofix", () => {
       expect(result.fixed).toHaveLength(0)
       expect(result.unfixed).toHaveLength(0)
     })
+
+    test("multi line tag with first attribute on the opening line (hanging indent) - #695", () => {
+      const input = dedent`
+        <div data-a="foo"
+             data-b="bar">
+          lorem
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not merge unindented attributes on separate lines", () => {
+      const input = dedent`
+        <a
+        href="https://example.com/path"
+        target="_blank">TOTP</a>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not merge unindented ERB attributes on separate lines", () => {
+      const input = dedent`
+        <div
+        data-base-path="<%= a %>"
+        data-available-locales="<%= b %>">z</div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
   })
 
   describe("when no space should be present", () => {
@@ -295,7 +341,7 @@ describe("html-no-space-in-tag autofix", () => {
       const result = linter.autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
-      expect(result.fixed).toHaveLength(2)
+      expect(result.fixed).toHaveLength(1)
       expect(result.unfixed).toHaveLength(0)
     })
 
@@ -335,7 +381,7 @@ describe("html-no-space-in-tag autofix", () => {
       const result = linter.autofix(input, { fileName: 'test.html.erb' })
 
       expect(result.source).toBe(expected)
-      expect(result.fixed).toHaveLength(2)
+      expect(result.fixed).toHaveLength(1)
       expect(result.unfixed).toHaveLength(0)
     })
 
@@ -404,6 +450,135 @@ describe("html-no-space-in-tag autofix", () => {
 
       expect(result.source).toBe(expected)
       expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("collapses extra space between name and first attribute on the opening line", () => {
+      const input = dedent`
+        <div  data-a="foo"
+          data-b="bar">
+        </div>
+      `
+      const expected = dedent`
+        <div data-a="foo"
+          data-b="bar">
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("collapses extra space between attributes on a continuation line", () => {
+      const input = dedent`
+        <div
+          data-a="foo"  data-b="bar">
+        </div>
+      `
+      const expected = dedent`
+        <div
+          data-a="foo" data-b="bar">
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes space before the closing bracket on an attribute line", () => {
+      const input = dedent`
+        <div
+          data-a="foo" >
+        </div>
+      `
+      const expected = dedent`
+        <div
+          data-a="foo">
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("aligns an over-indented closing bracket to the tag column in a nested tag", () => {
+      const input = dedent`
+        <div>
+          <input
+            type="password"
+              >
+        </div>
+      `
+      const expected = dedent`
+        <div>
+          <input
+            type="password"
+          >
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("aligns an over-indented self-closing bracket to the tag column in a nested tag", () => {
+      const input = dedent`
+        <div>
+          <input
+            type="password"
+              />
+        </div>
+      `
+      const expected = dedent`
+        <div>
+          <input
+            type="password"
+          />
+        </div>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes a genuine blank line between unindented attributes", () => {
+      const input = dedent`
+        <a
+        href="x"
+
+        target="_blank">y</a>
+      `
+      const expected = dedent`
+        <a
+        href="x"
+        target="_blank">y</a>
+      `
+
+      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
+      const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
       expect(result.unfixed).toHaveLength(0)
     })
   })
