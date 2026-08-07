@@ -1,21 +1,15 @@
 import { Range } from "vscode-languageserver/node"
 import { ParserService } from "./parser_service"
-import { RubyReferenceCollector } from "./ruby_reference_collector"
 import { StrictLocalsCollector } from "./strict_locals_collector"
 import { RootElementCollector } from "./root_element_collector"
 
-import { RUBY_KEYWORDS, helperExists, stringIndexFromByteOffset, getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
+import { RubyReferenceCollector, isProbableLocal, isValidLocalName, stringIndexFromByteOffset, getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
-import type { DocumentNode, HTMLElementNode } from "@herb-tools/core"
-import type { RubyReference } from "./ruby_reference_collector"
+import type { DocumentNode, HTMLElementNode, RubyReference } from "@herb-tools/core"
 
 const FALLBACK_NAME = "partial"
 const SEMANTIC_CLASS_LIMIT = 2
-const LOCAL_ASSIGNS = "local_assigns"
-const ROUTE_HELPER = /_(path|url)$/
-const PREDICATE_OR_BANG = /[?!]$/
-const LOCAL_NAME = /^[a-z_][a-zA-Z0-9_]*$/
 
 export interface ExtractedLocal {
   name: string
@@ -138,7 +132,7 @@ export class ExtractPartialAnalyzer {
       if (!isInside(call)) continue
       if (boundInside.has(call.name)) continue
 
-      const isLocal = strictLocals.names.has(call.name) || (strictLocals.inferLocals && this.isProbableLocal(call.name))
+      const isLocal = strictLocals.names.has(call.name) || (strictLocals.inferLocals && isProbableLocal(call.name))
       if (!isLocal) continue
 
       candidates.push({ name: call.name, expression: call.name, startOffset: call.startOffset })
@@ -153,7 +147,7 @@ export class ExtractPartialAnalyzer {
 
       const name = read.name.slice(1)
       if (variableNames.has(name) || boundInside.has(name)) continue
-      if (!this.isValidLocalName(name)) continue
+      if (!isValidLocalName(name)) continue
 
       candidates.push({ name, expression: read.name, startOffset: read.startOffset })
       rewrites.push({ startOffset: read.startOffset, length: read.length, replacement: name })
@@ -178,21 +172,6 @@ export class ExtractPartialAnalyzer {
     collector.visit(document)
 
     return { names: collector.names, declared: collector.declared }
-  }
-
-  private isProbableLocal(name: string): boolean {
-    if (!this.isValidLocalName(name)) return false
-    if (PREDICATE_OR_BANG.test(name)) return false
-    if (ROUTE_HELPER.test(name)) return false
-
-    return !helperExists(name)
-  }
-
-  private isValidLocalName(name: string): boolean {
-    if (!LOCAL_NAME.test(name)) return false
-    if (RUBY_KEYWORDS.has(name)) return false
-
-    return name !== LOCAL_ASSIGNS
   }
 
   private isPartial(uri: string): boolean {
