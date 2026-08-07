@@ -194,7 +194,7 @@ export class Server {
 
       if (!document) return null
 
-      return this.service.hoverService.getHover(document, params.position)
+      return this.service.hoverService.getHover(document, params.position) ?? this.service.definitionService.getHover(document, params.position)
     })
 
     this.connection.onCompletion((params: CompletionParams) => {
