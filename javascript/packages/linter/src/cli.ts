@@ -250,8 +250,7 @@ export class CLI {
         await Herb.load()
 
         const files = await config.findFilesForTool('linter', this.projectPath)
-        const upgradeProcessor = new FileProcessor()
-        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+        const results = await this.fileProcessor.processFiles(files, 'json', upgradeContext)
 
         for (const { offense } of results.allOffenses) {
           if (offense.severity !== "error" && offense.severity !== "warning") continue
@@ -334,8 +333,7 @@ export class CLI {
         jobs,
       }
 
-      const processor = new FileProcessor()
-      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const results = await this.fileProcessor.processFiles(files, 'json', disableFailingContext)
       const failingRules = new Map<string, number>()
       const PROTECTED_RULES = new Set(["parser-no-errors"])
 
