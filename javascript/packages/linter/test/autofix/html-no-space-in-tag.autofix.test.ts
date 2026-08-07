@@ -2,6 +2,7 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { createAutofixTest } from "../helpers/autofix-test-helper.js"
+import { Linter } from "../../src/linter.js"
 
 import { HTMLNoSpaceInTagRule } from "../../src/rules/html-no-space-in-tag.js"
 

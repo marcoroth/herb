@@ -78,7 +78,7 @@ export class ArgumentParser {
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
-      --no-compare-backends         disable comparison between the WASM and Rust backends
+      --compare-backends            compare the WASM and Rust backends and report where they disagree
       --backend <name>              force a linting backend (javascript|rust)
       --fail-on-backend-mismatch    exit with code 2 if the WASM and Rust backends disagree
       --all-rules                   run every rule, ignoring disabled-by-default rules
@@ -123,7 +123,7 @@ export class ArgumentParser {
         "truncate-lines": { type: "boolean" },
         "show-fix-diff": { type: "boolean" },
         "no-custom-rules": { type: "boolean" },
-        "no-compare-backends": { type: "boolean" },
+        "compare-backends": { type: "boolean" },
         backend: { type: "string" },
         "fail-on-backend-mismatch": { type: "boolean" },
         jobs: { type: "string", short: "j" }
@@ -204,8 +204,11 @@ export class ArgumentParser {
 
     const backend = backendValue as "javascript" | "rust" | undefined
 
-    const compareBackends = !values["no-compare-backends"]
     const failOnBackendMismatch = Boolean(values["fail-on-backend-mismatch"])
+
+    // comparison doubles the work and replaces the offense output, so it stays
+    // opt-in; asking to fail on a mismatch implies wanting the comparison
+    const compareBackends = Boolean(values["compare-backends"]) || failOnBackendMismatch
     const allRules = Boolean(values["all-rules"])
 
     let only: string[] | undefined

@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 import dedent from "dedent"
 import { Herb } from "@herb-tools/node-wasm"
 import { createAutofixTest } from "../helpers/autofix-test-helper.js"
+import { Linter } from "../../src/linter.js"
 import { ERBNoExtraWhitespaceRule } from "../../src/rules/erb-no-extra-whitespace-inside-tags.js"
 
 describe("erb-no-extra-whitespace-inside-tags autofix", () => {
