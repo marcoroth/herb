@@ -24,6 +24,13 @@ function paths(files: string[]): PartialPaths {
 
 describe("@herb-tools/core", () => {
   describe("isPartialPath", () => {
+    test("accepts variants of a partial", () => {
+      expect(isPartialPath("app/views/users/_card.html+phone.erb")).toBe(true)
+      expect(isPartialPath("app/views/users/_card.html+tablet.herb")).toBe(true)
+      expect(isPartialPath("app/views/users/_card.en.html.erb")).toBe(true)
+      expect(isPartialPath("app/views/users/_card.json.erb")).toBe(true)
+    })
+
     test("accepts every partial extension", () => {
       expect(isPartialPath("app/views/users/_card.html.erb")).toBe(true)
       expect(isPartialPath("app/views/users/_card.html.herb")).toBe(true)
@@ -90,6 +97,23 @@ describe("@herb-tools/core", () => {
 
     test("resolves against a project root view root", () => {
       expect(partialNameForFile("users/_card.html.erb", ".")).toBe("users/card")
+    })
+
+    test("collapses every variant of a partial onto the same name", () => {
+      expect(partialNameForFile("app/views/users/_card.html.erb", VIEW_ROOT)).toBe("users/card")
+      expect(partialNameForFile("app/views/users/_card.html+phone.erb", VIEW_ROOT)).toBe("users/card")
+      expect(partialNameForFile("app/views/users/_card.html+tablet.herb", VIEW_ROOT)).toBe("users/card")
+      expect(partialNameForFile("app/views/users/_card.en.html.erb", VIEW_ROOT)).toBe("users/card")
+      expect(partialNameForFile("app/views/users/_card.json.erb", VIEW_ROOT)).toBe("users/card")
+      expect(partialNameForFile("app/views/users/_card.turbo_stream.erb", VIEW_ROOT)).toBe("users/card")
+    })
+
+    test("returns null for a partial with no name before the extension", () => {
+      expect(partialNameForFile("app/views/users/_.html.erb", VIEW_ROOT)).toBeNull()
+    })
+
+    test("keeps a name that has no extension at all", () => {
+      expect(partialNameForFile("app/views/users/_card", VIEW_ROOT)).toBe("users/card")
     })
   })
 

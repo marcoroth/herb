@@ -15,7 +15,13 @@ const APPLICATION_DIRECTORY = "application"
 export type PartialPaths = Map<string, string>
 
 function normalize(path: string): string {
-  return path.replace(/\\/g, "/").replace(/\/+$/, "")
+  const separated = path.replace(/\\/g, "/")
+
+  let end = separated.length
+
+  while (end > 0 && separated[end - 1] === "/") end--
+
+  return separated.slice(0, end)
 }
 
 function basename(path: string): string {
@@ -59,7 +65,9 @@ export function partialNameForFile(filePath: string, viewRoot: string): string |
 
   if (!name.startsWith(PARTIAL_PREFIX)) return null
 
-  const withoutExtension = name.slice(PARTIAL_PREFIX.length).replace(/\..*$/, "")
+  const withoutPrefix = name.slice(PARTIAL_PREFIX.length)
+  const extension = withoutPrefix.indexOf(".")
+  const withoutExtension = extension === -1 ? withoutPrefix : withoutPrefix.slice(0, extension)
 
   if (withoutExtension === "") return null
 
