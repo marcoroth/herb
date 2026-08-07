@@ -47,6 +47,10 @@ pub struct Linter {
   config: Config,
   mode: LinterMode,
   rules: Vec<AnyRule>,
+  /// Restricts the run to these rules, ignoring config and version gating
+  only: Option<Vec<String>>,
+  /// Runs every rule regardless of config, defaults and version gating
+  all_rules: bool,
 }
 
 impl Linter {
@@ -57,7 +61,23 @@ impl Linter {
       config,
       mode: LinterMode::Cli,
       rules,
+      only: None,
+      all_rules: false,
     }
+  }
+
+  /// Runs only the named rules, the way `--only` does.
+  pub fn with_only(mut self, only: Vec<String>) -> Self {
+    self.only = if only.is_empty() { None } else { Some(only) };
+
+    self
+  }
+
+  /// Runs every rule, the way `--all-rules` does.
+  pub fn with_all_rules(mut self, all_rules: bool) -> Self {
+    self.all_rules = all_rules;
+
+    self
   }
 
   pub fn default() -> Self {
@@ -459,6 +479,14 @@ impl Linter {
   }
 
   fn filter_rule_by_config(&self, rule: &AnyRule) -> bool {
+    if let Some(only) = &self.only {
+      return only.iter().any(|name| name == rule.name());
+    }
+
+    if self.all_rules {
+      return true;
+    }
+
     if self.config.get_rule_config(rule.name()).is_some() {
       return !self.config.is_rule_disabled(rule.name());
     }

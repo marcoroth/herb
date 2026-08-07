@@ -41,6 +41,9 @@ struct CliArguments {
   no_color: bool,
   show_timing: bool,
   show_rules: bool,
+  only_rules: Vec<String>,
+  all_rules: bool,
+  log_level: Option<FailLevel>,
 }
 
 struct ProcessedFile {
@@ -181,8 +184,23 @@ fn main() {
     arguments.fix,
     arguments.fix_unsafe,
     arguments.ignore_disable_comments,
+    &arguments.only_rules,
+    arguments.all_rules,
   );
   let duration = start_time.elapsed();
+
+  let result = match &arguments.log_level {
+    // hides quieter offenses from the report without changing the counts
+    Some(level) => ProcessingResult {
+      all_offenses: result
+        .all_offenses
+        .into_iter()
+        .filter(|processed| meets_severity_threshold(&processed.offense.severity, level))
+        .collect(),
+      ..result
+    },
+    None => result,
+  };
 
   output_results(&result, &arguments, duration);
 
@@ -214,6 +232,9 @@ fn parse_arguments() -> CliArguments {
   let mut github_actions_flag: Option<bool> = None;
   let mut no_color = false;
   let mut show_timing = true;
+  let mut only_rules: Vec<String> = Vec::new();
+  let mut all_rules = false;
+  let mut log_level: Option<FailLevel> = None;
   let mut show_rules = false;
 
   let mut index = 1;
@@ -285,6 +306,36 @@ fn parse_arguments() -> CliArguments {
       "--no-github" => github_actions_flag = Some(false),
       "--no-color" => no_color = true,
       "--no-timing" => show_timing = false,
+      "--all-rules" => all_rules = true,
+      "--only" => {
+        index += 1;
+
+        match argument_values.get(index) {
+          Some(value) => only_rules.extend(value.split(',').map(|name| name.trim().to_string()).filter(|name| !name.is_empty())),
+          None => {
+            eprintln!("Error: --only requires a comma separated list of rule names");
+            std::process::exit(1);
+          }
+        }
+      }
+      "--log-level" => {
+        index += 1;
+
+        match argument_values.get(index).map(|value| value.as_str()) {
+          Some("error") => log_level = Some(FailLevel::Error),
+          Some("warning") => log_level = Some(FailLevel::Warning),
+          Some("info") => log_level = Some(FailLevel::Info),
+          Some("hint") => log_level = Some(FailLevel::Hint),
+          Some(other) => {
+            eprintln!("Error: Invalid --log-level value \"{}\". Must be one of: error, warning, info, hint", other);
+            std::process::exit(1);
+          }
+          None => {
+            eprintln!("Error: --log-level requires a severity argument (error|warning|info|hint)");
+            std::process::exit(1);
+          }
+        }
+      }
       "--no-wrap-lines" | "--truncate-lines" | "--theme" => {
         if argument == "--theme" {
           index += 1;
@@ -335,6 +386,9 @@ fn parse_arguments() -> CliArguments {
     no_color,
     show_timing,
     show_rules,
+    only_rules,
+    all_rules,
+    log_level,
   }
 }
 
@@ -366,6 +420,9 @@ fn print_usage() {
   println!("  --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)");
   println!("  --no-color                    disable colored output");
   println!("  --no-timing                   hide timing information");
+  println!("  --only <rules>                run only the given comma separated rules");
+  println!("  --all-rules                   run every rule, ignoring config and defaults");
+  println!("  --log-level <severity>        hide offenses below this severity (error|warning|info|hint)");
 }
 
 fn determine_project_path(patterns: &[String], current_directory: &Path) -> PathBuf {
@@ -459,8 +516,17 @@ struct FileLintResult {
   would_be_ignored: usize,
 }
 
-fn lint_files(files: &[String], project_path: &Path, config: &Config, fix: bool, fix_unsafe: bool, ignore_disable_comments: bool) -> ProcessingResult {
-  let linter = Linter::new(config.clone());
+fn lint_files(
+  files: &[String],
+  project_path: &Path,
+  config: &Config,
+  fix: bool,
+  fix_unsafe: bool,
+  ignore_disable_comments: bool,
+  only_rules: &[String],
+  all_rules: bool,
+) -> ProcessingResult {
+  let linter = Linter::new(config.clone()).with_only(only_rules.to_vec()).with_all_rules(all_rules);
   let rule_count = linter.rule_count();
   let rules_disabled_by_config = linter.rules_disabled_by_config();
   let rules_not_enabled_by_default = linter.rules_not_enabled_by_default();
@@ -586,6 +652,26 @@ fn lint_files(files: &[String], project_path: &Path, config: &Config, fix: bool,
     autofixable_count,
     rule_offenses,
   }
+}
+
+/// Whether an offense is at or above the given severity, so `--log-level`
+/// hides the quieter ones.
+fn meets_severity_threshold(severity: &Severity, level: &FailLevel) -> bool {
+  let rank = |severity: &Severity| match severity {
+    Severity::Error => 3,
+    Severity::Warning => 2,
+    Severity::Info => 1,
+    Severity::Hint => 0,
+  };
+
+  let threshold = match level {
+    FailLevel::Error => 3,
+    FailLevel::Warning => 2,
+    FailLevel::Info => 1,
+    FailLevel::Hint => 0,
+  };
+
+  rank(severity) >= threshold
 }
 
 fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
