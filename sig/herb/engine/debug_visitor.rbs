@@ -3,6 +3,8 @@
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
+      HEAD_CONTENT_HELPER_PATTERN: Regexp
+
       def initialize: (?file_path: untyped, ?project_path: untyped) -> untyped
 
       def visit_document_node: (untyped node) -> untyped
@@ -68,6 +70,9 @@ module Herb
 
       # TODO: Rewrite using Prism Nodes once available
       def javascript_tag?: (untyped code) -> untyped
+
+      # TODO: Rewrite using Prism Nodes once available
+      def head_content_helper?: (untyped code) -> untyped
 
       def include_debug_disable_comment?: (untyped code) -> untyped
     end

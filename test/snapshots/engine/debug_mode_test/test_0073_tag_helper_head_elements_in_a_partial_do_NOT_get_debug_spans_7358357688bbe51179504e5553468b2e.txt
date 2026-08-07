@@ -1,0 +1,10 @@
+---
+source: "Engine::DebugModeTest#test_0073_tag helper head elements in a partial do NOT get debug spans"
+input: "{source: \"<%= tag.meta charset: \\\"utf-8\\\" %>\\n<%= tag.title %>\\n<%= tag.link rel: \\\"canonical\\\", href: canonical_url %>\\n<%= tag.base href: \\\"/\\\" %>\\n\", options: {debug: true, filename: \"_head.html.erb\"}}"
+---
+_buf = ::String.new; _buf << (tag.meta charset: "utf-8").to_s; _buf << '
+'.freeze; _buf << (tag.title).to_s; _buf << '
+'.freeze; _buf << (tag.link rel: "canonical", href: canonical_url).to_s; _buf << '
+'.freeze; _buf << (tag.base href: "/").to_s; _buf << '
+'.freeze;
+_buf.to_s

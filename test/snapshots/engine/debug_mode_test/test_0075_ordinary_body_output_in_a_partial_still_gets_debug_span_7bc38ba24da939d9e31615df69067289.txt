@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0075_ordinary body output in a partial still gets debug span"
+input: "{source: \"<div><%= @name %></div>\", options: {debug: true, filename: \"_card.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="partial" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="_card.html.erb" data-herb-debug-file-full-path="_card.html.erb"><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @name %&gt;" data-herb-debug-file-name="_card.html.erb" data-herb-debug-file-relative-path="_card.html.erb" data-herb-debug-file-full-path="_card.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="6" style="display: contents;">'.freeze; _buf << (@name).to_s; _buf << '</span></div>'.freeze;
+_buf.to_s

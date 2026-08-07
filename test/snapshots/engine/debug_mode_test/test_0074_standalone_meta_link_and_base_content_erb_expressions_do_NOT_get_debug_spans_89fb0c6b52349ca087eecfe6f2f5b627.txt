@@ -1,0 +1,9 @@
+---
+source: "Engine::DebugModeTest#test_0074_standalone meta link and base content erb expressions do NOT get debug spans"
+input: "{source: \"<meta name=\\\"description\\\" content=\\\"<%= @description %>\\\">\\n<link rel=\\\"canonical\\\" href=\\\"<%= canonical_url %>\\\">\\n<base href=\\\"<%= base_href %>\\\">\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << '<meta name="description" content="'.freeze; _buf << ::Herb::Engine.attr((@description)); _buf << '" data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-attach-to-parent="true">
+<link rel="canonical" href="'.freeze; _buf << ::Herb::Engine.attr((canonical_url)); _buf << '">
+<base href="'.freeze; _buf << ::Herb::Engine.attr((base_href)); _buf << '">
+'.freeze;
+_buf.to_s

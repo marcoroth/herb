@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../action_view/helper_registry"
+
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
+      HEAD_CONTENT_HELPER_PATTERN = /\b(?:#{Herb::ActionView::HelperRegistry.by_context("head").map { |helper| Regexp.escape(helper.name) }.join("|")})\b/ #: Regexp
+      private_constant :HEAD_CONTENT_HELPER_PATTERN
+
       def initialize(file_path: nil, project_path: nil)
         super()
 
@@ -76,7 +81,7 @@ module Herb
         if !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
-          @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
+          @erb_nodes_to_wrap << node unless complex_rails_helper?(code) || head_content_helper?(code)
         end
 
         super
@@ -210,7 +215,7 @@ module Herb
         code = erb_node.content.value.strip
         erb_code = "#{opening} #{code} %>"
 
-        return erb_node if complex_rails_helper?(code)
+        return erb_node if complex_rails_helper?(code) || head_content_helper?(code)
 
         line = erb_node.location&.start&.line
         column = erb_node.location&.start&.column
@@ -329,7 +334,7 @@ module Herb
       end
 
       def in_excluded_context?
-        excluded_tags = ["script", "style", "head", "title", "textarea", "pre", "svg", "math"]
+        excluded_tags = ["script", "style", "head", "title", "meta", "link", "base", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
         if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) || include_debug_disable_comment?(node.content.value.strip) }
@@ -382,6 +387,17 @@ module Herb
                        cleaned_code.match?(/\bjavascript_tag\s.*\{\s*$/) ||
                        cleaned_code.match?(/\bjavascript_tag\(.*do\s*$/) ||
                        cleaned_code.match?(/\bjavascript_tag\(.*\{\s*$/)
+
+        false
+      end
+
+      # TODO: Rewrite using Prism Nodes once available
+      def head_content_helper?(code)
+        cleaned_code = code.strip.gsub(/\s+/, " ")
+
+        return true if cleaned_code.match?(HEAD_CONTENT_HELPER_PATTERN)
+
+        return true if cleaned_code.match?(/\btag\.(?:meta|link|title|base)\b/)
 
         false
       end

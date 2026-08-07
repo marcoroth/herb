@@ -4,6 +4,7 @@ source: "Turbo::DriveHelper#turbo_page_requires_reload_tag"
 gem: "turbo-rails"
 output: "html"
 visibility: "public"
+context: "head"
 supported: false
 supports_block: false
 signature: "turbo_page_requires_reload_tag"

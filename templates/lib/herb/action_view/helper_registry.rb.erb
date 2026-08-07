@@ -101,6 +101,7 @@ module Herb
       attr_reader :gem #: String
       attr_reader :output #: Symbol
       attr_reader :visibility #: String
+      attr_reader :context #: String?
       attr_reader :tag_name #: String?
       attr_reader :detect_style #: Symbol
       attr_reader :description #: String
@@ -113,9 +114,9 @@ module Herb
       attr_reader :special_behaviors #: Array[Symbol]
       attr_reader :aliases #: Array[String]
 
-      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, context: String?, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
       def initialize( # rubocop:disable Metrics/ParameterLists
-        name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
+        name:, type:, source:, gem:, output:, visibility:, context:, tag_name:, is_void:, supports_block:,
         preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
         implicit_attribute:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
       )
@@ -125,6 +126,7 @@ module Herb
         @gem = gem
         @output = output
         @visibility = visibility
+        @context = context
         @tag_name = tag_name
         @is_void = is_void
         @supports_block = supports_block
@@ -176,6 +178,7 @@ module Herb
         gem: "<%= helper.gem %>",
         output: :<%= helper.output %>,
         visibility: "<%= helper.visibility %>",
+        context: <%= helper.context ? "\"#{helper.context}\"" : "nil" %>,
         tag_name: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "nil" %>,
         is_void: <%= helper.void? %>,
         supports_block: <%= helper.supports_block %>,
@@ -239,6 +242,14 @@ module Herb
       <%- end -%>
       }.freeze #: Hash[String, Array[HelperEntry]]
 
+      <%- helpers_by_context = helpers.select(&:context).group_by(&:context) -%>
+
+      BY_CONTEXT = {
+      <%- helpers_by_context.each do |context, helpers| -%>
+        "<%= context %>" => [<%= helpers.map(&:constant_name).join(", ") %>].freeze,
+      <%- end -%>
+      }.freeze #: Hash[String, Array[HelperEntry]]
+
       class << self
         #: (String) -> HelperEntry?
         def get(name)
@@ -292,6 +303,11 @@ module Herb
         #: () -> Array[HelperEntry]
         def supported
           entries.select(&:supported?)
+        end
+
+        #: (String) -> Array[HelperEntry]
+        def by_context(context)
+          BY_CONTEXT[context] || []
         end
 
         #: (String) -> Array[HelperEntry]
