@@ -927,7 +927,7 @@ export function createLiteral(content: string): LiteralNode {
 }
 
 export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): Token {
-  return new Token(value, Range.zero, Location.zero, type)
+  return Token.from(type, value)
 }
 
 export function createWhitespaceNode(): WhitespaceNode {

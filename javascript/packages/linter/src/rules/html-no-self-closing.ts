@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
-import { getTagName, getTagLocalName, isWhitespaceNode, createSyntheticToken, HTMLCloseTagNode } from "@herb-tools/core"
+import { getTagName, getTagLocalName, isWhitespaceNode, Token, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
 import type { Node, HTMLOpenTagNode, HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
@@ -98,9 +98,9 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
 
       if (parent && parent.type === "AST_HTML_ELEMENT_NODE") {
         parent.close_tag = HTMLCloseTagNode.build({
-          tag_opening: createSyntheticToken("</", "TOKEN_HTML_TAG_START_CLOSE"),
-          tag_name: createSyntheticToken(tagName, "TOKEN_IDENTIFIER"),
-          tag_closing: createSyntheticToken(">", "TOKEN_HTML_TAG_END"),
+          tag_opening: Token.from("TOKEN_HTML_TAG_START_CLOSE", "</"),
+          tag_name: Token.from("TOKEN_IDENTIFIER", tagName),
+          tag_closing: Token.from("TOKEN_HTML_TAG_END", ">"),
         })
       }
     }

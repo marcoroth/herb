@@ -1,7 +1,7 @@
 import { ParserService } from "./parser_service"
 import { LineContextCollector } from "./line_context_collector"
 
-import { HTMLCommentNode, createSyntheticToken } from "@herb-tools/core"
+import { HTMLCommentNode, Token } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
@@ -31,9 +31,9 @@ export function commentERBNode(node: ERBContentNode): void {
   if (mutable.tag_opening) {
     const currentValue = mutable.tag_opening.value
 
-    mutable.tag_opening = createSyntheticToken(
-      currentValue.substring(0, 2) + "#" + currentValue.substring(2),
-      mutable.tag_opening.type
+    mutable.tag_opening = Token.from(
+      mutable.tag_opening.type,
+      currentValue.substring(0, 2) + "#" + currentValue.substring(2)
     )
   }
 }
@@ -52,10 +52,10 @@ export function uncommentERBNode(node: ERBContentNode): void {
       contentValue.startsWith(" = ") ||
       contentValue.startsWith(" - ")
     ) {
-      mutable.tag_opening = createSyntheticToken("<%", mutable.tag_opening.type)
-      mutable.content = createSyntheticToken(contentValue.substring(1), mutable.content!.type)
+      mutable.tag_opening = Token.from(mutable.tag_opening.type, "<%")
+      mutable.content = Token.from(mutable.content!.type, contentValue.substring(1))
     } else {
-      mutable.tag_opening = createSyntheticToken("<%", mutable.tag_opening.type)
+      mutable.tag_opening = Token.from(mutable.tag_opening.type, "<%")
     }
   }
 }
@@ -157,9 +157,9 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
       }
 
       const commentNode = HTMLCommentNode.build({
-        comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
+        comment_start: Token.from("TOKEN_HTML_COMMENT_START", "<!--"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
-        comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),
+        comment_end: Token.from("TOKEN_HTML_COMMENT_END", "-->"),
       })
 
       children.length = 0
@@ -169,9 +169,9 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
 
     case "html-only": {
       const commentNode = HTMLCommentNode.build({
-        comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
+        comment_start: Token.from("TOKEN_HTML_COMMENT_START", "<!--"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
-        comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),
+        comment_end: Token.from("TOKEN_HTML_COMMENT_END", "-->"),
       })
 
       children.length = 0
