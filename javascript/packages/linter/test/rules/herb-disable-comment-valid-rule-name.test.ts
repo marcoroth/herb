@@ -43,8 +43,8 @@ describe("HerbDisableCommentValidRuleNameRule", () => {
   })
 
   test("warns on multiple unknown rule names", () => {
-    expectWarning("Unknown rule `unknown-rule-1`. Did you mean `all`?")
-    expectWarning("Unknown rule `unknown-rule-2`. Did you mean `all`?")
+    expectWarning("Unknown rule `unknown-rule-1`. Did you mean `erb-no-sleep`?")
+    expectWarning("Unknown rule `unknown-rule-2`. Did you mean `erb-no-sleep`?")
 
     assertOffenses(dedent`
       <div>test</div> <%# herb:disable unknown-rule-1, unknown-rule-2 %>
@@ -72,7 +72,7 @@ describe("HerbDisableCommentValidRuleNameRule", () => {
   })
 
   test("handles multiple herb:disable comments", () => {
-    expectWarning("Unknown rule `unknown-rule`. Did you mean `all`?")
+    expectWarning("Unknown rule `unknown-rule`. Did you mean `erb-no-sleep`?")
 
     assertOffenses(dedent`
       <div>test</div> <%# herb:disable unknown-rule %>
