@@ -1,6 +1,6 @@
-use crate::utils::tag_utils::{get_attribute, get_static_attribute_value};
+use crate::utils::tag_utils::{get_attribute_in, get_static_attribute_value};
 
-use herb::nodes::{AnyNode, HTMLAttributeNode, HTMLOpenTagNode};
+use herb::nodes::{AnyNode, ERBOpenTagNode, HTMLAttributeNode, HTMLOpenTagNode};
 use herb::Visitor;
 
 fn has_erb_output(attribute: &HTMLAttributeNode) -> bool {
@@ -98,6 +98,7 @@ define_parser_rule!(
   "html-aria-level-must-be-valid",
   Warning,
   AriaLevelMustBeValidVisitor,
+  parser_options: { action_view_helpers: true },
   introduced_in: "0.4.3"
 );
 
@@ -124,9 +125,9 @@ impl AriaLevelMustBeValidVisitor {
   }
 }
 
-impl Visitor for AriaLevelMustBeValidVisitor {
-  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
-    if let Some(aria_level_attribute) = get_attribute(node, "aria-level") {
+impl AriaLevelMustBeValidVisitor {
+  fn check_children(&mut self, children: &[AnyNode]) {
+    if let Some(aria_level_attribute) = get_attribute_in(children, "aria-level") {
       if let Some(value) = get_static_attribute_value(aria_level_attribute) {
         self.validate_aria_level(&value, &aria_level_attribute.location);
       } else {
@@ -145,7 +146,17 @@ impl Visitor for AriaLevelMustBeValidVisitor {
         }
       }
     }
+  }
+}
 
+impl Visitor for AriaLevelMustBeValidVisitor {
+  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
+    self.check_children(&node.children);
     self.walk_html_open_tag_node(node);
+  }
+
+  fn visit_erb_open_tag_node(&mut self, node: &ERBOpenTagNode) {
+    self.check_children(&node.children);
+    self.walk_erb_open_tag_node(node);
   }
 }

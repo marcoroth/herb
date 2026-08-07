@@ -1,6 +1,6 @@
-use crate::utils::tag_utils::{get_attribute, get_static_attribute_value};
+use crate::utils::tag_utils::{get_attribute_in, get_static_attribute_value};
 
-use herb::nodes::HTMLOpenTagNode;
+use herb::nodes::{AnyNode, ERBOpenTagNode, HTMLOpenTagNode};
 use herb::Visitor;
 
 /// Mirrors the JavaScript `/^[a-z]+([A-Z][a-z]*)*$/` test.
@@ -40,12 +40,13 @@ define_parser_rule!(
   "html-aria-label-is-well-formatted",
   Warning,
   AriaLabelIsWellFormattedVisitor,
+  parser_options: { action_view_helpers: true },
   introduced_in: "0.6.0"
 );
 
-impl Visitor for AriaLabelIsWellFormattedVisitor {
-  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
-    if let Some(aria_label_attribute) = get_attribute(node, "aria-label") {
+impl AriaLabelIsWellFormattedVisitor {
+  fn check_children(&mut self, children: &[AnyNode]) {
+    if let Some(aria_label_attribute) = get_attribute_in(children, "aria-label") {
       if let Some(value) = get_static_attribute_value(aria_label_attribute) {
         if value.contains('\n')
           || value.contains('\r')
@@ -79,7 +80,17 @@ impl Visitor for AriaLabelIsWellFormattedVisitor {
         }
       }
     }
+  }
+}
 
+impl Visitor for AriaLabelIsWellFormattedVisitor {
+  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
+    self.check_children(&node.children);
     self.walk_html_open_tag_node(node);
+  }
+
+  fn visit_erb_open_tag_node(&mut self, node: &ERBOpenTagNode) {
+    self.check_children(&node.children);
+    self.walk_erb_open_tag_node(node);
   }
 }

@@ -1,16 +1,19 @@
-use crate::utils::tag_utils::{get_attribute, get_static_attribute_value};
+use crate::utils::tag_utils::{get_attribute_name, get_static_attribute_value};
 
-use herb::nodes::HTMLOpenTagNode;
+use herb::nodes::HTMLAttributeNode;
 use herb::Visitor;
 
 rule_visitor!(NoPositiveTabIndexVisitor);
 define_parser_rule!(HTMLNoPositiveTabIndexRule, "html-no-positive-tab-index", Warning, NoPositiveTabIndexVisitor,
+  parser_options: { action_view_helpers: true },
   introduced_in: "0.6.0"
 );
 
 impl Visitor for NoPositiveTabIndexVisitor {
-  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
-    if let Some(tabindex_attribute) = get_attribute(node, "tabindex") {
+  fn visit_html_attribute_node(&mut self, node: &HTMLAttributeNode) {
+    if get_attribute_name(node).map(|name| name.to_lowercase()) == Some("tabindex".to_string()) {
+      let tabindex_attribute = node;
+
       if let Some(value) = get_static_attribute_value(tabindex_attribute) {
         if let Ok(tab_index) = value.trim().parse::<i32>() {
           if tab_index > 0 {
@@ -23,6 +26,6 @@ impl Visitor for NoPositiveTabIndexVisitor {
       }
     }
 
-    self.walk_html_open_tag_node(node);
+    self.walk_html_attribute_node(node);
   }
 }

@@ -102,6 +102,23 @@ pub fn has_attribute(node: &HTMLOpenTagNode, attribute_name: &str) -> bool {
   get_attribute(node, attribute_name).is_some()
 }
 
+/// Finds an attribute among a tag's children, so the same lookup works for the
+/// attributes Action View synthesizes onto an `ERBOpenTagNode`.
+pub fn get_attribute_in<'node>(children: &'node [AnyNode], attribute_name: &str) -> Option<&'node HTMLAttributeNode> {
+  let lowercase = attribute_name.to_lowercase();
+
+  children.iter().find_map(|child| match child {
+    AnyNode::HTMLAttributeNode(attribute) => get_attribute_name(attribute)
+      .filter(|name| name.to_lowercase() == lowercase)
+      .map(|_| attribute.as_ref()),
+    _ => None,
+  })
+}
+
+pub fn has_attribute_in(children: &[AnyNode], attribute_name: &str) -> bool {
+  get_attribute_in(children, attribute_name).is_some()
+}
+
 pub fn get_attribute<'node>(node: &'node HTMLOpenTagNode, attribute_name: &str) -> Option<&'node HTMLAttributeNode> {
   let lowercase = attribute_name.to_lowercase();
   get_attributes(node)
