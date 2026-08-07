@@ -89,6 +89,10 @@ impl Linter {
   }
 
   pub fn rules_disabled_by_config(&self) -> usize {
+    if self.only.is_some() || self.all_rules {
+      return 0;
+    }
+
     self
       .rules
       .iter()
@@ -96,7 +100,27 @@ impl Linter {
       .count()
   }
 
+  /// A version-gated rule only counts as a new rule to offer when it would
+  /// otherwise be on, so a rule that is off by default stays in the
+  /// not-enabled tally instead.
+  pub fn rules_skipped_by_version(&self) -> Vec<(&'static str, &'static str)> {
+    if self.only.is_some() || self.all_rules {
+      return Vec::new();
+    }
+
+    self
+      .rules
+      .iter()
+      .filter(|rule| self.config.get_rule_config(rule.name()).is_none() && self.is_gated_by_version(rule) && rule.default_enabled())
+      .filter_map(|rule| rule.introduced_in().map(|introduced_in| (rule.name(), introduced_in)))
+      .collect()
+  }
+
   pub fn rules_not_enabled_by_default(&self) -> usize {
+    if self.only.is_some() || self.all_rules {
+      return 0;
+    }
+
     self
       .rules
       .iter()
@@ -106,6 +130,10 @@ impl Linter {
 
   pub fn is_rule_autocorrectable(&self, rule_name: &str) -> bool {
     self.find_rule(rule_name).map(|rule| rule.autocorrectable()).unwrap_or(false)
+  }
+
+  pub fn is_rule_unsafe_autocorrectable(&self, rule_name: &str) -> bool {
+    self.find_rule(rule_name).map(|rule| rule.unsafe_autocorrectable()).unwrap_or(false)
   }
 
   pub fn rule_names(&self) -> Vec<&'static str> {

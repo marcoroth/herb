@@ -25,6 +25,17 @@ enum FailLevel {
   Hint,
 }
 
+impl FailLevel {
+  fn severity(&self) -> Severity {
+    match self {
+      FailLevel::Error => Severity::Error,
+      FailLevel::Warning => Severity::Warning,
+      FailLevel::Info => Severity::Info,
+      FailLevel::Hint => Severity::Hint,
+    }
+  }
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 struct CliArguments {
@@ -78,6 +89,8 @@ struct ProcessingResult {
   rules_disabled_by_config: usize,
   rules_not_enabled_by_default: usize,
   autofixable_count: usize,
+  unsafe_autofixable_count: usize,
+  rules_skipped_by_version: Vec<(String, String)>,
   rule_offenses: HashMap<String, RuleOffenseStats>,
 }
 
@@ -205,7 +218,22 @@ fn main() {
     None => result,
   };
 
-  output_results(&result, &arguments, duration);
+  let has_config_file = Config::exists(&project_path);
+  let effective_log_level = arguments.log_level.clone().unwrap_or(FailLevel::Hint);
+  let lowered = lowered_log_level(&result, &effective_log_level, &arguments);
+
+  let summary_context = SummaryContext {
+    fail_level: fail_level.clone(),
+    log_level: lowered.as_ref().map(|(severity, _)| severity.clone()).unwrap_or(effective_log_level.clone()),
+    log_level_lowered_from: lowered.as_ref().map(|_| effective_log_level.clone()),
+    log_level_lowered_by: lowered.as_ref().map(|(_, flag)| *flag),
+    config_version: processing_config.config_version.clone(),
+    config_path: has_config_file.then(|| processing_config.path.to_string_lossy().into_owned()),
+    has_config_file,
+  };
+
+  output_results(&result, &arguments, &summary_context, duration);
+  display_tips(&result, &arguments, &summary_context);
 
   let should_fail = match fail_level {
     FailLevel::Error => result.total_errors > 0,
@@ -669,6 +697,17 @@ fn lint_files(
     .filter(|processed| linter.is_rule_autocorrectable(&processed.offense.rule))
     .count();
 
+  let unsafe_autofixable_count = all_offenses
+    .iter()
+    .filter(|processed| linter.is_rule_unsafe_autocorrectable(&processed.offense.rule))
+    .count();
+
+  let rules_skipped_by_version: Vec<(String, String)> = linter
+    .rules_skipped_by_version()
+    .into_iter()
+    .map(|(name, introduced_in)| (name.to_string(), introduced_in.to_string()))
+    .collect();
+
   all_offenses.sort_by(|a, b| {
     let file_comparison = a.filename.cmp(&b.filename);
 
@@ -699,6 +738,8 @@ fn lint_files(
     rules_disabled_by_config,
     rules_not_enabled_by_default,
     autofixable_count,
+    unsafe_autofixable_count,
+    rules_skipped_by_version,
     rule_offenses,
   }
 }
@@ -723,7 +764,108 @@ fn meets_severity_threshold(severity: &Severity, level: &FailLevel) -> bool {
   rank(severity) >= threshold
 }
 
-fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
+/// `--only` and `--all-rules` surface rules that are quieter than the default
+/// log level, so the level drops to the quietest severity actually found.
+fn lowered_log_level(result: &ProcessingResult, effective: &FailLevel, arguments: &CliArguments) -> Option<(FailLevel, &'static str)> {
+  let flag = if !arguments.only_rules.is_empty() {
+    "--only"
+  } else if arguments.all_rules {
+    "--all-rules"
+  } else {
+    return None;
+  };
+
+  if arguments.log_level.is_some() {
+    return None;
+  }
+
+  let counts = [
+    (FailLevel::Error, result.total_errors),
+    (FailLevel::Warning, result.total_warnings),
+    (FailLevel::Info, result.total_info),
+    (FailLevel::Hint, result.total_hints),
+  ];
+
+  let lowest = counts.into_iter().rfind(|(_, count)| *count > 0)?;
+
+  if meets_severity_threshold(&lowest.0.severity(), effective) {
+    return None;
+  }
+
+  Some((lowest.0, flag))
+}
+
+const NOT_FAILING_TIP_THRESHOLD: usize = 10;
+
+fn display_tips(result: &ProcessingResult, arguments: &CliArguments, context: &SummaryContext) {
+  if arguments.format == OutputFormat::Json || arguments.github_actions {
+    return;
+  }
+
+  let paint = Paint::new();
+
+  if !context.has_config_file {
+    println!();
+    println!(
+      " {} Run {} to create a {} and lock the {}.",
+      paint.bold("TIP:"),
+      paint.cyan("herb-lint --init"),
+      paint.cyan(".herb.yml"),
+      paint.cyan("version")
+    );
+    println!(
+      "      This ensures upgrading Herb won't enable new rules until you update the {} in {}.",
+      paint.cyan("version"),
+      paint.cyan(".herb.yml")
+    );
+  }
+
+  let counts = [
+    (Severity::Error, result.total_errors),
+    (Severity::Warning, result.total_warnings),
+    (Severity::Info, result.total_info),
+    (Severity::Hint, result.total_hints),
+  ];
+
+  let not_failing: Vec<(Severity, usize)> = counts
+    .into_iter()
+    .filter(|(severity, count)| *count > 0 && !meets_severity_threshold(severity, &context.fail_level))
+    .collect();
+
+  let not_failing_count: usize = not_failing.iter().map(|(_, count)| count).sum();
+
+  if arguments.log_level.is_some() || not_failing_count <= NOT_FAILING_TIP_THRESHOLD {
+    return;
+  }
+
+  let lowest = match not_failing.last() {
+    Some((severity, _)) => severity_label(severity),
+    None => return,
+  };
+
+  let fail_level = severity_label(&context.fail_level.severity());
+
+  println!();
+  println!(
+    " {} {} of the logged offenses don't fail the build.",
+    paint.bold("TIP:"),
+    paint.bold(&not_failing_count.to_string())
+  );
+  println!(
+    "      Run {} to stop logging them, or set {} in your {}.",
+    paint.cyan(&format!("herb-lint --log-level={fail_level}")),
+    paint.cyan("linter.logLevel"),
+    paint.cyan(".herb.yml")
+  );
+  println!(
+    "      To start enforcing them instead, set {} to {} in your {}.",
+    paint.cyan("linter.failLevel"),
+    paint.cyan(lowest),
+    paint.cyan(".herb.yml")
+  );
+}
+
+fn output_results(result: &ProcessingResult, arguments: &CliArguments, context: &SummaryContext, duration: std::time::Duration) {
   if arguments.github_actions {
     format_github_actions(result);
 
@@ -734,7 +876,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration:
       }
       display_most_offending_files(result);
       display_most_violated_rules(result);
-      display_summary(result, arguments, duration);
+      display_summary(result, arguments, context, duration);
       display_no_enabled_rules(result);
     }
   } else if arguments.format == OutputFormat::Json {
@@ -743,7 +885,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration:
     format_simple(result);
     display_most_offending_files(result);
     display_most_violated_rules(result);
-    display_summary(result, arguments, duration);
+    display_summary(result, arguments, context, duration);
     display_no_enabled_rules(result);
   }
 }
@@ -1008,243 +1150,413 @@ fn print_fix_diff(file_path: &str, before: &str, after: &str) {
   }
 }
 
-fn display_summary(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
-  let no_color = std::env::var("NO_COLOR").is_ok();
+struct SummaryContext {
+  fail_level: FailLevel,
+  log_level: FailLevel,
+  log_level_lowered_from: Option<FailLevel>,
+  log_level_lowered_by: Option<&'static str>,
+  config_version: Option<String>,
+  config_path: Option<String>,
+  has_config_file: bool,
+}
 
-  println!();
-  println!();
+const DIAGNOSTIC_SEVERITIES: [Severity; 4] = [Severity::Error, Severity::Warning, Severity::Info, Severity::Hint];
 
-  if no_color {
-    println!(" Summary:");
-  } else {
-    println!(" \x1b[1mSummary:\x1b[0m");
+fn severity_label(severity: &Severity) -> &'static str {
+  match severity {
+    Severity::Error => "error",
+    Severity::Warning => "warning",
+    Severity::Info => "info",
+    Severity::Hint => "hint",
   }
+}
+
+fn severity_color(severity: &Severity) -> &'static str {
+  match severity {
+    Severity::Error => "91",
+    Severity::Warning => "93",
+    Severity::Info => "36",
+    Severity::Hint => "90",
+  }
+}
+
+fn hyperlink(text: &str, url: &str) -> String {
+  if std::env::var("NO_COLOR").is_ok() {
+    return text.to_string();
+  }
+
+  format!("\x1b]8;;{url}\x1b\\{text}\x1b]8;;\x1b\\")
+}
+
+struct Paint {
+  enabled: bool,
+}
+
+impl Paint {
+  fn new() -> Self {
+    Self {
+      enabled: std::env::var("NO_COLOR").is_err(),
+    }
+  }
+
+  fn code(&self, code: &str, text: &str) -> String {
+    if self.enabled {
+      format!("\x1b[{code}m{text}\x1b[0m")
+    } else {
+      text.to_string()
+    }
+  }
+
+  fn bold(&self, text: &str) -> String {
+    self.code("1", text)
+  }
+
+  fn gray(&self, text: &str) -> String {
+    self.code("90", text)
+  }
+
+  fn cyan(&self, text: &str) -> String {
+    self.code("36", text)
+  }
+
+  fn green(&self, text: &str) -> String {
+    self.code("32", text)
+  }
+
+  fn white(&self, text: &str) -> String {
+    self.code("37", text)
+  }
+
+  fn severity(&self, severity: &Severity, text: &str) -> String {
+    self.bold(&self.code(severity_color(severity), text))
+  }
+}
+
+fn severity_part(paint: &Paint, severity: &Severity, count: usize) -> String {
+  let label = if matches!(severity, Severity::Info) {
+    format!("{count} info")
+  } else {
+    format!("{} {}", count, pluralize(count, severity_label(severity)))
+  };
+
+  paint.severity(severity, &label)
+}
+
+fn display_summary(result: &ProcessingResult, arguments: &CliArguments, context: &SummaryContext, duration: std::time::Duration) {
+  let paint = Paint::new();
+  let pad = |label: &str| format!("{label:<12}");
+  let line = |label: &str, value: &str| println!("  {} {}", paint.gray(&pad(label)), value);
+
+  let counts: HashMap<&'static str, usize> = HashMap::from([
+    ("error", result.total_errors),
+    ("warning", result.total_warnings),
+    ("info", result.total_info),
+    ("hint", result.total_hints),
+  ]);
+  let count_of = |severity: &Severity| counts[severity_label(severity)];
+
+  let failing_severities: Vec<&Severity> = DIAGNOSTIC_SEVERITIES
+    .iter()
+    .filter(|severity| meets_severity_threshold(severity, &context.fail_level))
+    .collect();
+
+  let other_severities: Vec<&Severity> = DIAGNOSTIC_SEVERITIES
+    .iter()
+    .filter(|severity| !meets_severity_threshold(severity, &context.fail_level))
+    .collect();
+
+  let failing_count: usize = failing_severities.iter().map(|severity| count_of(severity)).sum();
+  let other_count: usize = other_severities.iter().map(|severity| count_of(severity)).sum();
+
+  let not_reported_count: usize = DIAGNOSTIC_SEVERITIES
+    .iter()
+    .filter(|severity| !meets_severity_threshold(severity, &context.log_level))
+    .map(count_of)
+    .sum();
+
+  let files_failing = files_with_severities(result, &failing_severities);
+  let files_with_other_offenses_only = result.files_with_offenses.saturating_sub(files_failing);
+
+  println!();
+  println!();
+  println!(" {}", paint.bold("Summary:"));
 
   let file_count = result.files.len();
-  let checked_text = format!("{} {}", file_count, pluralize(file_count, "file"));
-  if no_color {
-    println!("  {:<12} {}", "Checked", checked_text);
-  } else {
-    println!("  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m", "Checked", checked_text);
-  }
+  line("Checked", &paint.cyan(&format!("{} {}", file_count, pluralize(file_count, "file"))));
 
   if file_count > 1 {
     let files_clean = file_count - result.files_with_offenses;
-    let files_summary = if result.files_with_offenses > 0 {
-      if no_color {
-        format!("{} with offenses | {} clean ({} total)", result.files_with_offenses, files_clean, file_count)
-      } else {
-        format!(
-          "\x1b[1m\x1b[91m{} with offenses\x1b[0m | \x1b[1m\x1b[32m{} clean\x1b[0m \x1b[90m({} total)\x1b[0m",
-          result.files_with_offenses, files_clean, file_count
-        )
+    let mut file_parts: Vec<String> = Vec::new();
+
+    if files_failing > 0 && files_with_other_offenses_only > 0 {
+      file_parts.push(paint.bold(&paint.code("91", &format!("{files_failing} failing"))));
+      file_parts.push(paint.bold(&paint.code("93", &format!("{files_with_other_offenses_only} with other offenses"))));
+    } else if files_failing > 0 {
+      file_parts.push(paint.bold(&paint.code("91", &format!("{files_failing} with offenses"))));
+    } else if files_with_other_offenses_only > 0 {
+      file_parts.push(paint.bold(&paint.code("93", &format!("{files_with_other_offenses_only} with offenses"))));
+    }
+
+    file_parts.push(paint.bold(&paint.green(&format!("{files_clean} clean"))));
+
+    line("Files", &format!("{} {}", file_parts.join(" | "), paint.gray(&format!("({file_count} total)"))));
+  }
+
+  let mut parts: Vec<String> = Vec::new();
+
+  for severity in &failing_severities {
+    if count_of(severity) > 0 {
+      parts.push(severity_part(&paint, severity, count_of(severity)));
+    } else if matches!(severity, Severity::Warning) && result.total_errors > 0 {
+      parts.push(paint.bold(&paint.green("0 warnings")));
+    }
+  }
+
+  if other_count == 0 {
+    for severity in &other_severities {
+      if count_of(severity) > 0 {
+        parts.push(severity_part(&paint, severity, count_of(severity)));
       }
-    } else if no_color {
-      format!("{} clean ({} total)", file_count, file_count)
-    } else {
-      format!("\x1b[1m\x1b[32m{} clean\x1b[0m \x1b[90m({} total)\x1b[0m", file_count, file_count)
-    };
-
-    if no_color {
-      println!("  {:<12} {}", "Files", files_summary);
-    } else {
-      println!("  \x1b[90m{:<12}\x1b[0m {}", "Files", files_summary);
-    }
-  }
-
-  let mut parts = Vec::new();
-  if result.total_errors > 0 {
-    if no_color {
-      parts.push(format!("{} {}", result.total_errors, pluralize(result.total_errors, "error")));
-    } else {
-      parts.push(format!(
-        "\x1b[1m\x1b[91m{} {}\x1b[0m",
-        result.total_errors,
-        pluralize(result.total_errors, "error")
-      ));
-    }
-  }
-
-  if result.total_warnings > 0 {
-    if no_color {
-      parts.push(format!("{} {}", result.total_warnings, pluralize(result.total_warnings, "warning")));
-    } else {
-      parts.push(format!(
-        "\x1b[1m\x1b[93m{} {}\x1b[0m",
-        result.total_warnings,
-        pluralize(result.total_warnings, "warning")
-      ));
-    }
-  } else if result.total_errors > 0 {
-    if no_color {
-      parts.push(format!("{} {}", result.total_warnings, pluralize(result.total_warnings, "warning")));
-    } else {
-      parts.push(format!(
-        "\x1b[1m\x1b[32m{} {}\x1b[0m",
-        result.total_warnings,
-        pluralize(result.total_warnings, "warning")
-      ));
-    }
-  }
-
-  if result.total_info > 0 {
-    if no_color {
-      parts.push(format!("{} info", result.total_info));
-    } else {
-      parts.push(format!("\x1b[1m\x1b[94m{} info\x1b[0m", result.total_info));
-    }
-  }
-
-  if result.total_hints > 0 {
-    if no_color {
-      parts.push(format!("{} {}", result.total_hints, pluralize(result.total_hints, "hint")));
-    } else {
-      parts.push(format!(
-        "\x1b[1m\x1b[90m{} {}\x1b[0m",
-        result.total_hints,
-        pluralize(result.total_hints, "hint")
-      ));
-    }
-  }
-
-  if result.total_ignored > 0 {
-    if no_color {
-      parts.push(format!("{} ignored", result.total_ignored));
-    } else {
-      parts.push(format!("\x1b[1m\x1b[90m{} ignored\x1b[0m", result.total_ignored));
     }
   }
 
   let offenses_summary = if parts.is_empty() {
-    if no_color {
-      "0 offenses".to_string()
-    } else {
-      "\x1b[1m\x1b[32m0 offenses\x1b[0m".to_string()
-    }
+    paint.bold(&paint.green("0 offenses"))
   } else {
-    let joined = parts.join(" | ");
-    let total_offenses = result.total_errors + result.total_warnings + result.total_info + result.total_hints;
+    let mut summary = parts.join(" | ");
 
-    if result.files_with_offenses > 0 {
+    if failing_count > 0 && files_failing > 0 {
       let detail = format!(
         "{} {} across {} {}",
-        total_offenses,
-        pluralize(total_offenses, "offense"),
-        result.files_with_offenses,
-        pluralize(result.files_with_offenses, "file")
+        failing_count,
+        pluralize(failing_count, "offense"),
+        files_failing,
+        pluralize(files_failing, "file")
       );
 
-      if no_color {
-        format!("{} ({})", joined, detail)
-      } else {
-        format!("{} \x1b[90m({})\x1b[0m", joined, detail)
-      }
-    } else {
-      joined
+      summary.push_str(&format!(" {}", paint.gray(&format!("({detail})"))));
     }
+
+    summary
   };
 
-  if no_color {
-    println!("  {:<12} {}", "Offenses", offenses_summary);
-  } else {
-    println!("  \x1b[90m{:<12}\x1b[0m {}", "Offenses", offenses_summary);
+  line(if other_count > 0 { "Failing" } else { "Offenses" }, &offenses_summary);
+
+  if other_count > 0 {
+    let other_parts: Vec<String> = other_severities
+      .iter()
+      .filter(|severity| count_of(severity) > 0)
+      .map(|severity| severity_part(&paint, severity, count_of(severity)))
+      .collect();
+
+    let files_not_failing = files_with_severities(result, &other_severities);
+    let detail = format!(
+      "{} {} across {} {}, below --fail-level={}",
+      other_count,
+      pluralize(other_count, "offense"),
+      files_not_failing,
+      pluralize(files_not_failing, "file"),
+      severity_label(&context.fail_level.severity())
+    );
+
+    line("Not failing", &format!("{} {}", other_parts.join(" | "), paint.gray(&format!("({detail})"))));
+  }
+
+  if result.total_ignored > 0 {
+    let message = format!(
+      "{} {} suppressed with herb:disable",
+      result.total_ignored,
+      pluralize(result.total_ignored, "offense")
+    );
+
+    line("Ignored", &paint.bold(&paint.gray(&message)));
+  }
+
+  if not_reported_count > 0 {
+    let lowest = DIAGNOSTIC_SEVERITIES
+      .iter()
+      .rfind(|severity| !meets_severity_threshold(severity, &context.log_level) && count_of(severity) > 0);
+
+    if let Some(lowest) = lowest {
+      let pronoun = if not_reported_count == 1 { "it" } else { "them" };
+      let message = format!(
+        "{} {} hidden, show {} with --log-level={}",
+        not_reported_count,
+        pluralize(not_reported_count, "offense"),
+        pronoun,
+        severity_label(lowest)
+      );
+
+      line("Not shown", &paint.bold(&paint.gray(&message)));
+    }
+  }
+
+  if let (Some(lowered_from), Some(lowered_by)) = (&context.log_level_lowered_from, context.log_level_lowered_by) {
+    let level = paint.severity(&context.log_level.severity(), severity_label(&context.log_level.severity()));
+    let reason = paint.cyan(&format!("lowered from {} by {}", severity_label(&lowered_from.severity()), lowered_by));
+
+    line("Log level", &format!("{level} | {reason}"));
   }
 
   if arguments.ignore_disable_comments && result.total_would_be_ignored > 0 {
-    let note = format!(
+    let message = format!(
       "{} additional {} reported (would have been ignored)",
       result.total_would_be_ignored,
       pluralize(result.total_would_be_ignored, "offense")
     );
 
-    if no_color {
-      println!("  {:<12} {}", "Note", note);
-    } else {
-      println!("  \x1b[90m{:<12}\x1b[0m \x1b[1m\x1b[96m{}\x1b[0m", "Note", note);
-    }
+    line("Note", &paint.bold(&paint.code("96", &message)));
   }
 
-  let total_offenses = result.total_errors + result.total_warnings + result.total_info + result.total_hints;
+  let total_offenses = failing_count + other_count;
+  let fixable_line = if result.autofixable_count > 0 || result.unsafe_autofixable_count > 0 {
+    let total_color = if failing_count > 0 { "91" } else { "93" };
+    let mut fixable_parts = vec![paint.bold(&paint.code(total_color, &format!("{} {}", total_offenses, pluralize(total_offenses, "offense"))))];
 
-  let autofixable_count = result.autofixable_count;
-
-  let fixable_line = if autofixable_count > 0 {
-    if no_color {
-      format!(
-        "{} {} | {} autocorrectable using `--fix`",
-        total_offenses,
-        pluralize(total_offenses, "offense"),
-        autofixable_count
-      )
-    } else {
-      format!(
-        "\x1b[1m\x1b[91m{} {}\x1b[0m | \x1b[1m\x1b[32m{} autocorrectable using `--fix`\x1b[0m",
-        total_offenses,
-        pluralize(total_offenses, "offense"),
-        autofixable_count
-      )
+    if result.autofixable_count > 0 {
+      fixable_parts.push(paint.bold(&paint.green(&format!("{} autocorrectable using `--fix`", result.autofixable_count))));
     }
-  } else if no_color {
-    format!("{} {}", autofixable_count, pluralize(autofixable_count, "offense"))
+
+    if result.unsafe_autofixable_count > 0 {
+      let label = if result.autofixable_count > 0 { "more" } else { "autocorrectable" };
+
+      fixable_parts.push(paint.bold(&paint.code("33", &format!("{} {label} using `--fix-unsafely`", result.unsafe_autofixable_count))));
+    }
+
+    fixable_parts.join(" | ")
   } else {
-    format!("\x1b[1m\x1b[90m{} {}\x1b[0m", autofixable_count, pluralize(autofixable_count, "offense"))
+    paint.bold(&paint.gray("0 offenses"))
   };
 
-  if no_color {
-    println!("  {:<12} {}", "Fixable", fixable_line);
-  } else {
-    println!("  \x1b[90m{:<12}\x1b[0m {}", "Fixable", fixable_line);
+  line("Fixable", &fixable_line);
+
+  let mut rules_parts = vec![paint.bold(&paint.green(&format!("{} enabled", result.rule_count)))];
+
+  if !arguments.only_rules.is_empty() {
+    rules_parts.push(paint.cyan("filtered by --only"));
   }
 
-  let mut rules_parts = vec![if no_color {
-    format!("{} enabled", result.rule_count)
-  } else {
-    format!("\x1b[1m\x1b[32m{} enabled\x1b[0m", result.rule_count)
-  }];
+  if arguments.all_rules {
+    rules_parts.push(paint.cyan("all rules via --all-rules"));
+  }
 
   if result.rules_not_enabled_by_default > 0 {
-    rules_parts.push(if no_color {
-      format!("{} not enabled", result.rules_not_enabled_by_default)
-    } else {
-      format!("\x1b[36m{} not enabled\x1b[0m", result.rules_not_enabled_by_default)
-    });
+    rules_parts.push(paint.cyan(&format!("{} not enabled", result.rules_not_enabled_by_default)));
   }
 
   if result.rules_disabled_by_config > 0 {
-    rules_parts.push(if no_color {
-      format!("{} disabled", result.rules_disabled_by_config)
-    } else {
-      format!("\x1b[33m{} disabled\x1b[0m", result.rules_disabled_by_config)
-    });
+    rules_parts.push(paint.code("33", &format!("{} disabled", result.rules_disabled_by_config)));
   }
 
-  let rules_line = rules_parts.join(" | ");
-
-  if no_color {
-    println!("  {:<12} {}", "Rules", rules_line);
-  } else {
-    println!("  \x1b[90m{:<12}\x1b[0m {}", "Rules", rules_line);
+  if !result.rules_skipped_by_version.is_empty() {
+    rules_parts.push(paint.gray(&format!("{} skipped (version)", result.rules_skipped_by_version.len())));
   }
+
+  line("Rules", &rules_parts.join(" | "));
 
   if arguments.show_timing {
-    let duration_milliseconds = duration.as_millis();
-    let duration_text = format!("{}ms", duration_milliseconds);
-
-    if no_color {
-      println!("  {:<12} {}", "Duration", duration_text);
-    } else {
-      println!("  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m", "Duration", duration_text);
-    }
+    line("Duration", &paint.cyan(&format!("{}ms", duration.as_millis())));
   }
 
   if result.files_with_offenses == 0 && file_count > 1 {
     println!();
-    if no_color {
-      println!(" ✓ All files are clean!");
-    } else {
-      println!(" \x1b[92m\u{2713}\x1b[0m \x1b[32mAll files are clean!\x1b[0m");
+    println!(" {} {}", paint.code("92", "\u{2713}"), paint.green("All files are clean!"));
+  }
+
+  display_version_skipped_rules(result, context);
+}
+
+fn files_with_severities(result: &ProcessingResult, severities: &[&Severity]) -> usize {
+  let mut files: std::collections::HashSet<&str> = std::collections::HashSet::new();
+
+  for processed in &result.all_offenses {
+    if severities.iter().any(|severity| **severity == processed.offense.severity) {
+      files.insert(processed.filename.as_str());
     }
   }
+
+  files.len()
+}
+
+const DOCS_LINTER_BASE_URL: &str = "https://herb-tools.dev/linter/rules";
+
+fn rule_documentation_url(rule_name: &str) -> String {
+  format!("{DOCS_LINTER_BASE_URL}/{rule_name}")
+}
+
+fn display_version_skipped_rules(result: &ProcessingResult, context: &SummaryContext) {
+  if result.rules_skipped_by_version.is_empty() || !context.has_config_file {
+    return;
+  }
+
+  let paint = Paint::new();
+  let config_version = match context.config_version.as_deref() {
+    Some(version) => version,
+    None => return,
+  };
+
+  let rule_count = result.rules_skipped_by_version.len();
+
+  println!();
+  println!(" {}", paint.bold("New rules available:"));
+  println!(
+    "  Your {} version is {}. {} new {} {} disabled to ease upgrades:",
+    paint.cyan(".herb.yml"),
+    paint.cyan(config_version),
+    paint.bold(&rule_count.to_string()),
+    pluralize(rule_count, "rule"),
+    if rule_count == 1 { "is" } else { "are" }
+  );
+
+  if let Some(config_path) = context.config_path.as_deref() {
+    println!("  {} {}", paint.gray("from Herb config:"), paint.cyan(config_path));
+  }
+
+  println!();
+
+  let mut grouped: Vec<(&str, Vec<&str>)> = Vec::new();
+
+  for (rule_name, introduced_in) in &result.rules_skipped_by_version {
+    match grouped.iter_mut().find(|(version, _)| *version == introduced_in.as_str()) {
+      Some((_, names)) => names.push(rule_name.as_str()),
+      None => grouped.push((introduced_in.as_str(), vec![rule_name.as_str()])),
+    }
+  }
+
+  grouped.sort_by(|(left, _), (right, _)| {
+    if herb_linter::semver::semver_greater_than(right, left) {
+      std::cmp::Ordering::Less
+    } else if herb_linter::semver::semver_greater_than(left, right) {
+      std::cmp::Ordering::Greater
+    } else {
+      std::cmp::Ordering::Equal
+    }
+  });
+
+  for (version, mut rule_names) in grouped {
+    rule_names.sort_unstable();
+
+    let version_label = if version == herb_linter::semver::UNRELEASED_VERSION {
+      "next release"
+    } else {
+      version
+    };
+
+    for rule_name in rule_names {
+      println!(
+        "  {} {}",
+        hyperlink(&paint.white(rule_name), &rule_documentation_url(rule_name)),
+        paint.gray(&format!("(introduced in {version_label})"))
+      );
+    }
+  }
+
+  println!();
+  println!(
+    "  Run {} to update the version. Rules with no offenses will be",
+    paint.cyan("herb-lint --upgrade")
+  );
+  println!("  enabled automatically; rules with offenses will be disabled to ease the upgrade.");
 }
 
 fn display_most_offending_files(result: &ProcessingResult) {

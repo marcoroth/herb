@@ -10,7 +10,7 @@ rule_visitor!(HTMLNoSpaceInTagVisitor);
 define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor,
   autocorrectable: true,
   autofix: autofix,
-  introduced_in: "0.8.0"
+  introduced_in: "0.10.3"
 );
 
 const EXTRA_SPACE_NO_SPACE: &str = "Extra space detected where there should be no space.";
