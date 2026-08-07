@@ -17,7 +17,7 @@ import { DEFAULT_RULE_CONFIG } from "./types.js"
 import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend, BackendLintOffense } from "@herb-tools/core"
+import type { ParseResult, LexResult, HerbBackend, BackendLintOffense, SerializedPartialIndex } from "@herb-tools/core"
 import type { RuleConfig, Config, Framework } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -525,12 +525,13 @@ export class Linter {
    * needs the same `HerbConfigOptions` this linter was built with, with the rule
    * selection folded into `linter.rules`.
    */
-  protected backendConfigJSON(indentWidth?: number, framework?: Framework): string {
+  protected backendConfigJSON(indentWidth?: number, framework?: Framework, partials?: SerializedPartialIndex): string {
     const formatter = this.config?.formatter ?? {}
 
     return JSON.stringify({
       ...(this.config?.options ?? {}),
       ...(framework !== undefined && { framework }),
+      ...(partials !== undefined && { partials }),
       ...(this.config?.configVersion !== undefined && { version: this.config.configVersion }),
       formatter: indentWidth !== undefined ? { ...formatter, indentWidth } : formatter,
       linter: {
@@ -547,7 +548,7 @@ export class Linter {
    * @param includeUnsafe - Whether to apply fixes marked as unsafe
    */
   protected autofixWithBackend(source: string, context?: Partial<LintContext>, includeUnsafe: boolean = false): AutofixResult {
-    const configJson = this.backendConfigJSON(context?.indentWidth ?? this.config?.formatter?.indentWidth)
+    const configJson = this.backendConfigJSON(context?.indentWidth ?? this.config?.formatter?.indentWidth, undefined, context?.partials?.toJSON())
 
     const result = this.herb.autofix(source, configJson, context?.fileName ?? undefined, includeUnsafe)
 
@@ -575,7 +576,7 @@ export class Linter {
    * @param context - Optional context for linting
    */
   protected lintWithBackend(source: string, context?: Partial<LintContext>): LintResult {
-    const configJson = this.backendConfigJSON(undefined, context?.framework ?? this.config?.framework)
+    const configJson = this.backendConfigJSON(undefined, context?.framework ?? this.config?.framework, context?.partials?.toJSON())
 
     const fileName = context?.fileName ?? undefined
 

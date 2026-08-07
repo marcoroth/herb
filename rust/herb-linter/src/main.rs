@@ -7,6 +7,7 @@ use rayon::prelude::*;
 use herb_config::{Config, Severity, Tool};
 use herb_linter::linter::Linter;
 use herb_linter::offense::Offense;
+use herb_linter::partial_index_builder::{build_partial_index, refresh_partial_after_fix};
 use herb_linter::rule::LintContext;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -522,6 +523,19 @@ struct FileLintResult {
   would_be_ignored: usize,
 }
 
+fn refresh_partials(partials: &std::sync::Mutex<std::sync::Arc<herb::action_view_partial_index::PartialIndex>>, file_path: &str, before: &str, after: &str) {
+  let mut guard = match partials.lock() {
+    Ok(guard) => guard,
+    Err(_) => return,
+  };
+
+  let mut updated = (**guard).clone();
+
+  if refresh_partial_after_fix(&mut updated, file_path, before, after) {
+    *guard = std::sync::Arc::new(updated);
+  }
+}
+
 fn lint_files(
   files: &[String],
   project_path: &Path,
@@ -534,6 +548,7 @@ fn lint_files(
   show_fix_diff: bool,
 ) -> ProcessingResult {
   let linter = Linter::new(config.clone()).with_only(only_rules.to_vec()).with_all_rules(all_rules);
+  let partials = std::sync::Mutex::new(std::sync::Arc::new(build_partial_index(project_path)));
   let rule_count = linter.rule_count();
   let rules_disabled_by_config = linter.rules_disabled_by_config();
   let rules_not_enabled_by_default = linter.rules_not_enabled_by_default();
@@ -554,6 +569,7 @@ fn lint_files(
       let context = LintContext {
         file_name: Some(file_path.clone()),
         ignore_disable_comments,
+        partials: partials.lock().ok().map(|partials| partials.clone()),
         ..Default::default()
       };
 
@@ -564,6 +580,8 @@ fn lint_files(
           if let Err(error) = std::fs::write(&resolved_path, &autofixed.source) {
             eprintln!("Error writing file '{}': {}", file_path, error);
           }
+
+          refresh_partials(&partials, file_path, &source, &autofixed.source);
         }
 
         linter.lint(&autofixed.source, &context)

@@ -22,6 +22,7 @@ pub struct LintContext {
   pub source: String,
   pub indent_width: Option<usize>,
   pub framework: Option<herb_config::Framework>,
+  pub partials: Option<std::sync::Arc<herb::action_view_partial_index::PartialIndex>>,
 }
 
 pub trait Rule: Send + Sync {

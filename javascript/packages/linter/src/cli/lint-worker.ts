@@ -97,7 +97,7 @@ async function run() {
     rustLinter = buildLinter()
     rustLinter.backendMode = "rust"
   }
-  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
+
   const partials = partialIndexFrom(data.partials)
 
   let totalErrors = 0
@@ -199,7 +199,8 @@ async function run() {
 
       const rustResult = rustLinter.lint(originalContent, {
         fileName: filename,
-        ignoreDisableComments: data.ignoreDisableComments
+        ignoreDisableComments: data.ignoreDisableComments,
+        partials
       })
 
       const mismatch = compareBackendOffenses(filename, lintResult.offenses, rustResult.offenses)

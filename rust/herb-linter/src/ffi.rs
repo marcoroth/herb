@@ -6,21 +6,83 @@ use crate::linter::Linter;
 use crate::rule::{LintContext, Rule};
 use crate::rules;
 
+use herb::action_view_partial_index::{PartialDeclaration, PartialIndex, StrictLocal};
 use herb_config::{Config, HerbConfigOptions};
 
-unsafe fn parse_config(config_json: *const c_char) -> Config {
+#[derive(serde::Deserialize)]
+struct SerializedStrictLocal {
+  name: String,
+  required: bool,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SerializedPartialDeclaration {
+  file: String,
+  has_declaration: bool,
+  has_keyword_rest: bool,
+  locals: Vec<SerializedStrictLocal>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SerializedPartialIndex {
+  view_root: String,
+  partials: std::collections::HashMap<String, SerializedPartialDeclaration>,
+}
+
+fn partial_index_from(value: serde_json::Value) -> Option<PartialIndex> {
+  let serialized: SerializedPartialIndex = serde_json::from_value(value).ok()?;
+
+  let partials = serialized
+    .partials
+    .into_iter()
+    .map(|(name, declaration)| {
+      (
+        name,
+        PartialDeclaration {
+          file: declaration.file,
+          has_declaration: declaration.has_declaration,
+          has_keyword_rest: declaration.has_keyword_rest,
+          locals: declaration
+            .locals
+            .into_iter()
+            .map(|local| StrictLocal {
+              name: local.name,
+              required: local.required,
+            })
+            .collect(),
+        },
+      )
+    })
+    .collect();
+
+  Some(PartialIndex::new(serialized.view_root, partials))
+}
+
+struct BackendContext {
+  config: Config,
+  partials: Option<std::sync::Arc<PartialIndex>>,
+}
+
+unsafe fn parse_backend_context(config_json: *const c_char) -> BackendContext {
+  let empty = || BackendContext {
+    config: Config::default(),
+    partials: None,
+  };
+
   if config_json.is_null() {
-    return Config::default();
+    return empty();
   }
 
   let json = match CStr::from_ptr(config_json).to_str() {
     Ok(json) => json,
-    Err(_) => return Config::default(),
+    Err(_) => return empty(),
   };
 
   let mut value: serde_json::Value = match serde_json::from_str(json) {
     Ok(value) => value,
-    Err(_) => return Config::default(),
+    Err(_) => return empty(),
   };
 
   let config_version = value
@@ -28,14 +90,23 @@ unsafe fn parse_config(config_json: *const c_char) -> Config {
     .and_then(|object| object.remove("version"))
     .and_then(|version| version.as_str().map(String::from));
 
+  let partials = value
+    .as_object_mut()
+    .and_then(|object| object.remove("partials"))
+    .and_then(partial_index_from)
+    .map(std::sync::Arc::new);
+
   let options: HerbConfigOptions = match serde_json::from_value(value) {
     Ok(options) => options,
-    Err(_) => return Config::default(),
+    Err(_) => return empty(),
   };
 
   let project_path = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
 
-  Config::from_object(&options, &project_path, None, config_version).unwrap_or_default()
+  BackendContext {
+    config: Config::from_object(&options, &project_path, None, config_version).unwrap_or_default(),
+    partials,
+  }
 }
 
 #[repr(C)]
@@ -65,7 +136,8 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
     Err(_) => return ptr::null_mut(),
   };
 
-  let config = parse_config(config_json);
+  let backend = parse_backend_context(config_json);
+  let config = backend.config;
 
   let file_name_string = if file_name.is_null() {
     None
@@ -81,6 +153,7 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
     file_name: file_name_string,
     indent_width,
     framework,
+    partials: backend.partials,
     ..Default::default()
   };
 
@@ -130,7 +203,8 @@ pub unsafe extern "C" fn herb_autofix(
     Err(_) => return ptr::null_mut(),
   };
 
-  let config = parse_config(config_json);
+  let backend = parse_backend_context(config_json);
+  let config = backend.config;
 
   let file_name_string = if file_name.is_null() {
     None
@@ -146,6 +220,7 @@ pub unsafe extern "C" fn herb_autofix(
     file_name: file_name_string,
     indent_width,
     framework,
+    partials: backend.partials,
     ..Default::default()
   };
 

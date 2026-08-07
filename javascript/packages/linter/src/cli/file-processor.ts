@@ -381,7 +381,8 @@ export class FileProcessor {
 
         const rustResult = this.rustLinter.lint(originalContent, {
           fileName: filename,
-          ignoreDisableComments: context?.ignoreDisableComments
+          ignoreDisableComments: context?.ignoreDisableComments,
+          partials: this.partials
         })
 
         const mismatch = compareBackendOffenses(filename, lintResult.offenses, rustResult.offenses)
