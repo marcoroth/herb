@@ -15,7 +15,7 @@ export default [
     output: {
       file: "dist/herb-language-service.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external,
     plugins: [
@@ -34,7 +34,7 @@ export default [
     output: {
       file: "dist/herb-language-service.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external,
     plugins: [

@@ -8,12 +8,12 @@ export default {
     {
       file: "dist/herb-node-wasm.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     {
       file: "dist/herb-node-wasm.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     }
   ],
   external: [/@ruby\/prism/],

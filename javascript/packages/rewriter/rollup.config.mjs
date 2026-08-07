@@ -27,7 +27,7 @@ export default [
     output: {
       file: "dist/index.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -47,7 +47,7 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -67,7 +67,7 @@ export default [
     output: {
       file: "dist/loader.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -87,7 +87,7 @@ export default [
     output: {
       file: "dist/loader.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [

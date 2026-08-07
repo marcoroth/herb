@@ -9,7 +9,7 @@ export default [
     output: {
       file: "dist/tailwind-class-sorter.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: [
       "tailwindcss",
@@ -39,7 +39,7 @@ export default [
     output: {
       file: "dist/tailwind-class-sorter.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: [
       "tailwindcss",

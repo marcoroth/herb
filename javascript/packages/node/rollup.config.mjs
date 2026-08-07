@@ -28,7 +28,7 @@ export default [
     output: {
       file: "dist/herb-node.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -48,7 +48,7 @@ export default [
     output: {
       file: "dist/herb-node.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [

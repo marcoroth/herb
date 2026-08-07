@@ -9,7 +9,7 @@ export default [
     output: {
       file: "dist/herb-dev-tools.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     plugins: [
       nodeResolve({ browser: true }),
@@ -32,7 +32,7 @@ export default [
       file: "dist/herb-dev-tools.umd.js",
       format: "umd",
       name: "HerbDevTools",
-      sourcemap: true
+      sourcemap: false
     },
     plugins: [
       nodeResolve({ browser: true }),

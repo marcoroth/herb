@@ -8,13 +8,13 @@ export default {
     {
       file: "dist/herb-browser.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     {
       file: "dist/herb-browser.umd.js",
       format: "iife",
       name: "Herb",
-      sourcemap: true,
+      sourcemap: false,
     },
   ],
   external: [/@ruby\/prism/],

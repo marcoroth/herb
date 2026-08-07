@@ -29,7 +29,7 @@ export default [
     output: {
       file: "dist/herb-print.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -50,7 +50,7 @@ export default [
     output: {
       file: "dist/index.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -71,7 +71,7 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [

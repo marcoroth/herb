@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleDetection": "force",
-    "sourceMap": true
+    "sourceMap": false
   },
   "include": ["src/**/*", "themes/**/*"],
   "exclude": ["node_modules", "dist"]

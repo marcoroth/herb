@@ -27,7 +27,7 @@ export default [
     output: {
       file: "dist/herb-language-server.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -47,7 +47,7 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [

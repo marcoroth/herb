@@ -7,7 +7,7 @@ export default [
     output: {
       file: "dist/herb-client.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     plugins: [
       nodeResolve({ browser: true }),
@@ -25,7 +25,7 @@ export default [
       file: "dist/herb-client.umd.js",
       format: "umd",
       name: "HerbClient",
-      sourcemap: true,
+      sourcemap: false,
     },
     plugins: [
       nodeResolve({ browser: true }),

@@ -12,12 +12,6 @@ const external = [
   "module",
 ]
 
-// Enable sourcemaps for local builds and release builds
-// Disable for CI non-release builds (PR previews, etc.)
-const isCI = process.env.CI === "true"
-const isReleaseBuild = process.env.RELEASE_BUILD === "true"
-const enableSourcemaps = !isCI || isReleaseBuild
-
 function isExternal(id) {
   return (
     external.includes(id) ||
@@ -32,7 +26,7 @@ export default [
     output: {
       file: "dist/stimulus-lint.js",
       format: "cjs",
-      sourcemap: enableSourcemaps,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -53,7 +47,7 @@ export default [
     output: {
       file: "dist/index.js",
       format: "esm",
-      sourcemap: enableSourcemaps,
+      sourcemap: false,
     },
     external: ["@herb-tools/core", "@herb-tools/highlighter", "@herb-tools/linter", "@herb-tools/node-wasm", "stimulus-parser"],
     plugins: [
@@ -75,7 +69,7 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: enableSourcemaps,
+      sourcemap: false,
     },
     plugins: [
       nodeResolve(),

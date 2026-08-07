@@ -9,7 +9,7 @@ export default [
     output: {
       file: "dist/herb-config.esm.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
       inlineDynamicImports: true,
     },
     external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
@@ -31,7 +31,7 @@ export default [
     output: {
       file: "dist/herb-config.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
       inlineDynamicImports: true,
     },
     external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],

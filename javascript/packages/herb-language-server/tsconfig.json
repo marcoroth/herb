@@ -8,7 +8,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "moduleDetection": "force",
-    "sourceMap": true,
+    "sourceMap": false,
     "strict": true,
     "outDir": "dist",
     "declaration": true,

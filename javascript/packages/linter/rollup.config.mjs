@@ -37,7 +37,7 @@ export default [
     output: {
       file: "dist/herb-lint.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -58,7 +58,7 @@ export default [
     output: {
       file: "dist/lint-worker.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -79,7 +79,7 @@ export default [
     output: {
       file: "dist/index.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -100,7 +100,7 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -121,7 +121,7 @@ export default [
     output: {
       file: "dist/partial-index-builder.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -143,7 +143,7 @@ export default [
     output: {
       file: "dist/loader.js",
       format: "esm",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
@@ -163,7 +163,7 @@ export default [
     output: {
       file: "dist/loader.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: false,
     },
     external: isExternal,
     plugins: [
