@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest"
 import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
-import { ANSI_REGEX } from "../src/color.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 import { stripAnsiColors } from "./util.js"
 
 import { DiagnosticRenderer } from "../src/diagnostic-renderer.js"

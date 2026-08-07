@@ -12,7 +12,7 @@ import {
 import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { ANSI_REGEX } from "../src/color.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
 
 describe("Highlighter", () => {

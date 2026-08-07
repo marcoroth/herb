@@ -1,0 +1,13 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: fixture.normalize(&stdout)
+---
+<test-file>
+
+      1 │ <h1 class="title">
+      2 │   <% if user.present? %>
+      3 │     Welcome <%= user.name %>!
+      4 │   <% else %>
+      5 │     Please sign in
+      6 │   <% end %>
+      7 │ </h1>

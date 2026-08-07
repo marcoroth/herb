@@ -2,6 +2,7 @@
 members = [
   ".",
   "herb-config",
+  "herb-highlighter",
   "herb-printer"
 ]
 

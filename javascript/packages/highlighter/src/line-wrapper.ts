@@ -1,4 +1,5 @@
-import { colorize, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
+import { colorize } from "./color.js"
+import { visibleWidth, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./ansi.js"
 
 export class LineWrapper {
   static wrapLine(line: string, maxWidth: number, indent: string = ""): string[] {
@@ -121,9 +122,8 @@ export class LineWrapper {
 
   static truncateLine(line: string, maxWidth: number): string {
     if (maxWidth <= 0) return line
-    const plainLine = line.replace(ANSI_REGEX, "")
 
-    if (plainLine.length <= maxWidth) {
+    if (visibleWidth(line) <= maxWidth) {
       return line
     }
 

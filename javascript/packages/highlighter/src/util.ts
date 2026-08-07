@@ -1,4 +1,5 @@
-import { colors, ANSI_REGEX_START, ANSI_REGEX_CAPTURE } from "./color.js"
+import { colors } from "./color.js"
+import { ANSI_REGEX_START, ANSI_REGEX_CAPTURE } from "./ansi.js"
 
 import type { Color } from "./color.js"
 
@@ -134,7 +135,7 @@ export function sliceStyled(text: string, start: number, end: number): string {
   return result
 }
 
-export function applyDimToStyledText(text: string): string {
+export function dimStyledText(text: string): string {
   const isColorEnabled = process.env.NO_COLOR === undefined
 
   if (!isColorEnabled) return text

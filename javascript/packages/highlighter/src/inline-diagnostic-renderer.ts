@@ -1,7 +1,7 @@
 import { colorize, hyperlink, severityColor } from "./color.js"
 import { TextFormatter } from "./text-formatter.js"
 import { LineWrapper } from "./line-wrapper.js"
-import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import * as gutter from "./gutter.js"
 import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
 import { computeDiagnosticMarkers } from "./diagnostic-markers.js"
 
@@ -40,7 +40,6 @@ export class InlineDiagnosticRenderer {
     path: string,
     content: string,
     diagnostics: Diagnostic[],
-    _contextLines: number,
     showLineNumbers = true,
     wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
@@ -93,67 +92,39 @@ export class InlineDiagnosticRenderer {
       const hasDiagnostics = lineMarkers.length > 0
       const hasMessages = lineMarkers.some(({ isLastLine }) => isLastLine)
 
-      if (hasDiagnostics && previousLineHadMessages) {
-        output += "\n"
+      if (previousLineHadMessages) {
+        output += showLineNumbers ? `${gutter.pointerPrefix()}\n` : "\n"
       }
 
       const highestSeverity = this.getHighestSeverity(lineDiagnostics)
       const lineColor = severityColor(highestSeverity)
 
       const displayLine = line
-      let availableWidth = maxWidth
+      let contentWidth = maxWidth
 
       if (wrapLines && showLineNumbers) {
-        const lineNumber = hasDiagnostics
-          ? colorize(i.toString().padStart(3, " "), "bold")
-          : colorize(i.toString().padStart(3, " "), "gray")
+        const prefix = gutter.linePrefix(i, hasDiagnostics, hasDiagnostics ? lineColor : undefined)
+        contentWidth = gutter.availableWidth(maxWidth)
 
-        const prefix = hasDiagnostics
-          ? colorize("  → ", lineColor)
-          : "    "
-
-        const separator = colorize("│", "gray")
-        const linePrefix = `${prefix}${lineNumber} ${separator} `
-        availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-
-        const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+        const wrappedLines = LineWrapper.wrapLine(displayLine, contentWidth, "")
 
         for (let j = 0; j < wrappedLines.length; j++) {
           if (j === 0) {
-            output += `${linePrefix}${wrappedLines[j]}\n`
+            output += `${prefix}${wrappedLines[j]}\n`
           } else {
-            output += `        ${separator} ${wrappedLines[j]}\n`
+            output += `${gutter.continuationPrefix()}${wrappedLines[j]}\n`
           }
         }
       } else if (truncateLines && showLineNumbers) {
-        const lineNumber = hasDiagnostics
-          ? colorize(i.toString().padStart(3, " "), "bold")
-          : colorize(i.toString().padStart(3, " "), "gray")
+        const prefix = gutter.linePrefix(i, hasDiagnostics, hasDiagnostics ? lineColor : undefined)
+        contentWidth = gutter.availableWidth(maxWidth)
 
-        const prefix = hasDiagnostics
-          ? colorize("  → ", lineColor)
-          : "    "
-
-        const separator = colorize("│", "gray")
-        const linePrefix = `${prefix}${lineNumber} ${separator} `
-        availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-
-        const truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
-        output += `${linePrefix}${truncatedLine}\n`
+        const truncatedLine = LineWrapper.truncateLine(displayLine, contentWidth)
+        output += `${prefix}${truncatedLine}\n`
       } else if (showLineNumbers) {
-        const lineNumber = hasDiagnostics
-          ? colorize(i.toString().padStart(3, " "), "bold")
-          : colorize(i.toString().padStart(3, " "), "gray")
-
-        const prefix = hasDiagnostics
-          ? colorize("  → ", lineColor)
-          : "    "
-
-        const separator = colorize("│", "gray")
-
-        output += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+        output += `${gutter.linePrefix(i, hasDiagnostics, hasDiagnostics ? lineColor : undefined)}${displayLine}\n`
       } else if (wrapLines) {
-        availableWidth = maxWidth
+        contentWidth = maxWidth
         const wrappedLines = LineWrapper.wrapLine(displayLine, maxWidth)
         for (const wrappedLine of wrappedLines) {
           output += `${wrappedLine}\n`
@@ -179,10 +150,10 @@ export class InlineDiagnosticRenderer {
           const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
           const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
           const dimmedDiagnosticText =
-            TextFormatter.applyDimToStyledText(diagnosticText)
+            TextFormatter.dimAnsiCodes(diagnosticText)
 
           if (showLineNumbers) {
-            const pointerPrefix = `        ${colorize("│", "gray")}`
+            const pointerPrefix = gutter.pointerPrefix()
             const pointerSpacing = " ".repeat(Math.max(0, marker.start + 1))
 
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
@@ -199,10 +170,6 @@ export class InlineDiagnosticRenderer {
               output += `${dimmedDiagnosticText}\n`
             }
           }
-        }
-
-        if (hasMessages) {
-          output += "\n"
         }
       }
 
