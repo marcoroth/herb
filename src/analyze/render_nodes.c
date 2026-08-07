@@ -45,6 +45,7 @@ static const char* render_keywords[] = {
 
 static bool is_render_call(pm_call_node_t* call_node, pm_parser_t* parser) {
   if (!call_node || !call_node->name) { return false; }
+  if (call_node->receiver && call_node->receiver->type != PM_SELF_NODE) { return false; }
 
   pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
 
