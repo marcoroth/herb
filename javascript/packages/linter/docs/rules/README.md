@@ -18,9 +18,12 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-dynamic-partial-path`](./actionview-no-dynamic-partial-path.md) - Disallow partial paths that are built at runtime
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
+- [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object
 - [`actionview-no-implicit-polymorphic-url`](./actionview-no-implicit-polymorphic-url.md) - Prefer explicit route helpers over implicit polymorphic URLs
 - [`actionview-no-redundant-local-assigns`](./actionview-no-redundant-local-assigns.md) - Disallow `local_assigns` reads that the strict locals declaration already answers
+- [`actionview-no-render-option-shadowing`](./actionview-no-render-option-shadowing.md) - Disallow locals that shadow a `render` option name
 - [`actionview-no-silent-helper`](./actionview-no-silent-helper.md) - Disallow silent ERB tags for Action View helpers
 - [`actionview-no-silent-render`](./actionview-no-silent-render.md) - Disallow calling `render` without outputting the result
 - [`actionview-no-strict-locals-error`](./actionview-no-strict-locals-error.md) - Disallow `render` calls that would raise an `ActionView::StrictLocalsError`
@@ -29,6 +32,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
+- [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 

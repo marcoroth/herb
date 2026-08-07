@@ -10,9 +10,12 @@ import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribut
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
+import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
+import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
 import { ActionViewNoSilentHelperRule } from "./rules/actionview-no-silent-helper.js"
 import { ActionViewNoSilentRenderRule } from "./rules/actionview-no-silent-render.js"
 import { ActionViewNoStrictLocalsErrorRule } from "./rules/actionview-no-strict-locals-error.js"
@@ -21,6 +24,7 @@ import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-prefer-qualified-partial-path.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -139,9 +143,12 @@ export const rules: RuleClass[] = [
   A11yNoRedundantImageAltRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoDynamicPartialPathRule,
   ActionViewNoHelperShadowingRule,
+  ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
   ActionViewNoRedundantLocalAssignsRule,
+  ActionViewNoRenderOptionShadowingRule,
   ActionViewNoSilentHelperRule,
   ActionViewNoSilentRenderRule,
   ActionViewNoStrictLocalsErrorRule,
@@ -150,6 +157,7 @@ export const rules: RuleClass[] = [
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewPreferQualifiedPartialPathRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 
