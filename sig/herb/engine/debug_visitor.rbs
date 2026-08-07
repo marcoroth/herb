@@ -3,6 +3,8 @@
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
+      HEAD_CONTENT_HELPER_PATTERN: Regexp
+
       def initialize: (?file_path: untyped, ?project_path: untyped) -> untyped
 
       def visit_document_node: (untyped node) -> untyped

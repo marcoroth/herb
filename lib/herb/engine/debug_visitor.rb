@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../action_view/helper_registry"
+
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
+      HEAD_CONTENT_HELPER_PATTERN = /\b(?:#{Herb::ActionView::HelperRegistry.head_content_helpers.map { |helper| Regexp.escape(helper.name) }.join("|")})\b/ #: Regexp
+
       def initialize(file_path: nil, project_path: nil)
         super()
 
@@ -390,20 +394,7 @@ module Herb
       def head_content_helper?(code)
         cleaned_code = code.strip.gsub(/\s+/, " ")
 
-        head_helpers = [
-          "csrf_meta_tags",
-          "csp_meta_tag",
-          "viewport_meta_tag",
-          "javascript_include_tag",
-          "javascript_importmap_tags",
-          "stylesheet_link_tag",
-          "stylesheet_import_tag",
-          "favicon_link_tag",
-          "auto_discovery_link_tag",
-          "preload_link_tag"
-        ]
-
-        return true if cleaned_code.match?(/\b(?:#{head_helpers.join("|")})\b/)
+        return true if cleaned_code.match?(HEAD_CONTENT_HELPER_PATTERN)
 
         return true if cleaned_code.match?(/\btag\.(?:meta|link|title|base)\b/)
 

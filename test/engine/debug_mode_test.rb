@@ -630,9 +630,9 @@ module Engine
     test "more head helpers in a partial do NOT get debug spans" do
       template = <<~ERB
         <%= csp_meta_tag %>
-        <%= viewport_meta_tag %>
         <%= javascript_importmap_tags %>
-        <%= stylesheet_import_tag "application" %>
+        <%= javascript_inline_importmap_tag %>
+        <%= javascript_import_module_tag "application" %>
         <%= favicon_link_tag %>
         <%= auto_discovery_link_tag(:rss, articles_url) %>
         <%= preload_link_tag "fonts/inter.woff2" %>
@@ -666,6 +666,18 @@ module Engine
       template = "<div><%= @name %></div>"
 
       assert_compiled_snapshot(template, debug: true, filename: "_card.html.erb")
+    end
+
+    test "turbo and action cable head helpers in a partial do NOT get debug spans" do
+      template = <<~ERB
+        <%= action_cable_meta_tag %>
+        <%= turbo_refreshes_with method: :morph, scroll: :preserve %>
+        <%= turbo_refresh_method_tag :morph %>
+        <%= turbo_page_requires_reload_tag %>
+        <%= turbo_include_tags %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "_head.html.erb")
     end
   end
 end

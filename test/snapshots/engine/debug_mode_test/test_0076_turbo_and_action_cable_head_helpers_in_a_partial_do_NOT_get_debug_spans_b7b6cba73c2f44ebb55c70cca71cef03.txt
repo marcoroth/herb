@@ -1,0 +1,11 @@
+---
+source: "Engine::DebugModeTest#test_0076_turbo and action cable head helpers in a partial do NOT get debug spans"
+input: "{source: \"<%= action_cable_meta_tag %>\\n<%= turbo_refreshes_with method: :morph, scroll: :preserve %>\\n<%= turbo_refresh_method_tag :morph %>\\n<%= turbo_page_requires_reload_tag %>\\n<%= turbo_include_tags %>\\n\", options: {debug: true, filename: \"_head.html.erb\"}}"
+---
+_buf = ::String.new; _buf << (action_cable_meta_tag).to_s; _buf << '
+'.freeze; _buf << (turbo_refreshes_with method: :morph, scroll: :preserve).to_s; _buf << '
+'.freeze; _buf << (turbo_refresh_method_tag :morph).to_s; _buf << '
+'.freeze; _buf << (turbo_page_requires_reload_tag).to_s; _buf << '
+'.freeze; _buf << (turbo_include_tags).to_s; _buf << '
+'.freeze;
+_buf.to_s
