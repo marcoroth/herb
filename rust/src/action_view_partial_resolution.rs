@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 pub const PARTIAL_EXTENSIONS: &[&str] = &[".html.erb", ".html.herb", ".erb", ".herb", ".turbo_stream.erb", ".turbo_stream.herb"];
 
+pub const TEMPLATE_GLOB_PATTERN: &str = "*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}";
+
 pub const PARTIAL_GLOB_PATTERN: &str = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}";
 
 const PARTIAL_PREFIX: &str = "_";

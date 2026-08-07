@@ -7,6 +7,8 @@ pub mod herb_disable;
 pub mod linter;
 pub mod offense;
 #[cfg(feature = "cli")]
+pub mod partial_caller_builder;
+#[cfg(feature = "cli")]
 pub mod partial_index_builder;
 pub mod rule;
 pub mod rules;

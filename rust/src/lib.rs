@@ -1,4 +1,5 @@
 pub mod action_view_helpers;
+pub mod action_view_partial_callers;
 pub mod action_view_partial_index;
 pub mod action_view_partial_resolution;
 pub mod ast;
