@@ -49,6 +49,14 @@ module Herb
         nilable? ? "#{ruby_type}?" : ruby_type
       end
 
+      def default_ruby_value
+        case ruby_type
+        when "bool" then "false"
+        when /\AArray\[/ then "[]"
+        else "nil"
+        end
+      end
+
       def writable?
         options.fetch(:writable, false)
       end

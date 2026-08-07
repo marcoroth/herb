@@ -1,4 +1,4 @@
-import type { LintOffense, RuleClass } from "../types.js"
+import type { LintOffense, RuleClass } from "./types.js"
 
 export interface Fixability {
   autocorrectable: boolean

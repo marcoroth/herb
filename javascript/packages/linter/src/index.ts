@@ -4,6 +4,9 @@ export * from "./types.js"
 
 export { ruleDocumentationUrl } from "./urls.js"
 export { rules } from "./rules.js"
+export { fixabilityFor } from "./fixability.js"
+
+export type { Fixability } from "./fixability.js"
 
 export {
   findAttributeByName,
