@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0033_delimits a dynamic HTML comment from the outside"
+input: "{source: \"<!-- Content: <%= @c %> -->\", locals: {\"@c\" => \"X\"}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:cf126d00--><!--herb-slot:0--><!-- Content: X --><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->

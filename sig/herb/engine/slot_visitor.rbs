@@ -1,0 +1,169 @@
+# Generated from lib/herb/engine/slot_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class SlotVisitor < Herb::Visitor
+      ATTRIBUTE_TYPES: Array[Symbol]
+
+      ELEMENT_ANCHORED_TYPES: Array[Symbol]
+
+      BRANCH_BODY_PROPERTIES: Array[Symbol]
+
+      BRANCH_CONTINUATION_PROPERTIES: Array[Symbol]
+
+      attr_reader slots: Array[Slot]
+
+      attr_reader warnings: Array[Herb::Warnings::Warning]
+
+      class Slot < Data
+        attr_reader index(): Integer
+
+        attr_reader type(): Symbol
+
+        attr_reader node_path(): Array[Integer]
+
+        attr_reader expression(): String?
+
+        attr_reader location(): String?
+
+        attr_reader attribute(): String?
+
+        attr_reader key_source(): Symbol?
+
+        attr_reader key_expression(): String?
+
+        def self.new: (Integer index, Symbol type, Array[Integer] node_path, String? expression, String? location, String? attribute, Symbol? key_source, String? key_expression) -> instance
+                    | (index: Integer, type: Symbol, node_path: Array[Integer], expression: String?, location: String?, attribute: String?, key_source: Symbol?, key_expression: String?) -> instance
+
+        def self.members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+
+        def members: () -> [ :index, :type, :node_path, :expression, :location, :attribute, :key_source, :key_expression ]
+      end
+
+      # : (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
+      def initialize: (?file_path: untyped, ?project_path: untyped, ?markers: SlotMarkers) -> void
+
+      # : () -> String
+      def version: () -> String
+
+      # : () -> Hash[Symbol, untyped]
+      def schema: () -> Hash[Symbol, untyped]
+
+      def visit_document_node: (untyped node) -> untyped
+
+      def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_open_tag_node: (untyped node) -> untyped
+
+      def visit_html_attribute_node: (untyped node) -> untyped
+
+      def visit_html_comment_node: (untyped node) -> untyped
+
+      def visit_html_doctype_node: (untyped node) -> untyped
+
+      def visit_erb_content_node: (untyped node) -> untyped
+
+      def visit_erb_yield_node: (untyped node) -> untyped
+
+      def visit_erb_if_node: (untyped node) -> untyped
+
+      def visit_erb_unless_node: (untyped node) -> untyped
+
+      def visit_erb_case_node: (untyped node) -> untyped
+
+      def visit_erb_block_node: (untyped node) -> untyped
+
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+      def visit_erb_while_node: (untyped node) -> untyped
+
+      def visit_erb_until_node: (untyped node) -> untyped
+
+      def visit_erb_for_node: (untyped node) -> untyped
+
+      private
+
+      # : (untyped, untyped) -> String
+      def relative_path_for: (untyped, untyped) -> String
+
+      def visit_children_with_paths: (untyped children) -> untyped
+
+      def visit_branching_node: (untyped node) -> untyped
+
+      # : (untyped) -> bool
+      def continuation?: (untyped) -> bool
+
+      # : (untyped, Symbol?) -> void
+      def record_slot: (untyped, Symbol?) -> void
+
+      # : (Symbol) -> Symbol?
+      def anchored_type_for: (Symbol) -> Symbol?
+
+      # : (untyped) -> Symbol
+      def attribute_type_for: (untyped) -> Symbol
+
+      # : (untyped) -> [Symbol, String?]
+      def key_for: (untyped) -> [ Symbol, String? ]
+
+      # : (untyped) -> String?
+      def keyable_tag_name_for: (untyped) -> String?
+
+      # : (Array[untyped]) -> String?
+      def key_directive_in: (Array[untyped]) -> String?
+
+      # : (untyped) -> String?
+      def key_expression_for: (untyped) -> String?
+
+      # : (untyped) -> Array[untyped]
+      def collection_body: (untyped) -> Array[untyped]
+
+      # : (untyped) -> Array[untyped]
+      def attributes_for: (untyped) -> Array[untyped]
+
+      # : (untyped) -> String?
+      def attribute_name_for: (untyped) -> String?
+
+      # : (untyped) -> bool
+      def dynamic?: (untyped) -> bool
+
+      def expression_for: (untyped node) -> untyped
+
+      def location_for: (untyped node) -> untyped
+
+      def erb_output?: (untyped opening) -> untyped
+
+      def insert_markers: (untyped node) -> untyped
+
+      # : (untyped, Integer?) -> void
+      def mark_branches: (untyped, Integer?) -> void
+
+      # : (untyped) -> Array[Array[untyped]]
+      def branch_bodies: (untyped) -> Array[Array[untyped]]
+
+      # : (untyped) -> untyped
+      def continuation_of: (untyped) -> untyped
+
+      # : (untyped, Integer?) -> void
+      def wrap_rows: (untyped, Integer?) -> void
+
+      def anchor_attributes: (untyped node) -> untyped
+
+      # : (untyped) { (Array[untyped]) -> void } -> void
+      def each_child_array: (untyped) { (Array[untyped]) -> void } -> void
+
+      def wrap_region: (untyped document_node) -> untyped
+
+      def text_node: (untyped content) -> untyped
+
+      def erb_output_node: (untyped code) -> untyped
+
+      def comment_node: (untyped text) -> untyped
+
+      def attribute_node: (untyped name, untyped value) -> untyped
+
+      def literal: (untyped content) -> untyped
+
+      def token: (untyped type, untyped value) -> untyped
+    end
+  end
+end

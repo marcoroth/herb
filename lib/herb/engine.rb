@@ -6,6 +6,7 @@ require "time"
 require "pathname"
 
 require_relative "engine/debug_visitor"
+require_relative "engine/slot_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"
@@ -18,8 +19,7 @@ require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template, :visitors, :enabled_validators
+    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head, :validation_error_template, :visitors, :enabled_validators, :slot_visitor
 
     # @rbs!
     #   def self.optimize_warning_issued: () -> bool
@@ -76,6 +76,7 @@ module Herb
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
       @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
+      @slots = properties.fetch(:slots, Herb.configuration.engine_option("slots", false))
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
@@ -98,6 +99,17 @@ module Herb
         )
 
         @visitors << debug_visitor
+      end
+
+      if @slots
+        @parser_options[:iteration_nodes] = true unless @parser_options.key?(:iteration_nodes)
+
+        @slot_visitor = SlotVisitor.new(
+          file_path: @filename,
+          project_path: @project_path
+        )
+
+        @visitors = [@slot_visitor, *@visitors]
       end
 
       unless [:raise, :overlay, :none].include?(@validation_mode)

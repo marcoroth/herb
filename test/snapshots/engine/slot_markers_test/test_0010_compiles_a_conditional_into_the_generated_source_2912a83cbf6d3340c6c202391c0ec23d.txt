@@ -1,0 +1,6 @@
+---
+source: "Engine::SlotMarkersTest#test_0010_compiles a conditional into the generated source"
+input: "{source: \"<div><% if @admin %><b><%= @secret %></b><% end %></div>\", options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+_buf = ::String.new; _buf << '<!--herb-region:app/views/test.html.erb:6f56441c--><div><!--herb-slot:0-->'.freeze; if @admin; _buf << '<!--herb-branch:0:0--><b><!--herb-slot:1-->'.freeze; _buf << (@secret).to_s; _buf << '<!--/herb-slot:1--></b>'.freeze; end; _buf << '<!--/herb-slot:0--></div><!--/herb-region:app/views/test.html.erb-->'.freeze;
+_buf.to_s

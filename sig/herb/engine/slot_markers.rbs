@@ -1,0 +1,31 @@
+# Generated from lib/herb/engine/slot_markers.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class SlotMarkers
+      # : (Integer, Symbol) -> String
+      def slot_open: (Integer, Symbol) -> String
+
+      # : (Integer) -> String
+      def slot_close: (Integer) -> String
+
+      # : (Integer, Integer) -> String
+      def branch: (Integer, Integer) -> String
+
+      # : (Integer) -> String
+      def row_open_prefix: (Integer) -> String
+
+      # : () -> String
+      def row_open_suffix: () -> String
+
+      # : (Integer) -> String
+      def row_close: (Integer) -> String
+
+      # : (String, String) -> String
+      def region_open: (String, String) -> String
+
+      # : (String) -> String
+      def region_close: (String) -> String
+    end
+  end
+end

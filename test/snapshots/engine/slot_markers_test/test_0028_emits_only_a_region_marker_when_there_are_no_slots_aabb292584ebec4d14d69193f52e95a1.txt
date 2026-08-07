@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0028_emits only a region marker when there are no slots"
+input: "{source: \"<div>static</div>\", locals: {}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:e3b0c442--><div>static</div><!--/herb-region:app/views/test.html.erb-->

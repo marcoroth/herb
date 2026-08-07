@@ -1,0 +1,5 @@
+---
+source: "Engine::SlotMarkersTest#test_0040_delimits each row of a keyed collection"
+input: "{source: \"<% @users.each do |user| %><li herb-key=\\\"<%= user[:id] %>\\\"><%= user[:name] %></li><% end %>\", locals: {\"@users\" => [{id: 1, name: \"Marco\"}, {id: 2, name: \"Alice\"}]}, options: {slots: true, filename: \"app/views/test.html.erb\", validation_mode: :none}}"
+---
+<!--herb-region:app/views/test.html.erb:d6c0551f--><!--herb-slot:0--><!--herb-row:0:1--><li herb-key="1" data-herb-slot="1"><!--herb-slot:2-->Marco<!--/herb-slot:2--></li><!--/herb-row:0--><!--herb-row:0:2--><li herb-key="2" data-herb-slot="1"><!--herb-slot:2-->Alice<!--/herb-slot:2--></li><!--/herb-row:0--><!--/herb-slot:0--><!--/herb-region:app/views/test.html.erb-->
