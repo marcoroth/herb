@@ -2,30 +2,13 @@
 #include "../include/lib/hb_allocator.h"
 #include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
+#include "../include/util/html_elements.h"
 
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-
-// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
-static hb_string_T void_tags[] = HB_STRING_LIST(
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr"
-);
 
 // https://html.spec.whatwg.org/multipage/rendering.html#the-page
 static hb_string_T whitespace_preserving_tags[] = HB_STRING_LIST("pre", "script", "style", "textarea");
@@ -148,8 +131,8 @@ static hb_string_T p_parent_closers[] = HB_STRING_LIST(
 bool is_void_element(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
-  for (size_t i = 0; i < sizeof(void_tags) / sizeof(void_tags[0]); i++) {
-    if (hb_string_equals_case_insensitive(tag_name, void_tags[i])) { return true; }
+  for (size_t i = 0; i < sizeof(html_void_elements) / sizeof(html_void_elements[0]); i++) {
+    if (hb_string_equals_case_insensitive(tag_name, html_void_elements[i])) { return true; }
   }
 
   return false;

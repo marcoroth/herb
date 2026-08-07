@@ -124,6 +124,27 @@ rules:
       - blank_lines:
           count: 1
 
+  - files: "config/html_elements.yml"
+    pipeline:
+      - sort_keys:
+          path: "elements[]"
+          order:
+            - name
+            - description
+            - void
+
+      - sort:
+          path: "elements"
+          by: name
+
+      - quote_style:
+          key_style: plain
+          value_style: double
+
+      - blank_lines:
+          path: "elements"
+          count: 0
+
   - files: "config/view_context_methods/**/*.yml"
     pipeline:
       - sort_keys:

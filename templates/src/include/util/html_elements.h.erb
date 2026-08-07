@@ -1,0 +1,11 @@
+#ifndef HERB_HTML_ELEMENTS_H
+#define HERB_HTML_ELEMENTS_H
+
+#include "../lib/hb_string.h"
+
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+static hb_string_T html_void_elements[] = HB_STRING_LIST(
+<%= html_elements.select(&:void?).map { |element| "  \"#{element.name}\"" }.join(",\n") %>
+);
+
+#endif

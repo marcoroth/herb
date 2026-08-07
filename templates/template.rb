@@ -671,6 +671,20 @@ module Herb
       end
     end
 
+    class HTMLElementType
+      attr_reader :name, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @description = config.fetch("description")
+        @void = config.fetch("void", false)
+      end
+
+      def void?
+        @void
+      end
+    end
+
     class HelperType
       attr_reader :name, :source, :gem, :output, :visibility, :receiver, :supports_block,
                   :supported, :description, :signature, :documentation_url, :tag,
@@ -941,7 +955,7 @@ module Herb
                       end
 
       rendered_template = read_template(template_path.to_s).result_with_hash(
-        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, prism_nodes: prism_nodes, prism_flags: prism_flags }
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_elements: html_elements, prism_nodes: prism_nodes, prism_flags: prism_flags }
       )
       content = heading_for(name, template_file) + rendered_template
 
@@ -1009,6 +1023,14 @@ module Herb
       Dir.glob("config/action_view_helpers/**/*.yml").map do |file|
         HelperType.new(YAML.load_file(file))
       end
+    end
+
+    def self.html_elements
+      (html_elements_config["elements"] || []).map { |element| HTMLElementType.new(element) }
+    end
+
+    def self.html_elements_config
+      @html_elements_config ||= YAML.load_file("config/html_elements.yml")
     end
 
     def self.config

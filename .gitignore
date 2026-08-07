@@ -110,6 +110,7 @@ java/org/herb/ast/Visitor.java
 javascript/packages/core/src/action-view-helpers.ts
 javascript/packages/core/src/config.ts
 javascript/packages/core/src/errors.ts
+javascript/packages/core/src/html-elements.ts
 javascript/packages/core/src/html-entities.json
 javascript/packages/core/src/node-type-guards.ts
 javascript/packages/core/src/nodes.ts
@@ -121,6 +122,7 @@ javascript/packages/node/extension/nodes.h
 lib/herb/action_view/helper_registry.rb
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
+lib/herb/html/elements.rb
 lib/herb/visitor.rb
 rust/herb-printer/src/printer_visitor.rs
 rust/src/action_view_helpers.rs
@@ -150,6 +152,7 @@ src/include/ast/ast_nodes.h
 src/include/ast/ast_pretty_print.h
 src/include/errors.h
 src/include/lib/hb_foreach.h
+src/include/util/html_elements.h
 src/parser/match_tags.c
 src/visitor.c
 wasm/error_helpers.cpp

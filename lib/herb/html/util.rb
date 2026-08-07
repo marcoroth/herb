@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 # rbs_inline: enabled
 
+require_relative "elements"
+
 module Herb
   module HTML
     module Util
-      # TODO: extract to shared utility for all languages in .yml
-      VOID_ELEMENTS = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"].freeze #: Array[String]
+      VOID_ELEMENTS = Elements::VOID_ELEMENTS #: Array[String]
 
       #: (String) -> bool
       def self.void_element?(tag_name)

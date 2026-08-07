@@ -1,0 +1,31 @@
+// https://html.spec.whatwg.org/multipage/indices.html#elements-3
+
+export interface HTMLElementInfo {
+  name: string
+  description: string
+  isVoid: boolean
+}
+
+export const HTML_ELEMENTS: HTMLElementInfo[] = [
+<%- html_elements.each do |element| -%>
+  { name: "<%= element.name %>", description: "<%= element.description %>", isVoid: <%= element.void? %> },
+<%- end -%>
+]
+
+export const HTML_ELEMENT_NAMES = new Set(HTML_ELEMENTS.map(element => element.name))
+
+export const HTML_VOID_ELEMENTS = new Set(
+  HTML_ELEMENTS.filter(element => element.isVoid).map(element => element.name),
+)
+
+export function isKnownHTMLElement(tagName: string): boolean {
+  return HTML_ELEMENT_NAMES.has(tagName.toLowerCase())
+}
+
+export function isVoidElement(tagName: string): boolean {
+  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
+}
+
+export function isCustomElement(tagName: string): boolean {
+  return tagName.includes("-")
+}

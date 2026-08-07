@@ -1,0 +1,12 @@
+module Herb
+  module HTML
+    module Elements
+      # https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+      VOID_ELEMENTS = [
+      <%- html_elements.select(&:void?).each do |element| -%>
+        "<%= element.name %>",
+      <%- end -%>
+      ].freeze #: Array[String]
+    end
+  end
+end

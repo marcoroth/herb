@@ -1,0 +1,10 @@
+# Generated from lib/herb/html/elements.rb with RBS::Inline
+
+module Herb
+  module HTML
+    module Elements
+      # https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+      VOID_ELEMENTS: Array[String]
+    end
+  end
+end
