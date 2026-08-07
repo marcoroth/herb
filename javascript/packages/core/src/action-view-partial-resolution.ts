@@ -7,7 +7,10 @@ export const PARTIAL_EXTENSIONS = [
   ".turbo_stream.herb",
 ] as const
 
-export const PARTIAL_GLOB_PATTERN = "_*.{html.erb,html.herb,erb,herb,turbo_stream.erb,turbo_stream.herb}"
+const EXTENSION_ALTERNATIVES = PARTIAL_EXTENSIONS.map(extension => extension.slice(1)).join(",")
+
+export const TEMPLATE_GLOB_PATTERN = `*.{${EXTENSION_ALTERNATIVES}}`
+export const PARTIAL_GLOB_PATTERN = `_${TEMPLATE_GLOB_PATTERN}`
 
 const PARTIAL_PREFIX = "_"
 const APPLICATION_DIRECTORY = "application"
