@@ -1082,6 +1082,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Non-squiggly heredocs (`<<` and `<<-`) are excluded: their bodies are
    * whitespace-significant, so re-indenting them would change the string
    * value. Those fall back to the default single-header rendering.
+   *
+   * @todo revisit once we have access to Prism nodes
    */
   private shouldExpandERBContent(node: ERBContentNode): boolean {
     const content = node.content?.value ?? ""
