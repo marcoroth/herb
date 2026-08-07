@@ -19,7 +19,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        115 enabled | all rules via --all-rules"
+  Rules        117 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--only\` replaces the counts from a disabled \`all\` 1`] = `
@@ -50,7 +50,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 115 not enabled
+  Rules        0 enabled | 117 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -71,7 +71,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 115 not enabled
+  Rules        0 enabled | 117 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -102,7 +102,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        115 enabled"
+  Rules        117 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports no version-skipped rules 1`] = `
@@ -124,7 +124,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        115 enabled"
+  Rules        117 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > reports enabled and not-enabled rules when no \`all\` is configured 1`] = `
@@ -165,7 +165,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        1 enabled | 114 not enabled"
+  Rules        1 enabled | 116 not enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted out on top of \`all: enabled: true\` count as disabled 1`] = `
@@ -184,7 +184,7 @@ test-file-with-errors.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        114 enabled | 1 disabled"
+  Rules        116 enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
@@ -214,7 +214,7 @@ test/fixtures/all-rules.html.erb:
   Failing      0 offenses
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        115 enabled | all rules via --all-rules"
+  Rules        117 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
@@ -412,7 +412,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        98 enabled | 16 not enabled | 1 disabled"
+  Rules        98 enabled | 18 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > prefers the CLI flag over the config file 1`] = `
@@ -431,7 +431,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        98 enabled | 16 not enabled | 1 disabled"
+  Rules        98 enabled | 18 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > reads logLevel from the config file 1`] = `
@@ -448,7 +448,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        98 enabled | 16 not enabled | 1 disabled"
+  Rules        98 enabled | 18 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still counts hidden offenses towards the exit code 1`] = `
@@ -464,7 +464,7 @@ exports[`CLI Output Formatting > --log-level > still counts hidden offenses towa
   Offenses     1 hint (1 offense across 1 file)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        98 enabled | 16 not enabled | 1 disabled"
+  Rules        98 enabled | 18 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still reports offenses at or above the given level 1`] = `
@@ -483,7 +483,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        98 enabled | 16 not enabled | 1 disabled"
+  Rules        98 enabled | 18 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > keeps the log level when it is passed explicitly 1`] = `
@@ -505,7 +505,7 @@ test-file-with-errors.html.erb:
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        115 enabled | all rules via --all-rules"
+  Rules        117 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > lowers the log level to report the rules it was asked for 1`] = `
@@ -528,7 +528,7 @@ test-file-with-errors.html.erb:
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Log level    hint | lowered from warning by --all-rules
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        115 enabled | all rules via --all-rules"
+  Rules        117 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --only > keeps the log level when it is passed explicitly 1`] = `
