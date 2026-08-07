@@ -1,5 +1,3 @@
-use crate::utils::tag_utils::is_erb_output_node;
-
 use herb::nodes::{AnyNode, ERBIterationBlockNode, ERBRenderNode};
 use herb::Visitor;
 

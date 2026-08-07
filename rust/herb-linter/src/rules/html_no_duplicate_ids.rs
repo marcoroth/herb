@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::control_flow_tracker::{ControlFlowTracker, ControlFlowType};
-use crate::utils::tag_utils::{get_static_attribute_name, get_tag_local_name, get_validatable_static_content, is_effectively_static, print_output_content};
+use crate::utils::tag_utils::{get_static_attribute_name, get_tag_local_name, get_validatable_static_content, print_output_content};
 
 use herb::nodes::*;
 use herb::ParseResult;

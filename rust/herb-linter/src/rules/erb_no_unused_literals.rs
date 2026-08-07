@@ -46,6 +46,27 @@ impl<'node> LiteralCollector<'node> {
       return;
     }
 
+    // the case operand and the `when` values are matched against, not discarded
+    if node.is("CaseNode") || node.is("CaseMatchNode") {
+      for condition in node.field("conditions") {
+        self.visit(condition);
+      }
+
+      for clause in node.field("else_clause") {
+        self.visit(clause);
+      }
+
+      return;
+    }
+
+    if node.is("WhenNode") || node.is("InNode") {
+      for statement in node.field("statements") {
+        self.visit(statement);
+      }
+
+      return;
+    }
+
     // only the receiver of a call is visited, not its arguments
     if node.is("CallNode") {
       if let Some(receiver) = node.receiver() {
