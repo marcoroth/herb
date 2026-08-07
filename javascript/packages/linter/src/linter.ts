@@ -2,6 +2,12 @@ import { Location } from "@herb-tools/core"
 import { BackendLintResult } from "@herb-tools/core"
 import picomatch from "picomatch"
 
+/**
+ * Matches the option `@herb-tools/config` uses, so a project under a dot
+ * directory does not quietly lose every rule exclude.
+ */
+const MATCH_OPTIONS = { dot: true } as const
+
 import { semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
@@ -370,7 +376,7 @@ export class Linter {
       const defaultExclude = rule.defaultConfig?.exclude ?? DEFAULT_RULE_CONFIG.exclude
 
       if (defaultExclude && defaultExclude.length > 0) {
-        const isExcluded = defaultExclude.some(pattern => picomatch.isMatch(context.fileName!, pattern))
+        const isExcluded = defaultExclude.some(pattern => picomatch.isMatch(context.fileName!, pattern, MATCH_OPTIONS))
 
         if (isExcluded) {
           return []

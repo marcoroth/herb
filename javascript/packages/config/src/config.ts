@@ -1,5 +1,12 @@
 import path from "path"
 import picomatch from "picomatch"
+
+/**
+ * A project can sit anywhere, including under a dot directory such as a git
+ * worktree in `.claude/`. Without this, picomatch refuses to let `**` cross
+ * that segment and every pattern silently stops matching.
+ */
+const MATCH_OPTIONS = { dot: true } as const
 import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
@@ -384,7 +391,7 @@ export class Config {
     }
 
     const normalized = this.normalizeFilePath(filePath)
-    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
+    return excludePatterns.some(pattern => picomatch.isMatch(normalized, pattern, MATCH_OPTIONS))
   }
 
   /**
@@ -399,7 +406,7 @@ export class Config {
     }
 
     const normalized = this.normalizeFilePath(filePath)
-    return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
+    return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern, MATCH_OPTIONS))
   }
 
   /**
