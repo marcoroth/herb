@@ -2,15 +2,18 @@ import typescript from "@rollup/plugin-typescript"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
 import json from "@rollup/plugin-json"
 import commonjs from "@rollup/plugin-commonjs"
+import { createRequire } from "module"
 
 // Bundle the CLI entry point into a single CommonJS file.
 // Exclude Node built-in so they remain as externals.
 const external = ["path", "url", "fs", "module"]
 
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = Object.keys(dependencies ?? {})
+
 function isExternal(id) {
-  return (
-    external.includes(id) ||
-    external.some((pkg) => id === pkg || id.startsWith(pkg + "/"))
+  return [...external, ...runtimeDependencies].some(
+    (pkg) => id === pkg || id.startsWith(pkg + "/")
   )
 }
 
@@ -44,7 +47,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", /@ruby\/prism/],
+    external: isExternal,
     plugins: [
       nodeResolve(),
       json(),
@@ -65,7 +68,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm", /@ruby\/prism/],
+    external: isExternal,
     plugins: [
       nodeResolve(),
       commonjs(),
