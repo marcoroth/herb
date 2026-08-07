@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0014_attribute name matching is case insensitive - render"
+input: "{source: \"<main ID=\\\"content\\\">Content</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\"} content=\"<p>Appended</p>\">]}}"
+---
+<main ID="content">Content<p>Appended</p></main>

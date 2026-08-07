@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0007_a non-matching tag is left alone - render"
+input: "{source: \"<article>Content</article>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"section\" attributes={} content=\"<p>Appended</p>\">]}}"
+---
+<article>Content</article>

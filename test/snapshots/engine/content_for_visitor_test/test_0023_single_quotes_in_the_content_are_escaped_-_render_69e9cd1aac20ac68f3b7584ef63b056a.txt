@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0023_single quotes in the content are escaped - render"
+input: "{source: \"<main></main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={} content=\"<p class='single'></p>\">]}}"
+---
+<main><p class='single'></p></main>

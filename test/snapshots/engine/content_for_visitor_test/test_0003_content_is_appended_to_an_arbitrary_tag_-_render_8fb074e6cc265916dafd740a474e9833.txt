@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0003_content is appended to an arbitrary tag - render"
+input: "{source: \"<body><h1>Title</h1></body>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"body\" attributes={} content=\"<p>Appended</p>\">]}}"
+---
+<body><h1>Title</h1><p>Appended</p></body>

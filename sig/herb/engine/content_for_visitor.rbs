@@ -1,0 +1,52 @@
+# Generated from lib/herb/engine/content_for_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Appends HTML to the end of every element matching a tag name, and optionally a set of
+    # attribute conditions, so that the compiled output always contains it before the
+    # element's closing tag.
+    #
+    # An attribute condition matches on `true` when the attribute is present, on `false` when
+    # it is absent, on a `Regexp` when the attribute value matches it, and on anything else
+    # when the attribute value is equal to it. An attribute whose value is built from ERB has
+    # no value known at compile time, so it only matches the `true` condition.
+    #
+    # This visitor is not loaded by default. Require it explicitly and pass it to the engine:
+    #
+    #     require "herb/engine/content_for_visitor"
+    #
+    #     Herb::Engine.new(source, visitors: [
+    #       Herb::Engine::ContentForVisitor.new("<p>Footer</p>", tag_name: "main", attributes: { "id" => "content" })
+    #     ])
+    class ContentForVisitor < Herb::Visitor
+      # : (String?, tag_name: String, ?attributes: Hash[untyped, untyped]) -> void
+      def initialize: (String?, tag_name: String, ?attributes: Hash[untyped, untyped]) -> void
+
+      # : (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      private
+
+      # : () -> Herb::AST::RubyLiteralNode
+      def content_node: () -> Herb::AST::RubyLiteralNode
+
+      # : (Herb::AST::HTMLElementNode) -> bool
+      def matches?: (Herb::AST::HTMLElementNode) -> bool
+
+      # : (Hash[String, String?], String, untyped) -> bool
+      def attribute_matches?: (Hash[String, String?], String, untyped) -> bool
+
+      # : (Herb::AST::HTMLElementNode) -> Hash[String, String?]
+      def element_attributes: (Herb::AST::HTMLElementNode) -> Hash[String, String?]
+
+      # : (Herb::AST::HTMLAttributeNode) -> String?
+      def attribute_name: (Herb::AST::HTMLAttributeNode) -> String?
+
+      # : (Herb::AST::HTMLAttributeNode) -> String?
+      def attribute_value: (Herb::AST::HTMLAttributeNode) -> String?
+    end
+  end
+end

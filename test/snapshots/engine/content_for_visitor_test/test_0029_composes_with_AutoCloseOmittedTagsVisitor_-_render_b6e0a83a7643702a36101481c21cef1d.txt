@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0029_composes with AutoCloseOmittedTagsVisitor - render"
+input: "{source: \"<head><title>Hello</title></head><ul><li>One<li>Two</ul>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"head\" attributes={} content=\"<meta name=\\\"herb\\\" content=\\\"1\\\">\">, #<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<head><title>Hello</title><meta name="herb" content="1"></head><ul><li>One</li><li>Two</li></ul>
