@@ -12,6 +12,7 @@ import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-te
 
 import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
+import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
 import { ActionViewNoRenderOptionShadowingRule } from "./rules/actionview-no-render-option-shadowing.js"
@@ -144,6 +145,7 @@ export const rules: RuleClass[] = [
 
   ActionViewNoDynamicPartialPathRule,
   ActionViewNoHelperShadowingRule,
+  ActionViewNoImplicitPartialRule,
   ActionViewNoImplicitPolymorphicURLRule,
   ActionViewNoRedundantLocalAssignsRule,
   ActionViewNoRenderOptionShadowingRule,

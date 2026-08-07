@@ -32,7 +32,7 @@ Branching between literal paths keeps the set of possible partials knowable, so 
 <%= render partial: current_user.admin? ? "admin/header" : "user/header" %>
 ```
 
-Renders that pass an object rather than a name, such as `render @products`, are not reported here.
+Renders that pass an object rather than a name, such as `render @products`, are not reported here. See [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md).
 
 Only output tags are reported. A `render` in a silent `<% %>` tag discards its output and is covered by [`actionview-no-silent-render`](./actionview-no-silent-render.md).
 

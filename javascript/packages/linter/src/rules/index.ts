@@ -17,6 +17,7 @@ export * from "./herb-disable-comment-base.js"
 
 export * from "./actionview-no-dynamic-partial-path.js"
 export * from "./actionview-no-helper-shadowing.js"
+export * from "./actionview-no-implicit-partial.js"
 export * from "./actionview-no-implicit-polymorphic-url.js"
 export * from "./actionview-no-redundant-local-assigns.js"
 export * from "./actionview-no-render-option-shadowing.js"
