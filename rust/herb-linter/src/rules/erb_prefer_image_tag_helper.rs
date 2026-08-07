@@ -3,10 +3,47 @@ use crate::utils::tag_utils::{get_attribute, get_tag_name_from_open_tag};
 use herb::nodes::*;
 use herb::Visitor;
 
-rule_visitor!(PreferImageTagHelperVisitor);
-define_parser_rule!(ERBPreferImageTagHelperRule, "erb-prefer-image-tag-helper", Warning, PreferImageTagHelperVisitor,
-  introduced_in: "0.4.3"
-);
+pub struct ERBPreferImageTagHelperRule;
+
+impl crate::rule::Rule for ERBPreferImageTagHelperRule {
+  fn name(&self) -> &'static str {
+    "erb-prefer-image-tag-helper"
+  }
+
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("0.4.3")
+  }
+
+  fn default_severity(&self) -> herb_config::SeverityConfig {
+    herb_config::SeverityConfig::Severity(herb_config::Severity::Warning)
+  }
+}
+
+struct PreferImageTagHelperVisitor {
+  rule_name: &'static str,
+  offenses: Vec<crate::offense::UnboundOffense>,
+  framework: Option<herb_config::Framework>,
+}
+
+impl PreferImageTagHelperVisitor {
+  fn add_offense(&mut self, message: impl Into<String>, location: herb::Location) {
+    self.offenses.push(crate::offense::UnboundOffense::new(self.rule_name, message, location));
+  }
+}
+
+impl crate::rule::ParserRule for ERBPreferImageTagHelperRule {
+  fn check(&self, result: &herb::ParseResult, context: &crate::rule::LintContext) -> Vec<crate::offense::UnboundOffense> {
+    let mut visitor = PreferImageTagHelperVisitor {
+      rule_name: crate::rule::Rule::name(self),
+      offenses: Vec::new(),
+      framework: context.framework,
+    };
+
+    visitor.visit_document_node(&result.value);
+
+    visitor.offenses
+  }
+}
 
 impl PreferImageTagHelperVisitor {
   fn contains_erb_content(value_node: &HTMLAttributeValueNode) -> bool {
@@ -94,6 +131,12 @@ impl PreferImageTagHelperVisitor {
 
 impl Visitor for PreferImageTagHelperVisitor {
   fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
+    if self.framework != Some(herb_config::Framework::ActionView) {
+      self.walk_html_open_tag_node(node);
+
+      return;
+    }
+
     if let Some(tag_name) = get_tag_name_from_open_tag(node) {
       if tag_name.to_lowercase() != "img" {
         self.walk_html_open_tag_node(node);

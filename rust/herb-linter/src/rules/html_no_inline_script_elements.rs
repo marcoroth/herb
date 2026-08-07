@@ -1,18 +1,68 @@
+use crate::offense::UnboundOffense;
+use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::tag_utils::{get_element_attribute, get_tag_local_name, is_javascript_tag_element, open_tag_location};
 
 use herb::nodes::HTMLElementNode;
+use herb::ParseResult;
 use herb::Visitor;
+use herb_config::{Framework, Severity, SeverityConfig};
 
-rule_visitor!(NoInlineScriptElementsVisitor);
-define_parser_rule!(
-  HTMLNoInlineScriptElementsRule,
-  "html-no-inline-script-elements",
-  Error,
-  NoInlineScriptElementsVisitor,
-  enabled: false,
-  parser_options: { action_view_helpers: true },
-  introduced_in: "unreleased"
-);
+pub struct HTMLNoInlineScriptElementsRule;
+
+impl Rule for HTMLNoInlineScriptElementsRule {
+  fn name(&self) -> &'static str {
+    "html-no-inline-script-elements"
+  }
+
+  fn introduced_in(&self) -> Option<&'static str> {
+    Some("unreleased")
+  }
+
+  fn default_enabled(&self) -> bool {
+    false
+  }
+
+  fn default_severity(&self) -> SeverityConfig {
+    SeverityConfig::Severity(Severity::Error)
+  }
+
+  fn parser_options(&self) -> herb::ParserOptions {
+    herb::ParserOptions {
+      action_view_helpers: true,
+      ..crate::rule::default_linter_parser_options()
+    }
+  }
+}
+
+struct NoInlineScriptElementsVisitor {
+  rule_name: &'static str,
+  offenses: Vec<UnboundOffense>,
+  framework: Option<Framework>,
+}
+
+impl NoInlineScriptElementsVisitor {
+  fn suggestion(&self) -> &'static str {
+    if self.framework == Some(Framework::ActionView) {
+      return "Extract the JavaScript into a separate `.js` file and include it with `javascript_include_tag`.";
+    }
+
+    "Extract the JavaScript into a separate `.js` file and deliver it through your framework's asset pipeline."
+  }
+}
+
+impl ParserRule for HTMLNoInlineScriptElementsRule {
+  fn check(&self, result: &ParseResult, context: &LintContext) -> Vec<UnboundOffense> {
+    let mut visitor = NoInlineScriptElementsVisitor {
+      rule_name: self.name(),
+      offenses: Vec::new(),
+      framework: context.framework,
+    };
+
+    visitor.visit_document_node(&result.value);
+
+    visitor.offenses
+  }
+}
 
 fn ignored_element_sources() -> [&'static str; 2] {
   [
@@ -44,10 +94,11 @@ fn is_inline_script(node: &HTMLElementNode) -> bool {
 impl Visitor for NoInlineScriptElementsVisitor {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     if is_inline_script(node) {
-      self.add_offense(
-        "Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.",
+      self.offenses.push(UnboundOffense::new(
+        self.rule_name,
+        format!("Avoid inline `<script>` tags. {}", self.suggestion()),
         open_tag_location(node),
-      );
+      ));
     }
 
     self.walk_html_element_node(node);
