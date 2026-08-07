@@ -1,4 +1,4 @@
-import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
+import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, Token, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
 import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -158,10 +158,10 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
 
     const erbOpenTag = ERBOpenTagNode.build({
       location: openTag.location,
-      tag_opening: createSyntheticToken("<%="),
-      content: createSyntheticToken(content),
-      tag_closing: createSyntheticToken("%>"),
-      tag_name: createSyntheticToken(tagName.value),
+      tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+      content: Token.from("TOKEN_ERB_CONTENT", content),
+      tag_closing: Token.from("TOKEN_ERB_END", "%>"),
+      tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
     })
 
     asMutable(node).open_tag = erbOpenTag
@@ -178,16 +178,16 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       asMutable(node).body = []
 
       const virtualClose = HTMLVirtualCloseTagNode.build({
-        tag_name: createSyntheticToken(tagName.value),
+        tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
       })
 
       asMutable(node).close_tag = virtualClose
     } else if (node.close_tag) {
       const erbEnd = ERBEndNode.build({
         location: node.close_tag.location,
-        tag_opening: createSyntheticToken("<%"),
-        content: createSyntheticToken(" end "),
-        tag_closing: createSyntheticToken("%>"),
+        tag_opening: Token.from("TOKEN_ERB_START", "<%"),
+        content: Token.from("TOKEN_ERB_CONTENT", " end "),
+        tag_closing: Token.from("TOKEN_ERB_END", "%>"),
       })
 
       asMutable(node).close_tag = erbEnd

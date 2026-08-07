@@ -45,7 +45,6 @@ import {
 } from "./node-type-guards.js"
 
 import { Location } from "./location.js"
-import { Range } from "./range.js"
 import { Token } from "./token.js"
 
 import type { Position } from "./position.js"
@@ -926,28 +925,24 @@ export function createLiteral(content: string): LiteralNode {
   return LiteralNode.build({ content })
 }
 
-export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): Token {
-  return Token.from(type, value)
-}
-
 export function createWhitespaceNode(): WhitespaceNode {
-  return WhitespaceNode.build({ value: createSyntheticToken(" ") })
+  return WhitespaceNode.build({ value: Token.from("TOKEN_WHITESPACE", " ") })
 }
 
 export function createERBOutputNode(expression: string, tagOpening = "<%=", tagClosing = "%>"): ERBContentNode {
   return ERBContentNode.build({
-    tag_opening: createSyntheticToken(tagOpening),
-    content: createSyntheticToken(expression),
-    tag_closing: createSyntheticToken(tagClosing),
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
     valid: true,
   })
 }
 
 export function createERBSilentNode(expression: string, tagOpening = "<%", tagClosing = "%>"): ERBContentNode {
   return ERBContentNode.build({
-    tag_opening: createSyntheticToken(tagOpening),
-    content: createSyntheticToken(expression),
-    tag_closing: createSyntheticToken(tagClosing),
+    tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+    content: Token.from("TOKEN_ERB_CONTENT", expression),
+    tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
     valid: true,
   })
 }

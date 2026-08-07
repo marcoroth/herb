@@ -34,7 +34,7 @@ import {
   ERBOpenTagNode,
   LiteralNode,
   RubyLiteralNode,
-  createSyntheticToken
+  Token
 } from "../src"
 
 import type { Node } from "../src/nodes.js"
@@ -45,9 +45,9 @@ describe("ast-utils", () => {
 
   const createERBContentNode = (tagOpening: string, content: string = "", tagClosing: string = "%>"): ERBContentNode =>
     ERBContentNode.build({
-      tag_opening: createSyntheticToken(tagOpening),
-      content: content ? createSyntheticToken(content) : null,
-      tag_closing: createSyntheticToken(tagClosing),
+      tag_opening: Token.from("TOKEN_ERB_START", tagOpening),
+      content: content ? Token.from("TOKEN_ERB_CONTENT", content) : null,
+      tag_closing: Token.from("TOKEN_ERB_END", tagClosing),
       location: Location.from(1, 1, 1, 1)
     })
 
