@@ -276,10 +276,11 @@ export class FileProcessor {
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
     const backendMismatches: BackendMismatch[] = []
 
-    if (!this.linter) {
-      const customRules = await this.loadCustomRulesOnce(context, formatOption)
+    const buildLinter = async () =>
+      Linter.from(Herb, context?.config, await this.loadCustomRulesOnce(context, formatOption), { only: context?.only, all: context?.allRules })
 
-      this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only, all: context?.allRules })
+    if (!this.linter) {
+      this.linter = await buildLinter()
 
       if (context?.backend) {
         this.linter.backendMode = context.backend
@@ -288,8 +289,9 @@ export class FileProcessor {
 
     const shouldCompare = context?.compareBackends && Herb.supportsLint
     const progress = shouldCompare ? new ComparisonProgress(files.length) : undefined
+
     if (shouldCompare && !this.rustLinter) {
-      this.rustLinter = Linter.from(Herb, context?.config)
+      this.rustLinter = await buildLinter()
       this.rustLinter.backendMode = "rust"
     }
 
