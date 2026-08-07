@@ -9,11 +9,14 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
+import { fixabilityFor } from "./fixability.js"
 
 import { compareBackendOffenses } from "../backend-comparison.js"
 
 import type { BackendMismatch } from "../backend-comparison.js"
 import type { SerializedDiagnostic } from "@herb-tools/core"
+import type { Fixability } from "./fixability.js"
+import type { LintOffense } from "../types.js"
 
 export interface WorkerInput {
   files: string[]
@@ -24,6 +27,7 @@ export interface WorkerInput {
   ignoreDisableComments: boolean
   loadCustomRules: boolean
   backendMode?: "javascript" | "rust"
+  only?: string[]
   allRules: boolean
   compareBackends: boolean
 }
@@ -32,6 +36,7 @@ export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
   autocorrectable: boolean
+  unsafeAutocorrectable: boolean
 }
 
 export interface WorkerResult {
@@ -73,11 +78,7 @@ async function run() {
     }
   }
 
-  const everyRule = customRules && customRules.length > 0 ? [...rules, ...customRules] : rules
-
-  const buildLinter = () => data.allRules
-    ? new Linter(Herb, everyRule, config, everyRule)
-    : Linter.from(Herb, config, customRules)
+  const buildLinter = () => Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
 
   const linter = buildLinter()
 
@@ -108,15 +109,12 @@ async function run() {
   const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
   const fixMessages: string[] = []
 
-  const isRuleAutocorrectable = (ruleName: string): boolean => {
+  const fixabilityOf = (offense: LintOffense): Fixability => {
     const ruleClass = linter.rules.find(
-      (rule) => rule.ruleName === ruleName
+      (rule) => rule.ruleName === offense.rule
     )
 
-    if (!ruleClass) return false
-
-    // TODO: fix types
-    return (ruleClass as any).autocorrectable === true
+    return fixabilityFor(offense, ruleClass)
   }
 
   for (const filename of data.files) {
@@ -141,13 +139,11 @@ async function run() {
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
 
-      content = autofixResult.source
-
       for (const offense of autofixResult.unfixed) {
         allOffenses.push({
           filename,
           offense,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
@@ -168,7 +164,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }

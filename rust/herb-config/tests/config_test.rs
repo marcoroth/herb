@@ -136,7 +136,7 @@ mod config_exists {
   fn returns_true_when_config_file_exists() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.2\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n").unwrap();
 
     assert!(Config::exists(dir.path()));
   }
@@ -146,7 +146,7 @@ mod config_exists {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.2\n").unwrap();
+    fs::write(&config_path, "version: 0.10.3\n").unwrap();
 
     assert!(Config::exists(&config_path));
   }
@@ -159,7 +159,7 @@ mod config_read_raw_yaml {
   fn reads_raw_yaml_content_from_config_file() {
     let dir = tempfile::tempdir().unwrap();
 
-    fs::write(dir.path().join(".herb.yml"), "version: 0.10.2\n# a comment\n").unwrap();
+    fs::write(dir.path().join(".herb.yml"), "version: 0.10.3\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(dir.path()).unwrap().contains("# a comment"));
   }
@@ -169,7 +169,7 @@ mod config_read_raw_yaml {
     let dir = tempfile::tempdir().unwrap();
     let config_path = dir.path().join(".herb.yml");
 
-    fs::write(&config_path, "version: 0.10.2\n# a comment\n").unwrap();
+    fs::write(&config_path, "version: 0.10.3\n# a comment\n").unwrap();
 
     assert!(Config::read_raw_yaml(&config_path).unwrap().contains("# a comment"));
   }
@@ -248,11 +248,11 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn applies_mutation_to_existing_yaml() {
-    let original = "version: 0.10.2\nlinter:\n  enabled: true\n";
+    let original = "version: 0.10.3\nlinter:\n  enabled: true\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
-    assert!(updated.contains("version: 0.10.2"));
+    assert!(updated.contains("version: 0.10.3"));
     assert!(updated.contains("enabled: true"));
     assert!(updated.contains("html-tag-name-lowercase:"));
     assert!(updated.contains("enabled: false"));
@@ -260,7 +260,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn merges_rules_without_overwriting_existing_rules() {
-    let original = "version: 0.10.2\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
+    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-img-require-alt:\n      enabled: false\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -270,7 +270,7 @@ mod config_apply_mutation_to_yaml_string {
 
   #[test]
   fn updates_existing_rule_configuration() {
-    let original = "version: 0.10.2\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
+    let original = "version: 0.10.3\nlinter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: true\n      severity: error\n";
 
     let updated = herb_config::apply_mutation_to_yaml_string(original, &disable("html-tag-name-lowercase")).unwrap();
 
@@ -451,6 +451,66 @@ mod config_instance_methods {
   #[test]
   fn is_rule_enabled_returns_true_when_rule_is_not_configured() {
     assert!(config_from_yaml("linter:\n  rules:\n    erb-no-empty-tags:\n      severity: warning\n").is_rule_enabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn default_rule_enabled_returns_none_when_all_is_not_configured() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    html-tag-name-lowercase:\n      enabled: false\n").default_rule_enabled(),
+      None
+    );
+  }
+
+  #[test]
+  fn default_rule_enabled_returns_the_all_pseudo_rule_setting() {
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").default_rule_enabled(),
+      Some(false)
+    );
+    assert_eq!(
+      config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n").default_rule_enabled(),
+      Some(true)
+    );
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_true_for_unconfigured_rules_when_all_is_disabled() {
+    assert!(config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n").is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_rules_re_enabled_over_a_disabled_all() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      enabled: true\n");
+
+    assert!(!config.is_rule_disabled("html-img-require-alt"));
+    assert!(config.is_rule_disabled("html-tag-name-lowercase"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_rules_configured_without_enabled_when_all_is_disabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      severity: warning\n");
+
+    assert!(!config.is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_returns_false_for_unconfigured_rules_when_all_is_enabled() {
+    assert!(!config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n").is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_disabled_still_honors_explicit_disables_when_all_is_enabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: true\n    html-img-require-alt:\n      enabled: false\n");
+
+    assert!(config.is_rule_disabled("html-img-require-alt"));
+  }
+
+  #[test]
+  fn is_rule_enabled_for_path_returns_false_for_unconfigured_rules_when_all_is_disabled() {
+    let config = config_from_yaml("linter:\n  rules:\n    all:\n      enabled: false\n    html-img-require-alt:\n      enabled: true\n");
+
+    assert!(!config.is_rule_enabled_for_path("html-tag-name-lowercase", "app/views/home/index.html.erb"));
+    assert!(config.is_rule_enabled_for_path("html-img-require-alt", "app/views/home/index.html.erb"));
   }
 
   #[test]
@@ -996,9 +1056,9 @@ mod config_upgrade_workflow {
 
     fs::write(&config_path, "version: 0.8.0\n\nlinter:\n  enabled: true\n").unwrap();
 
-    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.10.2");
+    let contents = fs::read_to_string(&config_path).unwrap().replace("version: 0.8.0", "version: 0.10.3");
     fs::write(&config_path, contents).unwrap();
 
-    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.10.2".to_string()));
+    assert_eq!(Config::load(dir.path(), None).unwrap().config_version, Some("0.10.3".to_string()));
   }
 }

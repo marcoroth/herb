@@ -55,4 +55,49 @@ describe("turbo-permanent-require-id", () => {
 
     assertOffenses('<div class="flash" data-turbo-permanent data-controller="flash">Flash</div>')
   })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with data-turbo-permanent and an id", () => {
+      expectNoOffenses('<%= tag.div id: "cart", data: { turbo_permanent: true } %>')
+    })
+
+    test("passes when no `turbo_permanent` key is given", () => {
+      expectNoOffenses('<%= tag.div class: "counter" %>')
+    })
+
+    test("fails for tag.div with data-turbo-permanent and no id", () => {
+      expectError(MESSAGE)
+
+      assertOffenses('<%= tag.div data: { turbo_permanent: true } %>')
+    })
+
+    test("fails for content_tag with data-turbo-permanent and no id", () => {
+      expectError(MESSAGE)
+
+      assertOffenses('<%= content_tag :div, "1 item", data: { turbo_permanent: true } %>')
+    })
+
+    test("fails for the block form with data-turbo-permanent and no id", () => {
+      expectError(MESSAGE)
+
+      assertOffenses('<%= tag.div(data: { turbo_permanent: true }) do %>1 item<% end %>')
+    })
+
+    test("passes for a dynamic id, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div id: dom_id(cart), data: { turbo_permanent: true } %>')
+    })
+
+    test("passes for an interpolated id", () => {
+      expectNoOffenses('<%= tag.div id: "cart-#{cart.id}", data: { turbo_permanent: true } %>')
+    })
+
+    // ActionView drops `id` entirely when the value is nil, so this renders a permanent
+    // element with no id at all. The parser still emits the attribute node, so the rule
+    // sees an id and stays quiet.
+    test.fails("fails for a nil id, which ActionView omits entirely", () => {
+      expectError(MESSAGE)
+
+      assertOffenses('<%= tag.div id: nil, data: { turbo_permanent: true } %>')
+    })
+  })
 })

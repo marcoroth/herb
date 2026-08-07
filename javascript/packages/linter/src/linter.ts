@@ -2,6 +2,7 @@ import { Location } from "@herb-tools/core"
 import { BackendLintResult } from "@herb-tools/core"
 import picomatch from "picomatch"
 
+import { semverGreaterThan } from "@herb-tools/core"
 import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
@@ -13,8 +14,7 @@ import { ParseCache } from "./parse-cache.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
-import { semverGreaterThan } from "./semver.js"
-import { resolveSeverity } from "@herb-tools/config"
+import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend, BackendLintOffense } from "@herb-tools/core"
@@ -70,7 +70,6 @@ export interface FilterRulesResult {
   notEnabledByDefault: number
 }
 
-
 /**
  * A leading byte-order mark is stripped from `node.source` but still counted in
  * the Prism byte offsets, so slicing the Ruby out lands three bytes late and
@@ -80,13 +79,18 @@ export interface FilterRulesResult {
 function stripByteOrderMark(source: string): string {
   return source.charCodeAt(0) === 0xfeff ? source.slice(1) : source
 }
-
+export interface FilterRulesOptions {
+  only?: string[]
+  all?: boolean
+}
 export class Linter {
   public rules: RuleClass[]
   public rulesSkippedByVersion: VersionSkippedRule[] = []
   public rulesDisabledByConfig: number = 0
   public rulesNotEnabledByDefault: number = 0
   public mode: LinterMode = "cli"
+  public onlyRules?: string[]
+  public allRules: boolean = false
 
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
@@ -108,17 +112,20 @@ export class Linter {
    * @param herb - The Herb backend instance for parsing and lexing
    * @param config - Optional full Config instance for rule filtering, severity overrides, and path-based filtering
    * @param customRules - Optional array of custom rules to include alongside built-in rules
+   * @param options - Optional filtering options, like restricting the linter to a set of rules via `only`
    * @returns A configured Linter instance
    */
-  static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[]): Linter {
+  static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[], options?: FilterRulesOptions): Linter {
     const allRules = customRules ? [...rules, ...customRules] : rules
     const configVersion = config?.configVersion
-    const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion)
+    const filterResult = Linter.filterRulesByConfig(allRules, config?.linter?.rules, configVersion, options)
 
     const linter = new Linter(herb, filterResult.enabled, config, allRules)
     linter.rulesSkippedByVersion = filterResult.skippedByVersion
     linter.rulesDisabledByConfig = filterResult.disabledByConfig
     linter.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
+    linter.onlyRules = Linter.normalizeOnlyRules(options?.only)
+    linter.allRules = options?.all ?? false
 
     return linter
   }
@@ -149,26 +156,62 @@ export class Linter {
    * Priority:
    * 1. User explicitly enabled/disabled (if rule config exists in userRulesConfig)
    * 2. Version gating (if rule.introducedIn > configVersion, skip unless explicitly enabled)
-   * 3. Default config from rule's defaultConfig getter
+   * 3. The `all` pseudo rule in userRulesConfig, if configured
+   * 4. Default config from rule's defaultConfig getter
+   *
+   * The `all` pseudo rule replaces every rule's own default. When it enables
+   * everything, version gating is bypassed as well, since holding rules back
+   * would contradict the setting. When it disables everything, gating stays in
+   * place but can't change the outcome: the rule ends up disabled either way.
+   *
+   * When `options.only` is provided all of the above is bypassed and exactly the
+   * requested rules are enabled, regardless of the user configuration.
+   *
+   * When `options.all` is provided all of the above is bypassed and every available
+   * rule is enabled, regardless of the user configuration.
    *
    * @param allRules - All available rule classes to filter from
    * @param userRulesConfig - Optional user configuration for rules
    * @param configVersion - Optional version from the user's .herb.yml for version-gated filtering
+   * @param options - Optional filtering options, like restricting the linter to a set of rules via `only`
    * @returns Object with enabled rules and rules skipped due to version gating
    */
   static filterRulesByConfig(
     allRules: RuleClass[],
     userRulesConfig?: Record<string, RuleConfig>,
-    configVersion?: string
+    configVersion?: string,
+    options?: FilterRulesOptions
   ): FilterRulesResult {
+    const onlyRules = Linter.normalizeOnlyRules(options?.only)
+
+    if (onlyRules) {
+      return {
+        enabled: allRules.filter(ruleClass => onlyRules.includes(ruleClass.ruleName)),
+        skippedByVersion: [],
+        disabledByConfig: 0,
+        notEnabledByDefault: 0
+      }
+    }
+
+    if (options?.all) {
+      return {
+        enabled: [...allRules],
+        skippedByVersion: [],
+        disabledByConfig: 0,
+        notEnabledByDefault: 0
+      }
+    }
+
     const enabled: RuleClass[] = []
     const skippedByVersion: VersionSkippedRule[] = []
     let disabledByConfig = 0
     let notEnabledByDefault = 0
 
+    const allRulesDefault = userRulesConfig?.[ALL_RULES_KEY]?.enabled
+
     for (const ruleClass of allRules) {
       const instance = new ruleClass()
-      const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
+      const defaultEnabled = allRulesDefault ?? instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
       const userRuleConfig = userRulesConfig?.[ruleClass.ruleName]
 
       if (userRuleConfig !== undefined) {
@@ -181,7 +224,7 @@ export class Linter {
         continue
       }
 
-      if (configVersion && ruleClass.introducedIn) {
+      if (allRulesDefault !== true && configVersion && ruleClass.introducedIn) {
         if (semverGreaterThan(ruleClass.introducedIn, configVersion)) {
           if (defaultEnabled) {
             skippedByVersion.push({
@@ -204,6 +247,17 @@ export class Linter {
     }
 
     return { enabled, skippedByVersion, disabledByConfig, notEnabledByDefault }
+  }
+
+  /**
+   * Normalizes a list of rule names for `only` filtering.
+   * @param only - Optional list of rule names
+   * @returns Deduplicated list of rule names, or undefined when no rules were requested
+   */
+  protected static normalizeOnlyRules(only?: string[]): string[] | undefined {
+    if (!only || only.length === 0) return undefined
+
+    return [...new Set(only)]
   }
 
   /**
@@ -306,7 +360,7 @@ export class Linter {
   ): UnboundLintOffense[] {
     const ruleName = rule.ruleName
 
-    if (this.config && context?.fileName) {
+    if (this.config && context?.fileName && !this.onlyRules && !this.allRules) {
       if (!this.config.isRuleEnabledForPath(ruleName, context.fileName)) {
         return []
       }
@@ -554,13 +608,13 @@ export class Linter {
    */
   protected lintWithJavaScript(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    this.parseCache.clear()
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
     const parseResult = this.parseCache.get(source)
 
-    // Check for file-level ignore directive using visitor
     if (hasLinterIgnoreDirective(parseResult)) {
       return {
         offenses: [],
@@ -571,6 +625,7 @@ export class Linter {
         ignored: 0
       }
     }
+
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
     const sourceLines = source.split("\n")
@@ -583,6 +638,7 @@ export class Linter {
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
         const offenses = rule.check(parseResult)
+
         this.offenses.push(...offenses)
       }
     }
@@ -600,7 +656,8 @@ export class Linter {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
-      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      framework: context?.framework ?? this.config?.framework
     }
 
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
@@ -610,8 +667,6 @@ export class Linter {
       const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
-      // Skip parser rules whose parse result has errors (unless the rule consumes parser errors)
-      // Skip lexer/source rules when the default parse has errors
       if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0 && !ruleClass.consumesParserErrors) continue
       } else if (hasParserErrors) {
@@ -713,6 +768,8 @@ export class Linter {
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
   autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    this.parseCache.clear()
+
     const includeUnsafe = options?.includeUnsafe ?? false
 
     if (this.useNativeBackend && offensesToFix === undefined) {
@@ -721,7 +778,8 @@ export class Linter {
 
     context = {
       ...context,
-      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth
+      indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      framework: context?.framework ?? this.config?.framework
     }
 
     const byteOrderMark = source.charCodeAt(0) === 0xfeff ? "\ufeff" : ""
@@ -781,7 +839,7 @@ export class Linter {
         }
 
         if (offense.autofixContext) {
-          const originalNodeType = offense.autofixContext.node.type
+          const originalNodeType = offense.autofixContext.nodeType ?? offense.autofixContext.node.type
           const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(

@@ -9,6 +9,14 @@ import type { RewriteContext } from "@herb-tools/rewriter"
 import type { HerbBackend, ParseResult, ParseOptions } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 
+export type FormatSkipReason = "parse-errors" | "scaffold" | "ignore-directive"
+
+export interface FormatResult {
+  output: string
+  skipped: FormatSkipReason | null
+  errorCount: number
+}
+
 /**
  * Formatter uses a Herb Backend to parse the source and then
  * formats the resulting AST into a well-indented, wrapped string.
@@ -59,15 +67,21 @@ export class Formatter {
    * Format a source string, optionally overriding format options per call.
    */
   format(source: string, options: FormatOptions = {}, filePath?: string): string {
+    return this.formatWithResult(source, options, filePath).output
+  }
+
+  formatWithResult(source: string, options: FormatOptions = {}, filePath?: string): FormatResult {
     const result = this.parse(source)
 
     if (result.options.action_view_helpers) {
       console.warn("[Herb Formatter] Warning: Formatting a document parsed with `action_view_helpers: true`. The result may not be 100% accurate.")
     }
 
-    if (result.failed) return source
-    if (isScaffoldTemplate(result)) return source
-    if (hasFormatterIgnoreDirective(result.value)) return source
+    const errors = result.recursiveErrors()
+
+    if (errors.length > 0) return { output: source, skipped: "parse-errors", errorCount: errors.length }
+    if (isScaffoldTemplate(result)) return { output: source, skipped: "scaffold", errorCount: 0 }
+    if (hasFormatterIgnoreDirective(result.value)) return { output: source, skipped: "ignore-directive", errorCount: 0 }
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
@@ -105,7 +119,7 @@ export class Formatter {
       }
     }
 
-    return formatted
+    return { output: formatted, skipped: null, errorCount: 0 }
   }
 
   private parse(source: string): ParseResult {

@@ -3,7 +3,7 @@ use herb::Visitor;
 
 use crate::print_context::PrintContext;
 use crate::printer::Printer;
-use crate::printing_visitor::impl_printing_visitor;
+use crate::printer_visitor::impl_printer_visitor;
 
 pub struct IndentPrinter {
   context: PrintContext,
@@ -128,4 +128,4 @@ impl Printer for IndentPrinter {
   }
 }
 
-impl_printing_visitor!(IndentPrinter);
+impl_printer_visitor!(IndentPrinter);

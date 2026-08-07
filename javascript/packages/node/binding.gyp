@@ -41,6 +41,7 @@
         "./extension/libherb/analyze/conditional_open_tags.c",
         "./extension/libherb/analyze/control_type.c",
         "./extension/libherb/analyze/invalid_structures.c",
+        "./extension/libherb/analyze/iteration_nodes.c",
         "./extension/libherb/analyze/missing_end.c",
         "./extension/libherb/analyze/parse_errors.c",
         "./extension/libherb/analyze/postfix_conditionals.c",

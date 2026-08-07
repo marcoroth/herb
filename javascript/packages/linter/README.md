@@ -20,8 +20,12 @@ npm install -g @herb-tools/linter
 pnpm add -g @herb-tools/linter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/linter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/linter template.html.erb
 ```
 
 ```shell [bun]
@@ -193,18 +197,23 @@ npx @herb-tools/linter template.html.erb --no-github
 ```
 
 **Exit Behavior:** <Badge type="info" text="v0.8.7+" />
-```bash
-# Exit with error code when warnings or higher are present
-npx @herb-tools/linter template.html.erb --fail-level warning
-
-# Exit with error code when info diagnostics or higher are present
-npx @herb-tools/linter template.html.erb --fail-level info
-
-# Exit with error code when any diagnostic (including hints) is present
-npx @herb-tools/linter template.html.erb --fail-level hint
-```
 
 By default, the linter exits with code `1` only when errors are present. The `--fail-level` option allows you to control this behavior for CI/CD pipelines where you want stricter enforcement. Valid values are: `error` (default), `warning`, `info`, `hint`.
+
+Exit with error code when warnings or higher are present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level warning
+```
+
+Exit with error code when info diagnostics or higher are present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level info
+```
+
+Exit with error code when any diagnostic (including hints) is present:
+```bash
+npx @herb-tools/linter template.html.erb --fail-level hint
+```
 
 This can also be configured in `.herb.yml`:
 ```yaml [.herb.yml]
@@ -213,6 +222,85 @@ linter:
 ```
 
 The CLI flag takes precedence over the configuration file.
+
+**Reported Severities:** <Badge type="info" text="^0.11.0" />
+
+By default, every offense is reported. The `--log-level` option keeps low-severity noise out of the output and out of GitHub Actions annotations, which is useful on large codebases where `hint` and `info` offenses would otherwise drown out the ones you care about.
+
+Only report errors, hiding warnings, info and hints:
+```bash
+npx @herb-tools/linter template.html.erb --log-level error
+```
+
+Only report warnings and errors:
+```bash
+npx @herb-tools/linter template.html.erb --log-level warning
+```
+
+Offenses below the level are still counted: they show up in the summary, they still count towards `--fail-level`, and they still show up in your editor. Only the individual reports (and CI annotations) are omitted.
+
+This can also be configured in `.herb.yml`:
+```yaml [.herb.yml]
+linter:
+  logLevel: warning
+```
+
+The CLI flag takes precedence over the configuration file.
+
+**Running Specific Rules:** <Badge type="info" text="^0.10.3" />
+
+Only run a single rule:
+```bash
+npx @herb-tools/linter --only html-img-require-alt
+```
+
+Only run multiple rules (comma-separated):
+```bash
+npx @herb-tools/linter --only html-img-require-alt,html-tag-name-lowercase
+```
+
+The flag can also be passed multiple times:
+```bash
+npx @herb-tools/linter --only html-img-require-alt --only html-tag-name-lowercase
+```
+
+Combine it with `--fix` to only autocorrect a specific rule:
+```bash
+npx @herb-tools/linter --fix --only html-tag-name-lowercase
+```
+
+The `--only` option runs exactly the given rules and ignores the rule configuration in `.herb.yml`. This means rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for rolling out a single rule across a codebase, or for checking what a rule would report before enabling it in `.herb.yml`.
+
+Everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Passing an unknown rule name exits with an error, so typos won't silently lint nothing.
+
+**Running Every Rule:** <Badge type="info" text="^0.10.3" />
+
+Run every available rule, regardless of how it is configured:
+```bash
+npx @herb-tools/linter --all-rules
+```
+
+`--all-rules` is the counterpart to `--only`: instead of narrowing the run down to a set of rules, it widens it to all of them. The same parts of the rule configuration in `.herb.yml` are ignored, so rules are run even if they are:
+
+- disabled via `enabled: false`
+- not enabled by default
+- skipped because they were introduced after the `version` in your `.herb.yml`
+- excluded for the linted files via rule-level `only`, `include` or `exclude` patterns
+
+This is useful for seeing everything Herb could report about a codebase, without changing `.herb.yml` first.
+
+Just like with `--only`, everything else still applies: which files get linted is unchanged, severity overrides from `.herb.yml` are respected, and offenses suppressed with `<%# herb:disable %>` comments stay suppressed (use `--ignore-disable-comments` to report them anyway).
+
+Since the two flags pull in opposite directions, `--all-rules` and `--only` can't be combined.
 
 **Autofix:**
 
@@ -239,6 +327,27 @@ The `--fix` flag automatically corrects offenses that have safe, deterministic f
 ::: warning
 Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
 :::
+
+Corrections are previewed automatically while a run has at most 20 correctable offenses, so most runs show them without being asked. Past that the diffs would crowd out the offenses themselves, and a tip points at the flag instead:
+
+```bash
+npx @herb-tools/linter --show-fix-diff
+```
+
+Each correctable offense is followed by a syntax-highlighted diff of the correction, with the characters that would actually change picked out. Nothing is written to disk, the heading names the flag that would apply it:
+
+```
+        Running --fix would correct this to:
+
+        app/views/gems/index.html.erb
+
+              2 │   <img src="a.png">
+          -   3 │   <span class='card'>Hello</span>
+          +     │   <span class="card">Hello</span>
+              4 │ </div>
+```
+
+Offenses that need `--fix-unsafely` say so instead, so the heading always names the flag that applies. `--show-fix-diff` has no effect on `--json` output.
 
 **Help and Version:**
 ```bash
@@ -267,7 +376,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -282,7 +391,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.2::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -445,6 +554,10 @@ linter:
   # # Valid values: error (default), warning, info, hint
   # failLevel: warning
 
+  # # Only report diagnostics of this severity or higher
+  # # Valid values: error, warning, info, hint (default)
+  # logLevel: warning
+
   # Additional glob patterns to include (additive to defaults)
   include:
     - '**/*.xml.erb'
@@ -521,13 +634,14 @@ import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
 
 class NoDivTagsVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node) {
-    if (!node.tag_name) return
-    if (node.tag_name.value !== "div") return
+    if (node.tag_name?.value === "div") {
+      this.addOffense(
+        `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
+        node.tag_name.location
+      )
+    }
 
-    this.addOffense(
-      `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
-      node.tag_name.location
-    )
+    super.visitHTMLOpenTagNode(node)
   }
 }
 
@@ -543,7 +657,7 @@ export default class NoDivTagsRule extends ParserRule {
 ```
 
 ```js [.herb/rules/no-inline-styles.mjs]
-import { BaseRuleVisitor, getAttributes, getAttributeName } from "@herb-tools/linter"
+import { BaseRuleVisitor, ParserRule, getAttributes, getAttributeName } from "@herb-tools/linter"
 
 class NoInlineStylesVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node) {
@@ -555,8 +669,7 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
       if (attributeName === "style") {
         this.addOffense(
           `Avoid using inline \`style\` attributes. Use CSS classes instead.`,
-          attribute.location,
-          "warning"
+          attribute.location
         )
       }
     }
@@ -565,18 +678,42 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
   }
 }
 
-export default class NoInlineStylesRule {
+export default class NoInlineStylesRule extends ParserRule {
   static ruleName = "no-inline-styles"
 
-  check(parseResult, context) {
+  get defaultConfig() {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result, context) {
     const visitor = new NoInlineStylesVisitor(this.ruleName, context)
-    visitor.visit(parseResult.value)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }
 ```
 
 :::
+
+**Calling `super` in visitor methods:**
+
+Each `visitFooNode()` method in the base visitor does up to three things:
+
+1. Calls `this.visitNode(node)`, a generic hook that runs for every node type
+2. Calls `this.visitERBNode(node)`, a shared hook that only runs for ERB node types
+3. Calls `this.visitChildNodes(node)`, which traverses the node's children
+
+For example, `visitHTMLOpenTagNode()` calls `visitNode()` and `visitChildNodes()`, while `visitERBContentNode()` calls `visitNode()`, `visitERBNode()`, and `visitChildNodes()`.
+
+Overriding a `visitFooNode()` method without calling `super` skips all three steps. Most importantly, `visitChildNodes()` is never called, so traversal stops at that node and the rule won't see anything below it. For leaf nodes like `ERBContentNode` this makes no difference, but for nodes with children like `HTMLElementNode`, `HTMLOpenTagNode`, or `ERBBlockNode` it means nested offenses go unreported.
+
+As a general rule, always call `super.visitFooNode(node)` unless you deliberately want to control traversal yourself. If you do, there are two alternatives:
+
+- `this.visitChildNodes(node)` traverses all children, but skips the `visitNode()` and `visitERBNode()` hooks
+- `this.visit(node.someChild)` visits only the children you pick
 
 **Rule Configuration:**
 

@@ -1,0 +1,5 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0020_handles empty escaped erb tag surrounded by text"
+input: "{source: \"a <%%> b\", locals: {}, options: {}}"
+---
+a  b

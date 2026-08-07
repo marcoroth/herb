@@ -16,11 +16,8 @@ pub mod token;
 pub mod union_types;
 pub mod visitor;
 
-pub use errors::{AnyError, ErrorNode, ErrorType};
-pub use herb::{
-  diff, extract_html, extract_ruby, extract_ruby_with_options, herb_version, lex, parse, parse_ruby, parse_with_options, prism_version, version, DiffOperation,
-  DiffResult, ExtractRubyOptions, ParserOptions, RubyParseResult,
-};
+pub(crate) mod style;
+
 pub use lex_result::LexResult;
 pub use location::Location;
 pub use nodes::{AnyNode, ERBNode, Node};
@@ -30,4 +27,11 @@ pub use range::Range;
 pub use token::Token;
 pub use visitor::Visitor;
 
-pub const VERSION: &str = "0.10.2";
+pub use errors::{AnyError, ErrorNode, ErrorType};
+
+pub use herb::{
+  diff, diff_with_options, extract_html, extract_ruby, extract_ruby_with_options, herb_version, lex, parse, parse_ruby, parse_with_options, prism_version,
+  version, DiffOperation, DiffOptions, DiffResult, ExtractRubyOptions, ParserOptions, RubyParseResult,
+};
+
+pub const VERSION: &str = "0.10.3";

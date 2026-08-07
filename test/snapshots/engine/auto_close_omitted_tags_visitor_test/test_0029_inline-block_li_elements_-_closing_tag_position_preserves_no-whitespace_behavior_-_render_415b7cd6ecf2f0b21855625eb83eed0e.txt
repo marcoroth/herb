@@ -1,0 +1,8 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0029_inline-block li elements - closing tag position preserves no-whitespace behavior - render"
+input: "{source: \"<ul>\\n  <li style=\\\"display: inline-block\\\">Foo\\n  <li style=\\\"display: inline-block\\\">Bar\\n</ul>\\n\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul>
+  <li style="display: inline-block">Foo
+  </li><li style="display: inline-block">Bar
+</li></ul>

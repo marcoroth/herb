@@ -272,4 +272,72 @@ describe("ActionViewNoSilentHelperRule", () => {
       </div>
     `)
   })
+
+  test("silent tag assigning a helper to a local variable is allowed", () => {
+    expectNoOffenses(dedent`
+      <% link = link_to "Home", root_path %>
+
+      <%= link %>
+    `)
+  })
+
+  test("silent tag assigning a captured render to a local variable is allowed", () => {
+    expectNoOffenses(dedent`
+      <% actions = capture { render "profiles/actions", user: user } %>
+
+      <% if actions.strip.present? %>
+        <%= actions %>
+      <% end %>
+    `)
+  })
+
+  test("silent tag passing a helper as an argument is allowed", () => {
+    expectNoOffenses(dedent`
+      <% collect(link_to("Home", root_path)) %>
+    `)
+  })
+
+  test("silent tag pushing a helper onto a collection is allowed", () => {
+    expectNoOffenses(dedent`
+      <% links << link_to("Home", root_path) %>
+    `)
+  })
+
+  test("silent tag assigning a helper to an instance variable is allowed", () => {
+    expectNoOffenses(dedent`
+      <% @link = link_to "Home", root_path %>
+    `)
+  })
+
+  test("silent tag with helper inside a conditional else branch is not allowed", () => {
+    expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
+
+    assertOffenses(dedent`
+      <% if admin? then admin_path else link_to "Home", root_path end %>
+    `)
+  })
+
+  test("silent tag with helper inside an unless else branch is not allowed", () => {
+    expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
+
+    assertOffenses(dedent`
+      <% unless admin? then admin_path else link_to "Home", root_path end %>
+    `)
+  })
+
+  test("silent tag with parenthesized helper is not allowed", () => {
+    expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
+
+    assertOffenses(dedent`
+      <% (link_to "Home", root_path) %>
+    `)
+  })
+
+  test("silent tag with helper on the right side of an or is not allowed", () => {
+    expectError("Avoid using `<% %>` with `link_to`. Use `<%= %>` to ensure the helper's output is rendered.")
+
+    assertOffenses(dedent`
+      <% show_link || link_to("Home", root_path) %>
+    `)
+  })
 })

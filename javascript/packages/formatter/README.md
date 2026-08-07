@@ -25,8 +25,12 @@ npm install -g @herb-tools/formatter
 pnpm add -g @herb-tools/formatter
 ```
 
-```shell [yarn]
+```shell [yarn 1]
 yarn global add @herb-tools/formatter
+```
+
+```shell [yarn 4]
+yarn dlx @herb-tools/formatter template.html.erb
 ```
 
 ```shell [bun]
@@ -226,7 +230,7 @@ The `include` patterns are **additive** - they add to the defaults.
 
 - **`enabled`**: `true` or `false` - Must be `true` to enable formatting
 - **`indentWidth`**: Number (default: `2`) - Spaces per indentation level
-- **`maxLineLength`**: Number (default: `80`) - Maximum line length before wrapping. Note: tags with **more than 3 attributes** are always wrapped one-per-line, independent of `maxLineLength`.
+- **`maxLineLength`**: Number (default: `80`) - Maximum line length before wrapping. Tags whose attributes would exceed this length are wrapped one-per-line.
 - **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
 - **`exclude`**: Array of glob patterns - Patterns to exclude from formatting
 

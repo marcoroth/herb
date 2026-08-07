@@ -34,4 +34,34 @@ describe("html-aria-role-must-be-valid", () => {
 
     assertOffenses('<div role="roletype"></div>')
   })
+
+  describe("ActionView tag helpers", () => {
+    it("passes for tag.div with a valid role", () => {
+      expectNoOffenses('<%= tag.div role: "button" %>')
+    })
+
+    it("fails for tag.div with an invalid role", () => {
+      expectWarning("The `role` attribute must be a valid ARIA role. Role `buton` is not recognized.")
+
+      assertOffenses('<%= tag.div role: "buton" %>')
+    })
+
+    it("fails for content_tag with an invalid role", () => {
+      expectWarning("The `role` attribute must be a valid ARIA role. Role `buton` is not recognized.")
+
+      assertOffenses('<%= content_tag :div, "content", role: "buton" %>')
+    })
+
+    it("passes for a dynamic role, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div role: role_name %>')
+    })
+
+    it("passes for a nil role, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div role: nil %>')
+    })
+
+    it("passes for an interpolated role", () => {
+      expectNoOffenses('<%= tag.div role: "but#{suffix}" %>')
+    })
+  })
 })

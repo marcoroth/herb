@@ -1,8 +1,7 @@
 import {
   Visitor,
   Location,
-  hasERBOutput,
-  isEffectivelyStatic,
+  hasDynamicOutput,
   getValidatableStaticContent,
   getAttributeName,
   getStaticAttributeValue,
@@ -16,6 +15,7 @@ import {
 } from "@herb-tools/core"
 
 import type {
+  ERBOpenTagNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLElementNode,
@@ -165,6 +165,10 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
     this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBIterationBlockNode(node))
+  }
+
   visitERBElseNode(node: Nodes.ERBElseNode): void {
     this.startNewBranch(() => super.visitERBElseNode(node))
   }
@@ -257,14 +261,7 @@ export * from "./html-data.js"
 export * from "./aria-data.js"
 
 export { HTML_BOOLEAN_ATTRIBUTES, isBooleanAttribute } from "@herb-tools/core"
-
-export function isKnownHTMLElement(tagName: string): boolean {
-  return HTML_KNOWN_ELEMENTS.has(tagName.toLowerCase())
-}
-
-export function isCustomElement(tagName: string): boolean {
-  return tagName.includes("-")
-}
+export { HTML_ELEMENTS, HTML_ELEMENT_NAMES, HTML_VOID_ELEMENTS, isKnownHTMLElement, isVoidElement, isCustomElement } from "@herb-tools/core"
 
 export function isKnownSVGElement(tagName: string): boolean {
   return SVG_KNOWN_ELEMENTS.has(tagName.toLowerCase())
@@ -282,7 +279,7 @@ export interface StaticAttributeStaticValueParams {
   attributeValue: string
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
@@ -290,7 +287,7 @@ export interface StaticAttributeDynamicValueParams {
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
   originalAttributeName: string
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedValue?: string | null
 }
 
@@ -298,7 +295,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
 }
 
@@ -306,7 +303,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode
+  parentNode: HTMLOpenTagNode | ERBOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -340,13 +337,6 @@ export function isBlockElement(tagName: string): boolean {
 }
 
 /**
- * Checks if an element is a void element
- */
-export function isVoidElement(tagName: string): boolean {
-  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
-}
-
-/**
  * Attribute visitor that provides granular processing based on both
  * attribute name type (static/dynamic) and value type (static/dynamic)
  *
@@ -366,15 +356,20 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkAttributesOnNode(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkAttributesOnNode(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
-      const hasOutputERB = hasERBOutput(valueNodes)
-      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+      const hasOutputERB = hasDynamicOutput(valueNodes)
+      const isEffectivelyStaticValue = !hasDynamicOutput(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
         this.checkStaticAttributeStaticValue({

@@ -397,4 +397,82 @@ describe("whitespace preservation around ERB control flow", () => {
       expectFormattedToMatch(`<p><em><%= name %></em> created an account.</p>`)
     })
   })
+
+  // https://github.com/marcoroth/herb/issues/1922
+  describe("#1922 — space before an output tag preceded by a sibling node", () => {
+    test("keeps the space when a control-flow node precedes the line", () => {
+      expectFormattedToMatch(dedent`
+        <% if @show_x %>
+          x
+        <% end %>
+        y and <%= @z %>
+      `)
+    })
+
+    test("keeps the space when an HTML element precedes the line", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and <%= @z %>
+      `)
+    })
+
+    test("keeps the space when an output tag precedes the line", () => {
+      expect(formatter.format(dedent`
+        <%= @x %>
+        y and <%= @z %>
+      `)).toEqual(`<%= @x %> y and <%= @z %>`)
+    })
+
+    test("keeps the space inside a block element", () => {
+      expectFormattedToMatch(dedent`
+        <section>
+          <div>x</div>
+          y and <%= @z %>
+        </section>
+      `)
+    })
+
+    test("keeps text glued to the output tag when the source has no space", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        y and<%= @z %>
+      `)
+    })
+
+    test("keeps the space with no preceding sibling", () => {
+      expectFormattedToMatch(`y and <%= @z %>`)
+    })
+  })
+
+  describe("glued control flow on a line after a non-text-flow sibling", () => {
+    test("keeps an if glued on both sides after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        a<% if @b %>c<% end %>d
+      `)
+    })
+
+    test("keeps an unless glued on both sides after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        a<% unless @b %>c<% end %>d
+      `)
+    })
+
+    test("keeps glued punctuation after a block element", () => {
+      expectFormattedToMatch(dedent`
+        <div>x</div>
+        Hello<% if owner %> <%= owner.name %><% end %>!
+      `)
+    })
+
+    test("keeps an if glued after a control-flow block sibling", () => {
+      expectFormattedToMatch(dedent`
+        <% if @a %>
+          <div>x</div>
+        <% end %>
+        a<% if @b %>c<% end %>d
+      `)
+    })
+  })
 })

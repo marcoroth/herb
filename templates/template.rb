@@ -9,7 +9,7 @@ module Herb
   module Template
     def self.underscore(name)
       name
-        .gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2')
+        .gsub(/([A-Z])(?=[A-Z][a-z])/, '\1_')
         .gsub(/([a-z\d])([A-Z])/, '\1_\2')
     end
 
@@ -17,12 +17,32 @@ module Herb
     CONDITIONALLY_INVISIBLE_FIELD_CLASSES = ["PrismSerializedField", "PrismNodeField"].freeze
     ALL_INVISIBLE_FIELD_CLASSES = (ALWAYS_INVISIBLE_FIELD_CLASSES + CONDITIONALLY_INVISIBLE_FIELD_CLASSES).freeze
 
+    NON_NILABLE_RUBY_TYPES = [
+      "Array[Herb::AST::Node]",
+      "Array[Herb::AST::ERBWhenNode]",
+      "Array[Herb::AST::ERBInNode]",
+      "bool",
+      "nil"
+    ].freeze
+
     class Field
       attr_reader :name, :options
 
       def initialize(name:, **options)
         @name = name
         @options = options
+      end
+
+      def nilable?
+        !NON_NILABLE_RUBY_TYPES.include?(ruby_type)
+      end
+
+      def nilable_ruby_type
+        nilable? ? "#{ruby_type}?" : ruby_type
+      end
+
+      def writable?
+        options.fetch(:writable, false)
       end
 
       def always_invisible?
@@ -412,7 +432,7 @@ module Herb
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
 
-          type.new(name: field_name, kind: kind)
+          type.new(name: field_name, kind: kind, writable: field.fetch("writable", false))
         end
       end
 
@@ -482,6 +502,26 @@ module Herb
 
       def escaped_default
         @default ? Template.escape_string(@default) : nil
+      end
+    end
+
+    class HelperBlockArgument
+      attr_reader :name, :position, :type, :optional, :description
+
+      def initialize(config)
+        @name = config.fetch("name")
+        @position = config.fetch("position")
+        @type = Array(config.fetch("type"))
+        @optional = config.fetch("optional", false)
+        @description = config.fetch("description", "")
+      end
+
+      def type_display
+        @type.join(" | ")
+      end
+
+      def escaped_description
+        Template.escape_string(@description)
       end
     end
 
@@ -618,7 +658,7 @@ module Herb
                   :supported, :description, :signature, :documentation_url, :tag,
                   :content, :attributes_arg, :attributes_arg_with_block,
                   :transform_style, :custom_transform,
-                  :arguments, :options, :special_behaviors, :aliases
+                  :arguments, :options, :block_arguments, :special_behaviors, :aliases
 
       def initialize(config)
         @name = config.fetch("name")
@@ -645,6 +685,7 @@ module Herb
 
         @arguments = (config.fetch("arguments", []) || []).map { |arg| HelperArgument.new(arg) }
         @options = (config.fetch("options", []) || []).map { |opt| HelperOption.new(opt) }
+        @block_arguments = (config.fetch("block_arguments", []) || []).map { |arg| HelperBlockArgument.new(arg) }
 
         raw_behaviors = config.fetch("special_behaviors", []) || []
         @special_behaviors = raw_behaviors.map { |b| HelperSpecialBehavior.new(b) }

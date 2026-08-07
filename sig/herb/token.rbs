@@ -18,6 +18,9 @@ module Herb
 
     attr_reader type: String
 
+    # : (String | Symbol, String, ?location: Location, ?range: Range) -> Token
+    def self.from: (String | Symbol, String, ?location: Location, ?range: Range) -> Token
+
     # : (String, Range, Location, String) -> void
     def initialize: (String, Range, Location, String) -> void
 

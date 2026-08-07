@@ -18,6 +18,14 @@ class ConfigurationTest < Minitest::Spec
     File.write(File.join(@temp_dir, filename), content)
   end
 
+  def load_config_silently
+    config = nil
+
+    capture_io { config = Herb::Configuration.load(@temp_dir) }
+
+    config
+  end
+
   test "loads default configuration when no config file exists" do
     config = Herb::Configuration.load(@temp_dir)
 
@@ -28,7 +36,7 @@ class ConfigurationTest < Minitest::Spec
 
   test "loads configuration from .herb.yml" do
     write_config(<<~YAML)
-      version: "0.10.2"
+      version: "0.10.3"
       files:
         include:
           - "**/*.custom.erb"
@@ -37,8 +45,26 @@ class ConfigurationTest < Minitest::Spec
     config = Herb::Configuration.load(@temp_dir)
 
     assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
-    assert_equal "0.10.2", config.version
+    assert_equal "0.10.3", config.version
     assert_includes config.file_include_patterns, "**/*.custom.erb"
+  end
+
+  test "loads configuration using YAML anchors and aliases" do
+    write_config(<<~YAML)
+      version: "0.9.6"
+      files:
+        include: &patterns
+          - "**/*.custom.erb"
+          - "**/*.other.erb"
+        exclude: *patterns
+    YAML
+
+    config = Herb::Configuration.load(@temp_dir)
+
+    assert_includes config.file_include_patterns, "**/*.custom.erb"
+    assert_includes config.file_include_patterns, "**/*.other.erb"
+    assert_includes config.file_exclude_patterns, "**/*.custom.erb"
+    assert_includes config.file_exclude_patterns, "**/*.other.erb"
   end
 
   test "searches parent directories for config file" do
@@ -46,7 +72,7 @@ class ConfigurationTest < Minitest::Spec
     FileUtils.mkdir_p(subdir)
 
     write_config(<<~YAML)
-      version: "0.10.2"
+      version: "0.10.3"
       files:
         include:
           - "**/*.custom.erb"
@@ -826,5 +852,78 @@ class ConfigurationTest < Minitest::Spec
 
     assert_equal "ruby", config.framework
     assert_equal "erubi", config.template_engine
+  end
+
+  test "does not read a misnamed config file" do
+    write_config(<<~YAML, ".herb.yaml")
+      files:
+        include:
+          - "**/*.custom.erb"
+    YAML
+
+    config = load_config_silently
+
+    assert_nil config.config_path
+    assert_equal Herb::Configuration::DEFAULTS["files"]["include"], config.file_include_patterns
+  end
+
+  test "warns about a config file with the wrong extension" do
+    write_config("framework: actionview", ".herb.yaml")
+
+    assert_output(nil, /Ignoring #{Regexp.escape(File.join(@temp_dir, ".herb.yaml"))}: Herb only reads `\.herb\.yml`/) do
+      Herb::Configuration.load(@temp_dir)
+    end
+  end
+
+  test "warns about a config file missing the leading dot" do
+    write_config("framework: actionview", "herb.yml")
+
+    assert_output(nil, /Ignoring #{Regexp.escape(File.join(@temp_dir, "herb.yml"))}: Herb only reads `\.herb\.yml`/) do
+      Herb::Configuration.load(@temp_dir)
+    end
+  end
+
+  test "warns about every misnamed config file" do
+    Herb::Configuration::MISNAMED_CONFIG_FILENAMES.each { |filename| write_config("framework: actionview", filename) }
+
+    config = load_config_silently
+
+    assert_equal(
+      Herb::Configuration::MISNAMED_CONFIG_FILENAMES.map { |filename| File.join(@temp_dir, filename) },
+      config.misnamed_config_paths.map(&:to_s)
+    )
+  end
+
+  test "warns about a misnamed config file next to the real one" do
+    write_config("framework: actionview")
+    write_config("framework: actionview", ".herb.yaml")
+
+    config = nil
+
+    assert_output(nil, /Ignoring .*\.herb\.yaml/) do
+      config = Herb::Configuration.load(@temp_dir)
+    end
+
+    assert_equal File.join(@temp_dir, ".herb.yml"), config.config_path.to_s
+    assert_equal "actionview", config.framework
+  end
+
+  test "does not warn when only the real config file exists" do
+    write_config("framework: actionview")
+
+    assert_silent do
+      config = Herb::Configuration.load(@temp_dir)
+
+      assert_empty config.misnamed_config_paths
+    end
+  end
+
+  test "does not warn about unrelated YAML files" do
+    write_config("framework: actionview", "config.yml")
+    write_config("framework: actionview", ".herb.yml.bak")
+
+    assert_silent do
+      assert_empty Herb::Configuration.load(@temp_dir).misnamed_config_paths
+    end
   end
 end

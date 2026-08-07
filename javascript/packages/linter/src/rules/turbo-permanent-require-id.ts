@@ -3,7 +3,7 @@ import { getAttribute } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, ERBOpenTagNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -11,7 +11,12 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  private checkTurboPermanent(node: HTMLOpenTagNode): void {
+  visitERBOpenTagNode(node: ERBOpenTagNode): void {
+    this.checkTurboPermanent(node)
+    super.visitERBOpenTagNode(node)
+  }
+
+  private checkTurboPermanent(node: HTMLOpenTagNode | ERBOpenTagNode): void {
     const turboPermanentAttribute = getAttribute(node, "data-turbo-permanent")
 
     if (!turboPermanentAttribute) {
@@ -37,6 +42,12 @@ export class TurboPermanentRequireIdRule extends ParserRule {
     return {
       enabled: true,
       severity: "error"
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

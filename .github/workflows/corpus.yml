@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Clone corpus
         id: corpus
@@ -47,6 +47,7 @@ jobs:
 
       - name: Install the last released gem
         id: release
+        if: github.event_name != 'pull_request'
         run: |-
           version=$(gem search '^herb$' --remote --no-prerelease | sed -n 's/^herb (\([0-9][0-9.]*\).*/\1/p')
 
@@ -60,11 +61,29 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Comparing against herb $version"
 
+      - name: Check out the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          git fetch --depth 1 origin "$BASE_SHA"
+          git worktree add base "$BASE_SHA"
+
+      - name: Build the base branch
+        if: github.event_name == 'pull_request'
+        working-directory: base
+        run: |-
+          bundle install --jobs 4
+          bundle exec rake templates
+          bundle exec rake make
+          bundle exec rake compile
+
       - name: Wait for the corpus clone
         wait: [corpus]
 
       - name: Measure the last release
         id: measure-release
+        if: github.event_name != 'pull_request'
         background: true
         env:
           BUNDLE_GEMFILE: ""
@@ -74,7 +93,23 @@ jobs:
             --version "${{ steps.release.outputs.version }}" \
             --label "released ${{ steps.release.outputs.version }}" \
             --corpus corpus/erb \
-            --out corpus/runs/release.json
+            --out corpus/runs/baseline.json
+
+      - name: Measure the base branch
+        id: measure-base
+        if: github.event_name == 'pull_request'
+        background: true
+        env:
+          BUNDLE_GEMFILE: ""
+          RUBYOPT: ""
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |-
+          corpus/bin/measure-herb \
+            --gem-path base \
+            --label "$BASE_REF (${BASE_SHA::7})" \
+            --corpus corpus/erb \
+            --out corpus/runs/baseline.json
 
       - name: Render Templates
         run: bundle exec rake templates
@@ -85,7 +120,7 @@ jobs:
       - name: Compile Ruby extension
         run: bundle exec rake compile
 
-      - name: Wait for the release measurement
+      - name: Wait for the baseline measurement
         wait-all:
 
       - name: Measure this branch
@@ -107,13 +142,13 @@ jobs:
           set -o pipefail
 
           corpus/bin/diff-runs \
-            corpus/runs/release.json \
+            corpus/runs/baseline.json \
             corpus/runs/branch.json \
             --markdown comment.md \
             --fail-on-regression | tee comparison.txt
 
       - name: Comment on the pull request
-        if: failure() && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
+        if: (!cancelled()) && github.event_name == 'pull_request' && hashFiles('comment.md') != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NUMBER: ${{ github.event.pull_request.number }}
@@ -124,6 +159,8 @@ jobs:
           if [ -n "$existing" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@comment.md >/dev/null
             echo "Updated comment $existing."
+          elif grep -q "<!-- corpus-no-changes -->" comment.md; then
+            echo "No outcome changes; not posting a comment."
           else
             gh pr comment "$NUMBER" --body-file comment.md
             echo "Posted a new comment."
@@ -133,7 +170,7 @@ jobs:
         if: always()
         run: |-
           {
-            echo "### Corpus: this branch vs herb ${{ steps.release.outputs.version }}"
+            echo "### Corpus"
             echo
             echo '```'
             cat comparison.txt 2>/dev/null || echo "the comparison did not run"
@@ -142,7 +179,7 @@ jobs:
 
       - name: Upload runs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: corpus-runs
           path: corpus/runs/*.json
@@ -150,47 +187,58 @@ jobs:
 
   linter-parity:
     name: Linter Parity
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
     timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - parallel:
-        - name: Clone corpus
-          run: |-
-            git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
 
-        - name: Add LLVM apt Repo
-          run: |-
-            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-            sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
-            sudo apt update
-            xargs sudo apt-get install -y --no-install-recommends < Aptfile
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
 
-        - name: Set up Ruby
-          uses: ruby/setup-ruby@v1
-          with:
-            bundler-cache: true
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
 
-        - name: Set up Node
-          uses: actions/setup-node@v4
-          with:
-            node-version: 22
-            cache: yarn
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
 
-        - name: Set up Rust
-          uses: dtolnay/rust-toolchain@stable
-          with:
-            targets: wasm32-unknown-emscripten
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
 
-        - name: Set up Emscripten
-          uses: mymindstorm/setup-emsdk@v14
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-emscripten
 
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Set up Emscripten
+        uses: mymindstorm/setup-emsdk@v14
 
       - name: Render Templates
         run: bundle exec rake templates
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
 
       - name: Install JavaScript dependencies
         run: yarn install --frozen-lockfile
@@ -252,3 +300,199 @@ jobs:
               echo '```'
             done
           } >> "$GITHUB_STEP_SUMMARY"
+
+  printer:
+    name: Printer Roundtrip
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 30
+
+    # Comparing the Rust and JavaScript printers against each other only needs
+    # this flag flipped to "true", nothing else.
+    #
+    # TODO: turn it on once the UTF-8 BOM fix for the WASM bindings has landed.
+    # Emscripten decodes strings coming out of WASM with a plain
+    # `new TextDecoder()`, which drops a leading BOM, so the JavaScript printer
+    # loses it on the seven corpus files that start with one while the Rust
+    # printer keeps it. Everything else already agrees, so the comparison only
+    # fails on those seven. It has been run against a patched build and passes.
+    env:
+      COMPARE_IMPLEMENTATIONS: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Clone corpus
+        id: corpus
+        background: true
+        run: |-
+          git clone --depth 1 https://github.com/marcoroth/herb-corpus corpus
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: ".node-version"
+          cache: "yarn"
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: yarn install
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Build herb-print
+        run: cargo build --release -p herb-printer --features cli
+        working-directory: rust
+
+      - name: Build the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: yarn nx build @herb-tools/printer
+
+      - name: Wait for the corpus clone
+        wait: [corpus]
+
+      - name: Verify the printer round-trips the corpus
+        id: verify
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          rust/target/release/herb-print \
+            --glob \
+            --verify \
+            --force \
+            "corpus/erb/**/*.erb" > summary.txt 2> failures.txt
+
+          set -e
+
+          cat summary.txt
+          echo
+
+          mismatches=$(sed -n 's/.*Verifications:.*passed, \([0-9]*\) failed.*/\1/p' summary.txt)
+
+          if [ -z "$mismatches" ]; then
+            echo "::error::Could not read the verification count from herb-print"
+            exit 1
+          fi
+
+          if [ "$mismatches" -ne 0 ]; then
+            grep "Verification failed" failures.txt | head -n 100
+            echo "::error::The printer did not round-trip $mismatches file(s) that parsed cleanly"
+            exit 1
+          fi
+
+      - name: Print the corpus with the JavaScript printer
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        env:
+          NO_COLOR: "1"
+        run: |-
+          set +e
+
+          node javascript/packages/printer/bin/herb-print \
+            --glob \
+            --verify \
+            --force \
+            "corpus/erb/**/*.erb" > javascript-summary.txt 2> javascript-failures.txt
+
+          exit 0
+
+      - name: Compare the Rust and JavaScript printers
+        if: env.COMPARE_IMPLEMENTATIONS == 'true'
+        run: |-
+          strip_ansi() { sed $'s/\033\[[0-9;]*m//g'; }
+
+          failing_files() {
+            strip_ansi < "$1" | grep '^✗' | sed 's/^✗ //; s/: .*//' | sort
+          }
+
+          totals() {
+            strip_ansi < "$1" | sed -n '/^Summary:/,$p'
+          }
+
+          failing_files failures.txt > rust-failed-files.txt
+          failing_files javascript-failures.txt > javascript-failed-files.txt
+
+          totals summary.txt > rust-totals.txt
+          totals javascript-summary.txt > javascript-totals.txt
+
+          if ! diff -u rust-totals.txt javascript-totals.txt; then
+            echo "::error::The Rust and JavaScript printers report different totals"
+            exit 1
+          fi
+
+          if ! diff -u rust-failed-files.txt javascript-failed-files.txt; then
+            echo "::error::The Rust and JavaScript printers disagree on which files fail"
+            exit 1
+          fi
+
+          echo "Both printers agree on all $(wc -l < rust-failed-files.txt | tr -d ' ') failing files and on every total."
+
+      - name: Job summary
+        if: always()
+        run: |-
+          {
+            echo "### Printer Roundtrip"
+            echo
+
+            if [ -s summary.txt ]; then
+              echo '```'
+              cat summary.txt
+              echo '```'
+            else
+              echo "the roundtrip did not run"
+            fi
+
+            if [ -s failures.txt ]; then
+              echo
+              echo "<details><summary>Files that did not round-trip or parse</summary>"
+              echo
+              echo '```'
+              head -n 100 failures.txt
+              echo '```'
+              echo
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the roundtrip report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: printer-roundtrip
+          path: |
+            summary.txt
+            failures.txt
+            javascript-summary.txt
+            javascript-failures.txt
+          if-no-files-found: ignore
+          retention-days: 30

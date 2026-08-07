@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0021_erb loop with li elements - render"
+input: "{source: \"<ul><% items.each do |item| %><li><%= item %><% end %></ul>\", locals: {items: [\"A\", \"B\", \"C\"]}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul><li>A</li><li>B</li><li>C</li></ul>

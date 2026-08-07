@@ -124,7 +124,7 @@ lib/herb/visitor.rb
 rust/herb-linter/src/utils/aria_data.rs
 rust/herb-linter/src/utils/html_character_references.rs
 rust/herb-linter/src/utils/html_data.rs
-rust/herb-printer/src/printing_visitor.rs
+rust/herb-printer/src/printer_visitor.rs
 rust/src/action_view_helpers.rs
 rust/src/ast/nodes.rs
 rust/src/config.rs

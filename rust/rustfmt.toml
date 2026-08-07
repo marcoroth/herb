@@ -11,6 +11,7 @@ remove_nested_parens = true
 # Ignore generated files from templates
 # run using `cargo +nightly fmt`
 ignore = [
+  "herb-printer/src/printer_visitor.rs",
   "src/ast/nodes.rs",
   "src/errors.rs",
   "src/nodes.rs",

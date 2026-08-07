@@ -124,11 +124,22 @@ describe("erb-no-extra-whitespace-inside-tags", () => {
     `)
   })
 
-  it("should report info for ERB comment tags with single space after equals", () => {
-    expectInfo("`<%#=` looks like a temporarily commented ERB tag.", [1, 0])
-
-    assertOffenses(dedent`
+  it("should not report ERB comment tags with single space after equals", () => {
+    expectNoOffenses(dedent`
       <%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
+    `)
+  })
+
+  it("should not report commented ERB tags with whitespace after the hash", () => {
+    expectNoOffenses(dedent`
+      <%# = link_to "New watch list", new_watch_list_path %>
+      <%# == raw_content %>
+    `)
+  })
+
+  it("should not report ERB comment tags that look like section dividers", () => {
+    expectNoOffenses(dedent`
+      <%# === Section === %>
     `)
   })
 

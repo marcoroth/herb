@@ -15,6 +15,7 @@ import {
   FoldingRangeParams,
   DocumentHighlightParams,
   HoverParams,
+  CompletionParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
@@ -22,7 +23,10 @@ import {
 import { Service } from "./service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
+import { isConfigDocument } from "./utils"
 import { version } from "../package.json"
+
+import type { ExtractToPartialResult } from "./extract_code_action_service"
 
 export class Server {
   private service!: Service
@@ -61,11 +65,14 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
           hoverProvider: true,
+          completionProvider: {
+            triggerCharacters: [".", ":", "<", "&"],
+          },
         },
       }
 
@@ -98,7 +105,8 @@ export class Server {
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
           ...patterns,
-          { globPattern: `**/.herb.yml` },
+          { globPattern: `**/${Config.configPath}` },
+          ...Config.misnamedConfigPaths.map(misnamedPath => ({ globPattern: `**/${misnamedPath}` })),
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
@@ -128,7 +136,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        const isConfigChange = event.uri.endsWith("/.herb.yml")
+        const isConfigChange = isConfigDocument(event.uri)
         const isCustomRuleChange = event.uri.includes("/.herb/rules/")
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 
@@ -186,6 +194,14 @@ export class Server {
       return this.service.hoverService.getHover(document, params.position)
     })
 
+    this.connection.onCompletion((params: CompletionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return null
+
+      return this.service.completionService.getCompletions(document, params.position)
+    })
+
     this.connection.onCodeAction((params: CodeActionParams) => {
       const document = this.service.documentService.get(params.textDocument.uri)
 
@@ -205,8 +221,17 @@ export class Server {
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
       const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
+      const extractCodeActions = this.service.extractCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
+    })
+
+    this.connection.onRequest<ExtractToPartialResult, void>('herb/extractToPartial', (params: { textDocument: TextDocumentIdentifier, range: Range, name: string }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return { error: "The document isn't open." }
+
+      return this.service.extractCodeActionService.extractToPartial(document, params.range, params.name)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {

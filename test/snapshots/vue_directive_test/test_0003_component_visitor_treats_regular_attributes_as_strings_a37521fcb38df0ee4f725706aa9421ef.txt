@@ -1,0 +1,6 @@
+---
+source: "VueDirectiveTest#test_0003_component visitor treats regular attributes as strings"
+input: "{source: \"<Button class=\\\"btn-primary\\\" type=\\\"submit\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Button.new(class: "btn-primary", type: "submit")).to_s;
+_buf.to_s

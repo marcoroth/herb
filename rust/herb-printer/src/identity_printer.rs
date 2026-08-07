@@ -3,7 +3,7 @@ use herb::{ERBNode, Visitor};
 
 use crate::print_context::PrintContext;
 use crate::printer::Printer;
-use crate::printing_visitor::impl_printing_visitor;
+use crate::printer_visitor::impl_printer_visitor;
 
 #[derive(Default)]
 pub struct IdentityPrinter {
@@ -50,4 +50,4 @@ impl Printer for IdentityPrinter {
   }
 }
 
-impl_printing_visitor!(IdentityPrinter);
+impl_printer_visitor!(IdentityPrinter);

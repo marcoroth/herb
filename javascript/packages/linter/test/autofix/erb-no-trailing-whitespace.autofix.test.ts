@@ -337,4 +337,351 @@ describe("erb-no-trailing-whitespace autofix", () => {
       expect(result.unfixed).toHaveLength(0)
     })
   })
+
+  describe("inside tags", () => {
+    test("removes trailing whitespace between attributes", () => {
+      const input = '<div data-a="foo" \n  data-b="bar">\nlorem\n</div>\n'
+      const expected = '<div data-a="foo"\n  data-b="bar">\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace after tag name", () => {
+      const input = '<div \n  data-b="bar">\nlorem\n</div>\n'
+      const expected = '<div\n  data-b="bar">\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace before the tag closing", () => {
+      const input = '<div data-a="foo"  \n>\nlorem\n</div>\n'
+      const expected = '<div data-a="foo"\n>\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace inside a closing tag", () => {
+      const input = "<div>\nlorem\n</div \n>\n"
+      const expected = "<div>\nlorem\n</div\n>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace inside a self-closing tag", () => {
+      const input = '<img src="a.png" \n  alt="x" />\n'
+      const expected = '<img src="a.png"\n  alt="x" />\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes mixed trailing whitespace between attributes", () => {
+      const input = '<div data-a="foo" \t \n  data-b="bar">\nlorem\n</div>\n'
+      const expected = '<div data-a="foo"\n  data-b="bar">\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("preserves whitespace between attributes on the same line", () => {
+      const input = '        <div     data-a="foo" \n                   data-b="bar">\n        lorem\n        </div>\n'
+      const expected = '        <div     data-a="foo"\n                   data-b="bar">\n        lorem\n        </div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not modify trailing whitespace inside a skipped element's tag", () => {
+      const input = '<pre data-a="foo" \n  data-b="bar">\nlorem\n</pre>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(input)
+      expect(result.fixed).toHaveLength(0)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("fixes every trailing whitespace occurrence inside a multi-line tag", () => {
+      const input = '<div \n  data-a="foo" \n  data-b="bar" \n>\nlorem\n</div>\n'
+      const expected = '<div\n  data-a="foo"\n  data-b="bar"\n>\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(3)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("leaves no offenses behind after fixing", () => {
+      const input = '<div data-a="foo" \n  data-b="bar">\nlorem  \n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(linter.lint(result.source, { fileName: "test.html.erb" }).offenses).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace after a valueless attribute", () => {
+      const input = "<input disabled \n  required>\n"
+      const expected = "<input disabled\n  required>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace after an unquoted attribute value", () => {
+      const input = "<div class=foo \n  id=bar>\ny\n</div>\n"
+      const expected = "<div class=foo\n  id=bar>\ny\n</div>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace after a single-quoted attribute value", () => {
+      const input = "<div class='foo' \n  id='bar'>\ny\n</div>\n"
+      const expected = "<div class='foo'\n  id='bar'>\ny\n</div>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace inside a void element tag", () => {
+      const input = "<br \n>\n"
+      const expected = "<br\n>\n"
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes trailing whitespace before a self-closing slash", () => {
+      const input = '<img src="a.png" \n/>\n'
+      const expected = '<img src="a.png"\n/>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes a trailing tab between attributes", () => {
+      const input = '<div data-a="foo"\t\n  data-b="bar">\ny\n</div>\n'
+      const expected = '<div data-a="foo"\n  data-b="bar">\ny\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(1)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("removes a trailing vertical tab and form feed between attributes", () => {
+      const input = '<div data-a="foo"\v\n  data-b="bar"\f\n  data-c="baz">\ny\n</div>\n'
+      const expected = '<div data-a="foo"\n  data-b="bar"\n  data-c="baz">\ny\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(2)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("fixes nested elements that both have multi-line tags", () => {
+      const input = '<div \n  id="a">\n  <span \n    id="b">x</span>\n</div>\n'
+      const expected = '<div\n  id="a">\n  <span\n    id="b">x</span>\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(2)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("fixes trailing whitespace inside a tag and in text content together", () => {
+      const input = '<div id="a" \n  class="b">\nlorem  \n</div>\n'
+      const expected = '<div id="a"\n  class="b">\nlorem\n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(result.source).toBe(expected)
+      expect(result.fixed).toHaveLength(2)
+      expect(result.unfixed).toHaveLength(0)
+    })
+
+    test("does not introduce parse errors", () => {
+      const input = '<div     data-a="foo" \n                   data-b="bar">\n        lorem\n        </div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+      expect(Herb.parse(result.source).value.recursiveErrors()).toHaveLength(0)
+    })
+
+    test("is idempotent", () => {
+      const input = '<div \n  data-a="foo" \n  data-b="bar" \n>\nlorem  \n</div>\n'
+
+      const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+      const once = linter.autofix(input, { fileName: "test.html.erb" })
+      const twice = linter.autofix(once.source, { fileName: "test.html.erb" })
+
+      expect(twice.source).toBe(once.source)
+      expect(twice.fixed).toHaveLength(0)
+    })
+
+    describe("ERB", () => {
+      test("removes trailing whitespace after an attribute with an ERB value", () => {
+        const input = '<div class="<%= foo %>" \n  id="x">\ny\n</div>\n'
+        const expected = '<div class="<%= foo %>"\n  id="x">\ny\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(1)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("removes trailing whitespace after ERB in attribute position", () => {
+        const input = '<div <%= attributes %> \n  data-b="x">\ny\n</div>\n'
+        const expected = '<div <%= attributes %>\n  data-b="x">\ny\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(1)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("removes trailing whitespace after ERB control flow inside a tag", () => {
+        const input = '<div <% if condition %> \n  data-a="1" <% end %>>\ny\n</div>\n'
+        const expected = '<div <% if condition %>\n  data-a="1" <% end %>>\ny\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(1)
+        expect(result.unfixed).toHaveLength(0)
+      })
+    })
+
+    describe("whitespace significant elements", () => {
+      test("does not modify the open tag of a <textarea>", () => {
+        const input = '<textarea rows="2" \n  cols="3">\nx  \n</textarea>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(input)
+        expect(result.fixed).toHaveLength(0)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("does not modify the open tag of a <script>", () => {
+        const input = '<script type="text/javascript" \n  defer>\nvar x = 1;  \n</script>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(input)
+        expect(result.fixed).toHaveLength(0)
+        expect(result.unfixed).toHaveLength(0)
+      })
+
+      test("does not modify the open tag of a <style>", () => {
+        const input = '<style media="all" \n  scoped>\n.a { }  \n</style>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(input)
+        expect(result.fixed).toHaveLength(0)
+        expect(result.unfixed).toHaveLength(0)
+      })
+    })
+
+    describe("pathological input", () => {
+      test("handles a long run of trailing whitespace inside a tag", () => {
+        const input = '<div data-a="foo"' + "\t".repeat(50_000) + '\n  data-b="bar">\ny\n</div>\n'
+        const expected = '<div data-a="foo"\n  data-b="bar">\ny\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(1)
+        expect(result.unfixed).toHaveLength(0)
+      })
+    })
+
+    describe("line endings", () => {
+      test("strips carriage returns inside tags and text alike", () => {
+        const input = '<div data-a="foo"\r\n  data-b="bar">\r\nlorem\r\n</div>\r\n'
+        const expected = '<div data-a="foo"\n  data-b="bar">\nlorem\n</div>\n'
+
+        const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
+        const result = linter.autofix(input, { fileName: "test.html.erb" })
+
+        expect(result.source).toBe(expected)
+        expect(result.fixed).toHaveLength(4)
+        expect(result.unfixed).toHaveLength(0)
+      })
+    })
+  })
 })

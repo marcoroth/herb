@@ -8,7 +8,7 @@ members = [
 
 [package]
 name = "herb"
-version = "0.10.2"
+version = "0.10.3"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
@@ -34,12 +34,18 @@ crate-type = ["rlib"]
 [[bin]]
 name = "herb-rust"
 path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+default = []
+color = ["dep:colored"]
+cli = ["color"]
 
 [dependencies]
-libc = "0.2"
-colored = "3"
+colored = { version = "3", optional = true }
 
 [dev-dependencies]
+colored = "3"
 insta = "1.40"
 cargo-insta = "1.43.2"
 

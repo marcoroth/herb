@@ -29,6 +29,12 @@ fn apply_mutation_to_document(document: &mut yerba::Document, mutation: &Value, 
       continue;
     }
 
+    if value.is_sequence() {
+      replace_or_insert_value(document, &path, value)?;
+
+      continue;
+    }
+
     set_or_insert(document, &path, &scalar_text(value))?;
   }
 
@@ -47,6 +53,14 @@ fn insert_value(document: &mut yerba::Document, path: &str, value: &Value) -> Re
   document
     .insert_into(path, &text, yerba::InsertPosition::Last)
     .map_err(|error| format!("failed to insert `{}`: {}", path, error))
+}
+
+fn replace_or_insert_value(document: &mut yerba::Document, path: &str, value: &Value) -> Result<(), String> {
+  if document.is_valid_selector(path) {
+    document.delete(path).map_err(|error| format!("failed to replace `{}`: {}", path, error))?;
+  }
+
+  insert_value(document, path, value)
 }
 
 fn set_or_insert(document: &mut yerba::Document, path: &str, value: &str) -> Result<(), String> {
@@ -69,13 +83,20 @@ fn scalar_text(value: &Value) -> String {
   }
 }
 
+fn ensure_loadable(yaml: String) -> Result<String, String> {
+  match serde_yaml::from_str::<serde_yaml::Value>(&yaml) {
+    Ok(_) => Ok(yaml),
+    Err(error) => Err(format!("the mutation produced invalid YAML and was not applied: {}", error)),
+  }
+}
+
 pub fn apply_mutation_to_yaml_string(yaml: &str, mutation: &HerbConfigOptions) -> Result<String, String> {
   let mut document = yerba::parse(yaml).map_err(|error| format!("failed to parse YAML: {}", error))?;
   let mutation = serde_yaml::to_value(mutation).map_err(|error| error.to_string())?;
 
   apply_mutation_to_document(&mut document, &mutation, "")?;
 
-  Ok(document.to_string())
+  ensure_loadable(document.to_string())
 }
 
 pub fn create_config_yaml_string(mutation: &HerbConfigOptions, version: Option<&str>) -> Result<String, String> {
@@ -91,7 +112,7 @@ pub fn create_config_yaml_string(mutation: &HerbConfigOptions, version: Option<&
     apply_mutation_to_document(&mut document, &mutation, "")?;
   }
 
-  Ok(document.to_string())
+  ensure_loadable(document.to_string())
 }
 
 pub fn mutate_config_file(config_path: &Path, mutation: &HerbConfigOptions, version: Option<&str>) -> Result<(), String> {

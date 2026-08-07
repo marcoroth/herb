@@ -13,8 +13,9 @@ export class GitHubActionsFormatter extends BaseFormatter {
   private wrapLines: boolean
   private truncateLines: boolean
 
-  constructor(wrapLines: boolean = true, truncateLines: boolean = false) {
-    super()
+  constructor(wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string) {
+    super(projectPath)
+
     this.wrapLines = wrapLines
     this.truncateLines = truncateLines
     this.highlighter = new Highlighter()
@@ -45,21 +46,15 @@ export class GitHubActionsFormatter extends BaseFormatter {
       await this.highlighter.initialize()
     }
 
-    for (const { filename, offense, content: providedContent } of allDiagnostics) {
-      let content = providedContent
-
-      if (content === undefined) {
-        try {
-          content = readFileSync(filename, "utf-8")
-        } catch {
-          content = ""
-        }
-      }
-
+    for (const processedFile of allDiagnostics) {
+      const { filename, offense } = processedFile
+      const content = this.contentFor(processedFile)
       const originalNoColor = process.env.NO_COLOR
+
       process.env.NO_COLOR = "1"
 
       let plainCodePreview = ""
+
       try {
         const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,

@@ -2,16 +2,13 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use colored::Colorize;
 use herb::ParserOptions;
 use herb_config::{Config, Tool};
 use herb_printer::IdentityPrinter;
+use rayon::prelude::*;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-const GREEN: &str = "\x1b[32m";
-const RED: &str = "\x1b[31m";
-const BOLD: &str = "\x1b[1m";
-const RESET: &str = "\x1b[0m";
 
 #[derive(Default)]
 struct CLIOptions {
@@ -23,6 +20,13 @@ struct CLIOptions {
   help: bool,
   glob: bool,
   force: bool,
+  verbose: bool,
+}
+
+enum Outcome {
+  ReadError(String),
+  PrintError(String),
+  Printed { matched: bool, bytes: usize },
 }
 
 fn main() {
@@ -62,7 +66,7 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
   let exclude = files_config.exclude.clone().unwrap_or_default();
 
   let files = match &options.input {
-    Some(input) => config.glob_files(&[input.clone()], current_directory, &exclude),
+    Some(input) => config.glob_files(std::slice::from_ref(input), current_directory, &exclude),
     None => config.find_files_for_linter(Some(current_directory)),
   };
 
@@ -79,36 +83,48 @@ fn run_glob(options: &CLIOptions, config: &Config, current_directory: &Path) -> 
 
   println!("Processing {} files...\n", files.len());
 
-  for file in &files {
-    let input = match fs::read_to_string(file) {
-      Ok(input) => input,
-      Err(error) => {
-        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Error{RESET} - {error}");
-        failed_files += 1;
-        continue;
-      }
-    };
+  let outcomes: Vec<Outcome> = files
+    .par_iter()
+    .map(|file| match fs::read_to_string(file) {
+      Err(error) => Outcome::ReadError(error.to_string()),
+      Ok(input) => match print_source(&input) {
+        Err(error) => Outcome::PrintError(error),
+        Ok(output) => Outcome::Printed {
+          matched: input == output,
+          bytes: input.len(),
+        },
+      },
+    })
+    .collect();
 
-    match print_source(&input) {
-      Ok(output) => {
+  for (file, outcome) in files.iter().zip(&outcomes) {
+    match outcome {
+      Outcome::ReadError(error) => {
+        eprintln!("{} {}: {} - {error}", "✗".red(), file.bold(), "Error".red().bold());
+        failed_files += 1;
+      }
+
+      Outcome::PrintError(error) => {
+        eprintln!("{} {}: {} - {error}", "✗".red(), file.bold(), "Failed".red().bold());
+        failed_files += 1;
+      }
+
+      Outcome::Printed { matched, bytes } => {
         total_files += 1;
-        total_bytes += input.len();
+        total_bytes += bytes;
 
         if options.verify {
-          if input == output {
-            println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Perfect match{RESET}");
+          if *matched {
+            if options.verbose {
+              println!("{} {}: {}", "✓".green(), file.bold(), "Perfect match".green());
+            }
           } else {
-            eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Verification failed{RESET} - differences detected");
+            eprintln!("{} {}: {} - differences detected", "✗".red(), file.bold(), "Verification failed".red().bold());
             verification_failures += 1;
           }
-        } else {
-          println!("{GREEN}✓{RESET} {BOLD}{file}{RESET}: {GREEN}Processed{RESET}");
+        } else if options.verbose {
+          println!("{} {}: {}", "✓".green(), file.bold(), "Processed".green());
         }
-      }
-
-      Err(error) => {
-        eprintln!("{RED}✗{RESET} {BOLD}{file}{RESET}: {BOLD}{RED}Failed{RESET} - {error}");
-        failed_files += 1;
       }
     }
   }
@@ -141,7 +157,7 @@ fn run_single(options: &CLIOptions, config: &Config, current_directory: &Path) -
 
   let files_config = config.get_files_config_for_tool(Tool::Linter);
   let exclude = files_config.exclude.clone().unwrap_or_default();
-  let matched = config.glob_files(&[input_arg.clone()], current_directory, &exclude);
+  let matched = config.glob_files(std::slice::from_ref(&input_arg), current_directory, &exclude);
 
   if matched.is_empty() && input_path.exists() {
     if !options.force {
@@ -198,9 +214,9 @@ fn run_single(options: &CLIOptions, config: &Config, current_directory: &Path) -
 
   if options.verify {
     if input == output {
-      eprintln!("{GREEN}✓ Verification passed{RESET} - output matches input exactly");
+      eprintln!("{} - output matches input exactly", "✓ Verification passed".green());
     } else {
-      eprintln!("{RED}✗ Verification failed{RESET} - output differs from input");
+      eprintln!("{} - output differs from input", "✗ Verification failed".red());
 
       return 1;
     }
@@ -228,7 +244,7 @@ fn print_source(input: &str) -> Result<String, String> {
 
   let parse_result = herb::parse_with_options(input, &options).map_err(|error| error.to_string())?;
 
-  if !parse_result.errors().is_empty() {
+  if !parse_result.recursive_errors().is_empty() {
     return Err("to parse".to_string());
   }
 
@@ -262,6 +278,7 @@ fn parse_args(args: Vec<String>) -> CLIOptions {
       "--stats" => options.stats = true,
       "--glob" => options.glob = true,
       "--force" => options.force = true,
+      "--verbose" => options.verbose = true,
       "-h" | "--help" => options.help = true,
 
       _ => {
@@ -297,6 +314,7 @@ Options:
   --stats                      Show parsing and printing statistics
   --glob                       Treat input as glob pattern
   --force                      Process files even if excluded by configuration
+  --verbose                    Print a line for every file, not just failures
   -h, --help                   Show this help message
 
 Examples:

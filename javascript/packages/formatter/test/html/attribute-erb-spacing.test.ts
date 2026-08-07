@@ -282,11 +282,19 @@ describe("Attribute ERB Spacing", () => {
     })
 
     test("keeps the ERB when the element is followed by a block element", () => {
-      expectFormattedToMatch(dedent`
+      const source = dedent`
         <strong <%= call(:me) %>>0</strong>
         / 2048 character limit
         <div></div>
-      `)
+      `
+
+      const expected = dedent`
+        <strong <%= call(:me) %>>0</strong> / 2048 character limit
+        <div></div>
+      `
+
+      expect(formatter.format(source)).toEqual(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("keeps the ERB when the element is nested in a block element", () => {

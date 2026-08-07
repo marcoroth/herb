@@ -86,6 +86,28 @@ class HelperOption {
   public String getDescription() { return description; }
 }
 
+class HelperBlockArgument {
+  private final String name;
+  private final int position;
+  private final String type;
+  private final boolean optional;
+  private final String description;
+
+  HelperBlockArgument(String name, int position, String type, boolean optional, String description) {
+    this.name = name;
+    this.position = position;
+    this.type = type;
+    this.optional = optional;
+    this.description = description;
+  }
+
+  public String getName() { return name; }
+  public int getPosition() { return position; }
+  public String getType() { return type; }
+  public boolean isOptional() { return optional; }
+  public String getDescription() { return description; }
+}
+
 /**
  * Implicit attribute metadata for a tag helper.
  */
@@ -130,6 +152,7 @@ class HelperEntry {
   private final HelperImplicitAttribute implicitAttribute;
   private final List<HelperArgument> arguments;
   private final List<HelperOption> options;
+  private final List<HelperBlockArgument> blockArguments;
   private final List<String> specialBehaviors;
   private final List<String> aliases;
 
@@ -137,7 +160,8 @@ class HelperEntry {
     String name, HelperType type, String source, String gem, String output, String visibility, String tagName,
     boolean isVoid, boolean supportsBlock, boolean preferredForTag, boolean supported, String detectStyle, String description,
     String signature, String documentationUrl, HelperImplicitAttribute implicitAttribute,
-    List<HelperArgument> arguments, List<HelperOption> options, List<String> specialBehaviors, List<String> aliases
+    List<HelperArgument> arguments, List<HelperOption> options, List<HelperBlockArgument> blockArguments,
+    List<String> specialBehaviors, List<String> aliases
   ) {
     this.name = name;
     this.type = type;
@@ -157,6 +181,7 @@ class HelperEntry {
     this.implicitAttribute = implicitAttribute;
     this.arguments = arguments;
     this.options = options;
+    this.blockArguments = blockArguments;
     this.specialBehaviors = specialBehaviors;
     this.aliases = aliases;
   }
@@ -179,6 +204,7 @@ class HelperEntry {
   public HelperImplicitAttribute getImplicitAttribute() { return implicitAttribute; }
   public List<HelperArgument> getArguments() { return arguments; }
   public List<HelperOption> getOptions() { return options; }
+  public List<HelperBlockArgument> getBlockArguments() { return blockArguments; }
   public List<String> getSpecialBehaviors() { return specialBehaviors; }
   public List<String> getAliases() { return aliases; }
 }
@@ -226,6 +252,7 @@ public final class HelperRegistry {
 <%- end -%>
         List.of(<%= helper.arguments.map { |arg| "new HelperArgument(\"#{arg.name}\", #{arg.position}, \"#{arg.type_display}\", #{arg.optional}, #{arg.default ? "\"#{arg.escaped_default}\"" : "null"}, #{arg.splat}, \"#{arg.escaped_description}\")" }.join(", ") %>),
         List.of(<%= helper.options.map { |opt| "new HelperOption(\"#{opt.name}\", \"#{opt.type_display}\", #{opt.maps_to ? "\"#{opt.maps_to}\"" : "null"}, \"#{opt.escaped_description}\")" }.join(", ") %>),
+        List.of(<%= helper.block_arguments.map { |arg| "new HelperBlockArgument(\"#{arg.name}\", #{arg.position}, \"#{arg.type_display}\", #{arg.optional}, \"#{arg.escaped_description}\")" }.join(", ") %>),
         List.of(<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>),
         List.of(<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>)
       );

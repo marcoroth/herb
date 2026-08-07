@@ -4,7 +4,7 @@ pub mod indent_printer;
 pub mod print_context;
 pub mod printer;
 
-mod printing_visitor;
+mod printer_visitor;
 
 pub use erb_to_ruby_string_printer::{ERBToRubyStringOptions, ERBToRubyStringPrinter};
 pub use identity_printer::IdentityPrinter;

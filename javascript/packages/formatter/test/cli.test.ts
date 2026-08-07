@@ -84,7 +84,7 @@ describe("CLI Binary", () => {
 
     await mkdir("test-dir", { recursive: true })
     await writeFile(configFile, dedent`
-      version: 0.10.2
+      version: 0.10.3
       formatter:
         enabled: false
     `)
@@ -234,7 +234,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("Checked 1 file, formatted")
+      expect(result.stdout).toContain("1 formatted")
       expect(result.stdout).toContain(`Formatted: ${testFile}`)
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
@@ -254,7 +254,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("Checked 2 files, formatted")
+      expect(result.stdout).toContain("2 formatted")
       expect(result.stdout).not.toContain("file(s)")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
@@ -278,17 +278,55 @@ describe("CLI Binary", () => {
   })
 
   it("should reject --check with stdin", async () => {
-    const result = await execBinary(["--check"], "<div>test</div>")
+    const result = await execBinary(["--check", "-"], "<div>test</div>")
 
     expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
   })
 
   it("should reject -c with stdin", async () => {
-    const result = await execBinary(["-c"], "<div>test</div>")
+    const result = await execBinary(["-c", "-"], "<div>test</div>")
 
     expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
+  })
+
+  for (const stdin of ["pipe", "ignore"] as const)  {
+    it(`should check configured files with --check when stdin is a non-TTY ${stdin}`, async () => {
+      const directory = `test-non-tty-${stdin}`
+      const input = '<div><p>   Not formatted   </p></div>'
+
+      await mkdir(directory, { recursive: true })
+      await writeFile(join(directory, "unformatted.html.erb"), input)
+
+      try {
+        const result = await execBinary(["--check"], undefined, { cwd: directory, stdin })
+
+        expect(result.stderr).not.toContain("--check mode is not supported with stdin")
+        expectExitCode(result, 1)
+        expect(result.stdout).toContain("unformatted.html.erb")
+        expect(result.stdout).toContain("not formatted")
+      } finally {
+        await rm(directory, { recursive: true }).catch(() => {})
+      }
+    })
+  }
+
+  it("should pass --check with a non-TTY stdin when all files are formatted", async () => {
+    const directory = "test-non-tty-stdin-formatted"
+    const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "formatted.html.erb"), input)
+
+    try {
+      const result = await execBinary(["--check"], undefined, { cwd: directory, stdin: "pipe" })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("clean")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
   })
 
   it("should pass --check when file is already formatted", async () => {
@@ -301,7 +339,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["--check", testFile])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("all files are properly formatted")
+      expect(result.stdout).toContain("clean")
     } finally {
       await unlink(testFile).catch(() => {})
     }
@@ -338,7 +376,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("The following")
       expect(result.stdout).toContain("not formatted")
       expect(result.stdout).toContain("unformatted.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+      expect(result.stdout).toContain("1 unformatted")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -452,7 +490,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Formatted: test-fixtures/file1.xml.erb")
       expect(result.stdout).toContain("Formatted: test-fixtures/file2.xml.erb")
       expect(result.stdout).not.toContain("ignored.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
     })
 
     it("should handle recursive glob pattern", async () => {
@@ -466,7 +504,7 @@ describe("CLI Binary", () => {
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/top.xml.erb")
       expect(result.stdout).toContain("Formatted: test-fixtures/nested/deep.xml.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
     })
 
     it("should handle mixed file extensions with glob", async () => {
@@ -481,7 +519,7 @@ describe("CLI Binary", () => {
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/file.xml.erb")
       expect(result.stdout).toContain("Formatted: test-fixtures/file.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
     })
 
     it("should handle glob with --check mode", async () => {
@@ -506,7 +544,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("not formatted")
       expect(result.stdout).toContain("bad.xml.erb")
       expect(result.stdout).not.toContain("good.xml.erb")
-      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+      expect(result.stdout).toContain("1 unformatted")
     })
 
     it("should handle no files matching glob pattern", async () => {
@@ -533,7 +571,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
-      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+      expect(result.stdout).toContain("1 formatted")
     })
   })
 
@@ -565,7 +603,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Formatted: test-advanced/sub2/file3.xml.erb")
       expect(result.stdout).not.toContain("root.xml.erb")
       expect(result.stdout).not.toContain("ignore.html.erb")
-      expect(result.stdout).toContain("Checked 3 files, formatted 3 files")
+      expect(result.stdout).toContain("3 formatted")
     })
 
     it("should handle brace expansion patterns", async () => {
@@ -581,7 +619,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Formatted: test-advanced/config.xml.erb")
       expect(result.stdout).toContain("Formatted: test-advanced/manifest.xml.erb")
       expect(result.stdout).not.toContain("other.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
     })
 
     it("should handle directory argument with mixed file types", async () => {
@@ -598,7 +636,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Formatted: test-advanced/page.html.erb")
       expect(result.stdout).not.toContain("file.xml.erb") // Only .html.erb by default for directories
       expect(result.stdout).not.toContain("readme.txt")
-      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+      expect(result.stdout).toContain("1 formatted")
     })
 
     it("should handle empty directory gracefully", async () => {
@@ -654,7 +692,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("bad.xml.erb")
       expect(result.stdout).not.toContain("good1.xml.erb")
       expect(result.stdout).not.toContain("good2.xml.erb")
-      expect(result.stdout).toContain("Checked 3 files, found 1 unformatted file")
+      expect(result.stdout).toContain("1 unformatted")
     })
   })
 
@@ -678,7 +716,7 @@ describe("CLI Binary", () => {
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-multi/file1.html.erb")
       expect(result.stdout).toContain("Formatted: test-multi/file2.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
     })
 
     it("should handle multiple files with mixed formatting states", async () => {
@@ -693,7 +731,7 @@ describe("CLI Binary", () => {
       expectExitCode(result, 0)
       expect(result.stdout).not.toContain("Formatted: test-multi/formatted.html.erb")
       expect(result.stdout).toContain("Formatted: test-multi/unformatted.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, formatted 1 file")
+      expect(result.stdout).toContain("1 formatted")
     })
 
     it("should exit with error if one file doesn't exist", async () => {
@@ -715,7 +753,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       // Should only format once
-      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+      expect(result.stdout).toContain("1 formatted")
     })
 
     it("should handle --check with multiple files", async () => {
@@ -732,7 +770,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("not formatted")
       expect(result.stdout).toContain("file2.html.erb")
       expect(result.stdout).not.toContain("file1.html.erb")
-      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+      expect(result.stdout).toContain("1 unformatted")
     })
 
     it("should reject stdin mixed with file arguments", async () => {
@@ -758,7 +796,7 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Formatted: test-multi/specific.html.erb")
       expect(result.stdout).toContain("Formatted: test-multi/pattern1.xml.erb")
       expect(result.stdout).toContain("Formatted: test-multi/pattern2.xml.erb")
-      expect(result.stdout).toContain("Checked 3 files, formatted 3 files")
+      expect(result.stdout).toContain("3 formatted")
     })
   })
 
@@ -907,7 +945,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("Using Herb config file")
-      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+      expect(result.stdout).toContain("2 formatted")
 
       const formatted1 = await readFile(file1, 'utf-8')
       const formatted2 = await readFile(file2, 'utf-8')
@@ -1002,7 +1040,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("Using Herb config file")
-      expect(result.stdout).toContain("Checked 3 files")
+      expect(result.stdout).toContain("3 files")
 
       const formatted1 = await readFile(file1, 'utf-8')
       const formatted2 = await readFile(file2, 'utf-8')
@@ -1042,7 +1080,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("Using Herb config file")
-      expect(result.stdout).toContain("all files are properly formatted")
+      expect(result.stdout).toContain("clean")
     })
 
     it("should detect unformatted files correctly with config settings", async () => {

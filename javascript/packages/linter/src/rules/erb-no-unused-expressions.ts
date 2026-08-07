@@ -3,7 +3,7 @@ import { PrismVisitor, substringFromByteOffset , locationFromByteOffset } from "
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { isERBOutputNode, isRubyParameterNode, isPrismNodeType } from "@herb-tools/core"
-import { isAssignmentNode, isDebugOutputCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
+import { isAssignmentNode, isDebugOutputCall, isSleepCall, isCallOnLocal, SIDE_EFFECT_METHODS } from "./prism-rule-utils.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode, ERBRenderNode, ERBBlockNode, ParserOptions, PrismNode } from "@herb-tools/core"
@@ -68,6 +68,7 @@ class UnusedExpressionCollector extends PrismVisitor {
       if (this.isMutationCall(node)) return false
       if (this.isSideEffectCall(node)) return false
       if (isDebugOutputCall(node)) return false
+      if (isSleepCall(node)) return false
       if (this.blockLocalNames.size > 0 && isCallOnLocal(node, this.blockLocalNames)) return false
 
       return true
@@ -136,13 +137,20 @@ class ERBNoUnusedExpressionsVisitor extends BaseRuleVisitor {
     const collector = new UnusedExpressionCollector(this.exemptLocalNames)
     collector.visit(prismNode)
 
+    const tagOpening = node.tag_opening?.value ?? "<%"
+    const tagClosing = node.tag_closing?.value ?? "%>"
+
     for (const expression of collector.expressions) {
       const { startOffset, length } = expression.location
       const expressionSource = substringFromByteOffset(source, startOffset, length)
       const location = locationFromByteOffset(source, startOffset, length)
 
+      const collapsedExpression = expressionSource.replace(/\s*\n\s*/g, " ")
+      const tag = `${tagOpening} ${collapsedExpression} ${tagClosing}`
+      const suggestion = `<%= ${collapsedExpression} ${tagClosing}`
+
       this.addOffense(
-        `Avoid unused expressions in silent ERB tags. \`${expressionSource}\` is evaluated but its return value is discarded. Use \`<%= ... %>\` to output the value or remove the expression.`,
+        `Avoid unused expressions in silent ERB tags. \`${tag}\` is evaluated but its return value is discarded. Use \`${suggestion}\` to output the value or remove the expression.`,
         location,
         undefined,
         undefined,

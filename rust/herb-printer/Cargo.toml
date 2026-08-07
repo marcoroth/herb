@@ -14,7 +14,13 @@ path = "src/lib.rs"
 [[bin]]
 name = "herb-print"
 path = "src/bin/herb_print.rs"
+required-features = ["cli"]
+
+[features]
+cli = ["dep:colored", "dep:herb-config", "dep:rayon"]
 
 [dependencies]
 herb = { path = ".." }
-herb-config = { path = "../herb-config" }
+colored = { version = "3", optional = true }
+herb-config = { path = "../herb-config", optional = true }
+rayon = { version = "1.10", optional = true }

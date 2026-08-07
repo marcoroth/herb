@@ -43,6 +43,10 @@ function trimWhitespaceNodes(nodes: Node[]): Node[] {
   return nodes.slice(start, end)
 }
 
+function haveIdenticalBodies(elements: HTMLElementNode[]): boolean {
+  return elements.every(element => IdentityPrinter.print(element) === IdentityPrinter.print(elements[0]))
+}
+
 function allEquivalentElements(nodes: Node[]): nodes is HTMLElementNode[] {
   if (nodes.length < 2) return false
   if (!nodes.every(node => isHTMLElementNode(node))) return false
@@ -228,51 +232,55 @@ class ERBNoDuplicateBranchElementsVisitor extends BaseRuleVisitor<DuplicateBranc
     const prefixCount = findCommonPrefixCount(significantBranches, minLength)
     const suffixCount = findCommonSuffixCount(significantBranches, minLength, prefixCount)
 
+    const groups: HTMLElementNode[][] = []
+
     for (let index = 0; index < prefixCount; index++) {
-      const elements = significantBranches.map(branch => branch[index] as HTMLElementNode)
-      this.reportAndRecurse(elements, conditionalNode, state)
+      groups.push(significantBranches.map(branch => branch[index] as HTMLElementNode))
     }
 
     for (let offset = 0; offset < suffixCount; offset++) {
-      const elements = significantBranches.map(branch => branch[branch.length - 1 - offset] as HTMLElementNode)
-      this.reportAndRecurse(elements, conditionalNode, state)
+      groups.push(significantBranches.map(branch => branch[branch.length - 1 - offset] as HTMLElementNode))
+    }
+
+    const sharedElementsSpanBranches = significantBranches.every(branch => branch.length === prefixCount + suffixCount)
+    const divergingGroupCount = groups.filter(elements => !haveIdenticalBodies(elements)).length
+    const canWrapConditional = sharedElementsSpanBranches && divergingGroupCount === 1
+
+    for (const elements of groups) {
+      this.reportAndRecurse(elements, conditionalNode, state, canWrapConditional)
     }
   }
 
-  private reportAndRecurse(elements: HTMLElementNode[], conditionalNode: ConditionalNode, state: { isFirstOffense: boolean }): void {
+  private reportAndRecurse(elements: HTMLElementNode[], conditionalNode: ConditionalNode, state: { isFirstOffense: boolean }, canWrapConditional: boolean): void {
     const bodies = elements.map(element => element.body)
-    const bodiesMatch = elements.every(element => IdentityPrinter.print(element) === IdentityPrinter.print(elements[0]))
+    const bodiesMatch = haveIdenticalBodies(elements)
 
-    for (const element of elements) {
-      const printed = IdentityPrinter.print(element.open_tag)
+    if (bodiesMatch || canWrapConditional) {
+      for (const element of elements) {
+        const printed = IdentityPrinter.print(element.open_tag)
 
-      if (bodiesMatch) {
         const autofixContext = state.isFirstOffense
           ? { node: conditionalNode as Mutable<ConditionalNode> }
           : undefined
 
-        this.addOffense(
-          `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
-          element.location,
-          autofixContext,
-        )
+        if (bodiesMatch) {
+          this.addOffense(
+            `The \`${printed}\` element is duplicated across all branches of this conditional and can be moved outside.`,
+            element.location,
+            autofixContext,
+          )
+        } else {
+          const tagNameLocation = isHTMLOpenTagNode(element.open_tag) && element.open_tag.tag_name?.location
+            ? element.open_tag.tag_name.location
+            : element?.open_tag?.location || element.location
 
-        state.isFirstOffense = false
-      } else {
-        const autofixContext = state.isFirstOffense
-          ? { node: conditionalNode as Mutable<ConditionalNode> }
-          : undefined
-
-        const tagNameLocation = isHTMLOpenTagNode(element.open_tag) && element.open_tag.tag_name?.location
-          ? element.open_tag.tag_name.location
-          : element?.open_tag?.location || element.location
-
-        this.addOffense(
-          `The \`${printed}\` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.`,
-          tagNameLocation,
-          autofixContext,
-          "hint",
-        )
+          this.addOffense(
+            `The \`${printed}\` tag is repeated across all branches with different content. Consider extracting the shared tag outside the conditional.`,
+            tagNameLocation,
+            autofixContext,
+            "hint",
+          )
+        }
 
         state.isFirstOffense = false
       }
@@ -288,6 +296,7 @@ export class ERBNoDuplicateBranchElementsRule extends ParserRule<DuplicateBranch
   static ruleName = "erb-no-duplicate-branch-elements"
   static introducedIn = this.version("0.9.0")
   static autocorrectable = true
+  static autofixRequiresContext = true
   static reindentAfterAutofix = true
 
   get defaultConfig(): FullRuleConfig {
