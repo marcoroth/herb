@@ -10,6 +10,7 @@ import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribut
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPolymorphicURLRule } from "./rules/actionview-no-implicit-polymorphic-url.js"
 import { ActionViewNoRedundantLocalAssignsRule } from "./rules/actionview-no-redundant-local-assigns.js"
@@ -140,6 +141,7 @@ export const rules: RuleClass[] = [
   A11yNoRedundantImageAltRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoDynamicPartialPathRule,
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPolymorphicURLRule,
   ActionViewNoRedundantLocalAssignsRule,

@@ -110,3 +110,65 @@ export function isCallOnLocal(node: PrismNode, localNames: Set<string>): boolean
   return false
 }
 
+
+export interface RenderPartialExpression {
+  node: PrismNode
+  explicit: boolean
+}
+
+export function renderPartialExpression(call: PrismNode): RenderPartialExpression | null {
+  if (!isPrismNodeType(call, "CallNode")) return null
+
+  const [first] = call.arguments_?.arguments_ ?? []
+
+  if (!first) return null
+
+  if (!isPrismNodeType(first, "KeywordHashNode")) return { node: first, explicit: false }
+
+  for (const element of first.elements ?? []) {
+    if (!isPrismNodeType(element, "AssocNode")) continue
+    if (!isPrismNodeType(element.key, "SymbolNode")) continue
+    if (element.key.unescaped?.value !== "partial") continue
+
+    return { node: element.value, explicit: true }
+  }
+
+  return null
+}
+
+export function isStaticPartialPath(node: PrismNode): boolean {
+  if (isPrismNodeType(node, "StringNode")) return true
+
+  if (isPrismNodeType(node, "IfNode")) {
+    return branchesOf(node).every(branch => branch !== null && isStaticPartialPath(branch))
+  }
+
+  return false
+}
+
+function branchesOf(node: PrismNode): (PrismNode | null)[] {
+  const branches: (PrismNode | null)[] = [onlyStatement(node.statements)]
+  const subsequent = node.subsequent
+
+  if (!subsequent) return [...branches, null]
+
+  if (isPrismNodeType(subsequent, "ElseNode")) return [...branches, onlyStatement(subsequent.statements)]
+
+  return [...branches, subsequent]
+}
+
+function onlyStatement(statements: PrismNode | null | undefined): PrismNode | null {
+  if (!isPrismNodeType(statements, "StatementsNode")) return null
+
+  const body = statements.body ?? []
+
+  return body.length === 1 ? body[0] : null
+}
+
+const OUTPUT_TAG_OPENINGS = new Set(["<%=", "<%=="])
+
+export function isOutputRender(node: { tag_opening?: { value?: string } | null }): boolean {
+  const opening = node.tag_opening?.value
+
+  return opening !== undefined && OUTPUT_TAG_OPENINGS.has(opening)
+}
