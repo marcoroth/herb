@@ -36,7 +36,7 @@ fn no_config_version_enables_every_default_rule() {
 
 #[test]
 fn a_version_at_or_above_the_rule_keeps_it_enabled() {
-  let exact = linter_with_version(Some("0.10.2"));
+  let exact = linter_with_version(Some(herb_config::semver::UNRELEASED_VERSION));
   let unpinned = linter_with_version(None);
 
   assert_eq!(exact.rule_count(), unpinned.rule_count());

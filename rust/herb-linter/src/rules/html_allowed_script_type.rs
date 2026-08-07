@@ -64,7 +64,11 @@ impl AllowedScriptTypeVisitor {
       return;
     }
 
-    let allowed_list = ALLOWED_SCRIPT_TYPES.iter().map(|type_name| format!("`{}`", type_name)).collect::<Vec<_>>().join(", ");
+    let allowed_list = ALLOWED_SCRIPT_TYPES
+      .iter()
+      .map(|type_name| format!("`{}`", type_name))
+      .collect::<Vec<_>>()
+      .join(", ");
 
     let blank_suffix = if ALLOW_BLANK { " or blank" } else { "" };
 

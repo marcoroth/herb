@@ -167,8 +167,8 @@ pub fn print_attribute(attribute: &HTMLAttributeNode) -> String {
   }
 
   if let Some(ref value_node) = attribute.value {
-    if let Some(ref open_quote) = value_node.open_quote {
-      result.push_str(&open_quote.value);
+    if value_node.quoted {
+      result.push_str(value_node.open_quote.as_ref().map(|token| token.value.as_str()).unwrap_or("\""));
     }
 
     for child in &value_node.children {
@@ -190,8 +190,8 @@ pub fn print_attribute(attribute: &HTMLAttributeNode) -> String {
         _ => {}
       }
     }
-    if let Some(ref close_quote) = value_node.close_quote {
-      result.push_str(&close_quote.value);
+    if value_node.quoted {
+      result.push_str(value_node.close_quote.as_ref().map(|token| token.value.as_str()).unwrap_or("\""));
     }
   }
 
@@ -321,6 +321,15 @@ pub fn print_output_content(children: &[AnyNode]) -> String {
         if let Some(ref closing) = erb.tag_closing {
           result.push_str(&closing.value);
         }
+      }
+
+      // Action View helpers leave interpolation behind as a `RubyLiteralNode`,
+      // which prints back as the `#{...}` it came from
+      AnyNode::RubyLiteralNode(literal) => {
+        result.push('#');
+        result.push('{');
+        result.push_str(&literal.content);
+        result.push('}');
       }
 
       _ => {}

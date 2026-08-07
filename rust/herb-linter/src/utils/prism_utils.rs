@@ -93,6 +93,21 @@ pub fn is_call_on_local(node: &PrismNode, local_names: &[String]) -> bool {
   false
 }
 
+pub fn is_sleep_call(node: &PrismNode) -> bool {
+  if !node.is("CallNode") {
+    return false;
+  }
+
+  if node.name.as_deref() != Some("sleep") {
+    return false;
+  }
+
+  match node.receiver() {
+    None => true,
+    Some(receiver) => receiver.is("ConstantReadNode") && receiver.name.as_deref() == Some("Kernel"),
+  }
+}
+
 pub fn walk_prism<F: FnMut(&PrismNode) -> bool>(node: &PrismNode, visit: &mut F) {
   if !visit(node) {
     return;

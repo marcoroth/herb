@@ -1,14 +1,15 @@
-use crate::utils::html_data::RAW_TEXT_ELEMENTS;
 use crate::offense::Offense;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
 use crate::utils::html_character_references::is_valid_character_reference;
+use crate::utils::html_data::RAW_TEXT_ELEMENTS;
+use crate::utils::source_slice::location_from_content_offset;
 use crate::utils::tag_utils::get_tag_local_name;
 use herb::nodes::{AnyNode, DocumentNode};
 
 use herb::nodes::{HTMLElementNode, HTMLTextNode};
-use herb::{Location, ParseResult, Position, Visitor};
+use herb::{ParseResult, Visitor};
 use herb_config::{Severity, SeverityConfig};
 
 pub struct HTMLNoUnescapedEntitiesRule;
@@ -118,22 +119,6 @@ fn find_unescaped_occurrences(value: &str) -> Vec<UnescapedOccurrence> {
   }
 
   occurrences
-}
-
-fn location_from_content_offset(start_line: u32, start_column: u32, content: &str, offset: usize) -> Location {
-  let mut line = start_line;
-  let mut column = start_column;
-
-  for character in content[..offset].chars() {
-    if character == '\n' {
-      line += 1;
-      column = 0;
-    } else {
-      column += 1;
-    }
-  }
-
-  Location::new(Position::new(line, column), Position::new(line, column + 1))
 }
 
 impl Visitor for HTMLNoUnescapedEntitiesVisitor {

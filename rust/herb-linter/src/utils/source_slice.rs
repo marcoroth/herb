@@ -66,3 +66,19 @@ pub fn position_from_offset(source: &str, offset: usize) -> Position {
 pub fn location_from_offset(source: &str, start_offset: usize, end_offset: usize) -> Location {
   Location::new(position_from_offset(source, start_offset), position_from_offset(source, end_offset))
 }
+
+pub fn location_from_content_offset(start_line: u32, start_column: u32, content: &str, offset: usize) -> Location {
+  let mut line = start_line;
+  let mut column = start_column;
+
+  for character in content[..offset].chars() {
+    if character == '\n' {
+      line += 1;
+      column = 0;
+    } else {
+      column += 1;
+    }
+  }
+
+  Location::new(Position::new(line, column), Position::new(line, column + 1))
+}

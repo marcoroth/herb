@@ -7,14 +7,21 @@ pub mod a11y_no_aria_unsupported_elements;
 pub mod a11y_no_autofocus_attribute;
 pub mod a11y_no_redundant_image_alt;
 pub mod a11y_svg_has_accessible_text;
+pub mod actionview_no_helper_shadowing;
+pub mod actionview_no_implicit_polymorphic_url;
+pub mod actionview_no_redundant_local_assigns;
 pub mod actionview_no_silent_helper;
 pub mod actionview_no_silent_render;
+pub mod actionview_no_unnecessary_html_safe;
 pub mod actionview_no_unnecessary_tag_attributes;
+pub mod actionview_no_unused_strict_locals;
 pub mod actionview_no_void_element_content;
+pub mod actionview_prefer_collection_render;
 pub mod actionview_strict_locals_first_line;
 pub mod actionview_strict_locals_partial_only;
 pub mod erb_comment_syntax;
 pub mod erb_no_case_node_children;
+pub mod erb_no_commented_out_output_tags;
 pub mod erb_no_conditional_html_element;
 pub mod erb_no_conditional_open_tag;
 pub mod erb_no_debug_output;
@@ -31,17 +38,23 @@ pub mod erb_no_output_control_flow;
 pub mod erb_no_output_in_attribute_name;
 pub mod erb_no_output_in_attribute_position;
 pub mod erb_no_raw_output_in_attribute_value;
+pub mod erb_no_shadowed_block_argument;
 pub mod erb_no_silent_statement;
 pub mod erb_no_silent_tag_in_attribute_name;
+pub mod erb_no_sleep;
 pub mod erb_no_statement_in_script;
 pub mod erb_no_then_in_control_flow;
 pub mod erb_no_trailing_whitespace;
 pub mod erb_no_unsafe_js_attribute;
 pub mod erb_no_unsafe_raw;
 pub mod erb_no_unsafe_script_interpolation;
+pub mod erb_no_unused_block_argument;
 pub mod erb_no_unused_expressions;
 pub mod erb_no_unused_literals;
 pub mod erb_prefer_direct_output;
+pub mod erb_prefer_do_end_blocks;
+pub mod erb_prefer_each_over_map;
+pub mod erb_prefer_explicit_conditionals;
 pub mod erb_prefer_image_tag_helper;
 pub mod erb_require_trailing_newline;
 pub mod erb_require_whitespace_inside_tags;
@@ -82,6 +95,7 @@ pub mod html_no_duplicate_ids;
 pub mod html_no_duplicate_meta_names;
 pub mod html_no_empty_attributes;
 pub mod html_no_empty_headings;
+pub mod html_no_nested_forms;
 pub mod html_no_nested_links;
 pub mod html_no_positive_tab_index;
 pub mod html_no_self_closing;
@@ -96,6 +110,7 @@ pub mod html_tag_name_lowercase;
 pub mod parser_no_errors;
 pub mod source_indentation;
 pub mod svg_tag_name_capitalization;
+pub mod turbo_permanent_no_misleading_value;
 pub mod turbo_permanent_require_id;
 
 use crate::rule::AnyRule;
@@ -190,6 +205,7 @@ pub fn all_rules() -> Vec<AnyRule> {
     parser_rule!(erb_no_statement_in_script::ERBNoStatementInScriptRule),
     parser_rule!(erb_no_raw_output_in_attribute_value::ERBNoRawOutputInAttributeValueRule),
     parser_rule!(erb_no_unsafe_js_attribute::ERBNoUnsafeJSAttributeRule),
+    parser_rule!(actionview_no_unused_strict_locals::ActionViewNoUnusedStrictLocalsRule),
     parser_rule!(actionview_no_void_element_content::ActionViewNoVoidElementContentRule),
     parser_rule!(actionview_no_silent_render::ActionViewNoSilentRenderRule),
     parser_rule!(erb_no_unsafe_raw::ERBNoUnsafeRawRule),
@@ -198,20 +214,34 @@ pub fn all_rules() -> Vec<AnyRule> {
     source_rule!(source_indentation::SourceIndentationRule),
     parser_rule!(html_no_unknown_tag::HTMLNoUnknownTagRule),
     parser_rule!(html_require_script_nonce::HTMLRequireScriptNonceRule),
+    parser_rule!(actionview_prefer_collection_render::ActionViewPreferCollectionRenderRule),
     parser_rule!(actionview_strict_locals_first_line::ActionViewStrictLocalsFirstLineRule),
     parser_rule!(html_no_unescaped_entities::HTMLNoUnescapedEntitiesRule),
     parser_rule!(erb_no_empty_control_flow::ERBNoEmptyControlFlowRule),
     parser_rule!(erb_no_duplicate_branch_elements::ERBNoDuplicateBranchElementsRule),
     parser_rule!(erb_no_silent_statement::ERBNoSilentStatementRule),
     parser_rule!(erb_no_debug_output::ERBNoDebugOutputRule),
+    parser_rule!(erb_no_shadowed_block_argument::ERBNoShadowedBlockArgumentRule),
+    parser_rule!(erb_no_sleep::ERBNoSleepRule),
+    parser_rule!(erb_prefer_do_end_blocks::ERBPreferDoEndBlocksRule),
+    parser_rule!(erb_prefer_each_over_map::ERBPreferEachOverMapRule),
+    parser_rule!(erb_prefer_explicit_conditionals::ERBPreferExplicitConditionalsRule),
+    parser_rule!(html_no_nested_forms::HTMLNoNestedFormsRule),
+    parser_rule!(turbo_permanent_no_misleading_value::TurboPermanentNoMisleadingValueRule),
+    parser_rule!(erb_no_commented_out_output_tags::ERBNoCommentedOutOutputTagsRule),
     parser_rule!(erb_no_output_in_attribute_position::ERBNoOutputInAttributePositionRule),
     parser_rule!(a11y_no_autofocus_attribute::A11yNoAutofocusAttributeRule),
+    parser_rule!(actionview_no_unnecessary_html_safe::ActionViewNoUnnecessaryHTMLSafeRule),
     parser_rule!(actionview_no_unnecessary_tag_attributes::ActionViewNoUnnecessaryTagAttributesRule),
     parser_rule!(erb_no_instance_variables_in_partials::ERBNoInstanceVariablesInPartialsRule),
+    parser_rule!(actionview_no_helper_shadowing::ActionViewNoHelperShadowingRule),
+    parser_rule!(actionview_no_implicit_polymorphic_url::ActionViewNoImplicitPolymorphicURLRule),
+    parser_rule!(actionview_no_redundant_local_assigns::ActionViewNoRedundantLocalAssignsRule),
     parser_rule!(actionview_no_silent_helper::ActionViewNoSilentHelperRule),
     parser_rule!(erb_prefer_direct_output::ERBPreferDirectOutputRule),
     parser_rule!(erb_no_unsafe_script_interpolation::ERBNoUnsafeScriptInterpolationRule),
     parser_rule!(erb_no_unused_literals::ERBNoUnusedLiteralsRule),
+    parser_rule!(erb_no_unused_block_argument::ERBNoUnusedBlockArgumentRule),
     parser_rule!(erb_no_unused_expressions::ERBNoUnusedExpressionsRule),
   ]
 }

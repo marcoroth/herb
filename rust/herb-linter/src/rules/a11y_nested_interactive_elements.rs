@@ -1,7 +1,7 @@
-use crate::utils::html_data::INTERACTIVE_ELEMENTS;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
 use crate::utils::element_stack::ElementStack;
+use crate::utils::html_data::INTERACTIVE_ELEMENTS;
 use crate::utils::tag_utils::{get_element_static_attribute_value, get_tag_local_name};
 
 use herb::nodes::HTMLElementNode;
