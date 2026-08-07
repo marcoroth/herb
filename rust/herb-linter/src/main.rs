@@ -219,8 +219,24 @@ fn main() {
   }
 }
 
+fn split_inline_values(arguments: impl Iterator<Item = String>) -> Vec<String> {
+  let mut values = Vec::new();
+
+  for argument in arguments {
+    match argument.split_once('=') {
+      Some((name, value)) if name.starts_with("--") && !name.is_empty() => {
+        values.push(name.to_string());
+        values.push(value.to_string());
+      }
+      _ => values.push(argument),
+    }
+  }
+
+  values
+}
+
 fn parse_arguments() -> CliArguments {
-  let argument_values: Vec<String> = std::env::args().collect();
+  let argument_values: Vec<String> = split_inline_values(std::env::args());
 
   let mut patterns = Vec::new();
   let mut format = OutputFormat::Detailed;
