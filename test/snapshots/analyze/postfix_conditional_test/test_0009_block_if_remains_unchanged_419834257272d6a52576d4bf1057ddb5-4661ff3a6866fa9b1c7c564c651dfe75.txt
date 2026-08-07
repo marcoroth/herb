@@ -1,0 +1,17 @@
+---
+source: "Analyze::PostfixConditionalTest#test_0009_block if remains unchanged"
+input: |2-
+<%= if condition then 'yes' end %>
+options: {transform_conditionals: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:34))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " if condition then 'yes' end " (location: (1:3)-(1:32))
+    │   ├── tag_closing: "%>" (location: (1:32)-(1:34))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:34)-(2:0))
+        └── content: "\n"

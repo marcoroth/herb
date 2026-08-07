@@ -228,6 +228,12 @@ bool token_value_empty(const token_T* token) {
   return token == NULL || hb_string_is_empty(token->value);
 }
 
+bool token_is_escaped_erb_tag_opening(const token_T* token) {
+  if (token_value_empty(token)) { return false; }
+
+  return hb_string_starts_with(token->value, hb_string("<%%"));
+}
+
 void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
 

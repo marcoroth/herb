@@ -1,0 +1,230 @@
+#include "../../include/analyze/action_view/tag_helper_handler.h"
+#include "../../include/lib/hb_allocator.h"
+#include "../../include/lib/hb_string.h"
+
+#include <prism.h>
+#include <stdbool.h>
+#include <string.h>
+
+<%- supported_helpers = helpers.select(&:supported?).reject(&:custom_transform?) -%>
+// ==========================================================================
+// Generated detect functions
+// ==========================================================================
+<%- supported_helpers.each do |helper| -%>
+<%- if helper.call_name_detect? -%>
+
+bool detect_<%= helper.safe_name %>(pm_call_node_t* call_node, pm_parser_t* parser) {
+  if (!call_node || !call_node->name) { return false; }
+
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+
+  return constant && constant->length == <%= helper.name.length %> && strncmp((const char*) constant->start, "<%= helper.name %>", <%= helper.name.length %>) == 0;
+}
+<%- elsif helper.receiver_call_detect? -%>
+
+bool detect_<%= helper.safe_name %>(pm_call_node_t* call_node, pm_parser_t* parser) {
+  if (!call_node || !call_node->receiver) { return false; }
+  if (call_node->receiver->type != PM_CALL_NODE) { return false; }
+
+  pm_call_node_t* receiver_node = (pm_call_node_t*) call_node->receiver;
+  if (!receiver_node->name) { return false; }
+
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, receiver_node->name);
+
+  return constant && constant->length == 3 && strncmp((const char*) constant->start, "tag", 3) == 0;
+}
+<%- end -%>
+<%- end -%>
+
+// ==========================================================================
+// Generated extract_tag_name functions
+// ==========================================================================
+<%- supported_helpers.each do |helper| -%>
+<%- if helper.tag_name -%>
+
+static char* extract_<%= helper.safe_name %>_tag_name(pm_call_node_t* _call_node, pm_parser_t* _parser, hb_allocator_T* allocator) {
+  (void) _call_node;
+  (void) _parser;
+
+  return hb_allocator_strdup(allocator, "<%= helper.tag_name %>");
+}
+<%- elsif helper.name == "content_tag" -%>
+
+static char* extract_<%= helper.safe_name %>_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
+  (void) parser;
+
+  if (!call_node || !call_node->arguments) { return NULL; }
+
+  pm_arguments_node_t* arguments = call_node->arguments;
+  if (!arguments->arguments.size) { return NULL; }
+
+  pm_node_t* first_argument = arguments->arguments.nodes[0];
+
+  if (first_argument->type == PM_STRING_NODE) {
+    pm_string_node_t* string_node = (pm_string_node_t*) first_argument;
+    size_t length = pm_string_length(&string_node->unescaped);
+    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+  } else if (first_argument->type == PM_SYMBOL_NODE) {
+    pm_symbol_node_t* symbol_node = (pm_symbol_node_t*) first_argument;
+    size_t length = pm_string_length(&symbol_node->unescaped);
+    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&symbol_node->unescaped), length);
+  }
+
+  return NULL;
+}
+<%- elsif helper.name == "tag" -%>
+
+extern bool is_ruby_introspection_method(hb_string_T method_name);
+
+static char* extract_<%= helper.safe_name %>_tag_name(pm_call_node_t* call_node, pm_parser_t* parser, hb_allocator_T* allocator) {
+  if (!call_node || !call_node->name) { return NULL; }
+
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+  if (!constant) { return NULL; }
+
+  if (is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) { return NULL; }
+
+  char* name = hb_allocator_strndup(allocator, (const char*) constant->start, constant->length);
+
+  for (size_t i = 0; i < constant->length && name[i] != '\0'; i++) {
+    if (name[i] == '_') { name[i] = '-'; }
+  }
+
+  return name;
+}
+<%- end -%>
+<%- end -%>
+
+// ==========================================================================
+// Generated extract_content functions
+// ==========================================================================
+<%- supported_helpers.each do |helper| -%>
+<%- content = helper.content -%>
+<%- if content.nil? -%>
+
+static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* _call_node, pm_parser_t* _parser, hb_allocator_T* _allocator) {
+  (void) _call_node;
+  (void) _parser;
+  (void) _allocator;
+
+  return NULL;
+}
+<%- elsif content.first_arg? -%>
+
+static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* _parser, hb_allocator_T* allocator) {
+  (void) _parser;
+
+  if (!call_node || !call_node->arguments) { return NULL; }
+
+  pm_arguments_node_t* arguments = call_node->arguments;
+  if (!arguments->arguments.size) { return NULL; }
+
+  pm_node_t* first_argument = arguments->arguments.nodes[0];
+
+  <%- if content.skip_if_hash -%>
+  if (first_argument->type == PM_KEYWORD_HASH_NODE) { return NULL; }
+  <%- end -%>
+
+  if (first_argument->type == PM_STRING_NODE) {
+    pm_string_node_t* string_node = (pm_string_node_t*) first_argument;
+    size_t length = pm_string_length(&string_node->unescaped);
+    return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+  }
+
+  size_t source_length = first_argument->location.end - first_argument->location.start;
+  return hb_allocator_strndup(allocator, (const char*) first_argument->location.start, source_length);
+}
+<%- elsif content.block_or_arg? -%>
+
+static char* extract_<%= helper.safe_name %>_content(pm_call_node_t* call_node, pm_parser_t* <%= helper.receiver_call_detect? ? "parser" : "_parser" %>, hb_allocator_T* allocator) {
+  (void) <%= helper.receiver_call_detect? ? "parser" : "_parser" %>;
+
+  if (!call_node) { return NULL; }
+
+  <%- if helper.receiver_call_detect? -%>
+  if (call_node->name) {
+    pm_constant_t* constant = pm_constant_pool_id_to_constant(&parser->constant_pool, call_node->name);
+
+    if (constant && is_ruby_introspection_method(hb_string_from_data((const char*) constant->start, constant->length))) {
+      return NULL;
+    }
+  }
+  <%- end -%>
+
+  char* block_content = extract_inline_block_content(call_node, allocator);
+  if (block_content) { return block_content; }
+
+  <%- arg_index = (content.arg_position || 1) - 1 -%>
+
+  <%- if content.arg_position -%>
+  if (call_node->arguments) {
+    pm_arguments_node_t* arguments = call_node->arguments;
+
+    if (arguments->arguments.size >= <%= content.arg_position %>) {
+      pm_node_t* argument = arguments->arguments.nodes[<%= arg_index %>];
+
+      <%- if content.skip_if_hash -%>
+      if (argument->type != PM_KEYWORD_HASH_NODE) {
+      <%- end -%>
+
+        if (argument->type == PM_STRING_NODE) {
+          pm_string_node_t* string_node = (pm_string_node_t*) argument;
+          size_t length = pm_string_length(&string_node->unescaped);
+          return hb_allocator_strndup(allocator, (const char*) pm_string_source(&string_node->unescaped), length);
+        }
+
+        size_t source_length = argument->location.end - argument->location.start;
+
+        <%- if content.to_s_suffix_when_single -%>
+        if (arguments->arguments.size == 1 && argument->type != PM_NIL_NODE) {
+          const char* suffix = ".to_s";
+          size_t suffix_length = strlen(suffix);
+          size_t total_length = source_length + suffix_length;
+          char* ruby_expression = hb_allocator_alloc(allocator, total_length + 1);
+
+          memcpy(ruby_expression, (const char*) argument->location.start, source_length);
+          memcpy(ruby_expression + source_length, suffix, suffix_length);
+          ruby_expression[total_length] = '\0';
+
+          return ruby_expression;
+        }
+        <%- end -%>
+
+        return hb_allocator_strndup(allocator, (const char*) argument->location.start, source_length);
+
+      <%- if content.skip_if_hash -%>
+      }
+      <%- end -%>
+    }
+  }
+<%- end -%>
+
+  return NULL;
+}
+<%- end -%>
+<%- end -%>
+
+// ==========================================================================
+// Generated supports_block functions
+// ==========================================================================
+<%- supported_helpers.each do |helper| -%>
+
+static bool <%= helper.safe_name %>_supports_block(void) {
+  return <%= helper.supports_block %>;
+}
+<%- end -%>
+
+// ==========================================================================
+// Generated handler structs
+// ==========================================================================
+<%- supported_helpers.each do |helper| -%>
+
+const tag_helper_handler_T <%= helper.safe_name %>_handler = {
+  .name = "<%= helper.name %>",
+  .source = HB_STRING_LITERAL("<%= helper.source %>"),
+  .detect = detect_<%= helper.safe_name %>,
+  .extract_tag_name = extract_<%= helper.safe_name %>_tag_name,
+  .extract_content = extract_<%= helper.safe_name %>_content,
+  .supports_block = <%= helper.safe_name %>_supports_block,
+};
+<%- end -%>

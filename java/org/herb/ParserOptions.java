@@ -5,13 +5,17 @@ public class ParserOptions {
   private boolean analyze = true;
   private boolean strict = true;
   private boolean actionViewHelpers = false;
+  private boolean transformConditionals = false;
   private boolean renderNodes = false;
   private boolean strictLocals = false;
+  private boolean iterationNodes = false;
   private boolean prismNodes = false;
   private boolean prismNodesDeep = false;
   private boolean prismProgram = false;
   private boolean dotNotationTags = false;
   private boolean html = true;
+  private int timeout = 1000;
+  private Integer maxErrors = 25;
 
   public ParserOptions() {}
 
@@ -51,6 +55,15 @@ public class ParserOptions {
     return actionViewHelpers;
   }
 
+  public ParserOptions transformConditionals(boolean value) {
+    this.transformConditionals = value;
+    return this;
+  }
+
+  public boolean isTransformConditionals() {
+    return transformConditionals;
+  }
+
   public ParserOptions renderNodes(boolean value) {
     this.renderNodes = value;
     return this;
@@ -67,6 +80,15 @@ public class ParserOptions {
 
   public boolean isStrictLocals() {
     return strictLocals;
+  }
+
+  public ParserOptions iterationNodes(boolean value) {
+    this.iterationNodes = value;
+    return this;
+  }
+
+  public boolean isIterationNodes() {
+    return iterationNodes;
   }
 
   public ParserOptions prismNodes(boolean value) {
@@ -112,6 +134,24 @@ public class ParserOptions {
 
   public boolean isHtml() {
     return html;
+  }
+
+  public ParserOptions timeout(int value) {
+    this.timeout = value;
+    return this;
+  }
+
+  public int getTimeout() {
+    return timeout;
+  }
+
+  public ParserOptions maxErrors(Integer value) {
+    this.maxErrors = value;
+    return this;
+  }
+
+  public Integer getMaxErrors() {
+    return maxErrors;
   }
 
   public static ParserOptions create() {

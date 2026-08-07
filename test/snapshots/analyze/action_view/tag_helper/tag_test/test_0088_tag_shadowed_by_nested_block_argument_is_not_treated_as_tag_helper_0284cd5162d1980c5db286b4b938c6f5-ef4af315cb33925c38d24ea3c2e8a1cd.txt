@@ -1,0 +1,77 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0088_tag shadowed by nested block argument is not treated as tag helper"
+input: |2-
+<% @groups.each do |tag| %>
+  <% tag.items.each do |item| %>
+    <%= tag.name %>
+  <% end %>
+<% end %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @groups.each do |tag| " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBBlockNode (location: (2:2)-(4:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " tag.items.each do |item| " (location: (2:4)-(2:30))
+    │   │   │   ├── tag_closing: "%>" (location: (2:30)-(2:32))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:32)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:4)-(3:19))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:4)-(3:7))
+    │   │   │   │   │   ├── content: " tag.name " (location: (3:7)-(3:17))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:17)-(3:19))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:19)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── block_arguments: (1 item)
+    │   │   │   │   └── @ RubyParameterNode (location: (2:24)-(2:28))
+    │   │   │   │       ├── name: "item" (location: (2:24)-(2:28))
+    │   │   │   │       ├── default_value: ∅
+    │   │   │   │       ├── kind: "positional"
+    │   │   │   │       └── required: true
+    │   │   │   │
+    │   │   │   ├── rescue_clause: ∅
+    │   │   │   ├── else_clause: ∅
+    │   │   │   ├── ensure_clause: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │           ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │           └── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:11)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:20)-(1:23))
+    │   │       ├── name: "tag" (location: (1:20)-(1:23))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

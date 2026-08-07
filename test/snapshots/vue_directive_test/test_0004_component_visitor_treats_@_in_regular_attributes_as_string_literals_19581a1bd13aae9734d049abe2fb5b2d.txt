@@ -1,0 +1,6 @@
+---
+source: "VueDirectiveTest#test_0004_component visitor treats @ in regular attributes as string literals"
+input: "{source: \"<MyComponent name=\\\"@hello\\\" email=\\\"user@example.com\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "@hello", email: "user@example.com")).to_s;
+_buf.to_s

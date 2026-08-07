@@ -379,6 +379,7 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (18:8)-(19:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: []
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

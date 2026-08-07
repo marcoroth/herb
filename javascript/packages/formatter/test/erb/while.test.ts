@@ -23,8 +23,7 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% while i < 3 %>
-        <b><%= i %></b>
-        <% i += 1 %>
+        <b><%= i %></b><% i += 1 %>
       <% end %>
     `)
   })

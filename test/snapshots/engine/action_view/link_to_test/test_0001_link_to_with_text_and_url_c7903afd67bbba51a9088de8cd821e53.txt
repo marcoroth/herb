@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::LinkToTest#test_0001_link_to with text and url"
+input: "{source: \"<%= link_to \\\"Click me\\\", \\\"#\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<a href="#">Click me</a>

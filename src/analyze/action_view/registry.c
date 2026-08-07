@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 extern const tag_helper_handler_T content_tag_handler;
-extern const tag_helper_handler_T tag_dot_handler;
+extern const tag_helper_handler_T tag_handler;
 extern const tag_helper_handler_T link_to_handler;
 extern const tag_helper_handler_T turbo_frame_tag_handler;
 extern const tag_helper_handler_T javascript_tag_handler;
@@ -49,7 +49,7 @@ tag_helper_handler_T* get_tag_helper_handlers(void) {
 
   if (!initialized) {
     static_handlers[0] = content_tag_handler;
-    static_handlers[1] = tag_dot_handler;
+    static_handlers[1] = tag_handler;
     static_handlers[2] = link_to_handler;
     static_handlers[3] = turbo_frame_tag_handler;
     static_handlers[4] = javascript_tag_handler;

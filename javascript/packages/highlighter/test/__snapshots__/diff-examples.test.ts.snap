@@ -1,0 +1,220 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`examples/diff-view.ts > renders every example 1`] = `
+"
+Attribute quotes — single-line edit, only the two quote characters are marked
+
+app/views/gems/index.html.erb
+
+      1 │ <div id="gems">
+  -   2 │   <span class='card'>Hello</span>
+  +     │   <span class="card">Hello</span>
+      3 │ </div>
+
+Missing alt attribute — pure insertion, nothing is marked on the removed side
+
+app/views/gems/index.html.erb
+
+      1 │ <div id="gems">
+  -   2 │   <img src="a.png">
+  +     │   <img src="a.png" alt="">
+      3 │ </div>
+
+Re-indent a block — three lines for three, the inserted indentation is marked on each
+
+app/views/gems/index.html.erb
+
+      1 │ <div>
+  -   2 │ <span>one</span>
+  -   3 │ <span>two</span>
+  -   4 │ <span>three</span>
+  +     │   <span>one</span>
+  +     │   <span>two</span>
+  +     │   <span>three</span>
+      5 │ </div>
+
+Wrap content in a new element — one line removed, three added
+
+app/views/gems/index.html.erb
+
+      1 │ <div>
+  -   2 │   <span>content</span>
+  +     │   <section>
+  +     │     <span>content</span>
+  +     │   </section>
+      3 │ </div>
+
+Collapse a multi-line tag — three lines into one, too dissimilar to refine so no inline marks
+
+app/views/gems/index.html.erb
+
+      1 │ <div>
+  -   2 │   <span
+  -   3 │     class="card"
+  -   4 │   >x</span>
+  +     │   <span class="card">x</span>
+      5 │ </div>
+
+Two distant changes — split into separate hunks, joined by the vertical ellipsis
+
+app/views/gems/index.html.erb
+
+      1 │ <div>
+  -   2 │   <span class='a'>one</span>
+  +     │   <span class="a">one</span>
+      3 │   <p>filler</p>
+        │ ⋮
+      6 │   <p>filler</p>
+  -   7 │   <span class='b'>two</span>
+  +     │   <span class="b">two</span>
+      8 │ </div>
+
+ERB block — quoting and spacing inside an ERB expression
+
+app/views/gems/index.html.erb
+
+      1 │ <% @gems.each do |gem| %>
+  -   2 │   <%= render partial: 'gem_card', locals: {gem: gem} %>
+  +     │   <%= render partial: "gem_card", locals: { gem: gem } %>
+      3 │ <% end %>
+
+
+Single-line collapsing (singleLineStyle)
+  auto collapses a pair only when the composite reads better than two lines: always for a pure
+  insertion or deletion, and for a replacement only while the change stays short, stays a
+  minority of the line, and still fits the width.
+  Needs color: without it every style falls back to split, since only the tinting tells old from new.
+
+
+Pure insertion — the composite is the real new line, nothing synthetic
+
+  split
+        1 │ <div>
+    -   2 │   <img src="a.png">
+    +     │   <img src="a.png" alt="">
+        3 │   <p>untouched</p>
+
+  inline
+        1 │ <div>
+    ±   2 │   <img src="a.png" alt="">
+        3 │   <p>untouched</p>
+
+  auto
+        1 │ <div>
+    ±   2 │   <img src="a.png" alt="">
+        3 │   <p>untouched</p>
+
+
+Replacement — the composite carries text that is in neither version, readable only by its tinting
+
+  split
+        1 │ <div>
+    -   2 │   <span class='a'>one</span>
+    +     │   <span class="a">one</span>
+        3 │   <p>untouched</p>
+
+  inline
+        1 │ <div>
+    ±   2 │   <span class='a'"a">one</span>
+        3 │   <p>untouched</p>
+
+  auto
+        1 │ <div>
+    ±   2 │   <span class='a'"a">one</span>
+        3 │   <p>untouched</p>
+
+
+Two edits on one line — declines to collapse, stays split
+
+  split
+        1 │ <div>
+    -   2 │   <span class='a' id='b'>x</span>
+    +     │   <span class="a" id="b">x</span>
+        3 │   <p>untouched</p>
+
+  inline
+        1 │ <div>
+    -   2 │   <span class='a' id='b'>x</span>
+    +     │   <span class="a" id="b">x</span>
+        3 │   <p>untouched</p>
+
+  auto
+        1 │ <div>
+    -   2 │   <span class='a' id='b'>x</span>
+    +     │   <span class="a" id="b">x</span>
+        3 │   <p>untouched</p>
+
+
+Long replacement — inline collapses it, auto declines: too much text to read apart on one line
+
+  split
+        1 │ <div>
+    -   2 │   <span class='alpha beta gamma delta'>one</span>
+    +     │   <span class="totally different set of names here">one</span>
+        3 │   <p>untouched</p>
+
+  inline
+        1 │ <div>
+    ±   2 │   <span class='alpha beta gamma delta'"totally different set of names here">one</span>
+        3 │   <p>untouched</p>
+
+  auto
+        1 │ <div>
+    -   2 │   <span class='alpha beta gamma delta'>one</span>
+    +     │   <span class="totally different set of names here">one</span>
+        3 │   <p>untouched</p>
+
+
+Multi-line restructure — declines to collapse, no one-for-one pair exists
+
+  split
+        1 │ <div>
+    -   2 │   <span>x</span>
+    +     │   <section>
+    +     │     <span>x</span>
+    +     │   </section>
+        3 │   <p>untouched</p>
+
+  inline
+        1 │ <div>
+    -   2 │   <span>x</span>
+    +     │   <section>
+    +     │     <span>x</span>
+    +     │   </section>
+        3 │   <p>untouched</p>
+
+  auto
+        1 │ <div>
+    -   2 │   <span>x</span>
+    +     │   <section>
+    +     │     <span>x</span>
+    +     │   </section>
+        3 │   <p>untouched</p>
+
+
+Split layout (layout: "split", original on the left, modified on the right)
+  Each column is numbered from its own version of the file, so the two drift apart after a
+  change in line count. Falls back to the unified layout when the terminal is too narrow.
+
+
+Line-for-line replacement — the two columns stay in step
+
+        1 │ <div id="gems">                                           ┃       1 │ <div id="gems">
+    -   2 │   <span class='a'>one</span>                              ┃   +   2 │   <span class="a">one</span>
+        3 │   <p>untouched</p>                                        ┃       3 │   <p>untouched</p>
+
+Restructure that adds lines — the shorter side is left blank, and the numbering drifts apart below the change
+
+        1 │ <div>                                                     ┃       1 │ <div>
+    -   2 │   <SPAN>restructured</SPAN>                               ┃   +   2 │   <section>
+          │                                                           ┃   +   3 │     <span>restructured</span>
+          │                                                           ┃   +   4 │   </section>
+        3 │   <p>untouched</p>                                        ┃       5 │   <p>untouched</p>
+
+Split layout, narrow terminal — 70 columns, falls back to unified
+
+        1 │ <div id="gems">
+    -   2 │   <span class='a'>one</span>
+    +     │   <span class="a">one</span>
+        3 │   <p>untouched</p>"
+`;

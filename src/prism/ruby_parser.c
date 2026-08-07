@@ -2,6 +2,7 @@
 
 #include <prism.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 static bool herb_prism_visit(const pm_node_t* node, void* data) {
@@ -46,4 +47,52 @@ void herb_parse_ruby_to_stdout(char* source) {
   pm_buffer_free(&buffer);
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
+}
+
+static const char* const RUBY_FRAGMENT_PREFIXES[] = {
+  "", "", "if __herb__\n", "if __herb__\n", "begin\n", "case __herb__\n"
+};
+
+static const char* const RUBY_FRAGMENT_SUFFIXES[] = { "", "\nend", "", "\nend", "\nend", "\nend" };
+
+static bool ruby_source_parses(const char* source, size_t length) {
+  pm_parser_t parser;
+  pm_parser_init(&parser, (const uint8_t*) source, length, NULL);
+
+  pm_node_t* root = pm_parse(&parser);
+  bool parses = (parser.error_list.size == 0);
+
+  if (root != NULL) { pm_node_destroy(&parser, root); }
+  pm_parser_free(&parser);
+
+  return parses;
+}
+
+bool herb_ruby_fragment_is_parseable(hb_string_T source) {
+  if (source.data == NULL) { return false; }
+
+  for (size_t index = 0; index < sizeof(RUBY_FRAGMENT_PREFIXES) / sizeof(RUBY_FRAGMENT_PREFIXES[0]); index++) {
+    const char* prefix = RUBY_FRAGMENT_PREFIXES[index];
+    const char* suffix = RUBY_FRAGMENT_SUFFIXES[index];
+
+    size_t prefix_length = strlen(prefix);
+    size_t suffix_length = strlen(suffix);
+    size_t length = prefix_length + source.length + suffix_length;
+
+    char* wrapped = malloc(length + 1);
+    if (wrapped == NULL) { return false; }
+
+    memcpy(wrapped, prefix, prefix_length);
+    memcpy(wrapped + prefix_length, source.data, source.length);
+    memcpy(wrapped + prefix_length + source.length, suffix, suffix_length);
+    wrapped[length] = '\0';
+
+    bool parses = ruby_source_parses(wrapped, length);
+
+    free(wrapped);
+
+    if (parses) { return true; }
+  }
+
+  return false;
 }

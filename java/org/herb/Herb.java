@@ -21,9 +21,14 @@ public class Herb {
   public static native String extractRuby(String source, ExtractRubyOptions options);
   public static native String extractHTML(String source);
   public static native byte[] parseRuby(String source);
+  public static native DiffResult diff(String oldSource, String newSource, DiffOptions options);
 
   public static ParseResult parse(String source) {
     return parse(source, null);
+  }
+
+  public static DiffResult diff(String oldSource, String newSource) {
+    return diff(oldSource, newSource, null);
   }
 
   public static String extractRuby(String source) {

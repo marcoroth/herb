@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0026_a tag name that is not a valid constant is left as HTML"
+input: "{source: \"<My-Component />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << '<My-Component />'.freeze;
+_buf.to_s

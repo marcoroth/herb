@@ -31,7 +31,7 @@ options: {action_view_helpers: true}
     │   │                       │       └── content: "42"
     │   │                       │
     │   │                       ├── close_quote: ∅
-    │   │                       └── quoted: false
+    │   │                       └── quoted: true
     │   │
     │   │
     │   │

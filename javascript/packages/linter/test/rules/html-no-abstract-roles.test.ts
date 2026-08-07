@@ -104,4 +104,34 @@ describe("html-no-abstract-roles", () => {
 
     assertOffenses('<div role="Widget">Content</div>')
   })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a concrete role", () => {
+      expectNoOffenses('<%= tag.div role: "button" %>')
+    })
+
+    test("fails for tag.div with an abstract role", () => {
+      expectWarning("The `role` attribute must not use abstract ARIA role `widget`. Abstract roles are not meant to be used directly.")
+
+      assertOffenses('<%= tag.div role: "widget" %>')
+    })
+
+    test("fails for content_tag with an abstract role", () => {
+      expectWarning("The `role` attribute must not use abstract ARIA role `widget`. Abstract roles are not meant to be used directly.")
+
+      assertOffenses('<%= content_tag :div, "content", role: "widget" %>')
+    })
+
+    test("passes for a dynamic role, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div role: role_name %>')
+    })
+
+    test("passes for a nil role, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div role: nil %>')
+    })
+
+    test("passes for an interpolated role", () => {
+      expectNoOffenses('<%= tag.div role: "widg#{suffix}" %>')
+    })
+  })
 })

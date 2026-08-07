@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0041_a custom resolver decides what a tag renders to"
+input: "{source: \"<IconStar />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (icon_tag("star")).to_s;
+_buf.to_s

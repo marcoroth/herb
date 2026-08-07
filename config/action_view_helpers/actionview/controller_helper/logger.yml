@@ -1,0 +1,21 @@
+---
+name: "logger"
+source: "ActionView::Helpers::ControllerHelper#logger"
+gem: "actionview"
+output: "text"
+visibility: "internal"
+supported: false
+supports_block: false
+signature: "logger"
+documentation_url: ""
+
+description: |-
+  Returns the logger instance from the controller.
+
+tag: null
+arguments: []
+options: []
+block_arguments: []
+special_behaviors: []
+aliases:
+  - "logger?"

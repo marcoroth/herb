@@ -8,7 +8,7 @@ import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { Project } from "./project"
-import { lintToDignosticSeverity, lintToDignosticTags } from "./utils"
+import { isConfigDocument, lintToDignosticSeverity, lintToDignosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
@@ -117,7 +117,7 @@ export class LinterService {
   private shouldLintFile(uri: string): boolean {
     const filePath = uri.replace(/^file:\/\//, '')
 
-    if (filePath.endsWith('.herb.yml')) return false
+    if (isConfigDocument(filePath)) return false
 
     const config = this.settings.projectConfig
     if (!config) return true

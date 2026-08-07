@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0004_tag.attributes with data hash containing special characters"
+input: "{source: \"<div <%= tag.attributes(data: { controller: \\\"hello\\\", action: \\\"click->hello#greet\\\" }) %>></div>\", type: \"rails_output\", action_view_helpers: true}"
+---
+<div data-controller="hello" data-action="click-&gt;hello#greet"></div>

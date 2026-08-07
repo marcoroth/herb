@@ -36,6 +36,19 @@ input: |2-
     │   │   └── @ HTMLTextNode (location: (3:14)-(4:0))
     │   │       └── content: "\n"
     │   │
+    │   ├── block_arguments: (2 items)
+    │   │   ├── @ RubyParameterNode (location: (1:33)-(1:37))
+    │   │   │   ├── name: "item" (location: (1:33)-(1:37))
+    │   │   │   ├── default_value: ∅
+    │   │   │   ├── kind: "positional"
+    │   │   │   └── required: true
+    │   │   │
+    │   │   └── @ RubyParameterNode (location: (1:39)-(1:44))
+    │   │       ├── name: "index" (location: (1:39)-(1:44))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
     │   ├── rescue_clause: ∅
     │   ├── else_clause: ∅
     │   ├── ensure_clause: ∅

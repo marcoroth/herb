@@ -1,0 +1,42 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0039_ERB tag closed with transposed >%"
+input: "<h1><%= title >%</h1>"
+---
+@ DocumentNode (location: (1:0)-(1:21))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:21))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:4))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "h1" (location: (1:1)-(1:3))
+        │       ├── tag_closing: ">" (location: (1:3)-(1:4))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "h1" (location: (1:1)-(1:3))
+        ├── body: (2 items)
+        │   ├── @ ERBContentNode (location: (1:4)-(1:15))
+        │   │   ├── errors: (1 error)
+        │   │   │   └── @ MalformedERBClosingTagError (location: (1:4)-(1:15))
+        │   │   │       ├── message: "ERB tag `<%=` at (1:4) is closed with `>` at (1:14) instead of `%>`."
+        │   │   │       ├── opening_tag: "<%=" (location: (1:4)-(1:7))
+        │   │   │       └── closing_tag: ">" (location: (1:14)-(1:15))
+        │   │   │
+        │   │   ├── tag_opening: "<%=" (location: (1:4)-(1:7))
+        │   │   ├── content: " title " (location: (1:7)-(1:14))
+        │   │   ├── tag_closing: ">" (location: (1:14)-(1:15))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ HTMLTextNode (location: (1:15)-(1:16))
+        │       └── content: "%"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:21))
+        │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+        │       ├── tag_name: "h1" (location: (1:18)-(1:20))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:20)-(1:21))
+        │
+        ├── is_void: false
+        └── element_source: "HTML"

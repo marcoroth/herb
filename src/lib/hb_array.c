@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -33,6 +34,8 @@ hb_array_T* hb_array_init(const size_t capacity, hb_allocator_T* allocator) {
 }
 
 bool hb_array_append(hb_array_T* array, void* item) {
+  assert(array != NULL);
+
   if (!array) { return false; }
 
   if (array->size >= array->capacity) {
@@ -114,6 +117,15 @@ void hb_array_remove_item(hb_array_T* array, void* item) {
   size_t index = hb_array_index_of(array, item);
 
   if (index != SIZE_MAX) { hb_array_remove(array, index); }
+}
+
+bool hb_array_append_lazy(hb_array_T** array, void* item, hb_allocator_T* allocator) {
+  if (*array == NULL) {
+    *array = hb_array_init(8, allocator);
+    if (!*array) { return false; }
+  }
+
+  return hb_array_append(*array, item);
 }
 
 // Alias for hb_array_append

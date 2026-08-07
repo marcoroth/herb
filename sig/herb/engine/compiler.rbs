@@ -5,6 +5,16 @@ module Herb
     class Compiler < ::Herb::Visitor
       EXPRESSION_TOKEN_TYPES: untyped
 
+      TRAILING_WHITESPACE: ::Regexp
+
+      TRAILING_INDENTATION: ::Regexp
+
+      TRAILING_INDENTATION_CAPTURE: ::Regexp
+
+      WHITESPACE_ONLY: ::Regexp
+
+      WHITESPACE_ONLY_CAPTURE: ::Regexp
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
@@ -24,6 +34,12 @@ module Herb
       def visit_html_attribute_name_node: (untyped node) -> untyped
 
       def visit_html_attribute_value_node: (untyped node) -> untyped
+
+      def visit_erb_open_tag_node: (untyped node) -> untyped
+
+      def visit_html_virtual_close_tag_node: (untyped node) -> untyped
+
+      def visit_ruby_literal_node: (untyped node) -> untyped
 
       def visit_html_close_tag_node: (untyped node) -> untyped
 
@@ -79,11 +95,15 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
+
+      def check_for_escaped_erb_tag!: (untyped opening) -> untyped
 
       def current_context: () -> untyped
 
@@ -133,6 +153,10 @@ module Herb
       def at_line_start?: () -> untyped
 
       def preceding_token_ends_with_newline?: () -> untyped
+
+      def left_trim?: (untyped node) -> untyped
+
+      def right_trim?: (untyped node) -> untyped
 
       def last_text_token: () -> untyped
 

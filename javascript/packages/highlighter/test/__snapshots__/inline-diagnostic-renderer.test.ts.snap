@@ -1,0 +1,48 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`InlineDiagnosticRenderer > marks every line a multi-line diagnostic spans 1`] = `
+"/test/file.erb
+
+      1 │ <div id="gems">
+  →   2 │   <% @gems.each do |topic_gem| %>
+        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   3 │     <%= render partial: "gem_card" %>
+        │     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  →   4 │   <% end %>
+        │   ~~~~~~~~~
+        │   [warning] Multi-line offense (multi-line-rule)
+
+      5 │ </div>"
+`;
+
+exports[`InlineDiagnosticRenderer > renders a single-line diagnostic with its message under the marker 1`] = `
+"/test/file.erb
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+        │      [error] Test error message (test-rule)
+
+      3 │ line 3"
+`;
+
+exports[`InlineDiagnosticRenderer > renders markers without line numbers 1`] = `
+"line 1
+line <error> content
+     ~~~~~
+[error] Test error message (test-rule)
+
+line 3"
+`;
+
+exports[`InlineDiagnosticRenderer > renders the message once, under the last line of a multi-line diagnostic 1`] = `
+"/test/file.erb
+
+  →   1 │ <% if true %>
+        │ ~~~~~~~~~~~~~
+  →   2 │   <span>content</span>
+        │   ~~~~~~~~~~~~~~~~~~~~
+  →   3 │ <% end %>
+        │ ~~~~~~~~~
+        │ [error] Multi-line offense (test-rule)"
+`;

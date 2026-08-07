@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0055_expression tag with right trim without following newline is a no-op"
+input: "{source: \"<%= \\\"Hello\\n\\\" -%>world\", locals: {}, options: {}}"
+---
+Hello
+world

@@ -1,6 +1,7 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, expect, beforeAll, vi } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { ParseCache } from "../src/parse-cache.js"
+import { Linter } from "../src/linter.js"
 import { isWhitespaceNode } from "@herb-tools/core"
 import type { HTMLElementNode } from "@herb-tools/core"
 
@@ -74,9 +75,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
+        transform_conditionals: false,
         html: true,
+        timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -93,9 +98,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
+        transform_conditionals: false,
         html: true,
+        timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -112,9 +121,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: true,
         strict_locals: false,
+        iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
+        transform_conditionals: false,
         html: true,
+        timeout: 1000,
+        max_errors: 25,
       })
     })
 
@@ -131,9 +144,13 @@ describe("ParseCache", () => {
         render_nodes: false,
         strict: false,
         strict_locals: false,
+        iteration_nodes: false,
         action_view_helpers: false,
         dot_notation_tags: false,
+        transform_conditionals: false,
         html: true,
+        timeout: 1000,
+        max_errors: 25,
       })
     })
   })
@@ -151,5 +168,74 @@ describe("ParseCache", () => {
     expect(div.close_tag).toBeDefined()
     expect(div.close_tag?.childNodes()).toHaveLength(1)
     expect(isWhitespaceNode(div.close_tag?.compactChildNodes()[0])).toBeTruthy()
+  })
+
+  describe("lifetime within a Linter", () => {
+    const first = "<SPAN>first</SPAN>"
+    const second = "<SPAN>second</SPAN>"
+
+    const cacheOf = (linter: Linter) => (linter as any).parseCache as ParseCache
+
+    test("doesn't retain the previous source after another lint()", () => {
+      const linter = new Linter(Herb)
+      const cache = cacheOf(linter)
+
+      linter.lint(first)
+
+      const cachedFirst = cache.get(first)
+
+      linter.lint(second)
+
+      expect(cache.get(first)).not.toBe(cachedFirst)
+    })
+
+    test("doesn't retain the previous source after another autofix()", () => {
+      const linter = new Linter(Herb)
+      const cache = cacheOf(linter)
+
+      linter.autofix(first)
+
+      const cachedFirst = cache.get(first)
+
+      linter.autofix(second)
+
+      expect(cache.get(first)).not.toBe(cachedFirst)
+    })
+
+    test("doesn't serve the mutated AST of a previous autofix() to lint()", () => {
+      const source = `<div class='foo'   id=''>\n<img src="logo.png">\n</div>\n`
+      const linter = new Linter(Herb)
+
+      const before = linter.lint(source).offenses.map(offense => offense.rule)
+
+      linter.autofix(source)
+
+      expect(linter.lint(source).offenses.map(offense => offense.rule)).toEqual(before)
+    })
+
+    test("doesn't serve the mutated AST of a previous autofix() to another autofix()", () => {
+      const source = `<div class='foo'   id=''>\n<img src="logo.png">\n</div>\n`
+      const linter = new Linter(Herb)
+
+      const first = linter.autofix(source)
+      const second = linter.autofix(source)
+
+      expect(second.source).toBe(first.source)
+      expect(second.fixed.map(offense => offense.rule)).toEqual(first.fixed.map(offense => offense.rule))
+    })
+
+    test("still reuses parse results across rules within a single lint()", () => {
+      const linter = new Linter(Herb)
+      const parseSpy = vi.spyOn(Herb, "parse")
+
+      try {
+        linter.lint("<div>hello</div>")
+
+        expect(parseSpy.mock.calls.length).toBeGreaterThan(0)
+        expect(parseSpy.mock.calls.length).toBeLessThan(linter.getRuleCount())
+      } finally {
+        parseSpy.mockRestore()
+      }
+    })
   })
 })

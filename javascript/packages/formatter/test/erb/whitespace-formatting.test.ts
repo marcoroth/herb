@@ -69,14 +69,22 @@ describe("ERB whitespace formatting", () => {
     test("verifies formatERBContent utility function behavior through working cases", () => {
       expect(formatter.format('<%=content%>')).toEqual('<%= content %>')
       expect(formatter.format('<%=  spaced  %>')).toEqual('<%= spaced %>')
-      expect(formatter.format('<%   %>')).toEqual('<%%>')
+      expect(formatter.format('<%   %>')).toEqual('<% %>')
     })
 
     test("handles ERB tags with only whitespace content", () => {
       const source = '<%   %>'
       const result = formatter.format(source)
 
-      expect(result).toEqual('<%%>')
+      expect(result).toEqual('<% %>')
+    })
+
+    test("never collapses an empty ERB tag into the <%% literal escape", () => {
+      expect(formatter.format('<% %>')).toEqual('<% %>')
+      expect(formatter.format('<%%>')).toEqual('<% %>')
+      expect(formatter.format('<%= %>')).toEqual('<%= %>')
+      expect(formatter.format('<div><% %></div>')).toEqual('<div><% %></div>')
+      expect(formatter.format('a <% %> b')).toEqual('a <% %> b')
     })
 
     test("preserves ERB comment formatting", () => {
@@ -550,6 +558,69 @@ describe("ERB whitespace formatting", () => {
     test("documents current behavior for ERB logic tags", () => {
       expect(formatter.format('<% if condition%>')).toBe('<% if condition%>')
       expect(formatter.format('<%end%>')).toBe('<%end%>')
+    })
+  })
+
+  describe("no trailing whitespace on blank lines", () => {
+    test("blank lines between ERB expressions inside elements have no trailing whitespace", () => {
+      const source = dedent`
+        <button
+          id="my-button"
+          class="
+            px-2 py-3 flex items-center gap-1
+            font-mono text-xs font-semibold text-primary tracking-wider uppercase
+          "
+        >
+          Learn <%= org.capitalize %>
+          <%= render "svgs/icons/caret_down", width: 16, height: 16, class_name: "fill-current -mt-0.5 [.active_&]:hidden" %>
+
+          <%= render "svgs/icons/x", width: 16, height: 16, class_name: "fill-current -mt-0.5 hidden [.active_&]:block" %>
+        </button>
+      `
+
+      const result = formatter.format(source)
+      const lines = result.split("\n")
+
+      for (const line of lines) {
+        if (line.trim() === "") {
+          expect(line).toBe("")
+        }
+      }
+    })
+
+    test("formatted output contains no lines with only whitespace", () => {
+      const source = dedent`
+        <div>
+          Text content here
+          <%= render "component_a", width: 16, height: 16, class_name: "fill-current -mt-0.5 [.active_&]:hidden" %>
+
+          <%= render "component_b", width: 16, height: 16, class_name: "fill-current -mt-0.5 hidden [.active_&]:block" %>
+        </div>
+      `
+
+      const result = formatter.format(source)
+      const lines = result.split("\n")
+
+      for (const line of lines) {
+        if (line.trim() === "") {
+          expect(line).toBe("")
+        }
+      }
+    })
+
+    test("blank separator lines are truly empty after formatting", () => {
+      const source = dedent`
+        <button>
+          Learn <%= org.capitalize %>
+          <%= render "svgs/icons/caret_down" %>
+
+          <%= render "svgs/icons/x" %>
+        </button>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).not.toMatch(/^[ \t]+$/m)
     })
   })
 })

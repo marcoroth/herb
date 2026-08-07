@@ -2,8 +2,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 import { ERBStringToDirectOutputRewriter } from "@herb-tools/rewriter"
 
-import { locationFromOffset } from "./rule-utils.js"
-import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray } from "@herb-tools/core"
+import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType , locationFromByteOffset } from "@herb-tools/core"
 
 import type { Mutable, ReplacementPart } from "@herb-tools/rewriter"
 import type { ParseResult, ERBContentNode, ParserOptions, Node } from "@herb-tools/core"
@@ -28,17 +27,16 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
 
     if (!ERBStringToDirectOutputRewriter.isStringOutputNode(prismNode)) return
 
-    const nodeType = prismNode.constructor.name
     const replacementParts = ERBStringToDirectOutputRewriter.extractReplacementParts(prismNode, source)
 
     const { startOffset, length } = prismNode.location
-    const stringLocation = locationFromOffset(source, startOffset, length)
+    const stringLocation = locationFromByteOffset(source, startOffset, length)
 
     const autofixContext = replacementParts
       ? { node: node as Mutable<ERBContentNode>, replacementParts }
       : undefined
 
-    if (nodeType === "StringNode") {
+    if (isPrismNodeType(prismNode, "StringNode")) {
       this.addOffense(
         `Avoid outputting string literal \`${content}\`. Write the text directly without wrapping it in an ERB output tag.`,
         stringLocation,
@@ -46,7 +44,7 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
       )
     }
 
-    if (nodeType === "InterpolatedStringNode") {
+    if (isPrismNodeType(prismNode, "InterpolatedStringNode")) {
       this.addOffense(
         `Avoid outputting interpolated string \`${content}\`. Use separate \`<%= %>\` tags for each dynamic value instead.`,
         stringLocation,
@@ -60,7 +58,7 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
 
 export class ERBPreferDirectOutputRule extends ParserRule<PreferDirectOutputAutofixContext> {
   static ruleName = "erb-prefer-direct-output"
-  static introducedIn = this.version("unreleased")
+  static introducedIn = this.version("0.9.4")
   static autocorrectable = true
 
   get defaultConfig(): FullRuleConfig {
