@@ -4,14 +4,22 @@
 #include "../ast/ast_nodes.h"
 #include "../lib/hb_allocator.h"
 #include "../lib/hb_array.h"
+#include "../lib/hb_buffer.h"
 #include "../parser/parser.h"
 #include "analyzed_ruby.h"
+
+typedef struct TAG_HELPER_SCOPE_STRUCT {
+  hb_buffer_T buffer;
+  pm_options_t options;
+  pm_parser_t parser;
+  pm_node_t* root;
+} tag_helper_scope_T;
 
 typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
-  hb_array_T* tag_helper_locals;
+  tag_helper_scope_T* tag_helper_scope;
   hb_allocator_T* allocator;
   const char* source;
   bool found_strict_locals;

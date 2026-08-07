@@ -500,5 +500,30 @@ describe("html-no-unknown-tag", () => {
     test("tag.send for custom element passes", () => {
       expectNoOffenses(`<%= tag.send("turbo-frame", id: "frame") do %>content<% end %>`)
     })
+
+    test("tag shadowed by a block argument passes", () => {
+      expectNoOffenses(`
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+      `)
+    })
+
+    test("tag shadowed by a local variable assignment passes", () => {
+      expectNoOffenses(`
+        <% tag = Tag.new(name: "Name") %>
+
+        <li><%= tag.name %></li>
+      `)
+    })
+
+    test("tag.hello is still flagged after an unrelated local variable assignment", () => {
+      expectWarning('Unknown HTML tag `<hello>`. This is not a standard HTML element.')
+
+      assertOffenses(`
+        <% label = "Name" %>
+        <%= tag.hello do %><%= label %><% end %>
+      `)
+    })
   })
 })

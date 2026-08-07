@@ -48,27 +48,84 @@ typedef struct {
   size_t erb_content_offset;
 } tag_helper_parse_context_T;
 
-static bool build_scope_options_from_context(analyze_ruby_context_T* context, pm_options_t* options) {
-  size_t locals_count = context && context->tag_helper_locals ? hb_array_size(context->tag_helper_locals) : 0;
+typedef struct {
+  tag_helper_scope_T* scope;
+  hb_array_T* constants;
+  size_t from;
+  size_t to;
+} local_read_search_T;
 
-  if (locals_count == 0) { return false; }
-  if (!pm_options_scopes_init(options, 1)) { return false; }
+static void append_local_read_constant(local_read_search_T* search, pm_constant_id_t constant_id) {
+  pm_constant_t* constant = pm_constant_pool_id_to_constant(&search->scope->parser.constant_pool, constant_id);
 
-  pm_options_scope_t* scope = &options->scopes[0];
+  if (!constant || constant->length == 0) { return; }
 
-  if (!pm_options_scope_init(scope, locals_count)) {
-    pm_options_free(options);
+  for (size_t index = 0; index < hb_array_size(search->constants); index++) {
+    pm_constant_t* existing = hb_array_get(search->constants, index);
 
-    return false;
+    if (existing && existing->length == constant->length
+        && memcmp(existing->start, constant->start, constant->length) == 0) {
+      return;
+    }
   }
 
-  for (size_t index = 0; index < locals_count; index++) {
-    const char* local_name = hb_array_get(context->tag_helper_locals, index);
+  hb_array_append(search->constants, constant);
+}
 
-    pm_string_constant_init(&scope->locals[index], local_name, strlen(local_name));
+static bool search_local_variable_reads(const pm_node_t* node, void* data) {
+  local_read_search_T* search = (local_read_search_T*) data;
+  const uint8_t* base = (const uint8_t*) search->scope->buffer.value;
+
+  size_t start = (size_t) (node->location.start - base);
+  size_t end = (size_t) (node->location.end - base);
+
+  if (end <= search->from || start >= search->to) { return false; }
+
+  if (PM_NODE_TYPE(node) == PM_LOCAL_VARIABLE_READ_NODE && start >= search->from && end <= search->to) {
+    append_local_read_constant(search, ((pm_local_variable_read_node_t*) node)->name);
   }
 
   return true;
+}
+
+static bool build_scope_options_from_context(
+  analyze_ruby_context_T* context,
+  pm_options_t* options,
+  size_t from,
+  size_t to
+) {
+  if (!context || !context->tag_helper_scope || !context->tag_helper_scope->root) { return false; }
+  if (to <= from) { return false; }
+
+  local_read_search_T search = { .scope = context->tag_helper_scope,
+                                 .constants = hb_array_init(4, context->allocator),
+                                 .from = from,
+                                 .to = to };
+
+  pm_visit_node(context->tag_helper_scope->root, search_local_variable_reads, &search);
+
+  size_t locals_count = hb_array_size(search.constants);
+  bool built = false;
+
+  if (locals_count > 0 && pm_options_scopes_init(options, 1)) {
+    pm_options_scope_t* scope = &options->scopes[0];
+
+    if (pm_options_scope_init(scope, locals_count)) {
+      for (size_t index = 0; index < locals_count; index++) {
+        pm_constant_t* constant = hb_array_get(search.constants, index);
+
+        pm_string_constant_init(&scope->locals[index], (const char*) constant->start, constant->length);
+      }
+
+      built = true;
+    } else {
+      pm_options_free(options);
+    }
+  }
+
+  hb_array_free(&search.constants);
+
+  return built;
 }
 
 static tag_helper_parse_context_T* parse_tag_helper_content(
@@ -88,13 +145,16 @@ static tag_helper_parse_context_T* parse_tag_helper_content(
   parse_context->original_source = original_source;
   parse_context->erb_content_offset = erb_content_offset;
 
+  size_t content_length = strlen(parse_context->content_string);
+
   pm_options_t options = { 0 };
-  bool has_scope_options = build_scope_options_from_context(context, &options);
+  bool has_scope_options =
+    build_scope_options_from_context(context, &options, erb_content_offset, erb_content_offset + content_length);
 
   pm_parser_init(
     &parse_context->parser,
     parse_context->prism_source,
-    strlen(parse_context->content_string),
+    content_length,
     has_scope_options ? &options : NULL
   );
   parse_context->root = pm_parse(&parse_context->parser);
@@ -1774,67 +1834,12 @@ void transform_tag_helper_blocks(const AST_NODE_T* node, analyze_ruby_context_T*
   }
 }
 
-static size_t push_tag_helper_local_scope(const AST_NODE_T* node, analyze_ruby_context_T* context) {
-  if (!node || !context || !context->tag_helper_locals) { return 0; }
-
-  hb_array_T* block_arguments = NULL;
-
-  if (node->type == AST_ERB_BLOCK_NODE) {
-    block_arguments = ((AST_ERB_BLOCK_NODE_T*) node)->block_arguments;
-  } else if (node->type == AST_ERB_RENDER_NODE) {
-    block_arguments = ((AST_ERB_RENDER_NODE_T*) node)->block_arguments;
-  }
-
-  if (!block_arguments) { return 0; }
-
-  size_t pushed = 0;
-
-  for (size_t index = 0; index < hb_array_size(block_arguments); index++) {
-    AST_NODE_T* argument = hb_array_get(block_arguments, index);
-
-    if (!argument || argument->type != AST_RUBY_PARAMETER_NODE) { continue; }
-
-    AST_RUBY_PARAMETER_NODE_T* parameter = (AST_RUBY_PARAMETER_NODE_T*) argument;
-
-    if (!parameter->name || hb_string_is_empty(parameter->name->value)) { continue; }
-
-    char* name = hb_allocator_strndup(context->allocator, parameter->name->value.data, parameter->name->value.length);
-
-    if (name && hb_array_append(context->tag_helper_locals, name)) {
-      pushed++;
-    } else if (name) {
-      hb_allocator_dealloc(context->allocator, name);
-    }
-  }
-
-  return pushed;
-}
-
-static void pop_tag_helper_local_scope(analyze_ruby_context_T* context, size_t count) {
-  if (!context || !context->tag_helper_locals) { return; }
-
-  for (size_t index = 0; index < count; index++) {
-    size_t size = hb_array_size(context->tag_helper_locals);
-
-    if (size == 0) { break; }
-
-    char* name = hb_array_get(context->tag_helper_locals, size - 1);
-    hb_array_remove(context->tag_helper_locals, size - 1);
-
-    if (name) { hb_allocator_dealloc(context->allocator, name); }
-  }
-}
-
 bool transform_tag_helper_nodes(const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
-
-  size_t pushed_locals = push_tag_helper_local_scope(node, context);
 
   transform_tag_helper_blocks(node, context);
 
   herb_visit_child_nodes(node, transform_tag_helper_nodes, data);
-
-  pop_tag_helper_local_scope(context, pushed_locals);
 
   return false;
 }

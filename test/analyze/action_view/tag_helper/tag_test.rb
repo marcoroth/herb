@@ -644,5 +644,109 @@ module Analyze::ActionView::TagHelper
         <%= tag.hr %>
       HTML
     end
+
+    test "tag shadowed by local variable assignment is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% tag = Tag.new(name: "Name") %>
+
+        <li><%= tag.name %></li>
+      HTML
+    end
+
+    test "tag shadowed by multiple assignment is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% label, tag = @pair %>
+        <%= tag.name %>
+      HTML
+    end
+
+    test "tag shadowed by or-assignment is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% tag ||= Tag.new %>
+        <%= tag.name %>
+      HTML
+    end
+
+    test "tag shadowed by local variable assignment inside an if statement is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% if @condition %>
+          <% tag = Tag.new %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "real tag helper is still transformed before the local variable assignment" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.hr %>
+        <% tag = Tag.new %>
+        <%= tag.name %>
+      HTML
+    end
+
+    test "tag shadowed by a for loop variable is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% for tag in @tags %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by a local variable assigned in a block opening is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% tag = capture do %>
+          content
+        <% end %>
+        <%= tag.name %>
+      HTML
+    end
+
+    test "tag shadowed by block argument is not treated as tag helper with iteration nodes" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true, iteration_nodes: true)
+        <% @tags.each do |tag| %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by a rescue reference is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% begin %>
+          <%= render "thing" %>
+        <% rescue => tag %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "tag shadowed by a rescue reference with an exception class is not treated as tag helper" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% begin %>
+          <%= render "thing" %>
+        <% rescue StandardError => tag %>
+          <%= tag.name %>
+        <% end %>
+      HTML
+    end
+
+    test "real tag helper is still transformed outside the rescue branch" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% begin %>
+          <%= tag.hr %>
+        <% rescue => tag %>
+          rescued
+        <% end %>
+      HTML
+    end
+
+    test "local variable assigned inside a block doesn't shadow the tag helper outside of it" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <% @groups.each do |group| %>
+          <% tag = group.tag %>
+          <%= tag.name %>
+        <% end %>
+        <%= tag.hr %>
+      HTML
+    end
   end
 end
