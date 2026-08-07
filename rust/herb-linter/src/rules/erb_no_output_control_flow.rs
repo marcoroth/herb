@@ -5,6 +5,7 @@ use herb::{Token, Visitor};
 rule_visitor!(NoOutputControlFlowVisitor);
 define_parser_rule!(ERBNoOutputControlFlowRule, "erb-no-output-control-flow", Error, NoOutputControlFlowVisitor,
   parser_options: { iteration_nodes: true },
+  autocorrectable: true,
   introduced_in: "0.4.0"
 );
 

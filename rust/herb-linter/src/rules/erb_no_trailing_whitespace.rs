@@ -136,7 +136,10 @@ impl Rule for ERBNoTrailingWhitespaceRule {
   }
 
   fn default_severity(&self) -> SeverityConfig {
-    SeverityConfig::Severity(Severity::Error)
+    SeverityConfig::PerMode {
+      cli: Severity::Error,
+      editor: Severity::Info,
+    }
   }
 }
 

@@ -7,7 +7,8 @@ use herb::Token;
 use herb::Visitor;
 
 rule_visitor!(HTMLNoSpaceInTagVisitor);
-define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor, enabled: false,
+define_parser_rule!(HTMLNoSpaceInTagRule, "html-no-space-in-tag", Error, HTMLNoSpaceInTagVisitor,
+  autocorrectable: true,
   autofix: autofix,
   introduced_in: "0.8.0"
 );

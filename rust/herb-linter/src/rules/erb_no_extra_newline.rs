@@ -5,7 +5,7 @@ use crate::utils::source_slice::offset_of;
 use herb::Location;
 use herb::Position;
 
-define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", Error, has_autofix: true, autocorrectable: true,
+define_source_rule!(ERBNoExtraNewlineRule, "erb-no-extra-newline", { cli: Error, editor: Info }, has_autofix: true, autocorrectable: true,
   introduced_in: "0.8.0"
 );
 
