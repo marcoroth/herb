@@ -19,7 +19,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        121 enabled | all rules via --all-rules"
+  Rules        122 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--only\` replaces the counts from a disabled \`all\` 1`] = `
@@ -50,7 +50,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 121 not enabled
+  Rules        0 enabled | 122 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -71,7 +71,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 121 not enabled
+  Rules        0 enabled | 122 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -102,7 +102,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        121 enabled"
+  Rules        122 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports no version-skipped rules 1`] = `
@@ -124,7 +124,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        121 enabled"
+  Rules        122 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > reports enabled and not-enabled rules when no \`all\` is configured 1`] = `
@@ -146,7 +146,7 @@ test/fixtures/test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted back in on top of \`all: enabled: false\` count as enabled 1`] = `
@@ -165,7 +165,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        1 enabled | 120 not enabled"
+  Rules        1 enabled | 121 not enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted out on top of \`all: enabled: true\` count as disabled 1`] = `
@@ -184,7 +184,7 @@ test-file-with-errors.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        120 enabled | 1 disabled"
+  Rules        121 enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
@@ -214,7 +214,7 @@ test/fixtures/all-rules.html.erb:
   Failing      0 offenses
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        121 enabled | all rules via --all-rules"
+  Rules        122 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
@@ -226,7 +226,7 @@ exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture w
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
@@ -377,7 +377,7 @@ test/fixtures/ignored.html.erb:8:8
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > counts the hidden offenses and suggests the level that reveals them 1`] = `
@@ -395,7 +395,7 @@ exports[`CLI Output Formatting > --log-level > counts the hidden offenses and su
   Not failing  2 info | 1 hint (3 offenses across 1 file, below --fail-level=error)
   Not shown    3 offenses hidden, show them with --log-level=hint
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > doesn't report offenses below the given level 1`] = `
@@ -412,7 +412,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        100 enabled | 20 not enabled | 1 disabled"
+  Rules        101 enabled | 20 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > prefers the CLI flag over the config file 1`] = `
@@ -431,7 +431,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        100 enabled | 20 not enabled | 1 disabled"
+  Rules        101 enabled | 20 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > reads logLevel from the config file 1`] = `
@@ -448,7 +448,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        100 enabled | 20 not enabled | 1 disabled"
+  Rules        101 enabled | 20 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still counts hidden offenses towards the exit code 1`] = `
@@ -464,7 +464,7 @@ exports[`CLI Output Formatting > --log-level > still counts hidden offenses towa
   Offenses     1 hint (1 offense across 1 file)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        100 enabled | 20 not enabled | 1 disabled"
+  Rules        101 enabled | 20 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still reports offenses at or above the given level 1`] = `
@@ -483,7 +483,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        100 enabled | 20 not enabled | 1 disabled"
+  Rules        101 enabled | 20 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > keeps the log level when it is passed explicitly 1`] = `
@@ -505,7 +505,7 @@ test-file-with-errors.html.erb:
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        121 enabled | all rules via --all-rules"
+  Rules        122 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > lowers the log level to report the rules it was asked for 1`] = `
@@ -528,7 +528,7 @@ test-file-with-errors.html.erb:
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Log level    hint | lowered from warning by --all-rules
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        121 enabled | all rules via --all-rules"
+  Rules        122 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --log-level > with --only > keeps the log level when it is passed explicitly 1`] = `
@@ -689,7 +689,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -721,11 +721,25 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[info] The partial \`post\` is looked up relative to the directory of the template rendering it. Moving this template changes which file that resolves to, and renaming the partial means hunting for callers that never spell its full name. Write the full path from the view root so it resolves to the same file from any template, and a search for that path finds every caller. (actionview-prefer-qualified-partial-path)
+
+test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:21
+
+      7 │ <% end %>
+      8 │ 
+  →   9 │ <%=  render partial: "post",
+        │                      ~~~~~~
+     10 │            as: :post
+     11 │ %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -745,7 +759,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace before \`%>\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -765,7 +779,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
               2 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -788,7 +802,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
              10 │            as: :post
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
 
 [error] Avoid unused expressions in silent ERB tags. \`<% extra_whitespace %>\` is evaluated but its return value is discarded. Use \`<%= extra_whitespace %>\` to output the value or remove the expression. (erb-no-unused-expressions)
 
@@ -803,14 +817,16 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
  Rule offenses:
   erb-no-extra-whitespace-inside-tags (3 offenses in 1 file)
+  actionview-prefer-qualified-partial-path (1 offense in 1 file)
   erb-no-unused-expressions (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     4 errors (4 offenses across 1 file)
-  Fixable      4 offenses | 3 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Failing      4 errors (4 offenses across 1 file)
+  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
+  Fixable      5 offenses | 3 autocorrectable using \`--fix\`
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
@@ -870,7 +886,7 @@ test/fixtures/ignored.html.erb:6:14
   Offenses     2 errors (2 offenses across 1 file)
   Ignored      3 offenses suppressed with herb:disable
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
@@ -930,7 +946,7 @@ test/fixtures/tag-attributes.html.erb:5:0
   Failing      0 offenses
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -956,7 +972,7 @@ test/fixtures/parser-errors.html.erb:2:16
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      0 offenses
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -1208,7 +1224,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -1333,7 +1349,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Failing      4 errors (4 offenses across 1 file)
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -1388,7 +1404,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -1400,7 +1416,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -1479,7 +1495,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -1536,7 +1552,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -1583,7 +1599,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 101,
+    "ruleCount": 102,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1605,7 +1621,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 101,
+    "ruleCount": 102,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1679,7 +1695,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 101,
+    "ruleCount": 102,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1762,7 +1778,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -1781,7 +1797,7 @@ test/fixtures/test-file-simple.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -1800,7 +1816,7 @@ test/fixtures/bad-file.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -1812,7 +1828,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles boolean attributes 1`] = `
@@ -1824,7 +1840,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
@@ -1875,7 +1891,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
@@ -2018,7 +2034,7 @@ test/fixtures/disabled-1.html.erb:14:19
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Ignored      8 offenses suppressed with herb:disable
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
@@ -2277,7 +2293,7 @@ test/fixtures/disabled-2.html.erb:2:44
   Not failing  7 warnings (7 offenses across 1 file, below --fail-level=error)
   Ignored      5 offenses suppressed with herb:disable
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > points at --log-level when many offenses don't fail the build 1`] = `
@@ -2315,7 +2331,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled
+  Rules        102 enabled | 20 not enabled
 
  TIP: 11 of the logged offenses don't fail the build.
       Run herb-lint --log-level=error to stop logging them, or set linter.logLevel in your .herb.yml.
@@ -2347,7 +2363,7 @@ multiple-rule-offenses.html.erb:
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Not shown    11 offenses hidden, show them with --log-level=hint
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when --log-level is passed explicitly, even when it hides nothing 1`] = `
@@ -2385,7 +2401,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when logLevel is set in the config file 1`] = `
@@ -2423,7 +2439,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when only a handful of offenses don't fail the build 1`] = `
@@ -2461,7 +2477,7 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > points at the flag instead of previewing once there are too many corrections 1`] = `
@@ -2557,7 +2573,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > previews the correction under each correctable offense 1`] = `
@@ -2614,7 +2630,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is hint 1`] = `
@@ -2651,7 +2667,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is info 1`] = `
@@ -2688,7 +2704,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is warning 1`] = `
@@ -2725,7 +2741,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > moves a severity between buckets as --fail-level is lowered 1`] = `
@@ -2763,7 +2779,7 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors | 4 warnings | 1 info (13 offenses across 1 file)
   Not failing  1 hint (1 offense across 1 file, below --fail-level=info)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > splits the buckets when only some severities fail the build 1`] = `
@@ -2801,7 +2817,7 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors | 4 warnings (12 offenses across 1 file)
   Not failing  1 info | 1 hint (2 offenses across 1 file, below --fail-level=warning)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;
 
 exports[`CLI Output Formatting > unsafe autocorrectable offenses > counts and tags them separately from offenses --fix can correct 1`] = `
@@ -2921,5 +2937,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        101 enabled | 20 not enabled"
+  Rules        102 enabled | 20 not enabled"
 `;

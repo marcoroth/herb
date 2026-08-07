@@ -31,6 +31,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
+- [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.
 - [`actionview-strict-locals-partial-only`](./actionview-strict-locals-partial-only.md) - Only allow strict local definitions in partial files.
 
