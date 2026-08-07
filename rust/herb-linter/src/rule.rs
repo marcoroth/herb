@@ -21,6 +21,7 @@ pub struct LintContext {
   pub ignore_disable_comments: bool,
   pub source: String,
   pub indent_width: Option<usize>,
+  pub framework: Option<herb_config::Framework>,
 }
 
 pub trait Rule: Send + Sync {

@@ -18,7 +18,7 @@ import { resolveSeverity, ALL_RULES_KEY } from "@herb-tools/config"
 
 import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult, RuleVersion, LinterMode } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend, BackendLintOffense } from "@herb-tools/core"
-import type { RuleConfig, Config } from "@herb-tools/config"
+import type { RuleConfig, Config, Framework } from "@herb-tools/config"
 
 export interface LinterOptions {
   /**
@@ -525,11 +525,12 @@ export class Linter {
    * needs the same `HerbConfigOptions` this linter was built with, with the rule
    * selection folded into `linter.rules`.
    */
-  protected backendConfigJSON(indentWidth?: number): string {
+  protected backendConfigJSON(indentWidth?: number, framework?: Framework): string {
     const formatter = this.config?.formatter ?? {}
 
     return JSON.stringify({
       ...(this.config?.options ?? {}),
+      ...(framework !== undefined && { framework }),
       ...(this.config?.configVersion !== undefined && { version: this.config.configVersion }),
       formatter: indentWidth !== undefined ? { ...formatter, indentWidth } : formatter,
       linter: {
@@ -574,7 +575,7 @@ export class Linter {
    * @param context - Optional context for linting
    */
   protected lintWithBackend(source: string, context?: Partial<LintContext>): LintResult {
-    const configJson = this.backendConfigJSON()
+    const configJson = this.backendConfigJSON(undefined, context?.framework ?? this.config?.framework)
 
     const fileName = context?.fileName ?? undefined
 

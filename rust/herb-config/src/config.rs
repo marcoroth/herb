@@ -81,6 +81,7 @@ impl Config {
 
   pub fn options(&self) -> HerbConfigOptions {
     HerbConfigOptions {
+      framework: self.config.framework,
       files: self.config.files.clone(),
       engine: None,
       linter: self.config.linter.clone(),

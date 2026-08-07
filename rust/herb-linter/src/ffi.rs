@@ -75,10 +75,12 @@ pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_
 
   let indent_width = config.formatter().and_then(|formatter| formatter.indent_width);
 
+  let framework = config.config.framework;
   let linter = Linter::new(config);
   let context = LintContext {
     file_name: file_name_string,
     indent_width,
+    framework,
     ..Default::default()
   };
 
@@ -138,10 +140,12 @@ pub unsafe extern "C" fn herb_autofix(
 
   let indent_width = config.formatter().and_then(|formatter| formatter.indent_width);
 
+  let framework = config.config.framework;
   let linter = Linter::new(config);
   let context = LintContext {
     file_name: file_name_string,
     indent_width,
+    framework,
     ..Default::default()
   };
 

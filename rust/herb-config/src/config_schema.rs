@@ -113,6 +113,9 @@ pub type EngineConfig = serde_yaml::Mapping;
 #[serde(deny_unknown_fields)]
 pub struct HerbConfigOptions {
   #[serde(default, skip_serializing_if = "Option::is_none")]
+  pub framework: Option<Framework>,
+
+  #[serde(default, skip_serializing_if = "Option::is_none")]
   pub files: Option<FilesConfig>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
