@@ -11,10 +11,8 @@ describe("RubyHTMLAttributesSplatNode Printing", () => {
   })
 
   test("can print double splat", () => {
-    const node = RubyHTMLAttributesSplatNode.from({
-      type: "AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE",
+    const node = RubyHTMLAttributesSplatNode.build({
       location,
-      errors: [],
       content: "**options",
       prefix: ""
     })
@@ -23,10 +21,8 @@ describe("RubyHTMLAttributesSplatNode Printing", () => {
   })
 
   test("can print splat with variable", () => {
-    const node = RubyHTMLAttributesSplatNode.from({
-      type: "AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE",
+    const node = RubyHTMLAttributesSplatNode.build({
       location,
-      errors: [],
       content: "**html_attrs",
       prefix: ""
     })
@@ -35,10 +31,8 @@ describe("RubyHTMLAttributesSplatNode Printing", () => {
   })
 
   test("can print splat with method call", () => {
-    const node = RubyHTMLAttributesSplatNode.from({
-      type: "AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE",
+    const node = RubyHTMLAttributesSplatNode.build({
       location,
-      errors: [],
       content: "**data_attributes(user)",
       prefix: ""
     })
@@ -47,10 +41,8 @@ describe("RubyHTMLAttributesSplatNode Printing", () => {
   })
 
   test("can print with prefix", () => {
-    const node = RubyHTMLAttributesSplatNode.from({
-      type: "AST_RUBY_HTML_ATTRIBUTES_SPLAT_NODE",
+    const node = RubyHTMLAttributesSplatNode.build({
       location,
-      errors: [],
       content: "**options",
       prefix: "data"
     })

@@ -18,7 +18,6 @@ import {
   replaceNodeWithBody,
   createLiteral,
   HTMLElementNode,
-  Location,
 } from "@herb-tools/core"
 
 import type { BaseAutofixContext, UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -151,16 +150,13 @@ function findCommonSuffixCount(branches: Node[][], minLength: number, prefixCoun
 }
 
 function createWrapper(template: HTMLElementNode, body: Node[]): HTMLElementNode {
-  return new HTMLElementNode({
-    type: "AST_HTML_ELEMENT_NODE",
+  return HTMLElementNode.build({
     open_tag: template.open_tag,
     tag_name: template.tag_name,
     body,
     close_tag: template.close_tag,
     is_void: template.is_void,
     element_source: template.element_source,
-    location: Location.zero,
-    errors: [],
   })
 }
 

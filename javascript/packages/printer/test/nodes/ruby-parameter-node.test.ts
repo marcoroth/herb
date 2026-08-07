@@ -12,10 +12,8 @@ describe("RubyParameterNode Printing", () => {
   })
 
   test("prints nothing from constructed node", () => {
-    const node = RubyParameterNode.from({
-      type: "AST_RUBY_PARAMETER_NODE",
+    const node = RubyParameterNode.build({
       location: createLocation(),
-      errors: [],
       name: createToken("TOKEN_IDENTIFIER", "user"),
       default_value: null,
       required: true,

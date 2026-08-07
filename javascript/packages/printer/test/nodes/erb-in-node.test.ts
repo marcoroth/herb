@@ -12,10 +12,8 @@ describe("ERBInNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBInNode.from({
-      type: "AST_ERB_IN_NODE",
+    const node = ERBInNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " in [Integer] "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

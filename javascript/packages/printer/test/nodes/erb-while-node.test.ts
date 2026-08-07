@@ -12,10 +12,8 @@ describe("ERBWhileNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBWhileNode.from({
-      type: "AST_ERB_WHILE_NODE",
+    const node = ERBWhileNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " while true "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

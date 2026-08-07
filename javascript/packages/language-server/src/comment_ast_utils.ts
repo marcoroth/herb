@@ -1,7 +1,7 @@
 import { ParserService } from "./parser_service"
 import { LineContextCollector } from "./line_context_collector"
 
-import { HTMLCommentNode, Location, createSyntheticToken } from "@herb-tools/core"
+import { HTMLCommentNode, createSyntheticToken } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { isERBCommentNode, isLiteralNode, createLiteral } from "@herb-tools/core"
@@ -156,10 +156,7 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
         commentERBNode(node)
       }
 
-      const commentNode = new HTMLCommentNode({
-        type: "AST_HTML_COMMENT_NODE",
-        location: Location.zero,
-        errors: [],
+      const commentNode = HTMLCommentNode.build({
         comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
         comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),
@@ -171,10 +168,7 @@ export function commentLineContent(content: string, erbNodes: ERBContentNode[], 
     }
 
     case "html-only": {
-      const commentNode = new HTMLCommentNode({
-        type: "AST_HTML_COMMENT_NODE",
-        location: Location.zero,
-        errors: [],
+      const commentNode = HTMLCommentNode.build({
         comment_start: createSyntheticToken("<!--", "TOKEN_HTML_COMMENT_START"),
         children: [createLiteral(" "), ...(children.slice() as Node[]), createLiteral(" ")],
         comment_end: createSyntheticToken("-->", "TOKEN_HTML_COMMENT_END"),

@@ -12,10 +12,8 @@ describe("ERBIfNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBIfNode.from({
-      type: "AST_ERB_IF_NODE",
+    const node = ERBIfNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " if condition? "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -34,10 +32,8 @@ describe("ERBIfNode Printing", () => {
   })
 
   test("can print from instantiated node with subsequent", () => {
-    const else_node = ERBElseNode.from({
-      type: "AST_ERB_ELSE_NODE",
+    const else_node = ERBElseNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " else "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -46,10 +42,8 @@ describe("ERBIfNode Printing", () => {
       ]
     })
 
-    const subsequent = ERBIfNode.from({
-      type: "AST_ERB_IF_NODE",
+    const subsequent = ERBIfNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " elsif another_condition? "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
@@ -61,10 +55,8 @@ describe("ERBIfNode Printing", () => {
     })
 
 
-    const node = ERBIfNode.from({
-      type: "AST_ERB_IF_NODE",
+    const node = ERBIfNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " if condition? "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

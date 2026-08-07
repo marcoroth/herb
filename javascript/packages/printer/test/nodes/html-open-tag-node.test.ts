@@ -11,10 +11,8 @@ describe("HTMLOpenTagNode Printing", () => {
   })
 
   test("can print from node with void=false", () => {
-    const node = HTMLOpenTagNode.from({
-      type: "AST_HTML_OPEN_TAG_NODE",
+    const node = HTMLOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_TAG_START", "<"),
       tag_name: createToken("TOKEN_IDENTIFIER", "a"),
       tag_closing: createToken("TOKEN_HTML_TAG_END", ">"),
@@ -26,10 +24,8 @@ describe("HTMLOpenTagNode Printing", () => {
   })
 
   test("can print from node with void=true", () => {
-    const node = HTMLOpenTagNode.from({
-      type: "AST_HTML_OPEN_TAG_NODE",
+    const node = HTMLOpenTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_TAG_START", "<"),
       tag_name: createToken("TOKEN_IDENTIFIER", "a"),
       tag_closing: createToken("TOKEN_HTML_TAG_END", "/>"),

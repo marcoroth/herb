@@ -601,12 +601,7 @@ export function splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
       const parts = node.content.match(/(\S+|\s+)/g) || []
 
       for (const part of parts) {
-        result.push(new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: part,
-          errors: [],
-          location: node.location
-        }))
+        result.push(LiteralNode.build({ content: part, location: node.location }))
       }
     } else {
       result.push(node)
@@ -928,12 +923,7 @@ export function replaceNodeWithBody(array: Node[], element: HTMLElementNode): vo
  * Useful for inserting whitespace or newlines during AST mutations.
  */
 export function createLiteral(content: string): LiteralNode {
-  return new LiteralNode({
-    type: "AST_LITERAL_NODE",
-    content,
-    location: Location.zero,
-    errors: [],
-  })
+  return LiteralNode.build({ content })
 }
 
 export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): Token {
@@ -941,38 +931,23 @@ export function createSyntheticToken(value: string, type = "TOKEN_SYNTHETIC"): T
 }
 
 export function createWhitespaceNode(): WhitespaceNode {
-  return new WhitespaceNode({
-    type: "AST_WHITESPACE_NODE",
-    location: Location.zero,
-    errors: [],
-    value: createSyntheticToken(" "),
-  })
+  return WhitespaceNode.build({ value: createSyntheticToken(" ") })
 }
 
 export function createERBOutputNode(expression: string, tagOpening = "<%=", tagClosing = "%>"): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
+  return ERBContentNode.build({
     tag_opening: createSyntheticToken(tagOpening),
     content: createSyntheticToken(expression),
     tag_closing: createSyntheticToken(tagClosing),
-    parsed: false,
     valid: true,
-    prism_node: null,
-    location: Location.zero,
-    errors: [],
   })
 }
 
 export function createERBSilentNode(expression: string, tagOpening = "<%", tagClosing = "%>"): ERBContentNode {
-  return new ERBContentNode({
-    type: "AST_ERB_CONTENT_NODE",
+  return ERBContentNode.build({
     tag_opening: createSyntheticToken(tagOpening),
     content: createSyntheticToken(expression),
     tag_closing: createSyntheticToken(tagClosing),
-    parsed: false,
     valid: true,
-    prism_node: null,
-    location: Location.zero,
-    errors: [],
   })
 }

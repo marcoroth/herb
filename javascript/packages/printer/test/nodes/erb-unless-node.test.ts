@@ -12,10 +12,8 @@ describe("ERBUnlessNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBUnlessNode.from({
-      type: "AST_ERB_UNLESS_NODE",
+    const node = ERBUnlessNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " unless condition? "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

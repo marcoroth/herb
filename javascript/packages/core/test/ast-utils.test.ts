@@ -24,37 +24,38 @@ import {
   getAttributes,
   getAttribute,
   Location,
-  HTMLAttributeNameNode
+  HTMLAttributeNameNode,
+  HTMLAttributeNode,
+  HTMLAttributeValueNode,
+  HTMLElementNode,
+  HTMLOpenTagNode,
+  DocumentNode,
+  ERBContentNode,
+  ERBOpenTagNode,
+  LiteralNode,
+  RubyLiteralNode,
+  createSyntheticToken
 } from "../src"
 
-import type { Node, LiteralNode, ERBContentNode, RubyLiteralNode } from "../src/nodes.js"
+import type { Node } from "../src/nodes.js"
 
 describe("ast-utils", () => {
-  const createLiteralNode = (content: string): LiteralNode => ({
-    type: "AST_LITERAL_NODE",
-    content,
-    location: Location.from(1, 1, 1, 1)
-  })
+  const createLiteralNode = (content: string): LiteralNode =>
+    LiteralNode.build({ content, location: Location.from(1, 1, 1, 1) })
 
-  const createERBContentNode = (tagOpening: string, content: string = "", tagClosing: string = "%>"): ERBContentNode => ({
-    type: "AST_ERB_CONTENT_NODE",
-    tag_opening: { type: "AST_TOKEN", value: tagOpening, location: Location.from(1, 1, 1, 1) },
-    content: content ? { type: "AST_TOKEN", value: content, location: Location.from(1, 1, 1, 1) } : undefined,
-    tag_closing: { type: "AST_TOKEN", value: tagClosing, location: Location.from(1, 1, 1, 1) },
-    location: Location.from(1, 1, 1, 1)
-  })
+  const createERBContentNode = (tagOpening: string, content: string = "", tagClosing: string = "%>"): ERBContentNode =>
+    ERBContentNode.build({
+      tag_opening: createSyntheticToken(tagOpening),
+      content: content ? createSyntheticToken(content) : null,
+      tag_closing: createSyntheticToken(tagClosing),
+      location: Location.from(1, 1, 1, 1)
+    })
 
-  const createRubyLiteralNode = (content: string): RubyLiteralNode => ({
-    type: "AST_RUBY_LITERAL_NODE",
-    content,
-    location: Location.from(1, 1, 1, 1)
-  })
+  const createRubyLiteralNode = (content: string): RubyLiteralNode =>
+    RubyLiteralNode.build({ content, location: Location.from(1, 1, 1, 1) })
 
-  const createAttributeNameNode = (children: Node[]): HTMLAttributeNameNode => ({
-    type: "AST_HTML_ATTRIBUTE_NAME_NODE",
-    children,
-    location: Location.from(1, 1, 1, 1)
-  })
+  const createAttributeNameNode = (children: Node[]): HTMLAttributeNameNode =>
+    HTMLAttributeNameNode.build({ children, location: Location.from(1, 1, 1, 1) })
 
   describe("isLiteralNode", () => {
     test("returns true for literal nodes", () => {
@@ -519,33 +520,22 @@ describe("ast-utils", () => {
   })
 
   describe("findParentArray", () => {
-    const createDocumentNode = (children: Node[]): Node => ({
-      type: "AST_DOCUMENT_NODE",
-      children,
-      location: Location.from(1, 1, 1, 1)
-    } as any)
+    const createDocumentNode = (children: Node[]): Node =>
+      DocumentNode.build({ children, location: Location.from(1, 1, 1, 1) })
 
-    const createElementNode = (openTagChildren: Node[], body: Node[] = []): any => ({
-      type: "AST_HTML_ELEMENT_NODE",
-      open_tag: {
-        type: "AST_HTML_OPEN_TAG_NODE",
-        children: openTagChildren,
+    const createElementNode = (openTagChildren: Node[], body: Node[] = []) =>
+      HTMLElementNode.build({
+        open_tag: HTMLOpenTagNode.build({ children: openTagChildren, location: Location.from(1, 1, 1, 1) }),
+        body,
         location: Location.from(1, 1, 1, 1)
-      },
-      body,
-      location: Location.from(1, 1, 1, 1)
-    })
+      })
 
-    const createAttributeNode = (valueChildren: Node[]): any => ({
-      type: "AST_HTML_ATTRIBUTE_NODE",
-      name: createAttributeNameNode([createLiteralNode("class")]),
-      value: {
-        type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
-        children: valueChildren,
+    const createAttributeNode = (valueChildren: Node[]) =>
+      HTMLAttributeNode.build({
+        name: createAttributeNameNode([createLiteralNode("class")]),
+        value: HTMLAttributeValueNode.build({ children: valueChildren, location: Location.from(1, 1, 1, 1) }),
         location: Location.from(1, 1, 1, 1)
-      },
-      location: Location.from(1, 1, 1, 1)
-    })
+      })
 
     test("finds a node in the document children", () => {
       const target = createERBContentNode("<%=", "value")
@@ -616,35 +606,24 @@ describe("ast-utils", () => {
   })
 
   describe("getAttributes", () => {
-    const createAttributeNode = (name: string) => ({
-      type: "AST_HTML_ATTRIBUTE_NODE",
-      location: Location.from(1, 1, 1, 1),
-      errors: [],
-      name: createAttributeNameNode([createLiteralNode(name)]),
-      equals: null,
-      value: null
-    })
+    const createAttributeNode = (name: string) =>
+      HTMLAttributeNode.build({
+        name: createAttributeNameNode([createLiteralNode(name)]),
+        location: Location.from(1, 1, 1, 1)
+      })
 
-    const createERBOpenTagNode = (children: Node[]) => ({
-      type: "AST_ERB_OPEN_TAG_NODE",
-      location: Location.from(1, 1, 1, 1),
-      errors: [],
-      tag_opening: null,
-      content: null,
-      tag_closing: null,
-      tag_name: null,
-      children
-    })
+    const createERBOpenTagNode = (children: Node[]) =>
+      ERBOpenTagNode.build({ children, location: Location.from(1, 1, 1, 1) })
 
     test("reads attributes off the ERB open tag that Action View tag helpers parse into", () => {
-      const node = createERBOpenTagNode([createAttributeNode("data-turbo-permanent")]) as any
+      const node = createERBOpenTagNode([createAttributeNode("data-turbo-permanent")])
 
       expect(getAttributes(node)).toHaveLength(1)
       expect(getAttribute(node, "data-turbo-permanent")).not.toBe(null)
     })
 
     test("returns an empty list for an ERB open tag without attributes", () => {
-      expect(getAttributes(createERBOpenTagNode([]) as any)).toEqual([])
+      expect(getAttributes(createERBOpenTagNode([]))).toEqual([])
     })
   })  
 })

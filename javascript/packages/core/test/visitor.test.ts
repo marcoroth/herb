@@ -28,39 +28,20 @@ describe("Visitor", () => {
     const position = new Position(1, 0)
     const location = new Location(position, position)
 
-    const text = new HTMLTextNode({
-      type: "AST_HTML_TEXT_NODE",
+    const text = HTMLTextNode.build({
       location,
-      errors: [],
       content: "Hello",
     })
 
-    const erb = new ERBContentNode({
-      type: "AST_ERB_CONTENT_NODE",
-      location,
-      errors: [],
-      tag_opening: null,
-      content: null,
-      tag_closing: null,
-      parsed: false,
-      valid: false,
-    })
+    const erb = ERBContentNode.build({ location })
 
-    const element = new HTMLElementNode({
-      type: "AST_HTML_ELEMENT_NODE",
+    const element = HTMLElementNode.build({
       location,
-      errors: [],
-      open_tag: null,
-      tag_name: null,
       body: [text, erb],
-      close_tag: null,
-      is_void: false,
     })
 
-    const doc = new DocumentNode({
-      type: "AST_DOCUMENT_NODE",
+    const doc = DocumentNode.build({
       location,
-      errors: [],
       children: [element],
     })
 
@@ -79,12 +60,8 @@ describe("Visitor", () => {
     const position = new Position(1, 0)
     const location = new Location(position, position)
 
-    const node = new RubyParameterNode({
-      type: "AST_RUBY_PARAMETER_NODE",
+    const node = RubyParameterNode.build({
       location,
-      errors: [],
-      name: null,
-      default_value: null,
       kind: "required",
       required: true,
     })
@@ -101,12 +78,8 @@ describe("Visitor", () => {
     const position = new Position(1, 0)
     const location = new Location(position, position)
 
-    const node = new RubyParameterNode({
-      type: "AST_RUBY_PARAMETER_NODE",
+    const node = RubyParameterNode.build({
       location,
-      errors: [],
-      name: null,
-      default_value: null,
       kind: "required",
       required: true,
     })

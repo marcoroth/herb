@@ -11,10 +11,8 @@ describe("HTMLVirtualCloseTagNode Printing", () => {
   })
 
   test("can print from node - prints nothing", () => {
-    const node = HTMLVirtualCloseTagNode.from({
-      type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
+    const node = HTMLVirtualCloseTagNode.build({
       location,
-      errors: [],
       tag_name: createToken("TOKEN_IDENTIFIER", "div")
     })
 
@@ -22,10 +20,8 @@ describe("HTMLVirtualCloseTagNode Printing", () => {
   })
 
   test("can print from node with null tag_name - prints nothing", () => {
-    const node = HTMLVirtualCloseTagNode.from({
-      type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
+    const node = HTMLVirtualCloseTagNode.build({
       location,
-      errors: [],
       tag_name: null
     })
 
@@ -33,10 +29,8 @@ describe("HTMLVirtualCloseTagNode Printing", () => {
   })
 
   test("can print from node for a", () => {
-    const node = HTMLVirtualCloseTagNode.from({
-      type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
+    const node = HTMLVirtualCloseTagNode.build({
       location,
-      errors: [],
       tag_name: createToken("TOKEN_IDENTIFIER", "a")
     })
 
@@ -44,10 +38,8 @@ describe("HTMLVirtualCloseTagNode Printing", () => {
   })
 
   test("can print from node for div", () => {
-    const node = HTMLVirtualCloseTagNode.from({
-      type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
+    const node = HTMLVirtualCloseTagNode.build({
       location,
-      errors: [],
       tag_name: createToken("TOKEN_IDENTIFIER", "div")
     })
 

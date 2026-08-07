@@ -1,4 +1,4 @@
-import { Visitor, Location, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
+import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
 import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -156,15 +156,12 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       elementSource = HELPER_REGISTRY["tag"].source
     }
 
-    const erbOpenTag = new ERBOpenTagNode({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const erbOpenTag = ERBOpenTagNode.build({
       location: openTag.location,
-      errors: [],
       tag_opening: createSyntheticToken("<%="),
       content: createSyntheticToken(content),
       tag_closing: createSyntheticToken("%>"),
       tag_name: createSyntheticToken(tagName.value),
-      children: [],
     })
 
     asMutable(node).open_tag = erbOpenTag
@@ -180,19 +177,14 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     } else if (isInlineForm) {
       asMutable(node).body = []
 
-      const virtualClose = new HTMLVirtualCloseTagNode({
-        type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
-        location: Location.zero,
-        errors: [],
+      const virtualClose = HTMLVirtualCloseTagNode.build({
         tag_name: createSyntheticToken(tagName.value),
       })
 
       asMutable(node).close_tag = virtualClose
     } else if (node.close_tag) {
-      const erbEnd = new ERBEndNode({
-        type: "AST_ERB_END_NODE",
+      const erbEnd = ERBEndNode.build({
         location: node.close_tag.location,
-        errors: [],
         tag_opening: createSyntheticToken("<%"),
         content: createSyntheticToken(" end "),
         tag_closing: createSyntheticToken("%>"),

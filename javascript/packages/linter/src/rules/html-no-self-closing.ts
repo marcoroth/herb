@@ -1,9 +1,9 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
-import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
+import { getTagName, getTagLocalName, isWhitespaceNode, createSyntheticToken, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult, ParserOptions } from "@herb-tools/core"
+import type { Node, HTMLOpenTagNode, HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
   node: Mutable<HTMLOpenTagNode>
@@ -97,18 +97,10 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
       const parent = findParent(result.value, node as any as Node) as Mutable<HTMLElementNode> | null
 
       if (parent && parent.type === "AST_HTML_ELEMENT_NODE") {
-        const tag_opening: SerializedToken = { type: "TOKEN_HTML_TAG_START_CLOSE", value: "</", location: Location.zero, range: [0, 0] }
-        const tag_name: SerializedToken = { type: "TOKEN_IDENTIFIER", value: tagName, location: Location.zero, range: [0, 0] }
-        const tag_closing: SerializedToken = { type: "TOKEN_HTML_TAG_END", value: ">", location: Location.zero, range: [0, 0] }
-
-        parent.close_tag = HTMLCloseTagNode.from({
-          type: "AST_HTML_CLOSE_TAG_NODE",
-          tag_opening,
-          tag_name,
-          tag_closing,
-          children: [],
-          errors: [],
-          location: Location.zero,
+        parent.close_tag = HTMLCloseTagNode.build({
+          tag_opening: createSyntheticToken("</", "TOKEN_HTML_TAG_START_CLOSE"),
+          tag_name: createSyntheticToken(tagName, "TOKEN_IDENTIFIER"),
+          tag_closing: createSyntheticToken(">", "TOKEN_HTML_TAG_END"),
         })
       }
     }
