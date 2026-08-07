@@ -670,7 +670,7 @@ module Herb
     end
 
     class HelperType
-      attr_reader :name, :source, :gem, :output, :visibility, :supports_block,
+      attr_reader :name, :source, :gem, :output, :visibility, :context, :supports_block,
                   :supported, :description, :signature, :documentation_url, :tag,
                   :content, :attributes_arg, :attributes_arg_with_block,
                   :transform_style, :custom_transform,
@@ -684,7 +684,7 @@ module Herb
         @visibility = config.fetch("visibility", "public")
         @supports_block = config.fetch("supports_block", false)
         @supported = config.fetch("supported", false)
-        @head_content = config.fetch("head_content", false)
+        @context = config.fetch("context", nil)
         @description = config.fetch("description", "").strip
         @signature = config.fetch("signature")
         @documentation_url = config.fetch("documentation_url")
@@ -787,10 +787,6 @@ module Herb
 
       def supported?
         @supported
-      end
-
-      def head_content?
-        @head_content
       end
 
       def static_tag_name?

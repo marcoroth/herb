@@ -4,7 +4,7 @@ source: "Importmap::ImportmapTagsHelper#javascript_import_module_tag"
 gem: "importmap-rails"
 output: "html"
 visibility: "public"
-head_content: true
+context: "head"
 supported: false
 supports_block: false
 signature: "javascript_import_module_tag(*module_names)"

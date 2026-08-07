@@ -6,7 +6,7 @@ require_relative "../action_view/helper_registry"
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
-      HEAD_CONTENT_HELPER_PATTERN = /\b(?:#{Herb::ActionView::HelperRegistry.head_content_helpers.map { |helper| Regexp.escape(helper.name) }.join("|")})\b/ #: Regexp
+      HEAD_CONTENT_HELPER_PATTERN = /\b(?:#{Herb::ActionView::HelperRegistry.by_context("head").map { |helper| Regexp.escape(helper.name) }.join("|")})\b/ #: Regexp
       private_constant :HEAD_CONTENT_HELPER_PATTERN
 
       def initialize(file_path: nil, project_path: nil)
