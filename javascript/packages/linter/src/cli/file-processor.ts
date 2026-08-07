@@ -12,6 +12,7 @@ import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
+import { buildPartialIndex } from "./partial-index-builder.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
@@ -20,6 +21,7 @@ import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "../fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
+import type { PartialIndex } from "@herb-tools/core"
 
 const AUTOMATIC_FIX_DIFF_LIMIT = 20
 
@@ -89,6 +91,7 @@ export class FileProcessor {
   private linter: Linter | null = null
   private customRulesLoaded: boolean = false
   private customRules: RuleClass[] | undefined = undefined
+  private partials: PartialIndex | undefined = undefined
 
   /**
    * Loads the project's custom rules once and caches them for subsequent calls.
@@ -222,11 +225,23 @@ export class FileProcessor {
     const jobs = context?.jobs ?? 1
     const shouldParallelize = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
 
+    await this.buildPartialIndexOnce(context)
+
     if (shouldParallelize) {
       return this.processFilesInParallel(files, jobs, formatOption, context)
     }
 
     return this.processFilesSequentially(files, formatOption, context)
+  }
+
+  private async buildPartialIndexOnce(context?: ProcessingContext): Promise<void> {
+    if (this.partials) return
+
+    try {
+      this.partials = await buildPartialIndex(Herb, context?.projectPath || process.cwd())
+    } catch {
+      this.partials = undefined
+    }
   }
 
   private async processFilesSequentially(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
@@ -255,7 +270,8 @@ export class FileProcessor {
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
-        ignoreDisableComments: context?.ignoreDisableComments
+        ignoreDisableComments: context?.ignoreDisableComments,
+        partials: this.partials
       })
 
       if (ruleCount === 0) {
@@ -265,7 +281,8 @@ export class FileProcessor {
       if (context?.fix && lintResult.offenses.length > 0) {
         const autofixResult = this.linter.autofix(content, {
           fileName: filename,
-          ignoreDisableComments: context?.ignoreDisableComments
+          ignoreDisableComments: context?.ignoreDisableComments,
+          partials: this.partials
         }, undefined, { includeUnsafe: context?.fixUnsafe })
 
         if (autofixResult.fixed.length > 0) {
@@ -413,6 +430,7 @@ export class FileProcessor {
         loadCustomRules: context?.loadCustomRules || false,
         only: context?.only,
         allRules: context?.allRules || false,
+        partials: this.partials?.toJSON(),
       }
 
       const worker = new Worker(workerPath, { workerData })
