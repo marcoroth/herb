@@ -1,12 +1,12 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 
-import { HTMLNoEventHandlersRule } from "../../src/rules/html-no-event-handlers.js"
+import { HTMLNoEventHandlerAttributesRule } from "../../src/rules/html-no-event-handler-attributes.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoEventHandlersRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoEventHandlerAttributesRule)
 
-describe("html-no-event-handlers", () => {
+describe("html-no-event-handler-attributes", () => {
   test("passes with regular element attributes", () => {
     expectNoOffenses(dedent`
       <button class="btn" id="submit" type="submit">Click</button>

@@ -14,7 +14,7 @@ function isExternalScript(node: HTMLElementNode): boolean {
   return !!findElementAttribute(node, "src") && node.body.length === 0
 }
 
-class HTMLNoScriptElementsVisitor extends BaseRuleVisitor {
+class HTMLNoInlineScriptElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (this.isInlineScript(node)) {
       this.addOffense(
@@ -36,8 +36,8 @@ class HTMLNoScriptElementsVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoScriptElementsRule extends ParserRule {
-  static ruleName = "html-no-script-elements"
+export class HTMLNoInlineScriptElementsRule extends ParserRule {
+  static ruleName = "html-no-inline-script-elements"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
@@ -54,7 +54,7 @@ export class HTMLNoScriptElementsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoScriptElementsVisitor(this.ruleName, context)
+    const visitor = new HTMLNoInlineScriptElementsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

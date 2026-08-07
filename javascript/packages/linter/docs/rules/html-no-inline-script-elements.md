@@ -1,6 +1,6 @@
 # Linter Rule: Disallow inline script elements
 
-**Rule:** `html-no-script-elements`
+**Rule:** `html-no-inline-script-elements`
 
 ## Description
 

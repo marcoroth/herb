@@ -101,11 +101,11 @@ import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
-import { HTMLNoEventHandlersRule } from "./rules/html-no-event-handlers.js"
+import { HTMLNoEventHandlerAttributesRule } from "./rules/html-no-event-handler-attributes.js"
+import { HTMLNoInlineScriptElementsRule } from "./rules/html-no-inline-script-elements.js"
 import { HTMLNoNestedFormsRule } from "./rules/html-no-nested-forms.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
-import { HTMLNoScriptElementsRule } from "./rules/html-no-script-elements.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
@@ -227,11 +227,11 @@ export const rules: RuleClass[] = [
   HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
   HTMLNoEmptyHeadingsRule,
-  HTMLNoEventHandlersRule,
+  HTMLNoEventHandlerAttributesRule,
+  HTMLNoInlineScriptElementsRule,
   HTMLNoNestedFormsRule,
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
-  HTMLNoScriptElementsRule,
   HTMLNoSelfClosingRule,
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,

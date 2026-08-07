@@ -118,11 +118,11 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
 - [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
-- [`html-no-event-handlers`](./html-no-event-handlers.md) - Disallow inline event handler attributes
+- [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
+- [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
 - [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
-- [`html-no-script-elements`](./html-no-script-elements.md) - Disallow inline script elements
 - [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute

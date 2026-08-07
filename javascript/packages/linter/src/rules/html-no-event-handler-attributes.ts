@@ -112,7 +112,7 @@ const HTML_EVENT_ATTRIBUTES = new Set([
   "ontoggle",
 ])
 
-class HTMLNoEventHandlersVisitor extends BaseRuleVisitor {
+class HTMLNoEventHandlerAttributesVisitor extends BaseRuleVisitor {
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     const attributeName = getAttributeName(node)
 
@@ -127,8 +127,8 @@ class HTMLNoEventHandlersVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoEventHandlersRule extends ParserRule {
-  static ruleName = "html-no-event-handlers"
+export class HTMLNoEventHandlerAttributesRule extends ParserRule {
+  static ruleName = "html-no-event-handler-attributes"
   static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
@@ -145,7 +145,7 @@ export class HTMLNoEventHandlersRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoEventHandlersVisitor(this.ruleName, context)
+    const visitor = new HTMLNoEventHandlerAttributesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

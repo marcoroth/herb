@@ -1,6 +1,6 @@
 # Linter Rule: Disallow inline event handler attributes
 
-**Rule:** `html-no-event-handlers`
+**Rule:** `html-no-event-handler-attributes`
 
 ## Description
 

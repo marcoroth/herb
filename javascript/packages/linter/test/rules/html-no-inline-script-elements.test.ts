@@ -1,12 +1,12 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 
-import { HTMLNoScriptElementsRule } from "../../src/rules/html-no-script-elements.js"
+import { HTMLNoInlineScriptElementsRule } from "../../src/rules/html-no-inline-script-elements.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoScriptElementsRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoInlineScriptElementsRule)
 
-describe("html-no-script-elements", () => {
+describe("html-no-inline-script-elements", () => {
   test("passes with script tag with allowed type", () => {
     expectNoOffenses(dedent`
       <script type="application/json">{"key": "value"}</script>
