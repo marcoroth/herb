@@ -6,7 +6,7 @@ import { beforeAll, afterEach, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 
-import { buildPartialIndex, findViewRoot } from "../src/partial-index-builder.js"
+import { buildPartialIndex, findViewRoot, refreshPartialAfterFix } from "../src/partial-index-builder.js"
 
 const projects: string[] = []
 
@@ -171,5 +171,46 @@ describe("findViewRoot", () => {
     const root = project({ "templates/_card.html.erb": `<%# locals: (user:) %>\n` })
 
     expect(await findViewRoot(root)).toBe(".")
+  })
+})
+
+describe("refreshPartialAfterFix", () => {
+  const WITHOUT = `<h1><%= title %></h1>\n`
+  const WITH = `<%# locals: (title:) %>\n<h1><%= title %></h1>\n`
+
+  test("updates the index when a fix adds a strict locals declaration", async () => {
+    const root = project({ "app/views/posts/_card.html.erb": WITHOUT })
+    const index = await buildPartialIndex(Herb, root)
+
+    expect(index.lookup("posts/card", "app/views/posts/index.html.erb")?.hasDeclaration).toBe(false)
+
+    const changed = refreshPartialAfterFix(Herb, index, "app/views/posts/_card.html.erb", WITHOUT, WITH)
+
+    expect(changed).toBe(true)
+
+    const declaration = index.lookup("posts/card", "app/views/posts/index.html.erb")
+
+    expect(declaration?.hasDeclaration).toBe(true)
+    expect(declaration?.locals.map(local => local.name)).toEqual(["title"])
+  })
+
+  test("reports no change when the declaration is untouched", async () => {
+    const root = project({ "app/views/posts/_card.html.erb": WITH })
+    const index = await buildPartialIndex(Herb, root)
+
+    const reformatted = `<%# locals: (title:) %>\n<h1><%= title %></h1>\n<p>extra</p>\n`
+
+    expect(refreshPartialAfterFix(Herb, index, "app/views/posts/_card.html.erb", WITH, reformatted)).toBe(false)
+  })
+
+  test("ignores files that are not partials", async () => {
+    const root = project({ "app/views/posts/_card.html.erb": WITH })
+    const index = await buildPartialIndex(Herb, root)
+
+    expect(refreshPartialAfterFix(Herb, index, "app/views/posts/index.html.erb", WITHOUT, WITH)).toBe(false)
+  })
+
+  test("is a no-op without an index", () => {
+    expect(refreshPartialAfterFix(Herb, undefined, "app/views/posts/_card.html.erb", WITHOUT, WITH)).toBe(false)
   })
 })

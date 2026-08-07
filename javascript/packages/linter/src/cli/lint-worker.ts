@@ -8,7 +8,7 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
-import { partialIndexFrom } from "../partial-index-builder.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "../partial-index-builder.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
@@ -117,6 +117,7 @@ async function run() {
 
       if (autofixResult.fixed.length > 0) {
         writeFileSync(filePath, autofixResult.source, "utf-8")
+        refreshPartialAfterFix(Herb, partials, filename, content, autofixResult.source)
         filesFixed++
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
