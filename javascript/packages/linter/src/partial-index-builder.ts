@@ -22,6 +22,20 @@ export async function findViewRoot(projectPath: string): Promise<string> {
   return matches.length > 0 ? VIEW_ROOT_CANDIDATE : PROJECT_ROOT
 }
 
+export function declarationFromSource(herb: HerbBackend, file: string, source: string): PartialDeclaration {
+  if (!source.includes(STRICT_LOCALS_MARKER)) return declarationWithoutStrictLocals(file)
+
+  return declarationFromDocument(herb.parse(source, PARSER_OPTIONS).value, file)
+}
+
+export function declarationFromFile(herb: HerbBackend, projectPath: string, file: string): PartialDeclaration | null {
+  try {
+    return declarationFromSource(herb, file, readFileSync(join(projectPath, file), "utf-8"))
+  } catch {
+    return null
+  }
+}
+
 export async function buildPartialIndex(herb: HerbBackend, projectPath: string): Promise<PartialIndex> {
   const viewRoot = await findViewRoot(projectPath)
   const files = await partialsIn(projectPath, viewRoot)
@@ -34,18 +48,9 @@ export async function buildPartialIndex(herb: HerbBackend, projectPath: string):
     const existing = declarations.get(name)
     if (existing && !outranksTemplate(file, existing.file)) continue
 
-    try {
-      const source = readFileSync(join(projectPath, file), "utf-8")
+    const declaration = declarationFromFile(herb, projectPath, file)
 
-      if (!source.includes(STRICT_LOCALS_MARKER)) {
-        declarations.set(name, declarationWithoutStrictLocals(file))
-        continue
-      }
-
-      declarations.set(name, declarationFromDocument(herb.parse(source, PARSER_OPTIONS).value, file))
-    } catch {
-      continue
-    }
+    if (declaration) declarations.set(name, declaration)
   }
 
   return new PartialIndex(viewRoot, declarations)
