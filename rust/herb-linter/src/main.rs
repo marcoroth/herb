@@ -64,12 +64,6 @@ struct ProcessedFile {
   offense: Offense,
 }
 
-struct FileOffenseStats {
-  count: usize,
-  errors: usize,
-  warnings: usize,
-}
-
 struct RuleOffenseStats {
   count: usize,
   files: HashSet<String>,
@@ -91,7 +85,7 @@ struct ProcessingResult {
   autofixable_count: usize,
   unsafe_autofixable_count: usize,
   rules_skipped_by_version: Vec<(String, String)>,
-  rule_offenses: HashMap<String, RuleOffenseStats>,
+  rule_offenses: Vec<(String, RuleOffenseStats)>,
 }
 
 fn main() {
@@ -662,7 +656,7 @@ fn lint_files(
   let mut files_with_offenses = 0usize;
   let mut total_ignored = 0usize;
   let mut total_would_be_ignored = 0usize;
-  let mut rule_offenses: HashMap<String, RuleOffenseStats> = HashMap::new();
+  let mut rule_offenses: Vec<(String, RuleOffenseStats)> = Vec::new();
 
   for file_result in file_results {
     if !file_result.offenses.is_empty() {
@@ -677,10 +671,20 @@ fn lint_files(
     total_would_be_ignored += file_result.would_be_ignored;
 
     for offense in file_result.offenses {
-      let stats = rule_offenses.entry(offense.rule.clone()).or_insert_with(|| RuleOffenseStats {
-        count: 0,
-        files: HashSet::new(),
-      });
+      let stats = match rule_offenses.iter().position(|(rule, _)| *rule == offense.rule) {
+        Some(index) => &mut rule_offenses[index].1,
+        None => {
+          rule_offenses.push((
+            offense.rule.clone(),
+            RuleOffenseStats {
+              count: 0,
+              files: HashSet::new(),
+            },
+          ));
+
+          &mut rule_offenses.last_mut().expect("just pushed").1
+        }
+      };
 
       stats.count += 1;
       stats.files.insert(file_result.file_path.clone());
@@ -874,7 +878,6 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, context: 
         OutputFormat::Simple | OutputFormat::Detailed => format_simple(result),
         OutputFormat::Json => unreachable!(),
       }
-      display_most_offending_files(result);
       display_most_violated_rules(result);
       display_summary(result, arguments, context, duration);
       display_no_enabled_rules(result, context);
@@ -883,7 +886,6 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, context: 
     format_json(result, arguments, duration);
   } else {
     format_simple(result);
-    display_most_offending_files(result);
     display_most_violated_rules(result);
     display_summary(result, arguments, context, duration);
     display_no_enabled_rules(result, context);
@@ -1564,94 +1566,6 @@ fn display_version_skipped_rules(result: &ProcessingResult, context: &SummaryCon
   println!("  enabled automatically; rules with offenses will be disabled to ease the upgrade.");
 }
 
-fn display_most_offending_files(result: &ProcessingResult) {
-  let mut file_offenses: HashMap<String, FileOffenseStats> = HashMap::new();
-
-  for processed in &result.all_offenses {
-    let stats = file_offenses.entry(processed.filename.clone()).or_insert(FileOffenseStats {
-      count: 0,
-      errors: 0,
-      warnings: 0,
-    });
-
-    stats.count += 1;
-
-    let severity_string = format!("{}", processed.offense.severity);
-
-    if severity_string == "error" {
-      stats.errors += 1;
-    }
-
-    if severity_string == "warning" {
-      stats.warnings += 1;
-    }
-  }
-
-  if file_offenses.is_empty() {
-    return;
-  }
-
-  let no_color = std::env::var("NO_COLOR").is_ok();
-  let limit = 5;
-
-  let mut all_files: Vec<(String, FileOffenseStats)> = file_offenses.into_iter().collect();
-  all_files.sort_by(|a, b| b.1.count.cmp(&a.1.count));
-
-  let displayed: Vec<_> = all_files.iter().take(limit).collect();
-  let remaining: Vec<_> = all_files.iter().skip(limit).collect();
-
-  let title = if all_files.len() <= limit {
-    "File offenses:"
-  } else {
-    "Most offending files:"
-  };
-
-  println!();
-
-  if no_color {
-    println!(" {}", title);
-  } else {
-    println!(" \x1b[1m{}\x1b[0m", title);
-  }
-
-  for (file, data) in &displayed {
-    let mut parts = Vec::new();
-    if data.errors > 0 {
-      parts.push(format!("{} {}", data.errors, pluralize(data.errors, "error")));
-    }
-    if data.warnings > 0 {
-      parts.push(format!("{} {}", data.warnings, pluralize(data.warnings, "warning")));
-    }
-    let count_text = format!("({})", parts.join(", "));
-
-    if no_color {
-      println!("  {} {}", file, count_text);
-    } else {
-      println!("  \x1b[37m{}\x1b[0m \x1b[90m{}\x1b[0m", file, count_text);
-    }
-  }
-
-  if !remaining.is_empty() {
-    let remaining_count: usize = remaining.iter().map(|(_, data)| data.count).sum();
-    let remaining_files = remaining.len();
-    let message = format!(
-      "  ...and {} more {} with {} {}",
-      remaining_files,
-      pluralize(remaining_files, "file"),
-      remaining_count,
-      pluralize(remaining_count, "offense")
-    );
-
-    if no_color {
-      println!();
-      println!("{}", message);
-    } else {
-      println!();
-      println!("\x1b[90m{}\x1b[0m", message);
-    }
-  }
-}
-
 fn display_most_violated_rules(result: &ProcessingResult) {
   if result.rule_offenses.is_empty() {
     return;
@@ -1660,7 +1574,7 @@ fn display_most_violated_rules(result: &ProcessingResult) {
   let no_color = std::env::var("NO_COLOR").is_ok();
   let limit = 5;
 
-  let mut all_rules: Vec<(&String, &RuleOffenseStats)> = result.rule_offenses.iter().collect();
+  let mut all_rules: Vec<&(String, RuleOffenseStats)> = result.rule_offenses.iter().collect();
   all_rules.sort_by(|a, b| b.1.count.cmp(&a.1.count));
 
   let displayed: Vec<_> = all_rules.iter().take(limit).collect();
