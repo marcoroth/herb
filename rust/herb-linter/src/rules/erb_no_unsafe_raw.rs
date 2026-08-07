@@ -56,7 +56,9 @@ impl<'rule> Visitor for ERBNoUnsafeRawVisitor<'rule> {
         match candidate.name.as_deref() {
           Some("raw") if candidate.receiver().is_none() => raw_calls.push((candidate.start_offset, candidate.end_offset)),
 
-          Some("html_safe") => {
+          // a String literal is written in the template, so marking it safe
+          // cannot introduce anything the author did not already control
+          Some("html_safe") if !candidate.receiver().is_some_and(|receiver| receiver.is("StringNode")) => {
             let start_offset = candidate.receiver().map(|receiver| receiver.end_offset).unwrap_or(candidate.start_offset);
 
             html_safe_calls.push((start_offset, candidate.end_offset));

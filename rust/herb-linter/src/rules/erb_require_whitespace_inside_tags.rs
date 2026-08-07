@@ -81,8 +81,13 @@ impl Visitor for RequireWhitespaceInsideTagsVisitor {
       None => return,
     };
 
+    let escaped = open_tag.value == "<%%" || open_tag.value == "<%%=";
+
     if open_tag.value == "<%#" {
       self.check_comment_tag_whitespace(open_tag, close_tag, content_value);
+    } else if escaped && content_value.starts_with('#') {
+      // an escaped tag renders as literal text, so only the closing side matters
+      self.check_close_tag_whitespace(close_tag, content_value);
     } else {
       self.check_open_tag_whitespace(open_tag, content_value);
       self.check_close_tag_whitespace(close_tag, content_value);
