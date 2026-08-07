@@ -6,6 +6,7 @@ import type { Node, ParserOptions } from "@herb-tools/core"
 import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
+import type { PartialIndex } from "./partial-index.js"
 
 export type { Mutable } from "@herb-tools/rewriter"
 export type { RuleVersion } from "@herb-tools/core"
@@ -254,6 +255,7 @@ export interface LintContext {
   ignoreDisableComments: boolean | undefined
   indentWidth: number | undefined
   framework: Framework | undefined
+  partials: PartialIndex | undefined
 }
 
 /**
@@ -265,7 +267,8 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
   indentWidth: undefined,
-  framework: undefined
+  framework: undefined,
+  partials: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

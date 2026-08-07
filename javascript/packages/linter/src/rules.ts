@@ -20,6 +20,7 @@ import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewRenderMissingStrictLocalsRule } from "./rules/actionview-render-missing-strict-locals.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
@@ -144,6 +145,7 @@ export const rules: RuleClass[] = [
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewRenderMissingStrictLocalsRule,
   ActionViewStrictLocalsFirstLineRule,
   ActionViewStrictLocalsPartialOnlyRule,
 

@@ -25,6 +25,7 @@ export * from "./actionview-no-unnecessary-tag-attributes.js"
 export * from "./actionview-no-unused-strict-locals.js"
 export * from "./actionview-no-void-element-content.js"
 export * from "./actionview-prefer-collection-render.js"
+export * from "./actionview-render-missing-strict-locals.js"
 export * from "./actionview-strict-locals-first-line.js"
 export * from "./actionview-strict-locals-partial-only.js"
 

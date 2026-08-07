@@ -8,10 +8,12 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
+import { partialIndexFrom } from "./partial-index-builder.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
+import type { SerializedPartialIndex } from "../partial-index.js"
 
 export interface WorkerInput {
   files: string[]
@@ -23,6 +25,7 @@ export interface WorkerInput {
   loadCustomRules: boolean
   only?: string[]
   allRules: boolean
+  partials?: SerializedPartialIndex
 }
 
 export interface WorkerOffense {
@@ -71,6 +74,7 @@ async function run() {
   }
 
   const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
+  const partials = partialIndexFrom(data.partials)
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -100,13 +104,15 @@ async function run() {
 
     const lintResult = linter.lint(content, {
       fileName: filename,
-      ignoreDisableComments: data.ignoreDisableComments
+      ignoreDisableComments: data.ignoreDisableComments,
+      partials
     })
 
     if (data.fix && lintResult.offenses.length > 0) {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
-        ignoreDisableComments: data.ignoreDisableComments
+        ignoreDisableComments: data.ignoreDisableComments,
+        partials
       }, undefined, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
