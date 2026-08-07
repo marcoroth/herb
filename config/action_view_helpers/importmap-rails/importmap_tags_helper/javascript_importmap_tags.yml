@@ -4,6 +4,7 @@ source: "Importmap::ImportmapTagsHelper#javascript_importmap_tags"
 gem: "importmap-rails"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "javascript_importmap_tags(entry_point = \"application\", importmap: Rails.application.importmap)"

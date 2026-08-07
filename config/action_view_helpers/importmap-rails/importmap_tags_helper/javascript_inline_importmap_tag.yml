@@ -4,6 +4,7 @@ source: "Importmap::ImportmapTagsHelper#javascript_inline_importmap_tag"
 gem: "importmap-rails"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "javascript_inline_importmap_tag(importmap_json = Rails.application.importmap.to_json(resolver: self))"

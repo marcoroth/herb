@@ -4,6 +4,7 @@ source: "ActionView::Helpers::CspHelper#csp_meta_tag"
 gem: "actionview"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "csp_meta_tag(**options)"

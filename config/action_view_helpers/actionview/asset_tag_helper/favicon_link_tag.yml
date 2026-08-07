@@ -4,6 +4,7 @@ source: "ActionView::Helpers::AssetTagHelper#favicon_link_tag"
 gem: "actionview"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "favicon_link_tag(source = \"favicon.ico\", options = {})"

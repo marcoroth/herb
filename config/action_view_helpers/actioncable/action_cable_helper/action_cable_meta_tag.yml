@@ -4,6 +4,7 @@ source: "ActionCable::Helpers::ActionCableHelper#action_cable_meta_tag"
 gem: "actioncable"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "action_cable_meta_tag"

@@ -4,6 +4,7 @@ source: "Importmap::ImportmapTagsHelper#javascript_module_preload_tag"
 gem: "importmap-rails"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "javascript_module_preload_tag(*paths)"

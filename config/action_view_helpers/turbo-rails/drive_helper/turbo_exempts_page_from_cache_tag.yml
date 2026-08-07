@@ -4,6 +4,7 @@ source: "Turbo::DriveHelper#turbo_exempts_page_from_cache_tag"
 gem: "turbo-rails"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "turbo_exempts_page_from_cache_tag"

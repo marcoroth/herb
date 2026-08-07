@@ -113,10 +113,10 @@ module Herb
       attr_reader :special_behaviors #: Array[Symbol]
       attr_reader :aliases #: Array[String]
 
-      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, head_content: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
       def initialize( # rubocop:disable Metrics/ParameterLists
         name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
-        preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
+        preferred_for_tag:, supported:, head_content:, detect_style:, description:, signature:, documentation_url:,
         implicit_attribute:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
       )
         @name = name
@@ -130,6 +130,7 @@ module Herb
         @supports_block = supports_block
         @preferred_for_tag = preferred_for_tag
         @supported = supported
+        @head_content = head_content
         @detect_style = detect_style
         @description = description
         @signature = signature
@@ -153,6 +154,9 @@ module Herb
 
       #: () -> bool
       def supported? = @supported
+
+      #: () -> bool
+      def head_content? = @head_content
 
       #: () -> bool
       def static_tag_name? = !@tag_name.nil?
@@ -181,6 +185,7 @@ module Herb
         supports_block: <%= helper.supports_block %>,
         preferred_for_tag: <%= helper.preferred_for_tag %>,
         supported: <%= helper.supported %>,
+        head_content: <%= helper.head_content? %>,
         detect_style: :<%= helper.detect_style || "call_name" %>,
         description: "<%= helper.escaped_description %>",
         signature: "<%= helper.escaped_signature %>",
@@ -239,6 +244,8 @@ module Herb
       <%- end -%>
       }.freeze #: Hash[String, Array[HelperEntry]]
 
+      HEAD_CONTENT = [<%= helpers.select(&:head_content?).map(&:constant_name).join(", ") %>].freeze #: Array[HelperEntry]
+
       class << self
         #: (String) -> HelperEntry?
         def get(name)
@@ -292,6 +299,17 @@ module Herb
         #: () -> Array[HelperEntry]
         def supported
           entries.select(&:supported?)
+        end
+
+        #: () -> Array[HelperEntry]
+        def head_content_helpers
+          HEAD_CONTENT
+        end
+
+        #: (String) -> bool
+        def head_content?(name)
+          entry = get(name)
+          entry&.head_content? || false
         end
 
         #: (String) -> Array[HelperEntry]

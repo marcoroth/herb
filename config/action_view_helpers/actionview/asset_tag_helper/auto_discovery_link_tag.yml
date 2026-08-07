@@ -4,6 +4,7 @@ source: "ActionView::Helpers::AssetTagHelper#auto_discovery_link_tag"
 gem: "actionview"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "auto_discovery_link_tag(type = :rss, url_options = {}, tag_options = {})"

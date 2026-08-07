@@ -4,6 +4,7 @@ source: "Turbo::DriveHelper#turbo_refresh_method_tag"
 gem: "turbo-rails"
 output: "html"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "turbo_refresh_method_tag(method = :replace)"

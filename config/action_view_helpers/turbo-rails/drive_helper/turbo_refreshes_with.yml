@@ -4,6 +4,7 @@ source: "Turbo::DriveHelper#turbo_refreshes_with"
 gem: "turbo-rails"
 output: "void"
 visibility: "public"
+head_content: true
 supported: false
 supports_block: false
 signature: "turbo_refreshes_with(method: :replace, scroll: :reset)"

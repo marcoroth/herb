@@ -684,6 +684,7 @@ module Herb
         @visibility = config.fetch("visibility", "public")
         @supports_block = config.fetch("supports_block", false)
         @supported = config.fetch("supported", false)
+        @head_content = config.fetch("head_content", false)
         @description = config.fetch("description", "").strip
         @signature = config.fetch("signature")
         @documentation_url = config.fetch("documentation_url")
@@ -786,6 +787,10 @@ module Herb
 
       def supported?
         @supported
+      end
+
+      def head_content?
+        @head_content
       end
 
       def static_tag_name?
