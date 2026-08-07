@@ -17,6 +17,7 @@ import { DocumentHighlightService } from "./document_highlight_service"
 import { HoverService } from "./hover_service"
 import { RewriteCodeActionService } from "./rewrite_code_action_service"
 import { ExtractCodeActionService } from "./extract_code_action_service"
+import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
 import { CompletionService } from "./completion_service"
 
@@ -42,6 +43,7 @@ export class Service {
   hoverService: HoverService
   rewriteCodeActionService: RewriteCodeActionService
   extractCodeActionService: ExtractCodeActionService
+  definitionService: DefinitionService
   commentService: CommentService
   completionService: CompletionService
 
@@ -62,6 +64,7 @@ export class Service {
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
     this.hoverService = new HoverService(this.parserService)
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
+    this.definitionService = new DefinitionService(this.parserService)
     this.commentService = new CommentService(this.parserService)
     this.completionService = new CompletionService(this.parserService)
 
