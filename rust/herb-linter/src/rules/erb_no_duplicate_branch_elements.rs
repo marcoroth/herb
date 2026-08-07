@@ -178,26 +178,48 @@ impl<'rule> ERBNoDuplicateBranchElementsVisitor<'rule> {
       }
     }
 
-    for index in 0..prefix_count {
-      let elements: Vec<&HTMLElementNode> = significant.iter().filter_map(|branch| as_element(branch[index])).collect();
+    let mut groups: Vec<Vec<&HTMLElementNode>> = Vec::new();
 
-      self.report_and_recurse(&elements, is_first_offense);
+    for index in 0..prefix_count {
+      groups.push(significant.iter().filter_map(|branch| as_element(branch[index])).collect());
     }
 
     for offset in 0..suffix_count {
-      let elements: Vec<&HTMLElementNode> = significant.iter().filter_map(|branch| as_element(branch[branch.len() - 1 - offset])).collect();
+      groups.push(significant.iter().filter_map(|branch| as_element(branch[branch.len() - 1 - offset])).collect());
+    }
 
-      self.report_and_recurse(&elements, is_first_offense);
+    // wrapping the conditional in the shared tag only works when the shared
+    // elements account for the whole branch and exactly one group differs
+    let shared_elements_span_branches = significant.iter().all(|branch| branch.len() == prefix_count + suffix_count);
+    let diverging_group_count = groups.iter().filter(|elements| !self.have_identical_bodies(elements)).count();
+    let can_wrap_conditional = shared_elements_span_branches && diverging_group_count == 1;
+
+    for elements in groups {
+      self.report_and_recurse(&elements, is_first_offense, can_wrap_conditional);
     }
   }
 
-  fn report_and_recurse(&mut self, elements: &[&HTMLElementNode], is_first_offense: &mut bool) {
+  fn have_identical_bodies(&self, elements: &[&HTMLElementNode]) -> bool {
+    match elements.first() {
+      Some(first) => {
+        let printed = self.print(&first.location);
+
+        elements.iter().all(|element| self.print(&element.location) == printed)
+      }
+      None => true,
+    }
+  }
+
+  fn report_and_recurse(&mut self, elements: &[&HTMLElementNode], is_first_offense: &mut bool, can_wrap_conditional: bool) {
     if elements.is_empty() {
       return;
     }
 
-    let first_printed = self.print(&elements[0].location);
-    let bodies_match = elements.iter().all(|element| self.print(&element.location) == first_printed);
+    let bodies_match = self.have_identical_bodies(elements);
+
+    if !bodies_match && !can_wrap_conditional {
+      return;
+    }
 
     for element in elements {
       let open_tag_location = match &element.open_tag {

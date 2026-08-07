@@ -74,12 +74,6 @@ impl Visitor for NoExtraWhitespaceInsideTagsVisitor {
             self.whitespace_start_location(content, content_location, prefix.len()),
             Severity::Info,
           );
-        } else {
-          self.add_offense_with_severity(
-            format!("`{}` looks like a temporarily commented ERB tag.", tag),
-            open_tag.location.clone(),
-            Severity::Info,
-          );
         }
       }
     }

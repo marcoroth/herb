@@ -1,8 +1,8 @@
 use crate::utils::html_data::RESTRICTED_ATTRIBUTES;
 
-use crate::utils::tag_utils::{get_attribute_name_literal_content, get_attributes, get_static_attribute_value, print_attribute, print_attribute_name};
+use crate::utils::tag_utils::{get_attribute_name_literal_content, get_static_attribute_value, print_attribute, print_attribute_name};
 
-use herb::nodes::{HTMLAttributeNode, HTMLOpenTagNode};
+use herb::nodes::{AnyNode, ERBOpenTagNode, HTMLAttributeNode, HTMLOpenTagNode};
 use herb::Visitor;
 
 fn is_restricted_attribute(attribute_name: &str) -> bool {
@@ -46,7 +46,8 @@ impl Visitor for ContainsOutputContentVisitor {
     }
 
     if let Some(ref tag_opening) = node.tag_opening {
-      if tag_opening.value == "<%=" || tag_opening.value == "<%==" {
+      // an escaped tag renders as the literal `<%= ... %>` text, so it counts
+      if tag_opening.value == "<%=" || tag_opening.value == "<%==" || tag_opening.value.starts_with("<%%") {
         self.has_output_content = true;
         return;
       }
@@ -56,6 +57,12 @@ impl Visitor for ContainsOutputContentVisitor {
   }
 
   fn visit_erb_yield_node(&mut self, _node: &herb::nodes::ERBYieldNode) {
+    self.has_output_content = true;
+  }
+
+  // Action View leaves an unresolvable value as a `RubyLiteralNode`, so the
+  // attribute is not empty, it just cannot be read statically
+  fn visit_ruby_literal_node(&mut self, _node: &herb::nodes::RubyLiteralNode) {
     self.has_output_content = true;
   }
 }
@@ -80,9 +87,12 @@ fn contains_output_content(attribute: &HTMLAttributeNode) -> bool {
 
 rule_visitor!(NoEmptyAttributesVisitor);
 
-impl Visitor for NoEmptyAttributesVisitor {
-  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
-    for attribute in get_attributes(node) {
+impl NoEmptyAttributesVisitor {
+  fn check_children(&mut self, children: &[AnyNode], in_erb_open_tag: bool) {
+    for attribute in children.iter().filter_map(|child| match child {
+      AnyNode::HTMLAttributeNode(attribute) => Some(attribute.as_ref()),
+      _ => None,
+    }) {
       let effective_name = match get_attribute_name_literal_content(attribute) {
         Some(name) => name,
         None => continue,
@@ -121,6 +131,11 @@ impl Visitor for NoEmptyAttributesVisitor {
       let printed_attribute = print_attribute(attribute);
 
       if is_data_attribute(&lowercase_name) {
+        // Action View drops empty data values, so there is nothing to report
+        if in_erb_open_tag {
+          continue;
+        }
+
         if attribute.value.is_some() {
           self.add_offense(
             format!(
@@ -142,11 +157,22 @@ impl Visitor for NoEmptyAttributesVisitor {
         attribute.location.clone(),
       );
     }
+  }
+}
 
+impl Visitor for NoEmptyAttributesVisitor {
+  fn visit_html_open_tag_node(&mut self, node: &HTMLOpenTagNode) {
+    self.check_children(&node.children, false);
     self.walk_html_open_tag_node(node);
+  }
+
+  fn visit_erb_open_tag_node(&mut self, node: &ERBOpenTagNode) {
+    self.check_children(&node.children, true);
+    self.walk_erb_open_tag_node(node);
   }
 }
 
 define_parser_rule!(HTMLNoEmptyAttributesRule, "html-no-empty-attributes", Warning, NoEmptyAttributesVisitor,
+  parser_options: { action_view_helpers: true },
   introduced_in: "0.7.0"
 );
