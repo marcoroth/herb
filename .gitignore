@@ -130,6 +130,8 @@ rust/src/ast/nodes.rs
 rust/src/config.rs
 rust/src/errors.rs
 rust/src/nodes.rs
+rust/src/prism/generated_deserialize.rs
+rust/src/prism/generated_prettyprint.rs
 rust/src/union_types.rs
 rust/src/visitor.rs
 sig/serialized_ast_errors.rbs

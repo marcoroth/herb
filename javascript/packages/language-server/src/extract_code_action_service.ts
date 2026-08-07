@@ -4,6 +4,7 @@ import { posix as path } from "path"
 import { CodeAction, CodeActionKind, CreateFile, OptionalVersionedTextDocumentIdentifier, Range, TextDocumentEdit, TextEdit, WorkspaceEdit } from "vscode-languageserver/node"
 
 import { ExtractPartialAnalyzer } from "./extract_partial_analyzer"
+import { pathFromUri, uriFromPath } from "./utils"
 import { ParserService } from "./parser_service"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
@@ -206,10 +207,3 @@ export class ExtractCodeActionService {
   }
 }
 
-export function pathFromUri(uri: string): string {
-  return decodeURIComponent(uri.replace(/^file:\/\//, ""))
-}
-
-export function uriFromPath(filePath: string): string {
-  return `file://${filePath.split("/").map(segment => encodeURIComponent(segment)).join("/")}`
-}

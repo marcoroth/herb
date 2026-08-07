@@ -22,7 +22,9 @@ fn test_document_with_text_node() {
     errors: vec![],
     children: vec![AnyNode::HTMLTextNode(Box::new(text_node))],
     prism_node: None,
-    prism_node_ast: None,
+    source: None,
+    #[cfg(feature = "prism")]
+    prism_cache: Default::default(),
   };
 
   let output = doc_node.tree_inspect();

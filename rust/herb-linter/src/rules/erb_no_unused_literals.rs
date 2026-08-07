@@ -75,8 +75,8 @@ impl<'rule> Visitor for ERBNoUnusedLiteralsVisitor<'rule> {
       return;
     }
 
-    let prism_node = match node.prism_node_ast {
-      Some(ref prism_node) => prism_node,
+    let prism_node = match node.prism() {
+      Some(prism_node) => prism_node,
       None => return,
     };
 

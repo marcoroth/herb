@@ -26,8 +26,8 @@ impl<'rule> Visitor for PreferDirectOutputVisitor<'rule> {
       return;
     }
 
-    let prism_node = match node.prism_node_ast {
-      Some(ref prism_node) => prism_node,
+    let prism_node = match node.prism() {
+      Some(prism_node) => prism_node,
       None => return,
     };
 
@@ -233,7 +233,7 @@ fn parts_for_offense(source: &str, offense: &Offense, options: herb::ParserOptio
       return;
     }
 
-    if let Some(ref prism_node) = erb.prism_node_ast {
+    if let Some(prism_node) = erb.prism() {
       found = replacement_parts(prism_node, source);
     }
   });

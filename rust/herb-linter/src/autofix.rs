@@ -450,7 +450,8 @@ pub fn erb_output_node(content: &str, tag_opening: &str, tag_closing: &str) -> E
     parsed: false,
     valid: false,
     prism_node: None,
-    prism_node_ast: None,
+    source: None,
+    prism_cache: Default::default(),
   }
 }
 

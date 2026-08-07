@@ -96,7 +96,7 @@ impl Visitor for NoAutofocusAttributeVisitor {
   }
 
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
-    if let Some(ref prism_node) = node.prism_node_ast {
+    if let Some(prism_node) = node.prism() {
       let mut detector = AutofocusKeywordDetector::default();
 
       detector.visit(prism_node);

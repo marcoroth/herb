@@ -30,7 +30,7 @@ impl Visitor for ActionViewNoSilentHelperVisitor {
       return;
     }
 
-    if let Some(ref prism_node) = node.prism_node_ast {
+    if let Some(prism_node) = node.prism() {
       let mut helper_names = Vec::new();
 
       walk_prism(prism_node, &mut |current| {

@@ -28,7 +28,7 @@ impl Visitor for ERBNoOutputInAttributePositionVisitor {
         continue;
       }
 
-      if let Some(ref prism_node) = erb.prism_node_ast {
+      if let Some(prism_node) = erb.prism() {
         if is_tag_attributes_call(prism_node) {
           continue;
         }

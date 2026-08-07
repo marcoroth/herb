@@ -124,7 +124,7 @@ impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
   }
 
   fn visit_erb_block_node(&mut self, node: &ERBBlockNode) {
-    let is_slot_setter = node.prism_node_ast.as_ref().map(is_slot_setter_call).unwrap_or(false);
+    let is_slot_setter = node.prism().map(is_slot_setter_call).unwrap_or(false);
 
     if !is_slot_setter {
       self.walk_erb_block_node(node);
@@ -146,8 +146,8 @@ impl<'rule> Visitor for ERBNoUnusedExpressionsVisitor<'rule> {
       return;
     }
 
-    let prism_node = match node.prism_node_ast {
-      Some(ref prism_node) => prism_node,
+    let prism_node = match node.prism() {
+      Some(prism_node) => prism_node,
       None => return,
     };
 

@@ -16,11 +16,13 @@ import {
   DocumentHighlightParams,
   HoverParams,
   CompletionParams,
+  DefinitionParams,
   TextDocumentIdentifier,
   Range,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
+import { DefinitionService } from "./definition_service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
 import { isConfigDocument } from "./utils"
@@ -73,6 +75,7 @@ export class Server {
           completionProvider: {
             triggerCharacters: [".", ":", "<", "&"],
           },
+          definitionProvider: true,
         },
       }
 
@@ -191,7 +194,7 @@ export class Server {
 
       if (!document) return null
 
-      return this.service.hoverService.getHover(document, params.position)
+      return this.service.hoverService.getHover(document, params.position) ?? this.service.definitionService.getHover(document, params.position)
     })
 
     this.connection.onCompletion((params: CompletionParams) => {
@@ -232,6 +235,18 @@ export class Server {
       if (!document) return { error: "The document isn't open." }
 
       return this.service.extractCodeActionService.extractToPartial(document, params.range, params.name)
+    })
+
+    this.connection.onDefinition((params: DefinitionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const links = this.service.definitionService.getDefinition(document, params.position)
+
+      if (this.service.settings.supportsDefinitionLinks) return links
+
+      return DefinitionService.asLocations(links)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {

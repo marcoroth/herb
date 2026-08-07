@@ -124,6 +124,10 @@ export class Settings {
     }
   }
 
+  get supportsDefinitionLinks(): boolean {
+    return this.capabilities.textDocument?.definition?.linkSupport === true
+  }
+
   get supportsResourceCreation(): boolean {
     return this.capabilities.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
   }

@@ -25,6 +25,14 @@ module Herb
       "nil"
     ].freeze
 
+    PrismConfigField = Data.define(:name, :type)
+
+    PrismConfigNode = Data.define(:name, :type_id, :fields, :flags) do
+      def entries
+        flags ? [PrismConfigField.new(flags, "__flags")] + fields : fields
+      end
+    end
+
     class Field
       attr_reader :name, :options
 
@@ -913,7 +921,9 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_character_references: html_character_references, aria: aria, html: html })
+      rendered_template = read_template(template_path.to_s).result_with_hash(
+        { nodes: nodes, errors: errors, union_kinds: union_kinds, helpers: helpers, html_character_references: html_character_references, aria: aria, html: html, prism_nodes: prism_nodes, prism_flags: prism_flags }
+      )
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -1010,6 +1020,34 @@ module Herb
 
     def self.config
       YAML.load_file("config.yml")
+    end
+
+    def self.prism_config_path
+      require_relative "../lib/herb/bootstrap"
+
+      vendored = File.join(Herb::Bootstrap::PRISM_VENDOR_DIR, "config.yml")
+
+      return vendored if File.exist?(vendored)
+
+      File.join(Herb::Bootstrap.find_prism_gem_path, "config.yml")
+    end
+
+    def self.prism_config
+      @prism_config ||= YAML.load_file(prism_config_path)
+    end
+
+    def self.prism_nodes
+      (prism_config["nodes"] || []).each_with_index.map do |node, index|
+        fields = (node["fields"] || []).map { |field| PrismConfigField.new(field["name"], field["type"]) }
+
+        PrismConfigNode.new(node["name"], index + 1, fields, node["flags"])
+      end
+    end
+
+    def self.prism_flags
+      (prism_config["flags"] || []).to_h do |group|
+        [group["name"], (group["values"] || []).map { |value| value["name"] }]
+      end
     end
   end
 end

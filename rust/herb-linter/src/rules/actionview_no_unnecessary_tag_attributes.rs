@@ -45,7 +45,7 @@ fn has_only_tag_attributes_children(open_tag: &HTMLOpenTagNode) -> bool {
       return false;
     }
 
-    erb.prism_node_ast.as_ref().map(is_tag_attributes_call).unwrap_or(false)
+    erb.prism().map(is_tag_attributes_call).unwrap_or(false)
   })
 }
 

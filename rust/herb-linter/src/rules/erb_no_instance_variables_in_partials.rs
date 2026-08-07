@@ -45,8 +45,8 @@ impl ParserRule for ERBNoInstanceVariablesInPartialsRule {
       return Vec::new();
     }
 
-    let prism_node = match result.value.prism_node_ast {
-      Some(ref prism_node) => prism_node,
+    let prism_node = match result.value.prism() {
+      Some(prism_node) => prism_node,
       None => return Vec::new(),
     };
 

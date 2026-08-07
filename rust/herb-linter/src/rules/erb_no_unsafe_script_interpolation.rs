@@ -53,9 +53,9 @@ impl ERBNoUnsafeScriptInterpolationVisitor {
   fn check_nodes_for_unsafe_output(&mut self, nodes: &[AnyNode]) {
     for child in nodes {
       let (tag_opening_token, location, prism_node) = match child {
-        AnyNode::ERBContentNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
-        AnyNode::ERBBlockNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
-        AnyNode::ERBRenderNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism_node_ast.as_ref()),
+        AnyNode::ERBContentNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism()),
+        AnyNode::ERBBlockNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism()),
+        AnyNode::ERBRenderNode(erb) => (erb.tag_opening.as_ref(), &erb.location, erb.prism()),
         AnyNode::ERBYieldNode(erb) => (erb.tag_opening.as_ref(), &erb.location, None),
         _ => continue,
       };
