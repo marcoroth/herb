@@ -12,10 +12,8 @@ describe("ERBForNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBForNode.from({
-      type: "AST_ERB_FOR_NODE",
+    const node = ERBForNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " for i in 1..5 "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

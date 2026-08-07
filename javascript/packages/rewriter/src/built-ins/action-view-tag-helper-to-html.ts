@@ -1,5 +1,5 @@
-import { Visitor, Location, HTMLOpenTagNode, HTMLCloseTagNode, HTMLElementNode, HTMLAttributeValueNode, WhitespaceNode, ERBContentNode } from "@herb-tools/core"
-import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, createSyntheticToken } from "@herb-tools/core"
+import { Visitor, HTMLOpenTagNode, HTMLCloseTagNode, HTMLElementNode, HTMLAttributeValueNode, WhitespaceNode, ERBContentNode } from "@herb-tools/core"
+import { isHTMLAttributeNode, isERBOpenTagNode, isRubyLiteralNode, isRubyHTMLAttributesSplatNode, isWhitespaceNode, Token } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -8,12 +8,7 @@ import type { RewriteContext } from "../context.js"
 import type { Node } from "@herb-tools/core"
 
 function createWhitespaceNode(): WhitespaceNode {
-  return new WhitespaceNode({
-    type: "AST_WHITESPACE_NODE",
-    location: Location.zero,
-    errors: [],
-    value: createSyntheticToken(" "),
-  })
+  return WhitespaceNode.build({ value: Token.from("TOKEN_WHITESPACE", " ") })
 }
 
 class ActionViewTagHelperToHTMLVisitor extends Visitor {
@@ -34,7 +29,7 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
       if (isHTMLAttributeNode(child)) {
         if (child.equals && child.equals.value !== "=") {
-          asMutable(child).equals = createSyntheticToken("=")
+          asMutable(child).equals = Token.from("TOKEN_EQUALS", "=")
         }
 
         if (child.value) {
@@ -82,16 +77,11 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
       if (isRubyHTMLAttributesSplatNode(child)) {
         htmlChildren.push(createWhitespaceNode())
 
-        htmlChildren.push(new ERBContentNode({
-          type: "AST_ERB_CONTENT_NODE",
-          location: Location.zero,
-          errors: [],
-          tag_opening: createSyntheticToken("<%="),
-          content: createSyntheticToken(` ${child.content} `),
-          tag_closing: createSyntheticToken("%>"),
-          parsed: false,
+        htmlChildren.push(ERBContentNode.build({
+          tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+          content: Token.from("TOKEN_ERB_CONTENT", ` ${child.content} `),
+          tag_closing: Token.from("TOKEN_ERB_END", "%>"),
           valid: true,
-          prism_node: null,
         }))
 
         continue
@@ -101,7 +91,7 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
       if (isHTMLAttributeNode(child)) {
         if (child.equals && child.equals.value !== "=") {
-          asMutable(child).equals = createSyntheticToken("=")
+          asMutable(child).equals = Token.from("TOKEN_EQUALS", "=")
         }
 
         if (child.value) {
@@ -112,13 +102,11 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
       }
     }
 
-    const htmlOpenTag = new HTMLOpenTagNode({
-      type: "AST_HTML_OPEN_TAG_NODE",
+    const htmlOpenTag = HTMLOpenTagNode.build({
       location: openTag.location,
-      errors: [],
-      tag_opening: createSyntheticToken("<"),
-      tag_name: createSyntheticToken(tagName.value),
-      tag_closing: createSyntheticToken(node.is_void ? " />" : ">"),
+      tag_opening: Token.from("TOKEN_HTML_TAG_START", "<"),
+      tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
+      tag_closing: node.is_void ? Token.from("TOKEN_HTML_TAG_SELF_CLOSE", " />") : Token.from("TOKEN_HTML_TAG_END", ">"),
       children: htmlChildren,
       is_void: node.is_void,
     })
@@ -128,14 +116,11 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     if (node.is_void) {
       asMutable(node).close_tag = null
     } else if (node.close_tag) {
-      const htmlCloseTag = new HTMLCloseTagNode({
-        type: "AST_HTML_CLOSE_TAG_NODE",
+      const htmlCloseTag = HTMLCloseTagNode.build({
         location: node.close_tag.location,
-        errors: [],
-        tag_opening: createSyntheticToken("</"),
-        tag_name: createSyntheticToken(tagName.value),
-        children: [],
-        tag_closing: createSyntheticToken(">"),
+        tag_opening: Token.from("TOKEN_HTML_TAG_START_CLOSE", "</"),
+        tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
+        tag_closing: Token.from("TOKEN_HTML_TAG_END", ">"),
       })
 
       asMutable(node).close_tag = htmlCloseTag
@@ -148,16 +133,12 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     } else if (node.body) {
       asMutable(node).body = node.body.map(child => {
         if (isRubyLiteralNode(child)) {
-          return new ERBContentNode({
-            type: "AST_ERB_CONTENT_NODE",
+          return ERBContentNode.build({
             location: child.location,
-            errors: [],
-            tag_opening: createSyntheticToken("<%="),
-            content: createSyntheticToken(` ${child.content} `),
-            tag_closing: createSyntheticToken("%>"),
-            parsed: false,
+            tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+            content: Token.from("TOKEN_ERB_CONTENT", ` ${child.content} `),
+            tag_closing: Token.from("TOKEN_ERB_END", "%>"),
             valid: true,
-            prism_node: null
           })
         }
 
@@ -177,16 +158,12 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
     if (hasRubyLiteral) {
       const newChildren: Node[] = value.children.map(child => {
         if (isRubyLiteralNode(child)) {
-          return new ERBContentNode({
-            type: "AST_ERB_CONTENT_NODE",
+          return ERBContentNode.build({
             location: child.location,
-            errors: [],
-            tag_opening: createSyntheticToken("<%="),
-            content: createSyntheticToken(` ${child.content} `),
-            tag_closing: createSyntheticToken("%>"),
-            parsed: false,
+            tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+            content: Token.from("TOKEN_ERB_CONTENT", ` ${child.content} `),
+            tag_closing: Token.from("TOKEN_ERB_END", "%>"),
             valid: true,
-            prism_node: null,
           })
         }
 
@@ -198,8 +175,8 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
 
     if (!value.quoted) {
       mutableValue.quoted = true
-      mutableValue.open_quote = createSyntheticToken('"')
-      mutableValue.close_quote = createSyntheticToken('"')
+      mutableValue.open_quote = Token.from("TOKEN_QUOTE", '"')
+      mutableValue.close_quote = Token.from("TOKEN_QUOTE", '"')
     }
   }
 }

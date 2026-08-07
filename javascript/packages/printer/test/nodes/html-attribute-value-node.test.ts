@@ -11,10 +11,8 @@ describe("HTMLAttributeValueNode Printing", () => {
   })
 
   test("can print double quoted node", () => {
-    const node = HTMLAttributeValueNode.from({
-      type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+    const node = HTMLAttributeValueNode.build({
       location,
-      errors: [],
       open_quote: doubleQuote,
       close_quote: doubleQuote,
       children: [
@@ -27,10 +25,8 @@ describe("HTMLAttributeValueNode Printing", () => {
   })
 
   test("can print single quoted node", () => {
-    const node = HTMLAttributeValueNode.from({
-      type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+    const node = HTMLAttributeValueNode.build({
       location,
-      errors: [],
       open_quote: singleQuote,
       close_quote: singleQuote,
       children: [createLiteralNode("value")],
@@ -41,10 +37,8 @@ describe("HTMLAttributeValueNode Printing", () => {
   })
 
   test("can print unquoted node", () => {
-    const node = HTMLAttributeValueNode.from({
-      type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+    const node = HTMLAttributeValueNode.build({
       location,
-      errors: [],
       open_quote: null,
       close_quote: null,
       children: [createLiteralNode("value")],
@@ -55,10 +49,8 @@ describe("HTMLAttributeValueNode Printing", () => {
   })
 
   test("can print node with multiple children", () => {
-    const node = HTMLAttributeValueNode.from({
-      type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+    const node = HTMLAttributeValueNode.build({
       location,
-      errors: [],
       open_quote: doubleQuote,
       close_quote: doubleQuote,
       children: [
@@ -73,10 +65,8 @@ describe("HTMLAttributeValueNode Printing", () => {
   })
 
   test("can print node with multiple children and ERBContentNode", () => {
-    const node = HTMLAttributeValueNode.from({
-      type: "AST_HTML_ATTRIBUTE_VALUE_NODE",
+    const node = HTMLAttributeValueNode.build({
       location,
-      errors: [],
       open_quote: doubleQuote,
       close_quote: doubleQuote,
       children: [
