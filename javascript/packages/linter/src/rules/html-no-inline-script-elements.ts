@@ -18,12 +18,20 @@ class HTMLNoInlineScriptElementsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (this.isInlineScript(node)) {
       this.addOffense(
-        "Avoid inline `<script>` tags. Use `javascript_include_tag` to include external JavaScript files instead.",
+        `Avoid inline \`<script>\` tags. ${this.suggestion()}`,
         node.open_tag!.location,
       )
     }
 
     super.visitHTMLElementNode(node)
+  }
+
+  private suggestion(): string {
+    if (this.context.framework === "actionview") {
+      return "Extract the JavaScript into a separate `.js` file and include it with `javascript_include_tag`."
+    }
+
+    return "Extract the JavaScript into a separate `.js` file and deliver it through your framework's asset pipeline."
   }
 
   private isInlineScript(node: HTMLElementNode): boolean {
