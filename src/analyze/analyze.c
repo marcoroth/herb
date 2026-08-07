@@ -16,8 +16,10 @@
 #include "../include/ast/ast_node.h"
 #include "../include/ast/ast_nodes.h"
 #include "../include/errors.h"
+#include "../include/extract.h"
 #include "../include/lexer/token_struct.h"
 #include "../include/lib/hb_array.h"
+#include "../include/lib/hb_buffer.h"
 #include "../include/lib/hb_string.h"
 #include "../include/lib/string.h"
 #include "../include/location/location.h"
@@ -1016,6 +1018,63 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
   return new_array;
 }
 
+static tag_helper_scope_T* tag_helper_scope_init(const char* source, hb_allocator_T* allocator) {
+  if (!source) { return NULL; }
+
+  tag_helper_scope_T* scope = hb_allocator_alloc(allocator, sizeof(tag_helper_scope_T));
+
+  if (!scope) { return NULL; }
+
+  memset(scope, 0, sizeof(tag_helper_scope_T));
+
+  if (!hb_buffer_init(&scope->buffer, strlen(source), allocator)) {
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  herb_extract_ruby_options_T extract_options = {
+    .semicolons = true,
+    .comments = false,
+    .preserve_positions = true,
+  };
+
+  herb_extract_ruby_to_buffer_with_options(source, &scope->buffer, &extract_options, allocator);
+
+  if (!scope->buffer.value || scope->buffer.length == 0) {
+    hb_buffer_free(&scope->buffer);
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  pm_options_partial_script_set(&scope->options, true);
+  pm_parser_init(&scope->parser, (const uint8_t*) scope->buffer.value, scope->buffer.length, &scope->options);
+
+  scope->root = pm_parse(&scope->parser);
+
+  if (!scope->root) {
+    pm_parser_free(&scope->parser);
+    pm_options_free(&scope->options);
+    hb_buffer_free(&scope->buffer);
+    hb_allocator_dealloc(allocator, scope);
+
+    return NULL;
+  }
+
+  return scope;
+}
+
+static void tag_helper_scope_free(tag_helper_scope_T* scope, hb_allocator_T* allocator) {
+  if (!scope) { return; }
+
+  pm_node_destroy(&scope->parser, scope->root);
+  pm_parser_free(&scope->parser);
+  pm_options_free(&scope->options);
+  hb_buffer_free(&scope->buffer);
+  hb_allocator_dealloc(allocator, scope);
+}
+
 void herb_analyze_parse_tree(
   AST_DOCUMENT_NODE_T* document,
   const char* source,
@@ -1029,7 +1088,7 @@ void herb_analyze_parse_tree(
     .document = document,
     .parent = NULL,
     .ruby_context_stack = hb_array_init(8, allocator),
-    .tag_helper_locals = hb_array_init(8, allocator),
+    .tag_helper_scope = NULL,
     .allocator = allocator,
     .source = source,
   };
@@ -1051,7 +1110,12 @@ void herb_analyze_parse_tree(
   }
 
   if (options && options->action_view_helpers) {
+    context.tag_helper_scope = tag_helper_scope_init(source, allocator);
+
     herb_visit_node((AST_NODE_T*) document, transform_tag_helper_nodes, &context);
+
+    tag_helper_scope_free(context.tag_helper_scope, allocator);
+    context.tag_helper_scope = NULL;
   }
 
   herb_transform_conditional_elements(document, allocator);
@@ -1069,11 +1133,5 @@ void herb_analyze_parse_tree(
 
   herb_parser_match_html_tags_post_analyze(document, options, allocator);
 
-  for (size_t index = hb_array_size(context.tag_helper_locals); index > 0; index--) {
-    char* local_name = hb_array_get(context.tag_helper_locals, index - 1);
-    if (local_name) { hb_allocator_dealloc(allocator, local_name); }
-  }
-
-  hb_array_free(&context.tag_helper_locals);
   hb_array_free(&context.ruby_context_stack);
 }

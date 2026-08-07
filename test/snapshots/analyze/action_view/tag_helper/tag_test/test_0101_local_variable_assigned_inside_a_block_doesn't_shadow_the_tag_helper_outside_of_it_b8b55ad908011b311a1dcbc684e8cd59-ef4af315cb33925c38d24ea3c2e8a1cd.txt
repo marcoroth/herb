@@ -1,0 +1,77 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0101_local variable assigned inside a block doesn't shadow the tag helper outside of it"
+input: |2-
+<% @groups.each do |group| %>
+  <% tag = group.tag %>
+  <%= tag.name %>
+<% end %>
+<%= tag.hr %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (4 items)
+    ├── @ ERBBlockNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @groups.each do |group| " (location: (1:2)-(1:27))
+    │   ├── tag_closing: "%>" (location: (1:27)-(1:29))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:29)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:23))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " tag = group.tag " (location: (2:4)-(2:21))
+    │   │   │   ├── tag_closing: "%>" (location: (2:21)-(2:23))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:23)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:17))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │   ├── content: " tag.name " (location: (3:5)-(3:15))
+    │   │   │   ├── tag_closing: "%>" (location: (3:15)-(3:17))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:17)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:20)-(1:25))
+    │   │       ├── name: "group" (location: (1:20)-(1:25))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (4:9)-(5:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (5:0)-(5:13))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (5:0)-(5:13))
+    │   │       ├── tag_opening: "<%=" (location: (5:0)-(5:3))
+    │   │       ├── content: " tag.hr " (location: (5:3)-(5:11))
+    │   │       ├── tag_closing: "%>" (location: (5:11)-(5:13))
+    │   │       ├── tag_name: "hr" (location: (5:8)-(5:10))
+    │   │       └── children: []
+    │   │
+    │   ├── tag_name: "hr" (location: (5:8)-(5:10))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── element_source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (5:13)-(6:0))
+        └── content: "\n"
