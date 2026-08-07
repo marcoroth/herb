@@ -1467,7 +1467,7 @@ fn display_summary(result: &ProcessingResult, arguments: &CliArguments, context:
 
   if result.files_with_offenses == 0 && file_count > 1 {
     println!();
-    println!(" {} {}", paint.code("92", "\u{2713}"), paint.green("All files are clean!"));
+    println!(" {} {}", paint.bold(&paint.green("\u{2713}")), paint.bold(&paint.green("All files are clean!")));
   }
 
   display_version_skipped_rules(result, context);

@@ -236,7 +236,7 @@ export class SummaryReporter {
 
     if (filesWithOffenses === 0 && files.length > 1) {
       console.log("")
-      console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
+      console.log(` ${colorize(colorize("✓", "green"), "bold")} ${colorize(colorize("All files are clean!", "green"), "bold")}`)
     }
 
     this.displayNoEnabledRules(data)
