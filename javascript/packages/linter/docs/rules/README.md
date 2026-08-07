@@ -162,6 +162,13 @@ This page contains documentation for all Herb Linter rules.
 - [`turbo-permanent-no-misleading-value`](./turbo-permanent-no-misleading-value.md) - Disallow misleading values on `data-turbo-permanent`
 - [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 
+#### UJS
+
+- [`ujs-no-remote-attribute`](./ujs-no-remote-attribute.md) - Disallow the deprecated `data-remote` attribute and helper option
+- [`ujs-prefer-turbo-confirm`](./ujs-prefer-turbo-confirm.md) - Prefer `data-turbo-confirm` over the deprecated `data-confirm`
+- [`ujs-prefer-turbo-method`](./ujs-prefer-turbo-method.md) - Prefer `data-turbo-method` over the deprecated `data-method`
+- [`ujs-prefer-turbo-submits-with`](./ujs-prefer-turbo-submits-with.md) - Prefer `data-turbo-submits-with` over the deprecated `data-disable-with`
+
 
 ## Contributing
 
