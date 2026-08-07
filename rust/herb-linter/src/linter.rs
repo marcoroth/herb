@@ -111,7 +111,12 @@ impl Linter {
     self
       .rules
       .iter()
-      .filter(|rule| self.config.get_rule_config(rule.name()).is_none() && self.is_gated_by_version(rule) && rule.default_enabled())
+      .filter(|rule| {
+        self.config.get_rule_config(rule.name()).is_none()
+          && self.config.default_rule_enabled() != Some(true)
+          && self.is_gated_by_version(rule)
+          && self.default_rule_enabled(rule)
+      })
       .filter_map(|rule| rule.introduced_in().map(|introduced_in| (rule.name(), introduced_in)))
       .collect()
   }
@@ -124,7 +129,7 @@ impl Linter {
     self
       .rules
       .iter()
-      .filter(|rule| self.config.get_rule_config(rule.name()).is_none() && !rule.default_enabled())
+      .filter(|rule| self.config.get_rule_config(rule.name()).is_none() && !self.default_rule_enabled(rule))
       .count()
   }
 
@@ -520,11 +525,17 @@ impl Linter {
       return !self.config.is_rule_disabled(rule.name());
     }
 
-    if self.is_gated_by_version(rule) {
+    if self.config.default_rule_enabled() != Some(true) && self.is_gated_by_version(rule) {
       return false;
     }
 
-    rule.default_enabled()
+    self.default_rule_enabled(rule)
+  }
+
+  /// The `all` pseudo rule stands in for every rule that has no entry of its
+  /// own, so it wins over the rule's own default.
+  fn default_rule_enabled(&self, rule: &AnyRule) -> bool {
+    self.config.default_rule_enabled().unwrap_or_else(|| rule.default_enabled())
   }
 
   fn is_gated_by_version(&self, rule: &AnyRule) -> bool {

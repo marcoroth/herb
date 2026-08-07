@@ -877,7 +877,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, context: 
       display_most_offending_files(result);
       display_most_violated_rules(result);
       display_summary(result, arguments, context, duration);
-      display_no_enabled_rules(result);
+      display_no_enabled_rules(result, context);
     }
   } else if arguments.format == OutputFormat::Json {
     format_json(result, arguments, duration);
@@ -886,7 +886,7 @@ fn output_results(result: &ProcessingResult, arguments: &CliArguments, context: 
     display_most_offending_files(result);
     display_most_violated_rules(result);
     display_summary(result, arguments, context, duration);
-    display_no_enabled_rules(result);
+    display_no_enabled_rules(result, context);
   }
 }
 
@@ -1095,7 +1095,7 @@ fn escape_github_param(input: &str) -> String {
 /// from a clean report, so say so explicitly.
 const RULE_CONFIGURATION_DOCUMENTATION_URL: &str = "https://herb-tools.dev/configuration#setting-the-default-for-all-rules";
 
-fn display_no_enabled_rules(result: &ProcessingResult) {
+fn display_no_enabled_rules(result: &ProcessingResult, context: &SummaryContext) {
   if result.rule_count > 0 {
     return;
   }
@@ -1108,6 +1108,11 @@ fn display_no_enabled_rules(result: &ProcessingResult) {
   println!();
   println!(" {}", bold("No rules enabled:"));
   println!("  Every linter rule is turned off, so no offenses can be reported.");
+
+  if let Some(config_path) = context.config_path.as_deref() {
+    println!("  {} {}", gray("from Herb config:"), cyan(config_path));
+  }
+
   println!();
   println!(
     "  Enable rules under {} in your {}, or run {}",
