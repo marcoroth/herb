@@ -20,10 +20,12 @@ impl Visitor for NoEmptyTagsVisitor {
     }
 
     if content.trim().is_empty() {
-      self.add_offense(
+      self.offenses.push(crate::offense::UnboundOffense::with_tags(
+        self.rule_name,
         "ERB tag should not be empty. Remove empty ERB tags or add content.".to_string(),
         node.location.clone(),
-      );
+        vec!["unnecessary".to_string()],
+      ));
     }
 
     self.walk_erb_content_node(node);

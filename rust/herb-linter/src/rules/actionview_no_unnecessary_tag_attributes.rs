@@ -54,13 +54,15 @@ impl Visitor for ActionViewNoUnnecessaryTagAttributesVisitor {
     if let Some(open_tag) = get_open_tag(node) {
       if let Some(tag_name) = get_tag_local_name(node) {
         if has_only_tag_attributes_children(open_tag) {
-          self.add_offense(
+          self.offenses.push(crate::offense::UnboundOffense::with_tags(
+            self.rule_name,
             format!(
               "Avoid using `tag.attributes` to set all attributes on `<{}>`. Use `tag.{}` or add the attributes directly to the `<{}>` tag instead.",
               tag_name, tag_name, tag_name
             ),
             open_tag.location.clone(),
-          );
+            vec!["unnecessary".to_string()],
+          ));
         }
       }
     }

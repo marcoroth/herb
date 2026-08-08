@@ -136,13 +136,14 @@ impl<'rule> NoCaseNodeChildrenVisitor<'rule> {
       if !is_allowed_content(child) {
         let child_code = print_node(&self.source_lines, child).trim().to_string();
 
-        self.offenses.push(UnboundOffense::new(
+        self.offenses.push(UnboundOffense::with_tags(
           self.rule_name,
           format!(
             "Do not place `{}` between `{}` and `{}`. Content here is not part of any branch and will not be rendered.",
             child_code, case_code, condition_code
           ),
           child.location().clone(),
+          vec!["unnecessary".to_string()],
         ));
       }
     }
