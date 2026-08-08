@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, labeled, closed]
+    types: [opened, synchronize, reopened, labeled, closed]
   release:
     types: [published]
 
@@ -15,7 +15,9 @@ permissions:
 
 jobs:
   main:
-    if: github.event.action != 'closed'
+    if: |
+      github.event.action != 'closed' &&
+      (github.event.action != 'labeled' || github.event.label.name == 'release-preview')
     env:
       GH_TOKEN: ${{ github.token }}
 
@@ -180,9 +182,10 @@ jobs:
 
   preview-check:
     if: |
+      (github.event.action != 'labeled' || github.event.label.name == 'release-preview') && (
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
+      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main'))
 
     runs-on: ubuntu-latest
     outputs:
@@ -255,7 +258,7 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           cd javascript/packages/vscode
-          npx @vscode/vsce@^3.9.2 publish --no-dependencies
+          npx @vscode/vsce publish --no-dependencies
 
       - name: Publish to Open VSX Registry
         env:
