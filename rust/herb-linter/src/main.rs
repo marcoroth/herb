@@ -53,6 +53,8 @@ struct CliArguments {
   no_color: bool,
   show_timing: bool,
   show_rules: bool,
+  upgrade: bool,
+  disable_failing: bool,
   show_fix_diff: bool,
   only_rules: Vec<String>,
   all_rules: bool,
@@ -118,6 +120,14 @@ fn main() {
       Config::exists(&project_path).then(|| Config::config_path_from_project_path(&project_path)),
     );
     return;
+  }
+
+  if arguments.upgrade {
+    upgrade_command(&project_path, &arguments);
+  }
+
+  if arguments.disable_failing {
+    disable_failing_command(&project_path, &arguments);
   }
 
   if !config.is_linter_enabled() && !arguments.force {
@@ -278,6 +288,8 @@ fn parse_arguments() -> CliArguments {
   let mut all_rules = false;
   let mut log_level: Option<FailLevel> = None;
   let mut show_rules = false;
+  let mut upgrade = false;
+  let mut disable_failing = false;
 
   let mut index = 1;
   while index < argument_values.len() {
@@ -293,6 +305,8 @@ fn parse_arguments() -> CliArguments {
         std::process::exit(0);
       }
       "--init" => init = true,
+      "--upgrade" => upgrade = true,
+      "--disable-failing" => disable_failing = true,
       "-c" | "--config-file" => {
         index += 1;
         if index >= argument_values.len() {
@@ -429,6 +443,8 @@ fn parse_arguments() -> CliArguments {
     no_color,
     show_timing,
     show_rules,
+    upgrade,
+    disable_failing,
     show_fix_diff,
     only_rules,
     all_rules,
@@ -465,6 +481,8 @@ fn print_usage() {
   println!("  --no-color                    disable colored output");
   println!("  --no-timing                   hide timing information");
   println!("  --only <rules>                run only the given comma separated rules");
+  println!("  --upgrade                     update the .herb.yml version, enabling new rules that have no offenses");
+  println!("  --disable-failing             disable every rule that currently reports an offense in .herb.yml");
   println!("  --all-rules                   run every rule, ignoring config and defaults");
   println!("  --show-fix-diff               show what `--fix` would change, without writing");
   println!("  --log-level <severity>        hide offenses below this severity (error|warning|info|hint)");
@@ -748,8 +766,6 @@ fn lint_files(
   }
 }
 
-/// Whether an offense is at or above the given severity, so `--log-level`
-/// hides the quieter ones.
 fn meets_severity_threshold(severity: &Severity, level: &FailLevel) -> bool {
   let rank = |severity: &Severity| match severity {
     Severity::Error => 3,
@@ -768,8 +784,6 @@ fn meets_severity_threshold(severity: &Severity, level: &FailLevel) -> bool {
   rank(severity) >= threshold
 }
 
-/// `--only` and `--all-rules` surface rules that are quieter than the default
-/// log level, so the level drops to the quietest severity actually found.
 fn lowered_log_level(result: &ProcessingResult, effective: &FailLevel, arguments: &CliArguments) -> Option<(FailLevel, &'static str)> {
   let flag = if !arguments.only_rules.is_empty() {
     "--only"
@@ -1020,6 +1034,7 @@ fn format_json(result: &ProcessingResult, arguments: &CliArguments, duration: st
         },
         "severity": format!("{}", processed.offense.severity),
         "code": processed.offense.rule,
+        "source": processed.offense.source,
       })
     })
     .collect();
@@ -1041,8 +1056,9 @@ fn format_json(result: &ProcessingResult, arguments: &CliArguments, duration: st
       "totalWarnings": result.total_warnings,
       "totalInfo": result.total_info,
       "totalHints": result.total_hints,
-      "totalIgnored": 0,
+      "totalIgnored": result.total_ignored,
       "totalOffenses": result.total_errors + result.total_warnings,
+      "totalNotReported": 0,
       "ruleCount": result.rule_count,
     },
     "timing": timing,
@@ -1093,10 +1109,6 @@ fn escape_github_param(input: &str) -> String {
     .replace(',', "%2C")
 }
 
-/// Every rule being off is easy to do by accident and impossible to notice
-/// from a clean report, so say so explicitly.
-const RULE_CONFIGURATION_DOCUMENTATION_URL: &str = "https://herb-tools.dev/configuration#setting-the-default-for-all-rules";
-
 fn display_no_enabled_rules(result: &ProcessingResult, context: &SummaryContext) {
   if result.rule_count > 0 {
     return;
@@ -1127,7 +1139,6 @@ fn display_no_enabled_rules(result: &ProcessingResult, context: &SummaryContext)
   println!("  {}", gray(RULE_CONFIGURATION_DOCUMENTATION_URL));
 }
 
-/// Shows what `--fix` would change, line by line, without touching the file.
 fn print_fix_diff(file_path: &str, before: &str, after: &str) {
   let no_color = std::env::var("NO_COLOR").is_ok();
   let removed = |text: &str| if no_color { format!("-{text}") } else { format!("\x1b[31m-{text}\x1b[0m") };
@@ -1486,6 +1497,7 @@ fn files_with_severities(result: &ProcessingResult, severities: &[&Severity]) ->
 }
 
 const DOCS_LINTER_BASE_URL: &str = "https://herb-tools.dev/linter/rules";
+const RULE_CONFIGURATION_DOCUMENTATION_URL: &str = "https://herb-tools.dev/configuration#setting-the-default-for-all-rules";
 
 fn rule_documentation_url(rule_name: &str) -> String {
   format!("{DOCS_LINTER_BASE_URL}/{rule_name}")
@@ -1631,6 +1643,286 @@ fn display_most_violated_rules(result: &ProcessingResult) {
       println!("\x1b[90m{}\x1b[0m", message);
     }
   }
+}
+
+const TOOL_VERSION: &str = env!("CARGO_PKG_VERSION");
+const PROTECTED_RULES: &[&str] = &["parser-no-errors"];
+
+fn require_config(project_path: &Path, config_file: &Option<String>) -> (Config, PathBuf) {
+  let paint = Paint::new();
+  let load_path = match config_file {
+    Some(config_file) => PathBuf::from(config_file),
+    None => project_path.to_path_buf(),
+  };
+
+  if !Config::exists(&load_path) {
+    eprintln!("\n\u{2717} No .herb.yml found. Run {} first.\n", paint.cyan("herb-lint --init"));
+    std::process::exit(1);
+  }
+
+  match Config::load(&load_path, None) {
+    Ok(config) => {
+      let path = config.path.clone();
+      (config, path)
+    }
+    Err(error) => {
+      eprintln!("Error: {}", error);
+      std::process::exit(1);
+    }
+  }
+}
+
+fn offense_counts_by_rule(result: &ProcessingResult, skip_protected: bool) -> Vec<(String, usize)> {
+  let mut counts: Vec<(String, usize)> = Vec::new();
+
+  for processed in &result.all_offenses {
+    if !matches!(processed.offense.severity, Severity::Error | Severity::Warning) {
+      continue;
+    }
+
+    if skip_protected && PROTECTED_RULES.contains(&processed.offense.rule.as_str()) {
+      continue;
+    }
+
+    match counts.iter_mut().find(|(rule, _)| *rule == processed.offense.rule) {
+      Some((_, count)) => *count += 1,
+      None => counts.push((processed.offense.rule.clone(), 1)),
+    }
+  }
+
+  counts
+}
+
+fn disable_rules(config_path: &Path, rule_names: &[String]) {
+  let rules: HashMap<String, herb_config::RuleConfig> = rule_names
+    .iter()
+    .map(|name| {
+      (
+        name.clone(),
+        herb_config::RuleConfig {
+          enabled: Some(false),
+          ..Default::default()
+        },
+      )
+    })
+    .collect();
+
+  let mutation = herb_config::HerbConfigOptions {
+    linter: Some(herb_config::LinterConfig {
+      rules: Some(rules),
+      ..Default::default()
+    }),
+    ..Default::default()
+  };
+
+  if let Err(error) = herb_config::mutate_config_file(config_path, &mutation, None) {
+    eprintln!("Error: failed to update {}: {}", config_path.display(), error);
+    std::process::exit(1);
+  }
+}
+
+fn write_config_version(config_path: &Path, version: &str) {
+  let contents = match std::fs::read_to_string(config_path) {
+    Ok(contents) => contents,
+    Err(error) => {
+      eprintln!("Error: failed to read {}: {}", config_path.display(), error);
+      std::process::exit(1);
+    }
+  };
+
+  let updated: Vec<String> = contents
+    .lines()
+    .map(|line| {
+      if line.starts_with("version:") {
+        format!("version: {version}")
+      } else {
+        line.to_string()
+      }
+    })
+    .collect();
+
+  let mut output = updated.join("\n");
+
+  if contents.ends_with('\n') {
+    output.push('\n');
+  }
+
+  if let Err(error) = std::fs::write(config_path, output) {
+    eprintln!("Error: failed to write {}: {}", config_path.display(), error);
+    std::process::exit(1);
+  }
+}
+
+fn lint_for_command(config: &Config, project_path: &Path, arguments: &CliArguments) -> ProcessingResult {
+  let files = config.find_files_for_linter(Some(project_path));
+
+  lint_files(&files, project_path, config, false, false, arguments.ignore_disable_comments, &[], false, false)
+}
+
+fn upgrade_command(project_path: &Path, arguments: &CliArguments) {
+  let paint = Paint::new();
+  let (config, config_path) = require_config(project_path, &arguments.config_file);
+  let config_version = config.config_version.clone();
+
+  if config_version.as_deref() == Some(TOOL_VERSION) {
+    println!("\n\u{2713} Your .herb.yml is already at version {TOOL_VERSION}. Nothing to upgrade.\n");
+    std::process::exit(0);
+  }
+
+  let skipped: Vec<String> = Linter::new(config.clone())
+    .rules_skipped_by_version()
+    .into_iter()
+    .map(|(name, _)| name.to_string())
+    .collect();
+
+  let mut to_enable: Vec<String> = Vec::new();
+  let mut to_disable: Vec<(String, usize)> = Vec::new();
+
+  if !skipped.is_empty() {
+    println!(
+      "\n{} Checking {} new {} against your codebase...",
+      paint.cyan("\u{21bb}"),
+      paint.bold(&skipped.len().to_string()),
+      pluralize(skipped.len(), "rule")
+    );
+
+    let result = lint_files(
+      &config.find_files_for_linter(Some(project_path)),
+      project_path,
+      &config,
+      false,
+      false,
+      arguments.ignore_disable_comments,
+      &skipped,
+      false,
+      false,
+    );
+
+    let counts = offense_counts_by_rule(&result, false);
+
+    for rule in &skipped {
+      match counts.iter().find(|(name, _)| name == rule) {
+        Some((_, count)) => to_disable.push((rule.clone(), *count)),
+        None => to_enable.push(rule.clone()),
+      }
+    }
+
+    to_enable.sort();
+    to_disable.sort_by(|left, right| left.0.cmp(&right.0));
+
+    if !to_disable.is_empty() {
+      let names: Vec<String> = to_disable.iter().map(|(name, _)| name.clone()).collect();
+
+      disable_rules(&config_path, &names);
+    }
+  }
+
+  write_config_version(&config_path, TOOL_VERSION);
+
+  println!(
+    "\n{} Updated {} version from {} to {}",
+    paint.code("92", "\u{2713}"),
+    paint.cyan(".herb.yml"),
+    paint.cyan(config_version.as_deref().unwrap_or("unversioned")),
+    paint.cyan(TOOL_VERSION)
+  );
+
+  if !to_enable.is_empty() {
+    println!(
+      "\n{} Enabled {} new {} (no offenses found):\n",
+      paint.code("92", "\u{2713}"),
+      paint.bold(&to_enable.len().to_string()),
+      pluralize(to_enable.len(), "rule")
+    );
+
+    for rule in &to_enable {
+      println!("  {} {}", paint.code("92", "\u{2713}"), paint.white(rule));
+    }
+  }
+
+  if !to_disable.is_empty() {
+    let total: usize = to_disable.iter().map(|(_, count)| count).sum();
+
+    println!(
+      "\n{} Found {} {} across {} new {}. Disabled to ease the upgrade:\n",
+      paint.code("33", "!"),
+      paint.bold(&total.to_string()),
+      pluralize(total, "offense"),
+      paint.bold(&to_disable.len().to_string()),
+      pluralize(to_disable.len(), "rule")
+    );
+
+    for (rule, count) in &to_disable {
+      println!(
+        "  {} {} {}",
+        paint.code("31", "\u{2717}"),
+        paint.white(rule),
+        paint.gray(&format!("({} {})", count, pluralize(*count, "offense")))
+      );
+    }
+
+    println!(
+      "\n  When you're ready, review the disabled {} in your {} and re-enable them after fixing the offenses.",
+      pluralize(to_disable.len(), "rule"),
+      paint.cyan(".herb.yml")
+    );
+  }
+
+  if skipped.is_empty() {
+    println!("\n{} No new rules to configure.", paint.code("92", "\u{2713}"));
+  }
+
+  println!();
+  std::process::exit(0);
+}
+
+fn disable_failing_command(project_path: &Path, arguments: &CliArguments) {
+  let paint = Paint::new();
+  let (config, config_path) = require_config(project_path, &arguments.config_file);
+
+  println!("\n{} Linting codebase to find rules with offenses...", paint.cyan("\u{21bb}"));
+
+  let result = lint_for_command(&config, project_path, arguments);
+  let mut failing = offense_counts_by_rule(&result, true);
+
+  if failing.is_empty() {
+    println!("\n{} No offenses found. All rules are passing!\n", paint.code("92", "\u{2713}"));
+    std::process::exit(0);
+  }
+
+  let names: Vec<String> = failing.iter().map(|(name, _)| name.clone()).collect();
+
+  disable_rules(&config_path, &names);
+
+  let total: usize = failing.iter().map(|(_, count)| count).sum();
+
+  failing.sort_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(&right.0)));
+
+  println!(
+    "\n{} Found {} {} across {} {}. Disabled in {}:\n",
+    paint.code("33", "!"),
+    paint.bold(&total.to_string()),
+    pluralize(total, "offense"),
+    paint.bold(&failing.len().to_string()),
+    pluralize(failing.len(), "rule"),
+    paint.cyan(".herb.yml")
+  );
+
+  for (rule, count) in &failing {
+    println!(
+      "  {} {} {}",
+      paint.code("31", "\u{2717}"),
+      paint.white(rule),
+      paint.gray(&format!("({} {})", count, pluralize(*count, "offense")))
+    );
+  }
+
+  println!(
+    "\n  When you're ready, review the disabled rules in your {} and re-enable them after fixing the offenses.\n",
+    paint.cyan(".herb.yml")
+  );
+
+  std::process::exit(0);
 }
 
 fn init_command(current_directory: &Path, existing_config: Option<PathBuf>) {

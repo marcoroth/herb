@@ -1,6 +1,6 @@
 [package]
 name = "herb-linter"
-version = "0.10.2"
+version = "0.10.3"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "HTML+ERB linter for validating HTML structure and enforcing best practices"
