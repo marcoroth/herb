@@ -206,9 +206,28 @@ export class ErrorOverlay {
   private overlay: HTMLElement | null = null;
   private allValidationData: ValidationData[] = [];
   private isVisible = false;
+  private destroyed = false;
 
   constructor() {
     this.init();
+  }
+
+  public destroy() {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    document.removeEventListener('keydown', this.handleEscapeKey);
+    document.removeEventListener('keydown', this.handleToggleShortcut);
+
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+
+    this.isVisible = false;
   }
 
   private init() {
@@ -494,20 +513,26 @@ export class ErrorOverlay {
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isVisible) {
-        this.hide();
-      }
-    });
+    document.removeEventListener('keydown', this.handleEscapeKey);
+    document.addEventListener('keydown', this.handleEscapeKey);
+  }
+
+  private handleEscapeKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && this.isVisible) {
+      this.hide();
+    }
+  }
+
+  private handleToggleShortcut = (event: KeyboardEvent) => {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'E') {
+      event.preventDefault();
+      this.toggle();
+    }
   }
 
   private setupToggleHandler() {
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
-        e.preventDefault();
-        this.toggle();
-      }
-    });
+    document.removeEventListener('keydown', this.handleToggleShortcut);
+    document.addEventListener('keydown', this.handleToggleShortcut);
 
     if (this.hasErrorSeverity()) {
       setTimeout(() => this.show(), 100);
