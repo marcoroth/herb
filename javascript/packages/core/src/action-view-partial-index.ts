@@ -3,6 +3,7 @@ import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./action
 
 import type { DocumentNode } from "./nodes.js"
 import type { PartialPaths } from "./action-view-partial-resolution.js"
+import type { CallSiteLocation } from "./action-view-partial-callers.js"
 
 const KEYWORD_KIND = "keyword"
 const KEYWORD_REST_KIND = "keyword_rest"
@@ -18,6 +19,7 @@ export interface PartialDeclaration {
   hasDeclaration: boolean
   hasKeywordRest: boolean
   locals: StrictLocal[]
+  location?: CallSiteLocation
 }
 
 export interface SerializedPartialIndex {
@@ -49,6 +51,12 @@ export function outranksTemplate(candidate: string, incumbent: string): boolean 
 
 export const STRICT_LOCALS_MARKER = "locals"
 
+function locationOf(node: { location?: { start?: { line: number, column: number } } }): CallSiteLocation | undefined {
+  const start = node.location?.start
+
+  return start ? { line: start.line, column: start.column } : undefined
+}
+
 export function declarationWithoutStrictLocals(file: string): PartialDeclaration {
   return { file, hasDeclaration: false, hasKeywordRest: false, locals: [] }
 }
@@ -60,6 +68,7 @@ export function declarationFromDocument(document: DocumentNode, file: string): P
     if (!isERBStrictLocalsNode(child)) continue
 
     declaration.hasDeclaration = true
+    declaration.location = declaration.location ?? locationOf(child)
 
     for (const local of child.locals) {
       if (!isRubyParameterNode(local)) continue

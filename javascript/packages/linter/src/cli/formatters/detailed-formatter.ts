@@ -15,6 +15,12 @@ import type { ThemeInput } from "@herb-tools/highlighter"
 
 import { DEFAULT_THEME } from "@herb-tools/highlighter"
 
+const FRAME_VERBS: Record<string, string> = {
+  render: "rendered from",
+  layout: "rendered into",
+  declaration: "declared at",
+}
+
 export class DetailedFormatter extends BaseFormatter {
   private highlighter: Highlighter | null = null
   private theme: ThemeInput
@@ -61,7 +67,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
     for (const frame of [...renderedFrom.frames].reverse()) {
       if (!frame.location) continue
 
-      const verb = frame.via === "layout" ? "rendered into" : "rendered from"
+      const verb = FRAME_VERBS[frame.via] ?? FRAME_VERBS.render
       const nesting = frame.ancestors.length > 0 ? colorize(`  ${frame.ancestors.map(tag => `<${tag}>`).join(" › ")}`, "gray") : ""
       const label = `${frame.file}:${frame.location.line}:${frame.location.column}`
       const target = colorize(hyperlink(label, fileUrl(this.absolutePath(frame.file))), "cyan")
