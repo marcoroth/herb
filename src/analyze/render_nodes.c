@@ -36,11 +36,13 @@ typedef struct {
   token_T** target;
 } keyword_field_T;
 
-// actionview/lib/action_view/render_parser.rb
+// A superset of ALL_KNOWN_KEYS in actionview/lib/action_view/render_parser.rb,
+// which only lists the keys Rails' dependency tracker will not bail out on. The
+// rendering modes and the collection options are recognized here as well.
 static const char* render_keywords[] = {
-  "partial", "template",   "layout",   "file",       "inline",       "body",     "plain",
-  "html",    "renderable", "locals",   "collection", "object",       "as",       "spacer_template",
-  "formats", "variants",   "handlers", "status",     "content_type", "location", NULL
+  "partial",      "template",   "layout", "file", "inline",          "body",    "plain",    "html",     "renderable",
+  "locals",       "collection", "object", "as",   "spacer_template", "formats", "variants", "handlers", "status",
+  "content_type", "location",   "cached", NULL
 };
 
 static bool is_render_call(pm_call_node_t* call_node, pm_parser_t* parser) {

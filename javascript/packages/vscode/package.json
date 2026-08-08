@@ -45,6 +45,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "[erb]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": true
+        }
+      }
+    },
     "configuration": {
       "type": "object",
       "title": "Herb (HTML+ERB)",

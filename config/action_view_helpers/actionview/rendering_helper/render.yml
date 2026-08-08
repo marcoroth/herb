@@ -44,6 +44,76 @@ options:
     description: |-
       Layout to wrap the rendered content.
 
+  - name: "object"
+    type: "object"
+    description: |-
+      Object to render the partial with, available as a local named after the partial.
+
+  - name: "as"
+    type: "symbol"
+    description: |-
+      Name of the local the object or each collection item is assigned to.
+
+  - name: "spacer_template"
+    type: "string"
+    description: |-
+      Partial rendered between the items of a collection.
+
+  - name: "cached"
+    type: "boolean"
+    description: |-
+      Render a collection through the cache, reading and writing each item in one multi-fetch.
+
+  - name: "template"
+    type: "string"
+    description: |-
+      Template to render instead of a partial.
+
+  - name: "file"
+    type: "string"
+    description: |-
+      Absolute path of a file to render.
+
+  - name: "inline"
+    type: "string"
+    description: |-
+      Template source to render inline.
+
+  - name: "plain"
+    type: "string"
+    description: |-
+      Plain text to render without a template.
+
+  - name: "html"
+    type: "string"
+    description: |-
+      HTML-safe string to render without a template.
+
+  - name: "body"
+    type: "string"
+    description: |-
+      Raw body to render without a template.
+
+  - name: "renderable"
+    type: "object"
+    description: |-
+      Object responding to `render_in` to render.
+
+  - name: "formats"
+    type: "array"
+    description: |-
+      Formats to look the template up in.
+
+  - name: "variants"
+    type: "array"
+    description: |-
+      Variants to look the template up in.
+
+  - name: "handlers"
+    type: "array"
+    description: |-
+      Template handlers to look the template up in.
+
 block_arguments: []
 
 special_behaviors:

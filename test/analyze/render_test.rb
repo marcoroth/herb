@@ -215,5 +215,11 @@ module Analyze
         <%= self.render "shared/header" %>
       HTML
     end
+
+    test "render with a cached collection" do
+      assert_parsed_snapshot(<<~HTML, render_nodes: true)
+        <%= render partial: "product", collection: @products, cached: true %>
+      HTML
+    end
   end
 end

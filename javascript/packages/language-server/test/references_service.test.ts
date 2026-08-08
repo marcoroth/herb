@@ -233,6 +233,29 @@ describe("ReferencesService", () => {
     ])
   })
 
+  test("reports a spacer_template alongside the render that pulls the file into the index", async () => {
+    const services = await serviceFor({
+      "app/views/posts/_card.html.erb": `<article></article>\n`,
+      "app/views/posts/index.html.erb": `<%= render partial: "posts/card" %>\n<%= render partial: "posts/list", spacer_template: "posts/card" %>\n`,
+      "app/views/posts/_list.html.erb": `<ul></ul>\n`,
+    })
+
+    expect(referencesAt(services, "app/views/posts/_card.html.erb")).toEqual([
+      "app/views/posts/index.html.erb:0 posts/card",
+      "app/views/posts/index.html.erb:1 posts/card",
+    ])
+  })
+
+  test("misses a partial that is only ever used as a spacer_template", async () => {
+    const services = await serviceFor({
+      "app/views/posts/_separator.html.erb": `<hr>\n`,
+      "app/views/posts/_card.html.erb": `<article></article>\n`,
+      "app/views/posts/index.html.erb": `<%= render partial: "posts/card", spacer_template: "posts/separator" %>\n`,
+    })
+
+    expect(referencesAt(services, "app/views/posts/_separator.html.erb")).toEqual([])
+  })
+
   test("returns nothing when the project has no call sites for the partial", async () => {
     const services = await serviceFor({
       "app/views/posts/_card.html.erb": `<article></article>\n`,

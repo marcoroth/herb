@@ -77,7 +77,7 @@ export class Server {
           documentHighlightProvider: true,
           hoverProvider: true,
           completionProvider: {
-            triggerCharacters: [".", ":", "<", "&"],
+            triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@"],
           },
           definitionProvider: true,
           referencesProvider: true,

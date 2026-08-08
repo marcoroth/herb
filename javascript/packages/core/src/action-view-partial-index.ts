@@ -112,6 +112,10 @@ export class PartialIndex {
     }
   }
 
+  entries(): [string, PartialDeclaration][] {
+    return [...this.declarations]
+  }
+
   lookup(partialName: string, sourceFile: string | undefined): PartialDeclaration | null {
     const file = resolvePartial(partialName, sourceFile ?? "", this.files, this.viewRoot)
 
