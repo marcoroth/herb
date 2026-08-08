@@ -93,6 +93,18 @@ This rule enforces proper document structure by ensuring semantic and content el
 </html>
 ```
 
+## Across call sites
+
+This rule also considers where a file is rendered. When the linter runs over a whole project it resolves the HTML ancestors that each call site places a file inside, following `render` calls and each template's conventional layout `yield`.
+
+A partial holding body-only elements is reported when every call site renders it inside `<head>`, and left alone when every call site renders it inside `<body>`.
+
+Action View helpers that render an element count as ancestors, so a `content_tag`, `tag.div` or `link_to` block nests what it wraps just like the equivalent HTML would.
+
+The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. A file rendered into two different sections is left alone too, so the placement check only ever reports what every call site agrees on.
+
+Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
+
 ## References
 
 - [HTML Living Standard - The `body` element](https://html.spec.whatwg.org/multipage/sections.html#the-body-element)

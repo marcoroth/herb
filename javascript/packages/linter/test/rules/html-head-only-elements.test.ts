@@ -1,8 +1,10 @@
 import dedent from "dedent"
 
 import { describe, test } from "vitest"
+import { PartialCallerIndex } from "@herb-tools/core"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HTMLHeadOnlyElementsRule } from "../../src/rules/html-head-only-elements.js"
+import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLHeadOnlyElementsRule)
 
@@ -382,5 +384,67 @@ describe("html-head-only-elements", () => {
         </body>
       </html>
     `)
+  })
+
+  describe("Action View helpers", () => {
+    test("keeps the svg exemption when the svg comes from a helper", () => {
+      expectNoOffenses(`<html><body><%= content_tag :svg do %><title>Chart</title><% end %></body></html>`)
+    })
+
+    test("sees a head-only element nested inside a helper element", () => {
+      expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+      assertOffenses(`<html><body><%= content_tag :section do %><meta name="x" content="y"><% end %></body></html>`)
+    })
+
+    test("treats a javascript_tag body as script text rather than markup", () => {
+      expectNoOffenses(`<html><head><%= javascript_tag do %>\n  var s = '<title>' + 'x';\n<% end %></head></html>`)
+    })
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_meta.html.erb"
+
+    test("passes when the only call site renders the partial into the head", () => {
+      expectNoOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "head"]))
+    })
+
+    test("fails when the only call site renders the partial into the body", () => {
+      expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+      assertOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "body", "footer"]))
+    })
+
+    test("passes when the call sites disagree", () => {
+      expectNoOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
+    })
+
+    test("passes when nothing renders the partial", () => {
+      expectNoOffenses(`<meta charset="UTF-8">`, renderedFromNowhere(partial))
+    })
+
+    test("passes when the chain never reaches a document root", () => {
+      expectNoOffenses(`<meta charset="UTF-8">`, {
+        fileName: partial,
+        partialCallers: new PartialCallerIndex(
+          new Map([[partial, [{ caller: "app/views/posts/index.html.erb", locals: [], ancestors: ["div"] }]]]),
+          new Set(),
+          0,
+          0,
+        ),
+      })
+    })
+
+    test("still trusts the local stack over the call sites for a whole document", () => {
+      expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+      assertOffenses(dedent`
+        <html>
+          <body>
+            <meta charset="UTF-8">
+          </body>
+        </html>
+      `, renderedFromNowhere(LAYOUT))
+    })
   })
 })

@@ -4,6 +4,7 @@ import { describe, test } from "vitest"
 
 import { ERBNoUnsafeRawRule } from "../../src/rules/erb-no-unsafe-raw.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoUnsafeRawRule)
 
@@ -229,6 +230,26 @@ describe("ERBNoUnsafeRawRule", () => {
       expectNoOffenses(dedent`
         <a onclick="method(<%= unsafe.to_json %>)"></a>
       `)
+    })
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_snippet.html.erb"
+
+    test("stays silent when every call site renders the file inside a script", () => {
+      expectNoOffenses(`<%= raw(payload) %>`, renderedFrom(partial, ["html", "body", "script"]))
+    })
+
+    test("reports when only some call sites render the file inside a script", () => {
+      expectError("Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.")
+
+      assertOffenses(`<%= raw(payload) %>`, renderedFrom(partial, ["html", "body", "script"], ["html", "body", "div"]))
+    })
+
+    test("reports when nothing renders the file", () => {
+      expectError("Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.")
+
+      assertOffenses(`<%= raw(payload) %>`, renderedFromNowhere(partial))
     })
   })
 })

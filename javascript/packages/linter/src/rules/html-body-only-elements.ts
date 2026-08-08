@@ -3,14 +3,14 @@ import { ElementStackVisitor, isBodyOnlyTag } from "./rule-utils.js"
 import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult, ParserOptions } from "@herb-tools/core"
 
 class HTMLBodyOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
-    if (tagName && !this.isInsideElement("body") && this.isInsideElement("head") && isBodyOnlyTag(tagName)) {
-      this.addOffense(
+    if (tagName && this.isInsideElementAcrossCallers("body") === "never" && this.isInsideElementAcrossCallers("head") === "always" && isBodyOnlyTag(tagName)) {
+      this.addOffenseWithCallChain(
         `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
         node.location,
       )
@@ -30,6 +30,12 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
       enabled: true,
       severity: "error",
       exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

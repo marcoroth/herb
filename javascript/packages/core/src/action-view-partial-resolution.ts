@@ -50,6 +50,12 @@ function relativeToViewRoot(path: string, viewRoot: string): string | null {
   return normalizedPath.slice(normalizedRoot.length + 1)
 }
 
+export function projectRelativePath(filePath: string, projectPath: string | undefined): string {
+  if (!projectPath) return normalize(filePath)
+
+  return relativeToViewRoot(filePath, projectPath) ?? normalize(filePath)
+}
+
 export function isPartialPath(filePath: string): boolean {
   const name = basename(normalize(filePath))
 
@@ -75,6 +81,53 @@ export function partialNameForFile(filePath: string, viewRoot: string): string |
   if (withoutExtension === "") return null
 
   return directory === "." ? withoutExtension : `${directory}/${withoutExtension}`
+}
+
+export const LAYOUTS_DIRECTORY = "layouts"
+export const APPLICATION_LAYOUT = "application"
+export const MAILER_LAYOUT = "mailer"
+const MAILER_SUFFIX = "_mailer"
+
+export function templateNameForFile(filePath: string, viewRoot: string): string | null {
+  const relative = relativeToViewRoot(normalize(filePath), viewRoot)
+  if (relative === null || relative === ".") return null
+
+  const directory = dirname(relative)
+
+  const name = basename(relative)
+  if (name.startsWith(PARTIAL_PREFIX)) return null
+
+  const extension = name.indexOf(".")
+
+  const withoutExtension = extension === -1 ? name : name.slice(0, extension)
+  if (withoutExtension === "") return null
+
+  return directory === "." ? withoutExtension : `${directory}/${withoutExtension}`
+}
+
+export function layoutCandidatesFor(templateFile: string, viewRoot: string): string[] {
+  const relative = relativeToViewRoot(normalize(templateFile), viewRoot)
+
+  if (relative === null || relative === ".") return []
+  if (basename(relative).startsWith(PARTIAL_PREFIX)) return []
+
+  const directory = dirname(relative)
+
+  if (directory === LAYOUTS_DIRECTORY || directory.startsWith(`${LAYOUTS_DIRECTORY}/`)) return []
+  if (directory === "." || directory === "/") return [`${LAYOUTS_DIRECTORY}/${APPLICATION_LAYOUT}`]
+
+  const segments = directory.split("/")
+  const isMailer = segments[segments.length - 1].endsWith(MAILER_SUFFIX)
+  const candidates: string[] = []
+
+  while (segments.length > 0) {
+    candidates.push(`${LAYOUTS_DIRECTORY}/${segments.join("/")}`)
+    segments.pop()
+  }
+
+  candidates.push(`${LAYOUTS_DIRECTORY}/${isMailer ? MAILER_LAYOUT : APPLICATION_LAYOUT}`)
+
+  return candidates
 }
 
 export function resolvePartial(partialName: string, sourceFile: string, index: PartialPaths, viewRoot: string): string | null {

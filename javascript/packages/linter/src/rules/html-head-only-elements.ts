@@ -2,19 +2,19 @@ import { ParserRule } from "../types"
 import { ElementStackVisitor, isHeadOnlyTag } from "./rule-utils"
 import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
-import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
+import type { ParseResult, HTMLElementNode, ParserOptions } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 class HeadOnlyElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
-    if (tagName && !this.isInsideElement("head") && this.isInsideElement("body") && isHeadOnlyTag(tagName)) {
+    if (tagName && this.isInsideElementAcrossCallers("head") === "never" && this.isInsideElementAcrossCallers("body") === "always" && isHeadOnlyTag(tagName)) {
       const isAllowedInSVG = (tagName === "title" || tagName === "style") && this.isInsideElement("svg")
       const isMetaWithItemprop = tagName === "meta" && hasAttribute(node, "itemprop")
 
       if (!isAllowedInSVG && !isMetaWithItemprop) {
-        this.addOffense(
+        this.addOffenseWithCallChain(
           `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
           node.location,
         )
@@ -35,6 +35,12 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
       enabled: true,
       severity: "error",
       exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
+  }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return {
+      action_view_helpers: true,
     }
   }
 

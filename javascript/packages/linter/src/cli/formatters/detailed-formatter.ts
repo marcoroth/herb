@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
+
 import { colorize } from "@herb-tools/highlighter"
 import { fileUrl } from "../file-url.js"
 import { ruleDocumentationUrl } from "../../urls.js"
@@ -19,6 +22,7 @@ export class DetailedFormatter extends BaseFormatter {
   private truncateLines: boolean
   private showFixDiff: boolean
   private previewsRendered = false
+  private frameSources = new Map<string, string>()
 
   constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false, projectPath?: string, showFixDiff: boolean = false) {
     super(projectPath)
@@ -45,6 +49,71 @@ export class DetailedFormatter extends BaseFormatter {
     return `
 ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold")}${colorize(" to preview the correction", "gray")}
 `
+  }
+
+  private callChainFor({ renderedFrom }: ProcessedFile): string | undefined {
+    if (!renderedFrom || !this.highlighter) return undefined
+    if (renderedFrom.frames.length === 0) return undefined
+
+    const indent = "        "
+    const sections: string[] = []
+
+    for (const frame of [...renderedFrom.frames].reverse()) {
+      if (!frame.location) continue
+
+      const verb = frame.via === "layout" ? "rendered into" : "rendered from"
+      const nesting = frame.ancestors.length > 0 ? colorize(`  ${frame.ancestors.map(tag => `<${tag}>`).join(" › ")}`, "gray") : ""
+      const heading = `${colorize(verb, "gray")} ${colorize(`${this.absolutePath(frame.file)}:${frame.location.line}:${frame.location.column}`, "cyan")}${nesting}`
+
+      const source = this.sourceOf(frame.file)
+      if (source === undefined) continue
+
+      const rendered = this.highlighter.highlight(frame.file, source, {
+        focusLine: frame.location.line,
+        contextLines: 0,
+        wrapLines: this.wrapLines,
+        truncateLines: this.truncateLines,
+      })
+
+      const gutterLines = rendered.split("\n").filter(line => line.includes("│"))
+
+      if (gutterLines.length === 0) continue
+
+      sections.push(`${indent}${heading}\n${gutterLines.map(line => `${indent}${line}`).join("\n")}`)
+    }
+
+    if (sections.length === 0) return undefined
+
+    const others = renderedFrom.occurrences - 1
+    const footer = others > 0
+      ? `\n${indent}${colorize(`and ${others} other call site${others === 1 ? "" : "s"} nesting it the same way`, "gray")}`
+      : ""
+
+    return `\n${sections.join("\n\n")}${footer}\n`
+  }
+
+  private absolutePath(filename: string): string {
+    return this.projectPath ? resolve(this.projectPath, filename) : resolve(filename)
+  }
+
+  private sourceOf(filename: string): string | undefined {
+    const cached = this.frameSources.get(filename)
+
+    if (cached !== undefined) return cached || undefined
+
+    const filePath = this.absolutePath(filename)
+
+    try {
+      const source = readFileSync(filePath, "utf-8")
+
+      this.frameSources.set(filename, source)
+
+      return source
+    } catch {
+      this.frameSources.set(filename, "")
+
+      return undefined
+    }
   }
 
   private fixDiffFor(processed: ProcessedFile): string | undefined {
@@ -114,9 +183,11 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
           suffix: correctableTags.get(offense),
         })
 
-        const addition = this.fixDiffFor(processed) ?? this.fixDiffHintFor(processed)
+        const callChain = this.callChainFor(processed) ?? ""
+        const addition = this.fixDiffFor(processed) ?? this.fixDiffHintFor(processed) ?? ""
+        const trailer = `${callChain}${addition}`
 
-        sections.push(addition ? `${rendered}${addition}` : rendered)
+        sections.push(trailer ? `${rendered}${trailer}` : rendered)
 
         if (index < allOffenses.length - 1) {
           sections.push(this.offenseSeparator(index + 1, allOffenses.length))
@@ -146,8 +217,10 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
 
         console.log(`\n${formatted}`)
 
-        const fixDiff = this.fixDiffFor(allOffenses[i]) ?? this.fixDiffHintFor(allOffenses[i])
+        const callChain = this.callChainFor(allOffenses[i])
+        if (callChain) console.log(callChain)
 
+        const fixDiff = this.fixDiffFor(allOffenses[i]) ?? this.fixDiffHintFor(allOffenses[i])
         if (fixDiff) console.log(fixDiff)
 
         const width = LineWrapper.getTerminalWidth()

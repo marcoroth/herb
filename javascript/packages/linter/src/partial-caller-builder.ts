@@ -4,19 +4,24 @@ import { glob } from "tinyglobby"
 import { join } from "node:path"
 import { readFileSync } from "node:fs"
 
-import { TEMPLATE_GLOB_PATTERN, isPrismNodeType, isRubyRenderLocalNode } from "@herb-tools/core"
+import { getTagLocalName, isHTMLElementNode, isPrismNodeType, isRubyRenderLocalNode, layoutCandidatesFor, outranksTemplate, templateNameForFile } from "@herb-tools/core"
 import { isOutputRender, renderPartialExpression } from "./rules/prism-rule-utils.js"
 
 import { PartialCallerIndex } from "@herb-tools/core"
 
-import type { ERBRenderNode, HerbBackend, Node, PartialCallSite, PartialIndex, SerializedPartialCallerIndex } from "@herb-tools/core"
+import { TEMPLATE_GLOB_PATTERN } from "@herb-tools/core"
+
+import type { CallSiteLocation, ERBRenderNode, ERBYieldNode, HerbBackend, Node, PartialCallSite, PartialIndex, SerializedPartialCallerIndex } from "@herb-tools/core"
 
 const RENDER_MARKER = "render"
-const PARSER_OPTIONS = { render_nodes: true, prism_nodes: true } as const
+const YIELD_MARKER = "yield"
+const YIELD_KEYWORD = "yield"
+const PARSER_OPTIONS = { render_nodes: true, prism_nodes: true, action_view_helpers: true } as const
 
 export interface PartialCallerIndexOptions {
   include?: string[]
   exclude?: string[]
+  resolveLayouts?: boolean
 }
 
 function templatePatterns(viewRoot: string, include: string[]): string[] {
@@ -29,20 +34,62 @@ function templatesIn(projectPath: string, viewRoot: string, include: string[]): 
   return glob(templatePatterns(viewRoot, include), { cwd: projectPath, onlyFiles: true, dot: false, absolute: false })
 }
 
-function renderNodesIn(node: Node): ERBRenderNode[] {
-  const found: ERBRenderNode[] = []
+interface RenderSite {
+  node: ERBRenderNode
+  ancestors: string[]
+}
+
+export interface YieldSite {
+  ancestors: string[]
+  location?: CallSiteLocation
+}
+
+interface ScannedTemplate {
+  sites: RenderSite[]
+  yields: YieldSite[]
+  isDocumentRoot: boolean
+}
+
+function isBareYield(node: Node): boolean {
+  if (node.type !== "AST_ERB_YIELD_NODE") return false
+
+  return (node as ERBYieldNode).content?.value.trim() === YIELD_KEYWORD
+}
+
+function callSiteLocation(node: Node): CallSiteLocation | undefined {
+  const start = node.location?.start
+
+  if (!start) return undefined
+
+  return { line: start.line, column: start.column }
+}
+
+function scanTemplate(node: Node): ScannedTemplate {
+  const sites: RenderSite[] = []
+  const yields: YieldSite[] = []
+  const stack: string[] = []
+
+  let isDocumentRoot = false
 
   const walk = (current: Node) => {
-    if (current.type === "AST_ERB_RENDER_NODE") found.push(current as ERBRenderNode)
+    const tagName = isHTMLElementNode(current) ? getTagLocalName(current) : null
+
+    if (tagName === "html") isDocumentRoot = true
+    if (tagName) stack.push(tagName)
+
+    if (current.type === "AST_ERB_RENDER_NODE") sites.push({ node: current as ERBRenderNode, ancestors: [...stack] })
+    if (isBareYield(current)) yields.push({ ancestors: [...stack], location: callSiteLocation(current) })
 
     for (const child of current.childNodes()) {
       if (child) walk(child)
     }
+
+    if (tagName) stack.pop()
   }
 
   walk(node)
 
-  return found
+  return { sites, yields, isDocumentRoot }
 }
 
 function localsPassedBy(node: ERBRenderNode): string[] {
@@ -73,12 +120,22 @@ function partialNameRenderedBy(node: ERBRenderNode): string | null {
   return expression.node.unescaped?.value ?? null
 }
 
-export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file: string, source: string, callSites: Map<string, PartialCallSite[]>): number {
-  if (!source.includes(RENDER_MARKER)) return 0
+export interface CollectedCallSites {
+  unresolved: number
+  isDocumentRoot: boolean
+  yields: YieldSite[]
+}
+
+const NOTHING_COLLECTED: CollectedCallSites = { unresolved: 0, isDocumentRoot: false, yields: [] }
+
+export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file: string, source: string, callSites: Map<string, PartialCallSite[]>): CollectedCallSites {
+  if (!source.includes(RENDER_MARKER) && !source.includes(YIELD_MARKER)) return NOTHING_COLLECTED
 
   let unresolved = 0
 
-  for (const node of renderNodesIn(herb.parse(source, PARSER_OPTIONS).value)) {
+  const { sites, yields, isDocumentRoot } = scanTemplate(herb.parse(source, PARSER_OPTIONS).value)
+
+  for (const { node, ancestors } of sites) {
     const name = partialNameRenderedBy(node)
 
     if (name === null) {
@@ -97,17 +154,54 @@ export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file
 
     const existing = callSites.get(declaration.file) ?? []
 
-    existing.push({ caller: file, locals: localsPassedBy(node) })
+    existing.push({ caller: file, locals: localsPassedBy(node), ancestors, via: "render", location: callSiteLocation(node) })
     callSites.set(declaration.file, existing)
   }
 
-  return unresolved
+  return { unresolved, isDocumentRoot, yields }
+}
+
+function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite[]>, viewRoot: string, callSites: Map<string, PartialCallSite[]>): void {
+  const layouts = new Map<string, string>()
+
+  for (const file of files) {
+    const name = templateNameForFile(file, viewRoot)
+
+    if (name === null || !layoutYields.has(file)) continue
+
+    const existing = layouts.get(name)
+
+    if (existing && !outranksTemplate(file, existing)) continue
+
+    layouts.set(name, file)
+  }
+
+  for (const file of files) {
+    for (const candidate of layoutCandidatesFor(file, viewRoot)) {
+      const layout = layouts.get(candidate)
+
+      if (!layout || layout === file) continue
+
+      const existing = callSites.get(file) ?? []
+
+      for (const { ancestors, location } of layoutYields.get(layout) ?? []) {
+        existing.push({ caller: layout, locals: [], ancestors, via: "layout", location })
+      }
+
+      callSites.set(file, existing)
+
+      break
+    }
+  }
 }
 
 export async function buildPartialCallerIndex(herb: HerbBackend, projectPath: string, partials: PartialIndex, options: PartialCallerIndexOptions = {}): Promise<PartialCallerIndex> {
   const files = await templatesIn(projectPath, partials.viewRoot, options.include ?? [])
   const excluded = options.exclude?.length ? picomatch(options.exclude) : null
   const callSites = new Map<string, PartialCallSite[]>()
+  const documentRoots = new Set<string>()
+  const layoutYields = new Map<string, YieldSite[]>()
+  const scanned: string[] = []
 
   let unresolvedRenders = 0
   let skippedFiles = 0
@@ -127,13 +221,23 @@ export async function buildPartialCallerIndex(herb: HerbBackend, projectPath: st
     }
 
     try {
-      unresolvedRenders += collectCallSites(herb, partials, file, source, callSites)
+      const collected = collectCallSites(herb, partials, file, source, callSites)
+
+      unresolvedRenders += collected.unresolved
+      scanned.push(file)
+
+      if (collected.isDocumentRoot) documentRoots.add(file)
+      if (collected.yields.length > 0) layoutYields.set(file, collected.yields)
     } catch {
       continue
     }
   }
 
-  return new PartialCallerIndex(callSites, unresolvedRenders, skippedFiles)
+  if (options.resolveLayouts !== false) {
+    addLayoutCallSites(scanned, layoutYields, partials.viewRoot, callSites)
+  }
+
+  return new PartialCallerIndex(callSites, documentRoots, unresolvedRenders, skippedFiles)
 }
 
 export function partialCallerIndexFrom(data: SerializedPartialCallerIndex | undefined): PartialCallerIndex | undefined {

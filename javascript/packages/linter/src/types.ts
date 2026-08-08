@@ -2,7 +2,7 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
-import type { Node, ParserOptions, PartialIndex } from "@herb-tools/core"
+import type { AncestorChain, Node, ParserOptions, PartialCallerIndex, PartialIndex } from "@herb-tools/core"
 import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
@@ -51,6 +51,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   autofixContext?: TAutofixContext
   /** If set, overrides rule-level severity for this specific offense */
   severity?: LintSeverity
+  /** The call chain that justified the offense */
+  renderedFrom?: AncestorChain
 }
 
 /**
@@ -255,6 +257,8 @@ export interface LintContext {
   indentWidth: number | undefined
   framework: Framework | undefined
   partials: PartialIndex | undefined
+  partialCallers: PartialCallerIndex | undefined
+  projectPath: string | undefined
 }
 
 /**
@@ -267,7 +271,9 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   ignoreDisableComments: undefined,
   indentWidth: undefined,
   framework: undefined,
-  partials: undefined
+  partials: undefined,
+  partialCallers: undefined,
+  projectPath: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

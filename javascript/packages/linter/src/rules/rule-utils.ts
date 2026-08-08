@@ -10,20 +10,26 @@ import {
   getAttributeValueNodes,
   getAttributeValue,
   getTagLocalName,
+  ancestorVerdict,
+  closestAncestor,
+  EMPTY_CHAIN,
+  projectRelativePath,
   forEachAttribute,
   getAttribute,
   findAttributeByName,
   isERBOpenTagNode,
-  stringIndexFromByteOffset,
 } from "@herb-tools/core"
 
 import type {
+  AncestorChain,
+  AncestorVerdict,
   ERBOpenTagNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLElementNode,
   HTMLOpenTagNode,
   LexResult,
+  PartialContext,
   Token,
   Node
 } from "@herb-tools/core"
@@ -37,6 +43,21 @@ import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext 
 export enum ControlFlowType {
   CONDITIONAL,
   LOOP
+}
+
+const DETACHED_BLOCK_HELPERS = new Set(["content_for", "javascript_tag"])
+
+/**
+ * Whether an ERB block opens with a call to one of the given helpers.
+ *
+ * A block node's content is its opening statement, so the helper being called
+ * is the leading identifier. Anchoring there keeps `my_content_for` and
+ * `helper.content_for` out without needing to guard the boundaries.
+ */
+function blockOpensWith(node: Nodes.ERBBlockNode, helpers: Set<string>): boolean {
+  const [call] = (node.content?.value ?? "").trim().split(/[\s(]/, 1)
+
+  return helpers.has(call)
 }
 
 /**
@@ -186,11 +207,21 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
  */
 export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
   private elementStack: HTMLElementNode[] = []
+  private detachedBlockDepth = 0
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     this.elementStack.push(node)
     super.visitHTMLElementNode(node)
     this.elementStack.pop()
+  }
+
+  visitERBBlockNode(node: Nodes.ERBBlockNode): void {
+    const isDetached = blockOpensWith(node, DETACHED_BLOCK_HELPERS)
+    if (isDetached) this.detachedBlockDepth++
+
+    super.visitERBBlockNode(node)
+
+    if (isDetached) this.detachedBlockDepth--
   }
 
   /**
@@ -238,6 +269,97 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    */
   protected get ancestors(): readonly HTMLElementNode[] {
     return this.elementStack
+  }
+
+  /**
+   * The tag names of all ancestor HTML elements, from outermost to innermost.
+   */
+  protected get ancestorTagNames(): string[] {
+    return this.elementStack.map(element => getTagLocalName(element)).filter((name): name is string => name !== null)
+  }
+
+  /**
+   * Like `isInsideElement`, but also considers the ancestors this file renders
+   * into at every call site, so a partial can be judged by the context its
+   * callers place it in.
+   *
+   * Returns `mixed` when the call sites disagree and `unknown` when there is
+   * not enough information to tell, both of which rules should stay silent on.
+   */
+  protected isInsideElementAcrossCallers(...tagNames: string[]): AncestorVerdict {
+    return ancestorVerdict(this.renderedContext, this.ancestorTagNames, ...tagNames)
+  }
+
+  /**
+   * Like `isInsideElementAcrossCallers`, but ignores the local element stack.
+   *
+   * For rules that already check the current file themselves, so the two
+   * checks don't report the same nesting twice.
+   */
+  protected isRenderedInsideElement(...tagNames: string[]): AncestorVerdict {
+    return ancestorVerdict(this.renderedContext, [], ...tagNames)
+  }
+
+  /**
+   * The innermost ancestor matching one of the given tags, across the local
+   * element stack and the ancestors this file renders into.
+   */
+  protected closestElementAcrossCallers(...tagNames: string[]): string | null {
+    return closestAncestor(this.renderedContext, this.ancestorTagNames, ...tagNames)
+  }
+
+  /**
+   * The innermost matching ancestor from the callers alone, ignoring the local
+   * element stack.
+   */
+  protected closestRenderedElement(...tagNames: string[]): string | null {
+    return closestAncestor(this.renderedContext, [], ...tagNames)
+  }
+
+  /**
+   * The first resolved chain that nests this file inside one of the given tags.
+   *
+   * Useful for a `mixed` verdict, where only some call sites are at fault and
+   * the report needs to name one of them.
+   */
+  protected renderedChainInside(...tagNames: string[]): AncestorChain | null {
+    return this.renderedContext.chains.find(chain => chain.tags.some(tag => tagNames.includes(tag))) ?? null
+  }
+
+  /**
+   * Like `addOffense`, but records the call chain that put this file where it
+   * is, so a formatter can show why the offense applies.
+   *
+   * Defaults to the first resolved chain. Pass one explicitly when only some
+   * call sites are at fault, so the report points at one that is.
+   *
+   * Nothing is recorded for a file judged on its own contents, which is what a
+   * whole document and a `content_for` body both are.
+   */
+  protected addOffenseWithCallChain(message: string, location: Location, chain: AncestorChain | null = this.renderedContext.chains[0] ?? null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    const offense = this.createOffense(message, location, autofixContext, severity, tags)
+
+    this.offenses.push(chain && chain.frames.length > 0 ? { ...offense, renderedFrom: chain } : offense)
+  }
+
+  /**
+   * The ancestors this file renders into.
+   *
+   * A file that already contains its own `<html>`, `<head>` or `<body>` is a
+   * whole document, so its own element stack is the entire truth and no caller
+   * lookup is needed.
+   */
+  private get renderedContext(): PartialContext {
+    if (this.isInsideElement("html", "head", "body")) return { chains: [EMPTY_CHAIN], resolved: true }
+
+    if (this.detachedBlockDepth > 0) return { chains: [], resolved: false }
+
+    const callers = this.context.partialCallers
+    const fileName = this.context.fileName
+
+    if (!callers || !fileName) return { chains: [], resolved: false }
+
+    return callers.contextOf(projectRelativePath(fileName, this.context.projectPath))
   }
 
   /**

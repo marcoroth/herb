@@ -9,11 +9,12 @@ import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
 import { partialIndexFrom, refreshPartialAfterFix } from "../partial-index-builder.js"
+import { partialCallerIndexFrom } from "../partial-caller-builder.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
-import type { SerializedPartialIndex } from "@herb-tools/core"
+import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/core"
 
 export interface WorkerInput {
   files: string[]
@@ -26,11 +27,13 @@ export interface WorkerInput {
   only?: string[]
   allRules: boolean
   partials?: SerializedPartialIndex
+  partialCallers?: SerializedPartialCallerIndex
 }
 
 export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
+  renderedFrom?: AncestorChain
   autocorrectable: boolean
   unsafeAutocorrectable: boolean
 }
@@ -75,6 +78,7 @@ async function run() {
 
   const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
   const partials = partialIndexFrom(data.partials)
+  const partialCallers = partialCallerIndexFrom(data.partialCallers)
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -105,14 +109,18 @@ async function run() {
     const lintResult = linter.lint(content, {
       fileName: filename,
       ignoreDisableComments: data.ignoreDisableComments,
-      partials
+      partials,
+      partialCallers,
+      projectPath: data.projectPath
     })
 
     if (data.fix && lintResult.offenses.length > 0) {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
         ignoreDisableComments: data.ignoreDisableComments,
-        partials
+        partials,
+        partialCallers,
+        projectPath: data.projectPath
       }, undefined, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
@@ -126,6 +134,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
+          renderedFrom: offense.renderedFrom,
           ...fixabilityOf(offense)
         })
 
@@ -147,6 +156,7 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
+          renderedFrom: offense.renderedFrom,
           ...fixabilityOf(offense)
         })
 

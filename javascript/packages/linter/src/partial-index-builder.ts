@@ -1,7 +1,7 @@
 import { join } from "node:path"
 import { glob } from "tinyglobby"
 import { readFileSync } from "node:fs"
-import { PARTIAL_GLOB_PATTERN, PartialIndex, STRICT_LOCALS_MARKER, declarationFromDocument, declarationWithoutStrictLocals, isPartialPath, outranksTemplate, partialNameForFile } from "@herb-tools/core"
+import { PARTIAL_GLOB_PATTERN, PartialIndex, STRICT_LOCALS_MARKER, TEMPLATE_GLOB_PATTERN, declarationFromDocument, declarationWithoutStrictLocals, isPartialPath, outranksTemplate, partialNameForFile } from "@herb-tools/core"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { PartialDeclaration, SerializedPartialIndex } from "@herb-tools/core"
@@ -10,14 +10,18 @@ const VIEW_ROOT_CANDIDATE = "app/views"
 const PROJECT_ROOT = "."
 const PARSER_OPTIONS = { strict_locals: true } as const
 
-function partialsIn(projectPath: string, viewRoot: string): Promise<string[]> {
-  const pattern = viewRoot === PROJECT_ROOT ? `**/${PARTIAL_GLOB_PATTERN}` : `${viewRoot}/**/${PARTIAL_GLOB_PATTERN}`
+function filesIn(projectPath: string, viewRoot: string, filePattern: string): Promise<string[]> {
+  const pattern = viewRoot === PROJECT_ROOT ? `**/${filePattern}` : `${viewRoot}/**/${filePattern}`
 
   return glob([pattern], { cwd: projectPath, onlyFiles: true, dot: false, absolute: false })
 }
 
+function partialsIn(projectPath: string, viewRoot: string): Promise<string[]> {
+  return filesIn(projectPath, viewRoot, PARTIAL_GLOB_PATTERN)
+}
+
 export async function findViewRoot(projectPath: string): Promise<string> {
-  const matches = await partialsIn(projectPath, VIEW_ROOT_CANDIDATE)
+  const matches = await filesIn(projectPath, VIEW_ROOT_CANDIDATE, TEMPLATE_GLOB_PATTERN)
 
   return matches.length > 0 ? VIEW_ROOT_CANDIDATE : PROJECT_ROOT
 }
