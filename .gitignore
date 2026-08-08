@@ -172,6 +172,7 @@ vitest.config.*.timestamp*
 
 # Vitest
 **/test/__screenshots__/**/*
+**/.vitest-attachments/**/*
 
 # Doxygen
 docs/docs/public/c-reference
