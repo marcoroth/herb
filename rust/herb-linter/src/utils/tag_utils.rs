@@ -1,4 +1,4 @@
-use crate::utils::html_data::TOKEN_LIST_ATTRIBUTES;
+use crate::rules::html_data::TOKEN_LIST_ATTRIBUTES;
 use herb::nodes::*;
 use herb::union_types::*;
 use herb::Location;

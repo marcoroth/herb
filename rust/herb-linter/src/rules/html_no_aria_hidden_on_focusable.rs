@@ -1,4 +1,4 @@
-use crate::utils::html_data::INTERACTIVE_ELEMENTS;
+use crate::rules::html_data::INTERACTIVE_ELEMENTS;
 
 use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag, has_aria_hidden_true, has_attribute, tag_name_location};
 

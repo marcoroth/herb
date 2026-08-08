@@ -1,5 +1,5 @@
-use crate::utils::aria_data::{LABEL_ATTRIBUTES, ROLES_WHICH_CANNOT_BE_NAMED};
-use crate::utils::html_data::{GENERIC_ELEMENTS, NAME_RESTRICTED_ELEMENTS};
+use crate::rules::aria_data::{LABEL_ATTRIBUTES, ROLES_WHICH_CANNOT_BE_NAMED};
+use crate::rules::html_data::{GENERIC_ELEMENTS, NAME_RESTRICTED_ELEMENTS};
 use crate::utils::tag_utils::{get_element_attribute, get_element_static_attribute_value, get_tag_local_name, has_element_attribute};
 
 use herb::nodes::HTMLElementNode;

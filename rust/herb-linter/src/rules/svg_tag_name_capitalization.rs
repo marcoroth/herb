@@ -1,5 +1,5 @@
 use crate::offense::Offense;
-use crate::utils::html_data::{SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE};
+use crate::rules::html_data::{SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE};
 use herb::nodes::DocumentNode;
 
 use crate::offense::UnboundOffense;

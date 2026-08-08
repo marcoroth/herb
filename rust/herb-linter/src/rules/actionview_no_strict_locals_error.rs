@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::prism_utils::walk_prism;
+use crate::rules::prism_rule_utils::walk_prism;
 
 use herb::action_view_partial_index::{PartialDeclaration, PartialIndex};
 use herb::nodes::{AnyNode, ERBRenderNode, RubyRenderLocalNode};

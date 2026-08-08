@@ -1,4 +1,4 @@
-use crate::utils::html_data::DISABLEABLE_ELEMENTS;
+use crate::rules::html_data::DISABLEABLE_ELEMENTS;
 use crate::utils::tag_utils::{has_attribute, tag_name_location};
 
 use herb::nodes::HTMLOpenTagNode;

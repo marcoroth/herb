@@ -1,4 +1,4 @@
-use crate::utils::action_view_utils::is_action_view_helper_call;
+use crate::rules::action_view_utils::is_action_view_helper_call;
 use crate::utils::erb_utils::is_output_tag_opening;
 
 use herb::nodes::ERBContentNode;

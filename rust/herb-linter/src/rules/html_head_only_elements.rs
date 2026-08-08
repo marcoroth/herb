@@ -1,7 +1,7 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::html_data::HEAD_ONLY_TAG_NAMES;
 use crate::utils::element_stack::ElementStack;
-use crate::utils::html_data::HEAD_ONLY_TAG_NAMES;
 use crate::utils::tag_utils::{get_open_tag, get_tag_name_from_element, has_attribute};
 
 use herb::nodes::HTMLElementNode;

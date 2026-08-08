@@ -1,4 +1,4 @@
-use crate::herb_disable::parse_herb_disable_content;
+use crate::herb_disable_comment_utils::parse_herb_disable_content;
 
 use herb::nodes::ERBContentNode;
 use herb::Visitor;

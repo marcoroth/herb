@@ -1,4 +1,4 @@
-use crate::utils::action_view_utils::{is_conditional_tag_attributes_call, is_tag_attributes_call};
+use crate::rules::action_view_utils::{is_conditional_tag_attributes_call, is_tag_attributes_call};
 use crate::utils::erb_utils::is_output_tag_opening;
 
 use herb::nodes::{AnyNode, HTMLOpenTagNode};

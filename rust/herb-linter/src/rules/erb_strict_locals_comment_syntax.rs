@@ -1,5 +1,6 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::string_utils::{has_balanced_parentheses, split_by_top_level_comma};
 
 use herb::nodes::{ERBContentNode, ERBStrictLocalsNode};
 use herb::ParseResult;
@@ -54,74 +55,6 @@ fn has_locals_like_syntax(remainder: &str) -> bool {
 
 fn looks_like_locals_declaration(content: &str) -> bool {
   strip_locals_prefix(content).is_some() && has_locals_like_syntax(content)
-}
-
-fn has_balanced_parentheses(content: &str) -> bool {
-  let mut depth: i32 = 0;
-
-  for character in content.chars() {
-    if character == '(' {
-      depth += 1;
-    }
-
-    if character == ')' {
-      depth -= 1;
-    }
-
-    if depth < 0 {
-      return false;
-    }
-  }
-
-  depth == 0
-}
-
-fn split_by_top_level_comma(string: &str) -> Vec<&str> {
-  let mut result = Vec::new();
-  let mut start = 0;
-  let mut paren_depth = 0i32;
-  let mut bracket_depth = 0i32;
-  let mut brace_depth = 0i32;
-  let mut in_string = false;
-  let mut string_char = ' ';
-  let bytes = string.as_bytes();
-
-  for index in 0..bytes.len() {
-    let character = bytes[index] as char;
-    let previous_character = if index > 0 { bytes[index - 1] as char } else { '\0' };
-
-    if (character == '"' || character == '\'') && previous_character != '\\' {
-      if !in_string {
-        in_string = true;
-        string_char = character;
-      } else if character == string_char {
-        in_string = false;
-      }
-    }
-
-    if !in_string {
-      match character {
-        '(' => paren_depth += 1,
-        ')' => paren_depth -= 1,
-        '[' => bracket_depth += 1,
-        ']' => bracket_depth -= 1,
-        '{' => brace_depth += 1,
-        '}' => brace_depth -= 1,
-        ',' if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 => {
-          result.push(&string[start..index]);
-          start = index + 1;
-          continue;
-        }
-        _ => {}
-      }
-    }
-  }
-
-  if start < string.len() {
-    result.push(&string[start..]);
-  }
-
-  result
 }
 
 fn is_valid_double_splat(string: &str) -> bool {
@@ -255,7 +188,7 @@ fn extract_ruby_comment(content: &str) -> Option<&str> {
 }
 
 fn is_partial_file_opt(file_name: Option<&str>) -> Option<bool> {
-  Some(crate::utils::file_utils::is_partial_file(file_name?))
+  Some(crate::rules::file_utils::is_partial_file(file_name?))
 }
 
 struct StrictLocalsCommentSyntaxVisitor<'rule> {

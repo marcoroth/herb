@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::prism_utils::walk_prism;
+use crate::rules::prism_rule_utils::walk_prism;
 use crate::utils::tag_utils::{element_tag_name_location, get_tag_local_name, is_erb_output_node};
 
 use herb::nodes::{ERBBlockNode, ERBContentNode, HTMLElementNode};

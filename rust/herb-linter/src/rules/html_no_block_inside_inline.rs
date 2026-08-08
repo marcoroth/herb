@@ -1,6 +1,6 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::html_data::{is_block_element, is_inline_element};
+use crate::rules::html_data::{is_block_element, is_inline_element};
 
 use herb::nodes::*;
 use herb::union_types::*;

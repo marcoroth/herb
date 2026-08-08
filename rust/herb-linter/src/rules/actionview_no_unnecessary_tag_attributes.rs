@@ -1,9 +1,9 @@
 use crate::autofix::{erb_output_node, for_each_node_array_mut};
 use crate::offense::Offense;
 use crate::rule::LintContext;
-use crate::utils::action_view_utils::is_tag_attributes_call;
+use crate::rules::action_view_utils::is_tag_attributes_call;
+use crate::rules::html_data::is_void_element;
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::html_data::is_void_element;
 use crate::utils::tag_utils::{get_open_tag, get_tag_local_name};
 use herb::nodes::DocumentNode;
 

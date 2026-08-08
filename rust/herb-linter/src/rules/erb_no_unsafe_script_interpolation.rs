@@ -1,5 +1,5 @@
+use crate::rules::prism_rule_utils::walk_prism;
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::walk_prism;
 use crate::utils::tag_utils::{get_attribute, get_open_tag, get_static_attribute_value};
 
 use herb::nodes::{AnyNode, HTMLElementNode};

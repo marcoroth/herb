@@ -1,7 +1,7 @@
 use crate::autofix::{close_tag_for, for_each_element_mut, location_matches};
 use crate::offense::Offense;
 use crate::rule::LintContext;
-use crate::utils::html_data::is_void_element;
+use crate::rules::html_data::is_void_element;
 use crate::utils::tag_utils::get_tag_name_from_element;
 use crate::utils::tag_utils::get_tag_name_from_open_tag;
 use herb::nodes::DocumentNode;

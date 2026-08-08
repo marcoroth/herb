@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use crate::rules::prism_rule_utils::render_partial_expression;
 use crate::utils::erb_utils::is_output_render;
-use crate::utils::prism_utils::render_partial_expression;
 
 use herb::action_view_partial_callers::{PartialCallSite, PartialCallerIndex};
 use herb::action_view_partial_index::PartialIndex;

@@ -1,9 +1,9 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::html_data::NON_ESCAPING_ELEMENTS;
+use crate::rules::prism_rule_utils::walk_prism;
 use crate::utils::element_stack::ElementStack;
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::html_data::NON_ESCAPING_ELEMENTS;
-use crate::utils::prism_utils::walk_prism;
 use crate::utils::source_slice::location_from_offset;
 use crate::utils::tag_utils::get_tag_local_name;
 

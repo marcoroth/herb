@@ -1,7 +1,7 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::prism_rule_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call, is_sleep_call};
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::{is_call_on_local, is_debug_output_call, is_side_effect_call, is_sleep_call};
 
 use crate::utils::source_slice::{collapse_newline_runs, location_from_offset};
 use herb::prism::PrismNode as PrismNodeRef;

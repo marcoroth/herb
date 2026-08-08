@@ -1,7 +1,7 @@
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::prism_rule_utils::{is_static_partial_path, render_partial_expression};
 use crate::utils::erb_utils::is_output_render;
-use crate::utils::prism_utils::{is_static_partial_path, render_partial_expression};
 use crate::utils::source_slice::location_from_offset;
 
 use herb::nodes::ERBRenderNode;

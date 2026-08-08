@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::file_utils::is_partial_file;
-use crate::utils::prism_utils::walk_prism;
+use crate::rules::file_utils::is_partial_file;
+use crate::rules::prism_rule_utils::walk_prism;
 use crate::utils::source_slice::location_from_offset;
 
 use herb::nodes::{AnyNode, ERBStrictLocalsNode};

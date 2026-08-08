@@ -2,8 +2,8 @@ use std::sync::LazyLock;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::action_view_utils::helper_names_for_tags;
 use crate::rules::ujs_base::{UJSAttributeDescriptor, UJSAttributeVisitor, UJSKeyword};
-use crate::utils::action_view_utils::helper_names_for_tags;
 
 use herb::ParseResult;
 use herb::Visitor;

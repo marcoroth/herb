@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::prism_rule_utils::render_partial_expression;
 use crate::utils::erb_utils::is_output_render;
-use crate::utils::prism_utils::render_partial_expression;
 use crate::utils::source_slice::location_from_offset;
 
 use herb::action_view_partial_index::PartialIndex;

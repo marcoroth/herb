@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::prism_utils::walk_prism;
+use crate::rules::prism_rule_utils::walk_prism;
 use crate::utils::source_slice::location_from_offset;
 
 use herb::nodes::{AnyNode, ERBBlockNode, ERBContentNode, ERBForNode, ERBRenderNode, ERBStrictLocalsNode};

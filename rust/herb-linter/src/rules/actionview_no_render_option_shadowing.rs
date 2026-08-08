@@ -1,4 +1,4 @@
-use crate::utils::prism_utils::call_arguments;
+use crate::rules::prism_rule_utils::call_arguments;
 
 use herb::nodes::{AnyNode, ERBRenderNode, RubyRenderLocalNode};
 use herb::Visitor;

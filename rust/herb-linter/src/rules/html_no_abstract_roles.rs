@@ -1,4 +1,4 @@
-use crate::utils::aria_data::ABSTRACT_ARIA_ROLES;
+use crate::rules::aria_data::ABSTRACT_ARIA_ROLES;
 use crate::utils::tag_utils::{get_attribute_in, get_static_attribute_value};
 
 use herb::nodes::{AnyNode, ERBOpenTagNode, HTMLOpenTagNode};

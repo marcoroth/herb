@@ -1,4 +1,4 @@
-use crate::utils::html_data::HEADING_TAGS;
+use crate::rules::html_data::HEADING_TAGS;
 
 use crate::utils::tag_utils::{get_attribute, get_open_tag, get_static_attribute_value, get_tag_name_from_element};
 

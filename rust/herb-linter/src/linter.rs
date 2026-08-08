@@ -1,13 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::autofix::AutofixResult;
-use crate::herb_disable::parse_herb_disable_line;
+use crate::herb_disable_comment_utils::parse_herb_disable_line;
 use crate::offense::{LintResult, Offense, OffenseLocation, UnboundOffense};
+use crate::parse_cache::ParseCache;
 use crate::rule::{AnyRule, LintContext, Rule};
 use crate::rules;
 use herb_printer::{IdentityPrinter, IndentPrinter};
 
-use herb::{ParseResult, ParserOptions};
 use herb_config::{Config, LinterMode, Severity};
 
 const UNNECESSARY_RULE_NAME: &str = "herb-disable-comment-unnecessary";
@@ -16,31 +16,6 @@ struct FilteredOffenses {
   kept: Vec<Offense>,
   ignored: usize,
   would_be_ignored: usize,
-}
-
-struct ParseCache<'source> {
-  source: &'source str,
-  entries: Vec<(ParserOptions, Option<ParseResult>)>,
-}
-
-impl<'source> ParseCache<'source> {
-  fn new(source: &'source str) -> Self {
-    Self { source, entries: Vec::new() }
-  }
-
-  fn get(&mut self, options: &ParserOptions) -> Option<&ParseResult> {
-    let index = match self.entries.iter().position(|(cached, _)| cached == options) {
-      Some(index) => index,
-
-      None => {
-        let result = herb::parse_with_options(self.source, options).ok();
-        self.entries.push((options.clone(), result));
-        self.entries.len() - 1
-      }
-    };
-
-    self.entries[index].1.as_ref()
-  }
 }
 
 pub struct Linter {
@@ -133,12 +108,16 @@ impl Linter {
       .count()
   }
 
+  pub fn fixability_for(&self, rule_name: &str) -> crate::fixability::Fixability {
+    crate::fixability::fixability_for(self.find_rule(rule_name))
+  }
+
   pub fn is_rule_autocorrectable(&self, rule_name: &str) -> bool {
-    self.find_rule(rule_name).map(|rule| rule.autocorrectable()).unwrap_or(false)
+    self.fixability_for(rule_name).autocorrectable
   }
 
   pub fn is_rule_unsafe_autocorrectable(&self, rule_name: &str) -> bool {
-    self.find_rule(rule_name).map(|rule| rule.unsafe_autocorrectable()).unwrap_or(false)
+    self.fixability_for(rule_name).unsafe_autocorrectable
   }
 
   pub fn rule_names(&self) -> Vec<&'static str> {
@@ -146,7 +125,7 @@ impl Linter {
   }
 
   pub fn lint(&self, source: &str, context: &LintContext) -> LintResult {
-    if self.has_linter_ignore_directive(source) {
+    if crate::linter_ignore::has_linter_ignore_directive(source) {
       return LintResult::empty();
     }
 
@@ -385,28 +364,6 @@ impl Linter {
 
   fn find_rule(&self, rule_name: &str) -> Option<&AnyRule> {
     self.rules.iter().find(|rule| rule.name() == rule_name)
-  }
-
-  fn has_linter_ignore_directive(&self, source: &str) -> bool {
-    for line in source.lines() {
-      let trimmed = line.trim();
-
-      if !trimmed.contains("herb:linter ignore") {
-        continue;
-      }
-
-      if let Some(start) = trimmed.find("<%#") {
-        if let Some(end) = trimmed[start..].find("%>") {
-          let content = trimmed[start + 3..start + end].trim();
-
-          if content == "herb:linter ignore" {
-            return true;
-          }
-        }
-      }
-    }
-
-    false
   }
 
   fn build_herb_disable_cache(&self, source: &str) -> HashMap<u32, Vec<String>> {

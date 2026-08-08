@@ -1,9 +1,9 @@
 use crate::offense::Offense;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
+use crate::rules::html_data::RAW_TEXT_ELEMENTS;
 use crate::utils::element_stack::ElementStack;
 use crate::utils::html_character_references::is_valid_character_reference;
-use crate::utils::html_data::RAW_TEXT_ELEMENTS;
 use crate::utils::source_slice::location_from_content_offset;
 use crate::utils::tag_utils::get_tag_local_name;
 use herb::nodes::{AnyNode, DocumentNode};

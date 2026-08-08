@@ -1,7 +1,7 @@
 use crate::autofix::{for_each_attribute_mut, location_matches};
 use crate::offense::Offense;
 use crate::rule::LintContext;
-use crate::utils::html_data::is_boolean_attribute;
+use crate::rules::html_data::is_boolean_attribute;
 use crate::utils::tag_utils::{get_attribute_name, get_attributes, print_attribute, print_attribute_name};
 use herb::nodes::DocumentNode;
 

@@ -1,7 +1,7 @@
 use crate::offense::Offense;
 use crate::offense::UnboundOffense;
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::file_utils::is_partial_file;
+use crate::rules::file_utils::is_partial_file;
 use herb::nodes::AnyNode;
 use herb::nodes::DocumentNode;
 

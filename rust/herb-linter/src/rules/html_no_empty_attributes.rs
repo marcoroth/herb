@@ -1,4 +1,4 @@
-use crate::utils::html_data::RESTRICTED_ATTRIBUTES;
+use crate::rules::html_data::RESTRICTED_ATTRIBUTES;
 
 use crate::utils::tag_utils::{get_attribute_name_literal_content, get_static_attribute_value, print_attribute, print_attribute_name};
 

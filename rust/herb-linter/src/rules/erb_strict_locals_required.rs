@@ -1,7 +1,7 @@
 use crate::autofix::literal_node;
 use crate::offense::{Offense, UnboundOffense};
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::file_utils::is_partial_file;
+use crate::rules::file_utils::is_partial_file;
 
 use herb::nodes::{AnyNode, DocumentNode, ERBStrictLocalsNode};
 use herb::{Location, ParseResult, Position, Visitor};

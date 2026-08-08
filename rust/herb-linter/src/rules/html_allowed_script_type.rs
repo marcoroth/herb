@@ -1,4 +1,4 @@
-use crate::utils::html_data::ALLOWED_SCRIPT_TYPES;
+use crate::rules::html_data::ALLOWED_SCRIPT_TYPES;
 use crate::utils::tag_utils::{get_attribute, get_static_attribute_value, get_tag_name_from_open_tag};
 
 use herb::nodes::HTMLOpenTagNode;

@@ -1,5 +1,5 @@
+use crate::rules::prism_rule_utils::{is_assignment_node, is_control_flow_node, is_side_effect_call, unwrap_modifier_statement};
 use crate::utils::erb_utils::is_output_tag_opening;
-use crate::utils::prism_utils::{is_assignment_node, is_control_flow_node, is_side_effect_call, unwrap_modifier_statement};
 
 use herb::nodes::ERBContentNode;
 use herb::Visitor;

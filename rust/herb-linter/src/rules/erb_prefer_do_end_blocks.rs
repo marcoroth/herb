@@ -1,7 +1,7 @@
 use crate::autofix::location_matches;
 use crate::offense::{Offense, UnboundOffense};
 use crate::rule::{LintContext, ParserRule, Rule};
-use crate::utils::prism_utils::is_assignment_node;
+use crate::rules::prism_rule_utils::is_assignment_node;
 use crate::utils::source_slice::location_from_content_offset;
 
 use herb::nodes::{DocumentNode, ERBBlockNode};
