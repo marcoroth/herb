@@ -1,8 +1,29 @@
-import { PrismVisitor, PrismNodes } from "./prism/index.js"
 import { RUBY_KEYWORDS } from "./ruby-keywords.js"
+
+import { PrismVisitor, PrismNodes } from "./prism/index.js"
 import { helperExists } from "./action-view-helpers.js"
 
 import type { PrismLocation } from "./prism/index.js"
+
+const LOCAL_ASSIGNS = "local_assigns"
+const LOCAL_NAME = /^[a-z_][a-zA-Z0-9_]*$/
+const ROUTE_HELPER = /_(path|url)$/
+const PREDICATE_OR_BANG = /[?!]$/
+
+export function isValidLocalName(name: string): boolean {
+  if (!LOCAL_NAME.test(name)) return false
+  if (RUBY_KEYWORDS.has(name)) return false
+
+  return name !== LOCAL_ASSIGNS
+}
+
+export function isProbableLocal(name: string): boolean {
+  if (!isValidLocalName(name)) return false
+  if (PREDICATE_OR_BANG.test(name)) return false
+  if (ROUTE_HELPER.test(name)) return false
+
+  return !helperExists(name)
+}
 
 export interface RubyReference {
   name: string
@@ -150,33 +171,4 @@ export class RubyReferenceCollector extends PrismVisitor {
 
     references.push({ name, startOffset: location.startOffset, length: location.length })
   }
-}
-
-const LOCAL_ASSIGNS = "local_assigns"
-const LOCAL_NAME = /^[a-z_][a-zA-Z0-9_]*$/
-const ROUTE_HELPER = /_(path|url)$/
-const PREDICATE_OR_BANG = /[?!]$/
-
-export function isValidLocalName(name: string): boolean {
-  if (!LOCAL_NAME.test(name)) return false
-  if (RUBY_KEYWORDS.has(name)) return false
-
-  return name !== LOCAL_ASSIGNS
-}
-
-/**
- * Whether a receiver-less, argument-less call is more likely a local than a helper.
- *
- * Inside a template a local passed by the caller and a helper method are the same node: both parse
- * as a `CallNode` with no receiver, because nothing binds the local in the template's own scope.
- * Names that end in `?` or `!`, route helpers, and anything in the helper registry are therefore
- * excluded. An application-defined helper still passes, so this is a heuristic and callers should
- * treat a positive result as a candidate rather than a fact.
- */
-export function isProbableLocal(name: string): boolean {
-  if (!isValidLocalName(name)) return false
-  if (PREDICATE_OR_BANG.test(name)) return false
-  if (ROUTE_HELPER.test(name)) return false
-
-  return !helperExists(name)
 }

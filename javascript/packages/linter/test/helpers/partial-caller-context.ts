@@ -20,3 +20,14 @@ export function renderedFrom(fileName: string, ...chains: string[][]) {
 export function renderedFromNowhere(fileName: string) {
   return { fileName, partialCallers: callerIndexFor({}) }
 }
+
+export interface CallerLocals {
+  caller: string
+  locals: string[]
+}
+
+export function callerIndexWithLocals(partialFile: string, callers: CallerLocals[], unresolved = 0): PartialCallerIndex {
+  const sites: PartialCallSite[] = callers.map(({ caller, locals }) => ({ caller, locals, ancestors: [] }))
+
+  return new PartialCallerIndex(new Map([[partialFile, sites]]), new Set(), unresolved, 0)
+}
