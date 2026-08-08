@@ -98,6 +98,21 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
   protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
     this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
   }
+
+  /**
+   * The file being linted, as the project-relative path the partial indexes are
+   * keyed by.
+   *
+   * The CLI passes absolute file names, which resolve against neither index and
+   * silently defeat relative partial name resolution, so anything looking a file
+   * up in an index wants this rather than `context.fileName`.
+   */
+  protected get sourceFile(): string | undefined {
+    const fileName = this.context.fileName
+    if (!fileName) return undefined
+
+    return projectRelativePath(fileName, this.context.projectPath)
+  }
 }
 
 /**
@@ -327,6 +342,32 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 
   /**
+   * Judges every resolved chain with a predicate over the full ancestor list,
+   * for rules whose question is more than "inside this tag".
+   *
+   * `isInsideElementAcrossCallers` answers one tag at a time, which cannot
+   * express a condition like "inside `<body>` but not inside `<head>`" once the
+   * call sites disagree, because each half comes back `mixed` on its own even
+   * though individual chains give a clear answer.
+   *
+   * Returns an offending chain alongside the verdict, so a `mixed` report can
+   * point at a call site that is actually at fault.
+   */
+  protected placementAcrossCallers(misplaced: (ancestors: string[]) => boolean): { verdict: AncestorVerdict, chain: AncestorChain | null } {
+    const { chains } = this.renderedContext
+    const local = this.ancestorTagNames
+
+    if (chains.length === 0) return { verdict: "unknown", chain: null }
+
+    const offending = chains.filter(chain => misplaced([...chain.tags, ...local]))
+
+    if (offending.length === chains.length) return { verdict: "always", chain: offending[0] }
+    if (offending.length > 0) return { verdict: "mixed", chain: offending[0] }
+
+    return { verdict: "never", chain: null }
+  }
+
+  /**
    * Like `addOffense`, but records the call chain that put this file where it
    * is, so a formatter can show why the offense applies.
    *
@@ -355,11 +396,11 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
     if (this.detachedBlockDepth > 0) return { chains: [], resolved: false }
 
     const callers = this.context.partialCallers
-    const fileName = this.context.fileName
+    const fileName = this.sourceFile
 
     if (!callers || !fileName) return { chains: [], resolved: false }
 
-    return callers.contextOf(projectRelativePath(fileName, this.context.projectPath))
+    return callers.contextOf(fileName)
   }
 
   /**

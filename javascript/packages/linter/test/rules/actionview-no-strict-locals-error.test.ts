@@ -206,4 +206,24 @@ describe("actionview-no-strict-locals-error", () => {
   test("does not run without a partial index", () => {
     expectNoOffenses(`<%= render "users/card" %>`, { fileName: "app/views/posts/index.html.erb" })
   })
+
+  describe("absolute file names", () => {
+    const absolute = {
+      fileName: "/Users/dev/blog/app/views/users/index.html.erb",
+      projectPath: "/Users/dev/blog",
+      partials,
+    }
+
+    test("resolves an unqualified partial name from an absolute file name", () => {
+      expectError("The partial `card` requires the `user:` local to be passed. Rails raises an `ActionView::StrictLocalsError` when a required local is missing, so add it to this `render` call.")
+
+      assertOffenses(`<%= render "card" %>`, absolute)
+    })
+
+    test("resolves a qualified partial name from an absolute file name", () => {
+      expectError("The partial `users/card` requires the `user:` local to be passed. Rails raises an `ActionView::StrictLocalsError` when a required local is missing, so add it to this `render` call.")
+
+      assertOffenses(`<%= render "users/card" %>`, absolute)
+    })
+  })
 })

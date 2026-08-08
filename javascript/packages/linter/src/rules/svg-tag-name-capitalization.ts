@@ -29,7 +29,7 @@ class SVGTagNameCapitalizationVisitor extends ElementStackVisitor<SVGTagNameCapi
   }
 
   private checkTagName(tagNameToken: Token | null, type: string, autofixNode?: HTMLTagNode): void {
-    if (!this.isInsideElement("svg")) return
+    if (this.isInsideElementAcrossCallers("svg") !== "always") return
 
     const tagName = tagNameToken?.value
     if (!tagName) return

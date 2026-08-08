@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { relative, resolve } from "node:path"
 
-import { colorize } from "@herb-tools/highlighter"
+import { colorize, hyperlink } from "@herb-tools/highlighter"
 import { fileUrl } from "../file-url.js"
 import { ruleDocumentationUrl } from "../../urls.js"
 
@@ -63,7 +63,9 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
 
       const verb = frame.via === "layout" ? "rendered into" : "rendered from"
       const nesting = frame.ancestors.length > 0 ? colorize(`  ${frame.ancestors.map(tag => `<${tag}>`).join(" › ")}`, "gray") : ""
-      const heading = `${colorize(verb, "gray")} ${colorize(`${this.absolutePath(frame.file)}:${frame.location.line}:${frame.location.column}`, "cyan")}${nesting}`
+      const label = `${frame.file}:${frame.location.line}:${frame.location.column}`
+      const target = colorize(hyperlink(label, fileUrl(this.absolutePath(frame.file))), "cyan")
+      const heading = `${colorize(verb, "gray")} ${target}${nesting}`
 
       const source = this.sourceOf(frame.file)
       if (source === undefined) continue
@@ -96,6 +98,14 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
     return this.projectPath ? resolve(this.projectPath, filename) : resolve(filename)
   }
 
+  private displayPath(filename: string): string {
+    if (!this.projectPath) return filename
+
+    const relativePath = relative(this.projectPath, filename)
+
+    return relativePath && !relativePath.startsWith("..") ? relativePath : filename
+  }
+
   private sourceOf(filename: string): string | undefined {
     const cached = this.frameSources.get(filename)
 
@@ -126,7 +136,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
 
     const indent = "        "
 
-    const diff = this.highlighter.highlightDiff(filename, content, fixedContent, {
+    const diff = this.highlighter.highlightDiff(this.displayPath(filename), content, fixedContent, {
       contextLines: 1,
       wrapLines: this.wrapLines,
       truncateLines: this.truncateLines,
@@ -174,12 +184,12 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
       allOffenses.forEach((processed, index) => {
         const { offense } = processed
 
-        const rendered = this.highlighter!.highlightDiagnostic(filename, offense, content, {
+        const rendered = this.highlighter!.highlightDiagnostic(this.displayPath(filename), offense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines,
           codeUrl: offense.code ? ruleDocumentationUrl(offense.code) : undefined,
-          fileUrl: fileUrl(filename),
+          fileUrl: fileUrl(this.absolutePath(filename)),
           suffix: correctableTags.get(offense),
         })
 
@@ -206,7 +216,7 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
         const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
         const suffix = correctableTagFor(allOffenses[i])
 
-        const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
+        const formatted = this.highlighter.highlightDiagnostic(this.displayPath(filename), offense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines,

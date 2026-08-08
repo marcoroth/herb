@@ -123,13 +123,13 @@ describe("html-head-only-elements across files", () => {
     expect(offenses).toEqual([])
   })
 
-  test("stays quiet for a partial rendered into both", async () => {
+  test("reports a partial rendered into both, naming the body call site", async () => {
     const offenses = await lintInProject({
       "app/views/layouts/application.html.erb": `<html>\n  <head><%= render "shared/thing" %></head>\n  <body><%= render "shared/thing" %></body>\n</html>`,
       "app/views/shared/_thing.html.erb": `<meta charset="utf-8">`,
     }, HTMLHeadOnlyElementsRule, "app/views/shared/_thing.html.erb")
 
-    expect(offenses).toEqual([])
+    expect(offenses).toEqual(["Element `<meta>` must be placed inside the `<head>` tag. At least one call site renders this file inside the `<body>`."])
   })
 
   test("resolves the same answer from an absolute file name", async () => {

@@ -160,8 +160,10 @@ describe("html-body-only-elements", () => {
       assertOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "head"]))
     })
 
-    test("passes when the call sites disagree", () => {
-      expectNoOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
+    test("fails when only some call sites render the partial into the head", () => {
+      expectError("Element `<div>` must be placed inside the `<body>` tag. At least one call site renders this file inside the `<head>`.")
+
+      assertOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
     })
 
     test("passes when nothing renders the partial", () => {

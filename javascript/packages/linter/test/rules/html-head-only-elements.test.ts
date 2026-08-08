@@ -415,8 +415,10 @@ describe("html-head-only-elements", () => {
       assertOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "body", "footer"]))
     })
 
-    test("passes when the call sites disagree", () => {
-      expectNoOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
+    test("fails when only some call sites render the partial into the body", () => {
+      expectError("Element `<meta>` must be placed inside the `<head>` tag. At least one call site renders this file inside the `<body>`.")
+
+      assertOffenses(`<meta charset="UTF-8">`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
     })
 
     test("passes when nothing renders the partial", () => {

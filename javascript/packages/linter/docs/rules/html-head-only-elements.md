@@ -104,7 +104,7 @@ A partial holding `<meta>` or `<link>` tags is reported when every call site ren
 
 Action View helpers that render an element count as ancestors, so a `content_tag`, `tag.div` or `link_to` block nests what it wraps just like the equivalent HTML would.
 
-The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. A file rendered into two different sections is left alone too, so the placement check only ever reports what every call site agrees on.
+The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. When only some call sites place the file in the wrong section, the offense is still reported and the call chain points at one that does.
 
 Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
 
