@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0017_stylesheet_link_tag with crossorigin string"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", crossorigin: \\\"use-credentials\\\", media: \\\"all\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" crossorigin="use-credentials" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" media="all" />'.freeze;
+_buf.to_s

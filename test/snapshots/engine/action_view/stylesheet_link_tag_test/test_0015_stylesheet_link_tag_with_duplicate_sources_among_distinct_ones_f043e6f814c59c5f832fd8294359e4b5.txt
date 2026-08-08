@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0015_stylesheet_link_tag with duplicate sources among distinct ones"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", \\\"admin\\\", \\\"application\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" />
+<link rel="stylesheet" href="/stylesheets/admin.css" />

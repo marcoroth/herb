@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0019_stylesheet_link_tag with preload_links_header"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", preload_links_header: false %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" />

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0008_javascript_include_tag with crossorigin true"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", crossorigin: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js" crossorigin="anonymous"></script>

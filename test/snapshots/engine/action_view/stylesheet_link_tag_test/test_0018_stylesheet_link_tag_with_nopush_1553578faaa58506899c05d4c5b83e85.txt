@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0018_stylesheet_link_tag with nopush"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", nopush: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" />

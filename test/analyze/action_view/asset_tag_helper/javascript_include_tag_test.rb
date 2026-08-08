@@ -125,5 +125,29 @@ module Analyze::ActionView::AssetTagHelper
         <%= javascript_include_tag "application", skip_pipeline: true %>
       HTML
     end
+
+    test "javascript_include_tag with duplicate sources" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", "application" %>
+      HTML
+    end
+
+    test "javascript_include_tag with crossorigin true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", crossorigin: true %>
+      HTML
+    end
+
+    test "javascript_include_tag with nopush" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", nopush: true %>
+      HTML
+    end
+
+    test "javascript_include_tag with preload_links_header" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= javascript_include_tag "application", preload_links_header: false %>
+      HTML
+    end
   end
 end

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0017_stylesheet_link_tag with crossorigin string"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", crossorigin: \\\"use-credentials\\\", media: \\\"all\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" crossorigin="use-credentials" href="/stylesheets/application.css" media="all" />

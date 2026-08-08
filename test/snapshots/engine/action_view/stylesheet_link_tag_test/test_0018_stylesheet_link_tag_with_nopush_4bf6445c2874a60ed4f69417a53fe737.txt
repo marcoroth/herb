@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0018_stylesheet_link_tag with nopush"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", nopush: true %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" />'.freeze;
+_buf.to_s

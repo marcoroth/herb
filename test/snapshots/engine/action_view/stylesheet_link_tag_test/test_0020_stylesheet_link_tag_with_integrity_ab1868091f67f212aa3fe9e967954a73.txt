@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0020_stylesheet_link_tag with integrity"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", integrity: \\\"sha256-abc\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" integrity="sha256-abc" />

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0012_javascript_include_tag with integrity"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", integrity: \\\"sha256-abc\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js" integrity="sha256-abc"></script>

@@ -433,11 +433,51 @@ static AST_NODE_T* remove_attribute_by_name(hb_array_T* attributes, const char* 
   return NULL;
 }
 
+static void remove_asset_tag_non_html_options(hb_array_T* attributes) {
+  if (!attributes) { return; }
+
+  remove_attribute_by_name(attributes, "extname");
+  remove_attribute_by_name(attributes, "host");
+  remove_attribute_by_name(attributes, "protocol");
+  remove_attribute_by_name(attributes, "skip-pipeline");
+  remove_attribute_by_name(attributes, "nopush");
+  remove_attribute_by_name(attributes, "preload-links-header");
+}
+
+static AST_NODE_T* extract_crossorigin_attribute(hb_array_T* attributes, hb_allocator_T* allocator) {
+  AST_NODE_T* node = remove_attribute_by_name(attributes, "crossorigin");
+
+  if (!node || node->type != AST_HTML_ATTRIBUTE_NODE) { return node; }
+
+  AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
+
+  if (!attribute->value || !attribute->value->children || hb_array_size(attribute->value->children) != 1) {
+    return node;
+  }
+
+  AST_NODE_T* value = (AST_NODE_T*) hb_array_get(attribute->value->children, 0);
+
+  if (!value || value->type != AST_LITERAL_NODE) { return node; }
+
+  AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) value;
+
+  if (!hb_string_equals(literal->content, hb_string("true"))) { return node; }
+
+  return (AST_NODE_T*) create_html_attribute_node(
+    "crossorigin",
+    "anonymous",
+    attribute->base.location.start,
+    attribute->base.location.end,
+    allocator
+  );
+}
+
 static hb_array_T* prepend_stylesheet_link_tag_attributes(
   hb_array_T* attributes,
   tag_helper_parse_context_T* parse_context,
   pm_node_t* source_argument,
   const char* path_options,
+  AST_NODE_T* crossorigin_attribute,
   hb_allocator_T* allocator
 ) {
   bool source_is_string = (source_argument->type == PM_STRING_NODE);
@@ -485,6 +525,7 @@ static hb_array_T* prepend_stylesheet_link_tag_attributes(
   hb_allocator_dealloc(allocator, source_value);
 
   if (href_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) href_attribute, allocator); }
+  if (crossorigin_attribute) { attributes = prepend_attribute(attributes, crossorigin_attribute, allocator); }
 
   AST_NODE_T* rel_attribute = remove_attribute_by_name(attributes, "rel");
 
@@ -535,6 +576,7 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
   }
 
   char* path_options = NULL;
+  AST_NODE_T* crossorigin_attribute = NULL;
 
   if (attributes && handler->name && strcmp(handler->name, "javascript_include_tag") == 0) {
     path_options = extract_path_options_from_keyword_hash(
@@ -543,10 +585,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    remove_asset_tag_non_html_options(attributes);
+    crossorigin_attribute = extract_crossorigin_attribute(attributes, allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "stylesheet_link_tag") == 0) {
@@ -556,10 +596,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
       allocator
     );
 
-    remove_attribute_by_name(attributes, "extname");
-    remove_attribute_by_name(attributes, "host");
-    remove_attribute_by_name(attributes, "protocol");
-    remove_attribute_by_name(attributes, "skip-pipeline");
+    remove_asset_tag_non_html_options(attributes);
+    crossorigin_attribute = extract_crossorigin_attribute(attributes, allocator);
   }
 
   if (attributes && handler->name && strcmp(handler->name, "image_tag") == 0) {
@@ -748,7 +786,8 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
           ? create_html_attribute_node("src", source_attribute_value, source_start, source_end, allocator)
           : create_html_attribute_with_ruby_literal("src", source_attribute_value, source_start, source_end, allocator);
 
-      if (source_attribute) { hb_array_append(attributes, (AST_NODE_T*) source_attribute); }
+      if (crossorigin_attribute) { attributes = prepend_attribute(attributes, crossorigin_attribute, allocator); }
+      if (source_attribute) { attributes = prepend_attribute(attributes, (AST_NODE_T*) source_attribute, allocator); }
 
       if (source_attribute_value != source_value) { hb_allocator_dealloc(allocator, source_attribute_value); }
       hb_allocator_dealloc(allocator, source_value);
@@ -806,8 +845,14 @@ static AST_NODE_T* transform_tag_helper_with_attributes(
     if (first_argument->type != PM_KEYWORD_HASH_NODE) {
       if (!attributes) { attributes = hb_array_init(4, allocator); }
 
-      attributes =
-        prepend_stylesheet_link_tag_attributes(attributes, parse_context, first_argument, path_options, allocator);
+      attributes = prepend_stylesheet_link_tag_attributes(
+        attributes,
+        parse_context,
+        first_argument,
+        path_options,
+        crossorigin_attribute,
+        allocator
+      );
     }
   }
 
@@ -958,12 +1003,69 @@ static size_t count_asset_tag_sources(pm_call_node_t* call_node) {
   return count;
 }
 
+static bool asset_tag_sources_are_equal(pm_node_t* left, pm_node_t* right) {
+  bool left_is_string = (left->type == PM_STRING_NODE);
+  bool right_is_string = (right->type == PM_STRING_NODE);
+
+  if (left_is_string != right_is_string) { return false; }
+
+  if (left_is_string) {
+    pm_string_t* left_string = &((pm_string_node_t*) left)->unescaped;
+    pm_string_t* right_string = &((pm_string_node_t*) right)->unescaped;
+    size_t length = pm_string_length(left_string);
+
+    return length == pm_string_length(right_string)
+        && memcmp(pm_string_source(left_string), pm_string_source(right_string), length) == 0;
+  }
+
+  size_t left_length = left->location.end - left->location.start;
+  size_t right_length = right->location.end - right->location.start;
+
+  return left_length == right_length && memcmp(left->location.start, right->location.start, left_length) == 0;
+}
+
+static size_t collect_unique_asset_tag_sources(pm_call_node_t* call_node, pm_node_t** sources, size_t capacity) {
+  size_t total = count_asset_tag_sources(call_node);
+  size_t unique = 0;
+
+  for (size_t i = 0; i < total && unique < capacity; i++) {
+    pm_node_t* source = call_node->arguments->arguments.nodes[i];
+    bool seen = false;
+
+    for (size_t j = 0; j < unique; j++) {
+      if (asset_tag_sources_are_equal(sources[j], source)) {
+        seen = true;
+        break;
+      }
+    }
+
+    if (!seen) { sources[unique++] = source; }
+  }
+
+  return unique;
+}
+
+static size_t count_unique_asset_tag_sources(pm_call_node_t* call_node) {
+  size_t total = count_asset_tag_sources(call_node);
+
+  if (total == 0) { return 0; }
+
+  pm_node_t** sources = malloc(sizeof(pm_node_t*) * total);
+  if (!sources) { return total; }
+
+  size_t unique = collect_unique_asset_tag_sources(call_node, sources, total);
+  free(sources);
+
+  return unique;
+}
+
 static AST_NODE_T* create_javascript_include_tag_element(
   AST_ERB_CONTENT_NODE_T* erb_node,
   tag_helper_parse_context_T* parse_context,
   pm_node_t* source_argument,
   hb_array_T* shared_attributes,
   const char* path_options,
+  AST_NODE_T* crossorigin_attribute,
   hb_allocator_T* allocator
 ) {
   position_T tag_name_start, tag_name_end;
@@ -1008,13 +1110,14 @@ static AST_NODE_T* create_javascript_include_tag_element(
     hb_allocator_dealloc(allocator, quoted_source);
   }
 
-  hb_array_T* attributes = hb_array_init(hb_array_size(shared_attributes) + 1, allocator);
+  hb_array_T* attributes = hb_array_init(hb_array_size(shared_attributes) + 2, allocator);
 
   AST_HTML_ATTRIBUTE_NODE_T* source_attribute =
     is_url
       ? create_html_attribute_node("src", source_attribute_value, source_start, source_end, allocator)
       : create_html_attribute_with_ruby_literal("src", source_attribute_value, source_start, source_end, allocator);
   if (source_attribute) { hb_array_append(attributes, source_attribute); }
+  if (crossorigin_attribute) { hb_array_append(attributes, crossorigin_attribute); }
 
   for (size_t i = 0; i < hb_array_size(shared_attributes); i++) {
     hb_array_append(attributes, hb_array_get(shared_attributes, i));
@@ -1068,6 +1171,11 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
+  pm_node_t** sources = hb_allocator_alloc(allocator, sizeof(pm_node_t*) * source_count);
+  if (!sources) { return NULL; }
+
+  size_t unique_count = collect_unique_asset_tag_sources(call_node, sources, source_count);
+
   hb_array_T* shared_attributes = extract_html_attributes_from_call_node(
     call_node,
     parse_context->prism_source,
@@ -1081,21 +1189,21 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
 
   char* path_options =
     extract_path_options_from_keyword_hash(call_node, JAVASCRIPT_INCLUDE_TAG_PATH_OPTIONS, allocator);
-  remove_attribute_by_name(shared_attributes, "extname");
-  remove_attribute_by_name(shared_attributes, "host");
-  remove_attribute_by_name(shared_attributes, "protocol");
-  remove_attribute_by_name(shared_attributes, "skip-pipeline");
+  remove_asset_tag_non_html_options(shared_attributes);
 
-  hb_array_T* elements = hb_array_init(source_count * 2, allocator);
+  AST_NODE_T* crossorigin_attribute = extract_crossorigin_attribute(shared_attributes, allocator);
 
-  for (size_t i = 0; i < source_count; i++) {
-    pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
+  hb_array_T* elements = hb_array_init(unique_count * 2, allocator);
+
+  for (size_t i = 0; i < unique_count; i++) {
+    pm_node_t* source_arg = sources[i];
     AST_NODE_T* element = create_javascript_include_tag_element(
       erb_node,
       parse_context,
       source_arg,
       shared_attributes,
       path_options,
+      crossorigin_attribute,
       allocator
     );
 
@@ -1116,6 +1224,8 @@ static hb_array_T* transform_javascript_include_tag_multi_source(
     }
   }
 
+  hb_allocator_dealloc(allocator, sources);
+
   return elements;
 }
 
@@ -1125,6 +1235,7 @@ static AST_NODE_T* create_stylesheet_link_tag_element(
   pm_node_t* source_argument,
   hb_array_T* shared_attributes,
   const char* path_options,
+  AST_NODE_T* crossorigin_attribute,
   hb_allocator_T* allocator
 ) {
   position_T tag_name_start, tag_name_end;
@@ -1138,14 +1249,20 @@ static AST_NODE_T* create_stylesheet_link_tag_element(
 
   token_T* tag_name_token = create_synthetic_token(allocator, "link", TOKEN_IDENTIFIER, tag_name_start, tag_name_end);
 
-  hb_array_T* attributes = hb_array_init(hb_array_size(shared_attributes) + 2, allocator);
+  hb_array_T* attributes = hb_array_init(hb_array_size(shared_attributes) + 3, allocator);
 
   for (size_t i = 0; i < hb_array_size(shared_attributes); i++) {
     hb_array_append(attributes, hb_array_get(shared_attributes, i));
   }
 
-  attributes =
-    prepend_stylesheet_link_tag_attributes(attributes, parse_context, source_argument, path_options, allocator);
+  attributes = prepend_stylesheet_link_tag_attributes(
+    attributes,
+    parse_context,
+    source_argument,
+    path_options,
+    crossorigin_attribute,
+    allocator
+  );
 
   AST_ERB_OPEN_TAG_NODE_T* open_tag_node = ast_erb_open_tag_node_init(
     erb_node->tag_opening,
@@ -1184,6 +1301,11 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
 
   if (source_count == 0) { return NULL; }
 
+  pm_node_t** sources = hb_allocator_alloc(allocator, sizeof(pm_node_t*) * source_count);
+  if (!sources) { return NULL; }
+
+  size_t unique_count = collect_unique_asset_tag_sources(call_node, sources, source_count);
+
   hb_array_T* shared_attributes = extract_html_attributes_from_call_node(
     call_node,
     parse_context->prism_source,
@@ -1196,21 +1318,21 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
   resolve_nonce_attribute(shared_attributes, allocator);
 
   char* path_options = extract_path_options_from_keyword_hash(call_node, STYLESHEET_LINK_TAG_PATH_OPTIONS, allocator);
-  remove_attribute_by_name(shared_attributes, "extname");
-  remove_attribute_by_name(shared_attributes, "host");
-  remove_attribute_by_name(shared_attributes, "protocol");
-  remove_attribute_by_name(shared_attributes, "skip-pipeline");
+  remove_asset_tag_non_html_options(shared_attributes);
 
-  hb_array_T* elements = hb_array_init(source_count * 2, allocator);
+  AST_NODE_T* crossorigin_attribute = extract_crossorigin_attribute(shared_attributes, allocator);
 
-  for (size_t i = 0; i < source_count; i++) {
-    pm_node_t* source_arg = call_node->arguments->arguments.nodes[i];
+  hb_array_T* elements = hb_array_init(unique_count * 2, allocator);
+
+  for (size_t i = 0; i < unique_count; i++) {
+    pm_node_t* source_arg = sources[i];
     AST_NODE_T* element = create_stylesheet_link_tag_element(
       erb_node,
       parse_context,
       source_arg,
       shared_attributes,
       path_options,
+      crossorigin_attribute,
       allocator
     );
 
@@ -1230,6 +1352,8 @@ static hb_array_T* transform_stylesheet_link_tag_multi_source(
       hb_array_append(elements, element);
     }
   }
+
+  hb_allocator_dealloc(allocator, sources);
 
   return elements;
 }
@@ -1788,7 +1912,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
           bool is_multi_source_asset_tag = (strcmp(parse_context->matched_handler->name, "javascript_include_tag") == 0
                                             || strcmp(parse_context->matched_handler->name, "stylesheet_link_tag") == 0)
                                         && parse_context->info->call_node
-                                        && count_asset_tag_sources(parse_context->info->call_node) > 1;
+                                        && count_unique_asset_tag_sources(parse_context->info->call_node) > 1;
 
           if (is_multi_source_asset_tag) {
             hb_array_T* multi = strcmp(parse_context->matched_handler->name, "stylesheet_link_tag") == 0

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0008_javascript_include_tag with crossorigin true"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", crossorigin: true %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '" crossorigin="anonymous"></script>'.freeze;
+_buf.to_s

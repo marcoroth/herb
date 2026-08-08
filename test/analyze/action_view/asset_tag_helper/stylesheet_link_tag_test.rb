@@ -113,5 +113,29 @@ module Analyze::ActionView::AssetTagHelper
         <%= stylesheet_link_tag "application", "admin", media: "all" %>
       HTML
     end
+
+    test "stylesheet_link_tag with duplicate sources" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", "application" %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with crossorigin true" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", crossorigin: true %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with nopush" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", nopush: true %>
+      HTML
+    end
+
+    test "stylesheet_link_tag with preload_links_header" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= stylesheet_link_tag "application", preload_links_header: false %>
+      HTML
+    end
   end
 end

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0016_stylesheet_link_tag with crossorigin true"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", crossorigin: true %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" crossorigin="anonymous" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" />'.freeze;
+_buf.to_s

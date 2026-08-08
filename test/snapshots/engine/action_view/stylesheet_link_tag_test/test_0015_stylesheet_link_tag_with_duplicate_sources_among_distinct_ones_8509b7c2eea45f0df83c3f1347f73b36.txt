@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0015_stylesheet_link_tag with duplicate sources among distinct ones"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", \\\"admin\\\", \\\"application\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" />
+<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("admin"))); _buf << '" />'.freeze;
+_buf.to_s

@@ -60,6 +60,34 @@ module Engine
       test "stylesheet_link_tag with multiple sources and media" do
         assert_optimized_snapshot('<%= stylesheet_link_tag "application", "admin", media: "all" %>')
       end
+
+      test "stylesheet_link_tag with duplicate sources" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", "application" %>')
+      end
+
+      test "stylesheet_link_tag with duplicate sources among distinct ones" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", "admin", "application" %>')
+      end
+
+      test "stylesheet_link_tag with crossorigin true" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", crossorigin: true %>')
+      end
+
+      test "stylesheet_link_tag with crossorigin string" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", crossorigin: "use-credentials", media: "all" %>')
+      end
+
+      test "stylesheet_link_tag with nopush" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", nopush: true %>')
+      end
+
+      test "stylesheet_link_tag with preload_links_header" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", preload_links_header: false %>')
+      end
+
+      test "stylesheet_link_tag with integrity" do
+        assert_optimized_snapshot('<%= stylesheet_link_tag "application", integrity: "sha256-abc" %>')
+      end
     end
   end
 end

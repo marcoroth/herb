@@ -1,0 +1,7 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0007_javascript_include_tag with duplicate sources among distinct ones"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", \\\"vendor\\\", \\\"application\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '"></script>
+<script src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("vendor"))); _buf << '"></script>'.freeze;
+_buf.to_s

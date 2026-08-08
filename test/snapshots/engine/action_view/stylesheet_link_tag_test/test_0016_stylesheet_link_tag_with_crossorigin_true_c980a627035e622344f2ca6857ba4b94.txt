@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0016_stylesheet_link_tag with crossorigin true"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", crossorigin: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" crossorigin="anonymous" href="/stylesheets/application.css" />

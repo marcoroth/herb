@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0014_stylesheet_link_tag with duplicate sources"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", \\\"application\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" />

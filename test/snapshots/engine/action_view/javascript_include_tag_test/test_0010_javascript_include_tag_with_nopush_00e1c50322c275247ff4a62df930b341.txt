@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0010_javascript_include_tag with nopush"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", nopush: true %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js"></script>

@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0011_javascript_include_tag with preload_links_header"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", preload_links_header: false %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js"></script>
