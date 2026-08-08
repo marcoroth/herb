@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use herb::prism::PrismNode;
 
 fn is_action_view_helper_name(name: &str) -> bool {
@@ -68,4 +70,21 @@ pub fn is_conditional_tag_attributes_call(node: &PrismNode) -> bool {
   }
 
   false
+}
+
+pub fn helper_names_for_tags(tag_names: &[&str]) -> HashSet<&'static str> {
+  let mut names = HashSet::new();
+
+  for tag_name in tag_names {
+    for helper in herb::action_view_helpers::helpers_for_tag(tag_name) {
+      if helper.visibility != "public" {
+        continue;
+      }
+
+      names.insert(helper.name);
+      names.extend(helper.aliases.iter().copied());
+    }
+  }
+
+  names
 }

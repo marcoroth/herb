@@ -136,6 +136,11 @@ macro_rules! source_rule {
     AnyRule::Source(Box::new($rule))
   };
 }
+pub mod ujs_base;
+pub mod ujs_no_remote_attribute;
+pub mod ujs_prefer_turbo_confirm;
+pub mod ujs_prefer_turbo_method;
+pub mod ujs_prefer_turbo_submits_with;
 
 pub fn all_rules() -> Vec<AnyRule> {
   vec![
@@ -263,5 +268,9 @@ pub fn all_rules() -> Vec<AnyRule> {
     parser_rule!(erb_no_unused_local_variable::ERBNoUnusedLocalVariableRule),
     parser_rule!(actionview_no_strict_locals_error::ActionViewNoStrictLocalsErrorRule),
     parser_rule!(actionview_prefer_qualified_partial_path::ActionViewPreferQualifiedPartialPathRule),
+    parser_rule!(ujs_no_remote_attribute::UJSNoRemoteAttributeRule),
+    parser_rule!(ujs_prefer_turbo_confirm::UJSPreferTurboConfirmRule),
+    parser_rule!(ujs_prefer_turbo_method::UJSPreferTurboMethodRule),
+    parser_rule!(ujs_prefer_turbo_submits_with::UJSPreferTurboSubmitsWithRule),
   ]
 }
