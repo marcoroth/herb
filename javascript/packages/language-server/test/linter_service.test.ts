@@ -136,6 +136,35 @@ describe("LinterService", () => {
       expect(parserErrorDiagnostics).toHaveLength(0)
     })
 
+    test("passes the configured framework through to the rules", async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      settings.projectConfig = Config.fromObject({
+        framework: "actionview",
+        linter: { enabled: true, rules: {} }
+      }, { projectPath: process.cwd() })
+
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
+      const result = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).not.toContain("herb-config-framework-option")
+    })
+
+    test("reports the missing framework option when the project doesn't configure one", async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      settings.projectConfig = Config.fromObject({
+        linter: { enabled: true, rules: {} }
+      }, { projectPath: process.cwd() })
+
+      const linterService = new LinterService(mockConnection, settings, mockProject, partialIndexService)
+      const result = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
+
+      expect(result.diagnostics.map(diagnostic => diagnostic.code)).toContain("herb-config-framework-option")
+    })
+
     test("respects files.exclude patterns from config", async () => {
       vi.spyOn(Config, "exists").mockReturnValue(true)
 

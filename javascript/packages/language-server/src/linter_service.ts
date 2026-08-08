@@ -158,6 +158,8 @@ export class LinterService {
       const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
 
       const config = Config.fromObject({
+        framework: projectConfig?.config?.framework,
+        template_engine: projectConfig?.config?.template_engine,
         linter: {
           ...linterConfig,
           rules: {
