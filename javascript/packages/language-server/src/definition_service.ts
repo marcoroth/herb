@@ -23,7 +23,7 @@ const SNIPPET_LINES = 6
 const OPEN_TAG_WIDTH = 80
 const PRINT_OPTIONS = { ignoreErrors: true }
 
-interface PartialReference {
+export interface PartialReference {
   name: string
   keyword: string
   quoted: boolean
@@ -136,26 +136,21 @@ export class DefinitionService {
     return links.map(link => Location.create(link.targetUri, link.targetRange))
   }
 
-  private isStatic(reference: PartialReference): boolean {
+  isStatic(reference: PartialReference): boolean {
     return reference.quoted && PARTIAL_NAME.test(reference.name)
   }
 
-  private referenceAt(document: TextDocument, position: Position): PartialReference | null {
+  partialReferences(document: TextDocument): PartialReference[] {
     const result = this.parserService.parseContent(document.getText(), { render_nodes: true })
     const collector = new RenderCollector()
 
     collector.visit(result.value as DocumentNode)
 
-    for (const render of collector.renders) {
-      const reference = this.referenceFor(document, render)
+    return collector.renders.flatMap(render => this.referenceFor(document, render) ?? [])
+  }
 
-      if (!reference) continue
-      if (!isPositionInRange(position, reference.triggerRange)) continue
-
-      return reference
-    }
-
-    return null
+  referenceAt(document: TextDocument, position: Position): PartialReference | null {
+    return this.partialReferences(document).find(reference => isPositionInRange(position, reference.triggerRange)) ?? null
   }
 
   private referenceFor(document: TextDocument, render: ERBRenderNode): PartialReference | null {

@@ -49,6 +49,11 @@
       "types": "./dist/types/partial-index-builder.d.ts",
       "import": "./dist/partial-index-builder.js",
       "default": "./dist/partial-index-builder.js"
+    },
+    "./partial-caller-builder": {
+      "types": "./dist/types/partial-caller-builder.d.ts",
+      "import": "./dist/partial-caller-builder.js",
+      "default": "./dist/partial-caller-builder.js"
     }
   },
   "dependencies": {

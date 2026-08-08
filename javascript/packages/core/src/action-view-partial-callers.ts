@@ -81,6 +81,44 @@ export class PartialCallerIndex {
     return this.callSites.get(partialFile) ?? []
   }
 
+  replaceCallsFrom(caller: string, sites: Map<string, PartialCallSite[]>): boolean {
+    let changed = false
+
+    for (const [partialFile, callSites] of this.callSites) {
+      const remaining = callSites.filter(callSite => callSite.caller !== caller)
+
+      if (remaining.length === callSites.length) continue
+
+      changed = true
+
+      if (remaining.length > 0) {
+        this.callSites.set(partialFile, remaining)
+      } else {
+        this.callSites.delete(partialFile)
+      }
+    }
+
+    for (const [partialFile, callSites] of sites) {
+      if (callSites.length === 0) continue
+
+      changed = true
+
+      this.callSites.set(partialFile, [...this.callersOf(partialFile), ...callSites])
+    }
+
+    if (changed) this.contexts.clear()
+
+    return changed
+  }
+
+  removeCallsTo(partialFile: string): boolean {
+    if (!this.callSites.delete(partialFile)) return false
+
+    this.contexts.clear()
+
+    return true
+  }
+
   inferSignature(partialFile: string): InferredSignature {
     const callers = this.callersOf(partialFile)
     const names: string[] = []

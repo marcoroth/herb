@@ -21,6 +21,8 @@ import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
 import { CompletionService } from "./completion_service"
 import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
+import { ReferencesService } from "./references_service"
 
 import { version } from "../package.json"
 
@@ -33,6 +35,7 @@ export class Service {
   diagnostics: Diagnostics
   documentService: DocumentService
   partialIndexService: PartialIndexService
+  partialCallerIndexService: PartialCallerIndexService
   parserService: ParserService
   linterService: LinterService
   formattingService: FormattingService
@@ -46,6 +49,7 @@ export class Service {
   rewriteCodeActionService: RewriteCodeActionService
   extractCodeActionService: ExtractCodeActionService
   definitionService: DefinitionService
+  referencesService: ReferencesService
   commentService: CommentService
   completionService: CompletionService
 
@@ -56,6 +60,7 @@ export class Service {
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
     this.partialIndexService = new PartialIndexService(this.connection, this.project)
+    this.partialCallerIndexService = new PartialCallerIndexService(this.connection, this.project, this.partialIndexService)
     this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService)
     this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
     this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService)
@@ -68,6 +73,7 @@ export class Service {
     this.hoverService = new HoverService(this.parserService)
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
     this.definitionService = new DefinitionService(this.parserService)
+    this.referencesService = new ReferencesService(this.project, this.definitionService, this.partialIndexService, this.partialCallerIndexService, this.documentService)
     this.commentService = new CommentService(this.parserService)
     this.completionService = new CompletionService(this.parserService)
 
@@ -85,6 +91,7 @@ export class Service {
     await this.project.initialize()
     await this.formattingService.initialize()
     await this.partialIndexService.initialize()
+    await this.partialCallerIndexService.initialize()
 
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
@@ -119,6 +126,8 @@ export class Service {
     })
 
     this.documentService.onDidChangeContent(async (change) => {
+      this.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+
       if (this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())) {
         await this.diagnostics.refreshAllDocuments()
 
@@ -132,6 +141,7 @@ export class Service {
   async refresh() {
     await this.project.refresh()
     await this.partialIndexService.initialize()
+    await this.partialCallerIndexService.initialize()
     await this.formattingService.refreshConfig(this.config)
     await this.diagnostics.refreshAllDocuments()
   }
