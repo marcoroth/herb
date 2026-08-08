@@ -516,6 +516,62 @@ describe("DefinitionService", () => {
     })
   })
 
+  describe("spacer template rendering", () => {
+    it("resolves a spacer template", () => {
+      const service = createService("/project/app/views/events/_separator.html.erb")
+      const content = `<%= render partial: "events/card", collection: @events, spacer_template: "events/separator" %>`
+
+      expect(uris(service, content, "events/separator")).toEqual([
+        "file:///project/app/views/events/_separator.html.erb"
+      ])
+    })
+
+    it("resolves the partial and the spacer independently in the same call", () => {
+      const service = createService(
+        "/project/app/views/events/_card.html.erb",
+        "/project/app/views/events/_separator.html.erb"
+      )
+      const content = `<%= render partial: "events/card", spacer_template: "events/separator" %>`
+
+      expect(uris(service, content, "events/card")).toEqual(["file:///project/app/views/events/_card.html.erb"])
+      expect(uris(service, content, "events/separator")).toEqual(["file:///project/app/views/events/_separator.html.erb"])
+    })
+
+    it("selects the spacer name rather than the whole tag", () => {
+      const service = createService("/project/app/views/events/_separator.html.erb")
+      const content = `<%= render partial: "events/card", spacer_template: "events/separator" %>`
+
+      expect(selection(service, content, "events/separator")).toBe("events/separator")
+    })
+
+    it("resolves a spacer named relative to the current directory", () => {
+      const service = createService("/project/app/views/events/_separator.html.erb")
+      const content = `<%= render partial: "card", spacer_template: "separator" %>`
+
+      expect(uris(service, content, `"separator"`)).toEqual([
+        "file:///project/app/views/events/_separator.html.erb"
+      ])
+    })
+
+    it("hovers the spacer with a link to the partial", () => {
+      const service = createService("/project/app/views/events/_separator.html.erb")
+      const content = `<%= render partial: "events/card", spacer_template: "events/separator" %>`
+      const document = TextDocument.create(VIEW_URI, "erb", 1, content)
+      const result = service.getHover(document, document.positionAt(content.indexOf("events/separator") + 1))
+
+      expect((result!.contents as { value: string }).value).toBe(
+        "[app/views/events/_separator.html.erb](file:///project/app/views/events/_separator.html.erb)"
+      )
+    })
+
+    it("returns nothing for a spacer that is not a literal", () => {
+      const service = createService("/project/app/views/events/_separator.html.erb")
+      const content = `<%= render partial: "card", spacer_template: separator %>`
+
+      expect(definitions(service, content, "separator %>")).toEqual([])
+    })
+  })
+
   describe("layout rendering", () => {
     it("resolves a layout partial", () => {
       const service = createService("/project/app/views/profiles/_tab_layout.html.erb")

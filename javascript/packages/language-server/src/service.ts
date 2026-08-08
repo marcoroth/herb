@@ -75,7 +75,7 @@ export class Service {
     this.definitionService = new DefinitionService(this.parserService)
     this.referencesService = new ReferencesService(this.project, this.definitionService, this.partialIndexService, this.partialCallerIndexService, this.documentService)
     this.commentService = new CommentService(this.parserService)
-    this.completionService = new CompletionService(this.parserService)
+    this.completionService = new CompletionService(this.parserService, this.partialIndexService)
 
     this.extractCodeActionService = new ExtractCodeActionService(this.parserService, {
       supportsCreateFile: this.settings.supportsResourceCreation,
