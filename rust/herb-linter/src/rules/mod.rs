@@ -70,6 +70,7 @@ pub mod erb_right_trim;
 pub mod erb_strict_locals_comment_syntax;
 pub mod erb_strict_locals_required;
 pub mod file_utils;
+pub mod herb_disable_comment_base;
 pub mod herb_disable_comment_malformed;
 pub mod herb_disable_comment_missing_rules;
 pub mod herb_disable_comment_no_duplicate_rules;

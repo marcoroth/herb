@@ -20,17 +20,8 @@ struct UnnecessaryVisitor<'rule> {
 
 impl<'rule> Visitor for UnnecessaryVisitor<'rule> {
   fn visit_erb_content_node(&mut self, node: &ERBContentNode) {
-    let opening_tag = match &node.tag_opening {
-      Some(token) => &token.value,
-      None => return,
-    };
-
-    if opening_tag != "<%#" {
-      return;
-    }
-
-    let content = match &node.content {
-      Some(token) => &token.value,
+    let content = match crate::rules::herb_disable_comment_base::herb_disable_comment_content(node) {
+      Some(content) => content,
       None => return,
     };
 
