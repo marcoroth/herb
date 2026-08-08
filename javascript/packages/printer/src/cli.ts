@@ -126,7 +126,7 @@ export class CLI {
       await Herb.load()
 
       const startPath = options.input || process.cwd()
-      const config = await Config.loadForCLI(options.configFile || startPath, version, true)
+      const config = await Config.loadForCLI(options.configFile || startPath, version, true, Herb)
 
       if (options.glob) {
 

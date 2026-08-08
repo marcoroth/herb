@@ -20,6 +20,16 @@ module Herb
 
     DEFAULTS: untyped
 
+    GEMFILE_FILENAMES: Array[String]
+
+    FRAMEWORK_GEMS: Hash[String, String]
+
+    FRAMEWORK_PRECEDENCE: Array[String]
+
+    FRAMEWORK_LABELS: Hash[String, String]
+
+    FRAMEWORK_DESCRIPTIONS: Hash[String, String]
+
     attr_reader config: untyped
 
     attr_reader user_config: untyped
@@ -40,6 +50,15 @@ module Herb
 
     # : () -> String
     def framework: () -> String
+
+    # : () -> bool
+    def framework_configured?: () -> bool
+
+    # : () -> Hash[Symbol, String]?
+    def detected_framework: () -> Hash[Symbol, String]?
+
+    # : (?Hash[Symbol, String]?) -> String
+    def missing_framework_warning: (?Hash[Symbol, String]?) -> String
 
     # : () -> String
     def template_engine: () -> String
@@ -99,6 +118,9 @@ module Herb
 
     def self.default_exclude_patterns: () -> untyped
 
+    # : () -> Array[String]
+    def self.warned_framework_paths: () -> Array[String]
+
     private
 
     def find_config_file: () -> untyped
@@ -106,6 +128,23 @@ module Herb
     def find_misnamed_config_paths: () -> untyped
 
     def warn_about_misnamed_config_files: () -> untyped
+
+    def warn_about_missing_framework: () -> untyped
+
+    # : () -> Hash[Symbol, String]?
+    def detect_framework_from_gemfile: () -> Hash[Symbol, String]?
+
+    # : (Pathname) -> Hash[Symbol, String]?
+    def framework_from_gemfile: (Pathname) -> Hash[Symbol, String]?
+
+    # : (String) -> Array[String]
+    def gems_from_gemfile: (String) -> Array[String]
+
+    # : (untyped, Array[String]) -> void
+    def collect_gems: (untyped, Array[String]) -> void
+
+    # : (untyped) -> String?
+    def gem_call_name: (untyped) -> String?
 
     def project_root?: (untyped path) -> untyped
 

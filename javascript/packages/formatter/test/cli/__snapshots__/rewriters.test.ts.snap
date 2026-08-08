@@ -2,6 +2,7 @@
 
 exports[`CLI > Rewriters > should actually apply Tailwind class sorting 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -14,6 +15,7 @@ Using 1 pre-format rewriter:
 
 exports[`CLI > Rewriters > should format from stdin with rewriters configured 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -31,6 +33,7 @@ exports[`CLI > Rewriters > should format from stdin with rewriters configured 2`
 
 exports[`CLI > Rewriters > should handle both pre and post rewriters 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -43,6 +46,7 @@ Using 1 pre-format rewriter:
 
 exports[`CLI > Rewriters > should not show rewriter info when no rewriters are configured 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -51,6 +55,7 @@ exports[`CLI > Rewriters > should not show rewriter info when no rewriters are c
 
 exports[`CLI > Rewriters > should show multiple rewriters on stderr 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -63,6 +68,7 @@ Using 1 pre-format rewriter:
 
 exports[`CLI > Rewriters > should show rewriter info on stderr when pre-format rewriters are configured 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 
@@ -75,6 +81,7 @@ Using 1 pre-format rewriter:
 
 exports[`CLI > Rewriters > should show warning for unknown rewriters on stderr 1`] = `
 "✓ Using Herb config file at test-rewriters/.herb.yml
+⚠ No \`framework\` set in test-rewriters/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
 

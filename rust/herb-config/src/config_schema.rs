@@ -99,6 +99,37 @@ pub enum Framework {
   Sinatra,
 }
 
+impl Framework {
+  pub const ALL: [Framework; 4] = [Framework::Ruby, Framework::ActionView, Framework::Hanami, Framework::Sinatra];
+
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      Framework::Ruby => "ruby",
+      Framework::ActionView => "actionview",
+      Framework::Hanami => "hanami",
+      Framework::Sinatra => "sinatra",
+    }
+  }
+
+  pub fn label(&self) -> &'static str {
+    match self {
+      Framework::Ruby => "Ruby",
+      Framework::ActionView => "Action View",
+      Framework::Hanami => "Hanami",
+      Framework::Sinatra => "Sinatra",
+    }
+  }
+
+  pub fn description(&self) -> &'static str {
+    match self {
+      Framework::Ruby => "plain ERB templates, with no framework helpers in scope",
+      Framework::ActionView => "Action View templates, with their helpers, partials, and strict locals",
+      Framework::Hanami => "Hanami views, with their parts and helpers",
+      Framework::Sinatra => "Sinatra templates, with their helpers",
+    }
+  }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum TemplateEngine {

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use serde_yaml::Value;
 
-use crate::config_schema::HerbConfigOptions;
+use crate::config_schema::{Framework, HerbConfigOptions};
 use crate::defaults::{config_template, DEFAULT_VERSION};
 
 fn apply_mutation_to_document(document: &mut yerba::Document, mutation: &Value, prefix: &str) -> Result<(), String> {
@@ -100,11 +100,44 @@ pub fn apply_mutation_to_yaml_string(yaml: &str, mutation: &HerbConfigOptions) -
 }
 
 pub fn create_config_yaml_string(mutation: &HerbConfigOptions, version: Option<&str>) -> Result<String, String> {
+  create_config_yaml_string_with_framework(mutation, version, None)
+}
+
+const COMMENTED_FRAMEWORK_BLOCK: &str =
+  "# # Framework and template engine configuration\n#\n# # Options: ruby | actionview | hanami | sinatra (default: ruby)\n# framework: ruby\n#\n";
+
+fn apply_framework_to_template(template: &str, framework: Framework) -> Option<String> {
+  if !template.contains(COMMENTED_FRAMEWORK_BLOCK) {
+    return None;
+  }
+
+  let replacement = format!(
+    "# Framework configuration, detected from your Gemfile\n#\n# Options: ruby | actionview | hanami | sinatra (default: ruby)\nframework: {}\n\n",
+    framework.as_str()
+  );
+
+  Some(template.replace(COMMENTED_FRAMEWORK_BLOCK, &replacement))
+}
+
+pub fn create_config_yaml_string_with_framework(mutation: &HerbConfigOptions, version: Option<&str>, framework: Option<Framework>) -> Result<String, String> {
   let version = version.unwrap_or(DEFAULT_VERSION);
 
-  let mut document = yerba::parse(config_template()).map_err(|error| format!("failed to parse config template: {}", error))?;
+  let template = match framework.and_then(|framework| apply_framework_to_template(config_template(), framework)) {
+    Some(template) => template,
+    None => config_template().to_string(),
+  };
+
+  let mut document = yerba::parse(&template).map_err(|error| format!("failed to parse config template: {}", error))?;
 
   document.set("version", version).map_err(|error| format!("failed to set version: {}", error))?;
+
+  if let Some(framework) = framework {
+    if document.get("framework").is_none() {
+      document
+        .set("framework", framework.as_str())
+        .map_err(|error| format!("failed to set framework: {}", error))?;
+    }
+  }
 
   if mutation != &HerbConfigOptions::default() {
     let mutation = serde_yaml::to_value(mutation).map_err(|error| error.to_string())?;

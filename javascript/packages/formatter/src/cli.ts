@@ -176,7 +176,7 @@ export class CLI {
           process.exit(1)
         }
 
-        const config = await Config.loadForCLI(configPath, version, true)
+        const config = await Config.loadForCLI(configPath, version, true, Herb)
 
         await Config.mutateConfigFile(config.path, {
           formatter: {
@@ -200,7 +200,7 @@ export class CLI {
         process.exit(0)
       }
 
-      const config = await Config.loadForCLI(configFile || this.projectPath, version)
+      const config = await Config.loadForCLI(configFile || this.projectPath, version, false, Herb)
       const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 

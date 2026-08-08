@@ -5,19 +5,22 @@ import configTemplate from "./config-template.yml"
 import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
 import { stringify, parse, parseDocument, isMap, isScalar, isAlias, visit } from "yaml"
-import { semverGreaterThan } from "@herb-tools/core"
+import { semverGreaterThan, DEFAULT_FRAMEWORK, VALID_FRAMEWORKS } from "@herb-tools/core"
 import { promises as fs } from "fs"
 import { fromZodError } from "zod-validation-error"
 import { deepMerge } from "./merge.js"
 
 import { ZodError, z } from "zod"
 import { HerbConfigSchema } from "./config-schema.js"
+import { FRAMEWORK_DESCRIPTIONS, FRAMEWORK_LABELS, detectFrameworkFromGemfile } from "./framework-detection.js"
 
 import type { FrameworkSchema, TemplateEngineSchema } from "./config-schema.js"
+import type { FrameworkDetection, RubySourceParser } from "./framework-detection.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 
 const DEFAULT_VERSION = packageJson.version
+const warnedFrameworkPaths = new Set<string>()
 const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
 
 export interface ConfigValidationError {
@@ -115,6 +118,7 @@ export type LoadOptions = {
   version?: string
   createIfMissing?: boolean
   exitOnError?: boolean
+  herb?: RubySourceParser
 }
 
 export type FromObjectOptions = {
@@ -173,11 +177,13 @@ export class Config {
   public readonly path: string
   public config: HerbConfig
   public readonly configVersion: string | undefined
+  public readonly hasExplicitFramework: boolean
 
-  constructor(projectPath: string, config: HerbConfig, configVersion?: string) {
+  constructor(projectPath: string, config: HerbConfig, configVersion?: string, hasExplicitFramework: boolean = false) {
     this.path = Config.configPathFromProjectPath(projectPath)
     this.config = config
     this.configVersion = configVersion
+    this.hasExplicitFramework = hasExplicitFramework
   }
 
   get projectPath(): string {
@@ -603,6 +609,34 @@ export class Config {
     }
   }
 
+  static missingFrameworkWarning(configPath: string, detection?: FrameworkDetection): string {
+    const prefix = this.exists(configPath)
+      ? `⚠ No \`framework\` set in ${configPath}, Herb assumes plain \`${DEFAULT_FRAMEWORK}\` templates.`
+      : `⚠ No \`framework\` set, Herb assumes plain \`${DEFAULT_FRAMEWORK}\` templates.`
+
+    if (detection) {
+      const gemfile = path.basename(detection.gemfilePath)
+
+      return `${prefix} Your ${gemfile} depends on \`${detection.gem}\`, so set \`framework: ${detection.framework}\` and Herb can tailor its assumptions, rules, and optimizations to ${FRAMEWORK_DESCRIPTIONS[detection.framework]}.`
+    }
+
+    const frameworks = VALID_FRAMEWORKS.map(framework => `\`${framework}\``)
+    const list = `${frameworks.slice(0, -1).join(", ")}, or ${frameworks[frameworks.length - 1]}`
+
+    return `${prefix} Set \`framework\` to one of ${list} so Herb can tailor its assumptions, rules, and optimizations to your framework.`
+  }
+
+  private static async warnAboutMissingFramework(config: Config, herb?: RubySourceParser) {
+    if (config.hasExplicitFramework) return
+    if (warnedFrameworkPaths.has(config.path)) return
+
+    warnedFrameworkPaths.add(config.path)
+
+    const detection = herb ? await detectFrameworkFromGemfile(config.projectPath, herb) : undefined
+
+    console.error(this.missingFrameworkWarning(config.path, detection))
+  }
+
   /**
    * Find the project root by walking up from a given path.
    * Looks for .herb.yml first, then falls back to project indicators
@@ -706,11 +740,11 @@ export class Config {
     pathOrFile: string,
     options: LoadOptions = {}
   ): Promise<Config> {
-    const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false } = options
+    const { silent = false, version = DEFAULT_VERSION, createIfMissing = false, exitOnError = false, herb } = options
 
     try {
       if (pathOrFile.endsWith(this.configPath)) {
-        return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError)
+        return await this.loadFromExplicitPath(pathOrFile, silent, version, exitOnError, herb)
       }
 
       const { configPath, projectRoot } = await this.findConfigFile(pathOrFile)
@@ -720,13 +754,18 @@ export class Config {
       }
 
       if (configPath) {
-        return await this.loadFromPath(configPath, projectRoot, silent, version, exitOnError)
+        return await this.loadFromPath(configPath, projectRoot, silent, version, exitOnError, herb)
       } else if (createIfMissing) {
-        return await this.createDefaultConfig(projectRoot, silent, version)
+        return await this.createDefaultConfig(projectRoot, silent, version, herb)
       } else {
         const defaults = this.getDefaultConfig(version)
+        const config = new Config(projectRoot, defaults)
 
-        return new Config(projectRoot, defaults)
+        if (!silent) {
+          await this.warnAboutMissingFramework(config, herb)
+        }
+
+        return config
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -760,18 +799,21 @@ export class Config {
    * @param pathOrFile - Directory path or explicit .herb.yml file path
    * @param version - Optional version string (defaults to package version)
    * @param createIfMissing - Whether to create config if missing (default: false)
+   * @param herb - Optional loaded Herb backend used to detect the framework from the project's Gemfile
    * @returns Config instance or throws on errors
    */
   static async loadForCLI(
     pathOrFile: string,
     version?: string,
-    createIfMissing: boolean = false
+    createIfMissing: boolean = false,
+    herb?: RubySourceParser
   ): Promise<Config> {
     return await this.load(pathOrFile, {
       silent: false,
       version,
       createIfMissing,
-      exitOnError: false
+      exitOnError: false,
+      herb
     })
   }
 
@@ -940,22 +982,38 @@ export class Config {
    *
    * @param mutation - The mutation to apply to the default config
    * @param version - The version to use (defaults to package version)
+   * @param framework - The framework to set, instead of leaving the commented-out default in place
    * @returns The config file content as a YAML string
    */
   static createConfigYamlString(
     mutation: Partial<HerbConfigOptions>,
-    version: string = DEFAULT_VERSION
+    version: string = DEFAULT_VERSION,
+    framework?: Framework
   ): string {
     let yamlContent = configTemplate.replace(
       /^version:\s*[\d.]+$/m,
       `version: ${version}`
     )
 
+    if (framework) {
+      yamlContent = this.applyFrameworkToTemplate(yamlContent, framework)
+    }
+
     if (Object.keys(mutation).length > 0) {
       yamlContent = this.applyMutationToYamlString(yamlContent, mutation)
     }
 
     return yamlContent
+  }
+
+  private static applyFrameworkToTemplate(yamlContent: string, framework: Framework): string {
+    const commentedFramework = /^# # Framework and template engine configuration\n#\n# # (Options: [^\n]+)\n# framework: \w+\n#$/m
+
+    if (commentedFramework.test(yamlContent)) {
+      return yamlContent.replace(commentedFramework, `# Framework configuration, detected from your Gemfile\n#\n# $1\nframework: ${framework}\n`)
+    }
+
+    return this.applyMutationToYamlString(yamlContent, { framework } as Partial<HerbConfigOptions>)
   }
 
   /**
@@ -1122,7 +1180,8 @@ export class Config {
     configPath: string,
     silent: boolean,
     version: string,
-    exitOnError: boolean
+    exitOnError: boolean,
+    herb?: RubySourceParser
   ): Promise<Config> {
     const resolvedPath = path.resolve(configPath)
 
@@ -1159,6 +1218,8 @@ export class Config {
       await this.warnAboutMisnamedConfigFiles(projectRoot)
 
       console.error(`✓ Using Herb config file at ${resolvedPath}`)
+
+      await this.warnAboutMissingFramework(config, herb)
     }
 
     return config
@@ -1172,12 +1233,15 @@ export class Config {
     projectRoot: string,
     silent: boolean,
     version: string,
-    exitOnError: boolean
+    exitOnError: boolean,
+    herb?: RubySourceParser
   ): Promise<Config> {
     const config = await this.readAndValidateConfig(configPath, projectRoot, version, exitOnError)
 
     if (!silent) {
       console.error(`✓ Using Herb config file at ${configPath}`)
+
+      await this.warnAboutMissingFramework(config, herb)
     }
 
     return config
@@ -1189,15 +1253,23 @@ export class Config {
   private static async createDefaultConfig(
     projectRoot: string,
     silent: boolean,
-    version: string
+    version: string,
+    herb?: RubySourceParser
   ): Promise<Config> {
     const configPath = this.configPathFromProjectPath(projectRoot)
+    const detection = herb ? await detectFrameworkFromGemfile(projectRoot, herb) : undefined
 
     try {
-      await this.mutateConfigFile(configPath, {})
+      await fs.writeFile(configPath, this.createConfigYamlString({}, version, detection?.framework), { encoding: "utf-8", flag: "wx" })
 
       if (!silent) {
         console.error(`✓ Created default configuration at ${configPath}`)
+
+        if (detection) {
+          console.error(`✓ Detected ${FRAMEWORK_LABELS[detection.framework]} from ${path.basename(detection.gemfilePath)}, set \`framework: ${detection.framework}\``)
+        } else {
+          console.error(this.missingFrameworkWarning(configPath))
+        }
       }
     } catch (_error) {
       if (!silent) {
@@ -1207,7 +1279,11 @@ export class Config {
 
     const defaults = this.getDefaultConfig(version)
 
-    return new Config(projectRoot, defaults)
+    if (detection) {
+      defaults.framework = detection.framework
+    }
+
+    return new Config(projectRoot, defaults, undefined, detection !== undefined)
   }
 
   /**
@@ -1367,7 +1443,7 @@ export class Config {
 
     resolved.version = version
 
-    return new Config(projectRoot, resolved, declaredVersion)
+    return new Config(projectRoot, resolved, declaredVersion, parsed.framework !== undefined)
   }
 
   /**

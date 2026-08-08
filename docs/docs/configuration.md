@@ -63,6 +63,28 @@ This will generate a configuration file with sensible defaults:
 
 <<< @/../../javascript/packages/config/src/config-template.yml{yaml}
 
+## Framework Configuration <Badge type="info" text="^0.10.0" />
+
+The `framework` option tells Herb which framework renders your templates:
+
+```yaml [.herb.yml]
+framework: actionview # Options: ruby (default), actionview, hanami, sinatra
+```
+
+Every tool tailors itself to that answer. It decides what Herb may assume about a template, which rules apply, and which optimizations it can take. Each value describes something different:
+
+- `ruby` plain ERB templates, with no framework helpers in scope
+- `actionview` Action View templates, with their helpers, partials, and strict locals
+- `hanami` Hanami views, with their parts and helpers
+- `sinatra` Sinatra templates, with their helpers
+
+Both `herb-lint --init` and `herb-format --init` <Badge type="info" text="^0.10.3" /> infer the framework from your `Gemfile` and write it into the generated `.herb.yml`, so a Rails project starts out with `framework: actionview`.
+
+When `framework` isn't set, Herb assumes plain `ruby` templates, which is the most conservative behavior it has. Every tool warns about that <Badge type="info" text="^0.10.3" />, and uses your `Gemfile` to suggest the value your project needs:
+
+```
+⚠ No `framework` set in .herb.yml, Herb assumes plain `ruby` templates. Your Gemfile depends on `rails`, so set `framework: actionview` and Herb can tailor its assumptions, rules, and optimizations to Action View templates, with their helpers, partials, and strict locals.
+```
 
 ## Command Line Overrides
 

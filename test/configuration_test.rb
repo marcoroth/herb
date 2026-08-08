@@ -922,8 +922,97 @@ class ConfigurationTest < Minitest::Spec
     write_config("framework: actionview", "config.yml")
     write_config("framework: actionview", ".herb.yml.bak")
 
-    assert_silent do
+    _stdout, stderr = capture_io do
       assert_empty Herb::Configuration.load(@temp_dir).misnamed_config_paths
+    end
+
+    refute_match(/Ignoring/, stderr)
+  end
+
+  def write_gemfile(content, filename = "Gemfile")
+    File.write(File.join(@temp_dir, filename), content)
+  end
+
+  test "detects Action View from a Gemfile that depends on rails" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile(<<~RUBY)
+      source "https://rubygems.org"
+
+      gem "rails", "~> 8.0"
+    RUBY
+
+    config = load_config_silently
+
+    assert_equal(
+      { framework: "actionview", gem: "rails", gemfile_path: File.join(@temp_dir, "Gemfile") },
+      config.detected_framework
+    )
+  end
+
+  test "detects gems declared inside blocks and ignores commented out ones" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile(<<~RUBY)
+      # gem "rails"
+
+      group :development, :test do
+        gem "sinatra"
+      end
+    RUBY
+
+    assert_equal "sinatra", load_config_silently.detected_framework[:framework]
+  end
+
+  test "prefers Action View when a Gemfile depends on more than one framework" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile(<<~RUBY)
+      gem "sinatra"
+      gem "rails"
+    RUBY
+
+    assert_equal "actionview", load_config_silently.detected_framework[:framework]
+  end
+
+  test "falls back to gems.rb" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile('gem "hanami"', "gems.rb")
+
+    assert_equal "hanami", load_config_silently.detected_framework[:framework]
+  end
+
+  test "detects no framework without a Gemfile or without a framework gem" do
+    write_config("version: \"0.10.3\"")
+
+    assert_nil load_config_silently.detected_framework
+
+    write_gemfile('gem "rake"')
+
+    assert_nil load_config_silently.detected_framework
+  end
+
+  test "warns and suggests the detected framework when the config file doesn't set one" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile('gem "rails"')
+
+    assert_output(nil, /No `framework` set in .*Your Gemfile depends on `rails`, so set `framework: actionview`/) do
+      Herb::Configuration.load(@temp_dir)
+    end
+  end
+
+  test "warns without a suggestion when no framework gem is in the Gemfile" do
+    write_config("version: \"0.10.3\"")
+    write_gemfile('gem "rake"')
+
+    assert_output(nil, /No `framework` set in .*Set `framework` to one of/) do
+      Herb::Configuration.load(@temp_dir)
+    end
+  end
+
+  test "does not warn when the config file sets a framework" do
+    write_config("framework: actionview")
+    write_gemfile('gem "rails"')
+
+    assert_silent do
+      assert_predicate Herb::Configuration.load(@temp_dir), :framework_configured?
     end
   end
 end

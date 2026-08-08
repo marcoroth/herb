@@ -2,6 +2,7 @@
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--all-rules\` replaces the counts from a disabled \`all\` 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -24,6 +25,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--only\` replaces the counts from a disabled \`all\` 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -43,6 +45,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: false\` reports no enabled rules and the rest as not enabled 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test-file-with-errors.html.erb - No issues found
 
 
@@ -64,6 +67,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: false\` swallows the version-skipped rules into \`not enabled\` 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test-file-with-errors.html.erb - No issues found
 
 
@@ -85,6 +89,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports every rule as enabled and nothing else 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -107,6 +112,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports no version-skipped rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -129,6 +135,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > reports enabled and not-enabled rules when no \`all\` is configured 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -151,6 +158,7 @@ test/fixtures/test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted back in on top of \`all: enabled: false\` count as enabled 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -170,6 +178,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted out on top of \`all: enabled: true\` count as disabled 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -189,6 +198,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/all-rules.html.erb:
   2:2  ⚠ Avoid using generic link text such as "click here". Screen reader users often navigate by links, and generic text like "Read more", "Learn more", "Click here", "More", "Link", or "Here" is not meaningful out of context. (a11y-avoid-generic-link-text)
@@ -219,6 +229,7 @@ test/fixtures/all-rules.html.erb:
 
 exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test/fixtures/all-rules.html.erb - No issues found
 
 
@@ -231,6 +242,7 @@ exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture w
 
 exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] ERB tag should not be empty. Remove empty ERB tags or add content. (erb-no-empty-tags)
 
@@ -382,6 +394,7 @@ test/fixtures/ignored.html.erb:8:8
 
 exports[`CLI Output Formatting > --log-level > counts the hidden offenses and suggests the level that reveals them 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 
  Rule offenses:
@@ -400,6 +413,7 @@ exports[`CLI Output Formatting > --log-level > counts the hidden offenses and su
 
 exports[`CLI Output Formatting > --log-level > doesn't report offenses below the given level 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 
  Rule offenses:
@@ -417,6 +431,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
 
 exports[`CLI Output Formatting > --log-level > prefers the CLI flag over the config file 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -436,6 +451,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > reads logLevel from the config file 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 
  Rule offenses:
@@ -453,6 +469,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
 
 exports[`CLI Output Formatting > --log-level > still counts hidden offenses towards the exit code 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 
  Rule offenses:
@@ -469,6 +486,7 @@ exports[`CLI Output Formatting > --log-level > still counts hidden offenses towa
 
 exports[`CLI Output Formatting > --log-level > still reports offenses at or above the given level 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -488,6 +506,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > keeps the log level when it is passed explicitly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -510,6 +529,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > with --all-rules > lowers the log level to report the rules it was asked for 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -533,6 +553,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > with --only > keeps the log level when it is passed explicitly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 
  Rule offenses:
@@ -550,6 +571,7 @@ exports[`CLI Output Formatting > --log-level > with --only > keeps the log level
 
 exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to report the rules it was asked for 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -570,6 +592,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to the lowest severity of the run 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
@@ -590,6 +613,7 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > --log-level > with --only > stays quiet when the configured log level hides nothing 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test-file-with-errors.html.erb:
   2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -609,12 +633,14 @@ test-file-with-errors.html.erb:
 
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ⚠️  File test/fixtures/subdir/excluded.html.erb is excluded by configuration patterns.
    Use --force to lint it anyway."
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
@@ -694,6 +720,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ::error file=test/fixtures/no-trailing-newline.html.erb,line=1,col=29,title=erb-require-trailing-newline • @herb-tools/linter@0.10.3::File must end with trailing newline. [erb-require-trailing-newline]%0A%0A%0Atest/fixtures/no-trailing-newline.html.erb:1:29%0A%0A  →   1 │ <div>No trailing newline</div>%0A        │                              ~%0A
 
@@ -726,6 +753,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [info] The partial \`post\` is looked up relative to the directory of the template rendering it. Moving this template changes which file that resolves to, and renaming the partial means hunting for callers that never spell its full name. Write the full path from the view root so it resolves to the same file from any template, and a search for that path finds every caller. (actionview-prefer-qualified-partial-path)
 
@@ -831,6 +859,7 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -891,6 +920,7 @@ test/fixtures/ignored.html.erb:6:14
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [warning] Avoid using \`tag.attributes\` to set all attributes on \`<div>\`. Use \`tag.div\` or add the attributes directly to the \`<div>\` tag instead. (actionview-no-unnecessary-tag-attributes) [Correctable]
 
@@ -951,6 +981,7 @@ test/fixtures/tag-attributes.html.erb:5:0
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Unexpected Token. Expected: an identifier, \`@\`, \`<%\`, whitespace, or a newline, found: a character. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
 
@@ -977,6 +1008,7 @@ test/fixtures/parser-errors.html.erb:2:16
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
 
@@ -1229,6 +1261,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes) [Correctable]
 
@@ -1354,6 +1387,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ::error file=test/fixtures/bad-file.html.erb,line=1,col=1,title=html-tag-name-lowercase • @herb-tools/linter@0.10.3::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/bad-file.html.erb:1:1%0A%0A  →   1 │ <SPAN>Bad file</SPAN>%0A        │  ~~~~%0A      2 │%0A
 
@@ -1409,6 +1443,7 @@ test/fixtures/bad-file.html.erb:1:16
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test/fixtures/clean-file.html.erb - No issues found
 
 
@@ -1421,6 +1456,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
@@ -1500,6 +1536,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -1710,6 +1747,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
 
 exports[`CLI Output Formatting > formats detailed error output correctly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [warning] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -1783,6 +1821,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/test-file-simple.html.erb:
   2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -1802,6 +1841,7 @@ test/fixtures/test-file-simple.html.erb:
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/bad-file.html.erb:
   1:1  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
@@ -1821,6 +1861,7 @@ test/fixtures/bad-file.html.erb:
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test/fixtures/clean-file.html.erb - No issues found
 
 
@@ -1833,6 +1874,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
 
 exports[`CLI Output Formatting > handles boolean attributes 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 ✓ test/fixtures/boolean-attribute.html.erb - No issues found
 
 
@@ -1845,6 +1887,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -1896,6 +1939,7 @@ test/fixtures/bad-file.html.erb:1:16
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Use \`<%#\` instead of \`<% #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`). (erb-comment-syntax) [Correctable]
 
@@ -2039,6 +2083,7 @@ test/fixtures/disabled-1.html.erb:14:19
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
 
@@ -2298,6 +2343,7 @@ test/fixtures/disabled-2.html.erb:2:44
 
 exports[`CLI Output Formatting > non-failing offenses tip > points at --log-level when many offenses don't fail the build 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ⚠ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2340,6 +2386,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when --log-level is already narrowing the output 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:14 ✗ Duplicate attribute \`class\`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values. (html-no-duplicate-attributes)
@@ -2368,6 +2415,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when --log-level is passed explicitly, even when it hides nothing 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ⚠ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2406,6 +2454,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when logLevel is set in the config file 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ⚠ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2444,6 +2493,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when only a handful of offenses don't fail the build 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2482,6 +2532,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > points at the flag instead of previewing once there are too many corrections 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -2498,6 +2549,7 @@ test/fixtures/many-correctable.html.erb:2:3
 
 exports[`CLI Output Formatting > previews every correction when --show-fix-diff is passed, however many there are 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -2521,6 +2573,7 @@ test/fixtures/many-correctable.html.erb:2:3
 
 exports[`CLI Output Formatting > previews the correction the same way when --show-fix-diff is passed explicitly 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -2578,6 +2631,7 @@ test/fixtures/test-file-simple.html.erb:2:22
 
 exports[`CLI Output Formatting > previews the correction under each correctable offense 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 [error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
 
@@ -2635,6 +2689,7 @@ test/fixtures/test-file-simple.html.erb:2:22
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is hint 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2672,6 +2727,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is info 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2709,6 +2765,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is warning 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2746,6 +2803,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > summary offense buckets > moves a severity between buckets as --fail-level is lowered 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2784,6 +2842,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > summary offense buckets > splits the buckets when only some severities fail the build 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/test/fixtures/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 multiple-rule-offenses.html.erb:
   5:3  ✗ Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should navigate somewhere. If you need a clickable element without navigation, use a \`<button>\` instead. (html-anchor-require-href)
@@ -2822,6 +2881,7 @@ multiple-rule-offenses.html.erb:
 
 exports[`CLI Output Formatting > unsafe autocorrectable offenses > counts and tags them separately from offenses --fix can correct 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/unsafe-autocorrectable.html.erb:
   1:9  ⚠ Text content contains an unescaped \`&\` character. Use \`&amp;\` instead. (html-no-unescaped-entities) [Correctable with --fix-unsafely]
@@ -2844,6 +2904,7 @@ test/fixtures/unsafe-autocorrectable.html.erb:
 
 exports[`CLI Output Formatting > unsafe autocorrectable offenses > labels unsafe offenses as autocorrectable when no safe fix is available 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 test/fixtures/unsafe-autocorrectable.html.erb:
   1:9  ⚠ Text content contains an unescaped \`&\` character. Use \`&amp;\` instead. (html-no-unescaped-entities) [Correctable with --fix-unsafely]
@@ -2863,6 +2924,7 @@ test/fixtures/unsafe-autocorrectable.html.erb:
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+⚠ No \`framework\` set in /test/herb/javascript/packages/linter/.herb.yml, Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework.
 
 ::warning file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.10.3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 

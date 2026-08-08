@@ -1,7 +1,10 @@
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock};
 
-use crate::config_schema::{FilesConfig, FormatterConfig, HerbConfig, HerbConfigOptions, LinterConfig, RuleConfig};
+use crate::config_schema::{FilesConfig, FormatterConfig, Framework, HerbConfig, HerbConfigOptions, LinterConfig, RuleConfig};
 use crate::defaults::{config_template, default_config, default_config_value, DEFAULT_VERSION};
+use crate::framework_detection::{detect_framework_from_gemfile, FrameworkDetection};
 use crate::glob::{glob, glob_absolute, is_path_matching};
 use crate::merge::deep_merge;
 use crate::semver::semver_greater_than;
@@ -21,6 +24,12 @@ pub trait SeverityOverridable {
 pub const CONFIG_PATH: &str = ".herb.yml";
 pub const MISNAMED_CONFIG_PATHS: &[&str] = &[".herb.yaml", "herb.yml", "herb.yaml"];
 pub const ALL_RULES_KEY: &str = "all";
+
+fn warned_framework_paths() -> &'static Mutex<HashSet<PathBuf>> {
+  static WARNED_FRAMEWORK_PATHS: OnceLock<Mutex<HashSet<PathBuf>>> = OnceLock::new();
+
+  WARNED_FRAMEWORK_PATHS.get_or_init(|| Mutex::new(HashSet::new()))
+}
 
 const PROJECT_INDICATORS: &[&str] = &[
   ".git",
@@ -54,6 +63,7 @@ pub struct Config {
   pub path: PathBuf,
   pub config: HerbConfig,
   pub config_version: Option<String>,
+  pub has_explicit_framework: bool,
 }
 
 impl Default for Config {
@@ -68,6 +78,7 @@ impl Config {
       path: Self::config_path_from_project_path(project_path),
       config,
       config_version,
+      has_explicit_framework: false,
     }
   }
 
@@ -344,6 +355,65 @@ impl Config {
       .collect()
   }
 
+  pub fn missing_framework_warning(config_path: &Path, detection: Option<&FrameworkDetection>) -> String {
+    let prefix = if config_path.exists() {
+      format!(
+        "\u{26a0} No `framework` set in {}, Herb assumes plain `{}` templates.",
+        config_path.display(),
+        Framework::Ruby.as_str()
+      )
+    } else {
+      format!("\u{26a0} No `framework` set, Herb assumes plain `{}` templates.", Framework::Ruby.as_str())
+    };
+
+    if let Some(detection) = detection {
+      let gemfile = detection
+        .gemfile_path
+        .file_name()
+        .map(|name| name.to_string_lossy().to_string())
+        .unwrap_or_else(|| "Gemfile".to_string());
+
+      return format!(
+        "{} Your {} depends on `{}`, so set `framework: {}` and Herb can tailor its assumptions, rules, and optimizations to {}.",
+        prefix,
+        gemfile,
+        detection.gem,
+        detection.framework.as_str(),
+        detection.framework.description()
+      );
+    }
+
+    let frameworks: Vec<String> = Framework::ALL.iter().map(|framework| format!("`{}`", framework.as_str())).collect();
+    let (last, rest) = frameworks.split_last().expect("Framework::ALL is not empty");
+
+    format!(
+      "{} Set `framework` to one of {}, or {} so Herb can tailor its assumptions, rules, and optimizations to your framework.",
+      prefix,
+      rest.join(", "),
+      last
+    )
+  }
+
+  fn warn_about_missing_framework(config: &Config) {
+    if config.has_explicit_framework {
+      return;
+    }
+
+    let Ok(mut warned) = warned_framework_paths().lock() else {
+      return;
+    };
+
+    if !warned.insert(config.path.clone()) {
+      return;
+    }
+
+    drop(warned);
+
+    let detection = detect_framework_from_gemfile(config.project_path());
+
+    eprintln!("{}", Self::missing_framework_warning(&config.path, detection.as_ref()));
+  }
+
   pub fn misnamed_config_warning(misnamed_path: &Path) -> String {
     format!(
       "\u{26a0} Ignoring {}: Herb only reads `{}`. Rename it to `{}` to apply it.",
@@ -413,11 +483,15 @@ impl Config {
     let version = options.version.unwrap_or(DEFAULT_VERSION);
 
     if path_or_file.ends_with(CONFIG_PATH) {
+      let config = Self::load_from_explicit_path(path_or_file, version)?;
+
       if !options.silent {
         Self::warn_about_misnamed_config_files(path_or_file.parent().unwrap_or(Path::new(".")), &[]);
+
+        Self::warn_about_missing_framework(&config);
       }
 
-      return Self::load_from_explicit_path(path_or_file, version);
+      return Ok(config);
     }
 
     let FoundConfigFile { config_path, project_root } = Self::find_config_file(path_or_file);
@@ -431,6 +505,8 @@ impl Config {
 
       if !options.silent {
         eprintln!("\u{2713} Using Herb config file at {}", config_path.display());
+
+        Self::warn_about_missing_framework(&config);
       }
 
       return Ok(config);
@@ -440,7 +516,13 @@ impl Config {
       return Self::create_default_config(&project_root, options.silent, version);
     }
 
-    Ok(Self::new(&project_root, Self::get_default_config(version), None))
+    let config = Self::new(&project_root, Self::get_default_config(version), None);
+
+    if !options.silent {
+      Self::warn_about_missing_framework(&config);
+    }
+
+    Ok(config)
   }
 
   pub fn read_raw_yaml(path_or_file: &Path) -> Result<String, String> {
@@ -534,7 +616,11 @@ impl Config {
 
     resolved.version = version.to_string();
 
-    Ok(Self::new(project_root, resolved, user_config_version))
+    let mut config = Self::new(project_root, resolved, user_config_version);
+
+    config.has_explicit_framework = parsed.get("framework").is_some();
+
+    Ok(config)
   }
 
   pub fn find_config_file(start_path: &Path) -> FoundConfigFile {
@@ -593,11 +679,28 @@ impl Config {
   #[cfg(feature = "yerba")]
   fn create_default_config(project_root: &Path, silent: bool, version: &str) -> Result<Self, String> {
     let config_path = Self::config_path_from_project_path(project_root);
+    let detection = detect_framework_from_gemfile(project_root);
+    let framework = detection.as_ref().map(|detection| detection.framework);
 
-    match crate::mutation::mutate_config_file(&config_path, &HerbConfigOptions::default(), Some(version)) {
+    match Self::write_default_config(&config_path, version, framework) {
       Ok(()) => {
         if !silent {
           eprintln!("\u{2713} Created default configuration at {}", config_path.display());
+
+          match &detection {
+            Some(detection) => eprintln!(
+              "\u{2713} Detected {} from {}, set `framework: {}`",
+              detection.framework.label(),
+              detection
+                .gemfile_path
+                .file_name()
+                .map(|name| name.to_string_lossy().to_string())
+                .unwrap_or_default(),
+              detection.framework.as_str()
+            ),
+
+            None => eprintln!("{}", Self::missing_framework_warning(&config_path, None)),
+          }
         }
       }
 
@@ -608,7 +711,32 @@ impl Config {
       }
     }
 
-    Ok(Self::new(project_root, Self::get_default_config(version), None))
+    let mut config = Self::get_default_config(version);
+
+    if let Some(framework) = framework {
+      config.framework = Some(framework);
+    }
+
+    let mut config = Self::new(project_root, config, None);
+
+    config.has_explicit_framework = framework.is_some();
+
+    Ok(config)
+  }
+
+  #[cfg(feature = "yerba")]
+  fn write_default_config(config_path: &Path, version: &str, framework: Option<Framework>) -> Result<(), String> {
+    let contents = crate::mutation::create_config_yaml_string_with_framework(&HerbConfigOptions::default(), Some(version), framework)?;
+
+    if config_path.exists() {
+      return Err(format!("{} already exists", config_path.display()));
+    }
+
+    if let Some(parent) = config_path.parent() {
+      std::fs::create_dir_all(parent).map_err(|error| format!("failed to create {}: {}", parent.display(), error))?;
+    }
+
+    std::fs::write(config_path, contents).map_err(|error| format!("failed to write {}: {}", config_path.display(), error))
   }
 
   #[cfg(not(feature = "yerba"))]

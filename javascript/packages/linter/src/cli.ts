@@ -189,7 +189,7 @@ export class CLI {
         process.exit(1)
       }
 
-      const config = await Config.loadForCLI(configPath, version, true)
+      const config = await Config.loadForCLI(configPath, version, true, Herb)
       const extensionAdded = addHerbExtensionRecommendation(this.projectPath)
 
       console.log(`\n✓ Configuration initialized at ${config.path}`)
@@ -373,7 +373,7 @@ export class CLI {
     }
 
     const silent = formatOption === 'json'
-    const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
+    const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent, herb: Herb })
     const linterConfig = config.options.linter || {}
 
     const effectiveFailLevel = failLevel || linterConfig.failLevel || "error"

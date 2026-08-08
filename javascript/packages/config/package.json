@@ -36,6 +36,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@herb-tools/node-wasm": "0.10.3",
     "@types/picomatch": "^4.0.3",
     "zod": "^4.4.3",
     "zod-validation-error": "^5.0.0"

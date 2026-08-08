@@ -163,6 +163,17 @@ pub struct RubyParseResult {
 }
 
 impl RubyParseResult {
+  #[cfg(feature = "prism")]
+  pub fn program(&self) -> Option<crate::prism::PrismNode> {
+    let source = self._source.to_str().ok()?;
+
+    unsafe {
+      let bytes = crate::prism::serialize((*self.pointer).root, &(*self.pointer).parser)?;
+
+      crate::prism::deserialize(&bytes, source)
+    }
+  }
+
   pub fn prettyprint(&self) -> String {
     unsafe {
       let mut buffer: crate::ffi::pm_buffer_t = std::mem::zeroed();

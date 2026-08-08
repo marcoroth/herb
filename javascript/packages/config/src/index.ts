@@ -1,5 +1,6 @@
 export { Config, resolveSeverity, ALL_RULES_KEY } from "./config.js"
 export { HerbConfigSchema } from "./config-schema.js"
+export { detectFrameworkFromGemfile, gemsFromGemfile, FRAMEWORK_GEMS, FRAMEWORK_LABELS, FRAMEWORK_DESCRIPTIONS, GEMFILE_NAMES } from "./framework-detection.js"
 export { addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "./vscode.js"
 
 export type {
@@ -20,3 +21,5 @@ export type {
 } from "./config.js"
 
 export type { VSCodeExtensionsJson } from "./vscode.js"
+
+export type { FrameworkDetection, RubySourceParser } from "./framework-detection.js"

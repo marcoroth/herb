@@ -29,6 +29,32 @@ module Herb
     DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__ || __FILE__).freeze
     DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH).freeze
 
+    GEMFILE_FILENAMES = ["Gemfile", "gems.rb"].freeze #: Array[String]
+
+    FRAMEWORK_GEMS = {
+      "rails" => "actionview",
+      "actionview" => "actionview",
+      "hanami" => "hanami",
+      "hanami-view" => "hanami",
+      "sinatra" => "sinatra",
+    }.freeze #: Hash[String, String]
+
+    FRAMEWORK_PRECEDENCE = ["actionview", "hanami", "sinatra"].freeze #: Array[String]
+
+    FRAMEWORK_LABELS = {
+      "ruby" => "Ruby",
+      "actionview" => "Action View",
+      "hanami" => "Hanami",
+      "sinatra" => "Sinatra",
+    }.freeze #: Hash[String, String]
+
+    FRAMEWORK_DESCRIPTIONS = {
+      "ruby" => "plain ERB templates, with no framework helpers in scope",
+      "actionview" => "Action View templates, with their helpers, partials, and strict locals",
+      "hanami" => "Hanami views, with their parts and helpers",
+      "sinatra" => "Sinatra templates, with their helpers",
+    }.freeze #: Hash[String, String]
+
     attr_reader :config, :user_config, :config_path, :project_root, :misnamed_config_paths
 
     def initialize(project_path = nil)
@@ -39,6 +65,7 @@ module Herb
       @config = deep_merge(DEFAULTS, @user_config)
 
       warn_about_misnamed_config_files
+      warn_about_missing_framework
     end
 
     def [](key)
@@ -63,6 +90,42 @@ module Herb
       end
 
       value
+    end
+
+    #: () -> bool
+    def framework_configured?
+      @user_config.key?("framework")
+    end
+
+    #: () -> Hash[Symbol, String]?
+    def detected_framework
+      return @detected_framework if defined?(@detected_framework)
+
+      @detected_framework = detect_framework_from_gemfile
+    end
+
+    #: (?Hash[Symbol, String]?) -> String
+    def missing_framework_warning(detection = detected_framework)
+      prefix = if @config_path
+                 "[Herb] No `framework` set in #{@config_path}, Herb assumes plain `ruby` templates."
+               else
+                 "[Herb] No `framework` set, Herb assumes plain `ruby` templates."
+               end
+
+      if detection
+        gemfile = File.basename(detection[:gemfile_path])
+        description = FRAMEWORK_DESCRIPTIONS[detection[:framework]]
+
+        return "#{prefix} Your #{gemfile} depends on `#{detection[:gem]}`, so set `framework: #{detection[:framework]}` " \
+               "and Herb can tailor its assumptions, rules, and optimizations to #{description}."
+      end
+
+      frameworks = VALID_FRAMEWORKS.map { |framework| "`#{framework}`" }
+      last = frameworks.pop
+      list = "#{frameworks.join(", ")}, or #{last}"
+
+      "#{prefix} Set `framework` to one of #{list} so Herb can tailor its assumptions, rules, and optimizations " \
+        "to your framework."
     end
 
     #: () -> String
@@ -229,6 +292,11 @@ module Herb
       def default_exclude_patterns
         DEFAULTS.dig("files", "exclude") || []
       end
+
+      #: () -> Array[String]
+      def warned_framework_paths
+        @warned_framework_paths ||= []
+      end
     end
 
     private
@@ -263,6 +331,85 @@ module Herb
         warn "[Herb] Ignoring #{misnamed_path}: Herb only reads `#{CONFIG_FILENAMES.first}`. " \
              "Rename it to `#{CONFIG_FILENAMES.first}` to apply it."
       end
+    end
+
+    def warn_about_missing_framework
+      return if framework_configured?
+
+      project = (@config_path || @project_root || @start_path).to_s
+
+      return if self.class.warned_framework_paths.include?(project)
+
+      self.class.warned_framework_paths << project
+
+      warn missing_framework_warning
+    end
+
+    #: () -> Hash[Symbol, String]?
+    def detect_framework_from_gemfile
+      search_path = @project_root || @start_path
+
+      GEMFILE_FILENAMES.each do |gemfile_name|
+        gemfile = search_path / gemfile_name
+
+        return framework_from_gemfile(gemfile) if gemfile.exist?
+      end
+
+      nil
+    end
+
+    #: (Pathname) -> Hash[Symbol, String]?
+    def framework_from_gemfile(gemfile)
+      frameworks = {} #: Hash[String, String]
+
+      gems_from_gemfile(gemfile.read).each do |gem_name|
+        framework = FRAMEWORK_GEMS[gem_name]
+
+        frameworks[framework] ||= gem_name if framework
+      end
+
+      framework = FRAMEWORK_PRECEDENCE.find { |candidate| frameworks.key?(candidate) }
+
+      return nil unless framework
+
+      { framework: framework, gem: frameworks[framework], gemfile_path: gemfile.to_s }
+    end
+
+    #: (String) -> Array[String]
+    def gems_from_gemfile(source)
+      program = Herb.parse_ruby(source).value
+
+      return [] unless program
+
+      gems = [] #: Array[String]
+
+      collect_gems(program, gems)
+
+      gems
+    rescue StandardError
+      []
+    end
+
+    #: (untyped, Array[String]) -> void
+    def collect_gems(node, gems)
+      gem_name = gem_call_name(node)
+
+      gems << gem_name if gem_name
+
+      node.child_nodes.each do |child|
+        collect_gems(child, gems) if child
+      end
+    end
+
+    #: (untyped) -> String?
+    def gem_call_name(node)
+      return nil unless node.is_a?(Prism::CallNode) && node.name == :gem && node.receiver.nil?
+
+      argument = node.arguments&.arguments&.first
+
+      return nil unless argument.is_a?(Prism::StringNode) || argument.is_a?(Prism::SymbolNode)
+
+      argument.unescaped
     end
 
     def project_root?(path)

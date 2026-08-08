@@ -6,6 +6,7 @@ pub mod vscode;
 mod config;
 mod config_schema;
 mod defaults;
+mod framework_detection;
 mod merge;
 #[cfg(feature = "yerba")]
 mod mutation;
@@ -18,10 +19,13 @@ pub use config_schema::{
 };
 
 pub use defaults::DEFAULT_VERSION;
+pub use framework_detection::{
+  detect_framework_from_gemfile, framework_for_gem, framework_from_gems, gems_from_gemfile, FrameworkDetection, FRAMEWORK_GEMS, GEMFILE_NAMES,
+};
 pub use glob::is_path_matching;
 pub use merge::deep_merge;
 #[cfg(feature = "yerba")]
-pub use mutation::{add_yaml_spacing, apply_mutation_to_yaml_string, create_config_yaml_string, mutate_config_file};
+pub use mutation::{add_yaml_spacing, apply_mutation_to_yaml_string, create_config_yaml_string, create_config_yaml_string_with_framework, mutate_config_file};
 pub use semver::{compare_semver, parse_semver, semver_greater_than, UNRELEASED_VERSION};
 pub use severity::{resolve_severity, LinterMode, Severity, SeverityConfig};
 pub use validation::{validate_config_text, ConfigValidationError, ValidateOptions, ValidationSeverity};
