@@ -241,7 +241,7 @@ function applyFix(node: Mutable<StrictLocalsCommentNode>, fix: StrictLocalsFix):
 
       const head = content.slice(0, index + LOCALS_PREFIX.length)
       const rest = content.slice(index + LOCALS_PREFIX.length)
-      const trailing = rest.match(/\s*$/)?.[0] ?? ""
+      const trailing = rest.slice(rest.trimEnd().length)
 
       node.content.value = `${head} ${suggestedParameters(rest.trim())}${trailing}`
 
@@ -395,7 +395,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor<ERBStrictLocal
   }
 
   private reportSyntaxErrors(node: ERBStrictLocalsNode, content: string): boolean {
-    const syntaxErrors = node.errors.filter(error => error.type === "RUBY_PARSE_ERROR")
+    const syntaxErrors = node.errors.filter((error): error is RubyParseError => error.type === "RUBY_PARSE_ERROR")
     if (syntaxErrors.length === 0) return false
 
     const parameters = findParameters(content)
