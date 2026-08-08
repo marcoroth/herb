@@ -56,6 +56,12 @@ export function projectRelativePath(filePath: string, projectPath: string | unde
   return relativeToViewRoot(filePath, projectPath) ?? normalize(filePath)
 }
 
+export function isTemplatePath(filePath: string): boolean {
+  const name = basename(normalize(filePath))
+
+  return PARTIAL_EXTENSIONS.some(extension => name.endsWith(extension))
+}
+
 export function isPartialPath(filePath: string): boolean {
   const name = basename(normalize(filePath))
 
