@@ -241,8 +241,6 @@ export class ErrorOverlay {
       this.setupToggleHandler();
     } else if (hasParserErrors) {
       console.log('[ErrorOverlay] Parser error overlay already displayed');
-    } else {
-      console.log('[ErrorOverlay] No errors found, not creating overlay');
     }
   }
 
