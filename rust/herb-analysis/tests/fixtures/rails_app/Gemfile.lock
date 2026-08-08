@@ -1,0 +1,24 @@
+GIT
+  remote: https://github.com/example/fakerepo.git
+  revision: abc123456789deadbeefcafe
+  specs:
+    fakemono (9.9.9)
+      somedep (>= 1.0)
+
+PATH
+  remote: local_engine
+  specs:
+    localengine (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    fakegem (1.2.3)
+      othergem (>= 2.0)
+    notinstalledgem (4.5.6)
+
+PLATFORMS
+  arm64-darwin-24
+
+DEPENDENCIES
+  fakegem
