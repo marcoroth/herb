@@ -47,7 +47,7 @@ class UnsafeRawCallCollector extends PrismVisitor {
 
 class ERBNoUnsafeRawVisitor extends ElementStackVisitor {
   visitERBContentNode(node: ERBContentNode): void {
-    if (this.isInsideElement(...RAW_TEXT_ELEMENTS)) return
+    if (this.isInsideElementAcrossCallers(...RAW_TEXT_ELEMENTS) === "always") return
     if (!isERBOutputNode(node)) return
 
     const prismNode = node.prismNode

@@ -44,6 +44,18 @@ Calling `.html_safe` directly on a String literal, like `<%= "<strong>Sale</stro
 <p><%= user_input.html_safe %></p>
 ```
 
+## Across call sites
+
+This rule also considers where a file is rendered. When the linter runs over a whole project it resolves the HTML ancestors that each call site places a file inside, following `render` calls and each template's conventional layout `yield`.
+
+The rule already skips raw text elements such as `<script>` and `<title>`. That now extends across files, so a partial every call site renders inside a `<script>` is skipped too.
+
+Action View helpers that render an element count as ancestors, so a `content_tag`, `tag.div` or `link_to` block nests what it wraps just like the equivalent HTML would.
+
+The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. A file rendered into two different sections is left alone too, so the placement check only ever reports what every call site agrees on.
+
+Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
+
 ## References
 
 - [Shopify/better-html — TagInterpolation](https://github.com/Shopify/better-html/blob/main/lib/better_html/test_helper/safe_erb/tag_interpolation.rb)

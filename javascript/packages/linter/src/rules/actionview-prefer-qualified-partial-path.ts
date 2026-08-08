@@ -52,7 +52,7 @@ class ActionViewPreferQualifiedPartialPathVisitor extends BaseRuleVisitor {
 
     if (!partials) return null
 
-    const declaration = partials.lookup(name, this.context.fileName)
+    const declaration = partials.lookup(name, this.sourceFile)
 
     if (!declaration) return null
 

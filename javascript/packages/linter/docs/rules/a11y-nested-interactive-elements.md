@@ -57,6 +57,18 @@ Nesting interactive elements produces invalid HTML, and assistive technologies, 
 <button><input type="text" /></button>
 ```
 
+## Across call sites
+
+This rule also considers where a file is rendered. When the linter runs over a whole project it resolves the HTML ancestors that each call site places a file inside, following `render` calls and each template's conventional layout `yield`.
+
+An interactive element at the top level of a partial is reported when every call site renders that partial inside another interactive element.
+
+Action View helpers that render an element count as ancestors, so a `content_tag`, `tag.div` or `link_to` block nests what it wraps just like the equivalent HTML would.
+
+The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. When only some call sites nest the file, the offense is still reported and the call chain points at one that does, since the nesting is real on that code path.
+
+Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
+
 ## References
 
 - [erblint-github: NestedInteractiveElements](https://github.com/github/erblint-github/blob/main/lib/erblint-github/linters/github/accessibility/nested_interactive_elements.rb)

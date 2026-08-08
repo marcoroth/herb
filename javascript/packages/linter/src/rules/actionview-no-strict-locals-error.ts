@@ -28,7 +28,7 @@ class ActionViewNoStrictLocalsErrorVisitor extends BaseRuleVisitor {
     if (keywords.collection || keywords.object) return
     if (this.forwardsUnknownLocals(node)) return
 
-    const declaration = partials.lookup(partialName, this.context.fileName)
+    const declaration = partials.lookup(partialName, this.sourceFile)
 
     if (!declaration) return
     if (!declaration.hasDeclaration) return
