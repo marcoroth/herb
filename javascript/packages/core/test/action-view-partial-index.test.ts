@@ -194,7 +194,20 @@ describe("declarationFromDocument", () => {
       hasDeclaration: true,
       hasKeywordRest: false,
       locals: [{ name: "user", required: true }, { name: "size", required: false }],
+      location: { line: 1, column: 0 },
     })
+  })
+
+  test("records where the declaration sits", () => {
+    const result = Herb.parse(`\n<%# locals: (user:) %>\n`, { strict_locals: true })
+
+    expect(declarationFromDocument(result.value, "app/views/users/_card.html.erb").location).toEqual({ line: 2, column: 0 })
+  })
+
+  test("leaves the location unset without a declaration", () => {
+    const result = Herb.parse(`<h1>hi</h1>\n`, { strict_locals: true })
+
+    expect(declarationFromDocument(result.value, "app/views/users/_card.html.erb").location).toBeUndefined()
   })
 
   test("records a keyword rest separately from the locals", () => {
