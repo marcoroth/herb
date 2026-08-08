@@ -18,6 +18,7 @@
         "./extension/libherb/analyze/action_view/javascript_tag.c",
         "./extension/libherb/analyze/action_view/link_to.c",
         "./extension/libherb/analyze/action_view/registry.c",
+        "./extension/libherb/analyze/action_view/stylesheet_link_tag.c",
         "./extension/libherb/analyze/action_view/tag_helper_node_builders.c",
         "./extension/libherb/analyze/action_view/tag_helpers.c",
         "./extension/libherb/analyze/action_view/turbo_frame_tag.c",
