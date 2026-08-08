@@ -18,7 +18,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rollup -c",
+    "build": "yarn clean && tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",

@@ -28,7 +28,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "yarn generate:node-tests && tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn generate:node-tests && tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "test:watch": "vitest --watch",
