@@ -23,13 +23,13 @@ function project(files: Record<string, string>): string {
 }
 
 function runLinterIn(cwd: string, ...args: string[]): { output: string, exitCode: number } {
-  const { execSync } = require("child_process")
+  const { execFileSync } = require("child_process")
   const bin = resolve(process.cwd(), "bin/herb-lint")
-  const command = `node ${bin} ${args.join(" ")} --no-timing --no-wrap-lines 2>&1`
   const env = { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+  const options = { cwd, encoding: "utf-8" as const, env, stdio: ["ignore", "pipe", "pipe"] as const }
 
   try {
-    return { output: execSync(command, { cwd, encoding: "utf-8", env }).trim(), exitCode: 0 }
+    return { output: execFileSync("node", [bin, ...args, "--no-timing", "--no-wrap-lines"], options).trim(), exitCode: 0 }
   } catch (error: any) {
     const stdout = error.stdout ? error.stdout.toString().trim() : ""
     const stderr = error.stderr ? error.stderr.toString().trim() : ""
