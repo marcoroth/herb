@@ -9,6 +9,7 @@ use herb_linter::linter::Linter;
 use herb_linter::offense::Offense;
 use herb_linter::partial_index_builder::{build_partial_index, refresh_partial_after_fix};
 use herb_linter::rule::LintContext;
+use herb_linter::urls::{rule_documentation_url, RULE_CONFIGURATION_DOCUMENTATION_URL};
 
 #[derive(Debug, Clone, PartialEq)]
 enum OutputFormat {
@@ -1136,7 +1137,7 @@ fn display_no_enabled_rules(result: &ProcessingResult, context: &SummaryContext)
   );
   println!("  to lint with every rule for a single run.");
   println!();
-  println!("  {}", gray(RULE_CONFIGURATION_DOCUMENTATION_URL));
+  println!("  {}", gray(&RULE_CONFIGURATION_DOCUMENTATION_URL));
 }
 
 fn print_fix_diff(file_path: &str, before: &str, after: &str) {
@@ -1494,13 +1495,6 @@ fn files_with_severities(result: &ProcessingResult, severities: &[&Severity]) ->
   }
 
   files.len()
-}
-
-const DOCS_LINTER_BASE_URL: &str = "https://herb-tools.dev/linter/rules";
-const RULE_CONFIGURATION_DOCUMENTATION_URL: &str = "https://herb-tools.dev/configuration#setting-the-default-for-all-rules";
-
-fn rule_documentation_url(rule_name: &str) -> String {
-  format!("{DOCS_LINTER_BASE_URL}/{rule_name}")
 }
 
 fn display_version_skipped_rules(result: &ProcessingResult, context: &SummaryContext) {

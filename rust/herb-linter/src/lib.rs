@@ -13,4 +13,5 @@ pub mod partial_index_builder;
 pub mod rule;
 pub mod rules;
 pub mod semver;
+pub mod urls;
 pub mod utils;
