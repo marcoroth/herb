@@ -15,8 +15,8 @@
   "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && rollup -c rollup.config.mjs",
-    "dev": "rollup -c rollup.config.mjs -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
     "test:watch": "vitest --watch",

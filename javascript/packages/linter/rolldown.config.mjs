@@ -1,8 +1,3 @@
-import typescript from "@rollup/plugin-typescript"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-import json from "@rollup/plugin-json"
-import commonjs from "@rollup/plugin-commonjs"
-
 import { createRequire } from "module"
 
 // Bundle the CLI entry point into a single CommonJS file.
@@ -40,16 +35,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 
   // Lint worker entry point (CommonJS - used by worker_threads)
@@ -61,16 +46,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 
   // Library exports (ESM)
@@ -82,16 +57,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
   },
 
   // Library exports (CommonJS)
@@ -103,16 +68,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 
   // Partial index builder entry point (node only, used by the language server)
@@ -124,17 +79,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ preferBuiltins: true }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
   },
 
   // Loader entry point (includes custom rule loader)
@@ -146,17 +90,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ preferBuiltins: true }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
   },
   {
     input: "src/loader.ts",
@@ -166,14 +99,5 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ preferBuiltins: true }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-      }),
-    ],
   },
 ]

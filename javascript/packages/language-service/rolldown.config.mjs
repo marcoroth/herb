@@ -1,6 +1,3 @@
-import typescript from "@rollup/plugin-typescript"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-
 const external = [
   "@herb-tools/core",
   "@herb-tools/node-wasm",
@@ -18,15 +15,6 @@ export default [
       sourcemap: true,
     },
     external,
-    plugins: [
-      nodeResolve(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
   },
 
   {
@@ -37,12 +25,5 @@ export default [
       sourcemap: true,
     },
     external,
-    plugins: [
-      nodeResolve(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-      }),
-    ],
   },
 ]

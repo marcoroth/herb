@@ -1,7 +1,3 @@
-import typescript from "@rollup/plugin-typescript"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-import commonjs from "@rollup/plugin-commonjs"
-import json from "@rollup/plugin-json"
 import { createRequire } from "module"
 
 const external = [
@@ -30,16 +26,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
   {
     input: "src/index.ts",
@@ -49,17 +35,7 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ preferBuiltins: true }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
+    platform: "node",
   },
   {
     input: "src/index.ts",
@@ -69,14 +45,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ preferBuiltins: true }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-      }),
-    ],
+    platform: "node",
   },
 ]
