@@ -52,6 +52,11 @@
   "peerDependencies": {
     "tailwindcss": "^3.0 || ^4.0"
   },
+  "peerDependenciesMeta": {
+    "tailwindcss": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=14.21.3"
   }
