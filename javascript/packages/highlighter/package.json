@@ -29,7 +29,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build": "tsc -b && rolldown -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

@@ -1,8 +1,3 @@
-import typescript from "@rollup/plugin-typescript"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-import json from "@rollup/plugin-json"
-import commonjs from "@rollup/plugin-commonjs"
-
 // Bundle the LSP server entry point into a single CommonJS file.
 // Exclude Node built-in so they remain as externals.
 const external = [
@@ -41,16 +36,8 @@ export default [
       sourcemap: enableSourcemaps,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve({ exportConditions: ["node"] }),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
+    platform: "node",
+    resolve: { conditionNames: ["node", "import", "require", "default"] },
   },
 
   // Library exports (CommonJS)
@@ -62,15 +49,5 @@ export default [
       sourcemap: enableSourcemaps,
     },
     external: allExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 ]

@@ -29,8 +29,8 @@
     "directory": "javascript/packages/tailwind-class-sorter"
   },
   "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
     "setup-fixtures": "bash scripts/setup-fixtures.sh",
     "pretest": "yarn setup-fixtures",
