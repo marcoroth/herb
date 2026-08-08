@@ -80,12 +80,12 @@ end
 
 module Herb
   class << self
-    #: (String path, ?arena_stats: bool) -> LexResult
+    #: (String path, ?arena_stats: bool, **untyped) -> LexResult
     def lex_file(path, **)
       lex(File.read(path), **)
     end
 
-    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool) -> ParseResult
+    #: (String path, ?track_whitespace: bool, ?analyze: bool, ?strict: bool, ?action_view_helpers: bool, ?transform_conditionals: bool, ?strict_locals: bool, ?prism_nodes: bool, ?prism_nodes_deep: bool, ?prism_program: bool, ?arena_stats: bool, **untyped) -> ParseResult
     def parse_file(path, **)
       parse(File.read(path), **)
     end
