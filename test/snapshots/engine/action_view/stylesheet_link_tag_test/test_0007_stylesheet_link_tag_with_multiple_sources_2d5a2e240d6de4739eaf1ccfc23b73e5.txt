@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0007_stylesheet_link_tag with multiple sources"
+input: "{source: \"<%= stylesheet_link_tag \\\"random.styles\\\", \\\"/css/stylish\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/random.styles.css" />
+<link rel="stylesheet" href="/css/stylish.css" />
