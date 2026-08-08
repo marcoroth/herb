@@ -1,6 +1,29 @@
-import { PrismVisitor, PrismNodes } from "@herb-tools/core"
+import { RUBY_KEYWORDS } from "./ruby-keywords.js"
 
-import type { PrismLocation } from "@herb-tools/core"
+import { PrismVisitor, PrismNodes } from "./prism/index.js"
+import { helperExists } from "./action-view-helpers.js"
+
+import type { PrismLocation } from "./prism/index.js"
+
+const LOCAL_ASSIGNS = "local_assigns"
+const LOCAL_NAME = /^[a-z_][a-zA-Z0-9_]*$/
+const ROUTE_HELPER = /_(path|url)$/
+const PREDICATE_OR_BANG = /[?!]$/
+
+export function isValidLocalName(name: string): boolean {
+  if (!LOCAL_NAME.test(name)) return false
+  if (RUBY_KEYWORDS.has(name)) return false
+
+  return name !== LOCAL_ASSIGNS
+}
+
+export function isProbableLocal(name: string): boolean {
+  if (!isValidLocalName(name)) return false
+  if (PREDICATE_OR_BANG.test(name)) return false
+  if (ROUTE_HELPER.test(name)) return false
+
+  return !helperExists(name)
+}
 
 export interface RubyReference {
   name: string

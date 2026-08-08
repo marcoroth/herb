@@ -1,23 +1,20 @@
 import dedent from "dedent"
 
-import { describe, it, expect, beforeAll } from "vitest"
-import { Herb, substringFromByteOffset } from "@herb-tools/node-wasm"
+import { describe, it, test, expect, beforeAll } from "vitest"
+import { Herb } from "@herb-tools/node-wasm"
+import { substringFromByteOffset } from "../src/index.js"
 
-import { RubyReferenceCollector } from "../src/ruby_reference_collector"
-import { ParserService } from "../src/parser_service"
+import { RubyReferenceCollector, isProbableLocal, isValidLocalName } from "../src/ruby-reference-collector.js"
 
 import type { RubyReference } from "../src/ruby_reference_collector"
 
 describe("RubyReferenceCollector", () => {
-  let parserService: ParserService
-
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
   })
 
   function collect(source: string): RubyReferenceCollector {
-    const result = parserService.parseContent(source, { prism_program: true })
+    const result = Herb.parse(source, { prism_program: true })
     const collector = new RubyReferenceCollector()
 
     if (result.value.prismNode) {
@@ -201,5 +198,39 @@ describe("RubyReferenceCollector", () => {
 
       expect(substringFromByteOffset(source, reference.startOffset, reference.length)).toBe("@user")
     })
+  })
+})
+
+describe("isValidLocalName", () => {
+  test("accepts ordinary local names", () => {
+    expect(isValidLocalName("title")).toBe(true)
+    expect(isValidLocalName("_leading")).toBe(true)
+    expect(isValidLocalName("post_id2")).toBe(true)
+  })
+
+  test("rejects Ruby keywords, local_assigns and malformed names", () => {
+    expect(isValidLocalName("class")).toBe(false)
+    expect(isValidLocalName("local_assigns")).toBe(false)
+    expect(isValidLocalName("Title")).toBe(false)
+    expect(isValidLocalName("has?")).toBe(false)
+  })
+})
+
+describe("isProbableLocal", () => {
+  test("treats an ordinary bare name as a probable local", () => {
+    expect(isProbableLocal("title")).toBe(true)
+    expect(isProbableLocal("class_name")).toBe(true)
+  })
+
+  test("rejects predicates, bang methods and route helpers", () => {
+    expect(isProbableLocal("admin?")).toBe(false)
+    expect(isProbableLocal("save!")).toBe(false)
+    expect(isProbableLocal("posts_path")).toBe(false)
+    expect(isProbableLocal("post_url")).toBe(false)
+  })
+
+  test("rejects known Action View helpers", () => {
+    expect(isProbableLocal("link_to")).toBe(false)
+    expect(isProbableLocal("image_tag")).toBe(false)
   })
 })
