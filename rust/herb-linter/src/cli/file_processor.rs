@@ -1,6 +1,11 @@
 use crate::cli::argument_parser::{CliArguments, FailLevel};
 use crate::*;
 
+/// Rayon worker threads default to a smaller stack than the main thread, and a
+/// debug build's stack frames are large enough that walking a real template
+/// overflows it. Matching the main thread keeps the two builds behaving alike.
+const WORKER_STACK_SIZE: usize = 8 * 1024 * 1024;
+
 pub(crate) struct ProcessedFile {
   pub(crate) filename: String,
   pub(crate) offense: Offense,
@@ -162,62 +167,71 @@ pub(crate) fn lint_files(
   let rules_disabled_by_config = linter.rules_disabled_by_config();
   let rules_not_enabled_by_default = linter.rules_not_enabled_by_default();
 
-  let file_results: Vec<FileLintResult> = files
-    .par_iter()
-    .filter_map(|file_path| {
-      let resolved_path = project_path.join(file_path);
+  let pool = rayon::ThreadPoolBuilder::new().stack_size(WORKER_STACK_SIZE).build();
 
-      let source = match std::fs::read_to_string(&resolved_path) {
-        Ok(content) => content,
-        Err(error) => {
-          eprintln!("Error reading file '{}': {}", file_path, error);
-          return None;
-        }
-      };
+  let lint_all = || -> Vec<FileLintResult> {
+    files
+      .par_iter()
+      .filter_map(|file_path| {
+        let resolved_path = project_path.join(file_path);
 
-      let context = LintContext {
-        file_name: Some(file_path.clone()),
-        ignore_disable_comments,
-        partials: partials.lock().ok().map(|partials| partials.clone()),
-        ..Default::default()
-      };
+        let source = match std::fs::read_to_string(&resolved_path) {
+          Ok(content) => content,
+          Err(error) => {
+            eprintln!("Error reading file '{}': {}", file_path, error);
+            return None;
+          }
+        };
 
-      let result = if fix || fix_unsafe {
-        let autofixed = linter.autofix(&source, &context, fix_unsafe);
+        let context = LintContext {
+          file_name: Some(file_path.clone()),
+          ignore_disable_comments,
+          partials: partials.lock().ok().map(|partials| partials.clone()),
+          ..Default::default()
+        };
 
-        if autofixed.source != source {
-          if let Err(error) = std::fs::write(&resolved_path, &autofixed.source) {
-            eprintln!("Error writing file '{}': {}", file_path, error);
+        let result = if fix || fix_unsafe {
+          let autofixed = linter.autofix(&source, &context, fix_unsafe);
+
+          if autofixed.source != source {
+            if let Err(error) = std::fs::write(&resolved_path, &autofixed.source) {
+              eprintln!("Error writing file '{}': {}", file_path, error);
+            }
+
+            refresh_partials(&partials, file_path, &source, &autofixed.source);
           }
 
-          refresh_partials(&partials, file_path, &source, &autofixed.source);
-        }
+          linter.lint(&autofixed.source, &context)
+        } else {
+          if show_fix_diff {
+            let preview = linter.autofix(&source, &context, fix_unsafe);
 
-        linter.lint(&autofixed.source, &context)
-      } else {
-        if show_fix_diff {
-          let preview = linter.autofix(&source, &context, fix_unsafe);
-
-          if preview.source != source {
-            print_fix_diff(&file_path, &source, &preview.source);
+            if preview.source != source {
+              print_fix_diff(&file_path, &source, &preview.source);
+            }
           }
-        }
 
-        linter.lint(&source, &context)
-      };
+          linter.lint(&source, &context)
+        };
 
-      Some(FileLintResult {
-        file_path: file_path.clone(),
-        offenses: result.offenses,
-        errors: result.errors,
-        warnings: result.warnings,
-        info: result.info,
-        hints: result.hints,
-        ignored: result.ignored,
-        would_be_ignored: result.would_be_ignored,
+        Some(FileLintResult {
+          file_path: file_path.clone(),
+          offenses: result.offenses,
+          errors: result.errors,
+          warnings: result.warnings,
+          info: result.info,
+          hints: result.hints,
+          ignored: result.ignored,
+          would_be_ignored: result.would_be_ignored,
+        })
       })
-    })
-    .collect();
+      .collect()
+  };
+
+  let file_results: Vec<FileLintResult> = match pool {
+    Ok(pool) => pool.install(lint_all),
+    Err(_) => lint_all(),
+  };
 
   let mut all_offenses = Vec::new();
   let mut total_errors = 0usize;
