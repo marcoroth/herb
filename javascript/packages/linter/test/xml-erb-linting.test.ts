@@ -28,7 +28,7 @@ describe("XML+ERB Linting", () => {
       </rss>
     ` + '\n'
 
-    const result = linter.lint(source, { fileName: "test.xml.erb" })
+    const result = linter.lint(source, { fileName: "test.xml.erb", frameworkConfigured: true })
     expect(result.offenses).toHaveLength(0)
   })
 

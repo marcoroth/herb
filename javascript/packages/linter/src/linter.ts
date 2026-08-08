@@ -485,7 +485,8 @@ export class Linter {
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
-      framework: context?.framework ?? this.config?.framework
+      framework: context?.framework ?? this.config?.framework,
+      frameworkConfigured: context?.frameworkConfigured ?? (context?.framework !== undefined || this.config?.hasExplicitFramework)
     }
 
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
@@ -603,7 +604,8 @@ export class Linter {
     context = {
       ...context,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
-      framework: context?.framework ?? this.config?.framework
+      framework: context?.framework ?? this.config?.framework,
+      frameworkConfigured: context?.frameworkConfigured ?? (context?.framework !== undefined || this.config?.hasExplicitFramework)
     }
 
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)

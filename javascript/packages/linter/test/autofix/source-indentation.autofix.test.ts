@@ -120,7 +120,7 @@ describe("source-indentation autofix", () => {
     })
 
     const linter = Linter.from(Herb, config)
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { frameworkConfigured: true })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)

@@ -254,6 +254,7 @@ export interface LintContext {
   ignoreDisableComments: boolean | undefined
   indentWidth: number | undefined
   framework: Framework | undefined
+  frameworkConfigured: boolean | undefined
   partials: PartialIndex | undefined
 }
 
@@ -267,6 +268,7 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   ignoreDisableComments: undefined,
   indentWidth: undefined,
   framework: undefined,
+  frameworkConfigured: undefined,
   partials: undefined
 } as const
 

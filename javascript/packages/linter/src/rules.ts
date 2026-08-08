@@ -72,6 +72,7 @@ import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
+import { HerbConfigFrameworkOptionRule } from "./rules/herb-config-framework-option.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
 import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-comment-no-duplicate-rules.js"
@@ -206,6 +207,7 @@ export const rules: RuleClass[] = [
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
 
+  HerbConfigFrameworkOptionRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentMissingRulesRule,
   HerbDisableCommentNoDuplicateRulesRule,

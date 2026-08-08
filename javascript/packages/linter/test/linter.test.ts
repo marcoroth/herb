@@ -50,7 +50,7 @@ describe("@herb-tools/linter", () => {
     test("returns correct error and warning counts", () => {
       const html = '<DIV><SPAN>Hello</SPAN></DIV>\n'
       const linter = new Linter(Herb)
-      const lintResult = linter.lint(html)
+      const lintResult = linter.lint(html, { frameworkConfigured: true })
 
       expect(lintResult.errors).toBe(4)
       expect(lintResult.warnings).toBe(0)
