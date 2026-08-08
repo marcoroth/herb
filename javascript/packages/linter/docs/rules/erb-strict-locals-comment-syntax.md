@@ -14,6 +14,27 @@ Additionally, Rails only supports keyword arguments in strict locals declaration
 
 This rule catches invalid comment forms and argument types early during development.
 
+## Autofix
+
+Most of these offenses are corrected by `--fix`. The rewrites are safe because the declaration they replace is one Rails rejects outright.
+
+| Before | After |
+| --- | --- |
+| `<%# locals() %>` | `<%# locals: () %>` |
+| `<%# local: (user:) %>` | `<%# locals: (user:) %>` |
+| `<%# locals (user:) %>` | `<%# locals: (user:) %>` |
+| `<%# locals:(user:) %>` | `<%# locals: (user:) %>` |
+| `<%# locals: %>` | `<%# locals: () %>` |
+| `<%# locals: user:, admin: false %>` | `<%# locals: (user:, admin: false) %>` |
+| `<%# locals: (user: %>` | `<%# locals: (user:) %>` |
+| `<% # locals: (user:) %>` | `<%# locals: (user:) %>` |
+| `<%# locals: (user) %>` | `<%# locals: (user:) %>` |
+| `<%# locals: (user:,) %>` | `<%# locals: (user:) %>` |
+
+A parameter list written without parentheses is wrapped in them, and any bare name in it becomes a required keyword argument, since that is the only form Rails accepts.
+
+Block arguments, splat arguments, and duplicate declarations are reported but not corrected. Each has more than one reasonable rewrite, so the choice is left to you.
+
 ## Examples
 
 ### ✅ Good
@@ -80,6 +101,12 @@ Empty `locals:` without parentheses:
 
 ```erb
 <%# locals: %>
+```
+
+Missing space after the colon:
+
+```erb
+<%# locals:(user:) %>
 ```
 
 Unbalanced parentheses:
