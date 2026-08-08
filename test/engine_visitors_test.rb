@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../lib/herb/engine"
+require_relative "../lib/herb/engine/debug_visitor"
 
 class EngineVisitorsTest < Minitest::Spec
   test "engine works without any visitors" do
@@ -51,7 +53,7 @@ class EngineVisitorsTest < Minitest::Spec
     assert_equal expected, engine.src
   end
 
-  test "debug visitor can still be used explicitly" do
+  test "debug visitor is passed through the visitors option" do
     html = "<div>Debug test</div>"
 
     debug_visitor = Herb::Engine::DebugVisitor.new(
@@ -61,7 +63,7 @@ class EngineVisitorsTest < Minitest::Spec
 
     visitors = [debug_visitor]
 
-    engine = Herb::Engine.new(html, visitors: visitors, debug: false)
+    engine = Herb::Engine.new(html, visitors: visitors)
 
     refute_nil engine.src
   end

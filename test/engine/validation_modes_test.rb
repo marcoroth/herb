@@ -1,10 +1,16 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
+require_relative "../../lib/herb/engine"
+require_relative "../../lib/herb/engine/debug_visitor"
 
 module Engine
   class ValidationModesTest < Minitest::Spec
     include SnapshotUtils
+
+    def debug_visitors
+      [Herb::Engine::DebugVisitor.new]
+    end
 
     before do
       @valid_template = "<div>Valid template</div>"
@@ -85,14 +91,14 @@ module Engine
     end
 
     test "validation modes work with debug mode" do
-      engine1 = assert_compiled_snapshot(@valid_template, validation_mode: :none, debug: true)
+      engine1 = assert_compiled_snapshot(@valid_template, validation_mode: :none, visitors: debug_visitors)
       assert_kind_of String, engine1.src
 
-      engine2 = assert_compiled_snapshot(@valid_template, validation_mode: :overlay, debug: true)
+      engine2 = assert_compiled_snapshot(@valid_template, validation_mode: :overlay, visitors: debug_visitors)
       assert_kind_of String, engine2.src
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, validation_mode: :raise, debug: true)
+        Herb::Engine.new(@invalid_security_template, validation_mode: :raise, visitors: debug_visitors)
       end
     end
 

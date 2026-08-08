@@ -23,6 +23,9 @@ module Herb
 
       def visit_erb_iteration_block_node: (untyped node) -> untyped
 
+      # : () -> String
+      def inspect: () -> String
+
       private
 
       def calculate_relative_path: () -> untyped
