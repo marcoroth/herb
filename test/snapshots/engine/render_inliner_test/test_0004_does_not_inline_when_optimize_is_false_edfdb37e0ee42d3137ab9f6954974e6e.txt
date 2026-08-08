@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderInlinerTest#test_0004_does not inline when optimize is false"
+input: "{source: \"<%= render \\\"shared/header\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: false, escape: false}}"
+---
+_buf = ::String.new; _buf << (render "shared/header").to_s;
+_buf.to_s

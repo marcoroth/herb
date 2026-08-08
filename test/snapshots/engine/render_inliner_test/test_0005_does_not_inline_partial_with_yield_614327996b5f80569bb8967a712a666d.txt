@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderInlinerTest#test_0005_does not inline partial with yield"
+input: "{source: \"<%= render \\\"shared/wrapper\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; _buf << (render "shared/wrapper").to_s;
+_buf.to_s

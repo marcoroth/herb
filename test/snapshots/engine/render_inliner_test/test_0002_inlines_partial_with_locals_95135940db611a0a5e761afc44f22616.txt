@@ -1,0 +1,7 @@
+---
+source: "Engine::RenderInlinerTest#test_0002_inlines partial with locals"
+input: "{source: \"<%= render partial: \\\"posts/card\\\", locals: { title: @post.title } %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; begin; ; title = (@post.title); ;; _buf << '<div>'.freeze; _buf << (title).to_s; _buf << '</div>
+'.freeze; ; end;;
+_buf.to_s

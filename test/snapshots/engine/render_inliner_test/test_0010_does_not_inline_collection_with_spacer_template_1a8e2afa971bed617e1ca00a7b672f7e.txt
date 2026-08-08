@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderInlinerTest#test_0010_does not inline collection with spacer_template"
+input: "{source: \"<%= render partial: \\\"posts/post\\\", collection: @posts, spacer_template: \\\"posts/spacer\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; _buf << (render partial: "posts/post", collection: @posts, spacer_template: "posts/spacer").to_s;
+_buf.to_s

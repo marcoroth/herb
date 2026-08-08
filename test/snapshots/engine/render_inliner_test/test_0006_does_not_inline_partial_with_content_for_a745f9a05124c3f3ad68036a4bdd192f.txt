@@ -1,0 +1,6 @@
+---
+source: "Engine::RenderInlinerTest#test_0006_does not inline partial with content_for"
+input: "{source: \"<%= render \\\"shared/sidebar\\\" %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", optimize: true, inline_render: true, escape: false}}"
+---
+_buf = ::String.new; _buf << (render "shared/sidebar").to_s;
+_buf.to_s
