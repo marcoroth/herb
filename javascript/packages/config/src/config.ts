@@ -96,6 +96,8 @@ export type FormatterConfig = {
 export type EngineConfig = Record<string, unknown>
 
 export type HerbConfigOptions = {
+  framework?: Framework
+  template_engine?: TemplateEngine
   files?: FilesConfig
   engine?: EngineConfig
   linter?: LinterConfig
@@ -107,8 +109,6 @@ export type TemplateEngine = z.infer<typeof TemplateEngineSchema>
 
 export type HerbConfig = HerbConfigOptions & {
   version: string
-  framework?: Framework
-  template_engine?: TemplateEngine
 }
 
 export type LoadOptions = {

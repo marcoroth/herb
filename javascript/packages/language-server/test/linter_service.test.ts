@@ -57,7 +57,7 @@ describe("LinterService", () => {
       const result = await linterService.lintDocument(textDocument)
 
       expect(result).toBeDefined()
-      expect(result.diagnostics).toEqual([])
+      expect(result.diagnostics.filter(diagnostic => diagnostic.code !== "herb-config-framework-option")).toEqual([])
     })
 
     test("handles undefined linter settings", async () => {

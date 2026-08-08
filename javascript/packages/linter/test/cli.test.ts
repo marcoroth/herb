@@ -333,6 +333,51 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("missing `framework` option", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("collapses to a single offense across a run", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+              herb-config-framework-option:
+                enabled: true
+        `)
+
+        const { output } = runLinter("*.html.erb", "--simple")
+
+        expect(output.match(/herb-config-framework-option/g)).toHaveLength(2)
+        expect(output).toContain("1 offense")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("reports the missing option per template", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              all:
+                enabled: false
+              herb-config-framework-option:
+                enabled: true
+        `)
+
+        const { output, exitCode } = runLinter("clean-file.html.erb", "--simple")
+
+        expect(output).toMatchSnapshot()
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
   describe("Excluded Files", () => {
     const { writeFileSync, unlinkSync } = require("fs")
     const configPath = "test/fixtures/.herb.yml"
@@ -340,6 +385,8 @@ describe("CLI Output Formatting", () => {
     test("warns and skips excluded file without --force", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             exclude:
               - "test-file-with-errors.html.erb"
@@ -358,6 +405,8 @@ describe("CLI Output Formatting", () => {
     test("processes excluded file with --force", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             exclude:
               - "test-file-with-errors.html.erb"
@@ -383,6 +432,8 @@ describe("CLI Output Formatting", () => {
         writeFileSync(`${subdir}/excluded.html.erb`, '<img>\n')
 
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             exclude:
               - "subdir/**/*.html.erb"
@@ -468,6 +519,8 @@ describe("CLI Output Formatting", () => {
     test("exits with error code when warnings are present with --fail-level warning flag", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -488,6 +541,8 @@ describe("CLI Output Formatting", () => {
     test("exits with success when no warnings are present with --fail-level warning flag", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -505,6 +560,8 @@ describe("CLI Output Formatting", () => {
     test("exits with error code when failLevel is set in config", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             failLevel: warning
             rules:
@@ -526,6 +583,8 @@ describe("CLI Output Formatting", () => {
     test("CLI flag overrides config setting", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             failLevel: error
             rules:
@@ -555,6 +614,8 @@ describe("CLI Output Formatting", () => {
     test("exits with success when warnings present but --fail-level not set", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -575,6 +636,8 @@ describe("CLI Output Formatting", () => {
     test("exits with error code when info diagnostics are present with --fail-level info flag", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -595,6 +658,8 @@ describe("CLI Output Formatting", () => {
     test("exits with success when info diagnostics present but --fail-level is warning", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -615,6 +680,8 @@ describe("CLI Output Formatting", () => {
     test("exits with error code when hint diagnostics are present with --fail-level hint flag", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -635,6 +702,8 @@ describe("CLI Output Formatting", () => {
     test("exits with success when hint diagnostics present but --fail-level is info", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -660,6 +729,8 @@ describe("CLI Output Formatting", () => {
     const OFFENSE_MESSAGE = "Missing required `alt` attribute"
 
     const hintConfig = dedent`
+      framework: ruby
+
       linter:
         rules:
           html-img-require-alt:
@@ -697,6 +768,8 @@ describe("CLI Output Formatting", () => {
     test("counts the hidden offenses and suggests the level that reveals them", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -729,6 +802,8 @@ describe("CLI Output Formatting", () => {
     test("reads logLevel from the config file", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             logLevel: warning
             rules:
@@ -750,6 +825,8 @@ describe("CLI Output Formatting", () => {
     test("prefers the CLI flag over the config file", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             logLevel: warning
             rules:
@@ -805,6 +882,8 @@ describe("CLI Output Formatting", () => {
 
     describe("with --only", () => {
       const quietConfig = dedent`
+        framework: ruby
+
         linter:
           logLevel: warning
           rules:
@@ -830,6 +909,8 @@ describe("CLI Output Formatting", () => {
       test("lowers the log level to the lowest severity of the run", () => {
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               logLevel: error
               rules:
@@ -892,6 +973,8 @@ describe("CLI Output Formatting", () => {
 
     describe("with --all-rules", () => {
       const quietConfig = dedent`
+        framework: ruby
+
         linter:
           logLevel: warning
           rules:
@@ -936,6 +1019,8 @@ describe("CLI Output Formatting", () => {
     const configPath = "test/fixtures/.herb.yml"
 
     const noisyConfig = dedent`
+      framework: ruby
+
       linter:
         rules:
           html-anchor-require-href:
@@ -953,6 +1038,8 @@ describe("CLI Output Formatting", () => {
     `
 
     const quietConfig = dedent`
+      framework: ruby
+
       linter:
         rules:
           html-no-empty-headings:
@@ -1041,6 +1128,8 @@ describe("CLI Output Formatting", () => {
     const configPath = "test/fixtures/.herb.yml"
 
     const mixedSeverityConfig = dedent`
+      framework: ruby
+
       linter:
         rules:
           html-img-require-alt:
@@ -1134,6 +1223,8 @@ describe("CLI Output Formatting", () => {
     test("runs rules that are disabled in .herb.yml", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-img-require-alt:
@@ -1155,6 +1246,8 @@ describe("CLI Output Formatting", () => {
     test("ignores rule-level exclude patterns from .herb.yml", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-tag-name-lowercase:
@@ -1228,6 +1321,8 @@ describe("CLI Output Formatting", () => {
 
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-tag-name-lowercase:
@@ -1340,6 +1435,7 @@ describe("CLI Output Formatting", () => {
 
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
           version: 0.4.0
         `)
 
@@ -1435,6 +1531,8 @@ describe("CLI Output Formatting", () => {
     test("runs rules that are disabled in .herb.yml", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-tag-name-lowercase:
@@ -1458,6 +1556,7 @@ describe("CLI Output Formatting", () => {
 
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
           version: 0.4.0
         `)
 
@@ -1484,6 +1583,8 @@ describe("CLI Output Formatting", () => {
     test("ignores rule-level exclude patterns from .herb.yml", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               html-tag-name-lowercase:
@@ -1548,6 +1649,8 @@ describe("CLI Output Formatting", () => {
     test("`all: enabled: false` only runs the rules that are opted back in", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               all:
@@ -1577,6 +1680,8 @@ describe("CLI Output Formatting", () => {
         expect(withoutAll.output).not.toContain("a11y-disabled-attribute")
 
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               all:
@@ -1603,6 +1708,7 @@ describe("CLI Output Formatting", () => {
         ` + "\n")
 
         writeFileSync(configPath, dedent`
+          framework: ruby
           version: 0.4.0
         `)
 
@@ -1610,6 +1716,7 @@ describe("CLI Output Formatting", () => {
         expect(withoutAll.output).toContain("New rules available")
 
         writeFileSync(configPath, dedent`
+          framework: ruby
           version: 0.4.0
           linter:
             rules:
@@ -1630,6 +1737,8 @@ describe("CLI Output Formatting", () => {
     test("--only takes precedence over a disabled `all`", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               all:
@@ -1648,6 +1757,8 @@ describe("CLI Output Formatting", () => {
     test("--all-rules takes precedence over a disabled `all`", () => {
       try {
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               all:
@@ -1668,6 +1779,8 @@ describe("CLI Output Formatting", () => {
         const withoutAll = JSON.parse(runLinter("parallel", "--jobs", "4", "--json").output)
 
         writeFileSync(configPath, dedent`
+          framework: ruby
+
           linter:
             rules:
               all:
@@ -1721,6 +1834,8 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1741,6 +1856,8 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1761,6 +1878,8 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1783,6 +1902,8 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1805,6 +1926,7 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
             version: 0.4.0
           `)
 
@@ -1814,6 +1936,7 @@ describe("CLI Output Formatting", () => {
           expect(withVersion.output).toContain("New rules available")
 
           writeFileSync(configPath, dedent`
+            framework: ruby
             version: 0.4.0
             linter:
               rules:
@@ -1836,6 +1959,7 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
             version: 0.4.0
             linter:
               rules:
@@ -1856,6 +1980,8 @@ describe("CLI Output Formatting", () => {
       test("`0 enabled` explains how to enable rules and links to the docs", () => {
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1879,6 +2005,8 @@ describe("CLI Output Formatting", () => {
       test("the hint stays out of the way as soon as a single rule is enabled", () => {
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1902,6 +2030,8 @@ describe("CLI Output Formatting", () => {
       test("the hint does not leak into `--json` output", () => {
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1921,6 +2051,8 @@ describe("CLI Output Formatting", () => {
       test("`--only` replaces the counts from a disabled `all`", () => {
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:
@@ -1941,6 +2073,8 @@ describe("CLI Output Formatting", () => {
 
         try {
           writeFileSync(configPath, dedent`
+            framework: ruby
+
             linter:
               rules:
                 all:

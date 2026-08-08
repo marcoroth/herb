@@ -87,6 +87,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Herb
 
+- [`herb-config-framework-option`](./herb-config-framework-option.md) - Require the `framework` option to be set in `.herb.yml`.
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
 - [`herb-disable-comment-missing-rules`](./herb-disable-comment-missing-rules.md) - Require rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-duplicate-rules`](./herb-disable-comment-no-duplicate-rules.md) - Disallow duplicate rule names in `herb:disable` comments.
