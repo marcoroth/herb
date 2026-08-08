@@ -76,6 +76,7 @@ export * from "./erb-right-trim.js"
 export * from "./erb-strict-locals-comment-syntax.js"
 export * from "./erb-strict-locals-required.js"
 
+export * from "./herb-config-framework-option.js"
 export * from "./herb-disable-comment-malformed.js"
 export * from "./herb-disable-comment-missing-rules.js"
 export * from "./herb-disable-comment-no-duplicate-rules.js"
