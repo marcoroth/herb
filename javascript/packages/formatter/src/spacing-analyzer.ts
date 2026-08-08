@@ -1,6 +1,6 @@
 import { Node, HTMLTextNode, HTMLElementNode, HTMLDoctypeNode, ERBContentNode, WhitespaceNode, XMLDeclarationNode } from "@herb-tools/core"
 import { isNode, getTagName, isERBNode, isERBOutputNode, isERBCommentNode, isCommentNode, isERBControlFlowNode } from "@herb-tools/core"
-import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode } from "./format-helpers.js"
+import { findPreviousMeaningfulSibling, findNextMeaningfulSibling, isBlockLevelNode, isContentPreserving, isNonWhitespaceNode, isTextLevelContainer } from "./format-helpers.js"
 
 import { INLINE_ELEMENTS, SPACEABLE_CONTAINERS } from "./format-helpers.js"
 
@@ -51,6 +51,8 @@ export class SpacingAnalyzer {
     const hasMixedContent = siblings.some(child => isNode(child, HTMLTextNode) && child.content.trim() !== "")
 
     if (hasMixedContent) return false
+
+    if (parentElement && isTextLevelContainer(getTagName(parentElement))) return false
 
     const isCurrentComment = isCommentNode(currentNode)
     const isPreviousComment = previousNode ? isCommentNode(previousNode) : false
