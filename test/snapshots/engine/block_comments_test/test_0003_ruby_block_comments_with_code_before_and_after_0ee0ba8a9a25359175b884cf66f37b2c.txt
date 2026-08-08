@@ -4,10 +4,12 @@ input: "{source: \"<% x = 1 %>\\n<%\\n=begin\\nMulti-line comment\\nspanning mul
 ---
 _buf = ::String.new; x = 1 
 
+
 =begin
 Multi-line comment
 spanning multiple lines
-=end 
+=end
+
 
  y = 2 
  _buf << '<div>'.freeze; _buf << (x + y).to_s; _buf << '</div>
