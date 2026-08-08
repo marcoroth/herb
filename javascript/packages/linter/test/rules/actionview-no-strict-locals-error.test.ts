@@ -1,7 +1,9 @@
 import dedent from "dedent"
-import { describe, test } from "vitest"
+import { beforeAll, describe, expect, test } from "vitest"
 
 import { PartialIndex } from "@herb-tools/core"
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "../../src/linter.js"
 import { ActionViewNoStrictLocalsErrorRule } from "../../src/rules/actionview-no-strict-locals-error.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
@@ -224,6 +226,48 @@ describe("actionview-no-strict-locals-error", () => {
       expectError("The partial `users/card` requires the `user:` local to be passed. Rails raises an `ActionView::StrictLocalsError` when a required local is missing, so add it to this `render` call.")
 
       assertOffenses(`<%= render "users/card" %>`, absolute)
+    })
+  })
+
+  describe("declaration frames", () => {
+    const located = new PartialIndex("app/views", new Map([
+      ["users/card", { ...declaration("app/views/users/_card.html.erb", [{ name: "user", required: true }]), location: { line: 1, column: 0 } }],
+      ["users/plain", declaration("app/views/users/_plain.html.erb", [{ name: "user", required: true }])],
+    ]))
+
+    const locatedContext = { fileName: "app/views/posts/index.html.erb", partials: located }
+
+    beforeAll(async () => {
+      await Herb.load()
+    })
+
+    function offensesFor(source: string) {
+      const linter = new Linter(Herb, [ActionViewNoStrictLocalsErrorRule])
+
+      return linter.lint(source, locatedContext).offenses
+    }
+
+    test("points a missing local at the declaration it violates", () => {
+      const [offense] = offensesFor(`<%= render "users/card" %>`)
+
+      expect(offense.renderedFrom?.frames).toEqual([
+        { file: "app/views/users/_card.html.erb", ancestors: [], via: "declaration", location: { line: 1, column: 0 } },
+      ])
+    })
+
+    test("points an undeclared local at the declaration too", () => {
+      const [offense] = offensesFor(`<%= render "users/card", user: @user, extra: 1 %>`)
+
+      expect(offense.message).toContain("does not declare the `extra:` local")
+      expect(offense.renderedFrom?.frames[0].file).toBe("app/views/users/_card.html.erb")
+      expect(offense.renderedFrom?.frames[0].via).toBe("declaration")
+    })
+
+    test("omits the frame when the declaration has no recorded location", () => {
+      const [offense] = offensesFor(`<%= render "users/plain" %>`)
+
+      expect(offense.message).toContain("requires the `user:` local")
+      expect(offense.renderedFrom).toBeUndefined()
     })
   })
 })

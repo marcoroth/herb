@@ -22,6 +22,7 @@ import {
 
 import type {
   AncestorChain,
+  PartialDeclaration,
   AncestorVerdict,
   ERBOpenTagNode,
   HTMLAttributeNameNode,
@@ -97,6 +98,31 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    */
   protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
     this.offenses.push(this.createOffense(message, location, autofixContext, severity, tags))
+  }
+
+  /**
+   * Like `addOffense`, but records the frames that explain the offense, so a
+   * formatter can show why it applies. A chain with no frames is dropped, since
+   * there would be nothing to render.
+   */
+  protected addOffenseWithChain(message: string, location: Location, chain: AncestorChain | null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+    const offense = this.createOffense(message, location, autofixContext, severity, tags)
+
+    this.offenses.push(chain && chain.frames.length > 0 ? { ...offense, renderedFrom: chain } : offense)
+  }
+
+  /**
+   * A single frame pointing at a partial's `locals:` declaration, for offenses
+   * that are an argument about a declaration in another file.
+   */
+  protected declarationChain(declaration: PartialDeclaration): AncestorChain | null {
+    if (!declaration.location) return null
+
+    return {
+      tags: [],
+      occurrences: 1,
+      frames: [{ file: declaration.file, ancestors: [], via: "declaration", location: declaration.location }],
+    }
   }
 
   /**
@@ -378,9 +404,7 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * whole document and a `content_for` body both are.
    */
   protected addOffenseWithCallChain(message: string, location: Location, chain: AncestorChain | null = this.renderedContext.chains[0] ?? null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
-    const offense = this.createOffense(message, location, autofixContext, severity, tags)
-
-    this.offenses.push(chain && chain.frames.length > 0 ? { ...offense, renderedFrom: chain } : offense)
+    this.addOffenseWithChain(message, location, chain, autofixContext, severity, tags)
   }
 
   /**

@@ -66,14 +66,8 @@ describe("CLI call chain output", () => {
 
     const { output, exitCode } = runLinterIn(root, "--only", "html-head-only-elements")
 
+    expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
-    expect(output).toContain("Element `<style>` must be placed inside the `<head>` tag.")
-
-    expect(output).toContain("rendered from app/views/posts/index.html.erb:2:2")
-    expect(output).toContain(`<%= render "posts/card" %>`)
-
-    expect(output).toContain("rendered into app/views/layouts/application.html.erb:7:10")
-    expect(output).toContain("<main><%= yield %></main>")
   })
 
   test("labels every path in the output project relative", () => {
@@ -85,21 +79,8 @@ describe("CLI call chain output", () => {
 
     const { output } = runLinterIn(root, "--only", "html-head-only-elements")
 
-    expect(output).toContain("app/views/posts/_card.html.erb:2:2")
+    expect(output).toMatchSnapshot()
     expect(output).not.toContain(root)
-  })
-
-  test("names the elements each call site nests the file inside", () => {
-    const root = project({
-      "app/views/layouts/application.html.erb": LAYOUT,
-      "app/views/posts/index.html.erb": `<section>\n  <%= render "posts/card" %>\n</section>\n`,
-      "app/views/posts/_card.html.erb": `<div>\n  <style>.card {}</style>\n</div>\n`,
-    })
-
-    const { output } = runLinterIn(root, "--only", "html-head-only-elements")
-
-    expect(output).toContain("<section>")
-    expect(output).toContain("<html> › <body> › <main>")
   })
 
   test("prints no call chain for an offense the file explains on its own", () => {
@@ -109,9 +90,7 @@ describe("CLI call chain output", () => {
 
     const { output } = runLinterIn(root, "--only", "html-head-only-elements")
 
-    expect(output).toContain("Element `<style>` must be placed inside the `<head>` tag.")
-    expect(output).not.toContain("rendered from")
-    expect(output).not.toContain("rendered into")
+    expect(output).toMatchSnapshot()
   })
 
   test("reports the offending call site when only one call site nests the file", () => {
@@ -124,11 +103,9 @@ describe("CLI call chain output", () => {
 
     const { output } = runLinterIn(root, "--only", "html-no-nested-links")
 
-    expect(output).toContain("At least one call site renders this file inside an `<a>` element.")
-    expect(output).toContain("rendered from app/views/posts/show.html.erb:2:2")
+    expect(output).toMatchSnapshot()
     expect(output).not.toContain("rendered from app/views/posts/index.html.erb")
   })
-
 
   test("reports a partial rendered into both the head and the body", () => {
     const root = project({
@@ -139,10 +116,44 @@ describe("CLI call chain output", () => {
 
     const { output } = runLinterIn(root, "--only", "html-head-only-elements")
 
-    expect(output).toContain("At least one call site renders this file inside the `<body>`.")
-
-    // The chain has to name the body path, not the innocent <head> call site.
-    expect(output).toContain("rendered from app/views/posts/index.html.erb:3:2")
+    expect(output).toMatchSnapshot()
     expect(output).not.toContain("rendered from app/views/layouts/application.html.erb:4")
+  })
+
+  test("points a missing strict local at the declaration it violates", () => {
+    const root = project({
+      "app/views/layouts/application.html.erb": LAYOUT,
+      "app/views/posts/index.html.erb": `<h1>Posts</h1>\n\n<section class="list">\n  <%= render "posts/card" %>\n</section>\n`,
+      "app/views/posts/_card.html.erb": `<%# locals: (title:) %>\n<h2><%= title %></h2>\n`,
+    })
+
+    const { output } = runLinterIn(root, "--only", "actionview-no-strict-locals-error")
+
+    expect(output).toMatchSnapshot()
+    expect(output).not.toContain("rendered into")
+  })
+
+  test("points an undeclared strict local at the declaration too", () => {
+    const root = project({
+      "app/views/layouts/application.html.erb": LAYOUT,
+      "app/views/posts/index.html.erb": `<%= render "posts/card", title: "Hi", extra: true %>\n`,
+      "app/views/posts/_card.html.erb": `<%# locals: (title:) %>\n<h2><%= title %></h2>\n`,
+    })
+
+    const { output } = runLinterIn(root, "--only", "actionview-no-strict-locals-error")
+
+    expect(output).toMatchSnapshot()
+  })
+
+  test("prints no frame for a partial without a strict locals declaration", () => {
+    const root = project({
+      "app/views/layouts/application.html.erb": LAYOUT,
+      "app/views/posts/index.html.erb": `<%= render "posts/card" %>\n`,
+      "app/views/posts/_card.html.erb": `<h2>Card</h2>\n`,
+    })
+
+    const { output } = runLinterIn(root, "--only", "actionview-no-strict-locals-error")
+
+    expect(output).toMatchSnapshot()
   })
 })

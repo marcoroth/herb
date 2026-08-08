@@ -45,9 +45,10 @@ class ActionViewNoStrictLocalsErrorVisitor extends BaseRuleVisitor {
 
     const names = missing.map(local => `\`${local.name}:\``)
 
-    this.addOffense(
+    this.addOffenseWithChain(
       `The partial \`${partialName}\` requires the ${this.list(names)} local${missing.length === 1 ? "" : "s"} to be passed. Rails raises an \`ActionView::StrictLocalsError\` when a required local is missing, so add ${missing.length === 1 ? "it" : "them"} to this \`render\` call.`,
       node.keywords!.partial!.location,
+      this.declarationChain(declaration),
     )
   }
 
@@ -61,9 +62,10 @@ class ActionViewNoStrictLocalsErrorVisitor extends BaseRuleVisitor {
 
       if (declared.has(name)) continue
 
-      this.addOffense(
+      this.addOffenseWithChain(
         `The partial \`${partialName}\` does not declare the \`${name}:\` local. Rails raises an \`ActionView::StrictLocalsError\` when a caller passes an undeclared local, so remove it from this \`render\` call, or add it to the partial's \`<%# locals: () %>\` declaration.`,
         local.name!.location,
+        this.declarationChain(declaration),
       )
     }
   }

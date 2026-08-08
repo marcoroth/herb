@@ -1,6 +1,6 @@
 import type { StrictLocal } from "./action-view-partial-index.js"
 
-export type CallSiteKind = "render" | "layout"
+export type CallSiteKind = "render" | "layout" | "declaration"
 
 export interface CallSiteLocation {
   line: number
@@ -47,10 +47,11 @@ export interface SerializedPartialCallerIndex {
 }
 
 export const MAX_ANCESTOR_CHAINS = 32
-export const EMPTY_CHAIN: AncestorChain = Object.freeze({ tags: Object.freeze([]) as string[], frames: Object.freeze([]) as CallFrame[], occurrences: 1 })
 
-const UNRESOLVED: PartialContext = Object.freeze({ chains: Object.freeze([]) as AncestorChain[], resolved: false })
-const DOCUMENT_ROOT: PartialContext = Object.freeze({ chains: Object.freeze([EMPTY_CHAIN]) as AncestorChain[], resolved: true })
+export const EMPTY_CHAIN: AncestorChain = Object.freeze({ tags: [], frames: [], occurrences: 1 })
+
+const UNRESOLVED: PartialContext = Object.freeze({ chains: [], resolved: false })
+const DOCUMENT_ROOT: PartialContext = Object.freeze({ chains: [EMPTY_CHAIN], resolved: true })
 
 export class PartialCallerIndex {
   readonly unresolvedRenders: number

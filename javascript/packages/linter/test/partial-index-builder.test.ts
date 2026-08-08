@@ -92,6 +92,7 @@ describe("buildPartialIndex", () => {
       hasDeclaration: true,
       hasKeywordRest: false,
       locals: [{ name: "user", required: true }, { name: "size", required: false }],
+      location: { line: 1, column: 0 },
     })
   })
 
@@ -159,6 +160,26 @@ describe("buildPartialIndex", () => {
     expect(index.size).toBe(0)
   })
 })
+
+  test("records where the strict locals declaration sits", async () => {
+    const root = project({
+      "app/views/users/_card.html.erb": `\n<%# locals: (user:) %>\n<h1>hi</h1>\n`,
+    })
+
+    const index = await buildPartialIndex(Herb, root)
+
+    expect(index.lookup("users/card", "app/views/users/index.html.erb")?.location).toEqual({ line: 2, column: 0 })
+  })
+
+  test("leaves the location unset for a partial without a declaration", async () => {
+    const root = project({
+      "app/views/users/_card.html.erb": `<h1>hi</h1>\n`,
+    })
+
+    const index = await buildPartialIndex(Herb, root)
+
+    expect(index.lookup("users/card", "app/views/users/index.html.erb")?.location).toBeUndefined()
+  })
 
 describe("findViewRoot", () => {
   test("prefers app/views when it holds partials", async () => {
