@@ -18,18 +18,18 @@ This rule catches invalid comment forms and argument types early during developm
 
 Most of these offenses are corrected by `--fix`. The rewrites are safe because the declaration they replace is one Rails rejects outright.
 
-| Before | After |
-| --- | --- |
-| `<%# locals() %>` | `<%# locals: () %>` |
-| `<%# local: (user:) %>` | `<%# locals: (user:) %>` |
-| `<%# locals (user:) %>` | `<%# locals: (user:) %>` |
-| `<%# locals:(user:) %>` | `<%# locals: (user:) %>` |
-| `<%# locals: %>` | `<%# locals: () %>` |
+| Before                               | After                                  |
+|--------------------------------------|----------------------------------------|
+| `<%# locals() %>`                    | `<%# locals: () %>`                    |
+| `<%# local: (user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals (user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals:(user:) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals: %>`                     | `<%# locals: () %>`                    |
 | `<%# locals: user:, admin: false %>` | `<%# locals: (user:, admin: false) %>` |
-| `<%# locals: (user: %>` | `<%# locals: (user:) %>` |
-| `<% # locals: (user:) %>` | `<%# locals: (user:) %>` |
-| `<%# locals: (user) %>` | `<%# locals: (user:) %>` |
-| `<%# locals: (user:,) %>` | `<%# locals: (user:) %>` |
+| `<%# locals: (user: %>`              | `<%# locals: (user:) %>`               |
+| `<% # locals: (user:) %>`            | `<%# locals: (user:) %>`               |
+| `<%# locals: (user) %>`              | `<%# locals: (user:) %>`               |
+| `<%# locals: (user:,) %>`            | `<%# locals: (user:) %>`               |
 
 A parameter list written without parentheses is wrapped in them, and any bare name in it becomes a required keyword argument, since that is the only form Rails accepts.
 
