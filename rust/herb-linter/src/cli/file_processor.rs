@@ -269,12 +269,12 @@ pub(crate) fn lint_files(
 
   let autofixable_count = all_offenses
     .iter()
-    .filter(|processed| linter.is_rule_autocorrectable(&processed.offense.rule))
+    .filter(|processed| linter.fixability_for(&processed.offense).autocorrectable)
     .count();
 
   let unsafe_autofixable_count = all_offenses
     .iter()
-    .filter(|processed| linter.is_rule_unsafe_autocorrectable(&processed.offense.rule))
+    .filter(|processed| linter.fixability_for(&processed.offense).unsafe_autocorrectable)
     .count();
 
   let rules_skipped_by_version: Vec<(String, String)> = linter

@@ -108,16 +108,8 @@ impl Linter {
       .count()
   }
 
-  pub fn fixability_for(&self, rule_name: &str) -> crate::fixability::Fixability {
-    crate::fixability::fixability_for(self.find_rule(rule_name))
-  }
-
-  pub fn is_rule_autocorrectable(&self, rule_name: &str) -> bool {
-    self.fixability_for(rule_name).autocorrectable
-  }
-
-  pub fn is_rule_unsafe_autocorrectable(&self, rule_name: &str) -> bool {
-    self.fixability_for(rule_name).unsafe_autocorrectable
+  pub fn fixability_for(&self, offense: &Offense) -> crate::fixability::Fixability {
+    crate::fixability::fixability_for(offense, self.find_rule(&offense.rule))
   }
 
   pub fn rule_names(&self) -> Vec<&'static str> {
