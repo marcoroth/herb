@@ -263,6 +263,7 @@ describe("html-head-only-elements", () => {
   })
 
   test("works with ERB templates in body", () => {
+    expectError("Element `<link>` must be placed inside the `<head>` tag.")
     expectError("Element `<title>` must be placed inside the `<head>` tag.")
 
     assertOffenses(dedent`
