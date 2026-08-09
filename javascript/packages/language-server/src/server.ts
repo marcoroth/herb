@@ -90,6 +90,7 @@ export class Server {
         result.capabilities.workspace = {
           workspaceFolders: {
             supported: true,
+            changeNotifications: true,
           },
         }
       }
@@ -103,8 +104,14 @@ export class Server {
       }
 
       if (this.service.settings.hasWorkspaceFolderCapability) {
-        this.connection.workspace.onDidChangeWorkspaceFolders((_event) => {
-          this.connection.console.log("Workspace folder change event received.")
+        this.connection.workspace.onDidChangeWorkspaceFolders(async (event) => {
+          this.service.settings.updateWorkspaceFolders(event)
+
+          const dropped = this.service.workspaces.prune()
+
+          this.connection.console.log(`[Workspace] Folders changed, dropped ${dropped.length} project(s)`)
+
+          await this.service.diagnostics.refreshAllDocuments()
         })
       }
 
@@ -160,12 +167,12 @@ export class Server {
         } else if (isCustomRuleChange || isCustomRewriterChange) {
           if (isCustomRuleChange) {
             this.connection.console.log(`[Linter] Custom rule changed: ${event.uri}`)
-            this.service.linterService.rebuildLinter()
+            for (const workspace of this.service.workspaces.all()) workspace.linterService.rebuildLinter()
           }
 
           if (isCustomRewriterChange) {
             this.connection.console.log(`[Rewriter] Custom rewriter changed: ${event.uri}`)
-            await this.service.formattingService.refreshConfig(this.service.config)
+            for (const workspace of this.service.workspaces.all()) await workspace.formattingService.refreshConfig(workspace.config)
           }
 
           const documents = this.service.documentService.getAll()
@@ -187,7 +194,7 @@ export class Server {
     })
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
-      return this.service.formattingService.formatRange(params)
+      return this.service.workspaces.get(params.textDocument.uri)?.formattingService.formatRange(params) ?? []
     })
 
     this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
@@ -211,7 +218,7 @@ export class Server {
 
       if (!document) return null
 
-      return this.service.completionService.getCompletions(document, params.position)
+      return this.service.workspaces.get(params.textDocument.uri)?.completionService.getCompletions(document, params.position) ?? null
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {
@@ -219,19 +226,22 @@ export class Server {
 
       if (!document) return []
 
+      const workspace = this.service.workspaces.get(params.textDocument.uri)
+      if (!workspace) return []
+
       const parseResult = this.service.parserService.parseDocument(document)
       if (parseResult.diagnostics.length > 0) return []
 
       const diagnostics = params.context.diagnostics
       const documentText = document.getText()
 
-      const linterDisableCodeActions = this.service.codeActionService.createCodeActions(
+      const linterDisableCodeActions = workspace.codeActionService.createCodeActions(
         params.textDocument.uri,
         diagnostics,
         documentText
       )
 
-      const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+      const autofixCodeActions = workspace.codeActionService.autofixCodeActions(params, document)
       const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
       const extractCodeActions = this.service.extractCodeActionService.getCodeActions(document, params.range)
 
@@ -263,7 +273,7 @@ export class Server {
 
       if (!document) return []
 
-      return this.service.referencesService.getReferences(document, params.position, params.context.includeDeclaration)
+      return this.service.workspaces.get(params.textDocument.uri)?.referencesService.getReferences(document, params.position, params.context.includeDeclaration) ?? []
     })
 
     this.connection.onDocumentSymbol((params: DocumentSymbolParams) => {
@@ -300,8 +310,16 @@ export class Server {
   }
 
   private async updatePartialIndex(event: FileEvent): Promise<boolean> {
-    const partials = this.service.partialIndexService
-    const callers = this.service.partialCallerIndexService
+    const workspace = this.service.workspaces.get(event.uri)
+
+    if (!workspace) {
+      this.service.diagnostics.clear(event.uri)
+
+      return false
+    }
+
+    const partials = workspace.partialIndexService
+    const callers = workspace.partialCallerIndexService
 
     if (event.type === FileChangeType.Deleted) {
       const stoppedCalling = callers.remove(event.uri)

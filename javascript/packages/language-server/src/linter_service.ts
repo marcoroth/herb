@@ -35,6 +35,7 @@ export class LinterService {
   private readonly partialIndexService: PartialIndexService
   private readonly partialCallerIndexService?: PartialCallerIndexService
   private readonly source = "Herb Linter "
+  private config?: Config
   private linter?: Linter
   private allRules: RuleClass[] = rules
   private customRulesLoaded = false
@@ -48,6 +49,10 @@ export class LinterService {
     this.project = project
     this.partialIndexService = partialIndexService
     this.partialCallerIndexService = partialCallerIndexService
+  }
+
+  setConfig(config: Config): void {
+    this.config = config
   }
 
   /**
@@ -134,7 +139,7 @@ export class LinterService {
 
     if (isConfigDocument(filePath)) return false
 
-    const config = this.settings.projectConfig
+    const config = this.config
     if (!config) return true
 
     const hasConfigFile = Config.exists(config.projectPath)
@@ -193,7 +198,7 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const projectConfig = this.settings.projectConfig
+    const projectConfig = this.config
 
     if (!this.linter) {
       await this.loadCustomRules()

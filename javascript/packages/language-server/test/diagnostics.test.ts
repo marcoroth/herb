@@ -6,6 +6,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Settings } from "../src/settings"
 import { Diagnostics } from "../src/diagnostics"
 import { ParserService } from "../src/parser_service"
+import { Workspaces } from "../src/workspaces"
 
 import type { Connection, InitializeParams, PublishDiagnosticsParams } from "vscode-languageserver/node"
 import type { ConfigService } from "../src/config_service"
@@ -46,13 +47,19 @@ describe("Diagnostics", () => {
     const linterService = { lintDocument: async () => ({ diagnostics: [] }) } as unknown as LinterService
     const configService = { validateDocument: async () => [] } as unknown as ConfigService
 
+    const settings = new Settings(params, connection)
+
+    const workspaces = {
+      ensure: async (uri: string) => settings.includes(uri) ? { linterService, configService } : null
+    } as unknown as Workspaces
+
     const diagnostics = new Diagnostics(
       connection,
       documentService,
       parserService,
-      linterService,
       configService,
-      new Settings(params, connection),
+      settings,
+      workspaces,
     )
 
     return { diagnostics, published }
