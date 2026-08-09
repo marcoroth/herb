@@ -52,6 +52,8 @@ import {
   isNonWhitespaceNode,
   shouldAppendToLastLine,
   shouldPreserveUserSpacing,
+  countBlankLines,
+  normalizeBlankLineCount,
 } from "./format-helpers.js"
 
 import {
@@ -827,7 +829,12 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const child = body[index]
 
       if (shouldPreserveUserSpacing(child, body, index)) {
-        this.push("")
+        const blankLines = isNode(child, HTMLTextNode) ? normalizeBlankLineCount(countBlankLines(child.content)) : 1
+
+        for (let blankLine = 0; blankLine < blankLines; blankLine++) {
+          this.push("")
+        }
+
         hasHandledSpacing = true
         continue
       }
@@ -877,9 +884,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (!run) return null
 
     if (lastMeaningfulNode && !hasHandledSpacing) {
-      const hasBlankLineBefore = this.spacingAnalyzer.hasBlankLineBetween(body, index)
+      const blankLinesBefore = normalizeBlankLineCount(this.spacingAnalyzer.blankLinesBetween(body, index))
 
-      if (hasBlankLineBefore) {
+      for (let blankLine = 0; blankLine < blankLinesBefore; blankLine++) {
         this.push("")
       }
     }
@@ -887,17 +894,17 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.textFlow.visitTextFlowChildren(run.nodes)
 
     const lastRunNode = run.nodes[run.nodes.length - 1]
-    const hasBlankLineInTrailing = isNode(lastRunNode, HTMLTextNode) && lastRunNode.content.includes('\n\n')
-    const hasBlankLineAfter = hasBlankLineInTrailing || this.spacingAnalyzer.hasBlankLineBetween(body, run.endIndex)
+    const blankLinesInTrailing = isNode(lastRunNode, HTMLTextNode) ? countBlankLines(lastRunNode.content) : 0
+    const blankLinesAfter = normalizeBlankLineCount(Math.max(blankLinesInTrailing, this.spacingAnalyzer.blankLinesBetween(body, run.endIndex)))
 
-    if (hasBlankLineAfter) {
+    for (let blankLine = 0; blankLine < blankLinesAfter; blankLine++) {
       this.push("")
     }
 
     return {
       newIndex: run.endIndex - 1,
       lastMeaningfulNode: run.nodes[run.nodes.length - 1],
-      hasHandledSpacing: hasBlankLineAfter,
+      hasHandledSpacing: blankLinesAfter > 0,
     }
   }
 
