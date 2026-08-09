@@ -37,6 +37,8 @@
   "dependencies": {
     "@herb-tools/config": "0.10.3",
     "@herb-tools/core": "0.10.3",
+    "@herb-tools/highlighter": "0.10.3",
+    "@herb-tools/node-wasm": "0.10.3",
     "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "@ruby/prism": "^1.9.0",
