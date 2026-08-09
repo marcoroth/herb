@@ -119,18 +119,30 @@ module Herb
       nil
     end
 
-    def ensure_installed(&block)
+    #: (*String gems) -> void
+    def ensure_installed(*gems)
+      missing = gems.reject do |name|
+        require name
+        true
+      rescue LoadError
+        false
+      end
+
+      return if missing.empty?
+
       require "bundler/inline"
 
       verbose = $VERBOSE
       $VERBOSE = nil
 
-      gemfile(true, quiet: true) do # steep:ignore
-        source "https://rubygems.org" # steep:ignore
-        instance_eval(&block) # steep:ignore
+      begin
+        gemfile(true, quiet: true) do # steep:ignore
+          source "https://rubygems.org" # steep:ignore
+          missing.each { |name| gem name }
+        end
+      ensure
+        $VERBOSE = verbose
       end
-    ensure
-      $VERBOSE = verbose
     end
   end
 end
