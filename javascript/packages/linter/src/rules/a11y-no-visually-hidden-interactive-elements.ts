@@ -1,31 +1,32 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "./rule-utils.js"
 
-import { getTagLocalName, getStaticAttributeValue } from "@herb-tools/core"
+import { isKeyboardFocusableElement } from "./rule-utils.js"
+import { getStaticAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
 
-// TODO: we might want to extract this to config/*.yml later
-const INTERACTIVE_ELEMENTS = ["a", "button", "summary", "select", "option", "textarea"]
-
 // TODO: make these classes configurable once https://github.com/marcoroth/herb/issues/1204 lands
 const VISUALLY_HIDDEN_CLASSES = ["sr-only"]
-const VISUALLY_HIDDEN_UNDO_CLASSES = ["not-sr-only", "focus:not-sr-only", "focus-within:not-sr-only"]
+const VISUALLY_SHOWN_ON_FOCUS = /(?:^|:)(?:group-)?focus(?:-visible|-within)?:not-sr-only$/
 
-class NoVisuallyHiddenInteractiveElementsVisitor extends BaseRuleVisitor {
+const isUndoClass = (className: string): boolean =>
+  className === "not-sr-only" || VISUALLY_SHOWN_ON_FOCUS.test(className)
+
+class NoVisuallyHiddenInteractiveElementsVisitor extends ElementStackVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagLocalName(node)
 
-    if (tagName && INTERACTIVE_ELEMENTS.includes(tagName)) {
+    if (tagName !== "input" && isKeyboardFocusableElement(node)) {
       const classValue = getStaticAttributeValue(node, "class")
 
       if (classValue) {
         const classes = classValue.split(/\s+/)
 
-        if (VISUALLY_HIDDEN_CLASSES.some((cls) => classes.includes(cls)) && !VISUALLY_HIDDEN_UNDO_CLASSES.some((cls) => classes.includes(cls))) {
-          this.addOffense(
-            "Avoid visually hiding interactive elements. Visually hiding interactive elements can be confusing to sighted keyboard users as it appears their focus has been lost when they navigate to the hidden element.",
+        if (VISUALLY_HIDDEN_CLASSES.some((cls) => classes.includes(cls)) && !classes.some(isUndoClass)) {
+          this.addOffenseWithCallChain(
+            `The keyboard-focusable \`<${tagName}>\` element uses \`sr-only\` without a focus reveal class, so sighted keyboard users may think focus was lost. Remove \`sr-only\` or add a class such as \`focus:not-sr-only\` to reveal the element when it receives focus.`,
             node.tag_name!.location,
           )
         }
@@ -54,7 +55,10 @@ export class A11yNoVisuallyHiddenInteractiveElementsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoVisuallyHiddenInteractiveElementsVisitor(this.ruleName, context)
+    const visitor = new NoVisuallyHiddenInteractiveElementsVisitor(
+      this.ruleName,
+      context,
+    )
 
     visitor.visit(result.value)
 

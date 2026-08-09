@@ -17,6 +17,7 @@ import {
   forEachAttribute,
   getAttribute,
   findAttributeByName,
+  hasAttribute,
   isERBOpenTagNode,
 } from "@herb-tools/core"
 
@@ -47,6 +48,44 @@ export enum ControlFlowType {
 }
 
 const DETACHED_BLOCK_HELPERS = new Set(["content_for", "javascript_tag"])
+
+
+const NATIVELY_KEYBOARD_FOCUSABLE_ELEMENTS = new Set([
+  "button",
+  "input",
+  "select",
+  "summary",
+  "textarea",
+])
+
+const DISABLEABLE_ELEMENTS = new Set(["button", "input", "select", "textarea"])
+
+/**
+ * Whether an HTML element can be reached through sequential keyboard navigation.
+ *
+ * This deliberately excludes elements with a negative `tabindex`, even though
+ * scripts can still focus them, because callers use it to detect keyboard-focus
+ * accessibility problems.
+ */
+export function isKeyboardFocusableElement(node: HTMLElementNode | HTMLOpenTagNode): boolean {
+  const tagName = getTagLocalName(node)
+  if (!tagName) return false
+
+  if (DISABLEABLE_ELEMENTS.has(tagName) && hasAttribute(node, "disabled")) return false
+  if (tagName === "input" && getStaticAttributeValue(node, "type")?.toLowerCase() === "hidden") return false
+
+  const tabindexAttribute = getAttribute(node, "tabindex")
+  const tabindexValue = getStaticAttributeValue(tabindexAttribute)
+  const tabindex = tabindexValue === null || tabindexValue.trim() === "" ? null : Number.parseInt(tabindexValue, 10)
+
+  if (tabindexAttribute && tabindex !== null && !Number.isNaN(tabindex)) {
+    return tabindex >= 0
+  }
+
+  if (tagName === "a") return hasAttribute(node, "href")
+
+  return NATIVELY_KEYBOARD_FOCUSABLE_ELEMENTS.has(tagName)
+}
 
 /**
  * Whether an ERB block opens with a call to one of the given helpers.
