@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "highlighter_bridge"
+
 module Herb
   class Engine
     class ValidationErrorOverlay
@@ -17,11 +19,13 @@ module Herb
         "info" => "#3b82f6",
       }.freeze
 
-      def initialize(source, error, filename: nil)
+      def initialize(source, error, filename: nil, overlay_messages: "both", bridge: nil)
         @source = source
         @error = error
         @filename = filename || "unknown"
         @lines = source.lines
+        @overlay_messages = overlay_messages
+        @bridge = bridge || HighlighterBridge.new
       end
 
       def generate_fragment
@@ -56,6 +60,30 @@ module Herb
       private
 
       def generate_code_snippet(line_num, col_num)
+        fragment = bridge_fragment
+
+        if fragment
+          <<~HTML
+            <div class="herb-code-snippet">
+              #{fragment}
+            </div>
+          HTML
+        else
+          generate_fallback_code_snippet(line_num, col_num)
+        end
+      end
+
+      def bridge_fragment
+        @bridge.html_fragments(
+          source: @source,
+          errors: [@error],
+          filename: @filename,
+          context_lines: CONTEXT_LINES,
+          messages: @overlay_messages
+        ).first
+      end
+
+      def generate_fallback_code_snippet(line_num, col_num)
         start_line = [line_num - CONTEXT_LINES, 1].max
         end_line = [line_num + CONTEXT_LINES, @lines.length].min
 
@@ -64,13 +92,13 @@ module Herb
           line_content = @lines[line - 1] || ""
           is_error_line = line == line_num
 
-          highlighted_content = syntax_highlight(line_content.chomp)
+          escaped_content = escape_html(line_content.chomp)
 
           if is_error_line
             code_lines << <<~HTML
               <div class="herb-code-line herb-error-line">
                 <div class="herb-line-number">#{line}</div>
-                <div class="herb-line-content">#{highlighted_content}</div>
+                <div class="herb-line-content">#{escaped_content}</div>
               </div>
             HTML
 
@@ -84,7 +112,7 @@ module Herb
             code_lines << <<~HTML
               <div class="herb-code-line">
                 <div class="herb-line-number">#{line}</div>
-                <div class="herb-line-content">#{highlighted_content}</div>
+                <div class="herb-line-content">#{escaped_content}</div>
               </div>
             HTML
           end
@@ -104,65 +132,6 @@ module Herb
             #{escape_html(@error[:suggestion])}
           </div>
         HTML
-      end
-
-      def syntax_highlight(code)
-        lex_result = ::Herb.lex(code)
-        return escape_html(code) if lex_result.errors.any?
-
-        tokens = lex_result.value
-        highlight_with_tokens(tokens, code)
-      rescue StandardError
-        escape_html(code)
-      end
-
-      def highlight_with_tokens(tokens, code)
-        return escape_html(code) if tokens.nil? || tokens.empty?
-
-        highlighted = ""
-        last_end = 0
-
-        tokens.each do |token|
-          char_offset = get_character_offset(code, token.location.start.line, token.location.start.column)
-          char_end = get_character_offset(code, token.location.end_point.line, token.location.end_point.column)
-
-          highlighted += escape_html(code[last_end...char_offset]) if char_offset > last_end
-
-          token_text = code[char_offset...char_end]
-          highlighted += apply_token_style(token, token_text)
-          last_end = char_end
-        end
-
-        highlighted += escape_html(code[last_end..]) if last_end < code.length
-
-        highlighted
-      end
-
-      def get_character_offset(_content, line, column)
-        return column - 1 if line == 1
-
-        column - 1
-      end
-
-      def apply_token_style(token, text)
-        escaped_text = escape_html(text)
-
-        case token.type
-        when "TOKEN_ERB_START", "TOKEN_ERB_END"
-          "<span class=\"herb-erb\">#{escaped_text}</span>"
-        when "TOKEN_ERB_CONTENT"
-          "<span class=\"herb-erb-content\">#{escaped_text}</span>"
-        when "TOKEN_HTML_TAG_START", "TOKEN_HTML_TAG_START_CLOSE", "TOKEN_HTML_TAG_END", "TOKEN_HTML_TAG_SELF_CLOSE", "TOKEN_IDENTIFIER"
-          "<span class=\"herb-tag\">#{escaped_text}</span>"
-        when "TOKEN_HTML_ATTRIBUTE_NAME"
-          "<span class=\"herb-attr\">#{escaped_text}</span>"
-        when "TOKEN_QUOTE", "TOKEN_HTML_ATTRIBUTE_VALUE"
-          "<span class=\"herb-value\">#{escaped_text}</span>"
-        when "TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END", "TOKEN_HTML_COMMENT_CONTENT"
-          "<span class=\"herb-comment\">#{escaped_text}</span>"
-        else
-          escaped_text
-        end
       end
 
       def escape_html(text)

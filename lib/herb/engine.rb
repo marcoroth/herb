@@ -7,6 +7,7 @@ require "pathname"
 
 require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
+require_relative "engine/highlighter_bridge"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"
 require_relative "engine/parser_error_overlay"
@@ -81,6 +82,11 @@ module Herb
       @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
+      @overlay_messages = properties.fetch(:overlay_messages, "both").to_s
+      @highlighter_bridge = HighlighterBridge.new(
+        enabled: properties.fetch(:highlighter, true),
+        highlighter_path: properties[:highlighter_path]
+      )
 
       if @optimize && !self.class.optimize_warning_issued
         self.class.optimize_warning_issued = true
@@ -102,6 +108,11 @@ module Herb
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
+      end
+
+      unless ["header", "both"].include?(@overlay_messages)
+        raise ArgumentError,
+              "overlay_messages must be one of \"header\" or \"both\", got #{properties[:overlay_messages].inspect}"
       end
 
       @freeze = properties[:freeze]
@@ -418,7 +429,7 @@ module Herb
     def handle_parser_errors(parser_errors, input, _ast)
       case @validation_mode
       when :raise
-        formatter = ErrorFormatter.new(input, parser_errors, filename: @filename)
+        formatter = ErrorFormatter.new(input, parser_errors, filename: @filename, bridge: @highlighter_bridge)
         message = formatter.format_all
 
         raise CompilationError, "\n#{message}"
@@ -448,7 +459,7 @@ module Herb
         )
       end
 
-      formatter = ErrorFormatter.new(input, errors, filename: @filename)
+      formatter = ErrorFormatter.new(input, errors, filename: @filename, bridge: @highlighter_bridge)
       message = formatter.format_all
       raise CompilationError, "\n#{message}"
     end
@@ -463,7 +474,13 @@ module Herb
         column = location&.start&.column || 0
 
         source = input || @src
-        overlay_generator = ValidationErrorOverlay.new(source, error, filename: @relative_file_path)
+        overlay_generator = ValidationErrorOverlay.new(
+          source,
+          error,
+          filename: @relative_file_path,
+          overlay_messages: @overlay_messages,
+          bridge: @highlighter_bridge
+        )
         html_fragment = overlay_generator.generate_fragment
 
         escaped_message = escape_attr(error[:message])
@@ -506,7 +523,9 @@ module Herb
       overlay_generator = ParserErrorOverlay.new(
         input,
         parser_errors,
-        filename: @relative_file_path
+        filename: @relative_file_path,
+        overlay_messages: @overlay_messages,
+        bridge: @highlighter_bridge
       )
 
       error_html = overlay_generator.generate_html

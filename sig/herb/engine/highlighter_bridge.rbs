@@ -1,0 +1,73 @@
+# Generated from lib/herb/engine/highlighter_bridge.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class HighlighterBridge
+      FRAGMENT_SEPARATOR: ::String
+
+      MONOREPO_BIN: untyped
+
+      def self.stylesheet_cache: () -> Hash[String, String]?
+
+      def self.stylesheet_cache=: (Hash[String, String]?) -> Hash[String, String]?
+
+      attr_accessor stylesheet_cache: untyped
+
+      # : () -> bool
+      def self.node_available?: () -> bool
+
+      # : (?enabled: bool, ?highlighter_path: String?) -> void
+      def initialize: (?enabled: bool, ?highlighter_path: String?) -> void
+
+      # : () -> bool
+      def available?: () -> bool
+
+      # : () -> String?
+      def path: () -> String?
+
+      # : (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer) -> String?
+      def ansi_diagnostics: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer) -> String?
+
+      # : (source: String, line: Integer, filename: untyped, ?context_lines: Integer) -> String?
+      def ansi_focus: (source: String, line: Integer, filename: untyped, ?context_lines: Integer) -> String?
+
+      # : (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String) -> Array[String]
+      def html_fragments: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String) -> Array[String]
+
+      # : (?String theme) -> String?
+      def stylesheet: (?String theme) -> String?
+
+      # : () -> String?
+      def markers_script: () -> String?
+
+      # : (Array[untyped] errors) -> Array[Hash[Symbol, untyped]]
+      def diagnostics_for: (Array[untyped] errors) -> Array[Hash[Symbol, untyped]]
+
+      private
+
+      # : () -> String?
+      def discover_path: () -> String?
+
+      # : (String name) -> String?
+      def find_in_path: (String name) -> String?
+
+      # : (String source, ?Array[untyped]? errors) { (untyped, untyped) -> untyped } -> untyped
+      def with_tempfiles: (String source, ?Array[untyped]? errors) { (untyped, untyped) -> untyped } -> untyped
+
+      # : (Array[untyped] args) -> String?
+      def run: (Array[untyped] args) -> String?
+
+      # : (String? output, String tmp_path, untyped display_name) -> String?
+      def relabel_ansi: (String? output, String tmp_path, untyped display_name) -> String?
+
+      # : (String? output, String tmp_path, untyped display_name) -> String?
+      def relabel_html: (String? output, String tmp_path, untyped display_name) -> String?
+
+      # : (untyped error) -> Hash[Symbol, untyped]
+      def diagnostic_for: (untyped error) -> Hash[Symbol, untyped]
+
+      # : (untyped text) -> String
+      def escape_html: (untyped text) -> String
+    end
+  end
+end

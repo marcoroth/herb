@@ -9,7 +9,7 @@ module Herb
 
       SEVERITY_COLORS: untyped
 
-      def initialize: (untyped source, untyped error, ?filename: untyped) -> untyped
+      def initialize: (untyped source, untyped error, ?filename: untyped, ?overlay_messages: untyped, ?bridge: untyped) -> untyped
 
       def generate_fragment: () -> untyped
 
@@ -17,15 +17,11 @@ module Herb
 
       def generate_code_snippet: (untyped line_num, untyped col_num) -> untyped
 
+      def bridge_fragment: () -> untyped
+
+      def generate_fallback_code_snippet: (untyped line_num, untyped col_num) -> untyped
+
       def generate_suggestion_html: () -> untyped
-
-      def syntax_highlight: (untyped code) -> untyped
-
-      def highlight_with_tokens: (untyped tokens, untyped code) -> untyped
-
-      def get_character_offset: (untyped _content, untyped line, untyped column) -> untyped
-
-      def apply_token_style: (untyped token, untyped text) -> untyped
 
       def escape_html: (untyped text) -> untyped
 

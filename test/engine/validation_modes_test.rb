@@ -14,9 +14,12 @@ module Engine
 
     around do |test|
       @fixed_time = Time.utc(2025, 1, 1, 12, 0, 0)
+      disabled_bridge = Herb::Engine::HighlighterBridge.new(enabled: false)
 
-      Time.stub :now, @fixed_time do
-        test.call
+      Herb::Engine::HighlighterBridge.stub :new, disabled_bridge do
+        Time.stub :now, @fixed_time do
+          test.call
+        end
       end
     end
 

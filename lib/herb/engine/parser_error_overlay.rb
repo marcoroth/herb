@@ -2,6 +2,8 @@
 
 require "digest"
 
+require_relative "highlighter_bridge"
+
 module Herb
   class Engine
     class ParserErrorOverlay
@@ -19,13 +21,15 @@ module Herb
         Herb::Errors::MissingAttributeValueError
       ].freeze
 
-      def initialize(source, errors, filename: nil)
+      def initialize(source, errors, filename: nil, overlay_messages: "both", bridge: nil)
         @source = source
         @errors = errors.sort_by { |error|
           [ERROR_CLASS_PRIORITRY.index(error.class) || -1, error.location.start.line, error.location.start.column]
         }
         @filename = filename || "unknown"
         @lines = source.lines
+        @overlay_messages = overlay_messages
+        @bridge = bridge || HighlighterBridge.new
       end
 
       def generate_html
@@ -37,9 +41,15 @@ module Herb
         primary_error = @errors.first
         error_message = primary_error.respond_to?(:message) ? primary_error.message : primary_error.to_s
 
+        error_sections = generate_error_sections
+        highlighter_styles = bridge_fragments.any? ? @bridge.stylesheet : nil
+        hydration_script = bridge_fragments.any? ? @bridge.markers_script : nil
+
         <<~HTML
           <div class="herb-parser-error-overlay">
             <style>
+              #{highlighter_styles}
+
               .herb-parser-error-overlay * {
                 margin: 0;
                 padding: 0;
@@ -296,20 +306,6 @@ module Herb
                 margin-bottom: 4px;
               }
 
-              /* Syntax highlighting */
-              .herb-parser-error-overlay .herb-keyword { color: #c678dd; }
-              .herb-parser-error-overlay .herb-string { color: #98c379; }
-              .herb-parser-error-overlay .herb-comment { color: #5c6370; font-style: italic; }
-              .herb-parser-error-overlay .herb-tag { color: #e06c75; }
-              .herb-parser-error-overlay .herb-attr { color: #d19a66; }
-              .herb-parser-error-overlay .herb-value { color: #98c379; }
-              .herb-parser-error-overlay .herb-erb {
-                color: #61dafb;
-                background: rgba(97, 218, 251, 0.1);
-                padding: 2px 4px;
-                border-radius: 3px;
-              }
-
               @media (max-width: 768px) {
                 .herb-parser-error-overlay {
                   padding: 10px;
@@ -347,7 +343,7 @@ module Herb
               </div>
 
               <div class="herb-error-content">
-                #{generate_error_sections}
+                #{error_sections}
               </div>
             </div>
 
@@ -426,6 +422,7 @@ module Herb
                 }
               })();
             </script>
+            #{"<script>\n#{hydration_script}\n</script>" if hydration_script}
           </div>
         HTML
       end
@@ -465,7 +462,7 @@ module Herb
                         "Error #{index + 1}: #{error_class} - #{@filename}:#{line_num}:#{col_num}"
                       end
 
-        code_lines = generate_code_lines(error, line_num, col_num)
+        code_lines = bridge_fragments[index] || generate_fallback_code_lines(error, line_num, col_num)
 
         <<~HTML
           <div class="herb-code-section">
@@ -483,27 +480,34 @@ module Herb
         HTML
       end
 
-      def generate_code_lines(error, line_num, col_num)
+      def bridge_fragments
+        @bridge_fragments ||= @bridge.html_fragments(
+          source: @source,
+          errors: @errors,
+          filename: @filename,
+          context_lines: CONTEXT_LINES,
+          messages: @overlay_messages
+        )
+      end
+
+      def generate_fallback_code_lines(error, line_num, col_num)
         start_line = [line_num - CONTEXT_LINES, 1].max
         end_line = [line_num + CONTEXT_LINES, @lines.length].min
 
         lines_html = [] #: Array[String]
 
         (start_line..end_line).each do |i|
-          line = @lines[i - 1] || ""
-          line_str = line.chomp
-          is_error_line = i == line_num
-
-          line_class = is_error_line ? "herb-code-line herb-error-line" : "herb-code-line"
+          line_str = (@lines[i - 1] || "").chomp
+          line_class = i == line_num ? "herb-code-line herb-error-line" : "herb-code-line"
 
           lines_html << <<~HTML
             <div class="#{line_class}">
               <div class="herb-line-number">#{i}</div>
-              <div class="herb-line-content">#{syntax_highlight(line_str)}</div>
+              <div class="herb-line-content">#{escape_html(line_str)}</div>
             </div>
           HTML
 
-          next unless is_error_line && col_num.positive?
+          next unless i == line_num && col_num.positive?
 
           pointer_text = "^#{"~" * [line_str.length - col_num, 0].max}"
           hint = get_inline_hint(error)
@@ -546,155 +550,6 @@ module Herb
             </div>
           </div>
         HTML
-      end
-
-      def syntax_highlight(code)
-        lex_result = ::Herb.lex(code)
-
-        return escape_html(code) if lex_result.errors.any?
-
-        tokens = lex_result.value
-        highlight_with_tokens(tokens, code)
-      rescue StandardError
-        escape_html(code)
-      end
-
-      def highlight_with_tokens(tokens, code)
-        return escape_html(code) if tokens.empty?
-
-        highlighted = ""
-        last_end = 0
-
-        state = {
-          in_tag: false,
-          in_comment: false,
-          tag_name: "",
-          is_closing_tag: false,
-          expecting_attribute_name: false,
-          expecting_attribute_value: false,
-          in_quotes: false,
-        }
-
-        tokens.each_with_index do |token, i|
-          next_token = tokens[i + 1]
-          prev_token = tokens[i - 1]
-
-          start_offset = get_character_offset(code, token.location.start.line, token.location.start.column)
-          end_offset = get_character_offset(code, token.location.end.line, token.location.end.column)
-
-          highlighted += escape_html(code[last_end...start_offset]) if start_offset > last_end
-
-          token_text = code[start_offset...end_offset]
-
-          update_highlighting_state(state, token, token_text, next_token, prev_token)
-
-          css_class = get_token_css_class(state, token, token_text)
-
-          highlighted += if css_class
-                           "<span class=\"herb-#{css_class}\">#{escape_html(token_text)}</span>"
-                         else
-                           escape_html(token_text)
-                         end
-
-          last_end = end_offset
-        end
-
-        highlighted += escape_html(code[last_end..]) if last_end < code.length
-
-        highlighted
-      end
-
-      def get_character_offset(code, line, column)
-        lines = code.lines
-        offset = 0
-
-        (1...line).each do |line_num|
-          offset += lines[line_num - 1]&.length || 0
-        end
-
-        offset + column
-      end
-
-      def update_highlighting_state(state, token, token_text, _next_token, _prev_token)
-        case token.type
-        when "TOKEN_HTML_TAG_START"
-          state[:in_tag] = true
-          state[:is_closing_tag] = false
-          state[:expecting_attribute_name] = false
-          state[:expecting_attribute_value] = false
-
-        when "TOKEN_HTML_TAG_START_CLOSE"
-          state[:in_tag] = true
-          state[:is_closing_tag] = true
-          state[:expecting_attribute_name] = false
-          state[:expecting_attribute_value] = false
-
-        when "TOKEN_HTML_TAG_END", "TOKEN_HTML_TAG_SELF_CLOSE"
-          state[:in_tag] = false
-          state[:tag_name] = ""
-          state[:is_closing_tag] = false
-          state[:expecting_attribute_name] = false
-          state[:expecting_attribute_value] = false
-
-        when "TOKEN_IDENTIFIER"
-          if state[:in_tag] && state[:tag_name].empty?
-            state[:tag_name] = token_text
-            state[:expecting_attribute_name] = !state[:is_closing_tag]
-          elsif state[:in_tag] && state[:expecting_attribute_name]
-            state[:expecting_attribute_name] = false
-            state[:expecting_attribute_value] = true
-          end
-
-        when "TOKEN_EQUALS"
-          state[:expecting_attribute_value] = true if state[:in_tag]
-
-        when "TOKEN_QUOTE"
-          if state[:in_tag]
-            state[:in_quotes] = !state[:in_quotes]
-            unless state[:in_quotes]
-              state[:expecting_attribute_name] = true
-              state[:expecting_attribute_value] = false
-            end
-          end
-
-        when "TOKEN_WHITESPACE"
-          if state[:in_tag] && !state[:in_quotes] && !state[:tag_name].empty?
-            state[:expecting_attribute_name] = true
-            state[:expecting_attribute_value] = false
-          end
-
-        when "TOKEN_HTML_COMMENT_START"
-          state[:in_comment] = true
-
-        when "TOKEN_HTML_COMMENT_END"
-          state[:in_comment] = false
-        end
-      end
-
-      def get_token_css_class(state, token, token_text)
-        if state[:in_comment] && !["TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END", "TOKEN_ERB_START",
-                                   "TOKEN_ERB_CONTENT", "TOKEN_ERB_END"].include?(token.type)
-          return "comment"
-        end
-
-        case token.type
-        when "TOKEN_ERB_START", "TOKEN_ERB_CONTENT", "TOKEN_ERB_END"
-          "erb"
-        when "TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END"
-          "comment"
-        when "TOKEN_HTML_TAG_START", "TOKEN_HTML_TAG_END", "TOKEN_HTML_TAG_START_CLOSE", "TOKEN_HTML_TAG_SELF_CLOSE"
-          "tag"
-        when "TOKEN_IDENTIFIER"
-          if state[:in_tag] && token_text == state[:tag_name]
-            "tag"
-          elsif state[:in_tag] && (state[:expecting_attribute_name] || state[:expecting_attribute_value])
-            state[:in_quotes] ? "value" : "attr"
-          end
-        when "TOKEN_QUOTE"
-          state[:in_tag] ? "value" : nil
-        when "TOKEN_STRING"
-          state[:in_tag] ? "value" : "string"
-        end
       end
 
       def get_error_suggestion(error)

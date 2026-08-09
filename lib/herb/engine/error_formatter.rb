@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require "English"
-require "tempfile"
+require_relative "highlighter_bridge"
 
 module Herb
   class Engine
@@ -13,14 +12,16 @@ module Herb
         @errors = errors
         @filename = options[:filename] || "[source]"
         @lines = source.lines
-        @use_highlighter = options.fetch(:use_highlighter, true)
-        @highlighter_path = options[:highlighter_path] || find_highlighter_path
+        @bridge = options[:bridge] || HighlighterBridge.new(
+          enabled: options.fetch(:use_highlighter, true),
+          highlighter_path: options[:highlighter_path]
+        )
       end
 
       def format_all
         return "No errors found" if @errors.empty?
 
-        if @use_highlighter && @highlighter_path && can_use_highlighter?
+        if @bridge.available?
           format_all_with_highlighter
         else
           format_all_without_highlighter
@@ -32,48 +33,49 @@ module Herb
         output << "HTML+ERB Compilation Errors:\n"
         output << ("=" * 60) << "\n\n"
 
-        require "tempfile"
-        temp_file = Tempfile.new(["herb_error", ".html.erb"])
-        temp_file.write(@source)
-        temp_file.close
+        highlighted_output = @bridge.ansi_diagnostics(
+          source: @source,
+          errors: @errors,
+          filename: @filename,
+          context_lines: CONTEXT_LINES
+        )
 
-        begin
-          highlighted_output = run_highlighter_with_diagnostics(temp_file.path, CONTEXT_LINES)
+        if highlighted_output
+          output << highlighted_output
+        else
+          errors_by_line = @errors.group_by do |error|
+            location = error.is_a?(Hash) ? error[:location] : error.location
+            location&.start&.line
+          end.compact
 
-          if highlighted_output
-            output << highlighted_output
-          else
-            errors_by_line = @errors.group_by do |error|
-              location = error.is_a?(Hash) ? error[:location] : error.location
-              location&.start&.line
-            end.compact
+          errors_by_line.each_with_index do |(line_num, line_errors), group_index|
+            output << "Error Group ##{group_index + 1} (Line #{line_num}):\n"
+            output << ("-" * 40) << "\n"
 
-            errors_by_line.each_with_index do |(line_num, line_errors), group_index|
-              output << "Error Group ##{group_index + 1} (Line #{line_num}):\n"
-              output << ("-" * 40) << "\n"
-
-              line_errors.each_with_index do |error, index|
-                output << format_error_header(error, index + 1)
-              end
-
-              output << "\nSource Context:\n"
-
-              highlighted_basic = run_highlighter(temp_file.path, line_num, CONTEXT_LINES)
-
-              output << (highlighted_basic || format_source_context_basic(line_errors.first))
-
-              output << "\n"
-              output << format_suggestions(line_errors)
-              output << "\n" unless group_index == errors_by_line.length - 1
+            line_errors.each_with_index do |error, index|
+              output << format_error_header(error, index + 1)
             end
-          end
 
-          output << "\n" << ("=" * 60) << "\n"
-          output << "Total errors: #{@errors.length}\n"
-          output << "Compilation failed. Please fix the errors above.\n"
-        ensure
-          temp_file.unlink
+            output << "\nSource Context:\n"
+
+            highlighted_basic = @bridge.ansi_focus(
+              source: @source,
+              line: line_num,
+              filename: @filename,
+              context_lines: CONTEXT_LINES
+            )
+
+            output << (highlighted_basic || format_source_context_basic(line_errors.first))
+
+            output << "\n"
+            output << format_suggestions(line_errors)
+            output << "\n" unless group_index == errors_by_line.length - 1
+          end
         end
+
+        output << "\n" << ("=" * 60) << "\n"
+        output << "Total errors: #{@errors.length}\n"
+        output << "Compilation failed. Please fix the errors above.\n"
 
         output
       end
@@ -246,112 +248,6 @@ module Herb
           "← Missing attribute value"
         else
           ""
-        end
-      end
-
-      def find_highlighter_path
-        possible_paths = [
-          File.expand_path("../../../javascript/packages/highlighter/bin/herb-highlight", __dir__ || "."),
-          "herb-highlight" # In PATH
-        ]
-
-        possible_paths.find { |path| File.executable?(path) || system("which #{path} > /dev/null 2>&1") }
-      end
-
-      def can_use_highlighter?
-        return false unless @highlighter_path
-        return false unless File.exist?(@highlighter_path) || system("which #{@highlighter_path} > /dev/null 2>&1")
-
-        system("node --version > /dev/null 2>&1")
-      end
-
-      def run_highlighter(file_path, line_num, context_lines)
-        return nil unless @highlighter_path && can_use_highlighter?
-
-        cmd = "#{@highlighter_path} --focus #{line_num} --context-lines #{context_lines} \"#{file_path}\""
-
-        begin
-          output = `#{cmd} 2>/dev/null`
-          status = $CHILD_STATUS
-          return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
-        rescue StandardError
-          # Silently fall back to basic formatting if highlighter fails
-        end
-
-        nil
-      end
-
-      def run_highlighter_with_diagnostics(file_path, context_lines = 2)
-        return nil unless @highlighter_path && can_use_highlighter?
-
-        diagnostics = @errors.map { |error| herb_error_to_diagnostic(error) }
-
-        require "tempfile"
-        require "json"
-
-        diagnostics_file = Tempfile.new(["herb_diagnostics", ".json"])
-        diagnostics_file.write(JSON.pretty_generate(diagnostics))
-        diagnostics_file.close
-
-        begin
-          cmd = "#{@highlighter_path} --diagnostics \"#{diagnostics_file.path}\" --split-diagnostics --context-lines #{context_lines} \"#{file_path}\""
-
-          output = `#{cmd} 2>/dev/null`
-          status = $CHILD_STATUS
-
-          return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
-        rescue StandardError
-          # Silently fall back to basic formatting if highlighter fails
-        ensure
-          diagnostics_file.unlink
-        end
-
-        nil
-      end
-
-      def herb_error_to_diagnostic(error)
-        if error.is_a?(Hash)
-          location = error[:location]
-          {
-            message: error[:message],
-            location: {
-              start: {
-                line: location&.start&.line || 1,
-                column: location&.start&.column || 1,
-              },
-              end: {
-                line: location&.end&.line || location&.start&.line || 1,
-                column: location&.end&.column || location&.start&.column || 1,
-              },
-            },
-            severity: error[:severity] || "error",
-            code: error[:code] || "UnknownError",
-            source: error[:source] || "herb-validator",
-          }
-        else
-          severity = case error
-                     when Herb::Errors::RubyParseError
-                       error.level == "error" ? "error" : "warning"
-                     else
-                       "error"
-                     end
-
-          {
-            message: error.message,
-            location: {
-              start: {
-                line: error.location&.start&.line || 1,
-                column: error.location&.start&.column || 1,
-              },
-              end: {
-                line: error.location&.end&.line || error.location&.start&.line || 1,
-                column: error.location&.end&.column || error.location&.start&.column || 1,
-              },
-            },
-            severity: severity,
-            code: error.class.name.split("::").last.gsub(/Error$/, ""),
-            source: "herb-compiler",
-          }
         end
       end
 

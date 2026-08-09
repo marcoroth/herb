@@ -9,6 +9,7 @@ target :lib do
   library "did_you_mean"
   library "digest"
   library "json"
+  library "open3"
   library "pathname"
   library "tempfile"
   library "yaml"
