@@ -22,12 +22,6 @@
       "options": {
         "script": "preview"
       }
-    },
-    "serve": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "serve"
-      }
     }
   },
   "tags": []
