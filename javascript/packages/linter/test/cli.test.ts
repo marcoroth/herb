@@ -278,6 +278,61 @@ describe("CLI Output Formatting", () => {
     expect(exitCode) .toBe(1)
   })
 
+  describe("Unsupported Files", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const scriptPath = "test/fixtures/unsupported-script.js"
+
+    test("warns and skips a file that doesn't match the configured file patterns", () => {
+      try {
+        writeFileSync(scriptPath, "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n")
+
+        const { output, exitCode } = runLinter("unsupported-script.js")
+
+        expect(output).toContain("match the configured file patterns")
+        expect(output).toContain("unsupported-script.js")
+        expect(output).toContain("Use --force to lint it anyway")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(scriptPath) } catch {}
+      }
+    })
+
+    test("lints a file outside the configured file patterns with --force", () => {
+      try {
+        writeFileSync(scriptPath, "<img>\n")
+
+        const { output } = runLinter("unsupported-script.js", "--force")
+
+        expect(output).not.toContain("match the configured file patterns")
+        expect(output).toContain("unsupported-script.js")
+      } finally {
+        try { unlinkSync(scriptPath) } catch {}
+      }
+    })
+
+    test("lints a file added to the include patterns in .herb.yml", () => {
+      const configPath = "test/fixtures/.herb.yml"
+      const xmlPath = "test/fixtures/feed.xml.erb"
+
+      try {
+        writeFileSync(configPath, dedent`
+          files:
+            include:
+              - "**/*.xml.erb"
+        `)
+        writeFileSync(xmlPath, '<?xml version="1.0"?>\n<root><img></root>\n')
+
+        const { output } = runLinter("feed.xml.erb")
+
+        expect(output).not.toContain("match the configured file patterns")
+        expect(output).toContain("feed.xml.erb")
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+        try { unlinkSync(xmlPath) } catch {}
+      }
+    })
+  })
+
   describe("Excluded Files", () => {
     const { writeFileSync, unlinkSync } = require("fs")
     const configPath = "test/fixtures/.herb.yml"

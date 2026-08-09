@@ -68,7 +68,7 @@ export class CLI {
       herb-format templates/                      # Format all configured files within the given directory
       herb-format "templates/**/*.html.erb"       # Format all \`**/*.html.erb\` files in the templates/ directory
       herb-format "**/*.html.erb"                 # Format all \`*.html.erb\` files using glob pattern
-      herb-format "**/*.xml.erb"                  # Format all \`*.xml.erb\` files using glob pattern
+      herb-format --force "**/*.xml.erb"          # Format files not covered by the configured patterns
 
       herb-format --check                         # Check if all configured files are formatted
       herb-format --check templates/              # Check if all configured files in templates/ are formatted
@@ -413,7 +413,7 @@ export class CLI {
           process.exit(1)
         }
 
-        const files = [...new Set(allFiles)]
+        const files = this.rejectUnsupportedFiles([...new Set(allFiles)], config, isForceMode)
 
         if (files.length === 0) {
           console.log(`No files found matching patterns: ${positionals.join(', ')}`)
@@ -497,6 +497,28 @@ export class CLI {
     reporter.displaySummary(data)
 
     process.exit(isCheckMode && changedFiles.length > 0 ? 1 : 0)
+  }
+
+  private rejectUnsupportedFiles(files: string[], config: Config, isForceMode: boolean | undefined): string[] {
+    if (isForceMode) {
+      return files
+    }
+
+    const supported = files.filter(file => config.isPathIncludedForTool(file, 'formatter'))
+    const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'formatter'))
+
+    if (unsupported.length > 0) {
+      console.error(`⚠️  Skipped ${unsupported.length} ${pluralize(unsupported.length, 'file')} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
+
+      for (const file of unsupported) {
+        console.error(`  ${colorize(relative(process.cwd(), resolve(file)), "cyan")}`)
+      }
+
+      console.error(`   Use --force to format ${unsupported.length === 1 ? 'it' : 'them'} anyway.`)
+      console.error()
+    }
+
+    return supported
   }
 
   private hasStdinInput(): boolean {

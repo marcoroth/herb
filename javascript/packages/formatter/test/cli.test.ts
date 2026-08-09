@@ -375,6 +375,126 @@ describe("CLI Binary", () => {
     })
   }
 
+  it("should skip files that don't match the configured file patterns", async () => {
+    const directory = "test-unsupported-files"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "script.js"), script)
+    await writeFile(join(directory, "page.html.erb"), '<div><p>   Not formatted   </p></div>')
+
+    try {
+      const result = await execBinary(["script.js", "page.html.erb"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("script.js")
+      expect(result.stderr).toContain("Use --force to format it anyway")
+      expect(result.stdout).toContain("Formatted: page.html.erb")
+
+      expect(await readFile(join(directory, "script.js"), "utf-8")).toBe(script)
+      expect(await readFile(join(directory, "page.html.erb"), "utf-8")).toBe("<div>\n  <p>Not formatted</p>\n</div>\n")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format files that don't match the configured file patterns with --force", async () => {
+    const directory = "test-unsupported-files-force"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "script.js"), script)
+
+    try {
+      const result = await execBinary(["--force", "script.js"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: script.js")
+      expect(await readFile(join(directory, "script.js"), "utf-8")).not.toBe(script)
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format files added to the include patterns in .herb.yml", async () => {
+    const directory = "test-include-config"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, ".herb.yml"), dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+      files:
+        include:
+          - "**/*.xml.erb"
+    `)
+    await writeFile(join(directory, "feed.xml.erb"), '<?xml version="1.0"?><root><item/></root>')
+
+    try {
+      const result = await execBinary(["feed.xml.erb"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).not.toContain("match the configured file patterns")
+      expect(result.stdout).toContain("Formatted: feed.xml.erb")
+
+      const formatted = await readFile(join(directory, "feed.xml.erb"), "utf-8")
+      expect(formatted).toContain("<item />")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should still skip files outside the include patterns in .herb.yml", async () => {
+    const directory = "test-include-config-skip"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, ".herb.yml"), dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+      files:
+        include:
+          - "**/*.xml.erb"
+    `)
+    await writeFile(join(directory, "script.js"), script)
+
+    try {
+      const result = await execBinary(["script.js"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("script.js")
+      expect(result.stderr).toContain("Use --force to format it anyway")
+      expect(await readFile(join(directory, "script.js"), "utf-8")).toBe(script)
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should accept every default file pattern", async () => {
+    const directory = "test-default-patterns"
+    const files = ["a.herb", "b.html.erb", "c.html.herb", "d.html", "e.html+phone.erb", "f.rhtml", "g.turbo_stream.erb"]
+
+    await mkdir(directory, { recursive: true })
+
+    for (const file of files) {
+      await writeFile(join(directory, file), '<div><p>   Not formatted   </p></div>')
+    }
+
+    try {
+      const result = await execBinary(["--check", ...files], undefined, { cwd: directory })
+
+      expectExitCode(result, 1)
+      expect(result.stderr).not.toContain("match the configured file patterns")
+
+      for (const file of files) {
+        expect(result.stdout).toContain(file)
+      }
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
   it("should check configured files with --check from a git pre-commit hook", async () => {
     const directory = "test-git-hook-check"
 
@@ -567,7 +687,7 @@ describe("CLI Binary", () => {
       `
 
       await writeFile("test-fixtures/test.xml.erb", content)
-      const result = await execBinary(["test-fixtures/test.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/test.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
@@ -584,7 +704,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/file2.xml.erb", content2)
       await writeFile("test-fixtures/ignored.html.erb", "<div></div>")
 
-      const result = await execBinary(["test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/file1.xml.erb")
@@ -599,7 +719,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/top.xml.erb", content)
       await writeFile("test-fixtures/nested/deep.xml.erb", content)
 
-      const result = await execBinary(["test-fixtures/**/*.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/**/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/top.xml.erb")
@@ -614,7 +734,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/file.xml.erb", xmlContent)
       await writeFile("test-fixtures/file.html.erb", htmlContent)
 
-      const result = await execBinary(["test-fixtures/*.erb"])
+      const result = await execBinary(["--force", "test-fixtures/*.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/file.xml.erb")
@@ -637,7 +757,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/good.xml.erb", wellFormattedContent + '\n')
       await writeFile("test-fixtures/bad.xml.erb", poorlyFormattedContent)
 
-      const result = await execBinary(["--check", "test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--check", "--force", "test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 1)
       expect(result.stdout).toContain("The following")
@@ -667,7 +787,7 @@ describe("CLI Binary", () => {
 
       await writeFile("test-fixtures/test.xml.erb", content)
 
-      const result = await execBinary(["./test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--force", "./test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
@@ -695,7 +815,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/sub2/file3.xml.erb", content)
       await writeFile("test-advanced/sub2/ignore.html.erb", "<div></div>")
 
-      const result = await execBinary(["test-advanced/**/file*.xml.erb"])
+      const result = await execBinary(["--force", "test-advanced/**/file*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-advanced/sub1/file1.xml.erb")
@@ -713,7 +833,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/manifest.xml.erb", content)
       await writeFile("test-advanced/other.erb", content)
 
-      const result = await execBinary(["test-advanced/{config,manifest}.xml.erb"])
+      const result = await execBinary(["--force", "test-advanced/{config,manifest}.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-advanced/config.xml.erb")
@@ -753,7 +873,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/specific.xml.erb", xmlContent)
       await writeFile("test-advanced/another.html.erb", htmlContent)
 
-      const result1 = await execBinary(["test-advanced/specific.xml.erb"])
+      const result1 = await execBinary(["--force", "test-advanced/specific.xml.erb"])
       expectExitCode(result1, 0)
       expect(result1.stdout).toContain("Formatted: test-advanced/specific.xml.erb")
 
@@ -784,7 +904,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/good2.xml.erb", formattedContent + '\n')
       await writeFile("test-advanced/sub1/bad.xml.erb", unformattedContent)
 
-      const result = await execBinary(["--check", "test-advanced/**/*.xml.erb"])
+      const result = await execBinary(["--check", "--force", "test-advanced/**/*.xml.erb"])
 
       expectExitCode(result, 1)
       expect(result.stdout).toContain("The following")
@@ -890,7 +1010,7 @@ describe("CLI Binary", () => {
       await writeFile("test-multi/pattern1.xml.erb", '<?xml version="1.0"?><root></root>')
       await writeFile("test-multi/pattern2.xml.erb", '<?xml version="1.0"?><config></config>')
 
-      const result = await execBinary(["test-multi/specific.html.erb", "test-multi/*.xml.erb"])
+      const result = await execBinary(["--force", "test-multi/specific.html.erb", "test-multi/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-multi/specific.html.erb")
