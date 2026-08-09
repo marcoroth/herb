@@ -381,6 +381,7 @@ formatter:
 
 - **`enabled`**: `true` or `false` - Enable or disable the formatter
 - **`indentWidth`**: Number (default: `2`) - Spaces per indent level
+- **`indentType`**: `"spaces"` or `"tabs"` (default: `"spaces"`) - Indentation character expected by the `source-indentation` linter rule
 - **`maxLineLength`**: Number (default: `80`) - Maximum line length
 - **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
 - **`exclude`**: Array of glob patterns - Additional patterns to exclude from formatting (additive to defaults)

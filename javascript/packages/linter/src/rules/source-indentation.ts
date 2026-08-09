@@ -5,25 +5,27 @@ import { positionFromOffset } from "@herb-tools/core"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
-const START_BLANKS = /^[^\S\n]*\t[^\S\n]*/
+const LEADING_BLANKS = /^[^\S\n]*/
 
 class SourceIndentationVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
+    const indentType = this.context.indentType ?? "spaces"
+    const disallowedChar = indentType === "tabs" ? " " : "\t"
+    const message = indentType === "tabs" ? "Indent with tabs instead of spaces." : "Indent with spaces instead of tabs."
+
     const lines = source.split("\n")
     let offset = 0
 
     lines.forEach((line) => {
-      const match = line.match(START_BLANKS)
+      const match = line.match(LEADING_BLANKS)
+      const leading = match ? match[0] : ""
 
-      if (match) {
+      if (leading.includes(disallowedChar)) {
         const start = positionFromOffset(source, offset)
-        const end = positionFromOffset(source, offset + match[0].length)
+        const end = positionFromOffset(source, offset + leading.length)
         const location = new Location(start, end)
 
-        this.addOffense(
-          "Indent with spaces instead of tabs.",
-          location,
-        )
+        this.addOffense(message, location)
       }
 
       offset += line.length + 1
@@ -53,13 +55,21 @@ export class SourceIndentationRule extends SourceRule {
 
   autofix(_offense: LintOffense, source: string, context?: Partial<LintContext>): string | null {
     const indentWidth = context?.indentWidth ?? 2
+    const indentType = context?.indentType ?? "spaces"
     const lines = source.split("\n")
-    const result = lines.map((line) => {
-      const match = line.match(START_BLANKS)
 
-      if (match) {
-        const replaced = match[0].replace(/\t/g, " ".repeat(indentWidth))
-        return replaced + line.substring(match[0].length)
+    const result = lines.map((line) => {
+      const match = line.match(LEADING_BLANKS)
+
+      if (match && match[0].length > 0) {
+        const leading = match[0]
+        const normalized = leading.replace(/\t/g, " ".repeat(indentWidth))
+
+        const replaced = indentType === "tabs"
+          ? "\t".repeat(Math.floor(normalized.length / indentWidth)) + " ".repeat(normalized.length % indentWidth)
+          : normalized
+
+        return replaced + line.substring(leading.length)
       }
 
       return line

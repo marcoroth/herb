@@ -43,4 +43,21 @@ describe("SourceIndentationRule", () => {
 
     assertOffenses("<div>\n\t<%= hello %>\n</div>\n")
   })
+
+  test("passes with tab indentation when indentType is tabs", () => {
+    expectNoOffenses("\t\tthis is a line\n\t\tanother line\n", { indentType: "tabs" })
+  })
+
+  test("fails with space indentation when indentType is tabs", () => {
+    expectError("Indent with tabs instead of spaces.", [1])
+    expectError("Indent with tabs instead of spaces.", [2])
+
+    assertOffenses("  this is a line\n  another line\n", { indentType: "tabs" })
+  })
+
+  test("fails with mixed indentation when indentType is tabs", () => {
+    expectError("Indent with tabs instead of spaces.", [1])
+
+    assertOffenses("\t  this is a line\n", { indentType: "tabs" })
+  })
 })
