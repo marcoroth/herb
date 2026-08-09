@@ -437,7 +437,7 @@ describe("CLI Binary", () => {
 
   it("should accept valid --indent-style", async () => {
     const input = '<div>\n<p>Test</p>\n</div>'
-    const result = await execBinary(["--indent-style", "tabs"], input)
+    const result = await execBinary(["--indent-style", "tab"], input)
 
     expectExitCode(result, 0)
     expect(result.stdout).toContain("\t<p>Test</p>")

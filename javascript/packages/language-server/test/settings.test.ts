@@ -135,7 +135,7 @@ describe("Settings", () => {
         formatter: {
           enabled: true,
           indentWidth: 2,
-          indentStyle: "spaces",
+          indentStyle: "space",
           maxLineLength: 80
         }
       })
@@ -166,7 +166,7 @@ describe("Settings", () => {
         formatter: {
           enabled: false,
           indentWidth: 2,
-          indentStyle: "spaces",
+          indentStyle: "space",
           maxLineLength: 80
         }
       })

@@ -19,7 +19,7 @@ export interface PersonalHerbSettings {
   formatter?: {
     enabled?: boolean
     indentWidth?: number
-    indentStyle?: "spaces" | "tabs"
+    indentStyle?: "space" | "tab"
     maxLineLength?: number
   }
 }

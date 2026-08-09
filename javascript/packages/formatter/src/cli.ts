@@ -59,7 +59,7 @@ export class CLI {
       --config-file <path>            explicitly specify path to .herb.yml config file
       --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
-      --indent-style <spaces|tabs>    character used for indentation (default: spaces)
+      --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
@@ -76,7 +76,7 @@ export class CLI {
 
       herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
-      herb-format --indent-style tabs             # Format with tab indentation
+      herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
@@ -116,12 +116,12 @@ export class CLI {
       indentWidth = parsed
     }
 
-    let indentStyle: "spaces" | "tabs" | undefined
+    let indentStyle: "space" | "tab" | undefined
 
     if (values["indent-style"]) {
-      if (values["indent-style"] !== "spaces" && values["indent-style"] !== "tabs") {
+      if (values["indent-style"] !== "space" && values["indent-style"] !== "tab") {
         console.error(
-          `Invalid indent-style: ${values["indent-style"]}. Must be "spaces" or "tabs".`,
+          `Invalid indent-style: ${values["indent-style"]}. Must be "space" or "tab".`,
         )
         process.exit(1)
       }

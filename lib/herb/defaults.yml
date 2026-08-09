@@ -32,5 +32,5 @@ linter:
 formatter:
   enabled: false
   indentWidth: 2
-  indentStyle: spaces
+  indentStyle: space
   maxLineLength: 80

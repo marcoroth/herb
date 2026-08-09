@@ -365,7 +365,7 @@ Configure the formatter behavior:
 formatter:
   enabled: false       # Disabled by default (experimental)
   indentWidth: 2       # Number of spaces for indentation
-  indentStyle: spaces  # "spaces" or "tabs"
+  indentStyle: space   # "space" or "tab"
   maxLineLength: 80    # Maximum line length before wrapping
 
   # Additional glob patterns to include (additive to defaults)
@@ -382,7 +382,7 @@ formatter:
 
 - **`enabled`**: `true` or `false` - Enable or disable the formatter
 - **`indentWidth`**: Number (default: `2`) - Spaces per indent level
-- **`indentStyle`**: `"spaces"` or `"tabs"` (default: `"spaces"`) <Badge type="tip" text="^0.11.0" /> - Character used for indentation
+- **`indentStyle`**: `"space"` or `"tab"` (default: `"space"`) <Badge type="tip" text="^0.11.0" /> - Character used for indentation
 - **`maxLineLength`**: Number (default: `80`) - Maximum line length
 - **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
 - **`exclude`**: Array of glob patterns - Additional patterns to exclude from formatting (additive to defaults)

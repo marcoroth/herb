@@ -8,9 +8,9 @@ import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } fro
 
 class SourceIndentationVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
-    const indentStyle = this.context.indentStyle ?? "spaces"
-    const disallowedChar = indentStyle === "tabs" ? " " : "\t"
-    const message = indentStyle === "tabs" ? "Indent with tabs instead of spaces." : "Indent with spaces instead of tabs."
+    const indentStyle = this.context.indentStyle ?? "space"
+    const disallowedChar = indentStyle === "tab" ? " " : "\t"
+    const message = indentStyle === "tab" ? "Indent with tabs instead of spaces." : "Indent with spaces instead of tabs."
 
     const lines = source.split("\n")
     let offset = 0
@@ -54,7 +54,7 @@ export class SourceIndentationRule extends SourceRule {
 
   autofix(_offense: LintOffense, source: string, context?: Partial<LintContext>): string | null {
     const indentWidth = context?.indentWidth ?? 2
-    const indentStyle = context?.indentStyle ?? "spaces"
+    const indentStyle = context?.indentStyle ?? "space"
 
     return convertIndentation(source, indentWidth, indentStyle)
   }

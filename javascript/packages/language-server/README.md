@@ -131,7 +131,7 @@ linter:
 formatter:
   enabled: true
   indentWidth: 2
-  indentStyle: spaces
+  indentStyle: space
   maxLineLength: 80
 ```
 

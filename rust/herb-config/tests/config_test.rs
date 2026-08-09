@@ -202,10 +202,10 @@ mod config_from_object {
   }
 
   #[test]
-  fn creates_config_with_indent_style_tabs() {
-    let config = config_from_yaml("formatter:\n  indentStyle: tabs\n");
+  fn creates_config_with_indent_style_tab() {
+    let config = config_from_yaml("formatter:\n  indentStyle: tab\n");
 
-    assert_eq!(config.formatter().unwrap().indent_style, Some(IndentStyle::Tabs));
+    assert_eq!(config.formatter().unwrap().indent_style, Some(IndentStyle::Tab));
   }
 
   #[test]

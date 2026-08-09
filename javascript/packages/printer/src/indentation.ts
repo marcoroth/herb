@@ -1,4 +1,4 @@
-export type IndentStyle = "spaces" | "tabs"
+export type IndentStyle = "space" | "tab"
 
 export const LEADING_BLANKS = /^[^\S\n]*/
 
@@ -21,7 +21,7 @@ export function convertIndentation(source: string, indentWidth: number, indentSt
     const leading = match[0]
     const normalized = leading.replace(/\t/g, " ".repeat(indentWidth))
 
-    const replaced = indentStyle === "tabs"
+    const replaced = indentStyle === "tab"
       ? "\t".repeat(Math.floor(normalized.length / indentWidth)) + " ".repeat(normalized.length % indentWidth)
       : normalized
 

@@ -63,7 +63,7 @@ describe("@herb-tools/formatter", () => {
         <span>World</span>
       </div>
     `
-    const result = formatter.format(source, { indentStyle: "tabs" })
+    const result = formatter.format(source, { indentStyle: "tab" })
 
     expect(result).toEqual("<div>\n\t<p>Hello</p>\n\t<span>World</span>\n</div>")
   })
@@ -76,7 +76,7 @@ describe("@herb-tools/formatter", () => {
         </section>
       </div>
     `
-    const result = formatter.format(source, { indentStyle: "tabs", indentWidth: 4 })
+    const result = formatter.format(source, { indentStyle: "tab", indentWidth: 4 })
 
     expect(result).toEqual("<div>\n\t<section>\n\t\t<p>Hello</p>\n\t</section>\n</div>")
   })

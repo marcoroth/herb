@@ -88,12 +88,12 @@ export async function showConfigDetails() {
 
   const formatterEnabled = config?.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false)
   const indentWidth = config?.formatter?.indentWidth ?? vscodeConfig.get('formatter.indentWidth', 2)
-  const indentStyle = config?.formatter?.indentStyle ?? vscodeConfig.get('formatter.indentStyle', 'spaces')
+  const indentStyle = config?.formatter?.indentStyle ?? vscodeConfig.get('formatter.indentStyle', 'space')
   const maxLineLength = config?.formatter?.maxLineLength ?? vscodeConfig.get('formatter.maxLineLength', 80)
 
   const formatterIcon = formatterEnabled ? "$(check)" : "$(x)"
   const formatterStatus = formatterEnabled ? "Enabled" : "Disabled"
-  const formatterDetail = indentStyle === 'tabs'
+  const formatterDetail = indentStyle === 'tab'
     ? `Indent: tabs, Max length: ${maxLineLength}`
     : `Indent: ${indentWidth} spaces, Max length: ${maxLineLength}`
 

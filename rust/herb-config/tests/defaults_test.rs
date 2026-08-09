@@ -27,7 +27,7 @@ fn default_config_has_default_formatter_settings() {
   let formatter = config.formatter().unwrap();
 
   assert_eq!(formatter.indent_width, Some(2));
-  assert_eq!(formatter.indent_style, Some(IndentStyle::Spaces));
+  assert_eq!(formatter.indent_style, Some(IndentStyle::Space));
   assert_eq!(formatter.max_line_length, Some(80));
 }
 

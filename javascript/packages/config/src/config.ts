@@ -85,7 +85,7 @@ export type FormatterConfig = {
   include?: string[]
   exclude?: string[]
   indentWidth?: number
-  indentStyle?: "spaces" | "tabs"
+  indentStyle?: "space" | "tab"
   maxLineLength?: number
   rewriter?: {
     pre?: string[]

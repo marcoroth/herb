@@ -22,7 +22,7 @@ export class AnalysisService {
       let linterEnabled = true
       let formatterEnabled = false
       let formatterIndentWidth = 2
-      let formatterIndentStyle = 'spaces'
+      let formatterIndentStyle = 'space'
       let formatterMaxLineLength = 80
       let linterRules = {}
       const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
@@ -33,7 +33,7 @@ export class AnalysisService {
           linterEnabled = projectConfig.linter?.enabled ?? true
           formatterEnabled = projectConfig.formatter?.enabled ?? false
           formatterIndentWidth = projectConfig.formatter?.indentWidth ?? 2
-          formatterIndentStyle = projectConfig.formatter?.indentStyle ?? 'spaces'
+          formatterIndentStyle = projectConfig.formatter?.indentStyle ?? 'space'
           formatterMaxLineLength = projectConfig.formatter?.maxLineLength ?? 80
           linterRules = projectConfig.linter?.rules ?? {}
         }
@@ -42,7 +42,7 @@ export class AnalysisService {
         linterEnabled = vscodeConfig.get('linter.enabled', true)
         formatterEnabled = vscodeConfig.get('formatter.enabled', false)
         formatterIndentWidth = vscodeConfig.get('formatter.indentWidth', 2)
-        formatterIndentStyle = vscodeConfig.get('formatter.indentStyle', 'spaces')
+        formatterIndentStyle = vscodeConfig.get('formatter.indentStyle', 'space')
         formatterMaxLineLength = vscodeConfig.get('formatter.maxLineLength', 80)
       }
 

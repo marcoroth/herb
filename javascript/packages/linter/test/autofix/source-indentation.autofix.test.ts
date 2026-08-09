@@ -132,7 +132,7 @@ describe("source-indentation autofix", () => {
     const expected = "\tthis is a line\n\t\tindented twice\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input, { indentStyle: "tabs" })
+    const result = linter.autofix(input, { indentStyle: "tab" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -143,7 +143,7 @@ describe("source-indentation autofix", () => {
     const input = "\tthis is a line\n\t\tanother line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input, { indentStyle: "tabs" })
+    const result = linter.autofix(input, { indentStyle: "tab" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -156,7 +156,7 @@ describe("source-indentation autofix", () => {
 
     const config = Config.fromObject({
       formatter: {
-        indentStyle: "tabs"
+        indentStyle: "tab"
       },
       linter: {
         rules: {

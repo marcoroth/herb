@@ -121,8 +121,8 @@ export class Formatter {
       }
     }
 
-    if (resolvedOptions.indentStyle === "tabs") {
-      formatted = convertIndentation(formatted, resolvedOptions.indentWidth, "tabs")
+    if (resolvedOptions.indentStyle === "tab") {
+      formatted = convertIndentation(formatted, resolvedOptions.indentWidth, "tab")
     }
 
     return { output: formatted, skipped: null, errorCount: 0 }

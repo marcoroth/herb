@@ -89,8 +89,11 @@
         "languageServerHerb.formatter.indentStyle": {
           "scope": "resource",
           "type": "string",
-          "enum": ["spaces", "tabs"],
-          "default": "spaces",
+          "enum": [
+            "space",
+            "tab"
+          ],
+          "default": "space",
           "description": "Character used for indentation.",
           "markdownDescription": "Character used for indentation.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },

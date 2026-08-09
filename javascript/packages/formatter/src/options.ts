@@ -5,7 +5,7 @@ import type { IndentStyle } from "@herb-tools/printer"
  * Formatting options for the Herb formatter.
  *
  * indentWidth: number of spaces per indentation level.
- * indentStyle: character used for indentation, "spaces" or "tabs".
+ * indentStyle: character used for indentation, "space" or "tab".
  * maxLineLength: maximum line length before wrapping text or attributes.
  * preRewriters: AST rewriters to run before formatting.
  * postRewriters: String rewriters to run after formatting.
@@ -13,7 +13,7 @@ import type { IndentStyle } from "@herb-tools/printer"
 export interface FormatOptions {
   /** number of spaces per indentation level; defaults to 2 */
   indentWidth?: number
-  /** character used for indentation; defaults to "spaces" */
+  /** character used for indentation; defaults to "space" */
   indentStyle?: IndentStyle
   /** maximum line length before wrapping; defaults to 80 */
   maxLineLength?: number
@@ -28,7 +28,7 @@ export interface FormatOptions {
  */
 export const defaultFormatOptions: Required<FormatOptions> = {
   indentWidth: 2,
-  indentStyle: "spaces",
+  indentStyle: "space",
   maxLineLength: 80,
   preRewriters: [],
   postRewriters: [],

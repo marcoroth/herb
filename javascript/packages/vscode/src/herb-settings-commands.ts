@@ -209,18 +209,18 @@ export class HerbSettingsCommands {
     const configPath = await this.getConfigPath()
     if (!configPath) {return}
 
-    const currentType = config.config.formatter?.indentStyle ?? "spaces"
+    const currentType = config.config.formatter?.indentStyle ?? "space"
 
     const choice = await vscode.window.showQuickPick([
       {
         label: 'Spaces',
-        description: currentType === 'spaces' ? '(current)' : '',
-        value: 'spaces' as const
+        description: currentType === 'space' ? '(current)' : '',
+        value: 'space' as const
       },
       {
         label: 'Tabs',
-        description: currentType === 'tabs' ? '(current)' : '',
-        value: 'tabs' as const
+        description: currentType === 'tab' ? '(current)' : '',
+        value: 'tab' as const
       }
     ], {
       placeHolder: 'Select indentation character for Herb formatter'

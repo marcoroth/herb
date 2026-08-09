@@ -342,10 +342,10 @@ export class FormattingService {
       const indentStyle = config?.formatter?.indentStyle ?? defaultFormatOptions.indentStyle
 
       const indentLevelOf = (indent: string): number =>
-        indentStyle === 'tabs' ? indent.replace(/ /g, '').length : Math.floor(indent.length / indentWidth)
+        indentStyle === 'tab' ? indent.replace(/ /g, '').length : Math.floor(indent.length / indentWidth)
 
       const indentStringFor = (level: number): string =>
-        indentStyle === 'tabs' ? '\t'.repeat(level) : ' '.repeat(level * indentWidth)
+        indentStyle === 'tab' ? '\t'.repeat(level) : ' '.repeat(level * indentWidth)
 
       for (const line of lines) {
         const trimmedLine = line.trim()

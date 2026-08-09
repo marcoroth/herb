@@ -45,19 +45,19 @@ describe("SourceIndentationRule", () => {
   })
 
   test("passes with tab indentation when indentStyle is tabs", () => {
-    expectNoOffenses("\t\tthis is a line\n\t\tanother line\n", { indentStyle: "tabs" })
+    expectNoOffenses("\t\tthis is a line\n\t\tanother line\n", { indentStyle: "tab" })
   })
 
   test("fails with space indentation when indentStyle is tabs", () => {
     expectError("Indent with tabs instead of spaces.", [1])
     expectError("Indent with tabs instead of spaces.", [2])
 
-    assertOffenses("  this is a line\n  another line\n", { indentStyle: "tabs" })
+    assertOffenses("  this is a line\n  another line\n", { indentStyle: "tab" })
   })
 
   test("fails with mixed indentation when indentStyle is tabs", () => {
     expectError("Indent with tabs instead of spaces.", [1])
 
-    assertOffenses("\t  this is a line\n", { indentStyle: "tabs" })
+    assertOffenses("\t  this is a line\n", { indentStyle: "tab" })
   })
 })

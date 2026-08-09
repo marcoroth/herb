@@ -91,7 +91,7 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
-            indentStyle: projectConfig.formatter?.indentStyle ?? 'spaces',
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
@@ -110,7 +110,7 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
-            indentStyle: vscodeConfig.get('formatter.indentStyle', 'spaces'),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           trace: {
@@ -121,7 +121,7 @@ export class Client {
     } else {
       settings = {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, indentStyle: 'spaces', maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         trace: { server: 'verbose' },
       }
     }
@@ -195,7 +195,7 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
-            indentStyle: projectConfig.formatter?.indentStyle ?? 'spaces',
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
@@ -215,7 +215,7 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
-            indentStyle: vscodeConfig.get('formatter.indentStyle', 'spaces'),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           trace: {
@@ -227,7 +227,7 @@ export class Client {
     } else {
       return {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, indentStyle: 'spaces', maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         trace: { server: 'verbose' },
         experimental: this.experimentalCapabilities,
       }
