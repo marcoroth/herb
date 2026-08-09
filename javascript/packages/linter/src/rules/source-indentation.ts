@@ -2,6 +2,7 @@ import { Location } from "@herb-tools/core"
 
 import { BaseSourceRuleVisitor } from "./rule-utils.js"
 import { positionFromOffset } from "@herb-tools/core"
+import { convertIndentation } from "@herb-tools/printer"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
@@ -56,25 +57,7 @@ export class SourceIndentationRule extends SourceRule {
   autofix(_offense: LintOffense, source: string, context?: Partial<LintContext>): string | null {
     const indentWidth = context?.indentWidth ?? 2
     const indentType = context?.indentType ?? "spaces"
-    const lines = source.split("\n")
 
-    const result = lines.map((line) => {
-      const match = line.match(LEADING_BLANKS)
-
-      if (match && match[0].length > 0) {
-        const leading = match[0]
-        const normalized = leading.replace(/\t/g, " ".repeat(indentWidth))
-
-        const replaced = indentType === "tabs"
-          ? "\t".repeat(Math.floor(normalized.length / indentWidth)) + " ".repeat(normalized.length % indentWidth)
-          : normalized
-
-        return replaced + line.substring(leading.length)
-      }
-
-      return line
-    })
-
-    return result.join("\n")
+    return convertIndentation(source, indentWidth, indentType)
   }
 }

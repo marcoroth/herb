@@ -427,6 +427,29 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("    <p>Test</p>") // 4 spaces instead of 2
   })
 
+  it("should show --indent-type option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("herb-format --indent-type")
+    expect(result.stdout).toContain("character used for indentation")
+  })
+
+  it("should accept valid --indent-type", async () => {
+    const input = '<div>\n<p>Test</p>\n</div>'
+    const result = await execBinary(["--indent-type", "tabs"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("\t<p>Test</p>")
+  })
+
+  it("should reject invalid --indent-type", async () => {
+    const result = await execBinary(["--indent-type", "nope"], '<div></div>')
+
+    expectExitCode(result, 1)
+    expect(result.stderr).toContain("Invalid indent-type")
+  })
+
   it("should show --max-line-length option in help", async () => {
     const result = await execBinary(["--help"])
 

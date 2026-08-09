@@ -202,6 +202,7 @@ herb-format --init
 formatter:
   enabled: true  # Must be enabled for formatting to work
   indentWidth: 2
+  indentType: spaces  # "spaces" or "tabs"
   maxLineLength: 80
 
   # Additional glob patterns to include (additive to defaults)
@@ -230,6 +231,7 @@ The `include` patterns are **additive** - they add to the defaults.
 
 - **`enabled`**: `true` or `false` - Must be `true` to enable formatting
 - **`indentWidth`**: Number (default: `2`) - Spaces per indentation level
+- **`indentType`**: `"spaces"` or `"tabs"` (default: `"spaces"`) - Character used for indentation
 - **`maxLineLength`**: Number (default: `80`) - Maximum line length before wrapping. Tags whose attributes would exceed this length are wrapped one-per-line.
 - **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
 - **`exclude`**: Array of glob patterns - Patterns to exclude from formatting

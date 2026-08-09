@@ -132,6 +132,7 @@ linter:
 formatter:
   enabled: true
   indentWidth: 2
+  indentType: spaces  # "spaces" or "tabs"
   maxLineLength: 80
 ```
 

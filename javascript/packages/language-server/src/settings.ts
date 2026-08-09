@@ -19,6 +19,7 @@ export interface PersonalHerbSettings {
   formatter?: {
     enabled?: boolean
     indentWidth?: number
+    indentType?: "spaces" | "tabs"
     maxLineLength?: number
   }
 }
@@ -38,6 +39,7 @@ export class Settings {
     formatter: {
       enabled: false,
       indentWidth: defaultFormatOptions.indentWidth,
+      indentType: defaultFormatOptions.indentType,
       maxLineLength: defaultFormatOptions.maxLineLength
     }
   }
@@ -108,6 +110,7 @@ export class Settings {
         formatter: {
           enabled: settings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
           indentWidth: settings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+          indentType: settings.formatter?.indentType ?? this.defaultSettings.formatter!.indentType!,
           maxLineLength: settings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
         }
       }
@@ -122,6 +125,7 @@ export class Settings {
       formatter: {
         enabled: projectConfig.isFormatterEnabled,
         indentWidth: projectConfig.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+        indentType: projectConfig.formatter?.indentType ?? this.defaultSettings.formatter!.indentType!,
         maxLineLength: projectConfig.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
       }
     }

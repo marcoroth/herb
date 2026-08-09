@@ -86,6 +86,14 @@
           "description": "Number of spaces for each indentation level.",
           "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
+        "languageServerHerb.formatter.indentType": {
+          "scope": "resource",
+          "type": "string",
+          "enum": ["spaces", "tabs"],
+          "default": "spaces",
+          "description": "Character used for indentation.",
+          "markdownDescription": "Character used for indentation.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
           "type": "number",
@@ -177,6 +185,11 @@
         "command": "herb.setIndentWidth",
         "title": "Herb: Set Indent Width",
         "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.setIndentType",
+        "title": "Herb: Set Indent Type",
+        "icon": "$(symbol-enum)"
       },
       {
         "command": "herb.setMaxLineLength",

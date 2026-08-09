@@ -8,7 +8,7 @@ Detects indentation that doesn't match the configured indentation style. By defa
 
 ## Configuration
 
-Set `formatter.indentType` in your Herb config to `"spaces"` (default) or `"tabs"` to control which character this rule expects and which one `--fix` writes:
+Set `formatter.indentType` in your Herb config to `"spaces"` (default) or `"tabs"` to control which character this rule expects and which one `--fix` writes. The same option also controls the indentation the [formatter](/projects/formatter) writes.
 
 ```yaml
 formatter:

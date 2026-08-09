@@ -1,4 +1,5 @@
 import { FormatPrinter } from "./format-printer.js"
+import { convertIndentation } from "@herb-tools/printer"
 
 import { isScaffoldTemplate } from "./scaffold-template-detector.js"
 import { resolveFormatOptions } from "./options.js"
@@ -43,6 +44,7 @@ export class Formatter {
 
     const mergedOptions: FormatOptions = {
       indentWidth: options.indentWidth ?? formatterConfig.indentWidth,
+      indentType: options.indentType ?? formatterConfig.indentType,
       maxLineLength: options.maxLineLength ?? formatterConfig.maxLineLength,
       preRewriters: options.preRewriters,
       postRewriters: options.postRewriters,
@@ -117,6 +119,10 @@ export class Formatter {
           console.error(`Post-format rewriter "${rewriter.name}" failed:`, error)
         }
       }
+    }
+
+    if (resolvedOptions.indentType === "tabs") {
+      formatted = convertIndentation(formatted, resolvedOptions.indentWidth, "tabs")
     }
 
     return { output: formatted, skipped: null, errorCount: 0 }

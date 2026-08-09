@@ -146,6 +146,18 @@ describe("@herb-tools/config", () => {
       expect(config.config.formatter?.maxLineLength).toBe(120)
     })
 
+    test("creates config with formatter indentType", () => {
+      const configOptions: HerbConfigOptions = {
+        formatter: {
+          indentType: "tabs"
+        }
+      }
+
+      const config = Config.fromObject(configOptions, { projectPath: testDir })
+
+      expect(config.config.formatter?.indentType).toBe("tabs")
+    })
+
     test("uses custom version when provided", () => {
       const config = Config.fromObject({}, { projectPath: testDir, version: "1.0.0" })
 

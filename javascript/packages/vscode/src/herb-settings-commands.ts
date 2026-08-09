@@ -25,6 +25,7 @@ export class HerbSettingsCommands {
       vscode.commands.registerCommand('herb.toggleLinter', () => this.toggleLinter()),
       vscode.commands.registerCommand('herb.toggleFormatter', () => this.toggleFormatter()),
       vscode.commands.registerCommand('herb.setIndentWidth', () => this.setIndentWidth()),
+      vscode.commands.registerCommand('herb.setIndentType', () => this.setIndentType()),
       vscode.commands.registerCommand('herb.setMaxLineLength', () => this.setMaxLineLength()),
     )
   }
@@ -187,6 +188,53 @@ export class HerbSettingsCommands {
 
       vscode.window.showInformationMessage(
         `Herb formatter indent width set to ${indentWidth} spaces`
+      )
+
+      warnAboutAliasedTargets(aliasedTargets)
+
+      vscode.commands.executeCommand('herb.refreshLanguageServer')
+
+      if (this.configProvider) {
+        await this.configProvider.refresh()
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(`Failed to update Herb config: ${error}`)
+    }
+  }
+
+  private async setIndentType() {
+    const config = await this.getOrCreateConfig()
+    if (!config) {return}
+
+    const configPath = await this.getConfigPath()
+    if (!configPath) {return}
+
+    const currentType = config.config.formatter?.indentType ?? "spaces"
+
+    const choice = await vscode.window.showQuickPick([
+      {
+        label: 'Spaces',
+        description: currentType === 'spaces' ? '(current)' : '',
+        value: 'spaces' as const
+      },
+      {
+        label: 'Tabs',
+        description: currentType === 'tabs' ? '(current)' : '',
+        value: 'tabs' as const
+      }
+    ], {
+      placeHolder: 'Select indentation character for Herb formatter'
+    })
+
+    if (choice === undefined) {return}
+
+    try {
+      const aliasedTargets = await Config.mutateConfigFile(configPath, {
+        formatter: { indentType: choice.value }
+      })
+
+      vscode.window.showInformationMessage(
+        `Herb formatter indent type set to ${choice.value}`
       )
 
       warnAboutAliasedTargets(aliasedTargets)

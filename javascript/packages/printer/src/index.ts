@@ -1,4 +1,6 @@
 export { IdentityPrinter } from "./identity-printer.js"
+export { convertIndentation } from "./indentation.js"
+export type { IndentType } from "./indentation.js"
 export { IndentPrinter } from "./indent-printer.js"
 export { ERBToRubyStringPrinter } from "./erb-to-ruby-string-printer.js"
 export { PrintContext } from "./print-context.js"
