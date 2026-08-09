@@ -20,6 +20,7 @@ import { ExtractCodeActionService } from "./extract_code_action_service"
 import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
 import { CompletionService } from "./completion_service"
+import { DocumentSymbolService } from "./document_symbol_service"
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { ReferencesService } from "./references_service"
@@ -52,6 +53,7 @@ export class Service {
   referencesService: ReferencesService
   commentService: CommentService
   completionService: CompletionService
+  documentSymbolService: DocumentSymbolService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -75,6 +77,7 @@ export class Service {
     this.definitionService = new DefinitionService(this.parserService)
     this.referencesService = new ReferencesService(this.project, this.definitionService, this.partialIndexService, this.partialCallerIndexService, this.documentService)
     this.commentService = new CommentService(this.parserService)
+    this.documentSymbolService = new DocumentSymbolService(this.parserService)
     this.completionService = new CompletionService(this.parserService, this.partialIndexService)
 
     this.extractCodeActionService = new ExtractCodeActionService(this.parserService, {
