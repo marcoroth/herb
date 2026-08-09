@@ -135,6 +135,7 @@ export * from "./parser-no-errors.js"
 export * from "./source-indentation.js"
 
 export * from "./svg-tag-name-capitalization.js"
+export * from "./svg-no-deprecated-tags.js"
 
 export * from "./turbo-permanent-no-misleading-value.js"
 export * from "./turbo-permanent-require-id.js"
