@@ -1,6 +1,6 @@
 export type IndentType = "spaces" | "tabs"
 
-const LEADING_BLANKS = /^[^\S\n]*/
+export const LEADING_BLANKS = /^[^\S\n]*/
 
 /**
  * Convert the leading indentation of every line in `source` between spaces and tabs.

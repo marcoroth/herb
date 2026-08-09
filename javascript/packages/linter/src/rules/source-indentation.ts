@@ -2,11 +2,9 @@ import { Location } from "@herb-tools/core"
 
 import { BaseSourceRuleVisitor } from "./rule-utils.js"
 import { positionFromOffset } from "@herb-tools/core"
-import { convertIndentation } from "@herb-tools/printer"
+import { convertIndentation, LEADING_BLANKS } from "@herb-tools/printer"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
-
-const LEADING_BLANKS = /^[^\S\n]*/
 
 class SourceIndentationVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
