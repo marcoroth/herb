@@ -10,7 +10,7 @@ export function callerIndexFor(callSites: Record<string, string[][]>, documentRo
     chains.map(ancestors => ({ caller: LAYOUT, locals: [], ancestors })),
   ])
 
-  return new PartialCallerIndex(new Map(entries), new Set(documentRoots), 0, 0)
+  return new PartialCallerIndex(new Map(entries), new Set(documentRoots), new Map(), new Set())
 }
 
 export function renderedFrom(fileName: string, ...chains: string[][]) {
@@ -29,5 +29,9 @@ export interface CallerLocals {
 export function callerIndexWithLocals(partialFile: string, callers: CallerLocals[], unresolved = 0): PartialCallerIndex {
   const sites: PartialCallSite[] = callers.map(({ caller, locals }) => ({ caller, locals, ancestors: [] }))
 
-  return new PartialCallerIndex(new Map([[partialFile, sites]]), new Set(), unresolved, 0)
+  const unresolvedRenders = new Map<string, number>()
+
+  if (unresolved > 0 && callers.length > 0) unresolvedRenders.set(callers[0].caller, unresolved)
+
+  return new PartialCallerIndex(new Map([[partialFile, sites]]), new Set(), unresolvedRenders, new Set())
 }

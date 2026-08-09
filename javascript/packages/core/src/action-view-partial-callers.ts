@@ -42,8 +42,8 @@ export interface PartialContext {
 export interface SerializedPartialCallerIndex {
   callSites: Record<string, PartialCallSite[]>
   documentRoots: string[]
-  unresolvedRenders: number
-  skippedFiles: number
+  unresolvedRenders: Record<string, number>
+  skippedFiles: string[]
 }
 
 export const MAX_ANCESTOR_CHAINS = 32
@@ -54,18 +54,22 @@ const UNRESOLVED: PartialContext = Object.freeze({ chains: [], resolved: false }
 const DOCUMENT_ROOT: PartialContext = Object.freeze({ chains: [EMPTY_CHAIN], resolved: true })
 
 export class PartialCallerIndex {
-  readonly unresolvedRenders: number
-  readonly skippedFiles: number
-
   private readonly callSites: Map<string, PartialCallSite[]>
   private readonly documentRoots: Set<string>
+  private readonly unresolvedRenders: Map<string, number>
+  private readonly skippedFiles: Set<string>
   private readonly contexts: Map<string, PartialContext>
 
   static from(data: SerializedPartialCallerIndex): PartialCallerIndex {
-    return new PartialCallerIndex(new Map(Object.entries(data.callSites)), new Set(data.documentRoots ?? []), data.unresolvedRenders, data.skippedFiles)
+    return new PartialCallerIndex(
+      new Map(Object.entries(data.callSites)),
+      new Set(data.documentRoots ?? []),
+      new Map(Object.entries(data.unresolvedRenders ?? {})),
+      new Set(data.skippedFiles ?? [])
+    )
   }
 
-  constructor(callSites: Map<string, PartialCallSite[]>, documentRoots: Set<string>, unresolvedRenders: number, skippedFiles: number) {
+  constructor(callSites: Map<string, PartialCallSite[]>, documentRoots: Set<string>, unresolvedRenders: Map<string, number>, skippedFiles: Set<string>) {
     this.callSites = callSites
     this.documentRoots = documentRoots
     this.contexts = new Map()
@@ -73,16 +77,28 @@ export class PartialCallerIndex {
     this.skippedFiles = skippedFiles
   }
 
+  get unresolvedRenderCount(): number {
+    let total = 0
+
+    for (const count of this.unresolvedRenders.values()) total += count
+
+    return total
+  }
+
+  get skippedFileCount(): number {
+    return this.skippedFiles.size
+  }
+
   get isComplete(): boolean {
-    return this.unresolvedRenders === 0 && this.skippedFiles === 0
+    return this.unresolvedRenders.size === 0 && this.skippedFiles.size === 0
   }
 
   callersOf(partialFile: string): PartialCallSite[] {
     return this.callSites.get(partialFile) ?? []
   }
 
-  replaceCallsFrom(caller: string, sites: Map<string, PartialCallSite[]>): boolean {
-    let changed = false
+  replaceCallsFrom(caller: string, sites: Map<string, PartialCallSite[]>, unresolved = 0): boolean {
+    let changed = this.replaceUnresolvedFrom(caller, unresolved)
 
     for (const [partialFile, callSites] of this.callSites) {
       const remaining = callSites.filter(callSite => callSite.caller !== caller)
@@ -109,6 +125,20 @@ export class PartialCallerIndex {
     if (changed) this.contexts.clear()
 
     return changed
+  }
+
+  private replaceUnresolvedFrom(caller: string, unresolved: number): boolean {
+    const previous = this.unresolvedRenders.get(caller) ?? 0
+
+    if (previous === unresolved) return false
+
+    if (unresolved === 0) {
+      this.unresolvedRenders.delete(caller)
+    } else {
+      this.unresolvedRenders.set(caller, unresolved)
+    }
+
+    return true
   }
 
   removeCallsTo(partialFile: string): boolean {
@@ -211,8 +241,8 @@ export class PartialCallerIndex {
     return {
       callSites: Object.fromEntries(this.callSites),
       documentRoots: [...this.documentRoots].sort(),
-      unresolvedRenders: this.unresolvedRenders,
-      skippedFiles: this.skippedFiles
+      unresolvedRenders: Object.fromEntries(this.unresolvedRenders),
+      skippedFiles: [...this.skippedFiles].sort()
     }
   }
 
