@@ -66,7 +66,7 @@ export class Service {
     this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService)
     this.configService = new ConfigService(this.project.projectPath)
     this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService)
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
+    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService, this.settings)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
@@ -123,6 +123,7 @@ export class Service {
 
     this.documentService.onDidClose((change) => {
       this.settings.documentSettings.delete(change.document.uri)
+      this.diagnostics.clear(change.document.uri)
     })
 
     this.documentService.onDidChangeContent(async (change) => {
