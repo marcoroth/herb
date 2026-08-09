@@ -79,7 +79,7 @@ static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
   position_T start = parser->current_token->location.start;
 
   while (token_is_none_of(parser, TOKEN_CDATA_END, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
@@ -122,7 +122,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   hb_buffer_init(&comment, 512, parser->allocator);
 
   while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_HTML_COMMENT_INVALID_END, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -183,7 +183,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
   position_T start = parser->current_token->location.start;
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -229,7 +229,7 @@ static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser
   position_T start = parser->current_token->location.start;
 
   while (token_is_none_of(parser, TOKEN_XML_DECLARATION_END, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -278,7 +278,9 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
     TOKEN_HTML_TAG_START_CLOSE,
     TOKEN_HTML_DOCTYPE,
     TOKEN_HTML_COMMENT_START,
-    TOKEN_ERB_START,
+    TOKEN_NUNJUCKS_OUTPUT_START,
+    TOKEN_NUNJUCKS_TAG_START,
+    TOKEN_NUNJUCKS_COMMENT_START,
     TOKEN_EOF
   )) {
     if (token_is(parser, TOKEN_ERROR)) {
@@ -353,7 +355,7 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
     TOKEN_HTML_TAG_SELF_CLOSE,
     TOKEN_EOF
   )) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       hb_string_T tag = parser->current_token->value;
       bool is_output_tag = (tag.length >= 3 && tag.data[2] == '=');
 
@@ -523,7 +525,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       }
     }
 
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
       hb_array_append(children, parser_parse_erb_tag(parser));
@@ -571,7 +573,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
                token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
                && hb_string_equals(parser->current_token->value, opening_quote->value)
              )) {
-        if (token_is(parser, TOKEN_ERB_START)) {
+        if (token_is_nunjucks_start(parser)) {
           parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
           hb_array_append(children, parser_parse_erb_tag(parser));
@@ -621,7 +623,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   hb_array_T* errors = NULL;
 
   // <div id=<%= "home" %>>
-  if (token_is(parser, TOKEN_ERB_START)) {
+  if (token_is_nunjucks_start(parser)) {
     AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
     hb_array_append(children, erb_node);
 
@@ -683,7 +685,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     return value;
   }
 
-  char* expected = token_types_to_friendly_string(parser->allocator, TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
+  char* expected = token_types_to_friendly_string(parser->allocator, TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_NUNJUCKS_TAG_START);
 
   append_unexpected_error(
     hb_string("Unexpected Token"),
@@ -897,7 +899,7 @@ static void parser_skip_erb_content(lexer_T* lexer) {
   do {
     token = lexer_next_token(lexer);
 
-    if (token->type == TOKEN_ERB_END || token->type == TOKEN_EOF) {
+    if (token_type_is_nunjucks_end(token->type) || token->type == TOKEN_EOF) {
       token_free(token, lexer->allocator);
       break;
     }
@@ -928,9 +930,9 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
     }
 
     if (after->type == TOKEN_IDENTIFIER || after->type == TOKEN_CHARACTER || after->type == TOKEN_DASH
-        || after->type == TOKEN_ERB_START) {
+        || token_type_is_nunjucks_start(after->type)) {
 
-      if (after->type == TOKEN_ERB_START) {
+      if (token_type_is_nunjucks_start(after->type)) {
         token_free(after, lexer->allocator);
         parser_skip_erb_content(lexer);
       } else {
@@ -976,7 +978,7 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
   lexer_T lexer_copy = *parser->lexer;
   token_T* content = lexer_next_token(&lexer_copy);
 
-  if (content == NULL || content->type != TOKEN_ERB_CONTENT) {
+  if (content == NULL || content->type != TOKEN_NUNJUCKS_CONTENT) {
     if (content) { token_free(content, parser->allocator); }
 
     return false;
@@ -1079,7 +1081,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       continue;
     }
 
-    if (parser->current_token->type == TOKEN_ERB_START) {
+    if (token_is_nunjucks_start(parser)) {
       parser_handle_erb_in_open_tag(parser, children);
       continue;
     }
@@ -1136,7 +1138,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       "Unexpected Token",
       TOKEN_IDENTIFIER,
       TOKEN_AT,
-      TOKEN_ERB_START,
+      TOKEN_NUNJUCKS_TAG_START,
       TOKEN_WHITESPACE,
       TOKEN_NEWLINE
     );
@@ -1389,20 +1391,21 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser) {
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   hb_array_T* errors = NULL;
 
-  token_T* opening_tag = parser_consume_expected(parser, TOKEN_ERB_START, &errors);
-  token_T* content = parser_consume_expected(parser, TOKEN_ERB_CONTENT, &errors);
+  token_type_T opening_type = parser->current_token->type;
+
+  token_T* opening_tag = parser_consume_expected(parser, opening_type, &errors);
+  token_T* content = parser_consume_expected(parser, TOKEN_NUNJUCKS_CONTENT, &errors);
+
+  token_type_T expected_closing_type = token_type_nunjucks_end_for(opening_type);
 
   token_T* closing_tag = NULL;
   position_T end_position;
 
-  if (token_is(parser, TOKEN_ERB_END)) {
-    closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, &errors);
+  if (token_is_nunjucks_end(parser)) {
+    closing_tag = parser_consume_expected(parser, parser->current_token->type, &errors);
     end_position = closing_tag->location.end;
 
-    bool is_well_formed = hb_string_equals(closing_tag->value, hb_string("%>"))
-                       || hb_string_equals(closing_tag->value, hb_string("-%>"))
-                       || hb_string_equals(closing_tag->value, hb_string("=%>"))
-                       || hb_string_equals(closing_tag->value, hb_string("%%>"));
+    bool is_well_formed = (closing_tag->type == expected_closing_type);
 
     if (!is_well_formed) {
       append_malformed_erb_closing_tag_error(
@@ -1414,7 +1417,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
         &errors
       );
     }
-  } else if (token_is(parser, TOKEN_ERB_START)) {
+  } else if (token_is_nunjucks_start(parser)) {
     append_nested_erb_tag_error(
       opening_tag,
       parser->current_token->location.start.line,
@@ -1465,7 +1468,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
   bool has_closing_tag = !hb_string_is_empty(expected_closing_tag);
 
   while (!token_is(parser, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       parser_append_literal_node_from_buffer(parser, &content, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -1519,7 +1522,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
   while (token_is_not(parser, TOKEN_EOF)) {
     if (parser_options_past_deadline(&parser->options)) { break; }
 
-    if (token_is(parser, TOKEN_ERB_START)) {
+    if (token_is_nunjucks_start(parser)) {
       hb_array_append(children, parser_parse_erb_tag(parser));
       parser->consecutive_error_count = 0;
       continue;
@@ -1581,6 +1584,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
           TOKEN_LT,
           TOKEN_NBSP,
           TOKEN_NEWLINE,
+          TOKEN_NUNJUCKS_RAW_CONTENT,
           TOKEN_PERCENT,
           TOKEN_QUOTE,
           TOKEN_SEMICOLON,
@@ -1606,7 +1610,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
       parser,
       errors,
       "Unexpected token",
-      TOKEN_ERB_START,
+      TOKEN_NUNJUCKS_TAG_START,
       TOKEN_HTML_DOCTYPE,
       TOKEN_HTML_COMMENT_START,
       TOKEN_IDENTIFIER,

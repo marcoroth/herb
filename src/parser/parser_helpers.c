@@ -269,7 +269,7 @@ void parser_synchronize(parser_T* parser, hb_array_T** errors) {
   while (parser->current_token->type != TOKEN_EOF) {
     token_type_T type = parser->current_token->type;
 
-    if (type == TOKEN_HTML_TAG_START || type == TOKEN_HTML_TAG_START_CLOSE || type == TOKEN_ERB_START
+    if (type == TOKEN_HTML_TAG_START || type == TOKEN_HTML_TAG_START_CLOSE || token_type_is_nunjucks_start(type)
         || type == TOKEN_HTML_COMMENT_START || type == TOKEN_HTML_DOCTYPE) {
       return;
     }

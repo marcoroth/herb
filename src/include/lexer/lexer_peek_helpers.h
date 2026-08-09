@@ -21,7 +21,10 @@ typedef struct {
   uint32_t previous_column;
   char current_character;
   lexer_state_T state;
-  uint8_t malformed_erb_close_length;
+  nunjucks_delimiter_T pending_close;
+  uint8_t pending_close_length;
+  nunjucks_raw_kind_T pending_raw;
+  nunjucks_raw_kind_T open_raw;
 } lexer_state_snapshot_T;
 
 bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset);
@@ -55,44 +58,47 @@ static inline bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer,
       && lexer->source.data[position + 3] == '>';
 }
 
-static inline bool lexer_peek_erb_start(const lexer_T* lexer, uint32_t offset) {
-  uint32_t position = lexer->current_position + offset;
-
-  return position + 1 < lexer->source.length && lexer->source.data[position] == '<'
-      && lexer->source.data[position + 1] == '%';
+static inline bool lexer_peek_pair_at(const lexer_T* lexer, uint32_t position, char first, char second) {
+  return position + 1 < lexer->source.length && lexer->source.data[position] == first
+      && lexer->source.data[position + 1] == second;
 }
 
-static inline bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
-  uint32_t position = lexer->current_position + offset;
-
-  return position + 1 < lexer->source.length && lexer->source.data[position] == '%'
-      && lexer->source.data[position + 1] == '>';
+static inline bool lexer_peek_nunjucks_output_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_pair_at(lexer, lexer->current_position + offset, '{', '{');
 }
 
-static inline bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, uint32_t offset) {
-  uint32_t position = lexer->current_position + offset;
-
-  return position + 2 < lexer->source.length && lexer->source.data[position] == '-'
-      && lexer->source.data[position + 1] == '%' && lexer->source.data[position + 2] == '>';
+static inline bool lexer_peek_nunjucks_tag_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_pair_at(lexer, lexer->current_position + offset, '{', '%');
 }
 
-static inline bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, uint32_t offset) {
-  uint32_t position = lexer->current_position + offset;
-
-  return position + 2 < lexer->source.length && lexer->source.data[position] == '%'
-      && lexer->source.data[position + 1] == '%' && lexer->source.data[position + 2] == '>';
+static inline bool lexer_peek_nunjucks_comment_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_pair_at(lexer, lexer->current_position + offset, '{', '#');
 }
 
-static inline bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, uint32_t offset) {
-  uint32_t position = lexer->current_position + offset;
-
-  return position + 2 < lexer->source.length && lexer->source.data[position] == '='
-      && lexer->source.data[position + 1] == '%' && lexer->source.data[position + 2] == '>';
+static inline bool lexer_peek_nunjucks_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_nunjucks_output_start(lexer, offset) || lexer_peek_nunjucks_tag_start(lexer, offset)
+      || lexer_peek_nunjucks_comment_start(lexer, offset);
 }
 
-static inline bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
-      || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset);
+// Closing delimiters, both plain (`}}`) and whitespace-controlled (`-}}`).
+static inline bool lexer_peek_nunjucks_close(const lexer_T* lexer, uint32_t offset, char first, char second) {
+  uint32_t position = lexer->current_position + offset;
+
+  if (lexer_peek_pair_at(lexer, position, first, second)) { return true; }
+
+  return lexer->source.data[position] == '-' && lexer_peek_pair_at(lexer, position + 1, first, second);
+}
+
+static inline bool lexer_peek_nunjucks_output_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_nunjucks_close(lexer, offset, '}', '}');
+}
+
+static inline bool lexer_peek_nunjucks_tag_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_nunjucks_close(lexer, offset, '%', '}');
+}
+
+static inline bool lexer_peek_nunjucks_comment_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_nunjucks_close(lexer, offset, '#', '}');
 }
 
 static inline lexer_state_snapshot_T lexer_save_state(lexer_T* lexer) {
@@ -104,7 +110,10 @@ static inline lexer_state_snapshot_T lexer_save_state(lexer_T* lexer) {
                                       .previous_column = lexer->previous_column,
                                       .current_character = lexer->current_character,
                                       .state = lexer->state,
-                                      .malformed_erb_close_length = lexer->malformed_erb_close_length };
+                                      .pending_close = lexer->pending_close,
+                                      .pending_close_length = lexer->pending_close_length,
+                                      .pending_raw = lexer->pending_raw,
+                                      .open_raw = lexer->open_raw };
   return snapshot;
 }
 
@@ -117,7 +126,10 @@ static inline void lexer_restore_state(lexer_T* lexer, lexer_state_snapshot_T sn
   lexer->previous_column = snapshot.previous_column;
   lexer->current_character = snapshot.current_character;
   lexer->state = snapshot.state;
-  lexer->malformed_erb_close_length = snapshot.malformed_erb_close_length;
+  lexer->pending_close = snapshot.pending_close;
+  lexer->pending_close_length = snapshot.pending_close_length;
+  lexer->pending_raw = snapshot.pending_raw;
+  lexer->open_raw = snapshot.open_raw;
 }
 
 #endif

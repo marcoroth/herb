@@ -1,5 +1,6 @@
 #include "include/herb.h"
 #include "include/lib/hb_allocator.h"
+#include "include/nunjucks/keywords.h"
 #include "include/lib/hb_array.h"
 #include "include/lib/hb_buffer.h"
 #include "include/lib/hb_string.h"
@@ -8,6 +9,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define EXTRACT_MAX_BLOCK_DEPTH 64
 
 const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicolons = true,
                                                                         .comments = false,
@@ -25,7 +28,11 @@ void herb_extract_ruby_to_buffer_with_options(
   bool skip_erb_content = false;
   bool is_comment_tag = false;
   bool is_erb_comment_tag = false;
+  bool is_statement_tag = false;
   bool need_newline = false;
+
+  bool in_for_block[EXTRACT_MAX_BLOCK_DEPTH] = { false };
+  size_t block_depth = 0;
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
@@ -37,8 +44,11 @@ void herb_extract_ruby_to_buffer_with_options(
         break;
       }
 
-      case TOKEN_ERB_START: {
-        is_erb_comment_tag = hb_string_equals(token->value, hb_string("<%#"));
+      case TOKEN_NUNJUCKS_OUTPUT_START:
+      case TOKEN_NUNJUCKS_TAG_START:
+      case TOKEN_NUNJUCKS_COMMENT_START: {
+        is_erb_comment_tag = (token->type == TOKEN_NUNJUCKS_COMMENT_START);
+        is_statement_tag = (token->type == TOKEN_NUNJUCKS_TAG_START);
 
         if (is_erb_comment_tag) {
           if (extract_options.comments) {
@@ -51,7 +61,7 @@ void herb_extract_ruby_to_buffer_with_options(
               if (i + 1 < hb_array_size(tokens)) {
                 const token_T* next = hb_array_get(tokens, i + 1);
 
-                if (next->type == TOKEN_ERB_CONTENT && !hb_string_is_null(next->value)
+                if (next->type == TOKEN_NUNJUCKS_CONTENT && !hb_string_is_null(next->value)
                     && memchr(next->value.data, '\n', next->value.length) != NULL) {
                   is_multiline = true;
                 }
@@ -74,11 +84,6 @@ void herb_extract_ruby_to_buffer_with_options(
             is_comment_tag = true;
             if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
           }
-        } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
-                   || hb_string_equals(token->value, hb_string("<%graphql"))) {
-          skip_erb_content = true;
-          is_comment_tag = false;
-          if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
         } else {
           skip_erb_content = false;
           is_comment_tag = false;
@@ -94,7 +99,7 @@ void herb_extract_ruby_to_buffer_with_options(
         break;
       }
 
-      case TOKEN_ERB_CONTENT: {
+      case TOKEN_NUNJUCKS_CONTENT: {
         if (skip_erb_content == false) {
           bool is_inline_comment = false;
 
@@ -135,7 +140,30 @@ void herb_extract_ruby_to_buffer_with_options(
 
             if (!extract_options.preserve_positions) { need_newline = true; }
           } else {
-            hb_buffer_append_string(output, token->value);
+            hb_string_T value = token->value;
+
+            if (is_statement_tag) {
+              hb_string_T keyword = nunjucks_statement_keyword(value);
+
+              if (hb_string_equals(keyword, hb_string("for"))) {
+                if (block_depth < EXTRACT_MAX_BLOCK_DEPTH) { in_for_block[block_depth] = true; }
+                block_depth++;
+              } else if (hb_string_starts_with(keyword, hb_string("end"))) {
+                if (block_depth > 0) { block_depth--; }
+              }
+
+              bool is_for_else = hb_string_equals(keyword, hb_string("else")) && block_depth > 0
+                              && block_depth <= EXTRACT_MAX_BLOCK_DEPTH && in_for_block[block_depth - 1];
+
+              if (is_for_else) {
+                hb_buffer_append_whitespace(output, value.length);
+                break;
+              }
+
+              value = nunjucks_normalize_statement_fixed_width(value, allocator);
+            }
+
+            hb_buffer_append_string(output, value);
 
             if (!extract_options.preserve_positions) { need_newline = true; }
           }
@@ -162,7 +190,9 @@ void herb_extract_ruby_to_buffer_with_options(
         break;
       }
 
-      case TOKEN_ERB_END: {
+      case TOKEN_NUNJUCKS_OUTPUT_END:
+      case TOKEN_NUNJUCKS_TAG_END:
+      case TOKEN_NUNJUCKS_COMMENT_END: {
         bool was_comment = is_comment_tag;
         bool was_erb_comment = is_erb_comment_tag;
         skip_erb_content = false;
@@ -208,9 +238,13 @@ void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output, hb_all
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
-      case TOKEN_ERB_START:
-      case TOKEN_ERB_CONTENT:
-      case TOKEN_ERB_END: hb_buffer_append_whitespace(output, range_length(token->range)); break;
+      case TOKEN_NUNJUCKS_OUTPUT_START:
+      case TOKEN_NUNJUCKS_TAG_START:
+      case TOKEN_NUNJUCKS_COMMENT_START:
+      case TOKEN_NUNJUCKS_CONTENT:
+      case TOKEN_NUNJUCKS_OUTPUT_END:
+      case TOKEN_NUNJUCKS_TAG_END:
+      case TOKEN_NUNJUCKS_COMMENT_END: hb_buffer_append_whitespace(output, range_length(token->range)); break;
       default: hb_buffer_append_string(output, token->value);
     }
   }

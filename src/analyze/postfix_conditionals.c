@@ -190,7 +190,7 @@ static AST_NODE_T* transform_conditional(
                                           + (uint32_t) (body_info.offset_in_content + body_info.length) };
 
   token_T* body_content =
-    create_synthetic_token(allocator, body_info.source, TOKEN_ERB_CONTENT, body_content_start, body_content_end);
+    create_synthetic_token(allocator, body_info.source, TOKEN_NUNJUCKS_CONTENT, body_content_start, body_content_end);
 
   AST_ERB_CONTENT_NODE_T* body_erb_node = ast_erb_content_node_init(
     erb_node->tag_opening,
@@ -229,13 +229,13 @@ static AST_NODE_T* transform_conditional(
 
   const char* condition_content = hb_buffer_value(&condition_buffer);
 
-  token_T* tag_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
-  token_T* content_token = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
-  token_T* tag_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  token_T* tag_opening = create_synthetic_token(allocator, "{%", TOKEN_NUNJUCKS_TAG_START, start, start);
+  token_T* content_token = create_synthetic_token(allocator, condition_content, TOKEN_NUNJUCKS_CONTENT, start, end);
+  token_T* tag_closing = create_synthetic_token(allocator, "%}", TOKEN_NUNJUCKS_TAG_END, end, end);
 
-  token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
-  token_T* end_content = create_synthetic_token(allocator, " end ", TOKEN_ERB_CONTENT, end, end);
-  token_T* end_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  token_T* end_opening = create_synthetic_token(allocator, "{%", TOKEN_NUNJUCKS_TAG_START, end, end);
+  token_T* end_content = create_synthetic_token(allocator, " end ", TOKEN_NUNJUCKS_CONTENT, end, end);
+  token_T* end_closing = create_synthetic_token(allocator, "%}", TOKEN_NUNJUCKS_TAG_END, end, end);
 
   AST_ERB_END_NODE_T* end_node =
     ast_erb_end_node_init(end_opening, end_content, end_closing, end, end, hb_array_init(0, allocator), allocator);

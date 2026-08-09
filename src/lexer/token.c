@@ -76,9 +76,14 @@ hb_string_T token_type_to_string(const token_type_T type) {
     case TOKEN_LT: return hb_string("TOKEN_LT");
     case TOKEN_PERCENT: return hb_string("TOKEN_PERCENT");
     case TOKEN_AMPERSAND: return hb_string("TOKEN_AMPERSAND");
-    case TOKEN_ERB_START: return hb_string("TOKEN_ERB_START");
-    case TOKEN_ERB_CONTENT: return hb_string("TOKEN_ERB_CONTENT");
-    case TOKEN_ERB_END: return hb_string("TOKEN_ERB_END");
+    case TOKEN_NUNJUCKS_OUTPUT_START: return hb_string("TOKEN_NUNJUCKS_OUTPUT_START");
+    case TOKEN_NUNJUCKS_OUTPUT_END: return hb_string("TOKEN_NUNJUCKS_OUTPUT_END");
+    case TOKEN_NUNJUCKS_TAG_START: return hb_string("TOKEN_NUNJUCKS_TAG_START");
+    case TOKEN_NUNJUCKS_TAG_END: return hb_string("TOKEN_NUNJUCKS_TAG_END");
+    case TOKEN_NUNJUCKS_COMMENT_START: return hb_string("TOKEN_NUNJUCKS_COMMENT_START");
+    case TOKEN_NUNJUCKS_COMMENT_END: return hb_string("TOKEN_NUNJUCKS_COMMENT_END");
+    case TOKEN_NUNJUCKS_CONTENT: return hb_string("TOKEN_NUNJUCKS_CONTENT");
+    case TOKEN_NUNJUCKS_RAW_CONTENT: return hb_string("TOKEN_NUNJUCKS_RAW_CONTENT");
     case TOKEN_CHARACTER: return hb_string("TOKEN_CHARACTER");
     case TOKEN_ERROR: return hb_string("TOKEN_ERROR");
     case TOKEN_EOF: return hb_string("TOKEN_EOF");
@@ -117,9 +122,14 @@ hb_string_T token_type_to_friendly_string(const token_type_T type) {
     case TOKEN_LT: return hb_string("`<`");
     case TOKEN_PERCENT: return hb_string("`%`");
     case TOKEN_AMPERSAND: return hb_string("`&`");
-    case TOKEN_ERB_START: return hb_string("`<%`");
-    case TOKEN_ERB_CONTENT: return hb_string("ERB content");
-    case TOKEN_ERB_END: return hb_string("`%>`");
+    case TOKEN_NUNJUCKS_OUTPUT_START: return hb_string("`{{`");
+    case TOKEN_NUNJUCKS_OUTPUT_END: return hb_string("`}}`");
+    case TOKEN_NUNJUCKS_TAG_START: return hb_string("`{%`");
+    case TOKEN_NUNJUCKS_TAG_END: return hb_string("`%}`");
+    case TOKEN_NUNJUCKS_COMMENT_START: return hb_string("`{#`");
+    case TOKEN_NUNJUCKS_COMMENT_END: return hb_string("`#}`");
+    case TOKEN_NUNJUCKS_CONTENT: return hb_string("Nunjucks content");
+    case TOKEN_NUNJUCKS_RAW_CONTENT: return hb_string("raw content");
     case TOKEN_CHARACTER: return hb_string("a character");
     case TOKEN_ERROR: return hb_string("an error token");
     case TOKEN_EOF: return hb_string("end of file");
@@ -228,10 +238,10 @@ bool token_value_empty(const token_T* token) {
   return token == NULL || hb_string_is_empty(token->value);
 }
 
-bool token_is_escaped_erb_tag_opening(const token_T* token) {
-  if (token_value_empty(token)) { return false; }
+bool token_is_escaped_tag_opening(const token_T* token) {
+  (void) token;
 
-  return hb_string_starts_with(token->value, hb_string("<%%"));
+  return false;
 }
 
 void token_free(token_T* token, hb_allocator_T* allocator) {

@@ -1,8 +1,8 @@
+#include "include/lexer/lexer.h"
 #include "include/lexer/lexer_peek_helpers.h"
 #include "include/lexer/token.h"
 #include "include/lib/hb_string.h"
 #include "include/macros.h"
-#include "include/prism/ruby_parser.h"
 #include "include/util/utf8.h"
 #include "include/util/util.h"
 
@@ -11,24 +11,6 @@
 #include <string.h>
 
 #define LEXER_STALL_LIMIT 5
-#define LEXER_ERB_END_CANDIDATE_LIMIT 16
-#define LEXER_ERB_SPACED_DELIMITER_LIMIT 8
-
-typedef enum {
-  ERB_END_CANDIDATE_PERCENT,
-  ERB_END_CANDIDATE_HTML_TAG,
-  ERB_END_CANDIDATE_ANGLE_BRACKET,
-} erb_end_candidate_kind_T;
-
-typedef struct {
-  uint32_t position;
-  uint32_t line;
-  uint32_t column;
-  uint8_t delimiter_length;
-  erb_end_candidate_kind_T kind;
-} erb_end_candidate_T;
-
-static hb_string_T erb_open_patterns[] = HB_STRING_LIST("<%==", "<%%=", "<%graphql", "<%=", "<%#", "<%-", "<%%", "<%");
 
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
@@ -74,7 +56,10 @@ void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
-  lexer->malformed_erb_close_length = 0;
+  lexer->pending_close = NUNJUCKS_DELIMITER_NONE;
+  lexer->pending_close_length = 0;
+  lexer->pending_raw = NUNJUCKS_RAW_NONE;
+  lexer->open_raw = NUNJUCKS_RAW_NONE;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -207,163 +192,164 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
   return token;
 }
 
-// ===== ERB Parsing
+// ===== Nunjucks Parsing
 
-static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  lexer->state = STATE_ERB_CONTENT;
-
-  if (lexer_peek(lexer, 2) == '%' && lexer_peek(lexer, 3) == '>') {
-    return lexer_advance_with(lexer, hb_string("<%"), TOKEN_ERB_START);
+static void lexer_advance_raw(lexer_T* lexer) {
+  if (lexer->current_position >= lexer->source.length) {
+    lexer->current_character = '\0';
+    return;
   }
 
-  for (size_t i = 0; i < sizeof(erb_open_patterns) / sizeof(erb_open_patterns[0]); i++) {
-    token_T* match = lexer_match_and_advance(lexer, erb_open_patterns[i], TOKEN_ERB_START);
-    if (match) { return match; }
+  if (is_newline(lexer->current_character)) {
+    lexer->current_line++;
+    lexer->current_column = 0;
+  } else {
+    lexer->current_column++;
   }
 
-  return lexer_error(lexer, "Unexpected ERB start");
+  lexer->current_position++;
+  lexer->current_character = lexer->source.data[lexer->current_position];
 }
 
-static uint8_t lexer_erb_percent_delimiter_length(const lexer_T* lexer) {
-  if (lexer->current_character != '%') { return 0; }
+static token_T* lexer_parse_nunjucks_open(lexer_T* lexer) {
+  token_type_T type;
 
-  char next = lexer_peek(lexer, 1);
-
-  if (is_newline(next) || next == '<' || next == '"' || next == '\'' || next == '\0') { return 1; }
-
-  for (uint8_t offset = 1; offset <= LEXER_ERB_SPACED_DELIMITER_LIMIT; offset++) {
-    char character = lexer_peek(lexer, offset);
-
-    if (character == '>') { return offset + 1; }
-    if (character != ' ' && character != '\t') { break; }
+  if (lexer_peek_nunjucks_output_start(lexer, 0)) {
+    lexer->state = STATE_NUNJUCKS_OUTPUT;
+    lexer->pending_close = NUNJUCKS_DELIMITER_OUTPUT;
+    type = TOKEN_NUNJUCKS_OUTPUT_START;
+  } else if (lexer_peek_nunjucks_tag_start(lexer, 0)) {
+    lexer->state = STATE_NUNJUCKS_TAG;
+    lexer->pending_close = NUNJUCKS_DELIMITER_TAG;
+    type = TOKEN_NUNJUCKS_TAG_START;
+  } else {
+    lexer->state = STATE_NUNJUCKS_COMMENT;
+    lexer->pending_close = NUNJUCKS_DELIMITER_COMMENT;
+    type = TOKEN_NUNJUCKS_COMMENT_START;
   }
 
-  return 0;
+  size_t length = (lexer_peek(lexer, 2) == '-') ? 3 : 2;
+
+  return lexer_advance_with_next(lexer, length, type);
 }
 
-static bool lexer_recover_erb_tag_end(
-  lexer_T* lexer,
-  uint32_t start_position,
-  const erb_end_candidate_T* candidates,
-  size_t candidate_count
-) {
-  for (int pass = ERB_END_CANDIDATE_PERCENT; pass <= ERB_END_CANDIDATE_ANGLE_BRACKET; pass++) {
-    bool last_first = (pass == ERB_END_CANDIDATE_ANGLE_BRACKET);
-
-    for (size_t offset = 0; offset < candidate_count; offset++) {
-      const erb_end_candidate_T* candidate = &candidates[last_first ? candidate_count - 1 - offset : offset];
-
-      if (candidate->kind != (erb_end_candidate_kind_T) pass) { continue; }
-
-      if (!herb_ruby_fragment_is_parseable(hb_string_range(lexer->source, start_position, candidate->position))) {
-        continue;
-      }
-
-      lexer->current_position = candidate->position;
-      lexer->current_line = candidate->line;
-      lexer->current_column = candidate->column;
-      lexer->current_character = lexer->source.data[candidate->position];
-
-      if (candidate->delimiter_length > 0) {
-        lexer->state = STATE_ERB_CLOSE;
-        lexer->malformed_erb_close_length = candidate->delimiter_length;
-      } else {
-        lexer->state = STATE_DATA;
-      }
-
-      return true;
-    }
+static bool lexer_peek_nunjucks_end_for(const lexer_T* lexer, nunjucks_delimiter_T delimiter) {
+  switch (delimiter) {
+    case NUNJUCKS_DELIMITER_OUTPUT: return lexer_peek_nunjucks_output_end(lexer, 0);
+    case NUNJUCKS_DELIMITER_TAG: return lexer_peek_nunjucks_tag_end(lexer, 0);
+    case NUNJUCKS_DELIMITER_COMMENT: return lexer_peek_nunjucks_comment_end(lexer, 0);
+    case NUNJUCKS_DELIMITER_NONE: return false;
   }
 
   return false;
 }
 
-static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  uint32_t start_position = lexer->current_position;
+static nunjucks_raw_kind_T lexer_raw_kind_from_content(hb_string_T content) {
+  hb_string_T keyword = hb_string_trim(content);
 
-  erb_end_candidate_T candidates[LEXER_ERB_END_CANDIDATE_LIMIT];
-  size_t candidate_count = 0;
+  if (hb_string_equals(keyword, hb_string("raw"))) { return NUNJUCKS_RAW_RAW; }
+  if (hb_string_equals(keyword, hb_string("verbatim"))) { return NUNJUCKS_RAW_VERBATIM; }
 
-  while (!lexer_peek_erb_end(lexer, 0)) {
-    if (lexer_eof(lexer) || lexer_peek_erb_start(lexer, 0)) {
-      if (!lexer_recover_erb_tag_end(lexer, start_position, candidates, candidate_count) && !lexer_eof(lexer)) {
-        lexer->state = STATE_DATA;
-      }
-
-      token_T* token =
-        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
-
-      return token;
-    }
-
-    if (candidate_count < LEXER_ERB_END_CANDIDATE_LIMIT) {
-      char next = lexer_peek(lexer, 1);
-      uint8_t trailing = lexer_erb_percent_delimiter_length(lexer);
-
-      if (trailing > 0) {
-        uint8_t leading = 0;
-
-        if (lexer->current_position > start_position) {
-          char preceding = lexer->source.data[lexer->current_position - 1];
-
-          if (preceding == '-' || preceding == '=' || preceding == '%') { leading = 1; }
-        }
-
-        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position - leading,
-                                                                .line = lexer->current_line,
-                                                                .column = lexer->current_column - leading,
-                                                                .delimiter_length = leading + trailing,
-                                                                .kind = ERB_END_CANDIDATE_PERCENT };
-      } else if (lexer->current_character == '<'
-                 && (isalpha(next) || next == '!' || (next == '/' && isalpha(lexer_peek(lexer, 2))))) {
-        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position,
-                                                                .line = lexer->current_line,
-                                                                .column = lexer->current_column,
-                                                                .delimiter_length = 0,
-                                                                .kind = ERB_END_CANDIDATE_HTML_TAG };
-      } else if (lexer->current_character == '>') {
-        candidates[candidate_count++] = (erb_end_candidate_T) { .position = lexer->current_position,
-                                                                .line = lexer->current_line,
-                                                                .column = lexer->current_column,
-                                                                .delimiter_length = 1,
-                                                                .kind = ERB_END_CANDIDATE_ANGLE_BRACKET };
-      }
-    }
-
-    if (is_newline(lexer->current_character)) {
-      lexer->current_line++;
-      lexer->current_column = 0;
-    } else {
-      lexer->current_column++;
-    }
-
-    lexer->current_position++;
-    lexer->current_character = lexer->source.data[lexer->current_position];
-  }
-
-  lexer->state = STATE_ERB_CLOSE;
-
-  token_T* token =
-    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
-
-  return token;
+  return NUNJUCKS_RAW_NONE;
 }
 
-static token_T* lexer_parse_erb_close(lexer_T* lexer) {
-  lexer->state = STATE_DATA;
+static token_T* lexer_parse_nunjucks_content(lexer_T* lexer) {
+  uint32_t start_position = lexer->current_position;
+  bool skip_strings = (lexer->pending_close != NUNJUCKS_DELIMITER_COMMENT);
 
-  if (lexer->malformed_erb_close_length > 0) {
-    uint8_t length = lexer->malformed_erb_close_length;
-    lexer->malformed_erb_close_length = 0;
+  while (!lexer_eof(lexer) && !lexer_peek_nunjucks_end_for(lexer, lexer->pending_close)) {
+    if (skip_strings && (lexer->current_character == '"' || lexer->current_character == '\'')) {
+      char quote = lexer->current_character;
 
-    return lexer_advance_with_next(lexer, length, TOKEN_ERB_END);
+      lexer_advance_raw(lexer);
+
+      while (!lexer_eof(lexer) && lexer->current_character != quote) {
+        if (lexer->current_character == '\\' && lexer_peek(lexer, 1) != '\0') { lexer_advance_raw(lexer); }
+
+        lexer_advance_raw(lexer);
+      }
+
+      if (!lexer_eof(lexer)) { lexer_advance_raw(lexer); }
+
+      continue;
+    }
+
+    lexer_advance_raw(lexer);
   }
 
-  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END); }
-  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END); }
-  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("-%>"), TOKEN_ERB_END); }
+  hb_string_T value = hb_string_range(lexer->source, start_position, lexer->current_position);
 
-  return lexer_advance_with(lexer, hb_string("%>"), TOKEN_ERB_END);
+  if (lexer_eof(lexer)) {
+    lexer->state = STATE_DATA;
+    lexer->pending_close = NUNJUCKS_DELIMITER_NONE;
+  } else {
+    lexer->state = STATE_NUNJUCKS_CLOSE;
+
+    if (lexer->pending_close == NUNJUCKS_DELIMITER_TAG) { lexer->pending_raw = lexer_raw_kind_from_content(value); }
+  }
+
+  return token_init(value, TOKEN_NUNJUCKS_CONTENT, lexer);
+}
+
+static token_T* lexer_parse_nunjucks_close(lexer_T* lexer) {
+  token_type_T type;
+
+  switch (lexer->pending_close) {
+    case NUNJUCKS_DELIMITER_OUTPUT: type = TOKEN_NUNJUCKS_OUTPUT_END; break;
+    case NUNJUCKS_DELIMITER_TAG: type = TOKEN_NUNJUCKS_TAG_END; break;
+    case NUNJUCKS_DELIMITER_COMMENT:
+    case NUNJUCKS_DELIMITER_NONE: type = TOKEN_NUNJUCKS_COMMENT_END; break;
+  }
+
+  size_t length = (lexer->current_character == '-') ? 3 : 2;
+
+  lexer->pending_close = NUNJUCKS_DELIMITER_NONE;
+
+  if (lexer->pending_raw != NUNJUCKS_RAW_NONE) {
+    lexer->open_raw = lexer->pending_raw;
+    lexer->pending_raw = NUNJUCKS_RAW_NONE;
+    lexer->state = STATE_NUNJUCKS_RAW;
+  } else {
+    lexer->state = STATE_DATA;
+  }
+
+  return lexer_advance_with_next(lexer, length, type);
+}
+
+static bool lexer_peek_nunjucks_raw_end(const lexer_T* lexer, nunjucks_raw_kind_T kind) {
+  if (!lexer_peek_nunjucks_tag_start(lexer, 0)) { return false; }
+
+  uint32_t position = lexer->current_position + 2;
+
+  if (position < lexer->source.length && lexer->source.data[position] == '-') { position++; }
+
+  while (position < lexer->source.length && isspace((unsigned char) lexer->source.data[position])) {
+    position++;
+  }
+
+  hb_string_T keyword = (kind == NUNJUCKS_RAW_VERBATIM) ? hb_string("endverbatim") : hb_string("endraw");
+
+  return hb_string_starts_with(hb_string_slice(lexer->source, position), keyword);
+}
+
+static token_T* lexer_parse_nunjucks_raw(lexer_T* lexer) {
+  uint32_t start_position = lexer->current_position;
+  nunjucks_raw_kind_T kind = lexer->open_raw;
+
+  lexer->open_raw = NUNJUCKS_RAW_NONE;
+  lexer->state = STATE_DATA;
+
+  while (!lexer_eof(lexer) && !lexer_peek_nunjucks_raw_end(lexer, kind)) {
+    lexer_advance_raw(lexer);
+  }
+
+  if (lexer->current_position == start_position) { return lexer_next_token(lexer); }
+
+  return token_init(
+    hb_string_range(lexer->source, start_position, lexer->current_position),
+    TOKEN_NUNJUCKS_RAW_CONTENT,
+    lexer
+  );
 }
 
 // ===== Tokenizing Function
@@ -372,8 +358,13 @@ token_T* lexer_next_token(lexer_T* lexer) {
   if (lexer_eof(lexer)) { return token_init(HB_STRING_EMPTY, TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
-  if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }
-  if (lexer->state == STATE_ERB_CLOSE) { return lexer_parse_erb_close(lexer); }
+  if (lexer->state == STATE_NUNJUCKS_OUTPUT || lexer->state == STATE_NUNJUCKS_TAG
+      || lexer->state == STATE_NUNJUCKS_COMMENT) {
+    return lexer_parse_nunjucks_content(lexer);
+  }
+
+  if (lexer->state == STATE_NUNJUCKS_CLOSE) { return lexer_parse_nunjucks_close(lexer); }
+  if (lexer->state == STATE_NUNJUCKS_RAW) { return lexer_parse_nunjucks_raw(lexer); }
 
   if (lexer->current_character == '\r' && lexer_peek(lexer, 1) == '\n') {
     return lexer_advance_with_next(lexer, 2, TOKEN_NEWLINE);
@@ -388,9 +379,13 @@ token_T* lexer_next_token(lexer_T* lexer) {
   }
 
   switch (lexer->current_character) {
-    case '<': {
-      if (lexer_peek(lexer, 1) == '%') { return lexer_parse_erb_open(lexer); }
+    case '{': {
+      if (lexer_peek_nunjucks_start(lexer, 0)) { return lexer_parse_nunjucks_open(lexer); }
 
+      return lexer_advance_current(lexer, TOKEN_CHARACTER);
+    }
+
+    case '<': {
       if (lexer_peek_for_doctype(lexer, 0)) {
         return lexer_advance_with_next(lexer, strlen("<!DOCTYPE"), TOKEN_HTML_DOCTYPE);
       }

@@ -18,4 +18,7 @@ bool token_matches_any(token_type_T current_token, token_type_T first_token, ...
 #define token_is_any_of(parser, ...) (token_matches_any((parser)->current_token->type, __VA_ARGS__, TOKEN_SENTINEL))
 #define token_is_none_of(parser, ...) (!token_matches_any((parser)->current_token->type, __VA_ARGS__, TOKEN_SENTINEL))
 
+#define token_is_nunjucks_start(parser) (token_type_is_nunjucks_start((parser)->current_token->type))
+#define token_is_nunjucks_end(parser) (token_type_is_nunjucks_end((parser)->current_token->type))
+
 #endif

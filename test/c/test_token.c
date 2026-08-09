@@ -26,8 +26,8 @@ TEST(test_token_type_to_friendly_string)
   ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_EQUALS), hb_string("`=`")));
   ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_SLASH), hb_string("`/`")));
   ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_COLON), hb_string("`:`")));
-  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_ERB_START), hb_string("`<%`")));
-  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_ERB_END), hb_string("`%>`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_NUNJUCKS_TAG_START), hb_string("`{%`")));
+  ck_assert(hb_string_equals(token_type_to_friendly_string(TOKEN_NUNJUCKS_TAG_END), hb_string("`%}`")));
 END
 
 TEST(test_token_types_to_friendly_string)
@@ -41,12 +41,12 @@ TEST(test_token_types_to_friendly_string)
   ck_assert_str_eq(result2, "an identifier or a quote");
   hb_allocator_dealloc(&alloc, result2);
 
-  char* result3 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
-  ck_assert_str_eq(result3, "an identifier, a quote, or `<%`");
+  char* result3 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_NUNJUCKS_TAG_START);
+  ck_assert_str_eq(result3, "an identifier, a quote, or `{%`");
   hb_allocator_dealloc(&alloc, result3);
 
-  char* result4 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_ERB_START, TOKEN_WHITESPACE, TOKEN_NEWLINE);
-  ck_assert_str_eq(result4, "an identifier, `<%`, whitespace, or a newline");
+  char* result4 = token_types_to_friendly_string(&alloc, TOKEN_IDENTIFIER, TOKEN_NUNJUCKS_TAG_START, TOKEN_WHITESPACE, TOKEN_NEWLINE);
+  ck_assert_str_eq(result4, "an identifier, `{%`, whitespace, or a newline");
   hb_allocator_dealloc(&alloc, result4);
 
   char* result5 = token_types_to_friendly_string(&alloc, TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_END, TOKEN_EQUALS);

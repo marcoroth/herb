@@ -192,7 +192,7 @@ static AST_ERB_ITERATION_BLOCK_NODE_T* try_transform_block_node(
 
   token_T* receiver = create_token_from_prism_location(
     iteration_call->receiver->location,
-    TOKEN_ERB_CONTENT,
+    TOKEN_NUNJUCKS_CONTENT,
     context->source,
     erb_content_offset,
     erb_content_source,

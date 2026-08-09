@@ -215,6 +215,7 @@ bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {
       return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_ENSURE;
     case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE;
     case CONTROL_TYPE_UNLESS: return child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_FOR: return child_type == CONTROL_TYPE_ELSE;
 
     default: return false;
   }

@@ -138,7 +138,7 @@ errors:
 
     - name: "ERBControlFlowScopeError"
       message:
-        template: "%s appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+        template: "%s appears outside its control flow block. Keep Nunjucks control flow statements together within the same HTML scope (tag, attribute, or content)."
         arguments:
           - "keyword"
 
@@ -158,7 +158,7 @@ errors:
 
     - name: "ERBMultipleBlocksInTagError"
       message:
-        template: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+        template: "Multiple unclosed control flow blocks in a single Nunjucks tag. Split each block into its own tag, or close all blocks within the same tag."
         arguments: []
 
       fields: []
@@ -298,7 +298,7 @@ errors:
 
     - name: "UnclosedERBTagError"
       message:
-        template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
+        template: "Nunjucks tag `%s` at (%u:%u) is missing its closing delimiter."
         arguments:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
@@ -310,7 +310,7 @@ errors:
 
     - name: "MalformedERBClosingTagError"
       message:
-        template: "ERB tag `%s` at (%u:%u) is closed with `%s` at (%u:%u) instead of `%%>`."
+        template: "Nunjucks tag `%s` at (%u:%u) is closed with `%s` at (%u:%u), which does not match its opening delimiter."
         arguments:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
@@ -328,7 +328,7 @@ errors:
 
     - name: "StrayERBClosingTagError"
       message:
-        template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
+        template: "Stray `%%}` found at (%u:%u). This closing delimiter is not part of a Nunjucks tag and will be treated as plain text. If you want a literal `%%}`, use the HTML entities `&percnt;&rbrace;` instead."
         arguments:
           - "start.line"
           - "start.column"
@@ -337,7 +337,7 @@ errors:
 
     - name: "NestedERBTagError"
       message:
-        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
+        template: "Nunjucks tag `%s` at (%u:%u) was terminated by a nested tag at (%zu:%zu). Nesting Nunjucks tags is not supported."
         arguments:
           - "opening_tag->value"
           - "opening_tag->location.start.line"
@@ -1154,6 +1154,11 @@ nodes:
         - name: "statements"
           type: "array"
           kind: "Node"
+
+        # Nunjucks runs the `else` branch of a `for` when the collection is empty.
+        - name: "subsequent"
+          type: "node"
+          kind: "ERBElseNode"
 
         - name: "end_node"
           type: "node"

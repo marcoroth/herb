@@ -68,6 +68,7 @@
         "./extension/libherb/location/location.c",
         "./extension/libherb/location/position.c",
         "./extension/libherb/location/range.c",
+        "./extension/libherb/nunjucks/keywords.c",
         "./extension/libherb/parser.c",
         "./extension/libherb/parser/dot_notation.c",
         "./extension/libherb/parser/match_tags.c",

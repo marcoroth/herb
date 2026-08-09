@@ -1731,7 +1731,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
     if (child->type == AST_ERB_BLOCK_NODE) {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) child;
 
-      if (token_is_escaped_erb_tag_opening(block_node->tag_opening)) { continue; }
+      if (token_is_escaped_tag_opening(block_node->tag_opening)) { continue; }
 
       if (block_node->tag_opening && !hb_string_is_empty(block_node->tag_opening->value)) {
         const char* opening_string = block_node->tag_opening->value.data;
@@ -1762,7 +1762,7 @@ void transform_tag_helper_array(hb_array_T* array, analyze_ruby_context_T* conte
       AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
       token_T* tag_opening = erb_node->tag_opening;
 
-      if (token_is_escaped_erb_tag_opening(tag_opening)) { continue; }
+      if (token_is_escaped_tag_opening(tag_opening)) { continue; }
 
       if (tag_opening && !hb_string_is_empty(tag_opening->value)) {
         const char* opening_string = tag_opening->value.data;

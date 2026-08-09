@@ -129,7 +129,7 @@ AST_NODE_T* transform_ternary_expression(
                                           + (uint32_t) (true_info.offset_in_content + true_info.length) };
 
   token_T* true_content =
-    create_synthetic_token(allocator, true_info.source, TOKEN_ERB_CONTENT, true_content_start, true_content_end);
+    create_synthetic_token(allocator, true_info.source, TOKEN_NUNJUCKS_CONTENT, true_content_start, true_content_end);
 
   AST_ERB_CONTENT_NODE_T* true_erb_node = ast_erb_content_node_init(
     erb_node->tag_opening,
@@ -155,7 +155,7 @@ AST_NODE_T* transform_ternary_expression(
                                            + (uint32_t) (false_info.offset_in_content + false_info.length) };
 
   token_T* false_content =
-    create_synthetic_token(allocator, false_info.source, TOKEN_ERB_CONTENT, false_content_start, false_content_end);
+    create_synthetic_token(allocator, false_info.source, TOKEN_NUNJUCKS_CONTENT, false_content_start, false_content_end);
 
   AST_ERB_CONTENT_NODE_T* false_erb_node = ast_erb_content_node_init(
     erb_node->tag_opening,
@@ -179,9 +179,9 @@ AST_NODE_T* transform_ternary_expression(
   hb_array_append(true_statements, (AST_NODE_T*) true_erb_node);
   hb_array_append(false_statements, (AST_NODE_T*) false_erb_node);
 
-  token_T* else_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
-  token_T* else_content_token = create_synthetic_token(allocator, " else ", TOKEN_ERB_CONTENT, end, end);
-  token_T* else_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  token_T* else_opening = create_synthetic_token(allocator, "{%", TOKEN_NUNJUCKS_TAG_START, end, end);
+  token_T* else_content_token = create_synthetic_token(allocator, " else ", TOKEN_NUNJUCKS_CONTENT, end, end);
+  token_T* else_closing = create_synthetic_token(allocator, "%}", TOKEN_NUNJUCKS_TAG_END, end, end);
 
   AST_ERB_ELSE_NODE_T* erb_else_node = ast_erb_else_node_init(
     else_opening,
@@ -202,13 +202,13 @@ AST_NODE_T* transform_ternary_expression(
 
   const char* condition_content = hb_buffer_value(&condition_buffer);
 
-  token_T* if_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, start, start);
-  token_T* if_content = create_synthetic_token(allocator, condition_content, TOKEN_ERB_CONTENT, start, end);
-  token_T* if_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  token_T* if_opening = create_synthetic_token(allocator, "{%", TOKEN_NUNJUCKS_TAG_START, start, start);
+  token_T* if_content = create_synthetic_token(allocator, condition_content, TOKEN_NUNJUCKS_CONTENT, start, end);
+  token_T* if_closing = create_synthetic_token(allocator, "%}", TOKEN_NUNJUCKS_TAG_END, end, end);
 
-  token_T* end_opening = create_synthetic_token(allocator, "<%", TOKEN_ERB_START, end, end);
-  token_T* end_content = create_synthetic_token(allocator, " end ", TOKEN_ERB_CONTENT, end, end);
-  token_T* end_closing = create_synthetic_token(allocator, "%>", TOKEN_ERB_END, end, end);
+  token_T* end_opening = create_synthetic_token(allocator, "{%", TOKEN_NUNJUCKS_TAG_START, end, end);
+  token_T* end_content = create_synthetic_token(allocator, " end ", TOKEN_NUNJUCKS_CONTENT, end, end);
+  token_T* end_closing = create_synthetic_token(allocator, "%}", TOKEN_NUNJUCKS_TAG_END, end, end);
 
   AST_ERB_END_NODE_T* end_node =
     ast_erb_end_node_init(end_opening, end_content, end_closing, end, end, hb_array_init(0, allocator), allocator);

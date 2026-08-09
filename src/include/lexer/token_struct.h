@@ -28,9 +28,14 @@ typedef enum {
   TOKEN_HTML_COMMENT_END,         // -->
   TOKEN_HTML_COMMENT_INVALID_END, // --!>
 
-  TOKEN_ERB_START,   // <%, <%=, <%%=, <%#, <%-, <%==, <%%
-  TOKEN_ERB_CONTENT, // Ruby Code
-  TOKEN_ERB_END,     // %>, -%>, =%>, %%>, and recovered: >, %, -%, =%, %%, "% >"
+  TOKEN_NUNJUCKS_OUTPUT_START,  // {{, {{-
+  TOKEN_NUNJUCKS_OUTPUT_END,    // }}, -}}
+  TOKEN_NUNJUCKS_TAG_START,     // {%, {%-
+  TOKEN_NUNJUCKS_TAG_END,       // %}, -%}
+  TOKEN_NUNJUCKS_COMMENT_START, // {#, {#-
+  TOKEN_NUNJUCKS_COMMENT_END,   // #}, -#}
+  TOKEN_NUNJUCKS_CONTENT,       // expression, tag statement, or comment text
+  TOKEN_NUNJUCKS_RAW_CONTENT,   // literal body of a `{% raw %}` or `{% verbatim %}` block
 
   TOKEN_LT,          // <
   TOKEN_SLASH,       // /

@@ -28,6 +28,23 @@ void token_free(token_T* token, hb_allocator_T* allocator);
 
 bool token_value_empty(const token_T* token);
 
-bool token_is_escaped_erb_tag_opening(const token_T* token);
+bool token_is_escaped_tag_opening(const token_T* token);
+
+static inline bool token_type_is_nunjucks_start(token_type_T type) {
+  return type == TOKEN_NUNJUCKS_OUTPUT_START || type == TOKEN_NUNJUCKS_TAG_START
+      || type == TOKEN_NUNJUCKS_COMMENT_START;
+}
+
+static inline bool token_type_is_nunjucks_end(token_type_T type) {
+  return type == TOKEN_NUNJUCKS_OUTPUT_END || type == TOKEN_NUNJUCKS_TAG_END || type == TOKEN_NUNJUCKS_COMMENT_END;
+}
+
+static inline token_type_T token_type_nunjucks_end_for(token_type_T type) {
+  switch (type) {
+    case TOKEN_NUNJUCKS_OUTPUT_START: return TOKEN_NUNJUCKS_OUTPUT_END;
+    case TOKEN_NUNJUCKS_TAG_START: return TOKEN_NUNJUCKS_TAG_END;
+    default: return TOKEN_NUNJUCKS_COMMENT_END;
+  }
+}
 
 #endif

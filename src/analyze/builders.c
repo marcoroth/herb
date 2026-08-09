@@ -301,12 +301,19 @@ static AST_NODE_T* build_until_node(control_builder_context_T* context) {
 }
 
 static AST_NODE_T* build_for_node(control_builder_context_T* context) {
+  AST_ERB_ELSE_NODE_T* else_clause = NULL;
+
+  if (context->subsequent && context->subsequent->type == AST_ERB_ELSE_NODE) {
+    else_clause = (AST_ERB_ELSE_NODE_T*) context->subsequent;
+  }
+
   return (AST_NODE_T*) ast_erb_for_node_init(
     context->tag_opening,
     context->content,
     context->tag_closing,
     HERB_PRISM_NODE_EMPTY,
     context->children,
+    else_clause,
     context->end_node,
     context->start_position,
     context->end_position,

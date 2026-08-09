@@ -13,9 +13,9 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter, rules, fixabilityFor } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 import { analyzeRuby } from "../analyze-ruby"
+import { DISABLED_VIEWERS, FEATURES } from "../features"
 
 window.Herb = Herb
 window.analyze = analyze
@@ -23,21 +23,39 @@ window.analyze = analyze
 const URL_UPDATE_THROTTLE = 100
 
 const exampleFile = dedent`
-  <!-- Example HTML+ERB File -->
+  <!-- Example HTML+Nunjucks File -->
+
+  {% extends "base.html" %}
 
   <input     required />
 
   <h1     class='bg-gray-300 text-gray"     id=''     data-controller="example">
-    Hello World <%= RUBY_VERSION %>
+    Hello {{ user.name | title }}
   </h1>
 
   <h2>
-    <% if Date.today.friday? %>
-      <div>Happy Friday!</div>
-    <% else %>
-      <div>Happy Day!</div>
-    <% end %>
+    {% if user.admin %}
+      <div>Welcome back!</div>
+    {% elif user.guest %}
+      <div>Hello, guest.</div>
+    {% else %}
+      <div>Please sign in.</div>
+    {% endif %}
   </h2>
+
+  {% block content %}
+    <ul>
+      {% for name, item in items %}
+        <li class="{{ loop.index }}">{{ name }}: {{ item }}</li>
+      {% else %}
+        <li>Nothing here yet.</li>
+      {% endfor %}
+    </ul>
+  {% endblock %}
+
+  {# a comment, stripped from the output #}
+
+  {% raw %}{{ this is not interpolated }}{% endraw %}
 
   <!-- Track whitespace example -->
   <div   class="example"></div   >
@@ -160,6 +178,8 @@ export default class extends Controller {
   }
 
   connect() {
+    this.hideUnsupportedViewers()
+
     this.currentDiagnosticsFilter = this.restoreDiagnosticsFilter()
     this.allDiagnostics = []
 
@@ -646,9 +666,18 @@ export default class extends Controller {
     }
   }
 
+  hideUnsupportedViewers() {
+    DISABLED_VIEWERS.forEach((viewer) => {
+      this.element
+        .querySelectorAll(`[data-viewer="${viewer}"], [data-viewer-target="${viewer}"]`)
+        .forEach((element) => element.classList.add("hidden"))
+    })
+  }
+
   isValidTab(tab) {
     const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'autofix', 'printer', 'diagnostics', 'rewrite', 'diff', 'full']
-    return validTabs.includes(tab)
+
+    return validTabs.includes(tab) && !DISABLED_VIEWERS.includes(tab)
   }
 
   setActiveTab(tabName) {
@@ -1352,6 +1381,7 @@ export default class extends Controller {
   }
 
   async formatEditor(event) {
+    if (!FEATURES.format) return
     if (this.isRubyMode) return
 
     const button = this.getClosestButton(event.target)
@@ -1388,6 +1418,7 @@ export default class extends Controller {
 
   async autofixEditor(event) {
     if (this.isRubyMode) return
+    if (!FEATURES.autofix) return
 
     const button = this.getClosestButton(event.target)
 
@@ -1442,6 +1473,7 @@ export default class extends Controller {
 
   async autofixUnsafeEditor(event) {
     if (this.isRubyMode) return
+    if (!FEATURES.autofix) return
 
     const button = this.getClosestButton(event.target)
 
@@ -1793,7 +1825,7 @@ export default class extends Controller {
     if (this.hasAutofixUnsafeWrapperTarget) {
       const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
       const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
-        result.lintResult.offenses.some(offense => fixabilityFor(offense, rules.find(rule => rule.ruleName === offense.rule)).unsafeAutocorrectable))
+        false)
 
       if (hasParserErrors || !hasUnsafeOffenses) {
         this.autofixUnsafeWrapperTarget.classList.add('hidden')
