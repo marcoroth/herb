@@ -14,10 +14,10 @@ import type {
   ParserOptions,
 } from "@herb-tools/core"
 
-const DEPRECATED_SVG_ELEMENTS = new Set([
-  "altglyph",
-  "altglyphdef",
-  "altglyphitem",
+export const DEPRECATED_SVG_ELEMENTS = [
+  "altGlyph",
+  "altGlyphDef",
+  "altGlyphItem",
   "cursor",
   "font",
   "font-face",
@@ -26,12 +26,12 @@ const DEPRECATED_SVG_ELEMENTS = new Set([
   "font-face-src",
   "font-face-uri",
   "glyph",
-  "glyphref",
+  "glyphRef",
   "hkern",
   "missing-glyph",
   "tref",
   "vkern",
-])
+] as const
 
 class SVGNoDeprecatedTagsVisitor extends ElementStackVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -48,7 +48,15 @@ class SVGNoDeprecatedTagsVisitor extends ElementStackVisitor {
     if (this.isInsideElementAcrossCallers("svg") !== "always") return
 
     const tagName = tagNameToken?.value
-    if (!tagName || !DEPRECATED_SVG_ELEMENTS.has(tagName.toLowerCase())) return
+    if (
+      !tagName ||
+      !DEPRECATED_SVG_ELEMENTS.some(
+        (deprecatedTagName) =>
+          deprecatedTagName.toLowerCase() === tagName.toLowerCase(),
+      )
+    ) {
+      return
+    }
 
     this.addOffense(
       `SVG element \`<${tagName}>\` is deprecated and no longer supported in modern browsers.`,

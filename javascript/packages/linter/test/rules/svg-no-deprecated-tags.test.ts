@@ -2,7 +2,10 @@ import { beforeAll, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 
-import { SVGNoDeprecatedTagsRule } from "../../src/rules/svg-no-deprecated-tags.js"
+import {
+  DEPRECATED_SVG_ELEMENTS,
+  SVGNoDeprecatedTagsRule,
+} from "../../src/rules/svg-no-deprecated-tags.js"
 import { Linter } from "../../src/linter.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import {
@@ -31,32 +34,13 @@ describe("svg-no-deprecated-tags", () => {
   })
 
   test("reports every element removed from SVG 2", () => {
-    const deprecatedElements = [
-      "altGlyph",
-      "altGlyphDef",
-      "altGlyphItem",
-      "cursor",
-      "font",
-      "font-face",
-      "font-face-format",
-      "font-face-name",
-      "font-face-src",
-      "font-face-uri",
-      "glyph",
-      "glyphRef",
-      "hkern",
-      "missing-glyph",
-      "tref",
-      "vkern",
-    ]
-
-    for (const tagName of deprecatedElements) {
+    for (const tagName of DEPRECATED_SVG_ELEMENTS) {
       expectError(message(tagName))
     }
 
     assertOffenses(`
       <svg>
-        ${deprecatedElements.map((tagName) => `<${tagName} />`).join("\n")}
+        ${DEPRECATED_SVG_ELEMENTS.map((tagName) => `<${tagName} />`).join("\n")}
       </svg>
     `)
   })
