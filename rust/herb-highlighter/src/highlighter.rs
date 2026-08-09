@@ -6,7 +6,7 @@ use crate::diagnostic_renderer::{DiagnosticRenderOptions, DiagnosticRenderer};
 use crate::diff_computer::DiffHunk;
 use crate::diff_renderer::{DiffRenderOptions, DiffRenderer};
 use crate::document::Document;
-use crate::document_builder::{DocumentBuilder, SplitOptions};
+use crate::document_builder::{DiffDocumentOptions, DocumentBuilder, SplitOptions};
 use crate::error::HighlightError;
 use crate::herb_backend::{Herb, HerbBackend};
 use crate::html_sink::{self, HTMLRenderOptions, HTMLSinkOptions, MarkerMode};
@@ -81,6 +81,7 @@ impl Highlighter {
       wrap_lines: options.wrap_lines,
       truncate_lines: options.truncate_lines,
       max_width,
+      ..Default::default()
     };
 
     let document = self.build_document(path, content, options);
@@ -139,6 +140,7 @@ impl Highlighter {
         theme_label: options.theme_label.clone(),
         show_line_numbers: options.show_line_numbers,
         markers: MarkerMode::Spans,
+        ..Default::default()
       },
     )
   }
@@ -161,6 +163,14 @@ impl Highlighter {
 
   pub fn highlight_diff_hunks(&self, path: &str, hunks: &[DiffHunk], options: &DiffRenderOptions) -> String {
     DiffRenderer::new(&self.syntax_renderer, self.colors.clone()).render_from_hunks(path, hunks, options)
+  }
+
+  pub fn build_diff_document(&self, path: &str, original: &str, modified: &str, options: &DiffDocumentOptions) -> Document {
+    DocumentBuilder::new(&self.syntax_renderer).build_diff(path, original, modified, options)
+  }
+
+  pub fn build_diff_document_from_hunks(&self, path: &str, hunks: &[DiffHunk], options: &DiffDocumentOptions) -> Document {
+    DocumentBuilder::new(&self.syntax_renderer).build_diff_from_hunks(path, hunks, options)
   }
 
   pub fn highlight_file_from_path(&self, file_path: &str, options: &HighlightOptions<'_>) -> Result<String, HighlightError> {

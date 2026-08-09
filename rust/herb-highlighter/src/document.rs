@@ -2,6 +2,7 @@ use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 
 use crate::diagnostic::DiagnosticSeverity;
+use crate::diff_computer::DiffLineType;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StyleRole {
@@ -81,10 +82,88 @@ pub enum Node {
     lines: Vec<LineInfo>,
   },
 
+  DiffBlock {
+    #[serde(rename = "originalRuns")]
+    original_runs: Vec<StyledRun>,
+    #[serde(rename = "modifiedRuns")]
+    modified_runs: Vec<StyledRun>,
+    hunks: Vec<DiffHunkInfo>,
+  },
+
   ProgressRule {
     index: usize,
     total: usize,
   },
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DiffHunkInfo {
+  pub rows: Vec<DiffRowInfo>,
+}
+
+impl DiffHunkInfo {
+  pub fn split_row_pairs(&self) -> Vec<(Option<usize>, Option<usize>)> {
+    let mut pairs: Vec<(Option<usize>, Option<usize>)> = Vec::new();
+
+    let mut index = 0;
+
+    while index < self.rows.len() {
+      if self.rows[index].kind == DiffLineType::Context {
+        pairs.push((Some(index), Some(index)));
+        index += 1;
+
+        continue;
+      }
+
+      let mut removed: Vec<usize> = Vec::new();
+
+      while index < self.rows.len() && self.rows[index].kind == DiffLineType::Removed {
+        removed.push(index);
+        index += 1;
+      }
+
+      let mut added: Vec<usize> = Vec::new();
+
+      while index < self.rows.len() && self.rows[index].kind == DiffLineType::Added {
+        added.push(index);
+        index += 1;
+      }
+
+      for row in 0..removed.len().max(added.len()) {
+        pairs.push((removed.get(row).copied(), added.get(row).copied()));
+      }
+    }
+
+    pairs
+  }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DiffRowInfo {
+  pub kind: DiffLineType,
+  pub content: String,
+  #[serde(rename = "oldLine")]
+  pub old_line: Option<usize>,
+  #[serde(rename = "newLine")]
+  pub new_line: Option<usize>,
+  #[serde(rename = "inlineRanges")]
+  pub inline_ranges: Vec<InlineRangeInfo>,
+  pub collapse: Option<CollapseInfo>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct InlineRangeInfo {
+  pub start: usize,
+  pub end: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct CollapseInfo {
+  pub start: usize,
+  #[serde(rename = "removedEnd")]
+  pub removed_end: usize,
+  #[serde(rename = "addedEnd")]
+  pub added_end: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]

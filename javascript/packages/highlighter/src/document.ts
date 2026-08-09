@@ -50,11 +50,43 @@ export interface ProgressRuleNode {
   total: number
 }
 
+export interface DiffBlockNode {
+  type: "DiffBlock"
+  originalRuns: StyledRun[]
+  modifiedRuns: StyledRun[]
+  hunks: DiffHunkInfo[]
+}
+
+export interface DiffHunkInfo {
+  rows: DiffRowInfo[]
+}
+
+export interface DiffRowInfo {
+  kind: "context" | "added" | "removed"
+  content: string
+  oldLine: number | null
+  newLine: number | null
+  inlineRanges: InlineRangeInfo[]
+  collapse: CollapseInfo | null
+}
+
+export interface InlineRangeInfo {
+  start: number
+  end: number
+}
+
+export interface CollapseInfo {
+  start: number
+  removedEnd: number
+  addedEnd: number
+}
+
 export type Node =
   | FileHeaderNode
   | DiagnosticHeaderNode
   | CodeBlockNode
   | ProgressRuleNode
+  | DiffBlockNode
 
 export type CodeBlockKind = "Listing" | "AnnotatedListing" | "Excerpt"
 

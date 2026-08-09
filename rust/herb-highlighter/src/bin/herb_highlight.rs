@@ -5,8 +5,9 @@ use std::path::{Path, PathBuf};
 use std::process;
 
 use herb_highlighter::diff_computer::DiffHunk;
-use herb_highlighter::diff_renderer::DiffRenderOptions;
+use herb_highlighter::diff_renderer::{DiffLayout, DiffRenderOptions};
 use herb_highlighter::document::{Document, Node};
+use herb_highlighter::document_builder::DiffDocumentOptions;
 use herb_highlighter::highlighter::{HighlightOptions, Highlighter};
 use herb_highlighter::html_sink::{wrap_document_html, HTMLSinkOptions, MarkerMode};
 use herb_highlighter::stylesheet::generate_stylesheet;
@@ -78,15 +79,6 @@ struct Arguments {
   html_markers: MarkerMode,
   html_chrome_document: bool,
   html_fragment_separator: Option<String>,
-}
-
-struct DiffOptions {
-  theme: String,
-  context_lines: usize,
-  show_line_numbers: bool,
-  wrap_lines: bool,
-  truncate_lines: bool,
-  max_width: Option<usize>,
 }
 
 pub struct CLI;
@@ -433,7 +425,7 @@ impl CLI {
     }
   }
 
-  fn run_diff(&self, inputs: &[String], options: &DiffOptions) {
+  fn run_diff(&self, inputs: &[String], arguments: &Arguments) {
     if inputs.len() > 2 {
       eprintln!("Error: --diff takes at most two files.");
       process::exit(1);
@@ -478,7 +470,7 @@ impl CLI {
       process::exit(1);
     }
 
-    let highlighter = match Highlighter::new(&options.theme) {
+    let highlighter = match Highlighter::new(&arguments.theme) {
       Ok(highlighter) => highlighter,
 
       Err(error) => {
@@ -487,36 +479,117 @@ impl CLI {
       }
     };
 
-    let render_options = DiffRenderOptions {
-      context_lines: options.context_lines,
-      show_line_numbers: options.show_line_numbers,
-      wrap_lines: options.wrap_lines,
-      truncate_lines: options.truncate_lines,
-      max_width: options.max_width,
-      ..Default::default()
+    if arguments.format == "ansi" {
+      let render_options = DiffRenderOptions {
+        context_lines: arguments.context_lines,
+        show_line_numbers: arguments.show_line_numbers,
+        wrap_lines: arguments.wrap_lines,
+        truncate_lines: arguments.truncate_lines,
+        max_width: arguments.max_width,
+        ..Default::default()
+      };
+
+      let rendered: Vec<String> = diffs
+        .iter()
+        .map(|diff| match &diff.hunks {
+          Some(hunks) => highlighter.highlight_diff_hunks(&diff.path, hunks, &render_options),
+
+          None => highlighter.highlight_diff(
+            &diff.path,
+            diff.original.as_deref().unwrap_or(""),
+            diff.modified.as_deref().unwrap_or(""),
+            &render_options,
+          ),
+        })
+        .filter(|diff| !diff.is_empty())
+        .collect();
+
+      if rendered.is_empty() {
+        eprintln!("No differences to render.");
+        process::exit(1);
+      }
+
+      println!("{}", rendered.join("\n\n"));
+
+      return;
+    }
+
+    let document_options = DiffDocumentOptions {
+      context_lines: arguments.context_lines,
+      highlight_inline_changes: true,
     };
 
-    let rendered: Vec<String> = diffs
+    let documents: Vec<Document> = diffs
       .iter()
       .map(|diff| match &diff.hunks {
-        Some(hunks) => highlighter.highlight_diff_hunks(&diff.path, hunks, &render_options),
+        Some(hunks) => highlighter.build_diff_document_from_hunks(&diff.path, hunks, &document_options),
 
-        None => highlighter.highlight_diff(
+        None => highlighter.build_diff_document(
           &diff.path,
           diff.original.as_deref().unwrap_or(""),
           diff.modified.as_deref().unwrap_or(""),
-          &render_options,
+          &document_options,
         ),
       })
-      .filter(|diff| !diff.is_empty())
+      .filter(|document| !document.nodes.is_empty())
       .collect();
 
-    if rendered.is_empty() {
+    if documents.is_empty() {
       eprintln!("No differences to render.");
       process::exit(1);
     }
 
-    println!("{}", rendered.join("\n\n"));
+    if arguments.format == "json" {
+      let document = Document {
+        version: 1,
+        nodes: documents.into_iter().flat_map(|document| document.nodes).collect(),
+      };
+
+      match serde_json::to_string_pretty(&document) {
+        Ok(json) => println!("{json}"),
+
+        Err(error) => {
+          eprintln!("Error: {error}");
+          process::exit(1);
+        }
+      }
+
+      return;
+    }
+
+    let sink_options = HTMLSinkOptions {
+      theme_label: arguments.theme.clone(),
+      show_line_numbers: arguments.show_line_numbers,
+      markers: arguments.html_markers,
+      diff_layout: DiffLayout::Unified,
+    };
+
+    let fragments: Vec<String> = documents.iter().map(|document| highlighter.render_html(document, &sink_options)).collect();
+
+    let rendered = match &arguments.html_fragment_separator {
+      Some(separator) => fragments.join(&format!("\n{separator}\n")),
+      None => fragments.join("\n"),
+    };
+
+    if arguments.html_chrome_document {
+      let scheme = match resolve_theme(&arguments.theme) {
+        Ok(scheme) => scheme,
+
+        Err(error) => {
+          eprintln!("Error: {error}");
+          process::exit(1);
+        }
+      };
+
+      let stylesheet = generate_stylesheet(&scheme, &arguments.theme, None);
+
+      println!(
+        "{}",
+        wrap_document_html(&rendered, &stylesheet, arguments.html_markers == MarkerMode::HighlightApi)
+      );
+    } else {
+      println!("{rendered}");
+    }
   }
 
   pub fn run(&self) {
@@ -526,16 +599,6 @@ impl CLI {
     let html_format = arguments.format == "html";
     let json_format = arguments.format == "json";
 
-    if html_format && (arguments.diff_mode || is_diff_subcommand) {
-      eprintln!("Error: --format html cannot render diffs yet.");
-      process::exit(1);
-    }
-
-    if json_format && (arguments.diff_mode || is_diff_subcommand) {
-      eprintln!("Error: --format json cannot render diffs yet.");
-      process::exit(1);
-    }
-
     if arguments.diff_mode || is_diff_subcommand {
       let inputs = if is_diff_subcommand {
         arguments.positionals[1..].to_vec()
@@ -543,17 +606,7 @@ impl CLI {
         arguments.positionals.clone()
       };
 
-      self.run_diff(
-        &inputs,
-        &DiffOptions {
-          theme: arguments.theme,
-          context_lines: arguments.context_lines,
-          show_line_numbers: arguments.show_line_numbers,
-          wrap_lines: arguments.wrap_lines,
-          truncate_lines: arguments.truncate_lines,
-          max_width: arguments.max_width,
-        },
-      );
+      self.run_diff(&inputs, &arguments);
 
       return;
     }
@@ -612,6 +665,7 @@ impl CLI {
         theme_label: arguments.theme.clone(),
         show_line_numbers: arguments.show_line_numbers,
         markers: arguments.html_markers,
+        ..Default::default()
       };
 
       let document = highlighter.build_document(&file_path.to_string_lossy(), &content, &options);

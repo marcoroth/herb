@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::diagnostic::{Diagnostic, DiagnosticSeverity, DIAGNOSTIC_SEVERITIES};
 use crate::diagnostic_markers::{compute_diagnostic_markers, DiagnosticMarker};
-use crate::document::{Annotation, AnnotationMessage, CodeBlockKind, Document, LineEmphasis, LineInfo, Node};
+use crate::diff_computer::{compute_diff_hunks, compute_inline_ranges, DiffHunk, DiffLineType, InlineRange};
+use crate::document::{
+  Annotation, AnnotationMessage, CodeBlockKind, CollapseInfo, DiffHunkInfo, DiffRowInfo, Document, InlineRangeInfo, LineEmphasis, LineInfo, Node,
+};
 use crate::highlighter::{FileUrlBuilder, SuffixBuilder};
 use crate::inline_diagnostic_renderer::CodeUrlBuilder;
 use crate::syntax_renderer::SyntaxRenderer;
@@ -13,6 +16,20 @@ pub struct CardOptions {
   pub code_url: Option<String>,
   pub file_url: Option<String>,
   pub suffix: Option<String>,
+}
+
+pub struct DiffDocumentOptions {
+  pub context_lines: usize,
+  pub highlight_inline_changes: bool,
+}
+
+impl Default for DiffDocumentOptions {
+  fn default() -> Self {
+    Self {
+      context_lines: 2,
+      highlight_inline_changes: true,
+    }
+  }
 }
 
 pub struct SplitOptions<'a> {
@@ -263,6 +280,209 @@ impl<'a> DocumentBuilder<'a> {
 
     Document { version: 1, nodes }
   }
+
+  pub fn build_diff(&self, path: &str, original: &str, modified: &str, options: &DiffDocumentOptions) -> Document {
+    let hunks = compute_diff_hunks(original, modified, options.context_lines);
+
+    if hunks.is_empty() {
+      return Document { version: 1, nodes: Vec::new() };
+    }
+
+    self.diff_document(path, &hunks, original, modified, options)
+  }
+
+  pub fn build_diff_from_hunks(&self, path: &str, hunks: &[DiffHunk], options: &DiffDocumentOptions) -> Document {
+    if hunks.is_empty() {
+      return Document { version: 1, nodes: Vec::new() };
+    }
+
+    let mut original_source: Vec<String> = Vec::new();
+    let mut modified_source: Vec<String> = Vec::new();
+
+    for hunk in hunks {
+      for line in &hunk.lines {
+        if let Some(number) = line.old_line_number {
+          fill(&mut original_source, number - 1, line.content.clone());
+        }
+
+        if let Some(number) = line.new_line_number {
+          fill(&mut modified_source, number - 1, line.content.clone());
+        }
+      }
+    }
+
+    self.diff_document(path, hunks, &original_source.join("\n"), &modified_source.join("\n"), options)
+  }
+
+  fn diff_document(&self, path: &str, hunks: &[DiffHunk], original: &str, modified: &str, options: &DiffDocumentOptions) -> Document {
+    let mut nodes: Vec<Node> = Vec::new();
+
+    if !path.is_empty() {
+      nodes.push(Self::file_header(path));
+    }
+
+    nodes.push(Node::DiffBlock {
+      original_runs: self.syntax_renderer.highlight_runs(original),
+      modified_runs: self.syntax_renderer.highlight_runs(modified),
+      hunks: hunks.iter().map(|hunk| hunk_info(hunk, options)).collect(),
+    });
+
+    Document { version: 1, nodes }
+  }
+}
+
+fn hunk_info(hunk: &DiffHunk, options: &DiffDocumentOptions) -> DiffHunkInfo {
+  let inline_ranges = if options.highlight_inline_changes {
+    inline_ranges_for(hunk)
+  } else {
+    HashMap::new()
+  };
+
+  let collapses = collapse_candidates(hunk, &inline_ranges);
+
+  DiffHunkInfo {
+    rows: hunk
+      .lines
+      .iter()
+      .enumerate()
+      .map(|(index, line)| DiffRowInfo {
+        kind: line.line_type,
+        content: line.content.clone(),
+        old_line: line.old_line_number,
+        new_line: line.new_line_number,
+        inline_ranges: inline_ranges
+          .get(&index)
+          .map(|ranges| {
+            ranges
+              .iter()
+              .map(|range| InlineRangeInfo {
+                start: range.start,
+                end: range.end,
+              })
+              .collect()
+          })
+          .unwrap_or_default(),
+        collapse: collapses.get(&index).cloned(),
+      })
+      .collect(),
+  }
+}
+
+fn inline_ranges_for(hunk: &DiffHunk) -> HashMap<usize, Vec<InlineRange>> {
+  let mut ranges: HashMap<usize, Vec<InlineRange>> = HashMap::new();
+
+  let mut index = 0;
+
+  while index < hunk.lines.len() {
+    if hunk.lines[index].line_type != DiffLineType::Removed {
+      index += 1;
+
+      continue;
+    }
+
+    let mut removed: Vec<usize> = Vec::new();
+
+    while index < hunk.lines.len() && hunk.lines[index].line_type == DiffLineType::Removed {
+      removed.push(index);
+      index += 1;
+    }
+
+    let mut added: Vec<usize> = Vec::new();
+
+    while index < hunk.lines.len() && hunk.lines[index].line_type == DiffLineType::Added {
+      added.push(index);
+      index += 1;
+    }
+
+    if removed.len() != added.len() {
+      continue;
+    }
+
+    for pair in 0..removed.len() {
+      let inline = compute_inline_ranges(&hunk.lines[removed[pair]].content, &hunk.lines[added[pair]].content);
+
+      if !inline.removed.is_empty() || !inline.added.is_empty() {
+        ranges.insert(removed[pair], inline.removed);
+        ranges.insert(added[pair], inline.added);
+      }
+    }
+  }
+
+  ranges
+}
+
+fn collapse_candidates(hunk: &DiffHunk, inline_ranges: &HashMap<usize, Vec<InlineRange>>) -> HashMap<usize, CollapseInfo> {
+  let mut candidates: HashMap<usize, CollapseInfo> = HashMap::new();
+
+  if hunk.lines.is_empty() {
+    return candidates;
+  }
+
+  let mut index = 0;
+
+  while index < hunk.lines.len() - 1 {
+    let removed = &hunk.lines[index];
+    let added = &hunk.lines[index + 1];
+
+    if removed.line_type != DiffLineType::Removed || added.line_type != DiffLineType::Added {
+      index += 1;
+
+      continue;
+    }
+
+    if hunk.lines.get(index + 2).map(|line| line.line_type) == Some(DiffLineType::Added) {
+      index += 1;
+
+      continue;
+    }
+
+    if index > 0 && hunk.lines[index - 1].line_type == DiffLineType::Removed {
+      index += 1;
+
+      continue;
+    }
+
+    let (Some(removed_ranges), Some(added_ranges)) = (inline_ranges.get(&index), inline_ranges.get(&(index + 1))) else {
+      index += 1;
+
+      continue;
+    };
+
+    if removed_ranges.len() > 1 || added_ranges.len() > 1 {
+      index += 1;
+
+      continue;
+    }
+
+    if removed_ranges.is_empty() && added_ranges.is_empty() {
+      index += 1;
+
+      continue;
+    }
+
+    let start = removed_ranges
+      .first()
+      .map(|range| range.start)
+      .unwrap_or(usize::MAX)
+      .min(added_ranges.first().map(|range| range.start).unwrap_or(usize::MAX));
+
+    let removed_end = removed_ranges.first().map(|range| range.end).unwrap_or(start);
+    let added_end = added_ranges.first().map(|range| range.end).unwrap_or(start);
+
+    candidates.insert(index, CollapseInfo { start, removed_end, added_end });
+
+    index += 2;
+  }
+
+  candidates
+}
+
+fn fill(lines: &mut Vec<String>, index: usize, content: String) {
+  while lines.len() <= index {
+    lines.push(String::new());
+  }
+
+  lines[index] = content;
 }
 
 fn highest_severity(annotations: &[Annotation]) -> Option<DiagnosticSeverity> {

@@ -13,12 +13,12 @@ import { resolveTheme } from "./themes.js"
 import { DEFAULT_HTML_RENDER_OPTIONS, renderDocumentHTML, renderDocumentFragments } from "./html-sink.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
-import type { ThemeInput } from "./themes.js"
+import type { ThemeInput, ColorScheme } from "./themes.js"
 import type { DiffRenderOptions } from "./diff-renderer.js"
 import type { DiffHunk } from "./diff-computer.js"
 import type { HTMLRenderOptions, HTMLSinkOptions } from "./html-sink.js"
 import type { Document } from "./document.js"
-import type { CardOptions } from "./document-builder.js"
+import type { CardOptions, DiffDocumentOptions } from "./document-builder.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -55,9 +55,11 @@ export class Highlighter {
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
   private diffRenderer: DiffRenderer
   private documentBuilder: DocumentBuilder
+  private colors: ColorScheme
 
   constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
     const colors = resolveTheme(theme)
+    this.colors = colors
     this.syntaxRenderer = new SyntaxRenderer(colors, herb)
     this.diagnosticRenderer = new DiagnosticRenderer(this.syntaxRenderer)
     this.fileRenderer = new FileRenderer(this.syntaxRenderer)
@@ -114,7 +116,7 @@ export class Highlighter {
     } = options
 
     const document = this.buildDocument(path, content, options)
-    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers, wrapLines, truncateLines, maxWidth })
+    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers, wrapLines, truncateLines, maxWidth }, this.colors)
 
     return sink.render(document)
   }
@@ -291,6 +293,42 @@ export class Highlighter {
     this.requireInitialized()
 
     return this.diffRenderer.renderFromHunks(path, hunks, options)
+  }
+
+  /**
+   * Build the document IR for the change between two sources
+   * @param path - File path shown above the diff (display only)
+   * @param original - The source before the change
+   * @param modified - The source after the change
+   * @param options - Optional configuration
+   * @returns The document, empty when the sources are identical
+   */
+  buildDiff(
+    path: string,
+    original: string,
+    modified: string,
+    options: Partial<DiffDocumentOptions> = {},
+  ): Document {
+    this.requireInitialized()
+
+    return this.documentBuilder.buildDiff(path, original, modified, options)
+  }
+
+  /**
+   * Build the document IR for pre-computed diff hunks
+   * @param path - File path shown above the diff (display only)
+   * @param hunks - The hunks to render
+   * @param options - Optional configuration
+   * @returns The document, empty when there are no hunks
+   */
+  buildDiffFromHunks(
+    path: string,
+    hunks: DiffHunk[],
+    options: Partial<DiffDocumentOptions> = {},
+  ): Document {
+    this.requireInitialized()
+
+    return this.documentBuilder.buildDiffFromHunks(path, hunks, options)
   }
 
   // File reading wrapper functions

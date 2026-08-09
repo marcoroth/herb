@@ -76,6 +76,73 @@ const DIAGNOSTIC_RULES: &str = r#".herb-highlight .herb-severity-label { font-we
   background-color: var(--herb-rule-label-bg, Canvas);
 }"#;
 
+const DIFF_RULES: &str = r#".herb-highlight .herb-line[data-old-line]::before,
+.herb-highlight .herb-line[data-new-line]::before {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-diff-context[data-old-line]::before { content: attr(data-old-line); }
+.herb-highlight .herb-diff-removed[data-old-line]::before { content: attr(data-old-line); color: var(--herb-severity-error, #F14C4C); }
+.herb-highlight .herb-diff-added[data-new-line]::before { content: attr(data-new-line); color: var(--herb-diff-added-number, #0DBC79); }
+
+.herb-highlight .herb-diff-context {
+  opacity: 0.75;
+}
+
+.herb-highlight .herb-diff-added {
+  background-color: var(--herb-diff-added-line-background, rgba(13, 188, 121, 0.12));
+}
+
+.herb-highlight .herb-diff-removed {
+  background-color: var(--herb-diff-removed-line-background, rgba(241, 76, 76, 0.12));
+}
+
+.herb-highlight mark.herb-diff-inline-added {
+  color: inherit;
+  background-color: var(--herb-diff-added-background, rgba(13, 188, 121, 0.35));
+}
+
+.herb-highlight mark.herb-diff-inline-removed {
+  color: inherit;
+  background-color: var(--herb-diff-removed-background, rgba(241, 76, 76, 0.35));
+}
+
+.herb-highlight .herb-diff-hunk-separator::before {
+  content: "⋮";
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-diff-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.5em;
+}
+
+.herb-highlight .herb-diff-column {
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.herb-highlight .herb-diff-column-new {
+  border-left: 1px solid var(--herb-rule, rgba(127, 127, 127, 0.4));
+  padding-left: 1.5em;
+}
+
+.herb-highlight .herb-diff-empty {
+  display: block;
+}"#;
+
 fn named_css(named: NamedColor) -> &'static str {
   match named {
     NamedColor::Reset | NamedColor::Bold | NamedColor::Dim => "inherit",
@@ -157,6 +224,7 @@ pub fn generate_stylesheet(dark: &ColorScheme, label: &str, light: Option<(&Colo
     ]
     .join("\n"),
     DIAGNOSTIC_RULES.to_string(),
+    DIFF_RULES.to_string(),
     format!(".herb-highlight {{\n{}\n}}", properties(dark, "  ")),
   ];
 

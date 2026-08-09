@@ -1,0 +1,1199 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DiffDocument > ansi diff is byte identical through the document path 1`] = `
+"[36mapp/views/users/show.html.erb[0m
+
+    [90m  1[0m [90m│[0m [2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+    [90m  2[0m [90m│[0m [2m  [22m[2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mone[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+[31m  - [0m[1m  3[0m [90m│[0m [48;2;58;34;36m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;58;34;36mp[0m[38;2;224;108;117m[48;2;58;34;36m>[0m[38;2;171;178;191m[48;2;58;34;36mt[48;2;107;46;49mwo[0m[38;2;224;108;117m[48;2;58;34;36m</[0m[38;2;224;108;117m[48;2;58;34;36mp[0m[38;2;224;108;117m[48;2;58;34;36m>[0m
+[32m  + [0m    [90m│[0m [48;2;30;50;38m  [38;2;224;108;117m<[0m[38;2;224;108;117m[48;2;30;50;38mp[0m[38;2;224;108;117m[48;2;30;50;38m>[0m[38;2;171;178;191m[48;2;30;50;38mt[48;2;46;94;61mres[0m[38;2;224;108;117m[48;2;30;50;38m</[0m[38;2;224;108;117m[48;2;30;50;38mp[0m[38;2;224;108;117m[48;2;30;50;38m>[0m
+    [90m  4[0m [90m│[0m [2m  [22m[2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mspan[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mtail[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mspan[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+    [90m  5[0m [90m│[0m [2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m"
+`;
+
+exports[`DiffDocument > ansi diff is byte identical through the document path 2`] = `
+"[36mapp/views/users/show.html.erb[0m
+
+    [90m  1[0m [90m│[0m [2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+    [90m  2[0m [90m│[0m [2m  [22m[2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mone[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mp[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+[33m  ± [0m[1m  3[0m [90m│[0m   [38;2;224;108;117m<[0m[38;2;224;108;117mp[0m[38;2;224;108;117m>[0m[38;2;171;178;191mt[0m[38;2;171;178;191m[48;2;107;46;49mwo[0m[38;2;171;178;191m[48;2;46;94;61mres[0m[38;2;224;108;117m</[0m[38;2;224;108;117mp[0m[38;2;224;108;117m>[0m
+    [90m  4[0m [90m│[0m [2m  [22m[2;38;2;224;108;117m[2m<[22m[0m[2;38;2;224;108;117m[2mspan[22m[0m[2;38;2;224;108;117m[2m>[22m[0m[2;38;2;171;178;191m[2mtail[22m[0m[2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mspan[22m[0m[2;38;2;224;108;117m[2m>[22m[0m
+    [90m  5[0m [90m│[0m [2;38;2;224;108;117m[2m</[22m[0m[2;38;2;224;108;117m[2mdiv[22m[0m[2;38;2;224;108;117m[2m>[22m[0m"
+`;
+
+exports[`DiffDocument > builds a diff document 1`] = `
+"{
+  "version": 1,
+  "nodes": [
+    {
+      "type": "FileHeader",
+      "path": "app/views/users/show.html.erb",
+      "line": null,
+      "column": null,
+      "url": null
+    },
+    {
+      "type": "DiffBlock",
+      "originalRuns": [
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "one",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "two",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tail",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_EOF"
+          }
+        }
+      ],
+      "modifiedRuns": [
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "one",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tres",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tail",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_EOF"
+          }
+        }
+      ],
+      "hunks": [
+        {
+          "rows": [
+            {
+              "kind": "context",
+              "content": "<div>",
+              "oldLine": 1,
+              "newLine": 1,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "  <p>one</p>",
+              "oldLine": 2,
+              "newLine": 2,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "removed",
+              "content": "  <p>two</p>",
+              "oldLine": 3,
+              "newLine": null,
+              "inlineRanges": [
+                {
+                  "start": 6,
+                  "end": 8
+                }
+              ],
+              "collapse": {
+                "start": 6,
+                "removedEnd": 8,
+                "addedEnd": 9
+              }
+            },
+            {
+              "kind": "added",
+              "content": "  <p>tres</p>",
+              "oldLine": null,
+              "newLine": 3,
+              "inlineRanges": [
+                {
+                  "start": 6,
+                  "end": 9
+                }
+              ],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "  <span>tail</span>",
+              "oldLine": 4,
+              "newLine": 4,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "</div>",
+              "oldLine": 5,
+              "newLine": 5,
+              "inlineRanges": [],
+              "collapse": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`DiffDocument > builds a diff document from hunks 1`] = `
+"{
+  "version": 1,
+  "nodes": [
+    {
+      "type": "FileHeader",
+      "path": "app/views/users/show.html.erb",
+      "line": null,
+      "column": null,
+      "url": null
+    },
+    {
+      "type": "DiffBlock",
+      "originalRuns": [
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "one",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "two",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tail",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_EOF"
+          }
+        }
+      ],
+      "modifiedRuns": [
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "one",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tres",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "tail",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_EOF"
+          }
+        }
+      ],
+      "hunks": [
+        {
+          "rows": [
+            {
+              "kind": "context",
+              "content": "<div>",
+              "oldLine": 1,
+              "newLine": 1,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "  <p>one</p>",
+              "oldLine": 2,
+              "newLine": 2,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "removed",
+              "content": "  <p>two</p>",
+              "oldLine": 3,
+              "newLine": null,
+              "inlineRanges": [
+                {
+                  "start": 6,
+                  "end": 8
+                }
+              ],
+              "collapse": {
+                "start": 6,
+                "removedEnd": 8,
+                "addedEnd": 9
+              }
+            },
+            {
+              "kind": "added",
+              "content": "  <p>tres</p>",
+              "oldLine": null,
+              "newLine": 3,
+              "inlineRanges": [
+                {
+                  "start": 6,
+                  "end": 9
+                }
+              ],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "  <span>tail</span>",
+              "oldLine": 4,
+              "newLine": 4,
+              "inlineRanges": [],
+              "collapse": null
+            },
+            {
+              "kind": "context",
+              "content": "</div>",
+              "oldLine": 5,
+              "newLine": 5,
+              "inlineRanges": [],
+              "collapse": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}"
+`;
+
+exports[`DiffDocument > renders a split diff with columns 1`] = `
+"<figure class="herb-highlight herb-diff herb-diff-split" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<div class="herb-diff-columns">
+<pre class="herb-code herb-diff-column herb-diff-column-old"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-removed"><span class="herb-token-identifier">a</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">b</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-hunk-separator"></span>
+<span class="herb-line herb-diff-context" data-old-line="7" data-new-line="7"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">f</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="8"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-removed"><span class="herb-token-identifier">g</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="9" data-new-line="9"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+<pre class="herb-code herb-diff-column herb-diff-column-new"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-added"><span class="herb-token-identifier">A</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">b</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-hunk-separator"></span>
+<span class="herb-line herb-diff-context" data-old-line="7" data-new-line="7"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">f</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="8"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-added"><span class="herb-token-identifier">G</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="9" data-new-line="9"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</div>
+</figure>"
+`;
+
+exports[`DiffDocument > renders a unified diff 1`] = `
+"<figure class="herb-highlight herb-diff" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-removed"><span class="herb-token-identifier">a</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-added"><span class="herb-token-identifier">A</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">b</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-hunk-separator"></span>
+<span class="herb-line herb-diff-context" data-old-line="7" data-new-line="7"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">f</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="8"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-removed"><span class="herb-token-identifier">g</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="8"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span><mark class="herb-diff-inline-added"><span class="herb-token-identifier">G</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">li</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="9" data-new-line="9"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">ul</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
+exports[`DiffDocument > renders inline change marks 1`] = `
+"<figure class="herb-highlight herb-diff" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="2" data-new-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">one</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">t</span><mark class="herb-diff-inline-removed"><span class="herb-token-identifier">wo</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">t</span><mark class="herb-diff-inline-added"><span class="herb-token-identifier">res</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="4" data-new-line="4"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">tail</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="5" data-new-line="5"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;

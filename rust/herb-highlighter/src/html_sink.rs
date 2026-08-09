@@ -1,5 +1,7 @@
 use crate::diagnostic::DiagnosticSeverity;
-use crate::document::{Annotation, CodeBlockKind, Document, LineEmphasis, LineInfo, Node, StyleRole, StyledRun};
+use crate::diff_computer::DiffLineType;
+use crate::diff_renderer::DiffLayout;
+use crate::document::{Annotation, CodeBlockKind, DiffHunkInfo, DiffRowInfo, Document, InlineRangeInfo, LineEmphasis, LineInfo, Node, StyleRole, StyledRun};
 use crate::text_formatter::replace_backticks;
 use crate::themes::DEFAULT_THEME;
 
@@ -34,6 +36,18 @@ pub struct HTMLSinkOptions {
   pub theme_label: String,
   pub show_line_numbers: bool,
   pub markers: MarkerMode,
+  pub diff_layout: DiffLayout,
+}
+
+impl Default for HTMLSinkOptions {
+  fn default() -> Self {
+    Self {
+      theme_label: DEFAULT_THEME.as_str().to_string(),
+      show_line_numbers: true,
+      markers: MarkerMode::Spans,
+      diff_layout: DiffLayout::Unified,
+    }
+  }
 }
 
 pub fn escape_html(text: &str) -> String {
@@ -233,6 +247,16 @@ fn render_groups(document: &Document, options: &HTMLSinkOptions) -> Vec<String> 
           index += 2;
         }
 
+        Some(Node::DiffBlock {
+          original_runs,
+          modified_runs,
+          hunks,
+        }) => {
+          results.push(render_diff(Some(path), original_runs, modified_runs, hunks, options));
+
+          index += 2;
+        }
+
         _ => index += 1,
       },
 
@@ -248,6 +272,16 @@ fn render_groups(document: &Document, options: &HTMLSinkOptions) -> Vec<String> 
         } else {
           results.push(render_listing(None, &block, options));
         }
+
+        index += 1;
+      }
+
+      Node::DiffBlock {
+        original_runs,
+        modified_runs,
+        hunks,
+      } => {
+        results.push(render_diff(None, original_runs, modified_runs, hunks, options));
 
         index += 1;
       }
@@ -513,6 +547,192 @@ fn render_inline(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkOp
   )
 }
 
+const DIFF_SEPARATOR_ROW: &str = "<span class=\"herb-line herb-diff-hunk-separator\"></span>";
+
+fn render_diff(path: Option<&str>, original_runs: &[StyledRun], modified_runs: &[StyledRun], hunks: &[DiffHunkInfo], options: &HTMLSinkOptions) -> String {
+  let original_pieces = split_lines(original_runs);
+  let modified_pieces = split_lines(modified_runs);
+
+  let figcaption = match path {
+    Some(path) if options.show_line_numbers => format!("<figcaption class=\"herb-file-header\">{}</figcaption>\n", escape_html(path)),
+    _ => String::new(),
+  };
+
+  if options.diff_layout == DiffLayout::Split {
+    return render_split_diff(&figcaption, &original_pieces, &modified_pieces, hunks, options);
+  }
+
+  let mut rows: Vec<String> = Vec::new();
+
+  for (hunk_index, hunk) in hunks.iter().enumerate() {
+    if hunk_index > 0 {
+      rows.push(DIFF_SEPARATOR_ROW.to_string());
+    }
+
+    for row in &hunk.rows {
+      rows.push(diff_row_span(row, &original_pieces, &modified_pieces, options));
+    }
+  }
+
+  format!(
+    "<figure class=\"herb-highlight herb-diff\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    escape_html(&options.theme_label),
+    rows.join("\n")
+  )
+}
+
+fn render_split_diff(
+  figcaption: &str,
+  original_pieces: &[Vec<(&str, &StyleRole)>],
+  modified_pieces: &[Vec<(&str, &StyleRole)>],
+  hunks: &[DiffHunkInfo],
+  options: &HTMLSinkOptions,
+) -> String {
+  let mut left: Vec<String> = Vec::new();
+  let mut right: Vec<String> = Vec::new();
+
+  for (hunk_index, hunk) in hunks.iter().enumerate() {
+    if hunk_index > 0 {
+      left.push(DIFF_SEPARATOR_ROW.to_string());
+      right.push(DIFF_SEPARATOR_ROW.to_string());
+    }
+
+    for (left_index, right_index) in hunk.split_row_pairs() {
+      left.push(split_diff_cell(hunk, left_index, original_pieces, modified_pieces, options));
+      right.push(split_diff_cell(hunk, right_index, original_pieces, modified_pieces, options));
+    }
+  }
+
+  format!(
+    "<figure class=\"herb-highlight herb-diff herb-diff-split\" data-herb-theme=\"{}\">\n{figcaption}<div class=\"herb-diff-columns\">\n<pre class=\"herb-code herb-diff-column herb-diff-column-old\"><code>{}</code></pre>\n<pre class=\"herb-code herb-diff-column herb-diff-column-new\"><code>{}</code></pre>\n</div>\n</figure>",
+    escape_html(&options.theme_label),
+    left.join("\n"),
+    right.join("\n")
+  )
+}
+
+fn split_diff_cell(
+  hunk: &DiffHunkInfo,
+  index: Option<usize>,
+  original_pieces: &[Vec<(&str, &StyleRole)>],
+  modified_pieces: &[Vec<(&str, &StyleRole)>],
+  options: &HTMLSinkOptions,
+) -> String {
+  match index {
+    Some(index) => diff_row_span(&hunk.rows[index], original_pieces, modified_pieces, options),
+    None => "<span class=\"herb-line herb-diff-empty\"></span>".to_string(),
+  }
+}
+
+fn diff_row_span(
+  row: &DiffRowInfo,
+  original_pieces: &[Vec<(&str, &StyleRole)>],
+  modified_pieces: &[Vec<(&str, &StyleRole)>],
+  options: &HTMLSinkOptions,
+) -> String {
+  let content = diff_row_content(row, original_pieces, modified_pieces);
+
+  let mut attributes = String::new();
+
+  let class = match row.kind {
+    DiffLineType::Context => {
+      if options.show_line_numbers {
+        attributes.push_str(&format!(" data-old-line=\"{}\"", row.old_line.expect("context rows carry an old line number")));
+        attributes.push_str(&format!(" data-new-line=\"{}\"", row.new_line.expect("context rows carry a new line number")));
+      }
+
+      "herb-diff-context"
+    }
+
+    DiffLineType::Removed => {
+      if options.show_line_numbers {
+        attributes.push_str(&format!(" data-old-line=\"{}\"", row.old_line.expect("removed rows carry an old line number")));
+      }
+
+      "herb-diff-removed"
+    }
+
+    DiffLineType::Added => {
+      if options.show_line_numbers {
+        attributes.push_str(&format!(" data-new-line=\"{}\"", row.new_line.expect("added rows carry a new line number")));
+      }
+
+      "herb-diff-added"
+    }
+  };
+
+  format!("<span class=\"herb-line {class}\"{attributes}>{content}</span>")
+}
+
+fn diff_row_content(row: &DiffRowInfo, original_pieces: &[Vec<(&str, &StyleRole)>], modified_pieces: &[Vec<(&str, &StyleRole)>]) -> String {
+  let pieces = if row.kind == DiffLineType::Added {
+    modified_pieces.get(row.new_line.expect("added lines carry a new line number") - 1)
+  } else {
+    original_pieces.get(row.old_line.expect("context and removed lines carry an old line number") - 1)
+  }
+  .map(|line| line.as_slice())
+  .unwrap_or(&[]);
+
+  if row.inline_ranges.is_empty() {
+    return line_content(pieces);
+  }
+
+  let mark_class = if row.kind == DiffLineType::Added {
+    "herb-diff-inline-added"
+  } else {
+    "herb-diff-inline-removed"
+  };
+
+  inline_marked_content(pieces, &row.inline_ranges, mark_class)
+}
+
+fn in_inline_range(assignment: &[bool], column: usize) -> bool {
+  assignment.get(column).copied().unwrap_or(false)
+}
+
+fn inline_marked_content(pieces: &[(&str, &StyleRole)], ranges: &[InlineRangeInfo], mark_class: &str) -> String {
+  let max_end = ranges.iter().map(|range| range.end).max().unwrap_or(0);
+  let mut assignment: Vec<bool> = vec![false; max_end];
+
+  for range in ranges {
+    for slot in assignment.iter_mut().take(range.end).skip(range.start) {
+      *slot = true;
+    }
+  }
+
+  let mut content = String::new();
+  let mut column = 0;
+
+  for (text, role) in pieces {
+    let characters: Vec<char> = text.chars().collect();
+    let mut start = 0;
+
+    while start < characters.len() {
+      let current = in_inline_range(&assignment, column + start);
+      let mut end = start + 1;
+
+      while end < characters.len() && in_inline_range(&assignment, column + end) == current {
+        end += 1;
+      }
+
+      let sub_piece: String = characters[start..end].iter().collect();
+      let rendered = piece_html(&sub_piece, role);
+
+      if current {
+        content.push_str(&format!("<mark class=\"{mark_class}\">{rendered}</mark>"));
+      } else {
+        content.push_str(&rendered);
+      }
+
+      start = end;
+    }
+
+    column += characters.len();
+  }
+
+  content
+}
+
 pub fn wrap_document_html(fragments: &str, stylesheet: &str, include_hydration: bool) -> String {
   let script = if include_hydration {
     format!("<script>\n{HYDRATION_SCRIPT}</script>\n")
@@ -563,6 +783,7 @@ pub fn render_file_html(runs: &[StyledRun], path: &str, theme_label: &str) -> St
       theme_label: theme_label.to_string(),
       show_line_numbers: true,
       markers: MarkerMode::Spans,
+      ..Default::default()
     },
   )
 }
@@ -583,6 +804,7 @@ pub fn render_plain_html(runs: &[StyledRun], theme_label: &str) -> String {
       theme_label: theme_label.to_string(),
       show_line_numbers: false,
       markers: MarkerMode::Spans,
+      ..Default::default()
     },
   )
 }
@@ -621,6 +843,7 @@ pub fn render_focus_html(runs: &[StyledRun], path: &str, focus_line: usize, cont
       theme_label: theme_label.to_string(),
       show_line_numbers,
       markers: MarkerMode::Spans,
+      ..Default::default()
     },
   )
 }

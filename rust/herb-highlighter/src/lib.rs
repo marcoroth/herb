@@ -32,8 +32,11 @@ pub use diagnostic_markers::{compute_diagnostic_markers, DiagnosticMarker};
 pub use diagnostic_renderer::{DiagnosticRenderOptions, DiagnosticRenderer};
 pub use diff_computer::{compute_diff_hunks, compute_inline_ranges, DiffHunk, DiffLine, DiffLineType, InlineRange, InlineRanges};
 pub use diff_renderer::{DiffLayout, DiffRenderOptions, DiffRenderer, RemovedLineStyle, SingleLineStyle};
-pub use document::{Annotation, AnnotationMessage, CodeBlockKind, Document, LineEmphasis, LineInfo, Node, StyleRole, StyledRun};
-pub use document_builder::{CardOptions, DocumentBuilder, SplitOptions};
+pub use document::{
+  Annotation, AnnotationMessage, CodeBlockKind, CollapseInfo, DiffHunkInfo, DiffRowInfo, Document, InlineRangeInfo, LineEmphasis, LineInfo, Node, StyleRole,
+  StyledRun,
+};
+pub use document_builder::{CardOptions, DiffDocumentOptions, DocumentBuilder, SplitOptions};
 pub use error::HighlightError;
 pub use file_renderer::FileRenderer;
 pub use gutter::{GUTTER_WIDTH, MIN_CONTENT_WIDTH};

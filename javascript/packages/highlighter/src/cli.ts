@@ -14,8 +14,8 @@ import { name, version } from "../package.json"
 import { parseUnifiedDiff } from "./unified-diff.js"
 
 import type { DiffHunk } from "./diff-computer.js"
+import type { Document } from "./document.js"
 import type { MarkerMode } from "./html-sink.js"
-import type { ThemeInput } from "./themes.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -361,8 +361,8 @@ export class CLI {
     }
   }
 
-  private async runDiff(inputs: string[], options: { theme: ThemeInput, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number }): Promise<void> {
-    const { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } = options
+  private async runDiff(inputs: string[], options: { theme: string, format: string, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number, htmlMarkers: MarkerMode, htmlChrome: string, htmlFragmentSeparator?: string }): Promise<void> {
+    const { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlFragmentSeparator } = options
 
     let diffs: { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[]
 
@@ -392,6 +392,45 @@ export class CLI {
     const highlighter = new Highlighter(theme)
     await highlighter.initialize()
 
+    if (format === "html" || format === "json") {
+      const documentOptions = { contextLines, highlightInlineChanges: true }
+
+      const documents = diffs
+        .map(diff => diff.hunks
+          ? highlighter.buildDiffFromHunks(diff.path, diff.hunks, documentOptions)
+          : highlighter.buildDiff(diff.path, diff.original!, diff.modified!, documentOptions))
+        .filter(document => document.nodes.length > 0)
+
+      if (documents.length === 0) {
+        console.error("No differences to render.")
+        process.exit(1)
+      }
+
+      if (format === "json") {
+        const document: Document = { version: 1, nodes: documents.flatMap(document => document.nodes) }
+
+        console.log(JSON.stringify(document, null, 2))
+
+        return
+      }
+
+      const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers, diffLayout: "unified" as const }
+
+      const fragments = documents.map(document => highlighter.renderHTML(document, sinkOptions))
+
+      let output = htmlFragmentSeparator !== undefined
+        ? fragments.join(`\n${htmlFragmentSeparator}\n`)
+        : fragments.join("\n")
+
+      if (htmlChrome === "document") {
+        output = wrapDocumentHTML(output, generateStylesheet(resolveTheme(theme), theme), htmlMarkers === "highlight-api")
+      }
+
+      console.log(output)
+
+      return
+    }
+
     const renderOptions = { contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth }
 
     const rendered = diffs
@@ -414,20 +453,10 @@ export class CLI {
 
     const isDiffSubcommand = positionals[0] === "diff"
 
-    if (format === "html" && (diffMode || isDiffSubcommand)) {
-      console.error("Error: --format html cannot render diffs yet.")
-      process.exit(1)
-    }
-
-    if (format === "json" && (diffMode || isDiffSubcommand)) {
-      console.error("Error: --format json cannot render diffs yet.")
-      process.exit(1)
-    }
-
     if (diffMode || isDiffSubcommand) {
       const inputs = isDiffSubcommand ? positionals.slice(1) : positionals
 
-      await this.runDiff(inputs, { theme, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth })
+      await this.runDiff(inputs, { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlFragmentSeparator })
 
       return
     }

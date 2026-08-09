@@ -40,6 +40,10 @@ impl SyntaxRenderer {
     Self { colors, herb }
   }
 
+  pub fn color_scheme(&self) -> &ColorScheme {
+    &self.colors
+  }
+
   pub fn highlight(&self, content: &str) -> String {
     self.resolve_runs(&self.highlight_runs(content))
   }

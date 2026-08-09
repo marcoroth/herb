@@ -63,6 +63,7 @@ impl<'a> DiagnosticRenderer<'a> {
         wrap_lines: options.wrap_lines,
         truncate_lines: options.truncate_lines,
         max_width: options.max_width.unwrap_or_else(LineWrapper::get_terminal_width),
+        ..Default::default()
       },
     )
   }

@@ -9,8 +9,12 @@ import type {
   Annotation,
   CodeBlockNode,
   DiagnosticHeaderNode,
+  DiffBlockNode,
+  DiffHunkInfo,
+  DiffRowInfo,
   Document,
   FileHeaderNode,
+  InlineRangeInfo,
   LineInfo,
   ProgressRuleNode,
   StyledRun,
@@ -36,6 +40,7 @@ export interface HTMLSinkOptions {
   themeLabel: string
   showLineNumbers: boolean
   markers: MarkerMode
+  diffLayout?: "unified" | "split"
 }
 
 export interface LinePiece {
@@ -301,6 +306,180 @@ function renderListing(fileHeader: FileHeaderNode | null, block: CodeBlockNode, 
   return `<figure class="herb-highlight" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
 
+const HUNK_SEPARATOR_ROW = `<span class="herb-line herb-diff-hunk-separator"></span>`
+const EMPTY_DIFF_CELL = `<span class="herb-line herb-diff-empty"></span>`
+
+function rangeAssignment(ranges: InlineRangeInfo[], length: number): boolean[] {
+  const assignment: boolean[] = new Array(length).fill(false)
+
+  for (const range of ranges) {
+    const start = Math.max(0, range.start)
+    const end = Math.min(length, range.end)
+
+    for (let column = start; column < end; column++) {
+      assignment[column] = true
+    }
+  }
+
+  return assignment
+}
+
+function renderInlineMarkedContent(pieces: LinePiece[], ranges: InlineRangeInfo[], markClass: string): string {
+  const characters = pieces.map(piece => [...piece.text])
+  const length = characters.reduce((total, piece) => total + piece.length, 0)
+  const assignment = rangeAssignment(ranges, length)
+
+  let column = 0
+  let content = ""
+
+  pieces.forEach((piece, pieceIndex) => {
+    const pieceCharacters = characters[pieceIndex]
+
+    let index = 0
+
+    while (index < pieceCharacters.length) {
+      const inRange = assignment[column + index]
+
+      let end = index + 1
+
+      while (end < pieceCharacters.length && assignment[column + end] === inRange) {
+        end++
+      }
+
+      const rendered = renderPiece({ text: pieceCharacters.slice(index, end).join(""), role: piece.role })
+
+      content += inRange ? `<mark class="${markClass}">${rendered}</mark>` : rendered
+
+      index = end
+    }
+
+    column += pieceCharacters.length
+  })
+
+  return content
+}
+
+function diffRowContent(row: DiffRowInfo, originalPieces: LinePiece[][], modifiedPieces: LinePiece[][]): string {
+  const pieces = row.kind === "added"
+    ? modifiedPieces[row.newLine! - 1] ?? []
+    : originalPieces[row.oldLine! - 1] ?? []
+
+  if (row.inlineRanges.length === 0) return renderLineContent(pieces)
+
+  const markClass = row.kind === "removed" ? "herb-diff-inline-removed" : "herb-diff-inline-added"
+
+  return renderInlineMarkedContent(pieces, row.inlineRanges, markClass)
+}
+
+function renderDiffRow(row: DiffRowInfo, content: string, showLineNumbers: boolean): string {
+  if (row.kind === "context") {
+    const attributes = showLineNumbers ? ` data-old-line="${row.oldLine}" data-new-line="${row.newLine}"` : ""
+
+    return `<span class="herb-line herb-diff-context"${attributes}>${content}</span>`
+  }
+
+  if (row.kind === "removed") {
+    const attributes = showLineNumbers ? ` data-old-line="${row.oldLine}"` : ""
+
+    return `<span class="herb-line herb-diff-removed"${attributes}>${content}</span>`
+  }
+
+  const attributes = showLineNumbers ? ` data-new-line="${row.newLine}"` : ""
+
+  return `<span class="herb-line herb-diff-added"${attributes}>${content}</span>`
+}
+
+function pairDiffRows(hunk: DiffHunkInfo): { left: DiffRowInfo | null, right: DiffRowInfo | null }[] {
+  const rows: { left: DiffRowInfo | null, right: DiffRowInfo | null }[] = []
+
+  let index = 0
+
+  while (index < hunk.rows.length) {
+    const row = hunk.rows[index]
+
+    if (row.kind === "context") {
+      rows.push({ left: row, right: row })
+      index++
+
+      continue
+    }
+
+    const removed: DiffRowInfo[] = []
+
+    while (index < hunk.rows.length && hunk.rows[index].kind === "removed") {
+      removed.push(hunk.rows[index])
+      index++
+    }
+
+    const added: DiffRowInfo[] = []
+
+    while (index < hunk.rows.length && hunk.rows[index].kind === "added") {
+      added.push(hunk.rows[index])
+      index++
+    }
+
+    for (let pair = 0; pair < Math.max(removed.length, added.length); pair++) {
+      rows.push({ left: removed[pair] ?? null, right: added[pair] ?? null })
+    }
+  }
+
+  return rows
+}
+
+function renderSplitDiff(
+  figcaption: string,
+  block: DiffBlockNode,
+  originalPieces: LinePiece[][],
+  modifiedPieces: LinePiece[][],
+  options: HTMLSinkOptions,
+): string {
+  const left: string[] = []
+  const right: string[] = []
+
+  const cellFor = (row: DiffRowInfo | null): string => row === null
+    ? EMPTY_DIFF_CELL
+    : renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options.showLineNumbers)
+
+  block.hunks.forEach((hunk, hunkIndex) => {
+    if (hunkIndex > 0) {
+      left.push(HUNK_SEPARATOR_ROW)
+      right.push(HUNK_SEPARATOR_ROW)
+    }
+
+    for (const { left: leftRow, right: rightRow } of pairDiffRows(hunk)) {
+      left.push(cellFor(leftRow))
+      right.push(cellFor(rightRow))
+    }
+  })
+
+  return `<figure class="herb-highlight herb-diff herb-diff-split" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<div class="herb-diff-columns">\n<pre class="herb-code herb-diff-column herb-diff-column-old"><code>${left.join("\n")}</code></pre>\n<pre class="herb-code herb-diff-column herb-diff-column-new"><code>${right.join("\n")}</code></pre>\n</div>\n</figure>`
+}
+
+function renderDiff(fileHeader: FileHeaderNode | null, block: DiffBlockNode, options: HTMLSinkOptions): string {
+  const originalPieces = splitRunsIntoLines(block.originalRuns)
+  const modifiedPieces = splitRunsIntoLines(block.modifiedRuns)
+
+  const figcaption = fileHeader !== null && options.showLineNumbers
+    ? `<figcaption class="herb-file-header">${escapeHTML(fileHeader.path)}</figcaption>\n`
+    : ""
+
+  if ((options.diffLayout ?? "unified") === "split") {
+    return renderSplitDiff(figcaption, block, originalPieces, modifiedPieces, options)
+  }
+
+  const rows: string[] = []
+
+  block.hunks.forEach((hunk, hunkIndex) => {
+    if (hunkIndex > 0) rows.push(HUNK_SEPARATOR_ROW)
+
+    for (const row of hunk.rows) {
+      rows.push(renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options.showLineNumbers))
+    }
+  })
+
+  return `<figure class="herb-highlight herb-diff" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${rows.join("\n")}</code></pre>\n</figure>`
+}
+
 function renderProgressRule(node: ProgressRuleNode): string {
   return `<hr class="herb-progress-rule" data-herb-progress="${node.index}/${node.total}">`
 }
@@ -317,11 +496,17 @@ export function renderDocumentFragments(document: Document, options: HTMLSinkOpt
     if (node.type === "DiagnosticHeader") {
       fragments.push(renderCard(node, nodes[i + 1] as FileHeaderNode, nodes[i + 2] as CodeBlockNode, options))
       i += 3
+    } else if (node.type === "FileHeader" && nodes[i + 1]?.type === "DiffBlock") {
+      fragments.push(renderDiff(node, nodes[i + 1] as DiffBlockNode, options))
+      i += 2
     } else if (node.type === "FileHeader") {
       const block = nodes[i + 1] as CodeBlockNode
 
       fragments.push(block.kind === "AnnotatedListing" ? renderInline(node, block, options) : renderListing(node, block, options))
       i += 2
+    } else if (node.type === "DiffBlock") {
+      fragments.push(renderDiff(null, node, options))
+      i += 1
     } else if (node.type === "CodeBlock") {
       fragments.push(node.kind === "AnnotatedListing" ? renderInline(null, node, options) : renderListing(null, node, options))
       i += 1

@@ -25,6 +25,7 @@ impl<'a> FileRenderer<'a> {
       wrap_lines: options.wrap_lines,
       truncate_lines: options.truncate_lines,
       max_width: options.max_width,
+      ..Default::default()
     }
   }
 

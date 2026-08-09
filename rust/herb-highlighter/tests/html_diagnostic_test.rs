@@ -39,6 +39,7 @@ fn sink_options(markers: MarkerMode) -> HTMLSinkOptions {
     theme_label: "onedark".to_string(),
     show_line_numbers: true,
     markers,
+    ..Default::default()
   }
 }
 
