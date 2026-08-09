@@ -267,6 +267,16 @@
       ],
       "view/item/context": [
         {
+          "command": "herb.toggleLinter",
+          "when": "view == herbConfiguration && (viewItem == linterSetting || viewItem == personalLinterSetting)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.toggleFormatter",
+          "when": "view == herbConfiguration && (viewItem == formatterSetting || viewItem == personalFormatterSetting)",
+          "group": "inline"
+        },
+        {
           "command": "herb.reprocessFile",
           "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",
           "group": "inline"
