@@ -3,7 +3,7 @@ import { Visitor, isERBOutputNode, createLiteral, createERBOutputNode, findParen
 import { ASTRewriter } from "../ast-rewriter.js"
 
 import type { RewriteContext } from "../context.js"
-import type { Node, ERBContentNode, PrismNode } from "@herb-tools/core"
+import type { Node, ERBContentNode, HTMLAttributeValueNode, PrismNode } from "@herb-tools/core"
 
 const STRING_NODE_TYPE = "StringNode"
 const INTERPOLATED_STRING_NODE_TYPE = "InterpolatedStringNode"
@@ -21,12 +21,44 @@ export interface ExpressionPart {
 
 export type ReplacementPart = TextPart | ExpressionPart
 
+export interface InlineSafetyOptions {
+  attributeValue?: HTMLAttributeValueNode | null
+  escaped?: boolean
+}
+
+export function isSafeToInline(parts: ReplacementPart[], options: InlineSafetyOptions = {}): boolean {
+  const { attributeValue = null, escaped = true } = options
+
+  if (attributeValue && !attributeValue.quoted) return false
+
+  const quote = attributeValue?.open_quote?.value ?? null
+
+  return parts.every(part => {
+    if (part.type !== "text") return true
+    if (escaped && (part.content.includes("<") || part.content.includes("&"))) return false
+    if (quote && part.content.includes(quote)) return false
+
+    return true
+  })
+}
+
 class ERBStringToDirectOutputVisitor extends Visitor {
   private root: Node
+  private attributeValue: HTMLAttributeValueNode | null = null
 
   constructor(root: Node) {
     super()
     this.root = root
+  }
+
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+    const previousAttributeValue = this.attributeValue
+
+    this.attributeValue = node
+
+    super.visitHTMLAttributeValueNode(node)
+
+    this.attributeValue = previousAttributeValue
   }
 
   visitERBContentNode(node: ERBContentNode): void {
@@ -55,6 +87,11 @@ class ERBStringToDirectOutputVisitor extends Visitor {
     const replacementParts = ERBStringToDirectOutputRewriter.extractReplacementParts(prismNode, source)
 
     if (!replacementParts) {
+      this.visitChildNodes(node)
+      return
+    }
+
+    if (!isSafeToInline(replacementParts, { attributeValue: this.attributeValue })) {
       this.visitChildNodes(node)
       return
     }

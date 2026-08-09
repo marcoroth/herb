@@ -82,4 +82,83 @@ describe("actionview-no-unnecessary-html-safe autofix", () => {
     expect(result.fixed).toHaveLength(0)
     expect(result.unfixed).toHaveLength(1)
   })
+
+  test("reports but does not fix a String literal in an unquoted attribute value", () => {
+    const input = `<div id=<%= "a b".html_safe %>>y</div>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("reports but does not fix a String literal containing the quote that encloses the attribute value", () => {
+    const input = `<div title="<%= "say \\"hi\\"".html_safe %>">y</div>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("reports but does not fix a String literal with an unclosed tag", () => {
+    const input = `<p><%= "<div>".html_safe %></p>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("reports but does not fix a String literal with an unopened tag", () => {
+    const input = `<p><%= "</div>".html_safe %></p>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(1)
+  })
+
+  test("reports but does not fix a String literal with misnested tags", () => {
+    const input = `<p><%= "<b>a<i>b</b></i>".html_safe %></p>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+  })
+
+  test("fixes a String literal with a void element", () => {
+    const input = `<p><%= "<br>".html_safe %></p>`
+    const expected = `<p><br></p>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("fixes a String literal with several balanced siblings", () => {
+    const input = `<%= "<div>a</div><div>b</div>".html_safe %>`
+    const expected = `<div>a</div><div>b</div>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("fixes a String literal containing `&`, which `.html_safe` leaves unescaped anyway", () => {
+    const input = `<p><%= "Tom & Jerry".html_safe %></p>`
+    const expected = `<p>Tom & Jerry</p>`
+
+    const result = autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
 })

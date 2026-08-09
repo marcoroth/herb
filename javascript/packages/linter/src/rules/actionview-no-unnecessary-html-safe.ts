@@ -1,11 +1,11 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { ERBStringToDirectOutputRewriter } from "@herb-tools/rewriter"
+import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
 
 import { isERBOutputNode, isPrismNodeType, createLiteral, findParentArray, locationFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 
-import type { ParseResult, ERBContentNode, ParserOptions, PrismNode, Node } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, HTMLAttributeValueNode, ParserOptions, PrismNode, Node } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 interface UnnecessaryHTMLSafeAutofixContext extends BaseAutofixContext {
@@ -28,6 +28,18 @@ function stringLiteralReceiver(prismNode: PrismNode): PrismNode | null {
 }
 
 class ActionViewNoUnnecessaryHTMLSafeVisitor extends BaseRuleVisitor<UnnecessaryHTMLSafeAutofixContext> {
+  private attributeValue: HTMLAttributeValueNode | null = null
+
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+    const previousAttributeValue = this.attributeValue
+
+    this.attributeValue = node
+
+    super.visitHTMLAttributeValueNode(node)
+
+    this.attributeValue = previousAttributeValue
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     this.checkUnnecessaryHTMLSafe(node)
 
@@ -50,7 +62,11 @@ class ActionViewNoUnnecessaryHTMLSafeVisitor extends BaseRuleVisitor<Unnecessary
     const literal = substringFromByteOffset(source, receiver.location.startOffset, receiver.location.length)
     const content = ERBStringToDirectOutputRewriter.extractStringContent(receiver, source)
 
-    const autofixContext = content.includes("<%")
+    const inlinable =
+      isSafeToInline([{ type: "text", content }], { attributeValue: this.attributeValue, escaped: false }) &&
+      this.isBalancedMarkup(content)
+
+    const autofixContext = (content.includes("<%") || !inlinable)
       ? undefined
       : { node: node as Mutable<ERBContentNode>, content }
 
@@ -61,6 +77,16 @@ class ActionViewNoUnnecessaryHTMLSafeVisitor extends BaseRuleVisitor<Unnecessary
       undefined,
       ["unnecessary"],
     )
+  }
+
+  private isBalancedMarkup(content: string): boolean {
+    if (!content.includes("<")) return true
+
+    const herb = this.context.herb
+
+    if (!herb) return false
+
+    return herb.parse(content).recursiveErrors().length === 0
   }
 }
 
