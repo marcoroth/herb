@@ -2,6 +2,7 @@ import { ClientCapabilities, Connection, InitializeParams, ResourceOperationKind
 import { Config } from "@herb-tools/config"
 
 import { defaultFormatOptions } from "@herb-tools/formatter"
+import { pathFromUri } from "./utils"
 import { version } from "../package.json"
 
 // TODO: ideally we could just Config all the way through
@@ -142,6 +143,23 @@ export class Settings {
     const uri = this.params.workspaceFolders?.at(0)?.uri ?? this.params.rootUri ?? this.params.rootPath ?? ""
 
     return uri.replace(/^file:\/\//, "")
+  }
+
+  get workspacePaths(): string[] {
+    const folders = this.params.workspaceFolders?.map(folder => folder.uri) ?? []
+    const roots = folders.length > 0 ? folders : [this.params.rootUri ?? this.params.rootPath ?? ""]
+
+    return roots.filter(root => root !== "").map(root => pathFromUri(root).replace(/\/$/, ""))
+  }
+
+  includes(uri: string): boolean {
+    const roots = this.workspacePaths
+
+    if (roots.length === 0) return true
+
+    const path = pathFromUri(uri)
+
+    return roots.some(root => path === root || path.startsWith(`${root}/`))
   }
 
   getDocumentSettings(resource: string): Thenable<PersonalHerbSettings> {

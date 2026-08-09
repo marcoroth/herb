@@ -295,6 +295,7 @@ export class Server {
 
     if (event.type === FileChangeType.Deleted) {
       callers.remove(event.uri)
+      this.service.diagnostics.clear(event.uri)
 
       return partials.remove(event.uri)
     }

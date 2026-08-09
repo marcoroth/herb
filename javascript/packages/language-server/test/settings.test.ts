@@ -42,6 +42,53 @@ describe("Settings", () => {
     })
   })
 
+  describe("includes", () => {
+    function settingsFor(folders: string[] | null, rootUri: string | null = null): Settings {
+      return new Settings({
+        ...mockParams,
+        rootUri,
+        workspaceFolders: folders?.map(uri => ({ uri, name: uri })) ?? null,
+      }, mockConnection)
+    }
+
+    test("accepts a document inside the only workspace folder", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("file:///work/foo/app/views/a.html.erb")).toBe(true)
+    })
+
+    test("accepts a document inside any workspace folder", () => {
+      const settings = settingsFor(["file:///work/foo", "file:///work/bar"])
+
+      expect(settings.includes("file:///work/bar/app/views/a.html.erb")).toBe(true)
+    })
+
+    test("rejects a document saved outside every workspace folder", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("file:///work/bar/example.html")).toBe(false)
+    })
+
+    test("rejects a sibling folder that merely shares a prefix", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("file:///work/foobar/example.html")).toBe(false)
+    })
+
+    test("accepts the workspace folder itself", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("file:///work/foo")).toBe(true)
+    })
+
+    test("falls back to rootUri when no folders are given", () => {
+      const settings = settingsFor(null, "file:///work/foo")
+
+      expect(settings.includes("file:///work/foo/a.html.erb")).toBe(true)
+      expect(settings.includes("file:///work/bar/a.html.erb")).toBe(false)
+    })
+
+    test("accepts everything when the client opened no folder at all", () => {
+      expect(settingsFor(null).includes("file:///anywhere/a.html.erb")).toBe(true)
+    })
+
+    test("handles a percent encoded path", () => {
+      expect(settingsFor(["file:///work/my%20app"]).includes("file:///work/my%20app/a.html.erb")).toBe(true)
+    })
+  })
+
   describe("getDocumentSettings", () => {
     test("returns defaultSettings when hasConfigurationCapability is false", async () => {
       const settings = new Settings(mockParams, mockConnection)

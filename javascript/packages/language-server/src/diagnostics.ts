@@ -1,6 +1,7 @@
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Connection, Diagnostic } from "vscode-languageserver/node"
 
+import { Settings } from "./settings"
 import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
@@ -13,6 +14,7 @@ export class Diagnostics {
   private readonly parserService: ParserService
   private readonly linterService: LinterService
   private readonly configService: ConfigService
+  private readonly settings: Settings
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
@@ -21,15 +23,27 @@ export class Diagnostics {
     parserService: ParserService,
     linterService: LinterService,
     configService: ConfigService,
+    settings: Settings,
   ) {
     this.connection = connection
     this.documentService = documentService
     this.parserService = parserService
     this.linterService = linterService
     this.configService = configService
+    this.settings = settings
+  }
+
+  clear(uri: string) {
+    this.connection.sendDiagnostics({ uri, diagnostics: [] })
   }
 
   async validate(textDocument: TextDocument) {
+    if (!this.settings.includes(textDocument.uri)) {
+      this.clear(textDocument.uri)
+
+      return
+    }
+
     let allDiagnostics: Diagnostic[] = []
 
     if (isConfigDocument(textDocument.uri)) {
