@@ -5,6 +5,8 @@ import { defaultFormatOptions } from "@herb-tools/formatter"
 import { pathFromUri } from "./utils"
 import { version } from "../package.json"
 
+const FILE_SCHEME = "file://"
+
 // TODO: ideally we could just Config all the way through
 export interface PersonalHerbSettings {
   trace?: {
@@ -153,6 +155,8 @@ export class Settings {
   }
 
   includes(uri: string): boolean {
+    if (!uri.startsWith(FILE_SCHEME)) return true
+
     const roots = this.workspacePaths
 
     if (roots.length === 0) return true

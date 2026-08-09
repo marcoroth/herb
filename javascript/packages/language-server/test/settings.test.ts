@@ -84,6 +84,14 @@ describe("Settings", () => {
       expect(settingsFor(null).includes("file:///anywhere/a.html.erb")).toBe(true)
     })
 
+    test("accepts an untitled buffer, which has nowhere to live", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("untitled:Untitled-1")).toBe(true)
+    })
+
+    test("accepts a document served by a virtual filesystem", () => {
+      expect(settingsFor(["file:///work/foo"]).includes("vscode-vfs://github/marcoroth/herb/a.html.erb")).toBe(true)
+    })
+
     test("handles a percent encoded path", () => {
       expect(settingsFor(["file:///work/my%20app"]).includes("file:///work/my%20app/a.html.erb")).toBe(true)
     })

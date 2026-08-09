@@ -88,6 +88,14 @@ describe("Diagnostics", () => {
     expect(published[0].diagnostics.length).toBeGreaterThan(0)
   })
 
+  test("still reports on an untitled buffer", async () => {
+    const { diagnostics, published } = diagnosticsFor([WORKSPACE])
+
+    await diagnostics.validate(documentFor("untitled:Untitled-1"))
+
+    expect(published[0].diagnostics.length).toBeGreaterThan(0)
+  })
+
   test("clear retracts the diagnostics of a document", () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
