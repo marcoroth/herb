@@ -217,6 +217,24 @@ module Engine
         assert_equal "<div>\n  Content\n</div>", result
         refute result.end_with?("\n"), "Optimized output should not have trailing newline"
       end
+
+      # TODO: Rails renders `hidden="hidden"`. We render `hidden` (boolean attribute without value).
+      test "tag.div with dynamic boolean attribute that is truthy" do
+        assert_optimized_mismatch_snapshot("<%= tag.div hidden: a != b %>", { a: 1, b: 2 })
+      end
+
+      test "tag.div with dynamic boolean attribute that is falsy" do
+        assert_optimized_snapshot("<%= tag.div hidden: a == b %>", { a: 1, b: 2 })
+      end
+
+      test "tag.div with dynamic boolean attribute that is nil" do
+        assert_optimized_snapshot("<%= tag.div hidden: maybe %>", { maybe: nil })
+      end
+
+      # TODO: Rails renders `hidden="hidden"`. We render `hidden` (boolean attribute without value).
+      test "tag.div with boolean attribute shorthand" do
+        assert_optimized_mismatch_snapshot("<%= tag.div(hidden:) %>", { hidden: true })
+      end
     end
   end
 end

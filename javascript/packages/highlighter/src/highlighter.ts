@@ -1,14 +1,18 @@
+import { readFileSync } from "fs"
+
 import { SyntaxRenderer } from "./syntax-renderer.js"
 import { DiagnosticRenderer } from "./diagnostic-renderer.js"
 import { FileRenderer } from "./file-renderer.js"
 import { InitializationManager } from "./initialization-manager.js"
 import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
-import { FileReader } from "./file-reader.js"
+import { DiffRenderer } from "./diff-renderer.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
+import type { DiffRenderOptions } from "./diff-renderer.js"
+import type { DiffHunk } from "./diff-computer.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -43,7 +47,7 @@ export class Highlighter {
   private fileRenderer: FileRenderer
   private initManager: InitializationManager
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
-  private fileReader: FileReader
+  private diffRenderer: DiffRenderer
 
   constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
     const colors = resolveTheme(theme)
@@ -52,7 +56,7 @@ export class Highlighter {
     this.fileRenderer = new FileRenderer(this.syntaxRenderer)
     this.initManager = new InitializationManager(herb)
     this.inlineDiagnosticRenderer = new InlineDiagnosticRenderer(this.syntaxRenderer)
-    this.fileReader = new FileReader(this)
+    this.diffRenderer = new DiffRenderer(this.syntaxRenderer, colors)
   }
 
   /**
@@ -151,7 +155,6 @@ export class Highlighter {
         path,
         content,
         diagnostics,
-        contextLines,
         showLineNumbers,
         wrapLines,
         maxWidth,
@@ -206,6 +209,42 @@ export class Highlighter {
     )
   }
 
+  /**
+   * Render the change between two sources as a syntax-highlighted diff
+   * @param path - File path shown above the diff (display only)
+   * @param original - The source before the change
+   * @param modified - The source after the change
+   * @param options - Optional configuration
+   * @returns The rendered diff, or an empty string when the sources are identical
+   */
+  highlightDiff(
+    path: string,
+    original: string,
+    modified: string,
+    options: DiffRenderOptions = {},
+  ): string {
+    this.requireInitialized()
+
+    return this.diffRenderer.render(path, original, modified, options)
+  }
+
+  /**
+   * Render pre-computed diff hunks
+   * @param path - File path shown above the diff (display only)
+   * @param hunks - The hunks to render
+   * @param options - Optional configuration
+   * @returns The rendered diff, or an empty string when there are no hunks
+   */
+  highlightDiffHunks(
+    path: string,
+    hunks: DiffHunk[],
+    options: DiffRenderOptions = {},
+  ): string {
+    this.requireInitialized()
+
+    return this.diffRenderer.renderFromHunks(path, hunks, options)
+  }
+
   // File reading wrapper functions
 
   /**
@@ -218,7 +257,9 @@ export class Highlighter {
     filePath: string,
     options: HighlightOptions = {},
   ): string {
-    return this.fileReader.highlightFromPath(filePath, options)
+    this.requireInitialized()
+
+    return this.highlight(filePath, readFile(filePath), options)
   }
 
   /**
@@ -233,7 +274,17 @@ export class Highlighter {
     diagnostic: Diagnostic,
     options: HighlightDiagnosticOptions = {},
   ): string {
-    return this.fileReader.highlightDiagnosticFromPath(filePath, diagnostic, options)
+    this.requireInitialized()
+
+    return this.highlightDiagnostic(filePath, diagnostic, readFile(filePath), options)
+  }
+}
+
+function readFile(filePath: string): string {
+  try {
+    return readFileSync(filePath, "utf8")
+  } catch (error) {
+    throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 

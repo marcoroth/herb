@@ -1,4 +1,4 @@
-import { Visitor, Location, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, createSyntheticToken, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
+import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, Token, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
 import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -31,20 +31,35 @@ function dashToUnderscore(string: string): string {
   return string.replace(/-/g, "_")
 }
 
+function getStaticAttributeValue(children: Node[], attributeName: string): string | null {
+  for (const child of children) {
+    if (!isHTMLAttributeNode(child)) continue
+    if (getStaticAttributeName(child.name!) !== attributeName) continue
+    if (!child.value) return null
+    if (!child.value.children.every(value => isLiteralNode(value))) return null
+
+    return child.value.children.map(value => isLiteralNode(value) ? value.content : "").join("")
+  }
+
+  return null
+}
+
 interface SerializedAttributes {
   attributes: string
   href: string | null
   id: string | null
   src: string | null
+  rel: string | null
 }
 
-function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean } = {}): SerializedAttributes {
+function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean, extractRel?: boolean } = {}): SerializedAttributes {
   const regular: string[] = []
   const prefixed: Map<string, string[]> = new Map()
 
   let href: string | null = null
   let id: string | null = null
   let src: string | null = null
+  let rel: string | null = null
 
   for (const child of children) {
     if (!isHTMLAttributeNode(child)) continue
@@ -69,6 +84,11 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
       continue
     }
 
+    if (options.extractRel && name === "rel") {
+      rel = value
+      continue
+    }
+
     const dataMatch = name.match(/^(data|aria)-(.+)$/)
 
     if (dataMatch) {
@@ -90,7 +110,7 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
     parts.push(`${prefix}: { ${entries.join(", ")} }`)
   }
 
-  return { attributes: parts.join(", "), href, id, src }
+  return { attributes: parts.join(", "), href, id, src, rel }
 }
 
 function isTextOnlyBody(body: Node[]): boolean {
@@ -125,10 +145,13 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     const attributes = openTag.children.filter(child => !isWhitespaceNode(child))
     const implicitAttrName = preferredHelper?.implicitAttribute?.name
     const hasSrcAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
+    const hasHrefAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "href")
+    const isStylesheetLink = tagName.value === "link" && hasHrefAttribute && getStaticAttributeValue(attributes, "rel") === "stylesheet"
     const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, {
-      extractHref: implicitAttrName === "href",
+      extractHref: implicitAttrName === "href" || isStylesheetLink,
       extractId: implicitAttrName === "id",
       extractSrc: implicitAttrName === "src" || tagName.value === "script",
+      extractRel: isStylesheetLink,
     })
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
@@ -145,6 +168,9 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     } else if (preferredHelper?.name === "image_tag") {
       content = this.buildImageTagContent(attributesString, src)
       elementSource = preferredHelper.source
+    } else if (isStylesheetLink) {
+      content = this.buildStylesheetLinkTagContent(attributesString, href)
+      elementSource = HELPER_REGISTRY["stylesheet_link_tag"].source
     } else if (tagName.value === "script" && hasSrcAttribute) {
       content = this.buildJavascriptIncludeTagContent(attributesString, src)
       elementSource = HELPER_REGISTRY["javascript_include_tag"].source
@@ -156,15 +182,12 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
       elementSource = HELPER_REGISTRY["tag"].source
     }
 
-    const erbOpenTag = new ERBOpenTagNode({
-      type: "AST_ERB_OPEN_TAG_NODE",
+    const erbOpenTag = ERBOpenTagNode.build({
       location: openTag.location,
-      errors: [],
-      tag_opening: createSyntheticToken("<%="),
-      content: createSyntheticToken(content),
-      tag_closing: createSyntheticToken("%>"),
-      tag_name: createSyntheticToken(tagName.value),
-      children: [],
+      tag_opening: Token.from("TOKEN_ERB_START", "<%="),
+      content: Token.from("TOKEN_ERB_CONTENT", content),
+      tag_closing: Token.from("TOKEN_ERB_END", "%>"),
+      tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
     })
 
     asMutable(node).open_tag = erbOpenTag
@@ -180,22 +203,17 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     } else if (isInlineForm) {
       asMutable(node).body = []
 
-      const virtualClose = new HTMLVirtualCloseTagNode({
-        type: "AST_HTML_VIRTUAL_CLOSE_TAG_NODE",
-        location: Location.zero,
-        errors: [],
-        tag_name: createSyntheticToken(tagName.value),
+      const virtualClose = HTMLVirtualCloseTagNode.build({
+        tag_name: Token.from("TOKEN_IDENTIFIER", tagName.value),
       })
 
       asMutable(node).close_tag = virtualClose
     } else if (node.close_tag) {
-      const erbEnd = new ERBEndNode({
-        type: "AST_ERB_END_NODE",
+      const erbEnd = ERBEndNode.build({
         location: node.close_tag.location,
-        errors: [],
-        tag_opening: createSyntheticToken("<%"),
-        content: createSyntheticToken(" end "),
-        tag_closing: createSyntheticToken("%>"),
+        tag_opening: Token.from("TOKEN_ERB_START", "<%"),
+        content: Token.from("TOKEN_ERB_CONTENT", " end "),
+        tag_closing: Token.from("TOKEN_ERB_END", "%>"),
       })
 
       asMutable(node).close_tag = erbEnd
@@ -289,6 +307,17 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     return argString ? ` image_tag ${argString} ` : ` image_tag `
   }
 
+  private buildStylesheetLinkTagContent(attributes: string, source: string | null): string {
+    const args: string[] = []
+
+    if (source) args.push(source)
+    if (attributes) args.push(attributes)
+
+    const argString = args.join(", ")
+
+    return argString ? ` stylesheet_link_tag ${argString} ` : ` stylesheet_link_tag `
+  }
+
   private buildLinkToContent(node: HTMLElementNode, attribute: string, href: string | null, isInlineContent: boolean): string {
     const args: string[] = []
 
@@ -320,7 +349,7 @@ export class HTMLToActionViewTagHelperRewriter extends ASTRewriter {
   }
 
   get description(): string {
-    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag)"
+    return "Converts raw HTML elements to ActionView tag helpers (tag.*, turbo_frame_tag, javascript_tag, javascript_include_tag, image_tag, stylesheet_link_tag)"
   }
 
   rewrite<T extends Node>(node: T, _context: RewriteContext): T {

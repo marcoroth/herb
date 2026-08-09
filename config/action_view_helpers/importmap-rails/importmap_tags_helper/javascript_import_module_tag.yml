@@ -1,0 +1,32 @@
+---
+name: "javascript_import_module_tag"
+source: "Importmap::ImportmapTagsHelper#javascript_import_module_tag"
+gem: "importmap-rails"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "javascript_import_module_tag(*module_names)"
+documentation_url: "https://www.rubydoc.info/gems/importmap-rails/Importmap/ImportmapTagsHelper#javascript_import_module_tag-instance_method"
+
+description: |-
+  Imports the named JavaScript module(s) using a `<script type="module">` tag. Each module name becomes an `import` statement in the body of the tag. Includes the Content Security Policy nonce when one is present.
+
+tag:
+  name: "script"
+  is_void: false
+  preferred: false
+  detect_style: "call_name"
+
+arguments:
+  - name: "module_names"
+    position: 1
+    type: "string"
+    optional: false
+    splat: true
+    description: |-
+      One or more module names to import.
+
+options: []
+block_arguments: []
+special_behaviors: []

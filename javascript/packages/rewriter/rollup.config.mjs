@@ -2,15 +2,23 @@ import typescript from "@rollup/plugin-typescript"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
 import commonjs from "@rollup/plugin-commonjs"
 import json from "@rollup/plugin-json"
+import { createRequire } from "module"
 
 const external = [
   "path",
   "url",
   "fs",
   "module",
-  "@herb-tools/tailwind-class-sorter",
-  "tinyglobby"
 ]
+
+const { dependencies } = createRequire(import.meta.url)("./package.json")
+const runtimeDependencies = Object.keys(dependencies ?? {})
+
+function isExternal(id) {
+  return [...external, ...runtimeDependencies].some(
+    (pkg) => id === pkg || id.startsWith(pkg + "/")
+  )
+}
 
 export default [
   // Browser-compatible entry point (core APIs only)
@@ -21,7 +29,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: [/@ruby\/prism/],
+    external: isExternal,
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -41,7 +49,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: [/@ruby\/prism/],
+    external: isExternal,
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -61,7 +69,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external,
+    external: isExternal,
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -81,7 +89,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external,
+    external: isExternal,
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),

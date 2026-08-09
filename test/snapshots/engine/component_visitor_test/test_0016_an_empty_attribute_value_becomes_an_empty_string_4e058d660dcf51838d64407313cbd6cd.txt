@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0016_an empty attribute value becomes an empty string"
+input: "{source: \"<MyComponent name=\\\"\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "")).to_s;
+_buf.to_s

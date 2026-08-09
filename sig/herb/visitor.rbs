@@ -97,6 +97,9 @@ module Herb
     # : (Herb::AST::ERBBlockNode) -> void
     def visit_erb_block_node: (Herb::AST::ERBBlockNode) -> void
 
+    # : (Herb::AST::ERBIterationBlockNode) -> void
+    def visit_erb_iteration_block_node: (Herb::AST::ERBIterationBlockNode) -> void
+
     # : (Herb::AST::ERBWhenNode) -> void
     def visit_erb_when_node: (Herb::AST::ERBWhenNode) -> void
 

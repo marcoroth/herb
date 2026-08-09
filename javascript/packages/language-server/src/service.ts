@@ -16,7 +16,13 @@ import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
 import { HoverService } from "./hover_service"
 import { RewriteCodeActionService } from "./rewrite_code_action_service"
+import { ExtractCodeActionService } from "./extract_code_action_service"
+import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
+import { CompletionService } from "./completion_service"
+import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
+import { ReferencesService } from "./references_service"
 
 import { version } from "../package.json"
 
@@ -28,6 +34,8 @@ export class Service {
 
   diagnostics: Diagnostics
   documentService: DocumentService
+  partialIndexService: PartialIndexService
+  partialCallerIndexService: PartialCallerIndexService
   parserService: ParserService
   linterService: LinterService
   formattingService: FormattingService
@@ -39,7 +47,11 @@ export class Service {
   documentHighlightService: DocumentHighlightService
   hoverService: HoverService
   rewriteCodeActionService: RewriteCodeActionService
+  extractCodeActionService: ExtractCodeActionService
+  definitionService: DefinitionService
+  referencesService: ReferencesService
   commentService: CommentService
+  completionService: CompletionService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -47,18 +59,28 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
-    this.linterService = new LinterService(this.connection, this.settings, this.project)
+    this.partialIndexService = new PartialIndexService(this.connection, this.project)
+    this.partialCallerIndexService = new PartialCallerIndexService(this.connection, this.project, this.partialIndexService)
+    this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService, this.partialCallerIndexService)
     this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
-    this.autofixService = new AutofixService(this.connection, this.config)
+    this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService, this.partialCallerIndexService)
     this.configService = new ConfigService(this.project.projectPath)
-    this.codeActionService = new CodeActionService(this.project, this.config)
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
+    this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService, this.partialCallerIndexService)
+    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService, this.settings)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
     this.hoverService = new HoverService(this.parserService)
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
+    this.definitionService = new DefinitionService(this.parserService)
+    this.referencesService = new ReferencesService(this.project, this.definitionService, this.partialIndexService, this.partialCallerIndexService, this.documentService)
     this.commentService = new CommentService(this.parserService)
+    this.completionService = new CompletionService(this.parserService, this.partialIndexService)
+
+    this.extractCodeActionService = new ExtractCodeActionService(this.parserService, {
+      supportsCreateFile: this.settings.supportsResourceCreation,
+      supportsPromptCommand: this.settings.supportsExtractToPartialCommand,
+    })
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings
@@ -68,6 +90,8 @@ export class Service {
   async init() {
     await this.project.initialize()
     await this.formattingService.initialize()
+    await this.partialIndexService.initialize()
+    await this.partialCallerIndexService.initialize()
 
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
@@ -99,15 +123,27 @@ export class Service {
 
     this.documentService.onDidClose((change) => {
       this.settings.documentSettings.delete(change.document.uri)
+      this.diagnostics.clear(change.document.uri)
     })
 
     this.documentService.onDidChangeContent(async (change) => {
+      const callersChanged = this.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+      const partialsChanged = this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
+
+      if (callersChanged || partialsChanged) {
+        await this.diagnostics.refreshAllDocuments()
+
+        return
+      }
+
       await this.diagnostics.refreshDocument(change.document)
     })
   }
 
   async refresh() {
     await this.project.refresh()
+    await this.partialIndexService.initialize()
+    await this.partialCallerIndexService.initialize()
     await this.formattingService.refreshConfig(this.config)
     await this.diagnostics.refreshAllDocuments()
   }

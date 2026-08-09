@@ -1,0 +1,39 @@
+---
+source: "Analyze::ThenTest#test_0036_when with ternary containing then in a string"
+input: |2-
+<% case value %>
+<% when a == "then" ? 1 : 2 %>
+  content
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case value " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:30))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when a == "then" ? 1 : 2 " (location: (2:2)-(2:28))
+    │   │       ├── tag_closing: "%>" (location: (2:28)-(2:30))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (2:30)-(4:0))
+    │   │               └── content: "\n  content\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

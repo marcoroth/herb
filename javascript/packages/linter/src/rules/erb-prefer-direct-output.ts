@@ -2,8 +2,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext } from "../types.js"
 import { ERBStringToDirectOutputRewriter } from "@herb-tools/rewriter"
 
-import { locationFromOffset } from "./rule-utils.js"
-import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType } from "@herb-tools/core"
+import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType , locationFromByteOffset } from "@herb-tools/core"
 
 import type { Mutable, ReplacementPart } from "@herb-tools/rewriter"
 import type { ParseResult, ERBContentNode, ParserOptions, Node } from "@herb-tools/core"
@@ -31,7 +30,7 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
     const replacementParts = ERBStringToDirectOutputRewriter.extractReplacementParts(prismNode, source)
 
     const { startOffset, length } = prismNode.location
-    const stringLocation = locationFromOffset(source, startOffset, length)
+    const stringLocation = locationFromByteOffset(source, startOffset, length)
 
     const autofixContext = replacementParts
       ? { node: node as Mutable<ERBContentNode>, replacementParts }

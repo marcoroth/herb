@@ -2,7 +2,7 @@ import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/nod
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Config } from "@herb-tools/config"
 
-import { lintToDignosticSeverity } from "./utils"
+import { isConfigDocument, lintToDignosticSeverity } from "./utils"
 import { version } from "../package.json"
 
 /**
@@ -15,10 +15,34 @@ export class ConfigService {
     this.projectPath = projectPath
   }
 
+  private wholeDocumentRange(document: TextDocument): Range {
+    const text = document.getText()
+
+    if (text.length === 0) {
+      return Range.create(0, 0, 0, 1)
+    }
+
+    const end = document.positionAt(text.length)
+
+    return Range.create(0, 0, end.line, end.character)
+  }
+
   async validateDocument(document: TextDocument): Promise<Diagnostic[]> {
     const diagnostics: Diagnostic[] = []
 
-    if (!document.uri.endsWith('.herb.yml')) {
+    if (Config.isMisnamedConfigPath(document.uri)) {
+      diagnostics.push({
+        severity: DiagnosticSeverity.Error,
+        range: this.wholeDocumentRange(document),
+        message: `Herb only reads \`${Config.configPath}\`, so this file is ignored. Rename it to \`${Config.configPath}\` to apply it.`,
+        source: 'Herb Config ',
+        code: 'wrong_file_extension'
+      })
+
+      return diagnostics
+    }
+
+    if (!isConfigDocument(document.uri)) {
       return diagnostics
     }
 

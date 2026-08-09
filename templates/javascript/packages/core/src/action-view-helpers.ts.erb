@@ -24,6 +24,14 @@ export interface HelperOption {
   readonly description: string
 }
 
+export interface HelperBlockArgument {
+  readonly name: string
+  readonly position: number
+  readonly type: string
+  readonly optional: boolean
+  readonly description: string
+}
+
 export interface HelperImplicitAttribute {
   readonly name: string
   readonly source: string
@@ -51,6 +59,7 @@ export interface HelperEntry {
   readonly implicitAttribute: HelperImplicitAttribute | null
   readonly arguments: HelperArgument[]
   readonly options: HelperOption[]
+  readonly blockArguments: HelperBlockArgument[]
   readonly specialBehaviors: string[]
   readonly aliases: string[]
 }
@@ -91,6 +100,11 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   options: [
   <%- helper.options.each do |opt| -%>
     { name: "<%= opt.name %>", type: "<%= opt.type_display %>", mapsTo: <%= opt.maps_to ? "\"#{opt.maps_to}\"" : "null" %>, description: "<%= opt.escaped_description %>" },
+  <%- end -%>
+  ],
+  blockArguments: [
+  <%- helper.block_arguments.each do |arg| -%>
+    { name: "<%= arg.name %>", position: <%= arg.position %>, type: "<%= arg.type_display %>", optional: <%= arg.optional %>, description: "<%= arg.escaped_description %>" },
   <%- end -%>
   ],
   specialBehaviors: [<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>],

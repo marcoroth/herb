@@ -7,6 +7,8 @@ import { LineContextCollector } from "./line_context_collector"
 import { lspLine } from "./range_utils"
 import { determineStrategy, commentLineContent, uncommentLineContent } from "./comment_ast_utils"
 
+import { isERBCommentNode } from "@herb-tools/core"
+
 import type { LineInfo } from "./line_context_collector"
 import type { ERBContentNode, HTMLCommentNode } from "@herb-tools/core"
 
@@ -28,7 +30,7 @@ export class CommentService {
     const lineInfos: LineInfo[] = []
 
     for (let line = startLine; line <= endLine; line++) {
-      const lineText = document.getText(Range.create(line, 0, line + 1, 0)).replace(/\n$/, "")
+      const lineText = this.getLineText(document, line)
 
       if (lineText.trim() === "") {
         continue
@@ -45,7 +47,11 @@ export class CommentService {
       if (htmlCommentNode && this.htmlCommentSpansLine(htmlCommentNode, lineText)) {
         lineInfos.push({ line, context: "html-comment", node: htmlCommentNode })
       } else if (info) {
-        if (info.context === "html-comment") {
+        if (info.context === "ruby") {
+          const context = lineText.trimStart().startsWith("#") ? "erb-comment" : "ruby"
+
+          lineInfos.push({ line, context, node: info.node })
+        } else if (info.context === "html-comment") {
           lineInfos.push({ line, context: "html-content", node: null })
         } else {
           lineInfos.push(info)
@@ -65,7 +71,7 @@ export class CommentService {
 
     if (allCommented) {
       for (const info of lineInfos) {
-        const lineText = document.getText(Range.create(info.line, 0, info.line + 1, 0)).replace(/\n$/, "")
+        const lineText = this.getLineText(document, info.line)
         const edit = this.uncommentLine(info, lineText, collector)
 
         if (edit) edits.push(edit)
@@ -74,7 +80,7 @@ export class CommentService {
       for (const info of lineInfos) {
         if (info.context === "erb-comment" || info.context === "html-comment") continue
 
-        const lineText = document.getText(Range.create(info.line, 0, info.line + 1, 0)).replace(/\n$/, "")
+        const lineText = this.getLineText(document, info.line)
         const erbNodes = collector.erbNodesPerLine.get(info.line) || []
         const edit = this.commentLine(info, lineText, erbNodes, collector)
 
@@ -86,11 +92,19 @@ export class CommentService {
   }
 
   toggleBlockComment(document: TextDocument, range: Range): TextEdit[] {
-    const startLine = range.start.line
-    const endLine = range.end.line
+    const parseResult = this.parserService.parseDocument(document)
+    const collector = new LineContextCollector()
 
-    const firstLineText = document.getText(Range.create(startLine, 0, startLine + 1, 0)).replace(/\n$/, "")
-    const lastLineText = document.getText(Range.create(endLine, 0, endLine + 1, 0)).replace(/\n$/, "")
+    collector.visit(parseResult.document)
+
+    if (this.selectionIsRubyLines(document, collector, range.start.line, range.end.line)) {
+      return this.toggleRubyLineComments(document, range.start.line, range.end.line)
+    }
+
+    const { startLine, endLine } = this.expandAcrossMultilineTags(collector, range.start.line, range.end.line)
+
+    const firstLineText = this.getLineText(document, startLine)
+    const lastLineText = this.getLineText(document, endLine)
     const isWrapped = firstLineText.trim() === "<% if false %>" && lastLineText.trim() === "<% end %>"
 
     if (isWrapped) {
@@ -113,6 +127,10 @@ export class CommentService {
     const indent = this.getIndentation(lineText)
     const content = lineText.trimStart()
     const htmlCommentNode = collector.htmlCommentNodesPerLine.get(info.line)
+
+    if (info.context === "ruby") {
+      return TextEdit.insert(Position.create(info.line, indent.length), "# ")
+    }
 
     if (htmlCommentNode) {
       return TextEdit.replace(lineRange, `${indent}<% if false %>${content}<% end %>`)
@@ -145,6 +163,63 @@ export class CommentService {
     return null
   }
 
+  private expandAcrossMultilineTags(collector: LineContextCollector, startLine: number, endLine: number): { startLine: number, endLine: number } {
+    const startInfo = collector.lineMap.get(startLine)
+    const endInfo = collector.lineMap.get(endLine)
+    const startNode = startInfo?.node as ERBContentNode | null
+    const endNode = endInfo?.node as ERBContentNode | null
+
+    if (startNode?.tag_opening && (startInfo!.context === "ruby" || startInfo!.context === "erb-comment")) {
+      startLine = Math.min(startLine, lspLine(startNode.tag_opening.location.start))
+    }
+
+    if (endNode?.tag_closing && (endInfo!.context === "ruby" || endInfo!.context === "erb-comment" || endInfo!.context === "erb-tag")) {
+      endLine = Math.max(endLine, lspLine(endNode.tag_closing.location.end))
+    }
+
+    return { startLine, endLine }
+  }
+
+  private selectionIsRubyLines(document: TextDocument, collector: LineContextCollector, startLine: number, endLine: number): boolean {
+    let hasRubyLine = false
+
+    for (let line = startLine; line <= endLine; line++) {
+      const lineText = this.getLineText(document, line)
+
+      if (lineText.trim() === "") continue
+      if (collector.lineMap.get(line)?.context !== "ruby") return false
+
+      hasRubyLine = true
+    }
+
+    return hasRubyLine
+  }
+
+  private toggleRubyLineComments(document: TextDocument, startLine: number, endLine: number): TextEdit[] {
+    const lineTexts: { line: number, text: string }[] = []
+
+    for (let line = startLine; line <= endLine; line++) {
+      const text = this.getLineText(document, line)
+
+      if (text.trim() !== "") {
+        lineTexts.push({ line, text })
+      }
+    }
+
+    const allCommented = lineTexts.every(({ text }) => text.trimStart().startsWith("#"))
+    const edits: TextEdit[] = []
+
+    for (const { line, text } of lineTexts) {
+      const edit = allCommented
+        ? this.uncommentRubyLine(text, line)
+        : TextEdit.insert(Position.create(line, this.getIndentation(text).length), "# ")
+
+      if (edit) edits.push(edit)
+    }
+
+    return edits
+  }
+
   private uncommentLine(info: LineInfo, lineText: string, collector: LineContextCollector): TextEdit | null {
     const lineRange = Range.create(info.line, 0, info.line, lineText.length)
     const indent = this.getIndentation(lineText)
@@ -155,8 +230,12 @@ export class CommentService {
     }
 
     if (info.context === "erb-comment") {
-      const node = info.node as ERBContentNode
+      const node = info.node as ERBContentNode | null
       if (!node?.tag_opening || !node?.tag_closing) return null
+
+      if (!isERBCommentNode(node) || lspLine(node.tag_opening.location.start) !== info.line) {
+        return this.uncommentRubyLine(lineText, info.line)
+      }
 
       const contentValue = (node as any).content?.value as string | null
       const trimmedContent = contentValue?.trim() || ""
@@ -164,8 +243,6 @@ export class CommentService {
       if (trimmedContent.startsWith("<") && !trimmedContent.startsWith("<%")) {
         return TextEdit.replace(lineRange, `${indent}${trimmedContent}`)
       }
-
-      if (lspLine(node.tag_opening.location.start) !== info.line) return null
 
       const erbNodes = collector.erbNodesPerLine.get(info.line) || []
 
@@ -209,6 +286,17 @@ export class CommentService {
     return null
   }
 
+  private uncommentRubyLine(lineText: string, line: number): TextEdit | null {
+    const content = lineText.trimStart()
+
+    if (!content.startsWith("#")) return null
+
+    const hashColumn = lineText.length - content.length
+    const deleteLength = content.startsWith("# ") ? 2 : 1
+
+    return TextEdit.del(Range.create(line, hashColumn, line, hashColumn + deleteLength))
+  }
+
   private htmlCommentSpansLine(node: HTMLCommentNode, lineText: string): boolean {
     if (!node.comment_start || !node.comment_end) return false
 
@@ -218,6 +306,10 @@ export class CommentService {
     const contentAfter = lineText.substring(commentEnd).trim()
 
     return contentBefore === "" && contentAfter === ""
+  }
+
+  private getLineText(document: TextDocument, line: number): string {
+    return document.getText(Range.create(line, 0, line + 1, 0)).replace(/\n$/, "")
   }
 
   private getIndentation(lineText: string): string {

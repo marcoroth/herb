@@ -1,0 +1,290 @@
+# Yerbafile
+#
+# Formatting rules for Herb's YAML configuration files, enforced with Yerba.
+#
+#   bundle exec yerba check   verify every file matches the rules (exits 1 if not)
+#   bundle exec yerba apply   rewrite the files so they match the rules
+#
+# See: https://github.com/marcoroth/yerba
+
+pipeline:
+  - directives:
+      ensure: true
+      max: 1
+
+  - sequence_indent:
+      style: indented
+
+  - final_newline:
+      count: 1
+
+rules:
+  - files: "config.yml"
+    pipeline:
+      - sort_keys:
+          order:
+            - errors
+            - warnings
+            - nodes
+
+      - sort_keys:
+          path: "errors"
+          order:
+            - fields
+            - types
+
+      - sort_keys:
+          path: "errors.fields[]"
+          order:
+            - name
+            - type
+
+      - sort_keys:
+          path: "errors.types[]"
+          order:
+            - name
+            - message
+            - fields
+
+      - sort_keys:
+          path: "errors.types[].message"
+          order:
+            - template
+            - arguments
+
+      - sort_keys:
+          path: "errors.types[].fields[]"
+          order:
+            - name
+            - type
+
+      - sort_keys:
+          path: "warnings"
+          order:
+            - fields
+            - types
+
+      - sort_keys:
+          path: "nodes"
+          order:
+            - fields
+            - types
+
+      - sort_keys:
+          path: "nodes.types[]"
+          order:
+            - name
+            - fields
+
+      - sort_keys:
+          path: "nodes.types[].fields[]"
+          order:
+            - name
+            - type
+            - writable
+            - kind
+
+      - quote_style:
+          key_style: plain
+          value_style: double
+
+      - blank_lines:
+          count: 1
+
+      - blank_lines:
+          path: "errors.fields"
+          count: 1
+
+      - blank_lines:
+          path: "errors.types"
+          count: 1
+
+      - blank_lines:
+          path: "errors.types[].message.arguments"
+          count: 0
+
+      - blank_lines:
+          path: "errors.types[].fields"
+          count: 1
+
+      - blank_lines:
+          path: "nodes.types"
+          count: 1
+
+      - blank_lines:
+          path: "nodes.types[].fields"
+          count: 1
+
+      - blank_lines:
+          path: "nodes.types[].fields[].kind"
+          count: 0
+
+  - files: "config/options.yml"
+    pipeline:
+      - blank_lines:
+          count: 1
+
+  - files: "config/view_context_methods/**/*.yml"
+    pipeline:
+      - sort_keys:
+          order:
+            - name
+            - source
+            - gem
+            - category
+            - output
+            - description
+            - aliases
+
+      - quote_style:
+          key_style: plain
+          value_style: double
+
+      - quote_style:
+          path: "description"
+          value_style: literal
+
+      - blank_lines:
+          count: 0
+
+  - files: "config/action_view_helpers/**/*.yml"
+    pipeline:
+      - sort_keys:
+          order:
+            - name
+            - source
+            - gem
+            - output
+            - visibility
+            - supported
+            - supports_block
+            - signature
+            - documentation_url
+            - attributes_arg
+            - attributes_arg_with_block
+            - transform_style
+            - custom_transform
+            - content
+            - description
+            - tag
+            - arguments
+            - options
+            - block_arguments
+            - special_behaviors
+            - aliases
+
+      - sort_keys:
+          path: "tag"
+          order:
+            - name
+            - is_void
+            - preferred
+            - detect_style
+            - implicit_attribute
+
+      - sort_keys:
+          path: "tag.implicit_attribute"
+          order:
+            - name
+            - source
+            - source_with_block
+            - wrapper
+            - wrapper_quotes_arg
+            - skip_wrapping_for
+
+      - sort_keys:
+          path: "content"
+          order:
+            - source
+            - arg_position
+            - skip_if_hash
+            - to_s_suffix_when_single
+
+      - sort_keys:
+          path: "arguments[]"
+          order:
+            - name
+            - position
+            - type
+            - optional
+            - default
+            - splat
+            - description
+
+      - sort_keys:
+          path: "options[]"
+          order:
+            - name
+            - type
+            - maps_to
+            - description
+
+      - sort_keys:
+          path: "special_behaviors[]"
+          order:
+            - type
+            - source
+            - attribute
+            - when_attribute
+            - add_attribute
+            - add_value
+            - width_attribute
+            - height_attribute
+            - wrapper
+            - options
+
+      - quote_style:
+          key_style: plain
+          value_style: double
+
+      - quote_style:
+          path: "description"
+          value_style: literal
+
+      - quote_style:
+          path: "arguments[].description"
+          value_style: literal
+
+      - quote_style:
+          path: "options[].description"
+          value_style: literal
+
+      - blank_lines:
+          count: 0
+
+      - blank_lines:
+          count: 1
+          skip_empty: true
+          before:
+            - content
+            - description
+            - tag
+            - arguments
+            - options
+            - block_arguments
+            - special_behaviors
+
+          after:
+            - content
+            - description
+            - tag
+            - arguments
+            - options
+            - block_arguments
+            - special_behaviors
+
+      - blank_lines:
+          path: "arguments"
+          count: 1
+
+      - blank_lines:
+          path: "options"
+          count: 1
+
+      - blank_lines:
+          path: "block_arguments"
+          count: 1
+
+      - blank_lines:
+          path: "special_behaviors"
+          count: 1

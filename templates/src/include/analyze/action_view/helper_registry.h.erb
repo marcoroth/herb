@@ -34,6 +34,13 @@ typedef struct {
 
 typedef struct {
   const char* name;
+  const char* type;
+  bool optional;
+  const char* description;
+} helper_block_argument_T;
+
+typedef struct {
+  const char* name;
   const char* source;
   const char* source_with_block;
   const char* wrapper;
@@ -70,6 +77,8 @@ typedef struct {
   size_t arguments_count;
   const helper_option_T* options;
   size_t options_count;
+  const helper_block_argument_T* block_arguments;
+  size_t block_arguments_count;
 } helper_registry_entry_T;
 
 const helper_registry_entry_T* helper_registry_get(helper_type_T type);

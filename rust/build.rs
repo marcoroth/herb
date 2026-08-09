@@ -70,7 +70,7 @@ fn main() {
 
     let mut build = cc::Build::new();
     build
-      .flag("-std=c99")
+      .flag("-std=gnu99")
       .flag("-Wall")
       .flag("-Wextra")
       .flag("-Wno-unused-parameter")
@@ -131,8 +131,12 @@ fn main() {
     .allowlist_type("prism_serialized_T")
     .allowlist_type("herb_prism_node_T")
     .allowlist_type("pm_buffer_t")
+    .allowlist_type("pm_node_t")
+    .allowlist_type("pm_parser_t")
     .allowlist_function("pm_prettyprint")
+    .allowlist_function("pm_serialize")
     .allowlist_function("pm_buffer_free")
+    .allowlist_var("PRISM_VERSION_.*")
     .allowlist_var("AST_.*")
     .allowlist_var("ERROR_.*")
     .allowlist_var("ELEMENT_SOURCE_.*")

@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0008_an attribute value condition matches - render"
+input: "{source: \"<main id=\\\"content\\\">One</main><main id=\\\"other\\\">Two</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="content">One<p>Appended</p></main><main id="other">Two</main>

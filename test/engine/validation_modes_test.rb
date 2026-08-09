@@ -95,5 +95,27 @@ module Engine
         Herb::Engine.new(@invalid_security_template, validation_mode: :raise, debug: true)
       end
     end
+
+    test ":overlay mode compiles parser errors into the template" do
+      engine = Herb::Engine.new("<div><span>Content</div>", validation_mode: :overlay)
+
+      assert_includes engine.src, "data-herb-parser-error"
+      assert_includes engine.src, "Add missing closing tag"
+      assert_includes engine.src, "suggestions-"
+    end
+
+    test ":overlay mode compiles parser errors in a process that only loads herb" do
+      script = <<~RUBY
+        require "herb"
+        require "herb/engine"
+        Herb::Engine.new("<div><span>Content</div>", validation_mode: :overlay)
+        print "ok"
+      RUBY
+
+      lib = File.expand_path("../../lib", __dir__)
+      output = IO.popen([RbConfig.ruby, "-I#{lib}", "-e", script], err: [:child, :out], &:read)
+
+      assert_equal "ok", output.strip
+    end
   end
 end

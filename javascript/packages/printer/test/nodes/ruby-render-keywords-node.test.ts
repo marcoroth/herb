@@ -11,10 +11,8 @@ describe("RubyRenderKeywordsNode Printing", () => {
   })
 
   test("prints nothing from constructed node", () => {
-    const node = RubyRenderKeywordsNode.from({
-      type: "AST_RUBY_RENDER_KEYWORDS_NODE",
+    const node = RubyRenderKeywordsNode.build({
       location: createLocation(),
-      errors: [],
       partial: createToken("TOKEN_IDENTIFIER", "shared/header"),
       template_path: null,
       layout: null,

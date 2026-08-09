@@ -22,10 +22,8 @@ describe("HTMLOmittedCloseTagNode Printing", () => {
   })
 
   test("can print from manually constructed node - prints nothing", () => {
-    const node = HTMLOmittedCloseTagNode.from({
-      type: "AST_HTML_OMITTED_CLOSE_TAG_NODE",
+    const node = HTMLOmittedCloseTagNode.build({
       location,
-      errors: [],
       tag_name: createToken("TOKEN_IDENTIFIER", "p"),
     })
 

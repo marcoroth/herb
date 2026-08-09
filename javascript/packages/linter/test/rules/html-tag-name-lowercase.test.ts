@@ -2,8 +2,11 @@ import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLTagNameLowercaseRule } from "../../src/rules/html-tag-name-lowercase.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLTagNameLowercaseRule)
+
+const PARTIAL = "app/views/shared/_icon.html.erb"
 
 describe("html-tag-name-lowercase", () => {
   test("passes for lowercase tag names", () => {
@@ -215,5 +218,29 @@ describe("html-tag-name-lowercase", () => {
         </DATABASE>
       </CONFIGURATION>
     `, { fileName: "config.xml" })
+  })
+
+  describe("across call sites", () => {
+    test("leaves SVG casing alone when every call site renders the file inside an svg", () => {
+      expectNoOffenses(`<linearGradient id="g"></linearGradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"]))
+    })
+
+    test("leaves SVG casing alone when only some call sites supply an svg", () => {
+      expectNoOffenses(`<linearGradient id="g"></linearGradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"], ["html", "body", "div"]))
+    })
+
+    test("still lowercases when no call site renders the file inside an svg", () => {
+      expectError("Opening tag name `<DIV>` should be lowercase. Use `<div>` instead.")
+      expectError("Closing tag name `</DIV>` should be lowercase. Use `</div>` instead.")
+
+      assertOffenses(`<DIV></DIV>`, renderedFrom(PARTIAL, ["html", "body", "section"]))
+    })
+
+    test("still lowercases when nothing renders the file", () => {
+      expectError("Opening tag name `<DIV>` should be lowercase. Use `<div>` instead.")
+      expectError("Closing tag name `</DIV>` should be lowercase. Use `</div>` instead.")
+
+      assertOffenses(`<DIV></DIV>`, renderedFromNowhere(PARTIAL))
+    })
   })
 })

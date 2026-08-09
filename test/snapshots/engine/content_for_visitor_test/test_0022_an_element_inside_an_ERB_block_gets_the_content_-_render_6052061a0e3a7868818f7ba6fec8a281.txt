@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0022_an element inside an ERB block gets the content - render"
+input: "{source: \"<% if true %><main>Content</main><% end %>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={} content=\"<p>Appended</p>\">]}}"
+---
+<main>Content<p>Appended</p></main>

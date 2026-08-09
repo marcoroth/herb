@@ -16,6 +16,9 @@ module Herb
     # : (Integer, Integer) -> Position
     def self.from: (Integer, Integer) -> Position
 
+    # : () -> Position
+    def self.zero: () -> Position
+
     # : () -> serialized_position
     def to_hash: () -> serialized_position
 

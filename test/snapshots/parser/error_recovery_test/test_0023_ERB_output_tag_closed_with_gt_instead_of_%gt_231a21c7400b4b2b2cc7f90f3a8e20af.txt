@@ -1,0 +1,18 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0023_ERB output tag closed with > instead of %>"
+input: "<%= user >"
+---
+@ DocumentNode (location: (1:0)-(1:10))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:10))
+        ├── errors: (1 error)
+        │   └── @ MalformedERBClosingTagError (location: (1:0)-(1:10))
+        │       ├── message: "ERB tag `<%=` at (1:0) is closed with `>` at (1:9) instead of `%>`."
+        │       ├── opening_tag: "<%=" (location: (1:0)-(1:3))
+        │       └── closing_tag: ">" (location: (1:9)-(1:10))
+        │
+        ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+        ├── content: " user " (location: (1:3)-(1:9))
+        ├── tag_closing: ">" (location: (1:9)-(1:10))
+        ├── parsed: true
+        └── valid: true

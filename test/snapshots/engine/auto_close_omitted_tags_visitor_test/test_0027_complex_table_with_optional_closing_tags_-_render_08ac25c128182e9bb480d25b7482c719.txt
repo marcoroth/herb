@@ -1,0 +1,18 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0027_complex table with optional closing tags - render"
+input: "{source: \"<table>\\n  <thead>\\n    <tr>\\n      <th>Name\\n      <th>Age\\n  <tbody>\\n    <% users.each do |user| %>\\n      <tr>\\n        <td><%= user[:name] %>\\n        <td><%= user[:age] %>\\n    <% end %>\\n</table>\\n\", locals: {users: [{name: \"Alice\", age: 30}, {name: \"Bob\", age: 25}]}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<table>
+  <thead>
+    <tr>
+      <th>Name
+      </th><th>Age
+  </th></tr></thead><tbody>
+      <tr>
+        <td>Alice
+        </td><td>30
+    </td></tr>      <tr>
+        <td>Bob
+        </td><td>25
+    </td></tr>
+</tbody></table>

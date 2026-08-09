@@ -1,0 +1,5 @@
+---
+source: "Engine::ContentForVisitorTest#test_0015_a symbol attribute name is matched - render"
+input: "{source: \"<main id=\\\"content\\\">Content</main>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::ContentForVisitor tag_name=\"main\" attributes={\"id\" => \"content\"} content=\"<p>Appended</p>\">]}}"
+---
+<main id="content">Content<p>Appended</p></main>

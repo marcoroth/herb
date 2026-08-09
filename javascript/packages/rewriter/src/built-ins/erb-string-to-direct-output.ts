@@ -1,4 +1,4 @@
-import { Visitor, isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType } from "@herb-tools/core"
+import { Visitor, isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType, stringIndexFromByteOffset, substringFromByteOffset } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 
@@ -115,7 +115,7 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
     const location = stringNode.contentLoc
 
     if (location) {
-      return source.substring(location.startOffset, location.startOffset + location.length)
+      return substringFromByteOffset(source, location.startOffset, location.length)
     }
 
     return ""
@@ -127,8 +127,8 @@ export class ERBStringToDirectOutputRewriter extends ASTRewriter {
 
     if (!openingLocation || !closingLocation) return null
 
-    const expressionStart = openingLocation.startOffset + openingLocation.length
-    const expressionEnd = closingLocation.startOffset
+    const expressionStart = stringIndexFromByteOffset(source, openingLocation.startOffset + openingLocation.length)
+    const expressionEnd = stringIndexFromByteOffset(source, closingLocation.startOffset)
 
     return source.substring(expressionStart, expressionEnd)
   }

@@ -1,0 +1,35 @@
+---
+name: "javascript_module_preload_tag"
+source: "Importmap::ImportmapTagsHelper#javascript_module_preload_tag"
+gem: "importmap-rails"
+output: "html"
+visibility: "public"
+supported: false
+supports_block: false
+signature: "javascript_module_preload_tag(*paths)"
+documentation_url: "https://www.rubydoc.info/gems/importmap-rails/Importmap/ImportmapTagsHelper#javascript_module_preload_tag-instance_method"
+
+description: |-
+  Returns a `<link rel="modulepreload">` tag for the JavaScript module residing in each of `*paths`. Returns one link tag per path element.
+
+tag:
+  name: "link"
+  is_void: true
+  preferred: false
+  detect_style: "call_name"
+
+arguments:
+  - name: "paths"
+    position: 1
+    type: "string"
+    optional: false
+    splat: true
+    description: |-
+      One or more module paths to preload.
+
+options: []
+block_arguments: []
+
+special_behaviors:
+  - type: "multiple_elements"
+    source: "splat_args"

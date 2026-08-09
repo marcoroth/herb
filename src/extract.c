@@ -175,9 +175,11 @@ void herb_extract_ruby_to_buffer_with_options(
           } else if (was_erb_comment && extract_options.comments) {
             hb_buffer_append_whitespace(output, range_length(token->range));
           } else if (extract_options.semicolons) {
-            hb_buffer_append_char(output, ' ');
-            hb_buffer_append_char(output, ';');
-            hb_buffer_append_whitespace(output, range_length(token->range) - 2);
+            size_t length = range_length(token->range);
+
+            if (length >= 2) { hb_buffer_append_char(output, ' '); }
+            if (length >= 1) { hb_buffer_append_char(output, ';'); }
+            if (length >= 2) { hb_buffer_append_whitespace(output, length - 2); }
           } else {
             hb_buffer_append_whitespace(output, range_length(token->range));
           }

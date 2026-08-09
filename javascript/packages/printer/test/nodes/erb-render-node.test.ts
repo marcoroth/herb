@@ -12,10 +12,8 @@ describe("ERBRenderNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const keywords = RubyRenderKeywordsNode.from({
-      type: "AST_RUBY_RENDER_KEYWORDS_NODE",
+    const keywords = RubyRenderKeywordsNode.build({
       location: createLocation(),
-      errors: [],
       partial: null,
       template_path: null,
       layout: null,
@@ -36,10 +34,8 @@ describe("ERBRenderNode Printing", () => {
       locals: []
     })
 
-    const node = ERBRenderNode.from({
-      type: "AST_ERB_RENDER_NODE",
+    const node = ERBRenderNode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%="),
       content: createToken("TOKEN_ERB_CONTENT", ' render "card" '),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

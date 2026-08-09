@@ -183,5 +183,17 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "render with layout keyword and no block reports an error" do
+      assert_parsed_snapshot(%(<%= render layout: "wrapper" %>), render_nodes: true)
+    end
+
+    test "render with layout keyword and a partial does not need a block" do
+      assert_parsed_snapshot(%(<%= render partial: "shared/card", layout: "wrapper" %>), render_nodes: true)
+    end
+
+    test "render with layout keyword and a template does not need a block" do
+      assert_parsed_snapshot(%(<%= render template: "posts/show", layout: "wrapper" %>), render_nodes: true)
+    end
   end
 end

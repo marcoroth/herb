@@ -14,8 +14,6 @@ module Herb
 
     attr_reader debug: untyped
 
-    attr_reader content_for_head: untyped
-
     attr_reader validation_error_template: untyped
 
     attr_reader visitors: untyped

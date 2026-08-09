@@ -11,10 +11,8 @@ describe("HTMLCloseTagNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = HTMLCloseTagNode.from({
-      type: "AST_HTML_CLOSE_TAG_NODE",
+    const node = HTMLCloseTagNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_HTML_TAG_START_CLOSE", "</"),
       tag_name: createToken("TOKEN_IDENTIFIER", "a"),
       tag_closing: createToken("TOKEN_HTML_TAG_END", ">")

@@ -1,11 +1,15 @@
-import { type ParseResult, type ParserOptions, type HTMLElementNode, getTagLocalName, getStaticAttributeValue } from "@herb-tools/core"
-
-import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
 
+import { getTagLocalName, getStaticAttributeValue } from "@herb-tools/core"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, ParserOptions, HTMLElementNode } from "@herb-tools/core"
+
+// TODO: we might want to extract this to config/*.yml later
 const INTERACTIVE_ELEMENTS = ["a", "button", "summary", "select", "option", "textarea"]
 
+// TODO: make these classes configurable once https://github.com/marcoroth/herb/issues/1204 lands
 const VISUALLY_HIDDEN_CLASSES = ["sr-only"]
 const VISUALLY_HIDDEN_UNDO_CLASSES = ["not-sr-only", "focus:not-sr-only", "focus-within:not-sr-only"]
 
@@ -34,7 +38,7 @@ class NoVisuallyHiddenInteractiveElementsVisitor extends BaseRuleVisitor {
 
 export class A11yNoVisuallyHiddenInteractiveElementsRule extends ParserRule {
   static ruleName = "a11y-no-visually-hidden-interactive-elements"
-  static introducedIn = this.version("0.9.4")
+  static introducedIn = this.version("unreleased")
 
   get defaultConfig(): FullRuleConfig {
     return {

@@ -274,6 +274,30 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitERBIterationBlockNode(node: Nodes.ERBIterationBlockNode): void {
+    this.printERBNode(node)
+
+    if (node.body) {
+      node.body.forEach(child => this.visit(child))
+    }
+
+    if (node.rescue_clause) {
+      this.visit(node.rescue_clause)
+    }
+
+    if (node.else_clause) {
+      this.visit(node.else_clause)
+    }
+
+    if (node.ensure_clause) {
+      this.visit(node.ensure_clause)
+    }
+
+    if (node.end_node) {
+      this.visit(node.end_node)
+    }
+  }
+
   visitERBCaseNode(node: Nodes.ERBCaseNode): void {
     this.printERBNode(node)
 

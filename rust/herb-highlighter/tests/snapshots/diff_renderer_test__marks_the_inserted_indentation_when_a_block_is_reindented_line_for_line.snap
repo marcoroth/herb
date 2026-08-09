@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+/test/file.erb
+
+  -   2 │ <span>one</span>
+  -   3 │ <span>two</span>
+  +     │   <span>one</span>
+  +     │   <span>two</span>

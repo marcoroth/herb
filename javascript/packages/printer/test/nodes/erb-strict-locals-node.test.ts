@@ -12,10 +12,8 @@ describe("ERBStrictLocalsNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBStrictLocalsNode.from({
-      type: "AST_ERB_STRICT_LOCALS_NODE",
+    const node = ERBStrictLocalsNode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken(),
       content: createToken(),
       tag_closing: createToken(),

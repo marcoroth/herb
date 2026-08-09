@@ -6,6 +6,7 @@ import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRew
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
+import { isConfigDocument } from "./utils"
 import { version } from "../package.json"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
@@ -207,7 +208,7 @@ export class FormattingService {
   }
 
   private shouldFormatFile(filePath: string): boolean {
-    if (filePath.endsWith('.herb.yml')) return false
+    if (isConfigDocument(filePath)) return false
     if (!this.config) return true
 
     const hasConfigFile = Config.exists(this.config.projectPath)
@@ -295,7 +296,7 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (isConfigDocument(params.textDocument.uri)) {
       return []
     }
 
@@ -395,7 +396,7 @@ export class FormattingService {
   }
 
   async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    if (params.textDocument.uri.endsWith('.herb.yml')) {
+    if (isConfigDocument(params.textDocument.uri)) {
       return []
     }
 

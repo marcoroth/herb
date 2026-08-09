@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0009_dt and dd elements without closing tags - render"
+input: "{source: \"<dl><dt>Term<dd>Definition</dl>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<dl><dt>Term</dt><dd>Definition</dd></dl>

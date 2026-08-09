@@ -75,4 +75,34 @@ describe("html-aria-label-is-well-formatted", () => {
   test("passes for mixed case attribute name", () => {
     expectNoOffenses(`<button ARIA-LABEL="Close dialog">X</button>`)
   })
+
+  describe("ActionView tag helpers", () => {
+    test("passes for tag.div with a well-formatted aria-label", () => {
+      expectNoOffenses('<%= tag.div aria: { label: "Close dialog" } %>')
+    })
+
+    test("fails for tag.div with an ID-like aria-label", () => {
+      expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+
+      assertOffenses('<%= tag.div aria: { label: "close_button_label" } %>')
+    })
+
+    test("fails for content_tag with an ID-like aria-label", () => {
+      expectWarning("The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.")
+
+      assertOffenses('<%= content_tag :div, "content", aria: { label: "close_button_label" } %>')
+    })
+
+    test("passes for a dynamic aria-label, which can't be resolved statically", () => {
+      expectNoOffenses('<%= tag.div aria: { label: label_text } %>')
+    })
+
+    test("passes for an interpolated aria-label", () => {
+      expectNoOffenses('<%= tag.div aria: { label: "Close #{name}" } %>')
+    })
+
+    test("passes for a nil aria-label, which ActionView omits entirely", () => {
+      expectNoOffenses('<%= tag.div aria: { label: nil } %>')
+    })
+  })
 })
