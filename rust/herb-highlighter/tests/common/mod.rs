@@ -9,10 +9,12 @@ use herb_highlighter::herb_backend::HerbBackend;
 
 pub fn with_color() {
   set_color_override(true);
+  set_terminal_override(false);
 }
 
 pub fn no_color() {
   set_color_override(false);
+  set_terminal_override(false);
 }
 
 pub fn with_terminal() {

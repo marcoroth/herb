@@ -1,5 +1,6 @@
 mod common;
 
+use herb_highlighter::ansi::find_ansi_sequences;
 use herb_highlighter::diagnostic::{Diagnostic, DiagnosticSeverity, SerializedLocation};
 use herb_highlighter::file_renderer::RenderOptions;
 use herb_highlighter::inline_diagnostic_renderer::InlineDiagnosticRenderer;
@@ -7,7 +8,7 @@ use herb_highlighter::line_wrapper::LineWrapper;
 use herb_highlighter::syntax_renderer::SyntaxRenderer;
 use herb_highlighter::themes::{get_theme, Theme};
 
-use common::{strip_ansi_colors, with_color};
+use common::{no_color, strip_ansi_colors, with_color};
 
 fn syntax_renderer() -> SyntaxRenderer {
   SyntaxRenderer::new(get_theme(Theme::OneDark).clone())
@@ -75,4 +76,46 @@ fn renders_markers_without_line_numbers() {
   let content = "line 1\nline <error> content\nline 3";
 
   insta::assert_snapshot!(render(content, &[diagnostic()], false));
+}
+
+#[test]
+fn renders_without_color() {
+  no_color();
+
+  let syntax_renderer = syntax_renderer();
+  let renderer = InlineDiagnosticRenderer::new(&syntax_renderer);
+
+  let options = RenderOptions {
+    show_line_numbers: true,
+    wrap_lines: false,
+    max_width: LineWrapper::get_terminal_width(),
+    truncate_lines: false,
+  };
+
+  let content = "line 1\nline <error> content\nline 3";
+  let result = renderer.render("/test/file.erb", content, &[diagnostic()], &options, None);
+
+  assert!(find_ansi_sequences(&result).is_empty());
+
+  insta::assert_snapshot!(result);
+}
+
+#[test]
+fn renders_with_the_simple_theme() {
+  with_color();
+
+  let syntax_renderer = SyntaxRenderer::new(get_theme(Theme::Simple).clone());
+  let renderer = InlineDiagnosticRenderer::new(&syntax_renderer);
+
+  let options = RenderOptions {
+    show_line_numbers: true,
+    wrap_lines: false,
+    max_width: LineWrapper::get_terminal_width(),
+    truncate_lines: false,
+  };
+
+  let content = "line 1\nline <error> content\nline 3";
+  let result = renderer.render("/test/file.erb", content, &[diagnostic()], &options, None);
+
+  insta::assert_snapshot!(result);
 }

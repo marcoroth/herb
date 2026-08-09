@@ -107,6 +107,15 @@ fn tracks_html_comment_state() {
 }
 
 #[test]
+fn multi_line_comment_colors_every_token() {
+  with_color();
+
+  let content = "<div>\n  <!-- first comment line\n  second comment line -->\n  <span>ok</span>\n</div>";
+
+  insta::assert_snapshot!(renderer(Theme::OneDark).highlight(content));
+}
+
+#[test]
 fn preserves_erb_highlighting_in_comments() {
   with_color();
 

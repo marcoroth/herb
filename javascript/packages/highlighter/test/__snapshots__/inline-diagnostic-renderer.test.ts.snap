@@ -46,3 +46,25 @@ exports[`InlineDiagnosticRenderer > renders the message once, under the last lin
         │ ~~~~~~~~~
         │ [error] Multi-line offense (test-rule)"
 `;
+
+exports[`InlineDiagnosticRenderer > renders with the simple theme 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [37mline[0m [37m1[0m
+[91m  → [0m[1m  2[0m [90m│[0m [37mline[0m [31m<[0m[31merror[0m[31m>[0m [37mcontent[0m
+        [90m│[0m      [91m~~~~~[0m
+        [90m│[0m      [[2;1m[2;91merror[0m[0m] Test error message (test-rule)
+        [90m│[0m
+    [90m  3[0m [90m│[0m [37mline[0m [37m3[0m"
+`;
+
+exports[`InlineDiagnosticRenderer > renders without color 1`] = `
+"/test/file.erb
+
+      1 │ line 1
+  →   2 │ line <error> content
+        │      ~~~~~
+        │      [error] Test error message (test-rule)
+        │
+      3 │ line 3"
+`;

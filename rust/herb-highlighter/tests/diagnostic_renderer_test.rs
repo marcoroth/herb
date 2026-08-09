@@ -522,6 +522,42 @@ fn preserves_colors_when_extracting_from_middle_of_styled_line() {
 }
 
 #[test]
+fn renders_a_card_with_the_simple_theme() {
+  with_color();
+
+  let syntax_renderer = SyntaxRenderer::new(get_theme(Theme::Simple).clone());
+  let renderer = DiagnosticRenderer::new(&syntax_renderer);
+
+  let content = "line 1\nline <error> content\nline 3";
+  let result = renderer.render_single("/test/file.erb", &diagnostic(), content, &DiagnosticRenderOptions::default());
+
+  insta::assert_snapshot!(result);
+}
+
+#[test]
+fn dims_context_lines_over_rgb_colors() {
+  with_color();
+
+  let syntax_renderer = syntax_renderer();
+  let renderer = DiagnosticRenderer::new(&syntax_renderer);
+
+  let content = "<div>\n  <span>bad</span>\n  <p>ok</p>\n</div>";
+  let diagnostic = Diagnostic::new("Bad span", SerializedLocation::from(2, 2, 2, 8), DiagnosticSeverity::Error).with_code("dim-rule");
+
+  let result = renderer.render_single(
+    "/test/file.erb",
+    &diagnostic,
+    content,
+    &DiagnosticRenderOptions {
+      wrap_lines: false,
+      ..Default::default()
+    },
+  );
+
+  insta::assert_snapshot!(result);
+}
+
+#[test]
 fn respects_the_no_color_setting() {
   no_color();
 

@@ -7,6 +7,8 @@ import { stripAnsiColors } from "./util.js"
 import { FileRenderer } from "../src/file-renderer.js"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
+const MULTI_COMMENT = "<div>\n  <!-- first comment line\n  second comment line -->\n  <span>ok</span>\n</div>"
+
 describe("FileRenderer", () => {
   let renderer: FileRenderer
   let syntaxRenderer: SyntaxRenderer
@@ -311,5 +313,11 @@ describe("FileRenderer", () => {
 
       expect(stripAnsiColors(result)).toMatchSnapshot()
     })
+  })
+
+  it("renders a multi-line comment with line numbers", () => {
+    const result = renderer.renderWithLineNumbers("/test/file.erb", MULTI_COMMENT)
+
+    expect(result).toMatchSnapshot()
   })
 })

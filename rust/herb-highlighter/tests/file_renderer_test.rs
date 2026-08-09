@@ -378,3 +378,15 @@ fn handles_unicode_characters() {
 
   insta::assert_snapshot!(strip_ansi_colors(&result));
 }
+
+#[test]
+fn renders_a_multi_line_comment_with_line_numbers() {
+  with_color();
+
+  let syntax_renderer = syntax_renderer(Theme::OneDark);
+  let renderer = FileRenderer::new(&syntax_renderer);
+
+  let content = "<div>\n  <!-- first comment line\n  second comment line -->\n  <span>ok</span>\n</div>";
+
+  insta::assert_snapshot!(renderer.render_with_line_numbers("/test/file.erb", content, &options(false, width(), false)));
+}

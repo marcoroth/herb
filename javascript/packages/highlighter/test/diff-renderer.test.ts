@@ -16,6 +16,9 @@ const hexBackground = (hex: string) =>
 const ADDED_SPAN = hexBackground(themes.onedark.DIFF_ADDED_BACKGROUND as string)
 const REMOVED_SPAN = hexBackground(themes.onedark.DIFF_REMOVED_BACKGROUND as string)
 
+const DIFF_BEFORE = "<div id=\"gems\">\n  <span class='card'>x</span>\n  <p>keep</p>\n</div>"
+const DIFF_AFTER = "<div id=\"gems\">\n  <span class=\"card\">x</span>\n  <p>keep</p>\n</div>"
+
 describe("DiffRenderer", () => {
   let renderer: DiffRenderer
 
@@ -373,5 +376,29 @@ describe("DiffRenderer", () => {
         }
       }
     })
+  })
+
+  it("renders with the simple theme", async () => {
+    const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple, Herb)
+    await simpleSyntaxRenderer.initialize()
+    const simpleRenderer = new DiffRenderer(simpleSyntaxRenderer, themes.simple)
+
+    const result = simpleRenderer.render("/test/file.erb", DIFF_BEFORE, DIFF_AFTER, { wrapLines: false, contextLines: 1 })
+
+    expect(result).toMatchSnapshot()
+  })
+
+  it("collapses inline without diff backgrounds", async () => {
+    const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple, Herb)
+    await simpleSyntaxRenderer.initialize()
+    const simpleRenderer = new DiffRenderer(simpleSyntaxRenderer, themes.simple)
+
+    const result = simpleRenderer.render("", DIFF_BEFORE, DIFF_AFTER, {
+      wrapLines: false,
+      contextLines: 1,
+      singleLineStyle: "inline",
+    })
+
+    expect(result).toMatchSnapshot()
   })
 })

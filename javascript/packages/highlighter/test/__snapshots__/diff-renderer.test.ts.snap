@@ -13,6 +13,13 @@ exports[`DiffRenderer > NO_COLOR environment > renders the diff without any esca
       6 │ </div>"
 `;
 
+exports[`DiffRenderer > collapses inline without diff backgrounds 1`] = `
+"    [90m  1[0m [90m│[0m [2;31m[2m<[22m[0m[2;31m[2mdiv[22m[0m[2m [22m[2;38;2;209;154;102m[2mid[22m[0m[2;34m[2m=[22m[0m[2;38;2;152;195;121m[2m"[22m[0m[2;38;2;152;195;121m[2mgems[22m[0m[2;38;2;152;195;121m[2m"[22m[0m[2;31m[2m>[22m[0m
+[31m  - [0m[1m  2[0m [90m│[0m   [31m<[0m[31mspan[0m [38;2;209;154;102mclass[0m[34m=[0m[38;2;152;195;121m'[0m[38;2;152;195;121mcard[0m[38;2;152;195;121m'[0m[31m>[0m[37mx[0m[31m</[0m[31mspan[0m[31m>[0m
+[32m  + [0m    [90m│[0m   [31m<[0m[31mspan[0m [38;2;209;154;102mclass[0m[34m=[0m[38;2;152;195;121m"[0m[38;2;152;195;121mcard[0m[38;2;152;195;121m"[0m[31m>[0m[37mx[0m[31m</[0m[31mspan[0m[31m>[0m
+    [90m  3[0m [90m│[0m [2m  [22m[2;31m[2m<[22m[0m[2;31m[2mp[22m[0m[2;31m[2m>[22m[0m[2;37m[2mkeep[22m[0m[2;31m[2m</[22m[0m[2;31m[2mp[22m[0m[2;31m[2m>[22m[0m"
+`;
+
 exports[`DiffRenderer > indents the whole diff for nesting under an offense 1`] = `
 "        -   2 │   <span class='card'>
         +     │   <span class="card">
@@ -84,6 +91,15 @@ exports[`DiffRenderer > renders removals and additions in the gutter alongside l
   -   5 │   <img src="a.png">
   +     │   <img src="a.png" alt="">
       6 │ </div>"
+`;
+
+exports[`DiffRenderer > renders with the simple theme 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [2;31m[2m<[22m[0m[2;31m[2mdiv[22m[0m[2m [22m[2;38;2;209;154;102m[2mid[22m[0m[2;34m[2m=[22m[0m[2;38;2;152;195;121m[2m"[22m[0m[2;38;2;152;195;121m[2mgems[22m[0m[2;38;2;152;195;121m[2m"[22m[0m[2;31m[2m>[22m[0m
+[31m  - [0m[1m  2[0m [90m│[0m   [31m<[0m[31mspan[0m [38;2;209;154;102mclass[0m[34m=[0m[38;2;152;195;121m'[0m[38;2;152;195;121mcard[0m[38;2;152;195;121m'[0m[31m>[0m[37mx[0m[31m</[0m[31mspan[0m[31m>[0m
+[32m  + [0m    [90m│[0m   [31m<[0m[31mspan[0m [38;2;209;154;102mclass[0m[34m=[0m[38;2;152;195;121m"[0m[38;2;152;195;121mcard[0m[38;2;152;195;121m"[0m[31m>[0m[37mx[0m[31m</[0m[31mspan[0m[31m>[0m
+    [90m  3[0m [90m│[0m [2m  [22m[2;31m[2m<[22m[0m[2;31m[2mp[22m[0m[2;31m[2m>[22m[0m[2;37m[2mkeep[22m[0m[2;31m[2m</[22m[0m[2;31m[2mp[22m[0m[2;31m[2m>[22m[0m"
 `;
 
 exports[`DiffRenderer > separates distant hunks with a marker 1`] = `

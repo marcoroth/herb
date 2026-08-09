@@ -579,6 +579,52 @@ fn auto_collapses_nothing_when_color_is_off() {
   assert!(!collapses("  <img src=\"a.png\">", "  <img src=\"a.png\" alt=\"\">", 120));
 }
 
+const DIFF_BEFORE: &str = "<div id=\"gems\">\n  <span class='card'>x</span>\n  <p>keep</p>\n</div>";
+const DIFF_AFTER: &str = "<div id=\"gems\">\n  <span class=\"card\">x</span>\n  <p>keep</p>\n</div>";
+
+#[test]
+fn renders_with_the_simple_theme() {
+  with_color();
+
+  let syntax_renderer = SyntaxRenderer::new(get_theme(Theme::Simple).clone());
+  let renderer = DiffRenderer::new(&syntax_renderer, get_theme(Theme::Simple).clone());
+
+  let result = renderer.render(
+    "/test/file.erb",
+    DIFF_BEFORE,
+    DIFF_AFTER,
+    &DiffRenderOptions {
+      wrap_lines: false,
+      context_lines: 1,
+      ..Default::default()
+    },
+  );
+
+  insta::assert_snapshot!(result);
+}
+
+#[test]
+fn collapses_inline_without_diff_backgrounds() {
+  with_color();
+
+  let syntax_renderer = SyntaxRenderer::new(get_theme(Theme::Simple).clone());
+  let renderer = DiffRenderer::new(&syntax_renderer, get_theme(Theme::Simple).clone());
+
+  let result = renderer.render(
+    "",
+    DIFF_BEFORE,
+    DIFF_AFTER,
+    &DiffRenderOptions {
+      wrap_lines: false,
+      context_lines: 1,
+      single_line_style: SingleLineStyle::Inline,
+      ..Default::default()
+    },
+  );
+
+  insta::assert_snapshot!(result);
+}
+
 #[test]
 fn renders_hunks_that_arrived_without_their_sources() {
   with_color();

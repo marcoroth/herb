@@ -2,12 +2,15 @@ import { describe, it, expect, beforeEach } from "vitest"
 import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 import { stripAnsiColors } from "./util.js"
 
 import { InlineDiagnosticRenderer } from "../src/inline-diagnostic-renderer.js"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
 import type { Diagnostic } from "@herb-tools/core"
+
+const DIAG_CONTENT = "line 1\nline <error> content\nline 3"
 
 describe("InlineDiagnosticRenderer", () => {
   let renderer: InlineDiagnosticRenderer
@@ -94,5 +97,33 @@ describe("InlineDiagnosticRenderer", () => {
     `
 
     expect(render(content, [createDiagnostic()], false)).toMatchSnapshot()
+  })
+
+  it("renders without color", () => {
+    const originalNoColor = process.env.NO_COLOR
+    process.env.NO_COLOR = "1"
+
+    try {
+      const result = renderer.render("/test/file.erb", DIAG_CONTENT, [createDiagnostic()], true, false)
+
+      expect(result).not.toMatch(ANSI_REGEX)
+      expect(result).toMatchSnapshot()
+    } finally {
+      if (originalNoColor === undefined) {
+        delete process.env.NO_COLOR
+      } else {
+        process.env.NO_COLOR = originalNoColor
+      }
+    }
+  })
+
+  it("renders with the simple theme", async () => {
+    const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple)
+    await simpleSyntaxRenderer.initialize()
+    const simpleRenderer = new InlineDiagnosticRenderer(simpleSyntaxRenderer)
+
+    const result = simpleRenderer.render("/test/file.erb", DIAG_CONTENT, [createDiagnostic()], true, false)
+
+    expect(result).toMatchSnapshot()
   })
 })

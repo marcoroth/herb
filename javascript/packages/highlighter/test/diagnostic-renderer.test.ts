@@ -10,6 +10,9 @@ import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 
+const DIAG_CONTENT = "line 1\nline <error> content\nline 3"
+const DIM_CONTENT = "<div>\n  <span>bad</span>\n  <p>ok</p>\n</div>"
+
 describe("DiagnosticRenderer", () => {
   let renderer: DiagnosticRenderer
   let syntaxRenderer: SyntaxRenderer
@@ -547,5 +550,39 @@ describe("DiagnosticRenderer", () => {
         }
       }
     })
+  })
+
+  it("renders a card with the simple theme", async () => {
+    const simpleSyntaxRenderer = new SyntaxRenderer(themes.simple)
+    await simpleSyntaxRenderer.initialize()
+    const simpleRenderer = new DiagnosticRenderer(simpleSyntaxRenderer)
+
+    const result = simpleRenderer.renderSingle(
+      "/test/file.erb",
+      createDiagnostic(),
+      DIAG_CONTENT,
+    )
+
+    expect(result).toMatchSnapshot()
+  })
+
+  it("dims context lines over RGB colors", () => {
+    const diagnostic = createDiagnostic({
+      message: "Bad span",
+      code: "dim-rule",
+      location: {
+        start: { line: 2, column: 2 },
+        end: { line: 2, column: 8 },
+      },
+    })
+
+    const result = renderer.renderSingle(
+      "/test/file.erb",
+      diagnostic,
+      DIM_CONTENT,
+      { wrapLines: false },
+    )
+
+    expect(result).toMatchSnapshot()
   })
 })

@@ -1,0 +1,12 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: result
+---
+[[1m[91merror[0m[0m] Test error message (test-rule)
+
+[36m/test/file.erb[0m:[36m2:5[0m
+
+    [90m  1[0m [90m│[0m [2;37m[2mline[22m[0m[2m [22m[2;37m[2m1[22m[0m
+[91m  → [0m[1m  2[0m [90m│[0m [37mline[0m [31m<[0m[31merror[0m[31m>[0m [37mcontent[0m
+        [90m│[0m      [91m~~~~~[0m
+    [90m  3[0m [90m│[0m [2;37m[2mline[22m[0m[2m [22m[2;37m[2m3[22m[0m

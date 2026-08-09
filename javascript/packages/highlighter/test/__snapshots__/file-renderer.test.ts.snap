@@ -134,6 +134,16 @@ exports[`FileRenderer > renderWithLineNumbers > should render content with line 
       3 │ line 3"
 `;
 
+exports[`FileRenderer > renders a multi-line comment with line numbers 1`] = `
+"[36m/test/file.erb[0m
+
+    [90m  1[0m [90m│[0m [38;2;224;108;117m<[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m
+    [90m  2[0m [90m│[0m   [38;2;92;99;112m<!--[0m[38;2;92;99;112m [0m[38;2;92;99;112mfirst[0m[38;2;92;99;112m [0m[38;2;92;99;112mcomment[0m[38;2;92;99;112m [0m[38;2;92;99;112mline[0m[38;2;92;99;112m
+    [90m  3[0m [90m│[0m [0m[38;2;92;99;112m  [0m[38;2;92;99;112msecond[0m[38;2;92;99;112m [0m[38;2;92;99;112mcomment[0m[38;2;92;99;112m [0m[38;2;92;99;112mline[0m[38;2;92;99;112m [0m[38;2;92;99;112m-->[0m
+    [90m  4[0m [90m│[0m   [38;2;224;108;117m<[0m[38;2;224;108;117mspan[0m[38;2;224;108;117m>[0m[38;2;171;178;191mok[0m[38;2;224;108;117m</[0m[38;2;224;108;117mspan[0m[38;2;224;108;117m>[0m
+    [90m  5[0m [90m│[0m [38;2;224;108;117m</[0m[38;2;224;108;117mdiv[0m[38;2;224;108;117m>[0m"
+`;
+
 exports[`FileRenderer > theme support > should work with different themes 1`] = `
 "[36m/test/file.erb[0m
 

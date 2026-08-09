@@ -6,6 +6,8 @@ import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 import { ANSI_REGEX } from "../src/ansi.js"
 
+const MULTI_COMMENT = "<div>\n  <!-- first comment line\n  second comment line -->\n  <span>ok</span>\n</div>"
+
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
 
@@ -226,5 +228,14 @@ describe("SyntaxRenderer", () => {
 
       expect(result).toMatchSnapshot()
     })
+  })
+
+  it("colors every token inside a multi-line comment", async () => {
+    const commentRenderer = new SyntaxRenderer(themes.onedark, Herb)
+    await commentRenderer.initialize()
+
+    const result = commentRenderer.highlight(MULTI_COMMENT)
+
+    expect(result).toMatchSnapshot()
   })
 })
