@@ -44,7 +44,7 @@ pub use herb_backend::{Herb, HerbBackend};
 pub use highlighter::{highlight_content, highlight_file, FileUrlBuilder, HighlightDiagnosticOptions, HighlightOptions, Highlighter, SuffixBuilder};
 pub use html_sink::{
   class_for_role, escape_html, render_document_fragments, render_document_html, render_file_html, render_focus_html, render_plain_html, wrap_document_html,
-  HTMLRenderOptions, HTMLSinkOptions, MarkerMode, HYDRATION_SCRIPT,
+  HTMLRenderOptions, HTMLSinkOptions, MarkerMode, MessageStyle, HYDRATION_SCRIPT,
 };
 pub use inline_diagnostic_renderer::{CodeUrlBuilder, InlineDiagnosticRenderer};
 pub use line_wrapper::LineWrapper;

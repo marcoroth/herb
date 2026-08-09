@@ -1,7 +1,7 @@
 use herb_highlighter::diagnostic::{Diagnostic, DiagnosticSeverity, SerializedLocation};
 use herb_highlighter::document_builder::{CardOptions, DocumentBuilder};
 use herb_highlighter::highlighter::{HighlightOptions, Highlighter};
-use herb_highlighter::html_sink::{render_document_html, wrap_document_html, HTMLSinkOptions, MarkerMode};
+use herb_highlighter::html_sink::{render_document_html, wrap_document_html, HTMLSinkOptions, MarkerMode, MessageStyle};
 use herb_highlighter::stylesheet::generate_stylesheet;
 use herb_highlighter::syntax_renderer::SyntaxRenderer;
 use herb_highlighter::themes::{get_theme, Theme};
@@ -146,6 +146,53 @@ fn overlapping_markers_use_the_highest_severity() {
   );
 
   insta::assert_snapshot!(render_document_html(&document, &sink_options(MarkerMode::Spans)));
+}
+
+#[test]
+fn renders_hover_messages_in_an_inline_document() {
+  let diagnostics = [multi_line_diagnostic(), warning_diagnostic()];
+
+  let document = highlighter().build_document(
+    PATH,
+    CONTENT,
+    &HighlightOptions {
+      diagnostics: &diagnostics,
+      ..Default::default()
+    },
+  );
+
+  let options = HTMLSinkOptions {
+    message_style: MessageStyle::Hover,
+    ..sink_options(MarkerMode::Spans)
+  };
+
+  insta::assert_snapshot!(render_document_html(&document, &options));
+}
+
+#[test]
+fn renders_hover_messages_on_a_card() {
+  let syntax_renderer = SyntaxRenderer::new(get_theme(Theme::OneDark).clone());
+  let builder = DocumentBuilder::new(&syntax_renderer);
+
+  let document = builder.build_card(
+    PATH,
+    &multi_line_diagnostic(),
+    CONTENT,
+    &CardOptions {
+      context_lines: 1,
+      optimize_highlighting: true,
+      code_url: Some("https://herb.tools/rules/parser-error".to_string()),
+      file_url: Some("file:///app/views/show.html.erb".to_string()),
+      suffix: Some("(fixable)".to_string()),
+    },
+  );
+
+  let options = HTMLSinkOptions {
+    message_style: MessageStyle::Hover,
+    ..sink_options(MarkerMode::Spans)
+  };
+
+  insta::assert_snapshot!(render_document_html(&document, &options));
 }
 
 #[test]

@@ -207,7 +207,11 @@ impl<'a> DocumentBuilder<'a> {
             start: marker.start,
             end: marker.end,
             severity: diagnostic.severity,
-            message: None,
+            message: (number == last_marked_line).then(|| AnnotationMessage {
+              text: diagnostic.message.clone(),
+              code: diagnostic.code.clone(),
+              code_url: options.code_url.clone(),
+            }),
           }],
         },
 

@@ -31,6 +31,7 @@ fn sink_options(diff_layout: DiffLayout) -> HTMLSinkOptions {
     show_line_numbers: true,
     markers: MarkerMode::Spans,
     diff_layout,
+    ..Default::default()
   }
 }
 

@@ -267,7 +267,11 @@ expression: to_json(&document)
               "start": 2,
               "end": 6,
               "severity": "error",
-              "message": null
+              "message": {
+                "text": "unclosed `<%=` tag",
+                "code": "parser-error",
+                "codeUrl": null
+              }
             }
           ]
         },
@@ -474,7 +478,11 @@ expression: to_json(&document)
               "start": 2,
               "end": 8,
               "severity": "warning",
-              "message": null
+              "message": {
+                "text": "avoid inline spans",
+                "code": null,
+                "codeUrl": null
+              }
             }
           ]
         },

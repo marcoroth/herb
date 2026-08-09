@@ -36,11 +36,14 @@ export const DEFAULT_HTML_RENDER_OPTIONS: HTMLRenderOptions = {
 
 export type MarkerMode = "highlight-api" | "spans"
 
+export type MessageStyle = "inline" | "hover"
+
 export interface HTMLSinkOptions {
   themeLabel: string
   showLineNumbers: boolean
   markers: MarkerMode
   diffLayout?: "unified" | "split"
+  messageStyle?: MessageStyle
 }
 
 export interface LinePiece {
@@ -207,7 +210,7 @@ function renderAnnotationMessages(annotations: Annotation[]): string {
   return output
 }
 
-function renderAnnotatedLine(info: LineInfo, pieces: LinePiece[], options: HTMLSinkOptions): string {
+function renderAnnotatedLine(info: LineInfo, pieces: LinePiece[], options: HTMLSinkOptions, emitMessages: boolean): string {
   let className = "herb-line"
 
   if (info.emphasis.kind === "Marked") {
@@ -236,7 +239,9 @@ function renderAnnotatedLine(info: LineInfo, pieces: LinePiece[], options: HTMLS
     ? renderMarkedLineContent(pieces, info.annotations)
     : renderLineContent(pieces)
 
-  return `<span${attributes}>${content}${renderAnnotationMessages(info.annotations)}</span>`
+  const messages = emitMessages ? renderAnnotationMessages(info.annotations) : ""
+
+  return `<span${attributes}>${content}${messages}</span>`
 }
 
 function renderDiagnosticHeader(node: DiagnosticHeaderNode): string {
@@ -246,8 +251,9 @@ function renderDiagnosticHeader(node: DiagnosticHeaderNode): string {
 }
 
 function renderCard(header: DiagnosticHeaderNode, fileHeader: FileHeaderNode, block: CodeBlockNode, options: HTMLSinkOptions): string {
+  const hover = (options.messageStyle ?? "inline") === "hover"
   const pieces = splitRunsIntoLines(block.runs)
-  const lineSpans = block.lines.map(info => renderAnnotatedLine(info, pieces[info.number - block.firstLine] ?? [], options))
+  const lineSpans = block.lines.map(info => renderAnnotatedLine(info, pieces[info.number - block.firstLine] ?? [], options, hover))
 
   let figcaption = ""
 
@@ -260,18 +266,23 @@ function renderCard(header: DiagnosticHeaderNode, fileHeader: FileHeaderNode, bl
     figcaption = `<figcaption class="herb-file-header">${linked}</figcaption>\n`
   }
 
-  return `<figure class="herb-highlight herb-diagnostic" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${renderDiagnosticHeader(header)}\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+  const figureClass = hover ? "herb-highlight herb-diagnostic herb-messages-hover" : "herb-highlight herb-diagnostic"
+
+  return `<figure class="${figureClass}" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${renderDiagnosticHeader(header)}\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
 
 function renderInline(fileHeader: FileHeaderNode | null, block: CodeBlockNode, options: HTMLSinkOptions): string {
+  const hover = (options.messageStyle ?? "inline") === "hover"
   const pieces = splitRunsIntoLines(block.runs)
-  const lineSpans = block.lines.map(info => renderAnnotatedLine(info, pieces[info.number - block.firstLine] ?? [], options))
+  const lineSpans = block.lines.map(info => renderAnnotatedLine(info, pieces[info.number - block.firstLine] ?? [], options, true))
 
   const figcaption = fileHeader !== null && options.showLineNumbers
     ? `<figcaption class="herb-file-header">${escapeHTML(fileHeader.path)}</figcaption>\n`
     : ""
 
-  return `<figure class="herb-highlight" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+  const figureClass = hover ? "herb-highlight herb-messages-hover" : "herb-highlight"
+
+  return `<figure class="${figureClass}" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
 
 function renderListing(fileHeader: FileHeaderNode | null, block: CodeBlockNode, options: HTMLSinkOptions): string {

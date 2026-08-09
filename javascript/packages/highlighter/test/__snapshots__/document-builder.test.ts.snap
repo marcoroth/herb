@@ -266,7 +266,11 @@ exports[`DocumentBuilder > builds a card document 1`] = `
               "start": 2,
               "end": 6,
               "severity": "error",
-              "message": null
+              "message": {
+                "text": "unclosed \`<%=\` tag",
+                "code": "parser-error",
+                "codeUrl": "https://herb.tools/rules/parser-error"
+              }
             }
           ]
         },
@@ -1407,7 +1411,11 @@ exports[`DocumentBuilder > builds a split document 1`] = `
               "start": 2,
               "end": 6,
               "severity": "error",
-              "message": null
+              "message": {
+                "text": "unclosed \`<%=\` tag",
+                "code": "parser-error",
+                "codeUrl": null
+              }
             }
           ]
         },
@@ -1614,7 +1622,11 @@ exports[`DocumentBuilder > builds a split document 1`] = `
               "start": 2,
               "end": 8,
               "severity": "warning",
-              "message": null
+              "message": {
+                "text": "avoid inline spans",
+                "code": null,
+                "codeUrl": null
+              }
             }
           ]
         },

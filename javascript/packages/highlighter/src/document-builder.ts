@@ -226,7 +226,18 @@ export class DocumentBuilder {
         lines.push({
           number: i,
           emphasis: { kind: "Marked", severity: diagnostic.severity },
-          annotations: [{ start: marker.start, end: marker.end, severity: diagnostic.severity, message: null }],
+          annotations: [{
+            start: marker.start,
+            end: marker.end,
+            severity: diagnostic.severity,
+            message: i === lastMarkedLine
+              ? {
+                  text: diagnostic.message,
+                  code: diagnostic.code ?? null,
+                  codeUrl: codeUrl ?? null,
+                }
+              : null,
+          }],
         })
       } else {
         lines.push({ number: i, emphasis: { kind: "Dimmed" }, annotations: [] })

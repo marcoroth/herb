@@ -70,6 +70,28 @@ exports[`HTMLDiagnostic > renders an inline diagnostics document with span marke
 </figure>"
 `;
 
+exports[`HTMLDiagnostic > renders hover messages in an inline document 1`] = `
+"<figure class="herb-highlight herb-messages-hover" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-error"><span class="herb-token-erb-start">&lt;%=</span></mark><mark class="herb-marker herb-marker-error"> </mark><mark class="herb-marker herb-marker-error">user</mark><mark class="herb-marker herb-marker-error">.</mark><mark class="herb-marker herb-marker-error">name</mark><mark class="herb-marker herb-marker-error"> </mark><mark class="herb-marker herb-marker-error"><span class="herb-token-erb-end">%&gt;</span></mark></span>
+<span class="herb-line herb-line-marked" data-line="3" data-herb-severity="error"><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start">&lt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">p</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-identifier">h</span></mark><span class="herb-token-identifier">ello</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-error">error</span> unclosed <code>&lt;%=</code> tag <span class="herb-diagnostic-code">(parser-error)</span></span></span>
+<span class="herb-line herb-line-marked" data-line="4" data-herb-severity="warning"><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-warning"><span class="herb-token-html-tag-start">&lt;</span></mark><mark class="herb-marker herb-marker-warning"><span class="herb-tag-name">span</span></mark><mark class="herb-marker herb-marker-warning"><span class="herb-token-html-tag-end">&gt;</span></mark><span class="herb-token-identifier">world</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-warning">warning</span> avoid inline spans <span class="herb-diagnostic-code">(-)</span></span></span>
+<span class="herb-line" data-line="5"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
+exports[`HTMLDiagnostic > renders hover messages on a card 1`] = `
+"<figure class="herb-highlight herb-diagnostic herb-messages-hover" data-herb-theme="onedark">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">unclosed <code>&lt;%=</code> tag</span> <span class="herb-diagnostic-code">(<a href="https://herb.tools/rules/parser-error" rel="noopener noreferrer">parser-error</a>)</span> <span class="herb-diagnostic-suffix">(fixable)</span></header>
+<figcaption class="herb-file-header"><a href="file:///app/views/show.html.erb" rel="noopener noreferrer">app/views/users/show.html.erb:2:2</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-error"><span class="herb-token-erb-start">&lt;%=</span></mark><mark class="herb-marker herb-marker-error"> </mark><mark class="herb-marker herb-marker-error">user</mark><mark class="herb-marker herb-marker-error">.</mark><mark class="herb-marker herb-marker-error">name</mark><mark class="herb-marker herb-marker-error"> </mark><mark class="herb-marker herb-marker-error"><span class="herb-token-erb-end">%&gt;</span></mark></span>
+<span class="herb-line herb-line-marked" data-line="3" data-herb-severity="error"><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start">&lt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">p</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-identifier">h</span></mark><span class="herb-token-identifier">ello</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-error">error</span> unclosed <code>&lt;%=</code> tag <span class="herb-diagnostic-code">(<a href="https://herb.tools/rules/parser-error" rel="noopener noreferrer">parser-error</a>)</span></span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">world</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
 exports[`HTMLDiagnostic > wraps a document with chrome and hydration 1`] = `
 "<!doctype html>
 <html>
@@ -285,6 +307,31 @@ exports[`HTMLDiagnostic > wraps a document with chrome and hydration 1`] = `
 }
 
 .herb-highlight .herb-diff-empty {
+  display: block;
+}
+
+.herb-highlight.herb-messages-hover .herb-line-marked {
+  position: relative;
+}
+
+.herb-highlight.herb-messages-hover .herb-annotation-message {
+  display: none;
+  position: absolute;
+  left: 5ch;
+  top: 100%;
+  z-index: 1;
+  width: max-content;
+  max-width: 60ch;
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--herb-rule, rgba(127, 127, 127, 0.4));
+  border-radius: 6px;
+  background-color: var(--herb-tooltip-bg, Canvas);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  white-space: normal;
+}
+
+.herb-highlight.herb-messages-hover .herb-line-marked:hover .herb-annotation-message,
+.herb-highlight.herb-messages-hover .herb-line-marked:focus-within .herb-annotation-message {
   display: block;
 }
 

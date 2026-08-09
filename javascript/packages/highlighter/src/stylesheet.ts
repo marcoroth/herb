@@ -178,6 +178,31 @@ const DIAGNOSTIC_RULES = `.herb-highlight .herb-severity-label { font-weight: bo
 
 .herb-highlight .herb-diff-empty {
   display: block;
+}
+
+.herb-highlight.herb-messages-hover .herb-line-marked {
+  position: relative;
+}
+
+.herb-highlight.herb-messages-hover .herb-annotation-message {
+  display: none;
+  position: absolute;
+  left: 5ch;
+  top: 100%;
+  z-index: 1;
+  width: max-content;
+  max-width: 60ch;
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--herb-rule, rgba(127, 127, 127, 0.4));
+  border-radius: 6px;
+  background-color: var(--herb-tooltip-bg, Canvas);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  white-space: normal;
+}
+
+.herb-highlight.herb-messages-hover .herb-line-marked:hover .herb-annotation-message,
+.herb-highlight.herb-messages-hover .herb-line-marked:focus-within .herb-annotation-message {
+  display: block;
 }`
 
 function cssColor(color: Color): string {

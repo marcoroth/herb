@@ -32,11 +32,19 @@ pub enum MarkerMode {
   Spans,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MessageStyle {
+  #[default]
+  Inline,
+  Hover,
+}
+
 pub struct HTMLSinkOptions {
   pub theme_label: String,
   pub show_line_numbers: bool,
   pub markers: MarkerMode,
   pub diff_layout: DiffLayout,
+  pub message_style: MessageStyle,
 }
 
 impl Default for HTMLSinkOptions {
@@ -46,6 +54,7 @@ impl Default for HTMLSinkOptions {
       show_line_numbers: true,
       markers: MarkerMode::Spans,
       diff_layout: DiffLayout::Unified,
+      message_style: MessageStyle::Inline,
     }
   }
 }
@@ -428,7 +437,7 @@ fn marked_line_content(pieces: &[(&str, &StyleRole)], annotations: &[Annotation]
   content
 }
 
-fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options: &HTMLSinkOptions) -> String {
+fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options: &HTMLSinkOptions, emit_messages: bool) -> String {
   let mut class = String::from("herb-line");
 
   let marked_severity = match info.emphasis {
@@ -476,14 +485,16 @@ fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options
 
   let mut result = format!("<span {attributes}>{content}");
 
-  for annotation in &info.annotations {
-    if let Some(message) = &annotation.message {
-      result.push_str(&format!(
-        "<span class=\"herb-annotation-message\">{} {} <span class=\"herb-diagnostic-code\">({})</span></span>",
-        severity_label(annotation.severity),
-        message_html(&message.text),
-        code_html(message.code.as_deref(), message.code_url.as_deref())
-      ));
+  if emit_messages {
+    for annotation in &info.annotations {
+      if let Some(message) = &annotation.message {
+        result.push_str(&format!(
+          "<span class=\"herb-annotation-message\">{} {} <span class=\"herb-diagnostic-code\">({})</span></span>",
+          severity_label(annotation.severity),
+          message_html(&message.text),
+          code_html(message.code.as_deref(), message.code_url.as_deref())
+        ));
+      }
     }
   }
 
@@ -492,7 +503,7 @@ fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options
   result
 }
 
-fn annotated_line_spans(block: &BlockData<'_>, options: &HTMLSinkOptions) -> Vec<String> {
+fn annotated_line_spans(block: &BlockData<'_>, options: &HTMLSinkOptions, emit_messages: bool) -> Vec<String> {
   let pieces_by_line = split_lines(block.runs);
 
   block
@@ -501,9 +512,16 @@ fn annotated_line_spans(block: &BlockData<'_>, options: &HTMLSinkOptions) -> Vec
     .map(|info| {
       let pieces = pieces_by_line.get(info.number - block.first_line).map(|line| line.as_slice()).unwrap_or(&[]);
 
-      render_annotated_line(info, pieces, options)
+      render_annotated_line(info, pieces, options, emit_messages)
     })
     .collect()
+}
+
+fn figure_class(base: &str, options: &HTMLSinkOptions) -> String {
+  match options.message_style {
+    MessageStyle::Hover => format!("{base} herb-messages-hover"),
+    MessageStyle::Inline => base.to_string(),
+  }
 }
 
 fn render_card(header: &HeaderData<'_>, file: &FileData<'_>, block: &BlockData<'_>, options: &HTMLSinkOptions) -> String {
@@ -528,9 +546,10 @@ fn render_card(header: &HeaderData<'_>, file: &FileData<'_>, block: &BlockData<'
   };
 
   format!(
-    "<figure class=\"herb-highlight herb-diagnostic\" data-herb-theme=\"{}\">\n{header_html}\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"{}\" data-herb-theme=\"{}\">\n{header_html}\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    figure_class("herb-highlight herb-diagnostic", options),
     escape_html(&options.theme_label),
-    annotated_line_spans(block, options).join("\n")
+    annotated_line_spans(block, options, options.message_style == MessageStyle::Hover).join("\n")
   )
 }
 
@@ -541,9 +560,10 @@ fn render_inline(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkOp
   };
 
   format!(
-    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"{}\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    figure_class("herb-highlight", options),
     escape_html(&options.theme_label),
-    annotated_line_spans(block, options).join("\n")
+    annotated_line_spans(block, options, true).join("\n")
   )
 }
 

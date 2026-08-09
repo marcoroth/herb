@@ -140,4 +140,25 @@ describe("HTMLDiagnostic", () => {
 
     expect(result).toMatchSnapshot()
   })
+
+  test("renders hover messages in an inline document", () => {
+    const document = highlighter.buildDocument(PATH, CONTENT, { diagnostics: [DIAG_MULTI, DIAG_WARN] })
+    const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", messageStyle: "hover" })
+
+    expect(result).toMatchSnapshot()
+  })
+
+  test("renders hover messages on a card", () => {
+    const document = highlighter.buildCard(PATH, DIAG_MULTI, CONTENT, {
+      contextLines: 1,
+      optimizeHighlighting: true,
+      codeUrl: "https://herb.tools/rules/parser-error",
+      fileUrl: "file:///app/views/show.html.erb",
+      suffix: "(fixable)",
+    })
+
+    const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", messageStyle: "hover" })
+
+    expect(result).toMatchSnapshot()
+  })
 })

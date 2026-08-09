@@ -15,6 +15,7 @@ Options:
   --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
   --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
   --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
+  --html-messages        diagnostic message style for html output (inline|hover) [default: inline]
   --html-fragment-separator  separator line printed between html fragments in split mode
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
