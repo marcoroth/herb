@@ -368,14 +368,18 @@ export class Config {
    */
   private normalizeFilePath(filePath: string): string {
     if (path.isAbsolute(filePath)) {
-      const projectDir = this.projectPath + path.sep
+      for (const baseDir of [this.projectPath, process.cwd()]) {
+        const prefix = baseDir + path.sep
 
-      if (filePath.startsWith(projectDir)) {
-        return filePath.slice(projectDir.length)
+        if (filePath.startsWith(prefix)) {
+          return filePath.slice(prefix.length)
+        }
       }
+
+      return filePath
     }
 
-    return filePath
+    return filePath.replace(/^(?:\.\/)+/, "")
   }
 
   private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
@@ -400,6 +404,20 @@ export class Config {
 
     const normalized = this.normalizeFilePath(filePath)
     return includePatterns.some(pattern => picomatch.isMatch(normalized, pattern))
+  }
+
+  /**
+   * Check if a file path matches the include patterns of a tool (linter or formatter).
+   * Answers whether the tool recognizes the path as a template it can process at all,
+   * independent of exclude patterns and the tool's enabled state.
+   * @param filePath - The file path to check
+   * @param tool - The tool to check ('linter' or 'formatter')
+   * @returns true if the path matches any include pattern for the tool
+   */
+  public isPathIncludedForTool(filePath: string, tool: 'linter' | 'formatter'): boolean {
+    const filesConfig = this.getFilesConfigForTool(tool)
+
+    return this.isPathIncluded(filePath, filesConfig.include)
   }
 
   /**

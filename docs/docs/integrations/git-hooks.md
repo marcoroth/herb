@@ -55,13 +55,15 @@ node_modules/.bin/herb-format --check
 ```json [package.json]
 {
   "lint-staged": {
-    "*.html.erb": [
+    "*.{erb,herb,html,rhtml}": [
       "herb-format",
       "herb-lint"
     ]
   }
 }
 ```
+
+The pattern only needs to be a rough superset of your templates. Both CLIs check every path they are given against the file patterns from `.herb.yml` and skip anything that doesn't match, so a stray `.js.erb` never reaches the formatter.
 
 Call it from whichever hook you set up above:
 
@@ -84,15 +86,17 @@ bundle add lefthook --group development
 bundle exec lefthook install
 ```
 
-`{staged_files}` expands to the staged paths matching `glob`, and the commands are skipped entirely when nothing matches:
+`{staged_files}` expands to the staged paths matching `glob`, and the commands are skipped entirely when nothing matches. As with lint-staged, the glob only has to be a rough superset, since both CLIs skip paths that don't match the patterns in `.herb.yml`:
 
 ```yaml [lefthook.yml]
 pre-commit:
   parallel: true
   commands:
     herb-lint:
+      glob: ["*.erb", "*.herb", "*.html", "*.rhtml"]
       run: node_modules/.bin/herb-lint {staged_files}
     herb-format:
+      glob: ["*.erb", "*.herb", "*.html", "*.rhtml"]
       run: node_modules/.bin/herb-format --check {staged_files}
 ```
 
@@ -102,6 +106,7 @@ To format instead of checking, drop `--check` and set `stage_fixed` so the rewri
 pre-commit:
   commands:
     herb-format:
+      glob: ["*.erb", "*.herb", "*.html", "*.rhtml"]
       run: node_modules/.bin/herb-format {staged_files}
       stage_fixed: true
 ```
