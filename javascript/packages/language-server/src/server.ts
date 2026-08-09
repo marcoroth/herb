@@ -14,6 +14,7 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  DocumentSymbolParams,
   HoverParams,
   CompletionParams,
   DefinitionParams,
@@ -81,6 +82,7 @@ export class Server {
           },
           definitionProvider: true,
           referencesProvider: true,
+          documentSymbolProvider: true,
         },
       }
 
@@ -262,6 +264,14 @@ export class Server {
       if (!document) return []
 
       return this.service.referencesService.getReferences(document, params.position, params.context.includeDeclaration)
+    })
+
+    this.connection.onDocumentSymbol((params: DocumentSymbolParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentSymbolService.getDocumentSymbols(document)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {
