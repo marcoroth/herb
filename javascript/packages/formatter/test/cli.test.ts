@@ -1,9 +1,51 @@
 import dedent from "dedent"
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
-import { join } from "path"
+import { join, resolve } from "path"
+import { spawn } from "child_process"
 
 import { execBinary, expectExitCode } from "./cli/cli-helpers"
+
+import type { ExecResult } from "./cli/cli-helpers"
+
+const execGit = (args: string[], cwd: string): Promise<ExecResult> => {
+  return new Promise((resolvePromise) => {
+    const child = spawn("git", args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, NO_COLOR: "1", GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_SYSTEM: "/dev/null" }
+    })
+
+    let stdout = ""
+    let stderr = ""
+
+    child.stdout.on("data", (data) => { stdout += data.toString() })
+    child.stderr.on("data", (data) => { stderr += data.toString() })
+
+    child.on("close", (code) => {
+      resolvePromise({ stdout, stderr, exitCode: code || 0 })
+    })
+  })
+}
+
+const setupGitRepositoryWithPreCommitHook = async (directory: string, formatArgs: string) => {
+  const binary = resolve(process.cwd(), "bin/herb-format")
+
+  await mkdir(join(directory, ".git-hooks"), { recursive: true })
+  await writeFile(join(directory, "unformatted.html.erb"), '<div><p>   Not formatted   </p></div>')
+  await writeFile(
+    join(directory, ".git-hooks", "pre-commit"),
+    `#!/bin/sh\nset -e\n"${process.execPath}" "${binary}" ${formatArgs}\n`.trimEnd() + "\n",
+    { mode: 0o755 }
+  )
+
+  await execGit(["init", "--quiet"], directory)
+  await execGit(["config", "core.hooksPath", ".git-hooks"], directory)
+  await execGit(["config", "commit.gpgsign", "false"], directory)
+  await execGit(["config", "user.email", "test@example.com"], directory)
+  await execGit(["config", "user.name", "Test"], directory)
+  await execGit(["add", "-A"], directory)
+}
 
 describe("CLI Binary", () => {
   beforeEach(async () => {
@@ -156,6 +198,27 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stderr).toContain("⚠️  Experimental Preview")
     expect(result.stdout).toBe("\n")
+  })
+
+  it("should format configured files when stdin is a non-TTY null device", async () => {
+    const directory = "test-non-tty-null-stdin"
+    const input = '<div><p>   Not formatted   </p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "unformatted.html.erb"), input)
+
+    try {
+      const result = await execBinary([], undefined, { cwd: directory, stdin: "ignore" })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: unformatted.html.erb")
+
+      const formattedContent = await readFile(join(directory, "unformatted.html.erb"), "utf-8")
+      expect(formattedContent).not.toBe(input)
+      expect(formattedContent).toContain("<div>")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
   })
 
   it("should handle no files found in empty directory", async () => {
@@ -311,6 +374,43 @@ describe("CLI Binary", () => {
       }
     })
   }
+
+  it("should check configured files with --check from a git pre-commit hook", async () => {
+    const directory = "test-git-hook-check"
+
+    try {
+      await setupGitRepositoryWithPreCommitHook(directory, "--check")
+
+      const result = await execGit(["commit", "-m", "test"], directory)
+      const output = result.stdout + result.stderr
+
+      expect(output).not.toContain("--check mode is not supported with stdin")
+      expect(result.exitCode).toBe(1)
+      expect(output).toContain("unformatted.html.erb")
+      expect(output).toContain("not formatted")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format configured files from a git pre-commit hook", async () => {
+    const directory = "test-git-hook-format"
+
+    try {
+      await setupGitRepositoryWithPreCommitHook(directory, "")
+
+      const result = await execGit(["commit", "-m", "test"], directory)
+      const output = result.stdout + result.stderr
+
+      expect(result.exitCode).toBe(0)
+      expect(output).toContain("Formatted: unformatted.html.erb")
+
+      const formattedContent = await readFile(join(directory, "unformatted.html.erb"), "utf-8")
+      expect(formattedContent).toBe("<div>\n  <p>Not formatted</p>\n</div>\n")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
 
   it("should pass --check with a non-TTY stdin when all files are formatted", async () => {
     const directory = "test-non-tty-stdin-formatted"
