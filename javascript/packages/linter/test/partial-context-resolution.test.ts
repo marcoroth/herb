@@ -301,8 +301,8 @@ describe("call frames", () => {
     const index = new PartialCallerIndex(
       new Map([["app/views/shared/_a.html.erb", [{ caller: "app/views/layouts/application.html.erb", locals: [], ancestors: ["html", "body"] }]]]),
       new Set(["app/views/layouts/application.html.erb"]),
-      0,
-      0,
+      new Map(),
+      new Set(),
     )
 
     expect(index.contextOf("app/views/shared/_a.html.erb").chains[0].frames[0]).toEqual({

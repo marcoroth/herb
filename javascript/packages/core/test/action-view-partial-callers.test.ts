@@ -14,11 +14,39 @@ function callSite(caller: string, ancestors: string[] = []): PartialCallSite {
 }
 
 function index(callSites: Record<string, PartialCallSite[]>, documentRoots: string[] = []): PartialCallerIndex {
-  return new PartialCallerIndex(new Map(Object.entries(callSites)), new Set(documentRoots), 0, 0)
+  return new PartialCallerIndex(new Map(Object.entries(callSites)), new Set(documentRoots), new Map(), new Set())
 }
 
 describe("PartialCallerIndex", () => {
   describe("replaceCallsFrom", () => {
+    test("clears the unresolved renders the caller previously contributed", () => {
+      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
+
+      expect(callers.isComplete).toBe(false)
+      expect(callers.unresolvedRenderCount).toBe(2)
+
+      callers.replaceCallsFrom(INDEX, new Map())
+
+      expect(callers.unresolvedRenderCount).toBe(0)
+      expect(callers.isComplete).toBe(true)
+    })
+
+    test("replaces the unresolved count rather than adding to it", () => {
+      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
+
+      callers.replaceCallsFrom(INDEX, new Map(), 1)
+
+      expect(callers.unresolvedRenderCount).toBe(1)
+    })
+
+    test("leaves the unresolved renders of other callers alone", () => {
+      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2], [SHOW, 3]]), new Set())
+
+      callers.replaceCallsFrom(INDEX, new Map())
+
+      expect(callers.unresolvedRenderCount).toBe(3)
+    })
+
     test("drops the call sites the caller previously contributed", () => {
       const callers = index({ [CARD]: [callSite(INDEX), callSite(SHOW)] })
 

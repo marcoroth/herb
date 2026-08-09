@@ -176,8 +176,8 @@ describe("html-body-only-elements", () => {
         partialCallers: new PartialCallerIndex(
           new Map([[partial, [{ caller: "app/views/posts/index.html.erb", locals: [], ancestors: ["span"] }]]]),
           new Set(),
-          0,
-          0,
+          new Map(),
+          new Set(),
         ),
       })
     })

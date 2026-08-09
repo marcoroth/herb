@@ -203,12 +203,12 @@ export async function buildPartialCallerIndex(herb: HerbBackend, projectPath: st
   const layoutYields = new Map<string, YieldSite[]>()
   const scanned: string[] = []
 
-  let unresolvedRenders = 0
-  let skippedFiles = 0
+  const unresolvedRenders = new Map<string, number>()
+  const skippedFiles = new Set<string>()
 
   for (const file of files.sort()) {
     if (excluded?.(file)) {
-      skippedFiles++
+      skippedFiles.add(file)
       continue
     }
 
@@ -223,7 +223,7 @@ export async function buildPartialCallerIndex(herb: HerbBackend, projectPath: st
     try {
       const collected = collectCallSites(herb, partials, file, source, callSites)
 
-      unresolvedRenders += collected.unresolved
+      if (collected.unresolved > 0) unresolvedRenders.set(file, collected.unresolved)
       scanned.push(file)
 
       if (collected.isDocumentRoot) documentRoots.add(file)

@@ -76,7 +76,7 @@ describe("buildPartialCallerIndex", () => {
 
     const inferred = callers.inferSignature("app/views/posts/_card.html.erb")
 
-    expect(callers.unresolvedRenders).toBe(1)
+    expect(callers.unresolvedRenderCount).toBe(1)
     expect(inferred.locals.map(local => local.name)).toEqual(["title"])
     expect(inferred.keywordRest).toBe(true)
   })
@@ -87,7 +87,7 @@ describe("buildPartialCallerIndex", () => {
       "app/views/posts/index.html.erb": `<%= render @posts %>`,
     })
 
-    expect(callers.unresolvedRenders).toBe(1)
+    expect(callers.unresolvedRenderCount).toBe(1)
   })
 
   test("ignores a render whose partial does not exist", async () => {
@@ -97,7 +97,7 @@ describe("buildPartialCallerIndex", () => {
     })
 
     expect(callers.callersOf("app/views/posts/_card.html.erb")).toEqual([])
-    expect(callers.unresolvedRenders).toBe(1)
+    expect(callers.unresolvedRenderCount).toBe(1)
   })
 
   test("records a partial rendered with no locals", async () => {
@@ -167,7 +167,7 @@ describe("buildPartialCallerIndex", () => {
     const partials = await buildPartialIndex(Herb, root)
     const callers = await buildPartialCallerIndex(Herb, root, partials, { exclude: ["app/views/legacy/**"] })
 
-    expect(callers.skippedFiles).toBe(1)
+    expect(callers.skippedFileCount).toBe(1)
     expect(callers.isComplete).toBe(false)
     expect(callers.inferSignature("app/views/posts/_card.html.erb").keywordRest).toBe(true)
   })
