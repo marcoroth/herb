@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: stripped
+---
+[error] Test short line (test-short)
+
+/test/file.erb:1:13
+
+  →   1 │ <div class="short">Content</div>
+        │              ~~~~~

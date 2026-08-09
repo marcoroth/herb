@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: "renderer.render_with_line_numbers(\"/test/file.erb\", \"<div>test</div>\", false,\nwidth(), false)"
+---
+/test/file.erb
+
+      1 │ <div>test</div>

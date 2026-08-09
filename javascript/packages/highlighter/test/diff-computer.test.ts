@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest"
 import dedent from "dedent"
 
-import { computeDiffHunks, computeInlineRanges, parseUnifiedDiff } from "../src/diff-computer.js"
+import { computeDiffHunks, computeInlineRanges } from "../src/diff-computer.js"
+import { parseUnifiedDiff } from "../src/unified-diff.js"
 
 describe("computeDiffHunks", () => {
   it("returns no hunks for identical sources", () => {

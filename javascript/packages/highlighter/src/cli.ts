@@ -9,7 +9,7 @@ import { Highlighter } from "./highlighter.js"
 import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
-import { parseUnifiedDiff } from "./diff-computer.js"
+import { parseUnifiedDiff } from "./unified-diff.js"
 
 import type { DiffHunk } from "./diff-computer.js"
 import type { ThemeInput } from "./themes.js"
@@ -52,7 +52,7 @@ export class CLI {
     {"original": "...", "modified": "..."} or {"hunks": [...]}
       `
 
-  private parseArguments() {
+  private async parseArguments() {
     const { values, positionals } = parseArgs({
       args: process.argv.slice(2),
       options: {
@@ -79,6 +79,8 @@ export class CLI {
     }
 
     if (values.version) {
+      await Herb.load()
+
       console.log("Versions:")
       console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
       process.exit(0)
@@ -291,7 +293,7 @@ export class CLI {
 
   async run() {
     const { positionals, diffMode, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
-      this.parseArguments()
+      await this.parseArguments()
 
     const isDiffSubcommand = positionals[0] === "diff"
 

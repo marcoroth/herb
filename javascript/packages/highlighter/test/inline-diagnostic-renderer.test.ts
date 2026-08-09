@@ -30,7 +30,7 @@ describe("InlineDiagnosticRenderer", () => {
   })
 
   const render = (content: string, diagnostics: Diagnostic[], showLineNumbers = true) => {
-    return stripAnsiColors(renderer.render("/test/file.erb", content, diagnostics, 2, showLineNumbers, false))
+    return stripAnsiColors(renderer.render("/test/file.erb", content, diagnostics, showLineNumbers, false))
   }
 
   it("renders a single-line diagnostic with its message under the marker", () => {

@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/file_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+This is another very long line that should be t…

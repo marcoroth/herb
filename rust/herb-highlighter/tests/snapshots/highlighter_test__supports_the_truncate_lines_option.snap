@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/highlighter_test.rs
+expression: strip_ansi(&result)
+---
+test.erb
+
+      1 │ <div class="this-is-a-very-long-class-name-that…
+      2 │ <span>Short line</span>

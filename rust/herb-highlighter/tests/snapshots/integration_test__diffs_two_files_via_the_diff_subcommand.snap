@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: stdout
+---
+<before> → <after>
+
+      1 │ <div>
+  -   2 │   <span class='card'>x</span>
+  +     │   <span class="card">x</span>
+      3 │ </div>

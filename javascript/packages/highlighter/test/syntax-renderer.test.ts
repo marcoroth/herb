@@ -4,7 +4,7 @@ import { themes } from "../src/themes.js"
 import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
-import { ANSI_REGEX } from "../src/color.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer

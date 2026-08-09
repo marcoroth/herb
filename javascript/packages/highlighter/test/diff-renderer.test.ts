@@ -3,7 +3,7 @@ import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { themes } from "../src/themes.js"
-import { ANSI_REGEX } from "../src/color.js"
+import { ANSI_REGEX } from "../src/ansi.js"
 import { stripAnsiColors } from "./util.js"
 
 import { DiffRenderer } from "../src/diff-renderer.js"

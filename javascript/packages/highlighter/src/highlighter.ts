@@ -1,10 +1,11 @@
+import { readFileSync } from "fs"
+
 import { SyntaxRenderer } from "./syntax-renderer.js"
 import { DiagnosticRenderer } from "./diagnostic-renderer.js"
 import { FileRenderer } from "./file-renderer.js"
 import { InitializationManager } from "./initialization-manager.js"
 import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
 import { DiffRenderer } from "./diff-renderer.js"
-import { FileReader } from "./file-reader.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
 
@@ -47,7 +48,6 @@ export class Highlighter {
   private initManager: InitializationManager
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
   private diffRenderer: DiffRenderer
-  private fileReader: FileReader
 
   constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
     const colors = resolveTheme(theme)
@@ -57,7 +57,6 @@ export class Highlighter {
     this.initManager = new InitializationManager(herb)
     this.inlineDiagnosticRenderer = new InlineDiagnosticRenderer(this.syntaxRenderer)
     this.diffRenderer = new DiffRenderer(this.syntaxRenderer, colors)
-    this.fileReader = new FileReader(this)
   }
 
   /**
@@ -156,7 +155,6 @@ export class Highlighter {
         path,
         content,
         diagnostics,
-        contextLines,
         showLineNumbers,
         wrapLines,
         maxWidth,
@@ -259,7 +257,9 @@ export class Highlighter {
     filePath: string,
     options: HighlightOptions = {},
   ): string {
-    return this.fileReader.highlightFromPath(filePath, options)
+    this.requireInitialized()
+
+    return this.highlight(filePath, readFile(filePath), options)
   }
 
   /**
@@ -274,7 +274,17 @@ export class Highlighter {
     diagnostic: Diagnostic,
     options: HighlightDiagnosticOptions = {},
   ): string {
-    return this.fileReader.highlightDiagnosticFromPath(filePath, diagnostic, options)
+    this.requireInitialized()
+
+    return this.highlightDiagnostic(filePath, diagnostic, readFile(filePath), options)
+  }
+}
+
+function readFile(filePath: string): string {
+  try {
+    return readFileSync(filePath, "utf8")
+  } catch (error) {
+    throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 

@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/syntax_renderer_test.rs
+expression: result
+---
+<div>test</div>
