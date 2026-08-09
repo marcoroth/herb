@@ -6,7 +6,8 @@ import { resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Highlighter } from "./highlighter.js"
-import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
+import { THEME_NAMES, DEFAULT_THEME, resolveTheme } from "./themes.js"
+import { generateStylesheet } from "./stylesheet.js"
 
 import { name, version } from "../package.json"
 import { parseUnifiedDiff } from "./unified-diff.js"
@@ -27,6 +28,8 @@ export class CLI {
       -h, --help             how help
       -v, --version          show version
       --theme                color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --format               output format (ansi|html) [default: ansi]
+      --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
       --focus                line number to focus on (shows only that line with context)
       --context-lines        number of context lines around focus line [default: 2]
       --no-line-numbers      hide line numbers and file path header
@@ -52,26 +55,63 @@ export class CLI {
     {"original": "...", "modified": "..."} or {"hunks": [...]}
       `
 
+  private parseRawArguments() {
+    try {
+      return parseArgs({
+        args: process.argv.slice(2),
+        options: {
+          help: { type: "boolean", short: "h" },
+          version: { type: "boolean", short: "v" },
+          theme: { type: "string" },
+          format: { type: "string" },
+          "emit-css": { type: "string" },
+          focus: { type: "string" },
+          "context-lines": { type: "string" },
+          "no-line-numbers": { type: "boolean" },
+          "wrap-lines": { type: "boolean" },
+          "no-wrap-lines": { type: "boolean" },
+          "truncate-lines": { type: "boolean" },
+          "max-width": { type: "string" },
+          "diagnostics": { type: "string" },
+          "split-diagnostics": { type: "boolean" },
+          "diff": { type: "boolean" },
+        },
+        allowPositionals: true,
+      })
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("--emit-css")) {
+        console.error("Error: --emit-css requires a theme name.")
+        process.exit(1)
+      }
+
+      throw error
+    }
+  }
+
+  private emitCss(value: string): never {
+    if (value === "") {
+      console.error("Error: --emit-css requires a theme name.")
+      process.exit(1)
+    }
+
+    const separatorIndex = value.indexOf(":")
+    const darkLabel = separatorIndex === -1 ? value : value.slice(0, separatorIndex)
+    const lightLabel = separatorIndex === -1 ? undefined : value.slice(separatorIndex + 1)
+
+    try {
+      const dark = resolveTheme(darkLabel)
+      const light = lightLabel === undefined ? undefined : { scheme: resolveTheme(lightLabel), label: lightLabel }
+
+      process.stdout.write(generateStylesheet(dark, value, light))
+      process.exit(0)
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : error}`)
+      process.exit(1)
+    }
+  }
+
   private async parseArguments() {
-    const { values, positionals } = parseArgs({
-      args: process.argv.slice(2),
-      options: {
-        help: { type: "boolean", short: "h" },
-        version: { type: "boolean", short: "v" },
-        theme: { type: "string" },
-        focus: { type: "string" },
-        "context-lines": { type: "string" },
-        "no-line-numbers": { type: "boolean" },
-        "wrap-lines": { type: "boolean" },
-        "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" },
-        "max-width": { type: "string" },
-        "diagnostics": { type: "string" },
-        "split-diagnostics": { type: "boolean" },
-        "diff": { type: "boolean" },
-      },
-      allowPositionals: true,
-    })
+    const { values, positionals } = this.parseRawArguments()
 
     if (values.help) {
       console.log(this.usage)
@@ -86,7 +126,18 @@ export class CLI {
       process.exit(0)
     }
 
+    if (values["emit-css"] !== undefined) {
+      this.emitCss(values["emit-css"])
+    }
+
     const theme = values.theme || DEFAULT_THEME
+
+    const format = values.format || "ansi"
+
+    if (format !== "ansi" && format !== "html") {
+      console.error(`Invalid format: ${format}. Valid formats: ansi, html.`)
+      process.exit(1)
+    }
 
     let focusLine: number | undefined
 
@@ -191,6 +242,7 @@ export class CLI {
       positionals,
       diffMode: values["diff"] === true,
       theme,
+      format,
       focusLine,
       contextLines,
       showLineNumbers,
@@ -292,10 +344,20 @@ export class CLI {
   }
 
   async run() {
-    const { positionals, diffMode, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
+    const { positionals, diffMode, theme, format, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
       await this.parseArguments()
 
     const isDiffSubcommand = positionals[0] === "diff"
+
+    if (format === "html" && diagnostics.length > 0) {
+      console.error("Error: --format html cannot render diagnostics yet.")
+      process.exit(1)
+    }
+
+    if (format === "html" && (diffMode || isDiffSubcommand)) {
+      console.error("Error: --format html cannot render diffs yet.")
+      process.exit(1)
+    }
 
     if (diffMode || isDiffSubcommand) {
       const inputs = isDiffSubcommand ? positionals.slice(1) : positionals
@@ -319,16 +381,23 @@ export class CLI {
       const highlighter = new Highlighter(theme)
       await highlighter.initialize()
 
-      const highlighted = highlighter.highlight(filePath, content, {
-        focusLine,
-        contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
-        showLineNumbers,
-        wrapLines,
-        truncateLines,
-        maxWidth,
-        diagnostics,
-        splitDiagnostics,
-      })
+      const highlighted = format === "html"
+        ? highlighter.highlightHTML(filePath, content, {
+            focusLine,
+            contextLines,
+            showLineNumbers,
+            themeLabel: theme,
+          })
+        : highlighter.highlight(filePath, content, {
+            focusLine,
+            contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
+            showLineNumbers,
+            wrapLines,
+            truncateLines,
+            maxWidth,
+            diagnostics,
+            splitDiagnostics,
+          })
 
       console.log(highlighted)
     } catch (error) {

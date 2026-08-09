@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/html_sink_test.rs
+expression: "highlighter().highlight_html(PATH, content, &options)"
+---
+<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">one</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-focus" data-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">two</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">three</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>

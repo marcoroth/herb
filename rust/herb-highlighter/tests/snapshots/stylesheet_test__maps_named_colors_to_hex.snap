@@ -1,0 +1,104 @@
+---
+source: herb-highlighter/tests/stylesheet_test.rs
+expression: "generate_stylesheet(get_theme(Theme::Simple), \"simple\", None)"
+---
+/* herb-highlight theme: simple */
+
+.herb-highlight {
+  margin: 0;
+}
+
+.herb-highlight .herb-file-header {
+  color: var(--herb-file-header, #11A8CD);
+}
+
+.herb-highlight .herb-code {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.herb-highlight .herb-line[data-line]::before {
+  content: attr(data-line);
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-line-dimmed {
+  opacity: 0.6;
+}
+
+.herb-highlight .herb-line-focus[data-line]::before {
+  color: var(--herb-line-number-focus, #11A8CD);
+  font-weight: bold;
+}
+
+.herb-highlight .herb-token-whitespace { color: var(--herb-token-whitespace); }
+.herb-highlight .herb-token-nbsp { color: var(--herb-token-nbsp); }
+.herb-highlight .herb-token-newline { color: var(--herb-token-newline); }
+.herb-highlight .herb-token-identifier { color: var(--herb-token-identifier); }
+.herb-highlight .herb-ruby-keyword { color: var(--herb-ruby-keyword); }
+.herb-highlight .herb-token-html-doctype { color: var(--herb-token-html-doctype); }
+.herb-highlight .herb-token-html-tag-start { color: var(--herb-token-html-tag-start); }
+.herb-highlight .herb-token-html-tag-start-close { color: var(--herb-token-html-tag-start-close); }
+.herb-highlight .herb-token-html-tag-end { color: var(--herb-token-html-tag-end); }
+.herb-highlight .herb-token-html-tag-self-close { color: var(--herb-token-html-tag-self-close); }
+.herb-highlight .herb-token-html-comment-start { color: var(--herb-token-html-comment-start); }
+.herb-highlight .herb-token-html-comment-end { color: var(--herb-token-html-comment-end); }
+.herb-highlight .herb-token-erb-start { color: var(--herb-token-erb-start); }
+.herb-highlight .herb-token-erb-content { color: var(--herb-token-erb-content); }
+.herb-highlight .herb-token-erb-end { color: var(--herb-token-erb-end); }
+.herb-highlight .herb-token-lt { color: var(--herb-token-lt); }
+.herb-highlight .herb-token-slash { color: var(--herb-token-slash); }
+.herb-highlight .herb-token-equals { color: var(--herb-token-equals); }
+.herb-highlight .herb-token-quote { color: var(--herb-token-quote); }
+.herb-highlight .herb-token-dash { color: var(--herb-token-dash); }
+.herb-highlight .herb-token-underscore { color: var(--herb-token-underscore); }
+.herb-highlight .herb-token-exclamation { color: var(--herb-token-exclamation); }
+.herb-highlight .herb-token-semicolon { color: var(--herb-token-semicolon); }
+.herb-highlight .herb-token-colon { color: var(--herb-token-colon); }
+.herb-highlight .herb-token-percent { color: var(--herb-token-percent); }
+.herb-highlight .herb-token-ampersand { color: var(--herb-token-ampersand); }
+.herb-highlight .herb-token-character { color: var(--herb-token-character); }
+.herb-highlight .herb-token-error { color: var(--herb-token-error); }
+.herb-highlight .herb-token-eof { color: var(--herb-token-eof); }
+
+.herb-highlight .herb-tag-name { color: var(--herb-token-html-tag-start); }
+.herb-highlight .herb-attr-name { color: var(--herb-attr-name); }
+.herb-highlight .herb-attr-value { color: var(--herb-attr-value); }
+.herb-highlight .herb-comment { color: var(--herb-token-html-comment-start); }
+
+.herb-highlight {
+  --herb-token-nbsp: #666666;
+  --herb-token-identifier: #E5E5E5;
+  --herb-ruby-keyword: #BC3FBC;
+  --herb-token-html-doctype: #2472C8;
+  --herb-token-html-tag-start: #CD3131;
+  --herb-token-html-tag-start-close: #CD3131;
+  --herb-token-html-tag-end: #CD3131;
+  --herb-token-html-tag-self-close: #CD3131;
+  --herb-token-html-comment-start: #666666;
+  --herb-token-html-comment-end: #666666;
+  --herb-token-erb-start: #E5E510;
+  --herb-token-erb-content: #BC3FBC;
+  --herb-token-erb-end: #E5E510;
+  --herb-token-lt: #CD3131;
+  --herb-token-slash: #CD3131;
+  --herb-token-equals: #2472C8;
+  --herb-token-quote: #0DBC79;
+  --herb-token-dash: #E5E5E5;
+  --herb-token-underscore: #E5E5E5;
+  --herb-token-exclamation: #BC3FBC;
+  --herb-token-semicolon: #E5E5E5;
+  --herb-token-colon: #E5E5E5;
+  --herb-token-percent: #E5E510;
+  --herb-token-ampersand: #E5E510;
+  --herb-token-character: #E5E5E5;
+  --herb-token-error: #CD3131;
+  --herb-attr-name: #D19A66;
+  --herb-attr-value: #98C379;
+}

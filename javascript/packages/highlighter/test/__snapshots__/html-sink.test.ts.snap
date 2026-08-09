@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HTMLSink > escapes HTML metacharacters 1`] = `
+"<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">data-x</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">a</span><span class="herb-token-ampersand">&amp;</span><span class="herb-attr-value">b</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-erb-start">&lt;%=</span> a &lt; b &amp;&amp; b &gt; &quot;c&quot; <span class="herb-token-erb-end">%&gt;</span><span class="herb-token-quote">&#39;</span><span class="herb-token-identifier">quoted</span><span class="herb-token-quote">&#39;</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
+exports[`HTMLSink > renders a file fragment with line numbers 1`] = `
+"<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line" data-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-comment-start">&lt;!--</span><span class="herb-comment"> </span><span class="herb-comment">first</span><span class="herb-comment"> </span><span class="herb-comment">comment</span><span class="herb-comment"> </span><span class="herb-comment">line</span></span>
+<span class="herb-line" data-line="3"><span class="herb-comment">  </span><span class="herb-comment">second</span><span class="herb-comment"> </span><span class="herb-comment">comment</span><span class="herb-comment"> </span><span class="herb-comment">line</span><span class="herb-comment"> </span><span class="herb-token-html-comment-end">--&gt;</span></span>
+<span class="herb-line" data-line="4"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">ok</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line" data-line="5"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
+exports[`HTMLSink > renders a focus fragment with dimmed context 1`] = `
+"<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="2"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">one</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-focus" data-line="3"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">two</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">three</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;
+
+exports[`HTMLSink > renders a plain fragment without line numbers 1`] = `
+"<figure class="herb-highlight" data-herb-theme="onedark">
+<pre class="herb-code"><code><span class="herb-line"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">hello</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">world</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>"
+`;

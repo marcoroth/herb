@@ -7,6 +7,7 @@ use crate::diff_renderer::{DiffRenderOptions, DiffRenderer};
 use crate::error::HighlightError;
 use crate::file_renderer::{FileRenderer, RenderOptions};
 use crate::herb_backend::{Herb, HerbBackend};
+use crate::html_sink::{self, HTMLRenderOptions};
 use crate::inline_diagnostic_renderer::{CodeUrlBuilder, InlineDiagnosticRenderer};
 use crate::line_wrapper::LineWrapper;
 use crate::syntax_renderer::SyntaxRenderer;
@@ -141,6 +142,20 @@ impl Highlighter {
       file_renderer.render_with_line_numbers(path, content, &render_options)
     } else {
       file_renderer.render_plain(content, &render_options)
+    }
+  }
+
+  pub fn highlight_html(&self, path: &str, content: &str, options: &HTMLRenderOptions) -> String {
+    let runs = self.syntax_renderer.highlight_runs(content);
+
+    if let Some(focus_line) = options.focus_line {
+      return html_sink::render_focus_html(&runs, path, focus_line, options.context_lines, options.show_line_numbers, &options.theme_label);
+    }
+
+    if options.show_line_numbers {
+      html_sink::render_file_html(&runs, path, &options.theme_label)
+    } else {
+      html_sink::render_plain_html(&runs, &options.theme_label)
     }
   }
 

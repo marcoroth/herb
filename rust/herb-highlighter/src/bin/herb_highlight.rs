@@ -7,7 +7,9 @@ use std::process;
 use herb_highlighter::diff_computer::DiffHunk;
 use herb_highlighter::diff_renderer::DiffRenderOptions;
 use herb_highlighter::highlighter::{HighlightOptions, Highlighter};
-use herb_highlighter::themes::{DEFAULT_THEME, THEME_NAMES};
+use herb_highlighter::html_sink::HTMLRenderOptions;
+use herb_highlighter::stylesheet::generate_stylesheet;
+use herb_highlighter::themes::{resolve_theme, DEFAULT_THEME, THEME_NAMES};
 use herb_highlighter::unified_diff::parse_unified_diff;
 use herb_highlighter::Diagnostic;
 
@@ -23,6 +25,8 @@ Options:
   -h, --help             how help
   -v, --version          show version
   --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
+  --format               output format (ansi|html) [default: ansi]
+  --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
   --no-line-numbers      hide line numbers and file path header
@@ -58,6 +62,7 @@ struct Arguments {
   positionals: Vec<String>,
   diff_mode: bool,
   theme: String,
+  format: String,
   focus_line: Option<usize>,
   context_lines: usize,
   show_line_numbers: bool,
@@ -105,6 +110,13 @@ impl CLI {
         "-h" | "--help" => values.help = true,
         "-v" | "--version" => values.version = true,
         "--theme" => values.theme = next_value(&arguments, &mut index, &inline_value),
+        "--format" => values.format = next_value(&arguments, &mut index, &inline_value),
+
+        "--emit-css" => {
+          values.emit_css_present = true;
+          values.emit_css = next_value(&arguments, &mut index, &inline_value);
+        }
+
         "--focus" => values.focus = next_value(&arguments, &mut index, &inline_value),
         "--context-lines" => values.context_lines = next_value(&arguments, &mut index, &inline_value),
         "--max-width" => values.max_width = next_value(&arguments, &mut index, &inline_value),
@@ -145,7 +157,19 @@ impl CLI {
       process::exit(0);
     }
 
+    if values.emit_css_present {
+      self.emit_css(values.emit_css.as_deref());
+      process::exit(0);
+    }
+
     let theme = values.theme.clone().unwrap_or_else(|| DEFAULT_THEME.as_str().to_string());
+
+    let format = values.format.clone().unwrap_or_else(|| "ansi".to_string());
+
+    if format != "ansi" && format != "html" {
+      eprintln!("Invalid format: {format}. Valid formats: ansi, html.");
+      process::exit(1);
+    }
 
     let focus_line = values.focus.as_ref().map(|focus| match focus.parse::<usize>() {
       Ok(parsed) if parsed >= 1 => parsed,
@@ -226,6 +250,7 @@ impl CLI {
       positionals,
       diff_mode: values.diff,
       theme,
+      format,
       focus_line,
       context_lines,
       show_line_numbers,
@@ -235,6 +260,44 @@ impl CLI {
       diagnostics,
       split_diagnostics,
     }
+  }
+
+  fn emit_css(&self, value: Option<&str>) {
+    let value = match value {
+      Some(value) if !value.is_empty() => value,
+
+      _ => {
+        eprintln!("Error: --emit-css requires a theme name.");
+        process::exit(1);
+      }
+    };
+
+    let (dark_name, light_name) = match value.split_once(':') {
+      Some((dark_name, light_name)) => (dark_name, Some(light_name)),
+      None => (value, None),
+    };
+
+    let dark = match resolve_theme(dark_name) {
+      Ok(scheme) => scheme,
+
+      Err(error) => {
+        eprintln!("Error: {error}");
+        process::exit(1);
+      }
+    };
+
+    let light = light_name.map(|name| match resolve_theme(name) {
+      Ok(scheme) => scheme,
+
+      Err(error) => {
+        eprintln!("Error: {error}");
+        process::exit(1);
+      }
+    });
+
+    let stylesheet = generate_stylesheet(&dark, value, light.as_ref().zip(light_name));
+
+    print!("{stylesheet}");
   }
 
   fn read_diff_input(&self, input: Option<&String>) -> String {
@@ -409,6 +472,19 @@ impl CLI {
     let arguments = self.parse_arguments();
 
     let is_diff_subcommand = arguments.positionals.first().is_some_and(|positional| positional == "diff");
+    let html_format = arguments.format == "html";
+
+    if html_format {
+      if !arguments.diagnostics.is_empty() {
+        eprintln!("Error: --format html cannot render diagnostics yet.");
+        process::exit(1);
+      }
+
+      if arguments.diff_mode || is_diff_subcommand {
+        eprintln!("Error: --format html cannot render diffs yet.");
+        process::exit(1);
+      }
+    }
 
     if arguments.diff_mode || is_diff_subcommand {
       let inputs = if is_diff_subcommand {
@@ -463,6 +539,23 @@ impl CLI {
       }
     };
 
+    if html_format {
+      let highlighted = highlighter.highlight_html(
+        &file_path.to_string_lossy(),
+        &content,
+        &HTMLRenderOptions {
+          focus_line: arguments.focus_line,
+          context_lines: arguments.context_lines,
+          show_line_numbers: arguments.show_line_numbers,
+          theme_label: arguments.theme.clone(),
+        },
+      );
+
+      println!("{highlighted}");
+
+      return;
+    }
+
     let context_lines = if arguments.focus_line.is_some() || !arguments.diagnostics.is_empty() {
       arguments.context_lines
     } else {
@@ -494,6 +587,9 @@ struct ParsedValues {
   help: bool,
   version: bool,
   theme: Option<String>,
+  format: Option<String>,
+  emit_css: Option<String>,
+  emit_css_present: bool,
   focus: Option<String>,
   context_lines: Option<String>,
   no_line_numbers: bool,

@@ -78,6 +78,38 @@ export const OPTIONAL_COLOR_SCHEME_KEYS: readonly (keyof ColorScheme)[] = [
   "DIFF_ADDED_BACKGROUND",
 ]
 
+export const REQUIRED_COLOR_SCHEME_KEYS: readonly (keyof ColorScheme)[] = [
+  "TOKEN_WHITESPACE",
+  "TOKEN_NBSP",
+  "TOKEN_NEWLINE",
+  "TOKEN_IDENTIFIER",
+  "RUBY_KEYWORD",
+  "TOKEN_HTML_DOCTYPE",
+  "TOKEN_HTML_TAG_START",
+  "TOKEN_HTML_TAG_START_CLOSE",
+  "TOKEN_HTML_TAG_END",
+  "TOKEN_HTML_TAG_SELF_CLOSE",
+  "TOKEN_HTML_COMMENT_START",
+  "TOKEN_HTML_COMMENT_END",
+  "TOKEN_ERB_START",
+  "TOKEN_ERB_CONTENT",
+  "TOKEN_ERB_END",
+  "TOKEN_LT",
+  "TOKEN_SLASH",
+  "TOKEN_EQUALS",
+  "TOKEN_QUOTE",
+  "TOKEN_DASH",
+  "TOKEN_UNDERSCORE",
+  "TOKEN_EXCLAMATION",
+  "TOKEN_SEMICOLON",
+  "TOKEN_COLON",
+  "TOKEN_PERCENT",
+  "TOKEN_AMPERSAND",
+  "TOKEN_CHARACTER",
+  "TOKEN_ERROR",
+  "TOKEN_EOF",
+]
+
 export const themes: Record<Theme, ColorScheme> = {
   onedark: onedarkTheme as ColorScheme,
   "github-light": githubLightTheme as ColorScheme,

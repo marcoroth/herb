@@ -1,0 +1,103 @@
+use crate::color::{Color, NamedColor};
+use crate::html_sink::kebab;
+use crate::themes::{ColorScheme, OPTIONAL_COLOR_SCHEME_KEYS, REQUIRED_COLOR_SCHEME_KEYS};
+
+fn named_css(named: NamedColor) -> &'static str {
+  match named {
+    NamedColor::Reset | NamedColor::Bold | NamedColor::Dim => "inherit",
+    NamedColor::Black | NamedColor::BgBlack => "#000000",
+    NamedColor::Red | NamedColor::BgRed => "#CD3131",
+    NamedColor::Green | NamedColor::BgGreen => "#0DBC79",
+    NamedColor::Yellow | NamedColor::BgYellow => "#E5E510",
+    NamedColor::Blue | NamedColor::BgBlue => "#2472C8",
+    NamedColor::Magenta | NamedColor::BgMagenta => "#BC3FBC",
+    NamedColor::Cyan | NamedColor::BgCyan => "#11A8CD",
+    NamedColor::White | NamedColor::BgWhite => "#E5E5E5",
+    NamedColor::Gray | NamedColor::BgGray => "#666666",
+    NamedColor::BrightRed => "#F14C4C",
+    NamedColor::BrightGreen => "#23D18B",
+    NamedColor::BrightYellow => "#F5F543",
+    NamedColor::BrightBlue => "#3B8EEA",
+    NamedColor::BrightMagenta => "#D670D6",
+    NamedColor::BrightCyan => "#29B8DB",
+  }
+}
+
+fn css_color(color: Color) -> String {
+  match color {
+    Color::Rgb(red, green, blue) => format!("#{red:02X}{green:02X}{blue:02X}"),
+    Color::Named(named) => named_css(named).to_string(),
+  }
+}
+
+fn color_for_key(scheme: &ColorScheme, key: &str) -> Option<Color> {
+  match key {
+    "RUBY_KEYWORD" => Some(scheme.ruby_keyword),
+    "DIFF_REMOVED_LINE_BACKGROUND" => scheme.diff_removed_line_background,
+    "DIFF_ADDED_LINE_BACKGROUND" => scheme.diff_added_line_background,
+    "DIFF_REMOVED_BACKGROUND" => scheme.diff_removed_background,
+    "DIFF_ADDED_BACKGROUND" => scheme.diff_added_background,
+    _ => scheme.for_token_type(key),
+  }
+}
+
+fn properties(scheme: &ColorScheme, indent: &str) -> String {
+  let mut lines: Vec<String> = Vec::new();
+
+  for key in REQUIRED_COLOR_SCHEME_KEYS.iter().chain(OPTIONAL_COLOR_SCHEME_KEYS) {
+    if let Some(color) = color_for_key(scheme, key) {
+      lines.push(format!("{indent}--herb-{}: {};", kebab(key), css_color(color)));
+    }
+  }
+
+  lines.push(format!("{indent}--herb-attr-name: #D19A66;"));
+  lines.push(format!("{indent}--herb-attr-value: #98C379;"));
+
+  lines.join("\n")
+}
+
+pub fn generate_stylesheet(dark: &ColorScheme, label: &str, light: Option<(&ColorScheme, &str)>) -> String {
+  let token_rules: Vec<String> = REQUIRED_COLOR_SCHEME_KEYS
+    .iter()
+    .map(|key| {
+      let name = kebab(key);
+
+      format!(".herb-highlight .herb-{name} {{ color: var(--herb-{name}); }}")
+    })
+    .collect();
+
+  let mut sections: Vec<String> = vec![
+    format!("/* herb-highlight theme: {label} */"),
+    ".herb-highlight {\n  margin: 0;\n}".to_string(),
+    ".herb-highlight .herb-file-header {\n  color: var(--herb-file-header, #11A8CD);\n}".to_string(),
+    ".herb-highlight .herb-code {\n  margin: 0;\n  white-space: pre-wrap;\n  overflow-wrap: anywhere;\n}".to_string(),
+    ".herb-highlight .herb-line[data-line]::before {\n  content: attr(data-line);\n  display: inline-block;\n  width: 3ch;\n  margin-right: 1ch;\n  text-align: right;\n  color: var(--herb-line-number, #666666);\n  user-select: none;\n}".to_string(),
+    ".herb-highlight .herb-line-dimmed {\n  opacity: 0.6;\n}".to_string(),
+    ".herb-highlight .herb-line-focus[data-line]::before {\n  color: var(--herb-line-number-focus, #11A8CD);\n  font-weight: bold;\n}".to_string(),
+    token_rules.join("\n"),
+    [
+      ".herb-highlight .herb-tag-name { color: var(--herb-token-html-tag-start); }",
+      ".herb-highlight .herb-attr-name { color: var(--herb-attr-name); }",
+      ".herb-highlight .herb-attr-value { color: var(--herb-attr-value); }",
+      ".herb-highlight .herb-comment { color: var(--herb-token-html-comment-start); }",
+    ]
+    .join("\n"),
+    format!(".herb-highlight {{\n{}\n}}", properties(dark, "  ")),
+  ];
+
+  if let Some((light_scheme, _)) = light {
+    sections.push(format!(
+      "@media (prefers-color-scheme: light) {{\n  .herb-highlight {{\n{}\n  }}\n}}",
+      properties(light_scheme, "    ")
+    ));
+
+    sections.push(format!(".herb-highlight[data-herb-appearance=\"dark\"] {{\n{}\n}}", properties(dark, "  ")));
+
+    sections.push(format!(
+      ".herb-highlight[data-herb-appearance=\"light\"] {{\n{}\n}}",
+      properties(light_scheme, "  ")
+    ));
+  }
+
+  format!("{}\n", sections.join("\n\n"))
+}

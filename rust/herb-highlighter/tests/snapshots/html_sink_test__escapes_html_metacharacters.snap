@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/html_sink_test.rs
+expression: "highlighter().highlight_html(PATH, content, &HTMLRenderOptions::default())"
+---
+<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">data-x</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">a</span><span class="herb-token-ampersand">&amp;</span><span class="herb-attr-value">b</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-erb-start">&lt;%=</span> a &lt; b &amp;&amp; b &gt; &quot;c&quot; <span class="herb-token-erb-end">%&gt;</span><span class="herb-token-quote">&#39;</span><span class="herb-token-identifier">quoted</span><span class="herb-token-quote">&#39;</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>

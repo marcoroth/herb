@@ -8,11 +8,13 @@ import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
 import { DiffRenderer } from "./diff-renderer.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
+import { DEFAULT_HTML_RENDER_OPTIONS, renderFileHTML, renderPlainHTML, renderFocusHTML } from "./html-sink.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
 import type { DiffRenderOptions } from "./diff-renderer.js"
 import type { DiffHunk } from "./diff-computer.js"
+import type { HTMLRenderOptions } from "./html-sink.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -183,6 +185,44 @@ export class Highlighter {
     } else {
       return this.fileRenderer.renderPlain(content, maxWidth, wrapLines, truncateLines)
     }
+  }
+
+  /**
+   * Render the highlighted content as an HTML fragment
+   * @param path - File path for annotation (display only, not used for reading)
+   * @param content - The content to highlight
+   * @param options - Configuration options
+   *   - focusLine: Line number to focus on (shows only that line with dimmed context)
+   *   - contextLines: Number of context lines around the focus line (default: 2)
+   *   - showLineNumbers: Whether to show line numbers and the file path header (default: true)
+   *   - themeLabel: Theme label emitted on the fragment (default: the default theme)
+   * @returns The HTML fragment
+   */
+  highlightHTML(
+    path: string,
+    content: string,
+    options: Partial<HTMLRenderOptions> = {},
+  ): string {
+    this.requireInitialized()
+
+    const {
+      focusLine,
+      contextLines = DEFAULT_HTML_RENDER_OPTIONS.contextLines,
+      showLineNumbers = DEFAULT_HTML_RENDER_OPTIONS.showLineNumbers,
+      themeLabel = DEFAULT_HTML_RENDER_OPTIONS.themeLabel,
+    } = options
+
+    const runs = this.syntaxRenderer.highlightRuns(content)
+
+    if (focusLine !== undefined) {
+      return renderFocusHTML(runs, path, focusLine, contextLines, showLineNumbers, themeLabel)
+    }
+
+    if (showLineNumbers) {
+      return renderFileHTML(runs, path, themeLabel)
+    }
+
+    return renderPlainHTML(runs, themeLabel)
   }
 
   /**

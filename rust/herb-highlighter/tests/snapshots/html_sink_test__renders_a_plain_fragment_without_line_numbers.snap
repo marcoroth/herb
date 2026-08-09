@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/html_sink_test.rs
+expression: "highlighter().highlight_html(PATH, content, &options)"
+---
+<figure class="herb-highlight" data-herb-theme="onedark">
+<pre class="herb-code"><code><span class="herb-line"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">hello</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">world</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
