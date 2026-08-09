@@ -1,5 +1,9 @@
-use crate::document::{StyleRole, StyledRun};
+use crate::diagnostic::DiagnosticSeverity;
+use crate::document::{Annotation, CodeBlockKind, Document, LineEmphasis, LineInfo, Node, StyleRole, StyledRun};
+use crate::text_formatter::replace_backticks;
 use crate::themes::DEFAULT_THEME;
+
+pub const HYDRATION_SCRIPT: &str = include_str!("../../../javascript/packages/highlighter/assets/herb-markers.js");
 
 pub struct HTMLRenderOptions {
   pub focus_line: Option<usize>,
@@ -17,6 +21,19 @@ impl Default for HTMLRenderOptions {
       theme_label: DEFAULT_THEME.as_str().to_string(),
     }
   }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum MarkerMode {
+  HighlightApi,
+  #[default]
+  Spans,
+}
+
+pub struct HTMLSinkOptions {
+  pub theme_label: String,
+  pub show_line_numbers: bool,
+  pub markers: MarkerMode,
 }
 
 pub fn escape_html(text: &str) -> String {
@@ -62,82 +79,548 @@ fn split_lines(runs: &[StyledRun]) -> Vec<Vec<(&str, &StyleRole)>> {
   lines
 }
 
+fn piece_html(text: &str, role: &StyleRole) -> String {
+  match class_for_role(role) {
+    Some(class) => format!("<span class=\"{class}\">{}</span>", escape_html(text)),
+    None => escape_html(text),
+  }
+}
+
 fn line_content(line: &[(&str, &StyleRole)]) -> String {
   let mut content = String::new();
 
   for (text, role) in line {
-    match class_for_role(role) {
-      Some(class) => content.push_str(&format!("<span class=\"{class}\">{}</span>", escape_html(text))),
-      None => content.push_str(&escape_html(text)),
-    }
+    content.push_str(&piece_html(text, role));
   }
 
   content
 }
 
-pub fn render_file_html(runs: &[StyledRun], path: &str, theme_label: &str) -> String {
-  let line_spans: Vec<String> = split_lines(runs)
+fn is_linkable(url: &str) -> bool {
+  let lower = url.to_lowercase();
+
+  lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("file://")
+}
+
+fn linkify(text: &str, url: Option<&str>) -> String {
+  match url {
+    Some(url) if is_linkable(url) => format!("<a href=\"{}\" rel=\"noopener noreferrer\">{text}</a>", escape_html(url)),
+    _ => text.to_string(),
+  }
+}
+
+fn severity_label(severity: DiagnosticSeverity) -> String {
+  format!("<span class=\"herb-severity-label herb-severity-{severity}\">{severity}</span>")
+}
+
+fn message_html(message: &str) -> String {
+  replace_backticks(&escape_html(message), "<code>", "</code>")
+}
+
+fn code_html(code: Option<&str>, code_url: Option<&str>) -> String {
+  let text = match code {
+    Some(code) => escape_html(code),
+    None => "-".to_string(),
+  };
+
+  linkify(&text, code_url)
+}
+
+struct HeaderData<'a> {
+  severity: DiagnosticSeverity,
+  message: &'a str,
+  code: Option<&'a str>,
+  code_url: Option<&'a str>,
+  suffix: Option<&'a str>,
+}
+
+struct FileData<'a> {
+  path: &'a str,
+  line: usize,
+  column: usize,
+  url: Option<&'a str>,
+}
+
+struct BlockData<'a> {
+  first_line: usize,
+  runs: &'a [StyledRun],
+  lines: &'a [LineInfo],
+}
+
+pub fn render_document_html(document: &Document, options: &HTMLSinkOptions) -> String {
+  render_groups(document, options).join("\n")
+}
+
+pub fn render_document_fragments(document: &Document, options: &HTMLSinkOptions) -> Vec<String> {
+  render_groups(document, options)
+}
+
+fn render_groups(document: &Document, options: &HTMLSinkOptions) -> Vec<String> {
+  let mut results: Vec<String> = Vec::new();
+  let mut index = 0;
+
+  while index < document.nodes.len() {
+    match &document.nodes[index] {
+      Node::DiagnosticHeader {
+        severity,
+        message,
+        code,
+        code_url,
+        suffix,
+      } => {
+        if let (Some(Node::FileHeader { path, line, column, url }), Some(Node::CodeBlock { first_line, runs, lines, .. })) =
+          (document.nodes.get(index + 1), document.nodes.get(index + 2))
+        {
+          results.push(render_card(
+            &HeaderData {
+              severity: *severity,
+              message,
+              code: code.as_deref(),
+              code_url: code_url.as_deref(),
+              suffix: suffix.as_deref(),
+            },
+            &FileData {
+              path,
+              line: line.unwrap_or(0),
+              column: column.unwrap_or(0),
+              url: url.as_deref(),
+            },
+            &BlockData {
+              first_line: *first_line,
+              runs,
+              lines,
+            },
+            options,
+          ));
+
+          index += 3;
+        } else {
+          index += 1;
+        }
+      }
+
+      Node::FileHeader { path, .. } => match document.nodes.get(index + 1) {
+        Some(Node::CodeBlock {
+          kind: CodeBlockKind::AnnotatedListing,
+          first_line,
+          runs,
+          lines,
+        }) => {
+          results.push(render_inline(
+            Some(path),
+            &BlockData {
+              first_line: *first_line,
+              runs,
+              lines,
+            },
+            options,
+          ));
+
+          index += 2;
+        }
+
+        Some(Node::CodeBlock { first_line, runs, lines, .. }) => {
+          results.push(render_listing(
+            Some(path),
+            &BlockData {
+              first_line: *first_line,
+              runs,
+              lines,
+            },
+            options,
+          ));
+
+          index += 2;
+        }
+
+        _ => index += 1,
+      },
+
+      Node::CodeBlock { kind, first_line, runs, lines } => {
+        let block = BlockData {
+          first_line: *first_line,
+          runs,
+          lines,
+        };
+
+        if *kind == CodeBlockKind::AnnotatedListing {
+          results.push(render_inline(None, &block, options));
+        } else {
+          results.push(render_listing(None, &block, options));
+        }
+
+        index += 1;
+      }
+
+      Node::ProgressRule { index: rule_index, total } => {
+        results.push(format!("<hr class=\"herb-progress-rule\" data-herb-progress=\"{rule_index}/{total}\">"));
+
+        index += 1;
+      }
+    }
+  }
+
+  results
+}
+
+fn render_listing(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkOptions) -> String {
+  let pieces_by_line = split_lines(block.runs);
+
+  let content_for = |info: &LineInfo| {
+    pieces_by_line
+      .get(info.number - block.first_line)
+      .map(|line| line_content(line))
+      .unwrap_or_default()
+  };
+
+  let Some(path) = path else {
+    let line_spans: Vec<String> = block
+      .lines
+      .iter()
+      .map(|info| format!("<span class=\"herb-line\">{}</span>", content_for(info)))
+      .collect();
+
+    return format!(
+      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+      escape_html(&options.theme_label),
+      line_spans.join("\n")
+    );
+  };
+
+  let has_focus = block
+    .lines
     .iter()
-    .enumerate()
-    .map(|(index, line)| format!("<span class=\"herb-line\" data-line=\"{}\">{}</span>", index + 1, line_content(line)))
+    .any(|info| matches!(info.emphasis, LineEmphasis::Focus | LineEmphasis::Dimmed));
+
+  if !has_focus && options.show_line_numbers {
+    let line_spans: Vec<String> = block
+      .lines
+      .iter()
+      .map(|info| format!("<span class=\"herb-line\" data-line=\"{}\">{}</span>", info.number, content_for(info)))
+      .collect();
+
+    return format!(
+      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<figcaption class=\"herb-file-header\">{}</figcaption>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+      escape_html(&options.theme_label),
+      escape_html(path),
+      line_spans.join("\n")
+    );
+  }
+
+  let line_spans: Vec<String> = block
+    .lines
+    .iter()
+    .map(|info| {
+      let emphasis_class = match info.emphasis {
+        LineEmphasis::Focus => " herb-line-focus",
+        LineEmphasis::Dimmed => " herb-line-dimmed",
+        _ => "",
+      };
+
+      let data_line = if options.show_line_numbers {
+        format!(" data-line=\"{}\"", info.number)
+      } else {
+        String::new()
+      };
+
+      format!("<span class=\"herb-line{emphasis_class}\"{data_line}>{}</span>", content_for(info))
+    })
     .collect();
 
+  let figcaption = if options.show_line_numbers {
+    format!("<figcaption class=\"herb-file-header\">{}</figcaption>\n", escape_html(path))
+  } else {
+    String::new()
+  };
+
   format!(
-    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<figcaption class=\"herb-file-header\">{}</figcaption>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
-    escape_html(theme_label),
-    escape_html(path),
+    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    escape_html(&options.theme_label),
     line_spans.join("\n")
+  )
+}
+
+fn severity_at(assignment: &[Option<DiagnosticSeverity>], column: usize) -> Option<DiagnosticSeverity> {
+  assignment.get(column).copied().flatten()
+}
+
+fn marked_line_content(pieces: &[(&str, &StyleRole)], annotations: &[Annotation]) -> String {
+  if annotations.is_empty() {
+    return line_content(pieces);
+  }
+
+  let max_end = annotations.iter().map(|annotation| annotation.end).max().unwrap_or(0);
+  let mut assignment: Vec<Option<DiagnosticSeverity>> = vec![None; max_end];
+
+  for annotation in annotations {
+    for slot in assignment.iter_mut().take(annotation.end).skip(annotation.start) {
+      match slot {
+        Some(existing) if annotation.severity.order() < existing.order() => *slot = Some(annotation.severity),
+        None => *slot = Some(annotation.severity),
+        _ => {}
+      }
+    }
+  }
+
+  let mut content = String::new();
+  let mut column = 0;
+
+  for (text, role) in pieces {
+    let characters: Vec<char> = text.chars().collect();
+    let mut start = 0;
+
+    while start < characters.len() {
+      let current = severity_at(&assignment, column + start);
+      let mut end = start + 1;
+
+      while end < characters.len() && severity_at(&assignment, column + end) == current {
+        end += 1;
+      }
+
+      let sub_piece: String = characters[start..end].iter().collect();
+      let rendered = piece_html(&sub_piece, role);
+
+      match current {
+        Some(severity) => content.push_str(&format!("<mark class=\"herb-marker herb-marker-{severity}\">{rendered}</mark>")),
+        None => content.push_str(&rendered),
+      }
+
+      start = end;
+    }
+
+    column += characters.len();
+  }
+
+  content
+}
+
+fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options: &HTMLSinkOptions) -> String {
+  let mut class = String::from("herb-line");
+
+  let marked_severity = match info.emphasis {
+    LineEmphasis::Marked { severity } => {
+      class.push_str(" herb-line-marked");
+
+      Some(severity)
+    }
+
+    LineEmphasis::Dimmed => {
+      class.push_str(" herb-line-dimmed");
+
+      None
+    }
+
+    _ => None,
+  };
+
+  let mut attributes = format!("class=\"{class}\"");
+
+  if options.show_line_numbers {
+    attributes.push_str(&format!(" data-line=\"{}\"", info.number));
+  }
+
+  if let Some(severity) = marked_severity {
+    attributes.push_str(&format!(" data-herb-severity=\"{severity}\""));
+  }
+
+  if options.markers == MarkerMode::HighlightApi && !info.annotations.is_empty() {
+    let markers: Vec<(usize, usize, &str)> = info
+      .annotations
+      .iter()
+      .map(|annotation| (annotation.start, annotation.end, annotation.severity.as_str()))
+      .collect();
+
+    let json = serde_json::to_string(&markers).expect("markers serialize");
+
+    attributes.push_str(&format!(" data-herb-markers=\"{}\"", escape_html(&json)));
+  }
+
+  let content = match options.markers {
+    MarkerMode::HighlightApi => line_content(pieces),
+    MarkerMode::Spans => marked_line_content(pieces, &info.annotations),
+  };
+
+  let mut result = format!("<span {attributes}>{content}");
+
+  for annotation in &info.annotations {
+    if let Some(message) = &annotation.message {
+      result.push_str(&format!(
+        "<span class=\"herb-annotation-message\">{} {} <span class=\"herb-diagnostic-code\">({})</span></span>",
+        severity_label(annotation.severity),
+        message_html(&message.text),
+        code_html(message.code.as_deref(), message.code_url.as_deref())
+      ));
+    }
+  }
+
+  result.push_str("</span>");
+
+  result
+}
+
+fn annotated_line_spans(block: &BlockData<'_>, options: &HTMLSinkOptions) -> Vec<String> {
+  let pieces_by_line = split_lines(block.runs);
+
+  block
+    .lines
+    .iter()
+    .map(|info| {
+      let pieces = pieces_by_line.get(info.number - block.first_line).map(|line| line.as_slice()).unwrap_or(&[]);
+
+      render_annotated_line(info, pieces, options)
+    })
+    .collect()
+}
+
+fn render_card(header: &HeaderData<'_>, file: &FileData<'_>, block: &BlockData<'_>, options: &HTMLSinkOptions) -> String {
+  let suffix = match header.suffix {
+    Some(suffix) => format!(" <span class=\"herb-diagnostic-suffix\">{}</span>", escape_html(suffix)),
+    None => String::new(),
+  };
+
+  let header_html = format!(
+    "<header class=\"herb-diagnostic-header\">{} <span class=\"herb-diagnostic-message\">{}</span> <span class=\"herb-diagnostic-code\">({})</span>{suffix}</header>",
+    severity_label(header.severity),
+    message_html(header.message),
+    code_html(header.code, header.code_url)
+  );
+
+  let figcaption = if options.show_line_numbers {
+    let location = format!("{}:{}:{}", escape_html(file.path), file.line, file.column);
+
+    format!("<figcaption class=\"herb-file-header\">{}</figcaption>\n", linkify(&location, file.url))
+  } else {
+    String::new()
+  };
+
+  format!(
+    "<figure class=\"herb-highlight herb-diagnostic\" data-herb-theme=\"{}\">\n{header_html}\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    escape_html(&options.theme_label),
+    annotated_line_spans(block, options).join("\n")
+  )
+}
+
+fn render_inline(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkOptions) -> String {
+  let figcaption = match path {
+    Some(path) if options.show_line_numbers => format!("<figcaption class=\"herb-file-header\">{}</figcaption>\n", escape_html(path)),
+    _ => String::new(),
+  };
+
+  format!(
+    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    escape_html(&options.theme_label),
+    annotated_line_spans(block, options).join("\n")
+  )
+}
+
+pub fn wrap_document_html(fragments: &str, stylesheet: &str, include_hydration: bool) -> String {
+  let script = if include_hydration {
+    format!("<script>\n{HYDRATION_SCRIPT}</script>\n")
+  } else {
+    String::new()
+  };
+
+  format!(
+    "<!doctype html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<title>herb-highlight</title>\n<style>\n{stylesheet}</style>\n</head>\n<body>\n{fragments}\n{script}</body>\n</html>"
+  )
+}
+
+fn listing_document(nodes: Vec<Node>) -> Document {
+  Document { version: 1, nodes }
+}
+
+fn listing_lines(count: usize, emphasis_for: impl Fn(usize) -> LineEmphasis) -> Vec<LineInfo> {
+  (1..=count)
+    .map(|number| LineInfo {
+      number,
+      emphasis: emphasis_for(number),
+      annotations: Vec::new(),
+    })
+    .collect()
+}
+
+pub fn render_file_html(runs: &[StyledRun], path: &str, theme_label: &str) -> String {
+  let line_count = split_lines(runs).len();
+
+  let document = listing_document(vec![
+    Node::FileHeader {
+      path: path.to_string(),
+      line: None,
+      column: None,
+      url: None,
+    },
+    Node::CodeBlock {
+      kind: CodeBlockKind::Listing,
+      first_line: 1,
+      runs: runs.to_vec(),
+      lines: listing_lines(line_count, |_| LineEmphasis::Normal),
+    },
+  ]);
+
+  render_document_html(
+    &document,
+    &HTMLSinkOptions {
+      theme_label: theme_label.to_string(),
+      show_line_numbers: true,
+      markers: MarkerMode::Spans,
+    },
   )
 }
 
 pub fn render_plain_html(runs: &[StyledRun], theme_label: &str) -> String {
-  let line_spans: Vec<String> = split_lines(runs)
-    .iter()
-    .map(|line| format!("<span class=\"herb-line\">{}</span>", line_content(line)))
-    .collect();
+  let line_count = split_lines(runs).len();
 
-  format!(
-    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
-    escape_html(theme_label),
-    line_spans.join("\n")
+  let document = listing_document(vec![Node::CodeBlock {
+    kind: CodeBlockKind::Listing,
+    first_line: 1,
+    runs: runs.to_vec(),
+    lines: listing_lines(line_count, |_| LineEmphasis::Normal),
+  }]);
+
+  render_document_html(
+    &document,
+    &HTMLSinkOptions {
+      theme_label: theme_label.to_string(),
+      show_line_numbers: false,
+      markers: MarkerMode::Spans,
+    },
   )
 }
 
 pub fn render_focus_html(runs: &[StyledRun], path: &str, focus_line: usize, context_lines: usize, show_line_numbers: bool, theme_label: &str) -> String {
-  let lines = split_lines(runs);
+  let line_count = split_lines(runs).len();
   let start_line = 1.max(focus_line.saturating_sub(context_lines));
-  let end_line = lines.len().min(focus_line + context_lines);
+  let end_line = line_count.min(focus_line + context_lines);
 
-  let mut line_spans: Vec<String> = Vec::new();
+  let lines = (start_line..=end_line)
+    .map(|number| LineInfo {
+      number,
+      emphasis: if number == focus_line { LineEmphasis::Focus } else { LineEmphasis::Dimmed },
+      annotations: Vec::new(),
+    })
+    .collect();
 
-  for number in start_line..=end_line {
-    let line = &lines[number - 1];
+  let document = listing_document(vec![
+    Node::FileHeader {
+      path: path.to_string(),
+      line: None,
+      column: None,
+      url: None,
+    },
+    Node::CodeBlock {
+      kind: CodeBlockKind::Listing,
+      first_line: 1,
+      runs: runs.to_vec(),
+      lines,
+    },
+  ]);
 
-    let class = if number == focus_line {
-      "herb-line herb-line-focus"
-    } else {
-      "herb-line herb-line-dimmed"
-    };
-
-    if show_line_numbers {
-      line_spans.push(format!("<span class=\"{class}\" data-line=\"{number}\">{}</span>", line_content(line)));
-    } else {
-      line_spans.push(format!("<span class=\"{class}\">{}</span>", line_content(line)));
-    }
-  }
-
-  if show_line_numbers {
-    format!(
-      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<figcaption class=\"herb-file-header\">{}</figcaption>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
-      escape_html(theme_label),
-      escape_html(path),
-      line_spans.join("\n")
-    )
-  } else {
-    format!(
-      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
-      escape_html(theme_label),
-      line_spans.join("\n")
-    )
-  }
+  render_document_html(
+    &document,
+    &HTMLSinkOptions {
+      theme_label: theme_label.to_string(),
+      show_line_numbers,
+      markers: MarkerMode::Spans,
+    },
+  )
 }

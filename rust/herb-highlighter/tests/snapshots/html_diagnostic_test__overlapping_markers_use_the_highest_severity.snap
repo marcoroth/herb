@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/html_diagnostic_test.rs
+expression: "render_document_html(&document, &sink_options(MarkerMode::Spans))"
+---
+<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-marked" data-line="1" data-herb-severity="error"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-whitespace"> </span><mark class="herb-marker herb-marker-error"><span class="herb-attr-name">id</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-equals">=</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-attr-value">&quot;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-attr-value">x</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-attr-value">&quot;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark><mark class="herb-marker herb-marker-warning"><span class="herb-token-identifier">text</span></mark><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-error">error</span> first <span class="herb-diagnostic-code">(-)</span></span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-warning">warning</span> second <span class="herb-diagnostic-code">(-)</span></span></span></code></pre>
+</figure>

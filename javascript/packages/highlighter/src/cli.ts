@@ -8,11 +8,13 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Highlighter } from "./highlighter.js"
 import { THEME_NAMES, DEFAULT_THEME, resolveTheme } from "./themes.js"
 import { generateStylesheet } from "./stylesheet.js"
+import { wrapDocumentHTML } from "./html-sink.js"
 
 import { name, version } from "../package.json"
 import { parseUnifiedDiff } from "./unified-diff.js"
 
 import type { DiffHunk } from "./diff-computer.js"
+import type { MarkerMode } from "./html-sink.js"
 import type { ThemeInput } from "./themes.js"
 
 import type { Diagnostic } from "@herb-tools/core"
@@ -30,6 +32,9 @@ export class CLI {
       --theme                color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --format               output format (ansi|html|json) [default: ansi]
       --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
+      --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
+      --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
+      --html-fragment-separator  separator line printed between html fragments in split mode
       --focus                line number to focus on (shows only that line with context)
       --context-lines        number of context lines around focus line [default: 2]
       --no-line-numbers      hide line numbers and file path header
@@ -64,7 +69,7 @@ export class CLI {
       process.exit(1)
     }
 
-    if (["--theme", "--format", "--focus", "--context-lines", "--max-width", "--diagnostics"].includes(last)) {
+    if (["--theme", "--format", "--focus", "--context-lines", "--max-width", "--diagnostics", "--html-markers", "--html-chrome", "--html-fragment-separator"].includes(last)) {
       args.pop()
     }
 
@@ -87,6 +92,9 @@ export class CLI {
           "diagnostics": { type: "string" },
           "split-diagnostics": { type: "boolean" },
           "diff": { type: "boolean" },
+          "html-markers": { type: "string" },
+          "html-chrome": { type: "string" },
+          "html-fragment-separator": { type: "string" },
         },
         allowPositionals: true,
       })
@@ -160,6 +168,36 @@ export class CLI {
 
     if (format !== "ansi" && format !== "html" && format !== "json") {
       console.error(`Invalid format: ${format}. Valid formats: ansi, html, json.`)
+      process.exit(1)
+    }
+
+    for (const flag of ["html-markers", "html-chrome", "html-fragment-separator"] as const) {
+      if (values[flag] !== undefined && format !== "html") {
+        console.error(`Error: --${flag} requires --format html.`)
+        process.exit(1)
+      }
+    }
+
+    const htmlMarkersValue = values["html-markers"] || "spans"
+
+    if (htmlMarkersValue !== "highlight-api" && htmlMarkersValue !== "spans") {
+      console.error(`Invalid html markers mode: ${htmlMarkersValue}. Valid modes: highlight-api, spans.`)
+      process.exit(1)
+    }
+
+    const htmlMarkers = htmlMarkersValue as MarkerMode
+
+    const htmlChrome = values["html-chrome"] || "fragment"
+
+    if (htmlChrome !== "fragment" && htmlChrome !== "document") {
+      console.error(`Invalid html chrome mode: ${htmlChrome}. Valid modes: fragment, document.`)
+      process.exit(1)
+    }
+
+    const htmlFragmentSeparator = values["html-fragment-separator"]
+
+    if (htmlFragmentSeparator !== undefined && htmlChrome === "document") {
+      console.error("Error: --html-fragment-separator cannot be combined with --html-chrome document.")
       process.exit(1)
     }
 
@@ -275,6 +313,9 @@ export class CLI {
       maxWidth,
       diagnostics,
       splitDiagnostics,
+      htmlMarkers,
+      htmlChrome,
+      htmlFragmentSeparator,
     }
   }
 
@@ -368,15 +409,10 @@ export class CLI {
   }
 
   async run() {
-    const { positionals, diffMode, theme, format, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
+    const { positionals, diffMode, theme, format, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics, htmlMarkers, htmlChrome, htmlFragmentSeparator } =
       await this.parseArguments()
 
     const isDiffSubcommand = positionals[0] === "diff"
-
-    if (format === "html" && diagnostics.length > 0) {
-      console.error("Error: --format html cannot render diagnostics yet.")
-      process.exit(1)
-    }
 
     if (format === "html" && (diffMode || isDiffSubcommand)) {
       console.error("Error: --format html cannot render diffs yet.")
@@ -439,23 +475,45 @@ export class CLI {
         return
       }
 
-      const highlighted = format === "html"
-        ? highlighter.highlightHTML(filePath, content, {
-            focusLine,
-            contextLines,
-            showLineNumbers,
-            themeLabel: theme,
-          })
-        : highlighter.highlight(filePath, content, {
-            focusLine,
-            contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
-            showLineNumbers,
-            wrapLines,
-            truncateLines,
-            maxWidth,
-            diagnostics,
-            splitDiagnostics,
-          })
+      if (format === "html") {
+        const document = highlighter.buildDocument(filePath, content, {
+          focusLine,
+          contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
+          showLineNumbers,
+          wrapLines,
+          truncateLines,
+          maxWidth,
+          diagnostics,
+          splitDiagnostics,
+        })
+
+        const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers }
+
+        let output = htmlFragmentSeparator !== undefined
+          ? highlighter.renderHTMLFragments(document, sinkOptions)
+              .filter(fragment => !fragment.startsWith(`<hr class="herb-progress-rule"`))
+              .join(`\n${htmlFragmentSeparator}\n`)
+          : highlighter.renderHTML(document, sinkOptions)
+
+        if (htmlChrome === "document") {
+          output = wrapDocumentHTML(output, generateStylesheet(resolveTheme(theme), theme), htmlMarkers === "highlight-api")
+        }
+
+        console.log(output)
+
+        return
+      }
+
+      const highlighted = highlighter.highlight(filePath, content, {
+        focusLine,
+        contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
+        showLineNumbers,
+        wrapLines,
+        truncateLines,
+        maxWidth,
+        diagnostics,
+        splitDiagnostics,
+      })
 
       console.log(highlighted)
     } catch (error) {

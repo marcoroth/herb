@@ -9,7 +9,7 @@ use crate::document::Document;
 use crate::document_builder::{DocumentBuilder, SplitOptions};
 use crate::error::HighlightError;
 use crate::herb_backend::{Herb, HerbBackend};
-use crate::html_sink::{self, HTMLRenderOptions};
+use crate::html_sink::{self, HTMLRenderOptions, HTMLSinkOptions, MarkerMode};
 use crate::inline_diagnostic_renderer::CodeUrlBuilder;
 use crate::line_wrapper::LineWrapper;
 use crate::syntax_renderer::SyntaxRenderer;
@@ -122,17 +122,33 @@ impl Highlighter {
   }
 
   pub fn highlight_html(&self, path: &str, content: &str, options: &HTMLRenderOptions) -> String {
-    let runs = self.syntax_renderer.highlight_runs(content);
+    let document = self.build_document(
+      path,
+      content,
+      &HighlightOptions {
+        focus_line: options.focus_line,
+        context_lines: options.context_lines,
+        show_line_numbers: options.show_line_numbers,
+        ..Default::default()
+      },
+    );
 
-    if let Some(focus_line) = options.focus_line {
-      return html_sink::render_focus_html(&runs, path, focus_line, options.context_lines, options.show_line_numbers, &options.theme_label);
-    }
+    self.render_html(
+      &document,
+      &HTMLSinkOptions {
+        theme_label: options.theme_label.clone(),
+        show_line_numbers: options.show_line_numbers,
+        markers: MarkerMode::Spans,
+      },
+    )
+  }
 
-    if options.show_line_numbers {
-      html_sink::render_file_html(&runs, path, &options.theme_label)
-    } else {
-      html_sink::render_plain_html(&runs, &options.theme_label)
-    }
+  pub fn render_html(&self, document: &Document, options: &HTMLSinkOptions) -> String {
+    html_sink::render_document_html(document, options)
+  }
+
+  pub fn render_html_fragments(&self, document: &Document, options: &HTMLSinkOptions) -> Vec<String> {
+    html_sink::render_document_fragments(document, options)
   }
 
   pub fn highlight_diagnostic(&self, path: &str, diagnostic: &Diagnostic, content: &str, options: &HighlightDiagnosticOptions) -> String {

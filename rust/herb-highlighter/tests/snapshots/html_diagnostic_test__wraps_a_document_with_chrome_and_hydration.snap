@@ -1,8 +1,14 @@
 ---
-source: herb-highlighter/tests/stylesheet_test.rs
-expression: "generate_stylesheet(get_theme(Theme::OneDark), \"onedark:github-light\",\nSome((get_theme(Theme::GithubLight), \"github-light\")))"
+source: herb-highlighter/tests/html_diagnostic_test.rs
+expression: "wrap_document_html(&fragment, &stylesheet, true)"
 ---
-/* herb-highlight theme: onedark:github-light */
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>herb-highlight</title>
+<style>
+/* herb-highlight theme: onedark */
 
 .herb-highlight {
   margin: 0;
@@ -180,110 +186,90 @@ expression: "generate_stylesheet(get_theme(Theme::OneDark), \"onedark:github-lig
   --herb-attr-name: #D19A66;
   --herb-attr-value: #98C379;
 }
+</style>
+</head>
+<body>
+<figure class="herb-highlight" data-herb-theme="onedark">
+<figcaption class="herb-file-header">app/views/users/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error" data-herb-markers="[[2,18,&quot;error&quot;]]"><span class="herb-token-whitespace">  </span><span class="herb-token-erb-start">&lt;%=</span> user.name <span class="herb-token-erb-end">%&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="3" data-herb-severity="error" data-herb-markers="[[2,6,&quot;error&quot;]]"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">hello</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">p</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-error">error</span> unclosed <code>&lt;%=</code> tag <span class="herb-diagnostic-code">(parser-error)</span></span></span>
+<span class="herb-line herb-line-marked" data-line="4" data-herb-severity="warning" data-herb-markers="[[2,8,&quot;warning&quot;]]"><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">world</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">span</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-annotation-message"><span class="herb-severity-label herb-severity-warning">warning</span> avoid inline spans <span class="herb-diagnostic-code">(-)</span></span></span>
+<span class="herb-line" data-line="5"><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+<script>
+(() => {
+  if (!("highlights" in CSS)) return
 
-@media (prefers-color-scheme: light) {
-  .herb-highlight {
-    --herb-token-nbsp: #6A737D;
-    --herb-token-identifier: #24292E;
-    --herb-ruby-keyword: #D73A49;
-    --herb-token-html-doctype: #005CC5;
-    --herb-token-html-tag-start: #22863A;
-    --herb-token-html-tag-start-close: #22863A;
-    --herb-token-html-tag-end: #22863A;
-    --herb-token-html-tag-self-close: #22863A;
-    --herb-token-html-comment-start: #6A737D;
-    --herb-token-html-comment-end: #6A737D;
-    --herb-token-erb-start: #E36209;
-    --herb-token-erb-content: #6F42C1;
-    --herb-token-erb-end: #E36209;
-    --herb-token-lt: #22863A;
-    --herb-token-slash: #22863A;
-    --herb-token-equals: #D73A49;
-    --herb-token-quote: #032F62;
-    --herb-token-dash: #24292E;
-    --herb-token-underscore: #24292E;
-    --herb-token-exclamation: #D73A49;
-    --herb-token-semicolon: #24292E;
-    --herb-token-colon: #24292E;
-    --herb-token-percent: #E36209;
-    --herb-token-ampersand: #005CC5;
-    --herb-token-character: #24292E;
-    --herb-token-error: #CB2431;
-    --herb-diff-removed-line-background: #FFEBE9;
-    --herb-diff-added-line-background: #E6FFEC;
-    --herb-diff-removed-background: #FFC9C7;
-    --herb-diff-added-background: #ABF2BC;
-    --herb-attr-name: #D19A66;
-    --herb-attr-value: #98C379;
+  const priorities = { error: 4, warning: 3, info: 2, hint: 1 }
+  const rangesBySeverity = new Map()
+
+  const rangeForColumns = (line, start, end) => {
+    const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) =>
+        node.parentElement.closest(".herb-annotation-message") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    })
+
+    let offset = 0
+    let startNode = null
+    let startOffset = 0
+    let endNode = null
+    let endOffset = 0
+
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const length = node.data.length
+
+      if (startNode === null && start < offset + length) {
+        startNode = node
+        startOffset = start - offset
+      }
+
+      if (end <= offset + length) {
+        endNode = node
+        endOffset = end - offset
+        break
+      }
+
+      offset += length
+    }
+
+    if (startNode === null || endNode === null) return null
+
+    const range = new Range()
+    range.setStart(startNode, startOffset)
+    range.setEnd(endNode, endOffset)
+
+    return range
   }
-}
 
-.herb-highlight[data-herb-appearance="dark"] {
-  --herb-token-nbsp: #5C6370;
-  --herb-token-identifier: #ABB2BF;
-  --herb-ruby-keyword: #C678DD;
-  --herb-token-html-doctype: #61AFEF;
-  --herb-token-html-tag-start: #E06C75;
-  --herb-token-html-tag-start-close: #E06C75;
-  --herb-token-html-tag-end: #E06C75;
-  --herb-token-html-tag-self-close: #E06C75;
-  --herb-token-html-comment-start: #5C6370;
-  --herb-token-html-comment-end: #5C6370;
-  --herb-token-erb-start: #BE5046;
-  --herb-token-erb-content: #E5C07B;
-  --herb-token-erb-end: #BE5046;
-  --herb-token-lt: #E06C75;
-  --herb-token-slash: #E06C75;
-  --herb-token-equals: #56B6C2;
-  --herb-token-quote: #98C379;
-  --herb-token-dash: #ABB2BF;
-  --herb-token-underscore: #ABB2BF;
-  --herb-token-exclamation: #C678DD;
-  --herb-token-semicolon: #ABB2BF;
-  --herb-token-colon: #ABB2BF;
-  --herb-token-percent: #BE5046;
-  --herb-token-ampersand: #D19A66;
-  --herb-token-character: #ABB2BF;
-  --herb-token-error: #E05252;
-  --herb-diff-removed-line-background: #3A2224;
-  --herb-diff-added-line-background: #1E3226;
-  --herb-diff-removed-background: #6B2E31;
-  --herb-diff-added-background: #2E5E3D;
-  --herb-attr-name: #D19A66;
-  --herb-attr-value: #98C379;
-}
+  for (const line of document.querySelectorAll(".herb-line[data-herb-markers]")) {
+    let markers
 
-.herb-highlight[data-herb-appearance="light"] {
-  --herb-token-nbsp: #6A737D;
-  --herb-token-identifier: #24292E;
-  --herb-ruby-keyword: #D73A49;
-  --herb-token-html-doctype: #005CC5;
-  --herb-token-html-tag-start: #22863A;
-  --herb-token-html-tag-start-close: #22863A;
-  --herb-token-html-tag-end: #22863A;
-  --herb-token-html-tag-self-close: #22863A;
-  --herb-token-html-comment-start: #6A737D;
-  --herb-token-html-comment-end: #6A737D;
-  --herb-token-erb-start: #E36209;
-  --herb-token-erb-content: #6F42C1;
-  --herb-token-erb-end: #E36209;
-  --herb-token-lt: #22863A;
-  --herb-token-slash: #22863A;
-  --herb-token-equals: #D73A49;
-  --herb-token-quote: #032F62;
-  --herb-token-dash: #24292E;
-  --herb-token-underscore: #24292E;
-  --herb-token-exclamation: #D73A49;
-  --herb-token-semicolon: #24292E;
-  --herb-token-colon: #24292E;
-  --herb-token-percent: #E36209;
-  --herb-token-ampersand: #005CC5;
-  --herb-token-character: #24292E;
-  --herb-token-error: #CB2431;
-  --herb-diff-removed-line-background: #FFEBE9;
-  --herb-diff-added-line-background: #E6FFEC;
-  --herb-diff-removed-background: #FFC9C7;
-  --herb-diff-added-background: #ABF2BC;
-  --herb-attr-name: #D19A66;
-  --herb-attr-value: #98C379;
-}
+    try {
+      markers = JSON.parse(line.getAttribute("data-herb-markers"))
+    } catch {
+      continue
+    }
+
+    for (const [start, end, severity] of markers) {
+      const range = rangeForColumns(line, start, end)
+
+      if (range === null) continue
+
+      if (!rangesBySeverity.has(severity)) rangesBySeverity.set(severity, [])
+
+      rangesBySeverity.get(severity).push(range)
+    }
+  }
+
+  for (const [severity, ranges] of rangesBySeverity) {
+    const highlight = new Highlight(...ranges)
+
+    highlight.priority = priorities[severity] ?? 0
+
+    CSS.highlights.set(`herb-marker-${severity}`, highlight)
+  }
+})()
+</script>
+</body>
+</html>

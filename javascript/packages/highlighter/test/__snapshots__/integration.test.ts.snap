@@ -54,6 +54,9 @@ Options:
   --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
   --format               output format (ansi|html|json) [default: ansi]
   --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
+  --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
+  --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
+  --html-fragment-separator  separator line printed between html fragments in split mode
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
   --no-line-numbers      hide line numbers and file path header

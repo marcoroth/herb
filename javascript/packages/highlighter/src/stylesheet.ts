@@ -39,6 +39,80 @@ const NAMED_COLOR_HEX: Record<string, string> = {
   dim: "inherit",
 }
 
+const DIAGNOSTIC_RULES = `.herb-highlight .herb-severity-label { font-weight: bold; }
+.herb-highlight .herb-severity-label.herb-severity-error { color: var(--herb-severity-error, #F14C4C); }
+.herb-highlight .herb-severity-label.herb-severity-warning { color: var(--herb-severity-warning, #F5F543); }
+.herb-highlight .herb-severity-label.herb-severity-info { color: var(--herb-severity-info, #11A8CD); }
+.herb-highlight .herb-severity-label.herb-severity-hint { color: var(--herb-severity-hint, #666666); }
+
+.herb-highlight .herb-diagnostic-header {
+  display: block;
+  margin: 0 0 0.75em;
+}
+
+.herb-highlight .herb-diagnostic-message code {
+  padding: 0 0.25em;
+  border-radius: 3px;
+  background-color: var(--herb-inline-code-bg, rgba(127, 127, 127, 0.18));
+}
+
+.herb-highlight .herb-diagnostic-code {
+  opacity: 0.7;
+}
+
+.herb-highlight .herb-diagnostic-suffix {
+  opacity: 0.7;
+}
+
+.herb-highlight .herb-annotation-message {
+  display: block;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.herb-highlight .herb-line-marked[data-line]::before {
+  font-weight: bold;
+}
+
+.herb-highlight a {
+  color: inherit;
+}
+
+.herb-highlight mark.herb-marker {
+  color: inherit;
+  background-color: transparent;
+  text-decoration: underline wavy;
+  text-decoration-skip-ink: none;
+}
+
+.herb-highlight mark.herb-marker-error { background-color: var(--herb-marker-error-bg, rgba(241, 76, 76, 0.15)); text-decoration-color: var(--herb-severity-error, #F14C4C); }
+.herb-highlight mark.herb-marker-warning { background-color: var(--herb-marker-warning-bg, rgba(245, 245, 67, 0.15)); text-decoration-color: var(--herb-severity-warning, #F5F543); }
+.herb-highlight mark.herb-marker-info { background-color: var(--herb-marker-info-bg, rgba(17, 168, 205, 0.15)); text-decoration-color: var(--herb-severity-info, #11A8CD); }
+.herb-highlight mark.herb-marker-hint { background-color: var(--herb-marker-hint-bg, rgba(102, 102, 102, 0.15)); text-decoration-color: var(--herb-severity-hint, #666666); }
+
+::highlight(herb-marker-error) { background-color: var(--herb-marker-error-bg, rgba(241, 76, 76, 0.15)); text-decoration: underline wavy var(--herb-severity-error, #F14C4C); }
+::highlight(herb-marker-warning) { background-color: var(--herb-marker-warning-bg, rgba(245, 245, 67, 0.15)); text-decoration: underline wavy var(--herb-severity-warning, #F5F543); }
+::highlight(herb-marker-info) { background-color: var(--herb-marker-info-bg, rgba(17, 168, 205, 0.15)); text-decoration: underline wavy var(--herb-severity-info, #11A8CD); }
+::highlight(herb-marker-hint) { background-color: var(--herb-marker-hint-bg, rgba(102, 102, 102, 0.15)); text-decoration: underline wavy var(--herb-severity-hint, #666666); }
+
+.herb-progress-rule {
+  position: relative;
+  margin: 1.5em 0;
+  border: none;
+  border-top: 1px solid var(--herb-rule, rgba(127, 127, 127, 0.4));
+}
+
+.herb-progress-rule::after {
+  content: attr(data-herb-progress);
+  position: absolute;
+  top: -0.75em;
+  right: 1em;
+  padding: 0 0.5em;
+  font-size: 0.8em;
+  color: var(--herb-rule-label, #666666);
+  background-color: var(--herb-rule-label-bg, Canvas);
+}`
+
 function cssColor(color: Color): string {
   if (color.startsWith("#")) {
     return color.toUpperCase()
@@ -87,6 +161,7 @@ export function generateStylesheet(dark: ColorScheme, label: string, light?: Lig
     `.herb-highlight .herb-line-focus[data-line]::before {\n  color: var(--herb-line-number-focus, #11A8CD);\n  font-weight: bold;\n}`,
     tokenRules,
     `.herb-highlight .herb-tag-name { color: var(--herb-token-html-tag-start); }\n.herb-highlight .herb-attr-name { color: var(--herb-attr-name); }\n.herb-highlight .herb-attr-value { color: var(--herb-attr-value); }\n.herb-highlight .herb-comment { color: var(--herb-token-html-comment-start); }`,
+    DIAGNOSTIC_RULES,
     `.herb-highlight {\n${propertyBlock(dark, "  ")}\n}`,
   ]
 

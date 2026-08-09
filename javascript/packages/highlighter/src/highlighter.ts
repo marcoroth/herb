@@ -10,13 +10,13 @@ import { DocumentBuilder } from "./document-builder.js"
 import { AnsiSink } from "./ansi-sink.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
-import { DEFAULT_HTML_RENDER_OPTIONS, renderFileHTML, renderPlainHTML, renderFocusHTML } from "./html-sink.js"
+import { DEFAULT_HTML_RENDER_OPTIONS, renderDocumentHTML, renderDocumentFragments } from "./html-sink.js"
 
 import type { HerbBackend, Diagnostic } from "@herb-tools/core"
 import type { ThemeInput } from "./themes.js"
 import type { DiffRenderOptions } from "./diff-renderer.js"
 import type { DiffHunk } from "./diff-computer.js"
-import type { HTMLRenderOptions } from "./html-sink.js"
+import type { HTMLRenderOptions, HTMLSinkOptions } from "./html-sink.js"
 import type { Document } from "./document.js"
 import type { CardOptions } from "./document-builder.js"
 
@@ -212,17 +212,25 @@ export class Highlighter {
       themeLabel = DEFAULT_HTML_RENDER_OPTIONS.themeLabel,
     } = options
 
-    const runs = this.syntaxRenderer.highlightRuns(content)
+    let document: Document
 
     if (focusLine !== undefined) {
-      return renderFocusHTML(runs, path, focusLine, contextLines, showLineNumbers, themeLabel)
+      document = this.documentBuilder.buildFocus(path, content, focusLine, contextLines)
+    } else if (showLineNumbers) {
+      document = this.documentBuilder.buildFile(path, content)
+    } else {
+      document = this.documentBuilder.buildPlain(content)
     }
 
-    if (showLineNumbers) {
-      return renderFileHTML(runs, path, themeLabel)
-    }
+    return renderDocumentHTML(document, { themeLabel, showLineNumbers, markers: "spans" })
+  }
 
-    return renderPlainHTML(runs, themeLabel)
+  renderHTML(document: Document, options: HTMLSinkOptions): string {
+    return renderDocumentHTML(document, options)
+  }
+
+  renderHTMLFragments(document: Document, options: HTMLSinkOptions): string[] {
+    return renderDocumentFragments(document, options)
   }
 
   /**

@@ -6,8 +6,9 @@ use std::process;
 
 use herb_highlighter::diff_computer::DiffHunk;
 use herb_highlighter::diff_renderer::DiffRenderOptions;
+use herb_highlighter::document::{Document, Node};
 use herb_highlighter::highlighter::{HighlightOptions, Highlighter};
-use herb_highlighter::html_sink::HTMLRenderOptions;
+use herb_highlighter::html_sink::{wrap_document_html, HTMLSinkOptions, MarkerMode};
 use herb_highlighter::stylesheet::generate_stylesheet;
 use herb_highlighter::themes::{resolve_theme, DEFAULT_THEME, THEME_NAMES};
 use herb_highlighter::unified_diff::parse_unified_diff;
@@ -27,6 +28,9 @@ Options:
   --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
   --format               output format (ansi|html|json) [default: ansi]
   --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
+  --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
+  --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
+  --html-fragment-separator  separator line printed between html fragments in split mode
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
   --no-line-numbers      hide line numbers and file path header
@@ -71,6 +75,9 @@ struct Arguments {
   max_width: Option<usize>,
   diagnostics: Vec<Diagnostic>,
   split_diagnostics: bool,
+  html_markers: MarkerMode,
+  html_chrome_document: bool,
+  html_fragment_separator: Option<String>,
 }
 
 struct DiffOptions {
@@ -117,6 +124,9 @@ impl CLI {
           values.emit_css = next_value(&arguments, &mut index, &inline_value);
         }
 
+        "--html-markers" => values.html_markers = next_value(&arguments, &mut index, &inline_value),
+        "--html-chrome" => values.html_chrome = next_value(&arguments, &mut index, &inline_value),
+        "--html-fragment-separator" => values.html_fragment_separator = next_value(&arguments, &mut index, &inline_value),
         "--focus" => values.focus = next_value(&arguments, &mut index, &inline_value),
         "--context-lines" => values.context_lines = next_value(&arguments, &mut index, &inline_value),
         "--max-width" => values.max_width = next_value(&arguments, &mut index, &inline_value),
@@ -168,6 +178,44 @@ impl CLI {
 
     if format != "ansi" && format != "html" && format != "json" {
       eprintln!("Invalid format: {format}. Valid formats: ansi, html, json.");
+      process::exit(1);
+    }
+
+    if format != "html" {
+      for (flag, present) in [
+        ("--html-markers", values.html_markers.is_some()),
+        ("--html-chrome", values.html_chrome.is_some()),
+        ("--html-fragment-separator", values.html_fragment_separator.is_some()),
+      ] {
+        if present {
+          eprintln!("Error: {flag} requires --format html.");
+          process::exit(1);
+        }
+      }
+    }
+
+    let html_markers = match values.html_markers.as_deref() {
+      None | Some("spans") => MarkerMode::Spans,
+      Some("highlight-api") => MarkerMode::HighlightApi,
+
+      Some(value) => {
+        eprintln!("Invalid html markers mode: {value}. Valid modes: highlight-api, spans.");
+        process::exit(1);
+      }
+    };
+
+    let html_chrome_document = match values.html_chrome.as_deref() {
+      None | Some("fragment") => false,
+      Some("document") => true,
+
+      Some(value) => {
+        eprintln!("Invalid html chrome mode: {value}. Valid modes: fragment, document.");
+        process::exit(1);
+      }
+    };
+
+    if values.html_fragment_separator.is_some() && html_chrome_document {
+      eprintln!("Error: --html-fragment-separator cannot be combined with --html-chrome document.");
       process::exit(1);
     }
 
@@ -259,6 +307,9 @@ impl CLI {
       max_width,
       diagnostics,
       split_diagnostics,
+      html_markers,
+      html_chrome_document,
+      html_fragment_separator: values.html_fragment_separator.clone(),
     }
   }
 
@@ -475,16 +526,9 @@ impl CLI {
     let html_format = arguments.format == "html";
     let json_format = arguments.format == "json";
 
-    if html_format {
-      if !arguments.diagnostics.is_empty() {
-        eprintln!("Error: --format html cannot render diagnostics yet.");
-        process::exit(1);
-      }
-
-      if arguments.diff_mode || is_diff_subcommand {
-        eprintln!("Error: --format html cannot render diffs yet.");
-        process::exit(1);
-      }
+    if html_format && (arguments.diff_mode || is_diff_subcommand) {
+      eprintln!("Error: --format html cannot render diffs yet.");
+      process::exit(1);
     }
 
     if json_format && (arguments.diff_mode || is_diff_subcommand) {
@@ -545,23 +589,6 @@ impl CLI {
       }
     };
 
-    if html_format {
-      let highlighted = highlighter.highlight_html(
-        &file_path.to_string_lossy(),
-        &content,
-        &HTMLRenderOptions {
-          focus_line: arguments.focus_line,
-          context_lines: arguments.context_lines,
-          show_line_numbers: arguments.show_line_numbers,
-          theme_label: arguments.theme.clone(),
-        },
-      );
-
-      println!("{highlighted}");
-
-      return;
-    }
-
     let context_lines = if arguments.focus_line.is_some() || !arguments.diagnostics.is_empty() {
       arguments.context_lines
     } else {
@@ -579,6 +606,51 @@ impl CLI {
       max_width: arguments.max_width,
       ..Default::default()
     };
+
+    if html_format {
+      let sink_options = HTMLSinkOptions {
+        theme_label: arguments.theme.clone(),
+        show_line_numbers: arguments.show_line_numbers,
+        markers: arguments.html_markers,
+      };
+
+      let document = highlighter.build_document(&file_path.to_string_lossy(), &content, &options);
+
+      let rendered = match &arguments.html_fragment_separator {
+        Some(separator) => {
+          let document = Document {
+            version: document.version,
+            nodes: document.nodes.into_iter().filter(|node| !matches!(node, Node::ProgressRule { .. })).collect(),
+          };
+
+          highlighter.render_html_fragments(&document, &sink_options).join(&format!("\n{separator}\n"))
+        }
+
+        None => highlighter.render_html(&document, &sink_options),
+      };
+
+      if arguments.html_chrome_document {
+        let scheme = match resolve_theme(&arguments.theme) {
+          Ok(scheme) => scheme,
+
+          Err(error) => {
+            eprintln!("Error: {error}");
+            process::exit(1);
+          }
+        };
+
+        let stylesheet = generate_stylesheet(&scheme, &arguments.theme, None);
+
+        println!(
+          "{}",
+          wrap_document_html(&rendered, &stylesheet, arguments.html_markers == MarkerMode::HighlightApi)
+        );
+      } else {
+        println!("{rendered}");
+      }
+
+      return;
+    }
 
     if json_format {
       let document = highlighter.build_document(&file_path.to_string_lossy(), &content, &options);
@@ -619,6 +691,9 @@ struct ParsedValues {
   diagnostics: Option<String>,
   split_diagnostics: bool,
   diff: bool,
+  html_markers: Option<String>,
+  html_chrome: Option<String>,
+  html_fragment_separator: Option<String>,
 }
 
 fn next_value(arguments: &[String], index: &mut usize, inline_value: &Option<String>) -> Option<String> {

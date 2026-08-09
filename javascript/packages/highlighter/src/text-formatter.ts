@@ -17,9 +17,13 @@ export class TextFormatter {
     })
   }
 
+  static replaceBackticks(text: string, open: string, close: string): string {
+    return text.replace(/`([^`]+)`/g, (_match, inner) => `${open}${inner}${close}`)
+  }
+
   static highlightBackticks(text: string): string {
     if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
-      return text.replace(/`([^`]+)`/g, `${colors.bold}${colors.white}$1${colors.reset}`)
+      return TextFormatter.replaceBackticks(text, `${colors.bold}${colors.white}`, colors.reset)
     }
     return text
   }
