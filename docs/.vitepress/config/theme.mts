@@ -69,6 +69,7 @@ const defaultSidebar = [
       { text: "GitLab CI", link: "/integrations/ci/gitlab" },
       { text: "Bitbucket Pipelines", link: "/integrations/ci/bitbucket" },
       { text: "Reviewdog", link: "/integrations/ci/reviewdog" },
+      { text: "Git Hooks", link: "/integrations/git-hooks" },
     ],
   },
   {

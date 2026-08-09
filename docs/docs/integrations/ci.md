@@ -10,3 +10,5 @@ Run the Herb [Linter](/projects/linter), [Formatter](/projects/formatter), and p
 - **[Reviewdog](/integrations/ci/reviewdog)** - Post linter findings as inline review comments
 
 See the [Linter](/projects/linter) and [Formatter](/projects/formatter) docs for the full list of CLI flags available in each snippet.
+
+To run the same checks locally before every commit, see [Git Hooks](/integrations/git-hooks).

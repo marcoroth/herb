@@ -32,7 +32,7 @@ jobs:
         run: npx --yes @herb-tools/formatter --check
 ```
 
-The formatter requires an explicit path in CI — without one it reads from stdin, which `--check` rejects. Adjust `app/views` to match where your templates live.
+Without a path the formatter checks every file configured in `.herb.yml`. Pass a directory such as `app/views` to narrow the check.
 
 ::: warning Formatter is in experimental preview
 `@herb-tools/formatter` prints an experimental-preview banner on every invocation, and `--check` will fail on any codebase that hasn't already been run through `herb-format`. Before wiring this step into CI, see [Adopting the formatter](#adopting-the-formatter) below.
