@@ -32,11 +32,13 @@ import type {
   HTMLOpenTagNode,
   LexResult,
   PartialContext,
+  StaticAttributeMap,
   Token,
   Node
 } from "@herb-tools/core"
 
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
+import { staticAncestorAttributes } from "../ancestor-attributes.js"
 
 import type * as Nodes from "@herb-tools/core"
 import type { DiagnosticTag } from "@herb-tools/core"
@@ -359,6 +361,16 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
   }
 
   /**
+   * Selected static attributes for each local ancestor, aligned with `ancestorTagNames`.
+   */
+  protected get ancestorAttributes(): StaticAttributeMap[] {
+    return this.elementStack.flatMap(element => {
+      if (getTagLocalName(element) === null) return []
+      return [staticAncestorAttributes(element)]
+    })
+  }
+
+  /**
    * Like `isInsideElement`, but also considers the ancestors this file renders
    * into at every call site, so a partial can be judged by the context its
    * callers place it in.
@@ -418,13 +430,17 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * Returns an offending chain alongside the verdict, so a `mixed` report can
    * point at a call site that is actually at fault.
    */
-  protected placementAcrossCallers(misplaced: (ancestors: string[]) => boolean): { verdict: AncestorVerdict, chain: AncestorChain | null } {
+  protected placementAcrossCallers(misplaced: (ancestors: string[], attributes: StaticAttributeMap[]) => boolean): { verdict: AncestorVerdict, chain: AncestorChain | null } {
     const { chains } = this.renderedContext
     const local = this.ancestorTagNames
 
     if (chains.length === 0) return { verdict: "unknown", chain: null }
 
-    const offending = chains.filter(chain => misplaced([...chain.tags, ...local]))
+    const localAttributes = this.ancestorAttributes
+    const offending = chains.filter(chain => misplaced(
+      [...chain.tags, ...local],
+      [...(chain.attributes ?? chain.tags.map(() => ({}))), ...localAttributes],
+    ))
 
     if (offending.length === chains.length) return { verdict: "always", chain: offending[0] }
     if (offending.length > 0) return { verdict: "mixed", chain: offending[0] }

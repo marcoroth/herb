@@ -6,12 +6,13 @@ import { readFileSync } from "node:fs"
 
 import { getTagLocalName, isHTMLElementNode, isPrismNodeType, isRubyRenderLocalNode, layoutCandidatesFor, outranksTemplate, templateNameForFile } from "@herb-tools/core"
 import { isOutputRender, renderPartialExpression } from "./rules/prism-rule-utils.js"
+import { staticAncestorAttributes } from "./ancestor-attributes.js"
 
 import { PartialCallerIndex } from "@herb-tools/core"
 
 import { TEMPLATE_GLOB_PATTERN } from "@herb-tools/core"
 
-import type { CallSiteLocation, ERBRenderNode, ERBYieldNode, HerbBackend, Node, PartialCallSite, PartialIndex, SerializedPartialCallerIndex } from "@herb-tools/core"
+import type { CallSiteLocation, ERBRenderNode, ERBYieldNode, HerbBackend, Node, PartialCallSite, PartialIndex, SerializedPartialCallerIndex, StaticAttributeMap } from "@herb-tools/core"
 
 const RENDER_MARKER = "render"
 const YIELD_MARKER = "yield"
@@ -37,10 +38,12 @@ function templatesIn(projectPath: string, viewRoot: string, include: string[]): 
 interface RenderSite {
   node: ERBRenderNode
   ancestors: string[]
+  ancestorAttributes?: StaticAttributeMap[]
 }
 
 export interface YieldSite {
   ancestors: string[]
+  ancestorAttributes?: StaticAttributeMap[]
   location?: CallSiteLocation
 }
 
@@ -67,18 +70,25 @@ function callSiteLocation(node: Node): CallSiteLocation | undefined {
 function scanTemplate(node: Node): ScannedTemplate {
   const sites: RenderSite[] = []
   const yields: YieldSite[] = []
-  const stack: string[] = []
+  const stack: { tagName: string, attributes: StaticAttributeMap }[] = []
 
   let isDocumentRoot = false
 
   const walk = (current: Node) => {
-    const tagName = isHTMLElementNode(current) ? getTagLocalName(current) : null
+    const element = isHTMLElementNode(current) ? current : null
+    const tagName = element ? getTagLocalName(element) : null
 
     if (tagName === "html") isDocumentRoot = true
-    if (tagName) stack.push(tagName)
+    if (tagName) {
+      stack.push({ tagName, attributes: staticAncestorAttributes(element!) })
+    }
 
-    if (current.type === "AST_ERB_RENDER_NODE") sites.push({ node: current as ERBRenderNode, ancestors: [...stack] })
-    if (isBareYield(current)) yields.push({ ancestors: [...stack], location: callSiteLocation(current) })
+    const ancestors = stack.map(ancestor => ancestor.tagName)
+    const attributes = stack.map(ancestor => ancestor.attributes)
+    const ancestorAttributes = attributes.some(attribute => Object.keys(attribute).length > 0) ? attributes : undefined
+
+    if (current.type === "AST_ERB_RENDER_NODE") sites.push({ node: current as ERBRenderNode, ancestors, ancestorAttributes })
+    if (isBareYield(current)) yields.push({ ancestors, ancestorAttributes, location: callSiteLocation(current) })
 
     for (const child of current.childNodes()) {
       if (child) walk(child)
@@ -135,7 +145,7 @@ export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file
 
   const { sites, yields, isDocumentRoot } = scanTemplate(herb.parse(source, PARSER_OPTIONS).value)
 
-  for (const { node, ancestors } of sites) {
+  for (const { node, ancestors, ancestorAttributes } of sites) {
     const name = partialNameRenderedBy(node)
 
     if (name === null) {
@@ -154,7 +164,7 @@ export function collectCallSites(herb: HerbBackend, partials: PartialIndex, file
 
     const existing = callSites.get(declaration.file) ?? []
 
-    existing.push({ caller: file, locals: localsPassedBy(node), ancestors, via: "render", location: callSiteLocation(node) })
+    existing.push({ caller: file, locals: localsPassedBy(node), ancestors, ancestorAttributes, via: "render", location: callSiteLocation(node) })
     callSites.set(declaration.file, existing)
   }
 
@@ -184,8 +194,8 @@ function addLayoutCallSites(files: string[], layoutYields: Map<string, YieldSite
 
       const existing = callSites.get(file) ?? []
 
-      for (const { ancestors, location } of layoutYields.get(layout) ?? []) {
-        existing.push({ caller: layout, locals: [], ancestors, via: "layout", location })
+      for (const { ancestors, ancestorAttributes, location } of layoutYields.get(layout) ?? []) {
+        existing.push({ caller: layout, locals: [], ancestors, ancestorAttributes, via: "layout", location })
       }
 
       callSites.set(file, existing)

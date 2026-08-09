@@ -12,6 +12,7 @@ import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-con
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(A11yNoVisuallyHiddenInteractiveElementsRule)
 
 const message = (tagName: string) => `The keyboard-focusable \`<${tagName}>\` element uses \`sr-only\` without a focus reveal class, so sighted keyboard users may think focus was lost. Remove \`sr-only\` or add a class such as \`focus:not-sr-only\` to reveal the element when it receives focus.`
+const ancestorMessage = (tagName: string, ancestorTagName: string) => `The keyboard-focusable \`<${tagName}>\` element is inside a \`<${ancestorTagName}>\` hidden by \`sr-only\`, so sighted keyboard users may think focus was lost. Remove \`sr-only\` from the ancestor or add \`focus-within:not-sr-only\` to reveal its contents when they receive focus.`
 
 describe("a11y-no-visually-hidden-interactive-elements", () => {
   test("passes for non-interactive element with sr-only", () => {
@@ -194,6 +195,44 @@ describe("a11y-no-visually-hidden-interactive-elements", () => {
     expectNoOffenses('<button class="sr-only <%= additional_classes %>">Submit</button>')
   })
 
+  describe("inside visually hidden ancestors", () => {
+    test("fails for a button inside a visually hidden div", () => {
+      expectWarning(ancestorMessage("button", "div"))
+
+      assertOffenses('<div class="sr-only"><button>Submit</button></div>')
+    })
+
+    test("reports the innermost visually hidden ancestor", () => {
+      expectWarning(ancestorMessage("button", "section"))
+
+      assertOffenses('<div class="sr-only"><section class="sr-only"><button>Submit</button></section></div>')
+    })
+
+    test("passes when focus-within reveals the hidden ancestor", () => {
+      expectNoOffenses('<div class="sr-only focus-within:not-sr-only"><button>Submit</button></div>')
+    })
+
+    test("passes when a prefixed focus-within variant reveals the hidden ancestor", () => {
+      expectNoOffenses('<div class="sr-only md:focus-within:not-sr-only"><button>Submit</button></div>')
+    })
+
+    test("fails when focus only reveals the ancestor on its own focus", () => {
+      expectWarning(ancestorMessage("button", "div"))
+
+      assertOffenses('<div class="sr-only focus:not-sr-only"><button>Submit</button></div>')
+    })
+
+    test("still fails when an outer hidden ancestor is not revealed", () => {
+      expectWarning(ancestorMessage("button", "div"))
+
+      assertOffenses('<div class="sr-only"><section class="sr-only focus-within:not-sr-only"><button>Submit</button></section></div>')
+    })
+
+    test("continues to exclude inputs inside a hidden ancestor", () => {
+      expectNoOffenses('<div class="sr-only"><input type="text"></div>')
+    })
+  })
+
   describe("across call sites", () => {
     const partial = "app/views/shared/_hidden_control.html.erb"
 
@@ -215,21 +254,16 @@ describe("a11y-no-visually-hidden-interactive-elements", () => {
       return linter.lint(source, context).offenses
     }
 
-    test("attaches the call chain to an offense in a rendered partial", () => {
+    test("omits the call chain when the element itself establishes the offense", () => {
       const [offense] = offensesFor(
         renderedFrom(partial, ["html", "body", "main"]),
       )
 
-      expect(offense.renderedFrom?.frames).toHaveLength(1)
-      expect(offense.renderedFrom?.frames[0].ancestors).toEqual([
-        "html",
-        "body",
-        "main",
-      ])
+      expect(offense.renderedFrom).toBeUndefined()
       expect(offense.message).toBe(message("button"))
     })
 
-    test("attaches one resolved chain when the partial has multiple call sites", () => {
+    test("omits the call chain when direct offenses have multiple call sites", () => {
       const [offense] = offensesFor(
         renderedFrom(
           partial,
@@ -238,12 +272,7 @@ describe("a11y-no-visually-hidden-interactive-elements", () => {
         ),
       )
 
-      expect(offense.renderedFrom?.frames).toHaveLength(1)
-      expect(offense.renderedFrom?.frames[0].ancestors).toEqual([
-        "html",
-        "body",
-        "main",
-      ])
+      expect(offense.renderedFrom).toBeUndefined()
       expect(offense.message).toBe(message("button"))
     })
 
@@ -271,14 +300,14 @@ describe("a11y-no-visually-hidden-interactive-elements", () => {
       expect(offense.renderedFrom).toBeUndefined()
     })
 
-    test("attaches the call chain to every offense in the partial", () => {
+    test("omits the call chain from every direct offense in the partial", () => {
       const offenses = offensesFor(
         renderedFrom(partial, ["html", "body", "main"]),
         '<button class="sr-only">Save</button><a class="sr-only" href="/cancel">Cancel</a>',
       )
 
       expect(offenses).toHaveLength(2)
-      expect(offenses.every((offense) => offense.renderedFrom?.frames.length === 1)).toBe(true)
+      expect(offenses.every((offense) => offense.renderedFrom === undefined)).toBe(true)
     })
   })
 })

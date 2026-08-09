@@ -86,6 +86,45 @@ describe("call site ancestors", () => {
 
     expect(callers.callersOf("app/views/posts/_card.html.erb")[0].ancestors).toEqual([])
   })
+
+  test("records selected static attributes on ancestors enclosing a render", async () => {
+    const callers = await indexFor({
+      "app/views/posts/_card.html.erb": `<h1>hi</h1>`,
+      "app/views/posts/index.html.erb": `<main class="page"><div class="sr-only focus-within:not-sr-only"><%= render "posts/card" %></div></main>`,
+    })
+
+    const [callSite] = callers.callersOf("app/views/posts/_card.html.erb")
+
+    expect(callSite.ancestors).toEqual(["main", "div"])
+    expect(callSite.ancestorAttributes).toEqual([
+      { class: "page" },
+      { class: "sr-only focus-within:not-sr-only" },
+    ])
+  })
+
+  test("carries ancestor attributes through transitive render chains", async () => {
+    const callers = await indexFor({
+      "app/views/shared/_control.html.erb": `<button>Save</button>`,
+      "app/views/shared/_wrapper.html.erb": `<section class="wrapper"><%= render "shared/control" %></section>`,
+      "app/views/posts/index.html.erb": `<main class="sr-only"><%= render "shared/wrapper" %></main>`,
+    })
+
+    const [chain] = callers.contextOf("app/views/shared/_control.html.erb").chains
+
+    expect(chain.tags).toEqual(["main", "section"])
+    expect(chain.attributes).toEqual([{ class: "sr-only" }, { class: "wrapper" }])
+  })
+
+  test("omits dynamic class values", async () => {
+    const callers = await indexFor({
+      "app/views/posts/_card.html.erb": `<h1>hi</h1>`,
+      "app/views/posts/index.html.erb": `<main class="<%= classes %>"><%= render "posts/card" %></main>`,
+    })
+
+    const [callSite] = callers.callersOf("app/views/posts/_card.html.erb")
+
+    expect(callSite.ancestorAttributes).toBeUndefined()
+  })
 })
 
 describe("contextOf", () => {
@@ -511,4 +550,3 @@ describe("Action View helper ancestors", () => {
     expect(tagsOf(callers.contextOf("app/views/posts/_badge.html.erb"))).toEqual([["html", "body", "main", "a"]])
   })
 })
-
