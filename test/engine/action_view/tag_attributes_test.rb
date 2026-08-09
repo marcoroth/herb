@@ -49,7 +49,7 @@ module Engine
 
       test "tag.attributes with dynamic boolean attribute" do
         assert_optimized_snapshot(
-          '<option <%= tag.attributes(selected: option == current) %>>One</option>',
+          "<option <%= tag.attributes(selected: option == current) %>>One</option>",
           { option: "one", current: "two" }
         )
       end
