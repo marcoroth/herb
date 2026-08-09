@@ -28,7 +28,7 @@ import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-pre
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
-import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
+import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
 import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
@@ -129,6 +129,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { SourceIndentationRule } from "./rules/source-indentation.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
+import { SVGNoDeprecatedTagsRule } from "./rules/svg-no-deprecated-tags.js"
 
 import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
@@ -268,6 +269,7 @@ export const rules: RuleClass[] = [
   SourceIndentationRule,
 
   SVGTagNameCapitalizationRule,
+  SVGNoDeprecatedTagsRule,
 
   TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,

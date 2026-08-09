@@ -154,6 +154,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### SVG
 
+- [`svg-no-deprecated-tags`](./svg-no-deprecated-tags.md) - Disallow SVG elements removed from SVG 2
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
 
 
