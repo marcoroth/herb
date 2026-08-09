@@ -294,10 +294,11 @@ export class Server {
     const callers = this.service.partialCallerIndexService
 
     if (event.type === FileChangeType.Deleted) {
-      callers.remove(event.uri)
+      const stoppedCalling = callers.remove(event.uri)
+
       this.service.diagnostics.clear(event.uri)
 
-      return partials.remove(event.uri)
+      return partials.remove(event.uri) || stoppedCalling
     }
 
     const isOpen = this.service.documentService.get(event.uri) !== undefined
@@ -305,8 +306,12 @@ export class Server {
 
     if (event.type === FileChangeType.Created && isPartialPath(event.uri)) {
       await callers.initialize()
-    } else if (!isOpen) {
-      callers.updateFromDisk(event.uri)
+
+      return true
+    }
+
+    if (!isOpen) {
+      return callers.updateFromDisk(event.uri) || changed
     }
 
     return changed
