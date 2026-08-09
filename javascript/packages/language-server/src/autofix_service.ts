@@ -7,15 +7,18 @@ import { Config } from "@herb-tools/config"
 
 import { getFullDocumentRange } from "./range_utils"
 import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
 
 export class AutofixService {
   private connection: Connection
   private linter: Linter
   private partialIndexService?: PartialIndexService
+  private partialCallerIndexService?: PartialCallerIndexService
 
-  constructor(connection: Connection, config?: Config, partialIndexService?: PartialIndexService) {
+  constructor(connection: Connection, config?: Config, partialIndexService?: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
     this.connection = connection
     this.partialIndexService = partialIndexService
+    this.partialCallerIndexService = partialCallerIndexService
     this.linter = this.buildLinter(config)
   }
 
@@ -31,6 +34,7 @@ export class AutofixService {
     return {
       fileName: this.partialIndexService?.relativePathFor(uri) ?? uri,
       partials: this.partialIndexService?.index,
+      partialCallers: this.partialCallerIndexService?.index,
     }
   }
 

@@ -6,6 +6,8 @@ import { LinterService } from "../src/linter_service"
 import { Settings } from "../src/settings"
 import { Project } from "../src/project"
 import { PartialIndexService } from "../src/partial_index_service"
+import { PartialCallerIndexService } from "../src/partial_caller_index_service"
+import { PartialCallerIndex } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
@@ -256,6 +258,56 @@ describe("LinterService", () => {
       )
 
       expect(lowercaseDiagnostics).toHaveLength(0)
+    })
+  })
+
+  describe("cross-file rules", () => {
+    const PARTIAL = "app/views/shared/_meta.html.erb"
+
+    function callerServiceFor(callers: PartialCallerIndex): PartialCallerIndexService {
+      const service = new PartialCallerIndexService(mockConnection, mockProject, partialIndexService)
+
+      vi.spyOn(service, "index", "get").mockReturnValue(callers)
+
+      return service
+    }
+
+    function settingsWithLinter() {
+      const settings = new Settings(mockParams, mockConnection)
+
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      return settings
+    }
+
+    test("reports an offense that only the call sites can justify", async () => {
+      const callers = new PartialCallerIndex(
+        new Map([[PARTIAL, [{ caller: "app/views/layouts/application.html.erb", locals: [], ancestors: ["html", "body"] }]]]),
+        new Set(["app/views/layouts/application.html.erb"]),
+        new Map(),
+        new Set()
+      )
+
+      const service = new LinterService(mockConnection, settingsWithLinter(), mockProject, partialIndexService, callerServiceFor(callers))
+
+      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+
+      const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
+      const result = await service.lintDocument(document)
+
+      expect(result.diagnostics.some(diagnostic => diagnostic.code === "html-head-only-elements")).toBe(true)
+    })
+
+    test("stays silent for the same partial when no call site is known", async () => {
+      const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
+      const service = new LinterService(mockConnection, settingsWithLinter(), mockProject, partialIndexService, callerServiceFor(empty))
+
+      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+
+      const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
+      const result = await service.lintDocument(document)
+
+      expect(result.diagnostics.some(diagnostic => diagnostic.code === "html-head-only-elements")).toBe(false)
     })
   })
 })

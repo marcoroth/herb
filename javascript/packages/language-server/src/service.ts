@@ -61,11 +61,11 @@ export class Service {
     this.parserService = new ParserService()
     this.partialIndexService = new PartialIndexService(this.connection, this.project)
     this.partialCallerIndexService = new PartialCallerIndexService(this.connection, this.project, this.partialIndexService)
-    this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService)
+    this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService, this.partialCallerIndexService)
     this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
-    this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService)
+    this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService, this.partialCallerIndexService)
     this.configService = new ConfigService(this.project.projectPath)
-    this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService)
+    this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService, this.partialCallerIndexService)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService, this.settings)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
@@ -127,9 +127,10 @@ export class Service {
     })
 
     this.documentService.onDidChangeContent(async (change) => {
-      this.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+      const callersChanged = this.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+      const partialsChanged = this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
 
-      if (this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())) {
+      if (callersChanged || partialsChanged) {
         await this.diagnostics.refreshAllDocuments()
 
         return
