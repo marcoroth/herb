@@ -23,7 +23,7 @@ gem "rbs", "~> 4.1"
 gem "rbs-inline", "~> 0.14"
 gem "reactionview", "~> 0.3.0"
 gem "reline", "~> 0.6"
-gem "rubocop", "~> 1.71"
+gem "rubocop", "~> 1.89"
 gem "sorbet"
 gem "turbo-rails", "~> 2.0", require: false
 gem "yerba", "~> 0.9"

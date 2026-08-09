@@ -32,7 +32,7 @@ module Parser
       end
 
       test "expression tag with string interpolation" do
-        assert_parsed_snapshot('<%= "hello #{name}" %>', prism_nodes: true, prism_nodes_deep: true)
+        assert_parsed_snapshot(%(<%= "hello #{name}" %>), prism_nodes: true, prism_nodes_deep: true)
       end
 
       test "non-output tag with assignment" do

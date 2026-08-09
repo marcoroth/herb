@@ -186,7 +186,7 @@ class RenderAnalyzerTest < Minitest::Spec
 
   test "dynamic prefix marks matching partials as reachable" do
     directory = create_project(
-      "app/views/pages/index.html.erb" => '<%= render "providers/#{provider_name}" %>',
+      "app/views/pages/index.html.erb" => %(<%= render "providers/#{provider_name}" %>),
       "app/views/providers/_youtube.html.erb" => "<div>YouTube</div>",
       "app/views/providers/_vimeo.html.erb" => "<div>Vimeo</div>"
     )
@@ -198,7 +198,7 @@ class RenderAnalyzerTest < Minitest::Spec
 
   test "dynamic render does not report unresolved" do
     directory = create_project(
-      "app/views/pages/index.html.erb" => '<%= render "providers/#{name}" %>'
+      "app/views/pages/index.html.erb" => %(<%= render "providers/#{name}" %>)
     )
 
     result = check(directory)
@@ -223,7 +223,7 @@ class RenderAnalyzerTest < Minitest::Spec
       "app/views/pages/index.html.erb" => "<p>Page</p>",
       "app/views/cards/_basic.html.erb" => "<div>Basic</div>",
       "app/views/cards/_premium.html.erb" => "<div>Premium</div>",
-      "app/controllers/pages_controller.rb" => 'render partial: "cards/#{card_type}"'
+      "app/controllers/pages_controller.rb" => %(render partial: "cards/#{card_type}")
     )
 
     result = check(directory)
@@ -381,7 +381,7 @@ class RenderAnalyzerTest < Minitest::Spec
 
   test "fully_resolvable? returns false with interpolated partial path" do
     directory = create_project(
-      "app/views/pages/index.html.erb" => '<%= render "cards/#{card_type}" %>'
+      "app/views/pages/index.html.erb" => %(<%= render "cards/#{card_type}" %>)
     )
 
     analyzer = Herb::ActionView::RenderAnalyzer.new(directory)

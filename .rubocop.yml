@@ -25,6 +25,10 @@ Style/ClassAndModuleChildren:
 Style/Documentation:
   Enabled: false
 
+Style/OneClassPerFile:
+  Exclude:
+    - lib/herb.rb
+
 Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes

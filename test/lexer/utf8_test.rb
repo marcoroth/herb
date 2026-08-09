@@ -63,7 +63,7 @@ module Lexer
     end
 
     test "complex UTF-8 with ERB" do
-      assert_lexed_snapshot('<%= "Héllö #{wörld}" %>')
+      assert_lexed_snapshot(%(<%= "Héllö #{wörld}" %>)) # rubocop:disable Naming/AsciiIdentifiers
     end
   end
 end

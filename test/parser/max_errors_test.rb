@@ -8,7 +8,7 @@ module Parser
       source = "<div>" * 1000
       result = Herb.parse(source)
 
-      missing_tag_errors = result.errors.select { |e| e.is_a?(Herb::Errors::MissingClosingTagError) }
+      missing_tag_errors = result.errors.grep(Herb::Errors::MissingClosingTagError)
       assert_equal 25, missing_tag_errors.size
     end
 
@@ -16,7 +16,7 @@ module Parser
       source = "<div>" * 1000
       result = Herb.parse(source, max_errors: 5)
 
-      missing_tag_errors = result.errors.select { |e| e.is_a?(Herb::Errors::MissingClosingTagError) }
+      missing_tag_errors = result.errors.grep(Herb::Errors::MissingClosingTagError)
       assert_equal 5, missing_tag_errors.size
     end
 
@@ -24,7 +24,7 @@ module Parser
       source = "<div>" * 100
       result = Herb.parse(source, max_errors: nil)
 
-      missing_tag_errors = result.errors.select { |e| e.is_a?(Herb::Errors::MissingClosingTagError) }
+      missing_tag_errors = result.errors.grep(Herb::Errors::MissingClosingTagError)
       assert_equal 100, missing_tag_errors.size
     end
 
@@ -32,7 +32,7 @@ module Parser
       source = "</div>" * 1000
       result = Herb.parse(source, max_errors: 10)
 
-      missing_tag_errors = result.errors.select { |e| e.is_a?(Herb::Errors::MissingOpeningTagError) }
+      missing_tag_errors = result.errors.grep(Herb::Errors::MissingOpeningTagError)
       assert_equal 10, missing_tag_errors.size
     end
 
