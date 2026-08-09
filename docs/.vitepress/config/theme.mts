@@ -53,6 +53,7 @@ const defaultSidebar = [
       { text: "Cursor", link: "/integrations/editors/cursor" },
       { text: "Helix", link: "/integrations/editors/helix" },
       { text: "Neovim", link: "/integrations/editors/neovim" },
+      { text: "Nova", link: "/integrations/editors/nova" },
       { text: "RubyMine", link: "/integrations/editors/rubymine" },
       { text: "Sublime Text", link: "/integrations/editors/sublime" },
       { text: "Vim", link: "/integrations/editors/vim" },
