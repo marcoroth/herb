@@ -8,11 +8,11 @@ Detects indentation that doesn't match the configured indentation style. By defa
 
 ## Configuration
 
-Set `formatter.indentType` in your Herb config to `"spaces"` (default) or `"tabs"` to control which character this rule expects and which one `--fix` writes. The same option also controls the indentation the [formatter](/projects/formatter) writes.
+Set `formatter.indentStyle` in your Herb config to `"spaces"` (default) or `"tabs"` to control which character this rule expects and which one `--fix` writes. The same option also controls the indentation the [formatter](/projects/formatter) writes.
 
 ```yaml
 formatter:
-  indentType: tabs
+  indentStyle: tabs
 ```
 
 ## Rationale
@@ -37,7 +37,7 @@ Mixing tabs and spaces for indentation causes inconsistent visual formatting acr
 </div>
 ```
 
-### ✅ Good (`indentType: tabs`)
+### ✅ Good (`indentStyle: tabs`)
 
 ```erb
 <div>
@@ -45,7 +45,7 @@ Mixing tabs and spaces for indentation causes inconsistent visual formatting acr
 </div>
 ```
 
-### 🚫 Bad (`indentType: tabs`)
+### 🚫 Bad (`indentStyle: tabs`)
 
 ```erb
 <div>

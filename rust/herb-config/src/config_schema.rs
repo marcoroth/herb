@@ -84,7 +84,7 @@ pub struct FormatterConfig {
   pub indent_width: Option<usize>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
-  pub indent_type: Option<IndentType>,
+  pub indent_style: Option<IndentStyle>,
 
   #[serde(default, skip_serializing_if = "Option::is_none")]
   pub max_line_length: Option<usize>,
@@ -95,7 +95,7 @@ pub struct FormatterConfig {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum IndentType {
+pub enum IndentStyle {
   Spaces,
   Tabs,
 }

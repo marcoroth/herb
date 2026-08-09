@@ -1,4 +1,4 @@
-export type IndentType = "spaces" | "tabs"
+export type IndentStyle = "spaces" | "tabs"
 
 export const LEADING_BLANKS = /^[^\S\n]*/
 
@@ -8,9 +8,9 @@ export const LEADING_BLANKS = /^[^\S\n]*/
  * Only whole `indentWidth`-space groups are converted to tabs; any remainder
  * (e.g. alignment padding that isn't a full indent level) is left as spaces.
  * Existing tabs are expanded to `indentWidth` spaces before conversion, so
- * mixed indentation is normalized regardless of the target `indentType`.
+ * mixed indentation is normalized regardless of the target `indentStyle`.
  */
-export function convertIndentation(source: string, indentWidth: number, indentType: IndentType): string {
+export function convertIndentation(source: string, indentWidth: number, indentStyle: IndentStyle): string {
   const lines = source.split("\n")
 
   const result = lines.map((line) => {
@@ -21,7 +21,7 @@ export function convertIndentation(source: string, indentWidth: number, indentTy
     const leading = match[0]
     const normalized = leading.replace(/\t/g, " ".repeat(indentWidth))
 
-    const replaced = indentType === "tabs"
+    const replaced = indentStyle === "tabs"
       ? "\t".repeat(Math.floor(normalized.length / indentWidth)) + " ".repeat(normalized.length % indentWidth)
       : normalized
 

@@ -44,7 +44,7 @@ export class Formatter {
 
     const mergedOptions: FormatOptions = {
       indentWidth: options.indentWidth ?? formatterConfig.indentWidth,
-      indentType: options.indentType ?? formatterConfig.indentType,
+      indentStyle: options.indentStyle ?? formatterConfig.indentStyle,
       maxLineLength: options.maxLineLength ?? formatterConfig.maxLineLength,
       preRewriters: options.preRewriters,
       postRewriters: options.postRewriters,
@@ -121,7 +121,7 @@ export class Formatter {
       }
     }
 
-    if (resolvedOptions.indentType === "tabs") {
+    if (resolvedOptions.indentStyle === "tabs") {
       formatted = convertIndentation(formatted, resolvedOptions.indentWidth, "tabs")
     }
 

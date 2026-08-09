@@ -38,7 +38,7 @@ describe("Settings", () => {
       expect(settings.defaultSettings.formatter).toBeDefined()
       expect(settings.defaultSettings.formatter?.enabled).toBe(false)
       expect(settings.defaultSettings.formatter?.indentWidth).toBeDefined()
-      expect(settings.defaultSettings.formatter?.indentType).toBeDefined()
+      expect(settings.defaultSettings.formatter?.indentStyle).toBeDefined()
       expect(settings.defaultSettings.formatter?.maxLineLength).toBeDefined()
     })
   })
@@ -135,7 +135,7 @@ describe("Settings", () => {
         formatter: {
           enabled: true,
           indentWidth: 2,
-          indentType: "spaces",
+          indentStyle: "spaces",
           maxLineLength: 80
         }
       })
@@ -166,7 +166,7 @@ describe("Settings", () => {
         formatter: {
           enabled: false,
           indentWidth: 2,
-          indentType: "spaces",
+          indentStyle: "spaces",
           maxLineLength: 80
         }
       })

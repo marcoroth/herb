@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use herb_config::{Config, HerbConfigOptions, IndentType, Severity, Tool};
+use herb_config::{Config, HerbConfigOptions, IndentStyle, Severity, Tool};
 
 fn config_from_yaml(yaml: &str) -> Config {
   let options: HerbConfigOptions = serde_yaml::from_str(yaml).unwrap();
@@ -27,7 +27,7 @@ fn default_config_has_default_formatter_settings() {
   let formatter = config.formatter().unwrap();
 
   assert_eq!(formatter.indent_width, Some(2));
-  assert_eq!(formatter.indent_type, Some(IndentType::Spaces));
+  assert_eq!(formatter.indent_style, Some(IndentStyle::Spaces));
   assert_eq!(formatter.max_line_length, Some(80));
 }
 

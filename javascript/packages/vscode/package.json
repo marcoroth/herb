@@ -86,7 +86,7 @@
           "description": "Number of spaces for each indentation level.",
           "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
-        "languageServerHerb.formatter.indentType": {
+        "languageServerHerb.formatter.indentStyle": {
           "scope": "resource",
           "type": "string",
           "enum": ["spaces", "tabs"],
@@ -187,8 +187,8 @@
         "icon": "$(symbol-numeric)"
       },
       {
-        "command": "herb.setIndentType",
-        "title": "Herb: Set Indent Type",
+        "command": "herb.setIndentStyle",
+        "title": "Herb: Set Indent Style",
         "icon": "$(symbol-enum)"
       },
       {

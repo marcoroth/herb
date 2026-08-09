@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use herb_config::{Config, HerbConfig, HerbConfigOptions, IndentType, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
+use herb_config::{Config, HerbConfig, HerbConfigOptions, IndentStyle, LinterMode, Severity, SeverityConfig, SeverityOverridable, Tool};
 
 fn default_include_patterns() -> Vec<String> {
   Config::get_default_file_patterns()
@@ -202,10 +202,10 @@ mod config_from_object {
   }
 
   #[test]
-  fn creates_config_with_indent_type_tabs() {
-    let config = config_from_yaml("formatter:\n  indentType: tabs\n");
+  fn creates_config_with_indent_style_tabs() {
+    let config = config_from_yaml("formatter:\n  indentStyle: tabs\n");
 
-    assert_eq!(config.formatter().unwrap().indent_type, Some(IndentType::Tabs));
+    assert_eq!(config.formatter().unwrap().indent_style, Some(IndentStyle::Tabs));
   }
 
   #[test]

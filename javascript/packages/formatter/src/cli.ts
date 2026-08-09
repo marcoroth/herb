@@ -59,7 +59,7 @@ export class CLI {
       --config-file <path>            explicitly specify path to .herb.yml config file
       --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
-      --indent-type <spaces|tabs>     character used for indentation (default: spaces)
+      --indent-style <spaces|tabs>    character used for indentation (default: spaces)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
@@ -76,7 +76,7 @@ export class CLI {
 
       herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
-      herb-format --indent-type tabs              # Format with tab indentation
+      herb-format --indent-style tabs             # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
@@ -92,7 +92,7 @@ export class CLI {
         init: { type: "boolean" },
         "config-file": { type: "string" },
         "indent-width": { type: "string" },
-        "indent-type": { type: "string" },
+        "indent-style": { type: "string" },
         "max-line-length": { type: "string" }
       },
       allowPositionals: true
@@ -116,16 +116,16 @@ export class CLI {
       indentWidth = parsed
     }
 
-    let indentType: "spaces" | "tabs" | undefined
+    let indentStyle: "spaces" | "tabs" | undefined
 
-    if (values["indent-type"]) {
-      if (values["indent-type"] !== "spaces" && values["indent-type"] !== "tabs") {
+    if (values["indent-style"]) {
+      if (values["indent-style"] !== "spaces" && values["indent-style"] !== "tabs") {
         console.error(
-          `Invalid indent-type: ${values["indent-type"]}. Must be "spaces" or "tabs".`,
+          `Invalid indent-style: ${values["indent-style"]}. Must be "spaces" or "tabs".`,
         )
         process.exit(1)
       }
-      indentType = values["indent-type"]
+      indentStyle = values["indent-style"]
     }
 
     let maxLineLength: number | undefined
@@ -149,13 +149,13 @@ export class CLI {
       isInitMode: values.init,
       configFile: values["config-file"],
       indentWidth,
-      indentType,
+      indentStyle,
       maxLineLength
     }
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentType, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
 
     const startTime = Date.now()
     const startDate = new Date()
@@ -245,8 +245,8 @@ export class CLI {
         formatterConfig.indentWidth = indentWidth
       }
 
-      if (indentType !== undefined) {
-        formatterConfig.indentType = indentType
+      if (indentStyle !== undefined) {
+        formatterConfig.indentStyle = indentStyle
       }
 
       if (maxLineLength !== undefined) {

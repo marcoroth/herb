@@ -89,7 +89,7 @@ linter:
 formatter:
   enabled: false
   indentWidth: 2
-  indentType: spaces # "spaces" or "tabs"
+  indentStyle: spaces
   maxLineLength: 80
 
   # # Additional patterns beyond the defaults for formatting

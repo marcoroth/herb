@@ -231,7 +231,7 @@ export class FormattingService {
       formatter: {
         ...projectFormatter,
         indentWidth: settings?.formatter?.indentWidth ?? projectFormatter.indentWidth,
-        indentType: settings?.formatter?.indentType ?? projectFormatter.indentType,
+        indentStyle: settings?.formatter?.indentStyle ?? projectFormatter.indentStyle,
         maxLineLength: settings?.formatter?.maxLineLength ?? projectFormatter.maxLineLength
       }
     } as Config
@@ -339,13 +339,13 @@ export class FormattingService {
 
       let minIndentLevel = Infinity
       const indentWidth = config?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth
-      const indentType = config?.formatter?.indentType ?? defaultFormatOptions.indentType
+      const indentStyle = config?.formatter?.indentStyle ?? defaultFormatOptions.indentStyle
 
       const indentLevelOf = (indent: string): number =>
-        indentType === 'tabs' ? indent.replace(/ /g, '').length : Math.floor(indent.length / indentWidth)
+        indentStyle === 'tabs' ? indent.replace(/ /g, '').length : Math.floor(indent.length / indentWidth)
 
       const indentStringFor = (level: number): string =>
-        indentType === 'tabs' ? '\t'.repeat(level) : ' '.repeat(level * indentWidth)
+        indentStyle === 'tabs' ? '\t'.repeat(level) : ' '.repeat(level * indentWidth)
 
       for (const line of lines) {
         const trimmedLine = line.trim()

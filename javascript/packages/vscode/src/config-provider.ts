@@ -165,7 +165,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       items.push(linterItem)
 
       const formatterEnabled = this.config.isFormatterEnabled
-      const formatterIndentDetail = this.config.formatter?.indentType === 'tabs'
+      const formatterIndentDetail = this.config.formatter?.indentStyle === 'tabs'
         ? 'tabs'
         : `${this.config.formatter?.indentWidth ?? 2} spaces`
       const formatterItem = new ConfigItem(

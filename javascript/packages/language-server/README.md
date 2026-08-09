@@ -124,15 +124,14 @@ See the [Configuration documentation](https://herb-tools.dev/configuration) for 
 
 ### Example Configuration
 
-```yaml
-# .herb.yml
+```yaml [.herb.yml]
 linter:
   enabled: true
 
 formatter:
   enabled: true
   indentWidth: 2
-  indentType: spaces  # "spaces" or "tabs"
+  indentStyle: spaces
   maxLineLength: 80
 ```
 

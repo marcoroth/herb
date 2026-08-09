@@ -25,7 +25,7 @@ export class HerbSettingsCommands {
       vscode.commands.registerCommand('herb.toggleLinter', () => this.toggleLinter()),
       vscode.commands.registerCommand('herb.toggleFormatter', () => this.toggleFormatter()),
       vscode.commands.registerCommand('herb.setIndentWidth', () => this.setIndentWidth()),
-      vscode.commands.registerCommand('herb.setIndentType', () => this.setIndentType()),
+      vscode.commands.registerCommand('herb.setIndentStyle', () => this.setIndentStyle()),
       vscode.commands.registerCommand('herb.setMaxLineLength', () => this.setMaxLineLength()),
     )
   }
@@ -202,14 +202,14 @@ export class HerbSettingsCommands {
     }
   }
 
-  private async setIndentType() {
+  private async setIndentStyle() {
     const config = await this.getOrCreateConfig()
     if (!config) {return}
 
     const configPath = await this.getConfigPath()
     if (!configPath) {return}
 
-    const currentType = config.config.formatter?.indentType ?? "spaces"
+    const currentType = config.config.formatter?.indentStyle ?? "spaces"
 
     const choice = await vscode.window.showQuickPick([
       {
@@ -230,11 +230,11 @@ export class HerbSettingsCommands {
 
     try {
       const aliasedTargets = await Config.mutateConfigFile(configPath, {
-        formatter: { indentType: choice.value }
+        formatter: { indentStyle: choice.value }
       })
 
       vscode.window.showInformationMessage(
-        `Herb formatter indent type set to ${choice.value}`
+        `Herb formatter indent style set to ${choice.value}`
       )
 
       warnAboutAliasedTargets(aliasedTargets)
