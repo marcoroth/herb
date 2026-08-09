@@ -46,6 +46,13 @@ module Engine
 
         assert_optimized_mismatch_snapshot(template, { dom_id: "post_1" })
       end
+
+      test "tag.attributes with dynamic boolean attribute" do
+        assert_optimized_snapshot(
+          '<option <%= tag.attributes(selected: option == current) %>>One</option>',
+          { option: "one", current: "two" }
+        )
+      end
     end
   end
 end

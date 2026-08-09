@@ -97,9 +97,9 @@ class ActionViewTagHelperToHTMLVisitor extends Visitor {
         if (child.value) {
           this.transformAttributeValue(child.value)
         }
-
-        htmlChildren.push(child)
       }
+
+      htmlChildren.push(child)
     }
 
     const htmlOpenTag = HTMLOpenTagNode.build({

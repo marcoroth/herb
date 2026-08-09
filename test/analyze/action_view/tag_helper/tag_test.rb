@@ -748,5 +748,31 @@ module Analyze::ActionView::TagHelper
         <%= tag.hr %>
       HTML
     end
+
+    test "tag.input with boolean attribute from a dynamic expression" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.input type: "text", disabled: user.admin? %>
+      HTML
+    end
+
+    test "tag.div with boolean attribute from a dynamic expression and block" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div hidden: a != b do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "tag.div with boolean attribute shorthand" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div(hidden:) %>
+      HTML
+    end
+
+    test "tag.div with boolean attribute inside data hash stays a valued attribute" do
+      assert_parsed_snapshot(<<~HTML, action_view_helpers: true)
+        <%= tag.div data: { hidden: a != b } %>
+      HTML
+    end
   end
 end
