@@ -4,6 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Config } from "@herb-tools/config"
 import { Project } from "./project"
 import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 
@@ -14,13 +15,15 @@ import type { LintOffense } from "@herb-tools/linter"
 export class CodeActionService {
   private project: Project
   private partialIndexService?: PartialIndexService
+  private partialCallerIndexService?: PartialCallerIndexService
   private config?: Config
   private linter: Linter
 
-  constructor(project: Project, config?: Config, partialIndexService?: PartialIndexService) {
+  constructor(project: Project, config?: Config, partialIndexService?: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
     this.project = project
     this.config = config
     this.partialIndexService = partialIndexService
+    this.partialCallerIndexService = partialCallerIndexService
     this.linter = Linter.from(Herb, config)
   }
 
@@ -90,6 +93,7 @@ export class CodeActionService {
     const lintResult = this.linter.lint(text, {
       fileName: this.partialIndexService?.relativePathFor(document.uri) ?? document.uri,
       partials: this.partialIndexService?.index,
+      partialCallers: this.partialCallerIndexService?.index,
     })
     const offenses = lintResult.offenses
 
