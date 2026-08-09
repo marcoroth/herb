@@ -25,7 +25,7 @@ Options:
   -h, --help             how help
   -v, --version          show version
   --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
-  --format               output format (ansi|html) [default: ansi]
+  --format               output format (ansi|html|json) [default: ansi]
   --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
@@ -166,8 +166,8 @@ impl CLI {
 
     let format = values.format.clone().unwrap_or_else(|| "ansi".to_string());
 
-    if format != "ansi" && format != "html" {
-      eprintln!("Invalid format: {format}. Valid formats: ansi, html.");
+    if format != "ansi" && format != "html" && format != "json" {
+      eprintln!("Invalid format: {format}. Valid formats: ansi, html, json.");
       process::exit(1);
     }
 
@@ -473,6 +473,7 @@ impl CLI {
 
     let is_diff_subcommand = arguments.positionals.first().is_some_and(|positional| positional == "diff");
     let html_format = arguments.format == "html";
+    let json_format = arguments.format == "json";
 
     if html_format {
       if !arguments.diagnostics.is_empty() {
@@ -484,6 +485,11 @@ impl CLI {
         eprintln!("Error: --format html cannot render diffs yet.");
         process::exit(1);
       }
+    }
+
+    if json_format && (arguments.diff_mode || is_diff_subcommand) {
+      eprintln!("Error: --format json cannot render diffs yet.");
+      process::exit(1);
     }
 
     if arguments.diff_mode || is_diff_subcommand {
@@ -562,21 +568,34 @@ impl CLI {
       0
     };
 
-    let highlighted = highlighter.highlight(
-      &file_path.to_string_lossy(),
-      &content,
-      &HighlightOptions {
-        diagnostics: &arguments.diagnostics,
-        split_diagnostics: arguments.split_diagnostics,
-        focus_line: arguments.focus_line,
-        context_lines,
-        show_line_numbers: arguments.show_line_numbers,
-        wrap_lines: arguments.wrap_lines,
-        truncate_lines: arguments.truncate_lines,
-        max_width: arguments.max_width,
-        ..Default::default()
-      },
-    );
+    let options = HighlightOptions {
+      diagnostics: &arguments.diagnostics,
+      split_diagnostics: arguments.split_diagnostics,
+      focus_line: arguments.focus_line,
+      context_lines,
+      show_line_numbers: arguments.show_line_numbers,
+      wrap_lines: arguments.wrap_lines,
+      truncate_lines: arguments.truncate_lines,
+      max_width: arguments.max_width,
+      ..Default::default()
+    };
+
+    if json_format {
+      let document = highlighter.build_document(&file_path.to_string_lossy(), &content, &options);
+
+      match serde_json::to_string_pretty(&document) {
+        Ok(json) => println!("{json}"),
+
+        Err(error) => {
+          eprintln!("Error: {error}");
+          process::exit(1);
+        }
+      }
+
+      return;
+    }
+
+    let highlighted = highlighter.highlight(&file_path.to_string_lossy(), &content, &options);
 
     println!("{highlighted}");
   }

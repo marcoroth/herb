@@ -6,6 +6,8 @@ import { FileRenderer } from "./file-renderer.js"
 import { InitializationManager } from "./initialization-manager.js"
 import { InlineDiagnosticRenderer } from "./inline-diagnostic-renderer.js"
 import { DiffRenderer } from "./diff-renderer.js"
+import { DocumentBuilder } from "./document-builder.js"
+import { AnsiSink } from "./ansi-sink.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { resolveTheme } from "./themes.js"
 import { DEFAULT_HTML_RENDER_OPTIONS, renderFileHTML, renderPlainHTML, renderFocusHTML } from "./html-sink.js"
@@ -15,6 +17,8 @@ import type { ThemeInput } from "./themes.js"
 import type { DiffRenderOptions } from "./diff-renderer.js"
 import type { DiffHunk } from "./diff-computer.js"
 import type { HTMLRenderOptions } from "./html-sink.js"
+import type { Document } from "./document.js"
+import type { CardOptions } from "./document-builder.js"
 
 export interface HighlightOptions {
   diagnostics?: Diagnostic[]
@@ -50,6 +54,7 @@ export class Highlighter {
   private initManager: InitializationManager
   private inlineDiagnosticRenderer: InlineDiagnosticRenderer
   private diffRenderer: DiffRenderer
+  private documentBuilder: DocumentBuilder
 
   constructor(theme: ThemeInput = "onedark", herb?: HerbBackend) {
     const colors = resolveTheme(theme)
@@ -59,6 +64,7 @@ export class Highlighter {
     this.initManager = new InitializationManager(herb)
     this.inlineDiagnosticRenderer = new InlineDiagnosticRenderer(this.syntaxRenderer)
     this.diffRenderer = new DiffRenderer(this.syntaxRenderer, colors)
+    this.documentBuilder = new DocumentBuilder(this.syntaxRenderer)
   }
 
   /**
@@ -101,90 +107,84 @@ export class Highlighter {
     this.requireInitialized()
 
     const {
+      showLineNumbers = true,
+      wrapLines = true,
+      maxWidth = LineWrapper.getTerminalWidth(),
+      truncateLines = false,
+    } = options
+
+    const document = this.buildDocument(path, content, options)
+    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers, wrapLines, truncateLines, maxWidth })
+
+    return sink.render(document)
+  }
+
+  /**
+   * Build the document IR that highlight() renders
+   * @param path - File path for annotation (display only, not used for reading)
+   * @param content - The content to highlight
+   * @param options - Configuration options, dispatched exactly like highlight()
+   * @returns The document
+   */
+  buildDocument(
+    path: string,
+    content: string,
+    options: HighlightOptions = {},
+  ): Document {
+    this.requireInitialized()
+
+    const {
       diagnostics = [],
       splitDiagnostics = false,
       contextLines = 0,
       focusLine,
       showLineNumbers = true,
-      wrapLines = true,
-      maxWidth = LineWrapper.getTerminalWidth(),
-      truncateLines = false,
       codeUrlBuilder,
       fileUrlBuilder,
       suffixBuilder,
     } = options
 
-    // Case 1: Split diagnostics - render each diagnostic individually
     if (diagnostics.length > 0 && splitDiagnostics) {
-      const results: string[] = []
-      for (let i = 0; i < diagnostics.length; i++) {
-        const diagnostic = diagnostics[i]
-        const codeUrl = codeUrlBuilder && diagnostic.code ? codeUrlBuilder(diagnostic.code) : undefined
-        const fileUrl = fileUrlBuilder ? fileUrlBuilder(path, diagnostic) : undefined
-        const suffix = suffixBuilder ? suffixBuilder(diagnostic) : undefined
-        const result = this.highlightDiagnostic(path, diagnostic, content, {
-          contextLines,
-          showLineNumbers,
-          wrapLines,
-          maxWidth,
-          truncateLines,
-          codeUrl,
-          fileUrl,
-          suffix,
-        })
-
-        results.push(result)
-
-        if (i < diagnostics.length - 1) {
-          const width = LineWrapper.getTerminalWidth()
-          const progressText = `[${i + 1}/${diagnostics.length}]`
-          const rightPadding = 16
-          const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)
-          const separator = '⎯'
-          const leftSeparator = separator.repeat(separatorLength)
-          const rightSeparator = separator.repeat(4)
-          const progress = progressText
-
-          results.push(`${leftSeparator}  ${progress} ${rightSeparator}`)
-        }
-      }
-      return results.join("\n\n")
-    }
-
-    // Case 2: Inline diagnostics - show whole file with diagnostics inline
-    if (diagnostics.length > 0) {
-      return this.inlineDiagnosticRenderer.render(
-        path,
-        content,
-        diagnostics,
-        showLineNumbers,
-        wrapLines,
-        maxWidth,
-        truncateLines,
-        codeUrlBuilder,
-      )
-    }
-
-    // Case 3: Focus line - show only specific line with context
-    if (focusLine) {
-      return this.fileRenderer.renderWithFocusLine(
-        path,
-        content,
-        focusLine,
+      return this.documentBuilder.buildSplit(path, content, diagnostics, {
         contextLines,
-        showLineNumbers,
-        maxWidth,
-        wrapLines,
-        truncateLines,
-      )
+        codeUrlBuilder,
+        fileUrlBuilder,
+        suffixBuilder,
+      })
     }
 
-    // Case 4: Default - just highlight the whole file
-    if (showLineNumbers) {
-      return this.fileRenderer.renderWithLineNumbers(path, content, wrapLines, maxWidth, truncateLines)
-    } else {
-      return this.fileRenderer.renderPlain(content, maxWidth, wrapLines, truncateLines)
+    if (diagnostics.length > 0) {
+      return this.documentBuilder.buildInline(path, content, diagnostics, codeUrlBuilder)
     }
+
+    if (focusLine) {
+      return this.documentBuilder.buildFocus(path, content, focusLine, contextLines)
+    }
+
+    if (showLineNumbers) {
+      return this.documentBuilder.buildFile(path, content)
+    }
+
+    return this.documentBuilder.buildPlain(content)
+  }
+
+  /**
+   * Build the document IR for a single diagnostic card
+   * @param path - The file path to display in the diagnostic (display only)
+   * @param diagnostic - The diagnostic message to render
+   * @param content - The content to highlight
+   * @param options - The card options
+   * @returns The document
+   */
+  buildCard(
+    path: string,
+    diagnostic: Diagnostic,
+    content: string,
+    options: CardOptions,
+  ): Document {
+    this.requireInitialized()
+
+    return this.documentBuilder.buildCard(path, diagnostic, content, options)
   }
 
   /**

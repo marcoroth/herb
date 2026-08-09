@@ -11,7 +11,7 @@ Options:
   -h, --help             how help
   -v, --version          show version
   --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
-  --format               output format (ansi|html) [default: ansi]
+  --format               output format (ansi|html|json) [default: ansi]
   --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]

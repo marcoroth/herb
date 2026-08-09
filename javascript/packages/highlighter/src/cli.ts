@@ -28,7 +28,7 @@ export class CLI {
       -h, --help             how help
       -v, --version          show version
       --theme                color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
-      --format               output format (ansi|html) [default: ansi]
+      --format               output format (ansi|html|json) [default: ansi]
       --emit-css             print CSS for a theme or dark:light theme pair (e.g. onedark:github-light) and exit
       --focus                line number to focus on (shows only that line with context)
       --context-lines        number of context lines around focus line [default: 2]
@@ -158,8 +158,8 @@ export class CLI {
 
     const format = values.format || "ansi"
 
-    if (format !== "ansi" && format !== "html") {
-      console.error(`Invalid format: ${format}. Valid formats: ansi, html.`)
+    if (format !== "ansi" && format !== "html" && format !== "json") {
+      console.error(`Invalid format: ${format}. Valid formats: ansi, html, json.`)
       process.exit(1)
     }
 
@@ -383,6 +383,11 @@ export class CLI {
       process.exit(1)
     }
 
+    if (format === "json" && (diffMode || isDiffSubcommand)) {
+      console.error("Error: --format json cannot render diffs yet.")
+      process.exit(1)
+    }
+
     if (diffMode || isDiffSubcommand) {
       const inputs = isDiffSubcommand ? positionals.slice(1) : positionals
 
@@ -416,6 +421,23 @@ export class CLI {
     try {
       const highlighter = new Highlighter(theme)
       await highlighter.initialize()
+
+      if (format === "json") {
+        const document = highlighter.buildDocument(filePath, content, {
+          focusLine,
+          contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
+          showLineNumbers,
+          wrapLines,
+          truncateLines,
+          maxWidth,
+          diagnostics,
+          splitDiagnostics,
+        })
+
+        console.log(JSON.stringify(document, null, 2))
+
+        return
+      }
 
       const highlighted = format === "html"
         ? highlighter.highlightHTML(filePath, content, {

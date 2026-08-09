@@ -65,7 +65,7 @@ impl SyntaxRenderer {
     }
   }
 
-  fn resolve_runs(&self, runs: &[StyledRun]) -> String {
+  pub fn resolve_runs(&self, runs: &[StyledRun]) -> String {
     let mut resolved = String::new();
 
     for run in runs {

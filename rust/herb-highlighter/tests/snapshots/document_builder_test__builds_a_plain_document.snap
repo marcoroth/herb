@@ -1,0 +1,287 @@
+---
+source: herb-highlighter/tests/document_builder_test.rs
+expression: to_json(&document)
+---
+{
+  "version": 1,
+  "nodes": [
+    {
+      "type": "CodeBlock",
+      "kind": "Listing",
+      "firstLine": 1,
+      "runs": [
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<%=",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_ERB_START"
+          }
+        },
+        {
+          "text": " ",
+          "role": {
+            "kind": "Plain"
+          }
+        },
+        {
+          "text": "user",
+          "role": {
+            "kind": "Plain"
+          }
+        },
+        {
+          "text": ".",
+          "role": {
+            "kind": "Plain"
+          }
+        },
+        {
+          "text": "name",
+          "role": {
+            "kind": "Plain"
+          }
+        },
+        {
+          "text": " ",
+          "role": {
+            "kind": "Plain"
+          }
+        },
+        {
+          "text": "%>",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_ERB_END"
+          }
+        },
+        {
+          "text": "\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "hello",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "p",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "  ",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_WHITESPACE"
+          }
+        },
+        {
+          "text": "<",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "world",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_IDENTIFIER"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "span",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "\n",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_NEWLINE"
+          }
+        },
+        {
+          "text": "</",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_START_CLOSE"
+          }
+        },
+        {
+          "text": "div",
+          "role": {
+            "kind": "TagName"
+          }
+        },
+        {
+          "text": ">",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_HTML_TAG_END"
+          }
+        },
+        {
+          "text": "",
+          "role": {
+            "kind": "Token",
+            "tokenType": "TOKEN_EOF"
+          }
+        }
+      ],
+      "lines": [
+        {
+          "number": 1,
+          "emphasis": {
+            "kind": "Normal"
+          },
+          "annotations": []
+        },
+        {
+          "number": 2,
+          "emphasis": {
+            "kind": "Normal"
+          },
+          "annotations": []
+        },
+        {
+          "number": 3,
+          "emphasis": {
+            "kind": "Normal"
+          },
+          "annotations": []
+        },
+        {
+          "number": 4,
+          "emphasis": {
+            "kind": "Normal"
+          },
+          "annotations": []
+        },
+        {
+          "number": 5,
+          "emphasis": {
+            "kind": "Normal"
+          },
+          "annotations": []
+        }
+      ]
+    }
+  ]
+}

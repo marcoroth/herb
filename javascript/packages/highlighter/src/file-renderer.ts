@@ -1,7 +1,6 @@
-import { colorize } from "./color.js"
-import { dimStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
-import * as gutter from "./gutter.js"
+import { DocumentBuilder } from "./document-builder.js"
+import { AnsiSink } from "./ansi-sink.js"
 
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 
@@ -13,33 +12,10 @@ export class FileRenderer {
   }
 
   renderWithLineNumbers(path: string, content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth(), truncateLines = false): string {
-    const highlightedContent = this.syntaxRenderer.highlight(content)
-    const lines = highlightedContent.split("\n")
+    const document = new DocumentBuilder(this.syntaxRenderer).buildFile(path, content)
+    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers: true, wrapLines, truncateLines, maxWidth })
 
-    let output = `${colorize(path, "cyan")}\n\n`
-
-    for (let i = 1; i <= lines.length; i++) {
-      const line = lines[i - 1] || ""
-      const prefix = gutter.linePrefix(i, false)
-
-      if (wrapLines) {
-        const wrappedLines = LineWrapper.wrapLine(line, gutter.availableWidth(maxWidth), "")
-
-        for (let j = 0; j < wrappedLines.length; j++) {
-          if (j === 0) {
-            output += `${prefix}${wrappedLines[j]}\n`
-          } else {
-            output += `${gutter.continuationPrefix()}${wrappedLines[j]}\n`
-          }
-        }
-      } else if (truncateLines) {
-        output += `${prefix}${LineWrapper.truncateLine(line, gutter.availableWidth(maxWidth))}\n`
-      } else {
-        output += `${prefix}${line}\n`
-      }
-    }
-
-    return output.trimEnd()
+    return sink.render(document)
   }
 
   renderWithFocusLine(
@@ -52,91 +28,16 @@ export class FileRenderer {
     wrapLines = false,
     truncateLines = false,
   ): string {
-    const highlightedContent = this.syntaxRenderer.highlight(content)
-    const lines = highlightedContent.split("\n")
+    const document = new DocumentBuilder(this.syntaxRenderer).buildFocus(path, content, focusLine, contextLines)
+    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers, wrapLines, truncateLines, maxWidth })
 
-    const startLine = Math.max(1, focusLine - contextLines)
-    const endLine = Math.min(lines.length, focusLine + contextLines)
-
-    let output = showLineNumbers ? `${colorize(path, "cyan")}\n\n` : ""
-
-    for (let i = startLine; i <= endLine; i++) {
-      const line = lines[i - 1] || ""
-      const isFocusLine = i === focusLine
-
-      if (showLineNumbers) {
-        const prefix = gutter.linePrefix(i, isFocusLine, isFocusLine ? "cyan" : undefined)
-
-        let displayLine = line
-
-        if (!isFocusLine) {
-          displayLine = dimStyledText(line)
-        }
-
-        if (wrapLines) {
-          const wrappedLines = LineWrapper.wrapLine(displayLine, gutter.availableWidth(maxWidth), "")
-
-          for (let j = 0; j < wrappedLines.length; j++) {
-            if (j === 0) {
-              output += `${prefix}${wrappedLines[j]}\n`
-            } else {
-              output += `${gutter.continuationPrefix()}${wrappedLines[j]}\n`
-            }
-          }
-        } else if (truncateLines) {
-          output += `${prefix}${LineWrapper.truncateLine(displayLine, gutter.availableWidth(maxWidth))}\n`
-        } else {
-          output += `${prefix}${displayLine}\n`
-        }
-      } else {
-        let displayLine = line
-
-        if (!isFocusLine) {
-          displayLine = dimStyledText(line)
-        }
-
-        if (wrapLines) {
-          const wrappedLines = LineWrapper.wrapLine(displayLine, maxWidth)
-          for (const wrappedLine of wrappedLines) {
-            output += `${wrappedLine}\n`
-          }
-        } else if (truncateLines) {
-          const truncatedLine = LineWrapper.truncateLine(displayLine, maxWidth)
-          output += `${truncatedLine}\n`
-        } else {
-          output += `${displayLine}\n`
-        }
-      }
-    }
-
-    return output.trimEnd()
+    return sink.render(document)
   }
 
   renderPlain(content: string, maxWidth = LineWrapper.getTerminalWidth(), wrapLines = false, truncateLines = false): string {
-    const highlighted = this.syntaxRenderer.highlight(content)
+    const document = new DocumentBuilder(this.syntaxRenderer).buildPlain(content)
+    const sink = new AnsiSink(this.syntaxRenderer, { showLineNumbers: false, wrapLines, truncateLines, maxWidth })
 
-    if (wrapLines) {
-      const lines = highlighted.split("\n")
-      const wrappedLines: string[] = []
-
-      for (const line of lines) {
-        const wrapped = LineWrapper.wrapLine(line, maxWidth)
-        wrappedLines.push(...wrapped)
-      }
-
-      return wrappedLines.join("\n")
-    } else if (truncateLines) {
-      const lines = highlighted.split("\n")
-      const truncatedLines: string[] = []
-
-      for (const line of lines) {
-        const truncated = LineWrapper.truncateLine(line, maxWidth)
-        truncatedLines.push(truncated)
-      }
-
-      return truncatedLines.join("\n")
-    }
-
-    return highlighted
+    return sink.render(document)
   }
 }

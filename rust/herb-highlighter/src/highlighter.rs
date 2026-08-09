@@ -1,14 +1,16 @@
 use std::sync::Arc;
 
+use crate::ansi_sink::{AnsiSink, AnsiSinkOptions};
 use crate::diagnostic::Diagnostic;
 use crate::diagnostic_renderer::{DiagnosticRenderOptions, DiagnosticRenderer};
 use crate::diff_computer::DiffHunk;
 use crate::diff_renderer::{DiffRenderOptions, DiffRenderer};
+use crate::document::Document;
+use crate::document_builder::{DocumentBuilder, SplitOptions};
 use crate::error::HighlightError;
-use crate::file_renderer::{FileRenderer, RenderOptions};
 use crate::herb_backend::{Herb, HerbBackend};
 use crate::html_sink::{self, HTMLRenderOptions};
-use crate::inline_diagnostic_renderer::{CodeUrlBuilder, InlineDiagnosticRenderer};
+use crate::inline_diagnostic_renderer::CodeUrlBuilder;
 use crate::line_wrapper::LineWrapper;
 use crate::syntax_renderer::SyntaxRenderer;
 use crate::themes::{resolve_theme, ColorScheme, DEFAULT_THEME};
@@ -74,74 +76,48 @@ impl Highlighter {
   pub fn highlight(&self, path: &str, content: &str, options: &HighlightOptions<'_>) -> String {
     let max_width = options.max_width.unwrap_or_else(LineWrapper::get_terminal_width);
 
-    let render_options = RenderOptions {
+    let sink_options = AnsiSinkOptions {
       show_line_numbers: options.show_line_numbers,
       wrap_lines: options.wrap_lines,
-      max_width,
       truncate_lines: options.truncate_lines,
+      max_width,
     };
 
+    let document = self.build_document(path, content, options);
+
+    AnsiSink::new(&self.syntax_renderer).render(&document, &sink_options)
+  }
+
+  pub fn build_document(&self, path: &str, content: &str, options: &HighlightOptions<'_>) -> Document {
+    let builder = DocumentBuilder::new(&self.syntax_renderer);
+
     if !options.diagnostics.is_empty() && options.split_diagnostics {
-      let mut results: Vec<String> = Vec::new();
-
-      for (index, diagnostic) in options.diagnostics.iter().enumerate() {
-        let code_url = match (options.code_url_builder, &diagnostic.code) {
-          (Some(builder), Some(code)) => Some(builder(code)),
-          _ => None,
-        };
-
-        let file_url = options.file_url_builder.map(|builder| builder(path, diagnostic));
-        let suffix = options.suffix_builder.and_then(|builder| builder(diagnostic));
-
-        let result = self.highlight_diagnostic(
-          path,
-          diagnostic,
-          content,
-          &HighlightDiagnosticOptions {
-            context_lines: options.context_lines,
-            show_line_numbers: options.show_line_numbers,
-            wrap_lines: options.wrap_lines,
-            max_width: Some(max_width),
-            truncate_lines: options.truncate_lines,
-            code_url,
-            file_url,
-            suffix,
-            ..Default::default()
-          },
-        );
-
-        results.push(result);
-
-        if index < options.diagnostics.len() - 1 {
-          let width = LineWrapper::get_terminal_width();
-          let progress_text = format!("[{}/{}]", index + 1, options.diagnostics.len());
-          let right_padding = 16;
-          let separator_length = width.saturating_sub(progress_text.chars().count() + 1 + right_padding);
-          let separator = "⎯";
-          let left_separator = separator.repeat(separator_length);
-          let right_separator = separator.repeat(4);
-
-          results.push(format!("{left_separator}  {progress_text} {right_separator}"));
-        }
-      }
-
-      return results.join("\n\n");
+      return builder.build_split(
+        path,
+        content,
+        options.diagnostics,
+        &SplitOptions {
+          context_lines: options.context_lines,
+          optimize_highlighting: true,
+          code_url_builder: options.code_url_builder,
+          file_url_builder: options.file_url_builder,
+          suffix_builder: options.suffix_builder,
+        },
+      );
     }
 
     if !options.diagnostics.is_empty() {
-      return InlineDiagnosticRenderer::new(&self.syntax_renderer).render(path, content, options.diagnostics, &render_options, options.code_url_builder);
+      return builder.build_inline(path, content, options.diagnostics, options.code_url_builder);
     }
 
     if let Some(focus_line) = options.focus_line {
-      return FileRenderer::new(&self.syntax_renderer).render_with_focus_line(path, content, focus_line, options.context_lines, &render_options);
+      return builder.build_focus(path, content, focus_line, options.context_lines);
     }
 
-    let file_renderer = FileRenderer::new(&self.syntax_renderer);
-
     if options.show_line_numbers {
-      file_renderer.render_with_line_numbers(path, content, &render_options)
+      builder.build_file(path, content)
     } else {
-      file_renderer.render_plain(content, &render_options)
+      builder.build_plain(content)
     }
   }
 

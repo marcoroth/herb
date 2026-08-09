@@ -148,7 +148,7 @@ export class SyntaxRenderer {
     return runs
   }
 
-  private resolveRuns(runs: StyledRun[]): string {
+  public resolveRuns(runs: StyledRun[]): string {
     let resolved = ""
 
     for (const run of runs) {
