@@ -137,4 +137,36 @@ describe("PartialCallerIndex", () => {
       expect(callers.contextOf(CARD).resolved).toBe(false)
     })
   })
+
+  describe("ancestor class context", () => {
+    test("preserves ancestor classes through serialization", () => {
+      const callers = index({
+        [CARD]: [{
+          caller: INDEX,
+          locals: [],
+          ancestors: ["main", "div"],
+          ancestorAttributes: [{}, { class: "sr-only" }],
+          via: "render",
+        }],
+      }, [INDEX])
+
+      const restored = PartialCallerIndex.from(structuredClone(callers.toJSON()))
+      const [chain] = restored.contextOf(CARD).chains
+
+      expect(chain.tags).toEqual(["main", "div"])
+      expect(chain.attributes).toEqual([{}, { class: "sr-only" }])
+      expect(chain.frames[0].ancestorAttributes).toEqual([{}, { class: "sr-only" }])
+    })
+
+    test("keeps call sites with the same tags but different classes distinct", () => {
+      const callers = index({
+        [CARD]: [
+          { caller: INDEX, locals: [], ancestors: ["div"], ancestorAttributes: [{ class: "sr-only" }] },
+          { caller: INDEX, locals: [], ancestors: ["div"] },
+        ],
+      }, [INDEX])
+
+      expect(callers.contextOf(CARD).chains).toHaveLength(2)
+    })
+  })
 })

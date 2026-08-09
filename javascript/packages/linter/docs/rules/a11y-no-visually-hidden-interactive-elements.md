@@ -22,6 +22,8 @@ This rule recognizes an `sr-only` class like the one Tailwind defines. It allows
 
 Responsive and other prefixes are supported, such as `md:focus:not-sr-only` and `dark:lg:focus-visible:not-sr-only`. Hover- and active-only variants are not considered focus reveals because they can leave the element hidden when keyboard focus first reaches it.
 
+The rule also detects focusable elements inside an ancestor with `sr-only`. A hidden ancestor must use `not-sr-only` or a `focus-within:not-sr-only` variant to reveal its descendants. A plain `focus:not-sr-only` on the ancestor is not sufficient because focusing a descendant does not focus the ancestor itself.
+
 The rule does not inspect CSS or detect arbitrary visually hidden classes. Class attributes containing ERB are skipped because a dynamic value could add one of the reveal classes.
 
 ::: info Configurability
@@ -75,6 +77,12 @@ With this definition, the visually hidden styles stop applying when the element 
 <button class="sr-only" disabled>Unavailable</button>
 ```
 
+```erb
+<div class="sr-only focus-within:not-sr-only">
+  <button>Submit</button>
+</div>
+```
+
 ### 🚫 Bad
 
 ```erb
@@ -89,13 +97,21 @@ With this definition, the visually hidden styles stop applying when the element 
 <div class="sr-only" tabindex="0">Open menu</div>
 ```
 
+```erb
+<div class="sr-only">
+  <button>Submit</button>
+</div>
+```
+
 ## Across call sites
 
-When an offense is found in a partial, the detailed formatter includes a call chain showing where the partial is rendered. The chain follows `render` calls and each template's conventional layout `yield`, making it possible to trace the hidden control back to the page that includes it.
+This rule considers the classes on ancestors at each call site. A focusable element in a partial is reported when every call site, or at least one call site, renders it inside an ancestor hidden with `sr-only`.
+
+When callers disagree, the detailed formatter includes a call chain pointing to one that hides the element. The chain follows `render` calls and each template's conventional layout `yield`, making it possible to trace the hidden control back to the responsible ancestor.
 
 Action View helpers such as `content_tag`, `tag.div`, and block-form `link_to` calls are included in the element context shown for each call site.
 
-Call-site context does not change whether the rule reports an offense: the hidden class and keyboard focusability belong to the element itself. A file that is not rendered anywhere is still linted normally, but no call chain is attached.
+A file with no known callers or only unresolved render chains is left alone when its local markup does not establish an offense. Dynamic ancestor class values are also skipped because the rule cannot know whether they hide or reveal the element.
 
 Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
 

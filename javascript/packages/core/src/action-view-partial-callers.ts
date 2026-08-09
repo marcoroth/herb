@@ -11,9 +11,12 @@ export interface PartialCallSite {
   caller: string
   locals: string[]
   ancestors: string[]
+  ancestorAttributes?: StaticAttributeMap[]
   via?: CallSiteKind
   location?: CallSiteLocation
 }
+
+export type StaticAttributeMap = Record<string, string>
 
 export interface InferredSignature {
   locals: StrictLocal[]
@@ -24,12 +27,14 @@ export interface InferredSignature {
 export interface CallFrame {
   file: string
   ancestors: string[]
+  ancestorAttributes?: StaticAttributeMap[]
   via: CallSiteKind
   location: CallSiteLocation | null
 }
 
 export interface AncestorChain {
   tags: string[]
+  attributes?: StaticAttributeMap[]
   frames: CallFrame[]
   occurrences: number
 }
@@ -202,7 +207,11 @@ export class PartialCallerIndex {
 
       for (const prefix of prefixes) {
         const tags = [...prefix.tags, ...callSite.ancestors]
-        const key = tags.join(">")
+        const attributes = [
+          ...(prefix.attributes ?? prefix.tags.map(() => ({}))),
+          ...(callSite.ancestorAttributes ?? callSite.ancestors.map(() => ({}))),
+        ]
+        const key = JSON.stringify([tags, attributes])
         const existing = byKey.get(key)
 
         if (existing) {
@@ -219,6 +228,7 @@ export class PartialCallerIndex {
 
         const chain: AncestorChain = {
           tags,
+          ...(attributes.some(attribute => Object.keys(attribute).length > 0) ? { attributes } : {}),
           frames: [...prefix.frames, frame],
           occurrences: prefix.occurrences,
         }
@@ -250,6 +260,7 @@ export class PartialCallerIndex {
     return {
       file: callSite.caller,
       ancestors: callSite.ancestors,
+      ...(callSite.ancestorAttributes ? { ancestorAttributes: callSite.ancestorAttributes } : {}),
       via: callSite.via ?? "render",
       location: callSite.location ?? null,
     }

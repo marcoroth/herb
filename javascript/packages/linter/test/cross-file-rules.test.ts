@@ -14,6 +14,7 @@ import { buildPartialIndex } from "../src/partial-index-builder.js"
 import { buildPartialCallerIndex } from "../src/partial-caller-builder.js"
 
 import { A11yNestedInteractiveElementsRule } from "../src/rules/a11y-nested-interactive-elements.js"
+import { A11yNoVisuallyHiddenInteractiveElementsRule } from "../src/rules/a11y-no-visually-hidden-interactive-elements.js"
 import { ERBNoUnsafeRawRule } from "../src/rules/erb-no-unsafe-raw.js"
 import { HTMLBodyOnlyElementsRule } from "../src/rules/html-body-only-elements.js"
 import { HTMLHeadOnlyElementsRule } from "../src/rules/html-head-only-elements.js"
@@ -99,6 +100,81 @@ afterEach(() => {
   while (projects.length > 0) {
     rmSync(projects.pop()!, { recursive: true, force: true })
   }
+})
+
+describe("a11y-no-visually-hidden-interactive-elements across files", () => {
+  const partial = "app/views/shared/_control.html.erb"
+  const control = `<button>Save</button>`
+
+  test("reports a control rendered inside a visually hidden ancestor", async () => {
+    const offenses = await offensesInProject({
+      [partial]: control,
+      "app/views/settings/show.html.erb": `<div class="sr-only"><%= render "shared/control" %></div>`,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, partial, { enabled: true })
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toContain("Every call site renders the keyboard-focusable `<button>` element inside an ancestor hidden by `sr-only`")
+    expect(offenses[0].message).toContain("The displayed call chain identifies the hidden `<div>` in `app/views/settings/show.html.erb`.")
+    expect(offenses[0].renderedFrom?.frames[0].file).toBe("app/views/settings/show.html.erb")
+  })
+
+  test("reports the offending chain when only some callers are visually hidden", async () => {
+    const offenses = await offensesInProject({
+      [partial]: control,
+      "app/views/settings/show.html.erb": `<div class="sr-only"><%= render "shared/control" %></div>`,
+      "app/views/settings/edit.html.erb": `<div><%= render "shared/control" %></div>`,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, partial, { enabled: true })
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toContain("At least one call site renders the keyboard-focusable `<button>` element inside an ancestor hidden by `sr-only`")
+    expect(offenses[0].message).toContain("The displayed call chain identifies the hidden `<div>` in `app/views/settings/show.html.erb`.")
+    expect(offenses[0].renderedFrom?.frames[0].file).toBe("app/views/settings/show.html.erb")
+  })
+
+  test("resolves visually hidden ancestors transitively", async () => {
+    const wrapper = "app/views/shared/_wrapper.html.erb"
+    const offenses = await offensesInProject({
+      [partial]: control,
+      [wrapper]: `<%= render "shared/control" %>`,
+      "app/views/settings/show.html.erb": `<section class="sr-only"><%= render "shared/wrapper" %></section>`,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, partial, { enabled: true })
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toContain("The displayed call chain identifies the hidden `<section>` in `app/views/settings/show.html.erb`.")
+    expect(offenses[0].renderedFrom?.frames.map(frame => frame.file)).toEqual([
+      "app/views/settings/show.html.erb",
+      wrapper,
+    ])
+  })
+
+  test("reports a control hidden by an ancestor around a layout yield", async () => {
+    const view = "app/views/settings/show.html.erb"
+    const offenses = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html><body><main class="sr-only"><%= yield %></main></body></html>`,
+      [view]: control,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, view, { enabled: true })
+
+    expect(offenses).toHaveLength(1)
+    expect(offenses[0].message).toContain("The displayed call chain identifies the hidden `<main>` in `app/views/layouts/application.html.erb`.")
+    expect(offenses[0].renderedFrom?.frames[0].via).toBe("layout")
+  })
+
+  test("passes when focus-within reveals the caller ancestor", async () => {
+    const offenses = await lintInProject({
+      [partial]: control,
+      "app/views/settings/show.html.erb": `<div class="sr-only focus-within:not-sr-only"><%= render "shared/control" %></div>`,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, partial, { enabled: true })
+
+    expect(offenses).toEqual([])
+  })
+
+  test("stays quiet when caller context is unknown", async () => {
+    const offenses = await lintInProject({
+      [partial]: control,
+    }, A11yNoVisuallyHiddenInteractiveElementsRule, partial, { enabled: true })
+
+    expect(offenses).toEqual([])
+  })
 })
 
 describe("html-head-only-elements across files", () => {
@@ -415,4 +491,3 @@ describe("Action View helper call sites", () => {
     expect(offenses).toEqual(["Found `<a>` nested inside of `<button>`. Every call site renders this file inside a `<button>`. Nesting interactive elements produces invalid HTML, and assistive technologies, such as screen readers, might ignore or respond unexpectedly to such nested controls."])
   })
 })
-
