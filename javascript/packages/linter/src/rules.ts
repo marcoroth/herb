@@ -8,6 +8,7 @@ import { A11yNoAriaLabelMisuseRule } from "./rules/a11y-no-aria-label-misuse.js"
 import { A11yNoAriaUnsupportedElementsRule } from "./rules/a11y-no-aria-unsupported-elements.js"
 import { A11yNoAutofocusAttributeRule } from "./rules/a11y-no-autofocus-attribute.js"
 import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt.js"
+import { A11yNoVisuallyHiddenInteractiveElementsRule } from "./rules/a11y-no-visually-hidden-interactive-elements.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
 import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
@@ -148,6 +149,7 @@ export const rules: RuleClass[] = [
   A11yNoAriaUnsupportedElementsRule,
   A11yNoAutofocusAttributeRule,
   A11yNoRedundantImageAltRule,
+  A11yNoVisuallyHiddenInteractiveElementsRule,
   A11ySVGHasAccessibleTextRule,
 
   ActionViewNoDynamicPartialPathRule,
