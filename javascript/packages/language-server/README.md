@@ -33,6 +33,10 @@ require('lspconfig')
 vim.lsp.enable('herb_ls')
 ```
 
+#### Nova
+
+After installing the Herb Language Server (see below), install the [Herb LSP extension](https://extensions.panic.com/extensions/com.freelancing-gods/com.freelancing-gods.herb-lsp/) from the Nova Extension Library. The extension is a community plugin maintained at [pat/herb-lsp.novaextension](https://github.com/pat/herb-lsp.novaextension).
+
 #### Sublime Text (using Sublime LSP)
 
 After installing the Herb Language Server (see below) and [Sublime LSP](http://lsp.sublimetext.io), update the preferences for the `LSP` package:
