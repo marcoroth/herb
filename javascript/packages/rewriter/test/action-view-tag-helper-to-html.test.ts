@@ -119,6 +119,24 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
       )
     })
 
+    test("tag.div with a dynamic boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div hidden: a != b %>')).toBe(
+        '<div <% if (a != b) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a shorthand boolean attribute becomes a conditional attribute", () => {
+      expect(transform('<%= tag.div(hidden:) %>')).toBe(
+        '<div <% if (hidden) %>hidden<% end %>></div>'
+      )
+    })
+
+    test("tag.div with a dynamic boolean attribute inside a data hash keeps its value", () => {
+      expect(transform('<%= tag.div data: { hidden: a != b } %>')).toBe(
+        '<div data-hidden="<%= ::Herb::Engine.nested_attribute_value(a != b) %>"></div>'
+      )
+    })
+
     test("tag.div with variable attribute value wraps in ERB", () => {
       const input = dedent`
         <%= tag.div class: class_name do %>
@@ -1092,6 +1110,12 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
     test("tag.attributes with attributes before", () => {
       expect(transform('<button class="primary" <%= tag.attributes(id: "cta") %>>Click</button>')).toBe(
         '<button class="primary" id="cta">Click</button>'
+      )
+    })
+
+    test("tag.attributes with a dynamic boolean attribute", () => {
+      expect(transform('<option <%= tag.attributes(selected: option == current) %>>One</option>')).toBe(
+        '<option <% if (option == current) %>selected<% end %>>One</option>'
       )
     })
 
