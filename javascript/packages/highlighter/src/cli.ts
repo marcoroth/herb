@@ -56,9 +56,21 @@ export class CLI {
       `
 
   private parseRawArguments() {
+    const args = process.argv.slice(2)
+    const last = args[args.length - 1]
+
+    if (last === "--emit-css") {
+      console.error("Error: --emit-css requires a theme name.")
+      process.exit(1)
+    }
+
+    if (["--theme", "--format", "--focus", "--context-lines", "--max-width", "--diagnostics"].includes(last)) {
+      args.pop()
+    }
+
     try {
       return parseArgs({
-        args: process.argv.slice(2),
+        args,
         options: {
           help: { type: "boolean", short: "h" },
           version: { type: "boolean", short: "v" },
@@ -81,6 +93,18 @@ export class CLI {
     } catch (error) {
       if (error instanceof Error && error.message.includes("--emit-css")) {
         console.error("Error: --emit-css requires a theme name.")
+        process.exit(1)
+      }
+
+      if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ERR_PARSE_ARGS_UNKNOWN_OPTION") {
+        const option = error.message.match(/'([^']+)'/)?.[1]
+
+        console.error(`Unknown option: ${option ?? error.message}`)
+        process.exit(1)
+      }
+
+      if (error instanceof Error && String((error as NodeJS.ErrnoException).code).startsWith("ERR_PARSE_ARGS")) {
+        console.error(`Error: ${error.message}`)
         process.exit(1)
       }
 
@@ -373,11 +397,23 @@ export class CLI {
     }
 
     const filename = positionals[0]
+    const filePath = resolve(filename)
+
+    let content: string
 
     try {
-      const filePath = resolve(filename)
-      const content = readFileSync(filePath, "utf-8")
+      content = readFileSync(filePath, "utf-8")
+    } catch (error) {
+      if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
+        console.error(`File not found: ${filename}`)
+      } else {
+        console.error(`Error: ${error instanceof Error ? error.message : error}`)
+      }
 
+      process.exit(1)
+    }
+
+    try {
       const highlighter = new Highlighter(theme)
       await highlighter.initialize()
 
@@ -401,12 +437,7 @@ export class CLI {
 
       console.log(highlighted)
     } catch (error) {
-      if (error instanceof Error && error.message.includes("ENOENT")) {
-        console.error(`File not found: ${filename}`)
-      } else {
-        console.error(`Error:`, error)
-      }
-
+      console.error(`Error: ${error instanceof Error ? error.message : error}`)
       process.exit(1)
     }
   }

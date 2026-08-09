@@ -45,7 +45,41 @@ describe("herb-highlight CLI", () => {
         encoding: "utf8",
         cwd: process.cwd(),
       })
-    }).toThrow()
+    }).toThrow(/File not found: non-existent-file.erb/)
+  })
+
+  test("should report the theme, not the input file, when a custom theme path is invalid", () => {
+    const run = () =>
+      execSync(`node ./bin/herb-highlight ${testFile} --theme not-a-theme`, {
+        encoding: "utf8",
+        cwd: process.cwd(),
+      })
+
+    expect(run).toThrow(/Failed to load custom theme from not-a-theme/)
+    expect(run).not.toThrow(/File not found/)
+  })
+
+  test("should fall back to the default theme when --theme has no value", () => {
+    const withFlag = execSync(`node ./bin/herb-highlight ${testFile} --theme`, {
+      encoding: "utf8",
+      cwd: process.cwd(),
+    })
+
+    const withoutFlag = execSync(`node ./bin/herb-highlight ${testFile}`, {
+      encoding: "utf8",
+      cwd: process.cwd(),
+    })
+
+    expect(withFlag).toBe(withoutFlag)
+  })
+
+  test("should report unknown options", () => {
+    expect(() => {
+      execSync(`node ./bin/herb-highlight ${testFile} --bogus`, {
+        encoding: "utf8",
+        cwd: process.cwd(),
+      })
+    }).toThrow(/Unknown option: --bogus/)
   })
 
   test("should respect NO_COLOR environment variable", () => {
