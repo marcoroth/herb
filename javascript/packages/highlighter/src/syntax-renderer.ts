@@ -5,9 +5,12 @@ import { colorize } from "./color.js"
 import type { HerbBackend } from "@herb-tools/core"
 import type { Color } from "./color.js"
 import type { ColorScheme } from "./themes.js"
+import type { StyledRun, StyleRole } from "./document.js"
 
 const HIGHLIGHTED_METHODS = ["raise"]
 const HIGHLIGHTED_WORDS = new Set([...RUBY_KEYWORDS, ...HIGHLIGHTED_METHODS])
+
+const PLAIN: StyleRole = { kind: "Plain" }
 
 type SyntaxRenderState = {
   inTag: boolean
@@ -44,6 +47,10 @@ export class SyntaxRenderer {
   }
 
   public highlight(content: string): string {
+    return this.resolveRuns(this.highlightRuns(content))
+  }
+
+  public highlightRuns(content: string): StyledRun[] {
     if (!this.initialized || !this.herb) {
       throw new Error("SyntaxRenderer must be initialized before use. Call await initialize() first.")
     }
@@ -51,12 +58,20 @@ export class SyntaxRenderer {
     const lexResult = this.herb.lex(content)
 
     if (lexResult.errors.length > 0) {
-      return content
+      return this.plainRuns(content)
     }
 
     const tokens = [...lexResult.value]
 
-    return this.highlightTokens(tokens, content)
+    return this.computeRuns(tokens, content)
+  }
+
+  private plainRuns(content: string): StyledRun[] {
+    if (content.length === 0) {
+      return []
+    }
+
+    return [{ text: content, role: PLAIN }]
   }
 
   private applyColor(text: string, color: Color | null): string {
@@ -66,27 +81,29 @@ export class SyntaxRenderer {
   }
 
   // TODO: in the future we should leverage Prism tokens here
-  private highlightRubyCode(code: string): string {
-    if (!this.isColorEnabled) return code
-
+  private rubyRuns(code: string): StyledRun[] {
     const words = code.split(/(\s+|[^\w\s]+)/)
+    const runs: StyledRun[] = []
 
-    return words
-      .map((word) => {
-        if (HIGHLIGHTED_WORDS.has(word)) {
-          return this.applyColor(word, this.colors.RUBY_KEYWORD)
-        }
+    for (const word of words) {
+      if (word.length === 0) continue
 
-        return word
-      }).join("")
-  }
-
-  private highlightTokens(tokens: Token[], content: string): string {
-    if (!tokens || tokens.length === 0) {
-      return content
+      if (HIGHLIGHTED_WORDS.has(word)) {
+        runs.push({ text: word, role: { kind: "RubyKeyword" } })
+      } else {
+        runs.push({ text: word, role: PLAIN })
+      }
     }
 
-    let highlighted = ""
+    return runs
+  }
+
+  private computeRuns(tokens: Token[], content: string): StyledRun[] {
+    if (!tokens || tokens.length === 0 || content.length === 0) {
+      return this.plainRuns(content)
+    }
+
+    const runs: StyledRun[] = []
     let lastEnd = 0
 
     const state: SyntaxRenderState = {
@@ -106,32 +123,75 @@ export class SyntaxRenderer {
       const prevToken = tokens[i - 1]
 
       if (token.range.start > lastEnd) {
-        highlighted += content.slice(lastEnd, token.range.start)
+        runs.push({ text: content.slice(lastEnd, token.range.start), role: PLAIN })
       }
 
       const tokenText = content.slice(token.range.start, token.range.end)
 
       this.updateState(state, token, tokenText, nextToken, prevToken)
 
-      const color = this.getContextualColor(state, token, tokenText)
+      const role = this.getContextualRole(state, token, tokenText)
 
       if (token.type === "TOKEN_ERB_CONTENT") {
-        const highlightedRuby = this.highlightRubyCode(tokenText)
-        highlighted += highlightedRuby
-      } else if (color !== undefined) {
-        highlighted += this.applyColor(tokenText, color)
+        runs.push(...this.rubyRuns(tokenText))
       } else {
-        highlighted += tokenText
+        runs.push({ text: tokenText, role })
       }
 
       lastEnd = token.range.end
     }
 
     if (lastEnd < content.length) {
-      highlighted += content.slice(lastEnd)
+      runs.push({ text: content.slice(lastEnd), role: PLAIN })
     }
 
-    return highlighted
+    return runs
+  }
+
+  private resolveRuns(runs: StyledRun[]): string {
+    let resolved = ""
+
+    for (const run of runs) {
+      resolved += this.resolveRun(run)
+    }
+
+    return resolved
+  }
+
+  private resolveRun(run: StyledRun): string {
+    const role = run.role
+
+    switch (role.kind) {
+      case "Plain":
+        return run.text
+
+      case "RubyKeyword":
+        if (!this.isColorEnabled) return run.text
+
+        return this.applyColor(run.text, this.colors.RUBY_KEYWORD)
+
+      case "TagName":
+        return this.applyColor(run.text, this.colors.TOKEN_HTML_TAG_START)
+
+      case "AttributeName":
+        return this.applyColor(run.text, "#D19A66")
+
+      case "AttributeValue":
+        return this.applyColor(run.text, "#98C379")
+
+      case "CommentInterior":
+        return this.applyColor(run.text, this.colors.TOKEN_HTML_COMMENT_START)
+
+      case "Token": {
+        if (!this.colors) {
+          return run.text
+        }
+
+        const color = this.colors[role.tokenType as keyof ColorScheme]
+
+        return this.applyColor(run.text, color !== undefined ? color : null)
+      }
+    }
   }
 
   private updateState(
@@ -208,11 +268,11 @@ export class SyntaxRenderer {
     }
   }
 
-  private getContextualColor(
+  private getContextualRole(
     state: SyntaxRenderState,
     token: Token,
     tokenText: string,
-  ): Color | null {
+  ): StyleRole {
     if (
       state.inComment &&
       token.type !== "TOKEN_HTML_COMMENT_START" &&
@@ -221,36 +281,31 @@ export class SyntaxRenderer {
       token.type !== "TOKEN_ERB_CONTENT" &&
       token.type !== "TOKEN_ERB_END"
     ) {
-      return this.colors.TOKEN_HTML_COMMENT_START
+      return { kind: "CommentInterior" }
     }
 
     switch (token.type) {
       case "TOKEN_IDENTIFIER":
         if (state.inTag && tokenText === state.tagName) {
-          return this.colors.TOKEN_HTML_TAG_START
+          return { kind: "TagName" }
         } else if (
           state.inTag &&
           state.expectingAttributeValue &&
           !state.inQuotes
         ) {
-          return "#D19A66"
+          return { kind: "AttributeName" }
         } else if (state.inTag && state.expectingAttributeName) {
-          return "#D19A66"
+          return { kind: "AttributeName" }
         } else if (state.inTag && state.inQuotes) {
-          return "#98C379"
+          return { kind: "AttributeValue" }
         } break
 
       case "TOKEN_QUOTE":
         if (state.inTag) {
-          return "#98C379"
+          return { kind: "AttributeValue" }
         } break
     }
 
-    if (!this.colors) {
-      return null
-    }
-
-    const color = this.colors[token.type as keyof ColorScheme]
-    return color !== undefined ? color : null
+    return { kind: "Token", tokenType: token.type }
   }
 }

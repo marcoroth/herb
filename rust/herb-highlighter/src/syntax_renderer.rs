@@ -3,6 +3,7 @@ use std::sync::Arc;
 use herb::Token;
 
 use crate::color::{colorize, is_color_enabled, Color};
+use crate::document::{StyleRole, StyledRun};
 use crate::herb_backend::{Herb, HerbBackend};
 use crate::ruby_keywords::RUBY_KEYWORDS;
 use crate::themes::ColorScheme;
@@ -40,12 +41,21 @@ impl SyntaxRenderer {
   }
 
   pub fn highlight(&self, content: &str) -> String {
+    self.resolve_runs(&self.highlight_runs(content))
+  }
+
+  pub fn highlight_runs(&self, content: &str) -> Vec<StyledRun> {
     let tokens = match self.herb.lex(content) {
       Ok(tokens) => tokens,
-      Err(_) => return content.to_string(),
+      Err(_) => {
+        return vec![StyledRun {
+          text: content.to_string(),
+          role: StyleRole::Plain,
+        }]
+      }
     };
 
-    self.highlight_tokens(&tokens, content)
+    self.runs_for_tokens(&tokens, content)
   }
 
   fn apply_color(&self, text: &str, color: Option<Color>) -> String {
@@ -55,59 +65,85 @@ impl SyntaxRenderer {
     }
   }
 
-  fn highlight_ruby_code(&self, code: &str) -> String {
-    if !is_color_enabled() {
-      return code.to_string();
+  fn resolve_runs(&self, runs: &[StyledRun]) -> String {
+    let mut resolved = String::new();
+
+    for run in runs {
+      resolved.push_str(&self.apply_color(&run.text, self.color_for_role(&run.role)));
     }
 
-    let mut highlighted = String::with_capacity(code.len());
-
-    for word in split_ruby_words(code) {
-      if is_highlighted_word(word) {
-        highlighted.push_str(&self.apply_color(word, Some(self.colors.ruby_keyword)));
-      } else {
-        highlighted.push_str(word);
-      }
-    }
-
-    highlighted
+    resolved
   }
 
-  fn highlight_tokens(&self, tokens: &[Token], content: &str) -> String {
-    if tokens.is_empty() {
-      return content.to_string();
+  fn color_for_role(&self, role: &StyleRole) -> Option<Color> {
+    match role {
+      StyleRole::Plain => None,
+      StyleRole::Token(token_type) => self.colors.for_token_type(token_type),
+      StyleRole::RubyKeyword => Some(self.colors.ruby_keyword),
+      StyleRole::TagName => Some(self.colors.token_html_tag_start),
+      StyleRole::AttributeName => Some(Color::Rgb(0xD1, 0x9A, 0x66)),
+      StyleRole::AttributeValue => Some(Color::Rgb(0x98, 0xC3, 0x79)),
+      StyleRole::CommentInterior => Some(self.colors.token_html_comment_start),
+    }
+  }
+
+  fn runs_for_tokens(&self, tokens: &[Token], content: &str) -> Vec<StyledRun> {
+    if content.is_empty() {
+      return Vec::new();
     }
 
-    let mut highlighted = String::new();
+    if tokens.is_empty() {
+      return vec![StyledRun {
+        text: content.to_string(),
+        role: StyleRole::Plain,
+      }];
+    }
+
+    let mut runs = Vec::new();
     let mut last_end = 0;
 
     let mut state = SyntaxRenderState::default();
 
     for token in tokens {
       if token.range.from > last_end {
-        highlighted.push_str(slice(content, last_end, token.range.from));
+        runs.push(StyledRun {
+          text: slice(content, last_end, token.range.from).to_string(),
+          role: StyleRole::Plain,
+        });
       }
 
       let token_text = slice(content, token.range.from, token.range.to);
 
       self.update_state(&mut state, token, token_text);
 
-      let color = self.contextual_color(&state, token, token_text);
-
       if token.token_type == "TOKEN_ERB_CONTENT" {
-        highlighted.push_str(&self.highlight_ruby_code(token_text));
+        for word in split_ruby_words(token_text) {
+          let role = if is_highlighted_word(word) {
+            StyleRole::RubyKeyword
+          } else {
+            StyleRole::Plain
+          };
+
+          runs.push(StyledRun { text: word.to_string(), role });
+        }
       } else {
-        highlighted.push_str(&self.apply_color(token_text, color));
+        runs.push(StyledRun {
+          text: token_text.to_string(),
+          role: self.contextual_role(&state, token, token_text),
+        });
       }
 
       last_end = token.range.to;
     }
 
     if last_end < content.len() {
-      highlighted.push_str(slice(content, last_end, content.len()));
+      runs.push(StyledRun {
+        text: slice(content, last_end, content.len()).to_string(),
+        role: StyleRole::Plain,
+      });
     }
 
-    highlighted
+    runs
   }
 
   fn update_state(&self, state: &mut SyntaxRenderState, token: &Token, token_text: &str) {
@@ -178,7 +214,7 @@ impl SyntaxRenderer {
     }
   }
 
-  fn contextual_color(&self, state: &SyntaxRenderState, token: &Token, token_text: &str) -> Option<Color> {
+  fn contextual_role(&self, state: &SyntaxRenderState, token: &Token, token_text: &str) -> StyleRole {
     let token_type = token.token_type.as_str();
 
     if state.in_comment
@@ -188,26 +224,26 @@ impl SyntaxRenderer {
       && token_type != "TOKEN_ERB_CONTENT"
       && token_type != "TOKEN_ERB_END"
     {
-      return Some(self.colors.token_html_comment_start);
+      return StyleRole::CommentInterior;
     }
 
     match token_type {
       "TOKEN_IDENTIFIER" if state.in_tag => {
         if token_text == state.tag_name {
-          return Some(self.colors.token_html_tag_start);
+          return StyleRole::TagName;
         } else if (state.expecting_attribute_value && !state.in_quotes) || state.expecting_attribute_name {
-          return Some(Color::Rgb(0xD1, 0x9A, 0x66));
+          return StyleRole::AttributeName;
         } else if state.in_quotes {
-          return Some(Color::Rgb(0x98, 0xC3, 0x79));
+          return StyleRole::AttributeValue;
         }
       }
 
-      "TOKEN_QUOTE" if state.in_tag => return Some(Color::Rgb(0x98, 0xC3, 0x79)),
+      "TOKEN_QUOTE" if state.in_tag => return StyleRole::AttributeValue,
 
       _ => {}
     }
 
-    self.colors.for_token_type(token_type)
+    StyleRole::Token(token_type.to_string())
   }
 }
 
