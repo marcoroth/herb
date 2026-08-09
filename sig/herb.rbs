@@ -24,5 +24,6 @@ module Herb
 
   def self.dev_server_port: (?untyped project_path) -> untyped
 
-  def self.ensure_installed: () ?{ (?) -> untyped } -> untyped
+  # : (*String gems) -> void
+  def self.ensure_installed: (*String gems) -> void
 end
