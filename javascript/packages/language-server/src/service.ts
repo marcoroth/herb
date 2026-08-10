@@ -91,6 +91,8 @@ export class Service {
   }
 
   async init() {
+    this.connection.console.log(`[Client] Diagnostic related information: ${this.settings.hasDiagnosticRelatedInformationCapability ? "supported" : "not supported"}`)
+
     await this.project.initialize()
     await this.formattingService.initialize()
     await this.partialIndexService.initialize()

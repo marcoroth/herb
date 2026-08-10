@@ -1,4 +1,5 @@
-import { Diagnostic, CodeDescription, Connection } from "vscode-languageserver/node"
+import { Diagnostic, DiagnosticRelatedInformation, CodeDescription, Connection, Position, Range } from "vscode-languageserver/node"
+import { join } from "node:path"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
@@ -8,6 +9,14 @@ import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { Project } from "./project"
+
+import type { AncestorChain } from "@herb-tools/core"
+
+const FRAME_VERBS: Record<string, string> = {
+  render: "rendered from",
+  layout: "rendered into",
+  declaration: "declared at",
+}
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { isConfigDocument, lintToDignosticSeverity, lintToDignosticTags } from "./utils"
@@ -136,6 +145,42 @@ export class LinterService {
     return config.isLinterEnabledForPath(relativePath)
   }
 
+  private messageFor(offense: { message: string, renderedFrom?: AncestorChain }): string {
+    if (this.settings.hasDiagnosticRelatedInformationCapability) return offense.message
+
+    const frames = (offense.renderedFrom?.frames ?? []).filter(frame => frame.location !== null)
+
+    if (frames.length === 0) return offense.message
+
+    const caller = frames[frames.length - 1]
+
+    const verb = FRAME_VERBS[caller.via] ?? FRAME_VERBS.render
+
+    return `${offense.message} ${verb.charAt(0).toUpperCase()}${verb.slice(1)} \`${caller.file}:${caller.location!.line}:${caller.location!.column}\`.`
+  }
+
+  private callChainFor(offense: { renderedFrom?: AncestorChain }): DiagnosticRelatedInformation[] {
+    const frames = offense.renderedFrom?.frames ?? []
+    const information: DiagnosticRelatedInformation[] = []
+
+    for (const frame of [...frames].reverse()) {
+      if (!frame.location) continue
+
+      const position = Position.create(Math.max(frame.location.line - 1, 0), frame.location.column)
+      const nesting = frame.ancestors.length > 0 ? ` inside ${frame.ancestors.map(tag => `<${tag}>`).join(" › ")}` : ""
+
+      information.push({
+        location: {
+          uri: `file://${join(this.project.projectPath, frame.file)}`,
+          range: Range.create(position, position)
+        },
+        message: `${FRAME_VERBS[frame.via] ?? FRAME_VERBS.render} here${nesting}`
+      })
+    }
+
+    return information
+  }
+
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
     if (!this.shouldLintFile(textDocument.uri)) {
       return { diagnostics: [] }
@@ -200,7 +245,7 @@ export class LinterService {
         source: this.source,
         severity: lintToDignosticSeverity(offense.severity),
         range,
-        message: offense.message,
+        message: this.messageFor(offense),
         code: offense.rule,
         data: { rule: offense.rule },
         codeDescription
@@ -210,6 +255,14 @@ export class LinterService {
 
       if (tags.length > 0) {
         diagnostic.tags = tags
+      }
+
+      if (this.settings.hasDiagnosticRelatedInformationCapability) {
+        const relatedInformation = this.callChainFor(offense)
+
+        if (relatedInformation.length > 0) {
+          diagnostic.relatedInformation = relatedInformation
+        }
       }
 
       return diagnostic
