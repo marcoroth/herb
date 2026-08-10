@@ -76,8 +76,7 @@ export class Project {
   async initialize() {
     await this.herbBackend.load()
     await this.loadConfig()
-    await this.formattingProvider.initialize()
-    await this.formattingProvider.refreshConfig(this.config)
+    await this.formattingProvider.initialize(this.config)
     await this.partialIndexService.initialize()
     await this.partialCallerIndexService.initialize()
   }
@@ -105,6 +104,34 @@ export class Project {
 
   contains(path: string): boolean {
     return path === this.root || path.startsWith(`${this.root}/`)
+  }
+
+  /**
+   * What a document in this project should actually be treated as, which is the
+   * user's editor preferences with this project's `.herb.yml` layered over them.
+   * A checked-in config is a decision the whole team made, so it wins over a
+   * personal default for whether the linter and formatter run at all. Settings
+   * that are only ever personal, like `fixOnSave`, stay with the user.
+   */
+  async settingsFor(uri: string): Promise<PersonalHerbSettings> {
+    const settings = await this.userSettings.getDocumentSettings(uri)
+
+    if (!this.config || !Config.exists(this.config.projectPath)) return settings
+
+    return {
+      ...settings,
+      linter: {
+        ...settings.linter,
+        enabled: this.config.isLinterEnabled
+      },
+      formatter: {
+        ...settings.formatter,
+        enabled: this.config.isFormatterEnabled,
+        indentWidth: this.config.formatter?.indentWidth ?? settings.formatter?.indentWidth,
+        indentStyle: this.config.formatter?.indentStyle ?? settings.formatter?.indentStyle,
+        maxLineLength: this.config.formatter?.maxLineLength ?? settings.formatter?.maxLineLength
+      }
+    }
   }
 
   private async readConfig(): Promise<Config> {

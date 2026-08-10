@@ -194,7 +194,7 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const settings = await this.userSettings.getDocumentSettings(textDocument.uri)
+    const settings = await this.project.settingsFor(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
     if (!linterEnabled) {

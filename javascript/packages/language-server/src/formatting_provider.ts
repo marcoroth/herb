@@ -8,7 +8,6 @@ import { UserSettings } from "./user_settings"
 import { Capabilities } from "./capabilities"
 import { Config } from "@herb-tools/config"
 import { isConfigDocument } from "./utils"
-import { version } from "../package.json"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
@@ -31,11 +30,9 @@ export class FormattingProvider {
     this.capabilities = capabilities
   }
 
-  async initialize() {
+  async initialize(config?: Config) {
     try {
-      this.config = await Config.loadForEditor(this.project.root, version)
-      this.connection.console.log(`[Formatting] Config loaded, formatter config: ${JSON.stringify(this.config?.formatter || 'none')}`)
-      await this.loadConfiguredRewriters()
+      await this.refreshConfig(config)
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
       this.connection.console.error(`Failed to initialize Herb formatter: ${error}`)
@@ -43,15 +40,9 @@ export class FormattingProvider {
   }
 
   async refreshConfig(config?: Config) {
-    if (config) {
-      this.config = config
-    } else {
-      try {
-        this.config = await Config.loadForEditor(this.project.root, version)
-      } catch (error) {
-        this.connection.console.error(`Failed to refresh Herb formatter config: ${error}`)
-      }
-    }
+    this.config = config
+
+    this.connection.console.log(`[Formatting] Config loaded, formatter config: ${JSON.stringify(this.config?.formatter || 'none')}`)
 
     await this.loadConfiguredRewriters()
   }
@@ -223,7 +214,7 @@ export class FormattingProvider {
   }
 
   private async getConfigWithSettings(uri: string): Promise<Config | undefined> {
-    const settings = await this.userSettings.getDocumentSettings(uri)
+    const settings = await this.project.settingsFor(uri)
 
     if (!this.config) return undefined
 
@@ -304,7 +295,7 @@ export class FormattingProvider {
       return []
     }
 
-    const settings = await this.userSettings.getDocumentSettings(params.textDocument.uri)
+    const settings = await this.project.settingsFor(params.textDocument.uri)
 
     if (settings?.formatter?.enabled === false) {
       return []

@@ -60,7 +60,7 @@ export class Session {
     })
 
     this.diagnostics = new DiagnosticsPublisher(this.connection, this.documents, this.parserService, this.configService, this.workspaceFolders, this.projects)
-    this.saveOrchestrator = new SaveOrchestrator(this.connection, this.userSettings, this.projects)
+    this.saveOrchestrator = new SaveOrchestrator(this.connection, this.projects)
     this.foldingRangeProvider = new FoldingRangeProvider(this.parserService)
     this.documentHighlightProvider = new DocumentHighlightProvider(this.parserService)
     this.hoverProvider = new HoverProvider(this.parserService)
@@ -85,6 +85,7 @@ export class Session {
 
     this.documents.onDidClose((change) => {
       this.userSettings.forget(change.document.uri)
+      this.saveOrchestrator.forget(change.document.uri)
       this.diagnostics.clear(change.document.uri)
     })
 

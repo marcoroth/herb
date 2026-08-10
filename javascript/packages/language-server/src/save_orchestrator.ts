@@ -1,12 +1,10 @@
 import { Connection, TextEdit, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { UserSettings } from "./user_settings"
 import { Projects } from "./projects"
 
 export class SaveOrchestrator {
   private connection: Connection
-  private userSettings: UserSettings
   private projects: Projects
 
   /**
@@ -18,10 +16,17 @@ export class SaveOrchestrator {
    */
   private recentlyAutofixedViaFormatting = new Set<string>()
 
-  constructor(connection: Connection, userSettings: UserSettings, projects: Projects) {
+  constructor(connection: Connection, projects: Projects) {
     this.connection = connection
-    this.userSettings = userSettings
     this.projects = projects
+  }
+
+  /**
+   * A closed document can't be mid-save, so anything remembered about its last
+   * save would only be able to suppress a later, unrelated autofix.
+   */
+  forget(uri: string) {
+    this.recentlyAutofixedViaFormatting.delete(uri)
   }
 
   /**
@@ -33,7 +38,7 @@ export class SaveOrchestrator {
 
     if (!project) return []
 
-    const settings = await this.userSettings.getDocumentSettings(document.uri)
+    const settings = await project.settingsFor(document.uri)
     const fixOnSave = settings?.linter?.fixOnSave !== false
 
     this.connection.console.log(`[DocumentSave] applyFixes fixOnSave=${fixOnSave}`)
@@ -57,7 +62,7 @@ export class SaveOrchestrator {
 
     if (!project) return []
 
-    const settings = await this.userSettings.getDocumentSettings(document.uri)
+    const settings = await project.settingsFor(document.uri)
     const fixOnSave = settings?.linter?.fixOnSave !== false
     const formatterEnabled = settings?.formatter?.enabled ?? false
 

@@ -38,7 +38,8 @@ describe('FormattingProvider', () => {
 
     project = {
       root: '/test/project',
-      herbBackend: Herb
+      herbBackend: Herb,
+      settingsFor: (uri: string) => userSettings.getDocumentSettings(uri)
     } as unknown as Project
 
     userSettings = {
