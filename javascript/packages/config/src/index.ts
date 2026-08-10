@@ -1,5 +1,5 @@
 export { Config, resolveSeverity, ALL_RULES_KEY } from "./config.js"
-export { HerbConfigSchema } from "./config-schema.js"
+export { HerbConfigSchema, FRAMEWORKS, FRAMEWORK_NAMES } from "./config-schema.js"
 export { addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "./vscode.js"
 
 export type {
