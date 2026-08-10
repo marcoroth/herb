@@ -44,6 +44,7 @@ This page contains documentation for all Herb Linter rules.
 #### ERB
 
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
+- [`erb-no-byte-order-mark`](./erb-no-byte-order-mark.md) - Disallow a byte order mark at the start of a template
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
 - [`erb-no-commented-out-output-tags`](./erb-no-commented-out-output-tags.md) - Disallow commented-out ERB output tags (`<%#=`, `<%# =`)
 - [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates

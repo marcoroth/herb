@@ -1,5 +1,6 @@
 import { FormatPrinter } from "./format-printer.js"
 import { convertIndentation } from "@herb-tools/printer"
+import { BYTE_ORDER_MARK } from "@herb-tools/core"
 
 import { isScaffoldTemplate } from "./scaffold-template-detector.js"
 import { resolveFormatOptions } from "./options.js"
@@ -73,7 +74,8 @@ export class Formatter {
   }
 
   formatWithResult(source: string, options: FormatOptions = {}, filePath?: string): FormatResult {
-    const result = this.parse(source)
+    const input = source.startsWith(BYTE_ORDER_MARK) ? source.slice(BYTE_ORDER_MARK.length) : source
+    const result = this.parse(input)
 
     if (result.options.action_view_helpers) {
       console.warn("[Herb Formatter] Warning: Formatting a document parsed with `action_view_helpers: true`. The result may not be 100% accurate.")
@@ -104,7 +106,7 @@ export class Formatter {
       }
     }
 
-    let formatted = new FormatPrinter(source, resolvedOptions, this.herb).print(node)
+    let formatted = new FormatPrinter(input, resolvedOptions, this.herb).print(node)
 
     if (resolvedOptions.postRewriters.length > 0) {
       const context: RewriteContext = {
