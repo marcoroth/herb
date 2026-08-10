@@ -2,14 +2,12 @@ import { Connection, TextEdit, TextDocumentSaveReason } from "vscode-languageser
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Settings } from "./settings"
-import { AutofixService } from "./autofix_service"
-import { FormattingService } from "./formatting_service"
+import { Workspaces } from "./workspaces"
 
 export class DocumentSaveService {
   private connection: Connection
   private settings: Settings
-  private autofixService: AutofixService
-  private formattingService: FormattingService
+  private workspaces: Workspaces
 
   /**
    * Tracks documents that were recently autofixed via applyFixesAndFormatting
@@ -20,11 +18,10 @@ export class DocumentSaveService {
    */
   private recentlyAutofixedViaFormatting = new Set<string>()
 
-  constructor(connection: Connection, settings: Settings, autofixService: AutofixService, formattingService: FormattingService) {
+  constructor(connection: Connection, settings: Settings, workspaces: Workspaces) {
     this.connection = connection
     this.settings = settings
-    this.autofixService = autofixService
-    this.formattingService = formattingService
+    this.workspaces = workspaces
   }
 
   /**
@@ -32,6 +29,10 @@ export class DocumentSaveService {
    * Called by willSaveWaitUntil - formatting is handled separately by editor.formatOnSave
    */
   async applyFixes(document: TextDocument): Promise<TextEdit[]> {
+    const workspace = await this.workspaces.ensure(document.uri)
+
+    if (!workspace) return []
+
     const settings = await this.settings.getDocumentSettings(document.uri)
     const fixOnSave = settings?.linter?.fixOnSave !== false
 
@@ -44,7 +45,7 @@ export class DocumentSaveService {
       return []
     }
 
-    return this.autofixService.autofix(document)
+    return workspace.autofixService.autofix(document)
   }
 
   /**
@@ -52,6 +53,10 @@ export class DocumentSaveService {
    * Called by onDocumentFormatting (manual format or editor.formatOnSave)
    */
   async applyFixesAndFormatting(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
+    const workspace = await this.workspaces.ensure(document.uri)
+
+    if (!workspace) return []
+
     const settings = await this.settings.getDocumentSettings(document.uri)
     const fixOnSave = settings?.linter?.fixOnSave !== false
     const formatterEnabled = settings?.formatter?.enabled ?? false
@@ -61,7 +66,7 @@ export class DocumentSaveService {
     let autofixEdits: TextEdit[] = []
 
     if (fixOnSave) {
-      autofixEdits = await this.autofixService.autofix(document)
+      autofixEdits = await workspace.autofixService.autofix(document)
 
       if (autofixEdits.length > 0) {
         this.recentlyAutofixedViaFormatting.add(document.uri)
@@ -71,9 +76,9 @@ export class DocumentSaveService {
     if (!formatterEnabled) return autofixEdits
 
     if (autofixEdits.length === 0) {
-      return this.formattingService.formatOnSave(document, reason)
+      return workspace.formattingService.formatOnSave(document, reason)
     }
 
-    return this.formattingService.formatOnSave(document, reason, autofixEdits[0].newText)
+    return workspace.formattingService.formatOnSave(document, reason, autofixEdits[0].newText)
   }
 }

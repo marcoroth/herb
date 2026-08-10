@@ -1,16 +1,12 @@
 import { Connection, InitializeParams } from "vscode-languageserver/node"
 
+import { Herb } from "@herb-tools/node-wasm"
+
 import { Settings, PersonalHerbSettings } from "./settings"
 import { DocumentService } from "./document_service"
 import { Diagnostics } from "./diagnostics"
 import { ParserService } from "./parser_service"
-import { LinterService } from "./linter_service"
-import { Config } from "@herb-tools/config"
-import { Project } from "./project"
-import { FormattingService } from "./formatting_service"
 import { ConfigService } from "./config_service"
-import { AutofixService } from "./autofix_service"
-import { CodeActionService } from "./code_action_service"
 import { DocumentSaveService } from "./document_save_service"
 import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
@@ -19,30 +15,18 @@ import { RewriteCodeActionService } from "./rewrite_code_action_service"
 import { ExtractCodeActionService } from "./extract_code_action_service"
 import { DefinitionService } from "./definition_service"
 import { CommentService } from "./comment_service"
-import { CompletionService } from "./completion_service"
 import { DocumentSymbolService } from "./document_symbol_service"
-import { PartialIndexService } from "./partial_index_service"
-import { PartialCallerIndexService } from "./partial_caller_index_service"
-import { ReferencesService } from "./references_service"
-
-import { version } from "../package.json"
+import { Workspaces } from "./workspaces"
 
 export class Service {
   connection: Connection
   settings: Settings
-  project: Project
-  config?: Config
+  workspaces: Workspaces
 
   diagnostics: Diagnostics
   documentService: DocumentService
-  partialIndexService: PartialIndexService
-  partialCallerIndexService: PartialCallerIndexService
   parserService: ParserService
-  linterService: LinterService
-  formattingService: FormattingService
-  autofixService: AutofixService
   configService: ConfigService
-  codeActionService: CodeActionService
   documentSaveService: DocumentSaveService
   foldingRangeService: FoldingRangeService
   documentHighlightService: DocumentHighlightService
@@ -50,35 +34,31 @@ export class Service {
   rewriteCodeActionService: RewriteCodeActionService
   extractCodeActionService: ExtractCodeActionService
   definitionService: DefinitionService
-  referencesService: ReferencesService
   commentService: CommentService
-  completionService: CompletionService
   documentSymbolService: DocumentSymbolService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
     this.settings = new Settings(params, this.connection)
     this.documentService = new DocumentService(this.connection)
-    this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
-    this.partialIndexService = new PartialIndexService(this.connection, this.project)
-    this.partialCallerIndexService = new PartialCallerIndexService(this.connection, this.project, this.partialIndexService)
-    this.linterService = new LinterService(this.connection, this.settings, this.project, this.partialIndexService, this.partialCallerIndexService)
-    this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
-    this.autofixService = new AutofixService(this.connection, this.config, this.partialIndexService, this.partialCallerIndexService)
-    this.configService = new ConfigService(this.project.projectPath)
-    this.codeActionService = new CodeActionService(this.project, this.config, this.partialIndexService, this.partialCallerIndexService)
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService, this.settings)
-    this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
+    this.configService = new ConfigService(this.settings.projectPath)
+    this.definitionService = new DefinitionService(this.parserService)
+
+    this.workspaces = new Workspaces(this.connection, this.settings, {
+      documentService: this.documentService,
+      parserService: this.parserService,
+      definitionService: this.definitionService,
+    })
+
+    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.configService, this.settings, this.workspaces)
+    this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.workspaces)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
     this.hoverService = new HoverService(this.parserService)
     this.rewriteCodeActionService = new RewriteCodeActionService(this.parserService)
-    this.definitionService = new DefinitionService(this.parserService)
-    this.referencesService = new ReferencesService(this.project, this.definitionService, this.partialIndexService, this.partialCallerIndexService, this.documentService)
     this.commentService = new CommentService(this.parserService)
     this.documentSymbolService = new DocumentSymbolService(this.parserService)
-    this.completionService = new CompletionService(this.parserService, this.partialIndexService)
 
     this.extractCodeActionService = new ExtractCodeActionService(this.parserService, {
       supportsCreateFile: this.settings.supportsResourceCreation,
@@ -93,38 +73,7 @@ export class Service {
   async init() {
     this.connection.console.log(`[Client] Diagnostic related information: ${this.settings.hasDiagnosticRelatedInformationCapability ? "supported" : "not supported"}`)
 
-    await this.project.initialize()
-    await this.formattingService.initialize()
-    await this.partialIndexService.initialize()
-    await this.partialCallerIndexService.initialize()
-
-    try {
-      this.config = await Config.loadForEditor(this.project.projectPath, version)
-      this.codeActionService.setConfig(this.config)
-      this.autofixService.setConfig(this.config)
-
-      if (this.config.version && this.config.version !== version) {
-        this.connection.console.warn(
-          `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yml file.`
-        )
-      }
-    } catch (error) {
-      this.connection.console.warn(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using personal settings with defaults.`
-      )
-      this.config = Config.fromObject({
-        linter: this.settings.globalSettings.linter,
-        formatter: this.settings.globalSettings.formatter
-      }, { projectPath: this.project.projectPath, version })
-
-      this.codeActionService.setConfig(this.config)
-      this.autofixService.setConfig(this.config)
-    }
-
-    await this.settings.initializeProjectConfig(this.config)
-    await this.formattingService.refreshConfig(this.config)
-    this.linterService.rebuildLinter()
+    await Herb.load()
 
     this.documentService.onDidClose((change) => {
       this.settings.documentSettings.delete(change.document.uri)
@@ -132,13 +81,17 @@ export class Service {
     })
 
     this.documentService.onDidChangeContent(async (change) => {
-      const callersChanged = this.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
-      const partialsChanged = this.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
+      const workspace = await this.workspaces.ensure(change.document.uri)
 
-      if (callersChanged || partialsChanged) {
-        await this.diagnostics.refreshAllDocuments()
+      if (workspace) {
+        const callersChanged = workspace.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+        const partialsChanged = workspace.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
 
-        return
+        if (callersChanged || partialsChanged) {
+          await this.diagnostics.refreshAllDocuments()
+
+          return
+        }
       }
 
       await this.diagnostics.refreshDocument(change.document)
@@ -146,43 +99,20 @@ export class Service {
   }
 
   async refresh() {
-    await this.project.refresh()
-    await this.partialIndexService.initialize()
-    await this.partialCallerIndexService.initialize()
-    await this.formattingService.refreshConfig(this.config)
+    this.workspaces.forget()
+
+    for (const workspace of this.workspaces.all()) {
+      await workspace.reindex()
+    }
+
     await this.diagnostics.refreshAllDocuments()
   }
 
   async refreshConfig() {
-    try {
-      this.config = await Config.loadForEditor(this.project.projectPath, version)
+    this.workspaces.forget()
 
-      this.codeActionService.setConfig(this.config)
-      this.autofixService.setConfig(this.config)
-
-      if (this.config.version && this.config.version !== version) {
-        this.connection.console.warn(
-          `Config file version (${this.config.version}) does not match current version (${version}). ` +
-          `Consider updating your .herb.yml file.`
-        )
-      }
-    } catch (error) {
-      this.connection.console.warn(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using personal settings with defaults.`
-      )
-
-      this.config = Config.fromObject({
-        linter: this.settings.globalSettings.linter,
-        formatter: this.settings.globalSettings.formatter
-      }, { projectPath: this.project.projectPath, version })
-
-      this.codeActionService.setConfig(this.config)
-      this.autofixService.setConfig(this.config)
+    for (const workspace of this.workspaces.all()) {
+      await workspace.refreshConfig()
     }
-
-    await this.settings.refreshProjectConfig(this.config)
-    await this.formattingService.refreshConfig(this.config)
-
-    this.linterService.rebuildLinter()
   }
 }

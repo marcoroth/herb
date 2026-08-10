@@ -7,6 +7,7 @@ import { DocumentSaveService } from '../src/document_save_service'
 import { Settings } from '../src/settings'
 import { AutofixService } from '../src/autofix_service'
 import { FormattingService } from '../src/formatting_service'
+import { Workspaces } from '../src/workspaces'
 import { Herb } from '@herb-tools/node-wasm'
 
 describe('DocumentSaveService', () => {
@@ -41,12 +42,11 @@ describe('DocumentSaveService', () => {
       formatText: vi.fn()
     } as unknown as FormattingService
 
-    documentSaveService = new DocumentSaveService(
-      connection,
-      settings,
-      autofixService,
-      formattingService
-    )
+    const workspaces = {
+      ensure: async () => ({ autofixService, formattingService })
+    } as unknown as Workspaces
+
+    documentSaveService = new DocumentSaveService(connection, settings, workspaces)
   })
 
   describe('applyFixesAndFormatting', () => {

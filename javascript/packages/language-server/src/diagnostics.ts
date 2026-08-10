@@ -3,34 +3,34 @@ import { Connection, Diagnostic } from "vscode-languageserver/node"
 
 import { Settings } from "./settings"
 import { ParserService } from "./parser_service"
-import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
 import { ConfigService } from "./config_service"
+import { Workspaces } from "./workspaces"
 import { isConfigDocument } from "./utils"
 
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
   private readonly parserService: ParserService
-  private readonly linterService: LinterService
   private readonly configService: ConfigService
   private readonly settings: Settings
+  private readonly workspaces: Workspaces
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
     connection: Connection,
     documentService: DocumentService,
     parserService: ParserService,
-    linterService: LinterService,
     configService: ConfigService,
     settings: Settings,
+    workspaces: Workspaces,
   ) {
     this.connection = connection
     this.documentService = documentService
     this.parserService = parserService
-    this.linterService = linterService
     this.configService = configService
     this.settings = settings
+    this.workspaces = workspaces
   }
 
   clear(uri: string) {
@@ -44,13 +44,14 @@ export class Diagnostics {
       return
     }
 
+    const workspace = await this.workspaces.ensure(textDocument.uri)
     let allDiagnostics: Diagnostic[] = []
 
     if (isConfigDocument(textDocument.uri)) {
-      allDiagnostics = await this.configService.validateDocument(textDocument)
+      allDiagnostics = await (workspace?.configService ?? this.configService).validateDocument(textDocument)
     } else {
       const parseResult = this.parserService.parseDocument(textDocument)
-      const lintResult = await this.linterService.lintDocument(textDocument)
+      const lintResult = workspace ? await workspace.linterService.lintDocument(textDocument) : { diagnostics: [] }
 
       allDiagnostics = [
         ...parseResult.diagnostics,

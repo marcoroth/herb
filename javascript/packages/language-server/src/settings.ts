@@ -1,4 +1,4 @@
-import { ClientCapabilities, Connection, InitializeParams, ResourceOperationKind } from "vscode-languageserver/node"
+import { ClientCapabilities, Connection, InitializeParams, ResourceOperationKind, WorkspaceFoldersChangeEvent } from "vscode-languageserver/node"
 import { Config } from "@herb-tools/config"
 
 import { defaultFormatOptions } from "@herb-tools/formatter"
@@ -56,10 +56,16 @@ export class Settings {
   capabilities: ClientCapabilities
   connection: Connection
 
+  private folders: string[]
+
   constructor(params: InitializeParams, connection: Connection) {
     this.params = params
     this.capabilities = params.capabilities
     this.connection = connection
+
+    const opened = params.workspaceFolders?.map(folder => folder.uri) ?? []
+
+    this.folders = this.folderPaths(opened.length > 0 ? opened : [params.rootUri ?? params.rootPath ?? ""])
 
     this.hasConfigurationCapability = !!(this.capabilities.workspace && !!this.capabilities.workspace.configuration)
     this.hasShowDocumentCapability = !!(this.capabilities.window?.showDocument)
@@ -152,22 +158,31 @@ export class Settings {
   }
 
   get workspacePaths(): string[] {
-    const folders = this.params.workspaceFolders?.map(folder => folder.uri) ?? []
-    const roots = folders.length > 0 ? folders : [this.params.rootUri ?? this.params.rootPath ?? ""]
+    return this.folders
+  }
 
-    return roots.filter(root => root !== "").map(root => pathFromUri(root).replace(/\/$/, ""))
+  updateWorkspaceFolders(event: WorkspaceFoldersChangeEvent) {
+    const removed = new Set(this.folderPaths(event.removed.map(folder => folder.uri)))
+
+    this.folders = [
+      ...this.folders.filter(path => !removed.has(path)),
+      ...this.folderPaths(event.added.map(folder => folder.uri)),
+    ]
   }
 
   includes(uri: string): boolean {
     if (!uri.startsWith(FILE_SCHEME)) return true
+    if (this.folders.length === 0) return true
 
-    const roots = this.workspacePaths
+    return this.containsPath(pathFromUri(uri))
+  }
 
-    if (roots.length === 0) return true
+  containsPath(path: string): boolean {
+    return this.folders.some(root => path === root || path.startsWith(`${root}/`))
+  }
 
-    const path = pathFromUri(uri)
-
-    return roots.some(root => path === root || path.startsWith(`${root}/`))
+  private folderPaths(uris: string[]): string[] {
+    return uris.filter(uri => uri !== "").map(uri => pathFromUri(uri).replace(/\/$/, ""))
   }
 
   getDocumentSettings(resource: string): Thenable<PersonalHerbSettings> {
