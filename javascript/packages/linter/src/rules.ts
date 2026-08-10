@@ -33,6 +33,7 @@ import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-l
 import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict-locals-partial-only.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
+import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
 import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
@@ -178,6 +179,7 @@ export const rules: RuleClass[] = [
   ActionViewStrictLocalsPartialOnlyRule,
 
   ERBCommentSyntax,
+  ERBNoByteOrderMarkRule,
   ERBNoCaseNodeChildrenRule,
   ERBNoCommentedOutOutputTagsRule,
   ERBNoDebugOutputRule,
