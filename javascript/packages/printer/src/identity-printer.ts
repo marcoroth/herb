@@ -44,11 +44,33 @@ export class IdentityPrinter extends Printer {
       this.write(node.tag_name.value)
     }
 
-    this.visitChildNodes(node)
+    // Without `track_whitespace: true` the parser doesn't emit a node for the
+    // whitespace that separates the tag name from the first attribute, or the
+    // whitespace between attributes, so reconstructing children back-to-back
+    // would merge them together (e.g. `<span class="x">` becoming
+    // `<spanclass="x">`). Restore a single separating space wherever the
+    // previous node's end position doesn't line up with the next node's start
+    // (when whitespace tracking is on, the gap is already covered by an
+    // explicit WhitespaceNode, so no extra space is added in that case).
+    let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
+
+    node.children.forEach(child => {
+      if (previousEnd && !this.samePosition(previousEnd, child.location.start)) {
+        this.write(" ")
+      }
+
+      this.visit(child)
+
+      previousEnd = child.location.end
+    })
 
     if (node.tag_closing) {
       this.write(node.tag_closing.value)
     }
+  }
+
+  private samePosition(a: Nodes.Position, b: Nodes.Position): boolean {
+    return a.line === b.line && a.column === b.column
   }
 
   visitHTMLCloseTagNode(node: Nodes.HTMLCloseTagNode): void {
