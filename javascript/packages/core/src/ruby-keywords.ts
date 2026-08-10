@@ -45,3 +45,30 @@ export const RUBY_KEYWORDS: ReadonlySet<string> = new Set([
 export function isRubyKeyword(name: string): boolean {
   return RUBY_KEYWORDS.has(name)
 }
+
+export const RUBY_INTROSPECTION_METHODS: ReadonlySet<string> = new Set([
+  "__id__",
+  "__send__",
+  "class",
+  "clone",
+  "dup",
+  "freeze",
+  "frozen",
+  "inspect",
+  "method",
+  "object_id",
+  "public_send",
+  "send",
+  "tap",
+  "then",
+  "to_s",
+  "try",
+  "try!",
+  "yield_self",
+])
+
+export function isRubyIntrospectionMethod(name: string): boolean {
+  if (RUBY_INTROSPECTION_METHODS.has(name)) return true
+
+  return name.endsWith("?") || name.endsWith("!")
+}

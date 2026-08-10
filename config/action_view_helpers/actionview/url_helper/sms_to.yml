@@ -9,6 +9,12 @@ supports_block: true
 signature: "sms_to(phone_number, name = nil, html_options = {}, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-sms_to"
 
+content:
+  source: "block_or_arg"
+  arg_position: 2
+  skip_if_hash: true
+  positional_arguments_with_block: 1
+
 description: |-
   Creates an SMS anchor link tag to the specified phone_number. When the link is clicked, the default SMS messaging app is opened ready to send a message. If the body option is specified, the contents of the message will be preset.
 

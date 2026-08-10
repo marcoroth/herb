@@ -17,6 +17,7 @@ content:
   source: "block_or_arg"
   arg_position: 1
   to_s_suffix_when_single: true
+  positional_arguments_with_block: 1
 
 description: |-
   Creates an anchor element of the given name using a URL created by the set of options. It is also possible to pass a String instead of an options hash, which generates an anchor element that uses the value of the String as the href for the link. If `nil` is passed as the name the value of the link itself will become the name.

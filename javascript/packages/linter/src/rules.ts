@@ -11,6 +11,7 @@ import { A11yNoRedundantImageAltRule } from "./rules/a11y-no-redundant-image-alt
 import { A11yNoVisuallyHiddenInteractiveElementsRule } from "./rules/a11y-no-visually-hidden-interactive-elements.js"
 import { A11ySVGHasAccessibleTextRule } from "./rules/a11y-svg-has-accessible-text.js"
 
+import { ActionViewNoContentArgumentWithBlockRule } from "./rules/actionview-no-content-argument-with-block.js"
 import { ActionViewNoDynamicPartialPathRule } from "./rules/actionview-no-dynamic-partial-path.js"
 import { ActionViewNoHelperShadowingRule } from "./rules/actionview-no-helper-shadowing.js"
 import { ActionViewNoImplicitPartialRule } from "./rules/actionview-no-implicit-partial.js"
@@ -153,6 +154,7 @@ export const rules: RuleClass[] = [
   A11yNoVisuallyHiddenInteractiveElementsRule,
   A11ySVGHasAccessibleTextRule,
 
+  ActionViewNoContentArgumentWithBlockRule,
   ActionViewNoDynamicPartialPathRule,
   ActionViewNoHelperShadowingRule,
   ActionViewNoImplicitPartialRule,

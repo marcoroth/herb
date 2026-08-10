@@ -575,13 +575,15 @@ module Herb
     end
 
     class HelperContent
-      attr_reader :source, :arg_position, :skip_if_hash, :to_s_suffix_when_single
+      attr_reader :source, :arg_position, :skip_if_hash, :to_s_suffix_when_single,
+                  :positional_arguments_with_block
 
       def initialize(config)
         @source = config.fetch("source")
         @arg_position = config.fetch("arg_position", nil)
         @skip_if_hash = config.fetch("skip_if_hash", false)
         @to_s_suffix_when_single = config.fetch("to_s_suffix_when_single", false)
+        @positional_arguments_with_block = config.fetch("positional_arguments_with_block", nil)
       end
 
       def null?

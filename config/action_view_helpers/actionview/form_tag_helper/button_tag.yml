@@ -9,6 +9,12 @@ supports_block: true
 signature: "button_tag(content_or_options = nil, options = nil, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-button_tag"
 
+content:
+  source: "block_or_arg"
+  arg_position: 1
+  skip_if_hash: true
+  positional_arguments_with_block: 0
+
 description: |-
   Creates a button element that defines a submit button, reset button, or a generic button which can be used in JavaScript.
 
