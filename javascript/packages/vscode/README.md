@@ -66,6 +66,7 @@ linter:
 formatter:
   enabled: true
   indentWidth: 2
+  indentStyle: space
   maxLineLength: 80
 ```
 
@@ -121,6 +122,7 @@ If a `.herb.yml` exists in the project root, its configuration always takes prec
 | `languageServerHerb.linter.fixOnSave`        | `true`    | Automatically apply autocorrectable fixes on save                |
 | `languageServerHerb.formatter.enabled`       | `false`   | Enable/disable the formatter (experimental)                      |
 | `languageServerHerb.formatter.indentWidth`   | `2`       | Number of spaces per indentation level                           |
+| `languageServerHerb.formatter.indentStyle`   | `space`   | Character used for indentation (`space` or `tab`)                |
 | `languageServerHerb.formatter.maxLineLength` | `80`      | Maximum line length before wrapping                              |
 | `languageServerHerb.trace.server`            | `verbose` | Trace the communication with the language server (for debugging) |
 

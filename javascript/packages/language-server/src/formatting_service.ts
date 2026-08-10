@@ -231,6 +231,7 @@ export class FormattingService {
       formatter: {
         ...projectFormatter,
         indentWidth: settings?.formatter?.indentWidth ?? projectFormatter.indentWidth,
+        indentStyle: settings?.formatter?.indentStyle ?? projectFormatter.indentStyle,
         maxLineLength: settings?.formatter?.maxLineLength ?? projectFormatter.maxLineLength
       }
     } as Config
@@ -338,13 +339,20 @@ export class FormattingService {
 
       let minIndentLevel = Infinity
       const indentWidth = config?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth
+      const indentStyle = config?.formatter?.indentStyle ?? defaultFormatOptions.indentStyle
+
+      const indentLevelOf = (indent: string): number =>
+        indentStyle === 'tab' ? indent.replace(/ /g, '').length : Math.floor(indent.length / indentWidth)
+
+      const indentStringFor = (level: number): string =>
+        indentStyle === 'tab' ? '\t'.repeat(level) : ' '.repeat(level * indentWidth)
 
       for (const line of lines) {
         const trimmedLine = line.trim()
 
         if (trimmedLine !== '') {
           const indent = line.match(/^\s*/)?.[0] || ''
-          const indentLevel = Math.floor(indent.length / indentWidth)
+          const indentLevel = indentLevelOf(indent)
 
           minIndentLevel = Math.min(minIndentLevel, indentLevel)
         }
@@ -357,7 +365,7 @@ export class FormattingService {
       let textToFormat = rangeText
 
       if (minIndentLevel > 0) {
-        const minIndentString = ' '.repeat(minIndentLevel * indentWidth)
+        const minIndentString = indentStringFor(minIndentLevel)
 
         textToFormat = lines.map(line => {
           if (line.trim() === '') {
@@ -372,7 +380,7 @@ export class FormattingService {
 
       if (minIndentLevel > 0) {
         const formattedLines = formattedText.split('\n')
-        const indentString = ' '.repeat(minIndentLevel * indentWidth)
+        const indentString = indentStringFor(minIndentLevel)
 
         formattedText = formattedLines.map((line: string, _index: number) => {
           if (line.trim() === '') {

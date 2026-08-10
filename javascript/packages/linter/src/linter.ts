@@ -485,6 +485,7 @@ export class Linter {
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework
     }
 
@@ -603,6 +604,7 @@ export class Linter {
     context = {
       ...context,
       indentWidth: context?.indentWidth ?? this.config?.formatter?.indentWidth,
+      indentStyle: context?.indentStyle ?? this.config?.formatter?.indentStyle,
       framework: context?.framework ?? this.config?.framework
     }
 

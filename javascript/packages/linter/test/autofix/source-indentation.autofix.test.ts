@@ -126,4 +126,50 @@ describe("source-indentation autofix", () => {
     expect(result.fixed).toHaveLength(2)
     expect(result.unfixed).toHaveLength(0)
   })
+
+  test("replaces space indentation with tabs when indentStyle is tabs", () => {
+    const input = "  this is a line\n    indented twice\n"
+    const expected = "\tthis is a line\n\t\tindented twice\n"
+
+    const linter = new Linter(Herb, [SourceIndentationRule])
+    const result = linter.autofix(input, { indentStyle: "tab" })
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("ignores tab-only indentation when indentStyle is tabs", () => {
+    const input = "\tthis is a line\n\t\tanother line\n"
+
+    const linter = new Linter(Herb, [SourceIndentationRule])
+    const result = linter.autofix(input, { indentStyle: "tab" })
+
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("defaults to indentStyle from formatter config", () => {
+    const input = "  this is a line\n"
+    const expected = "\tthis is a line\n"
+
+    const config = Config.fromObject({
+      formatter: {
+        indentStyle: "tab"
+      },
+      linter: {
+        rules: {
+          "source-indentation": { enabled: true }
+        }
+      }
+    })
+
+    const linter = Linter.from(Herb, config)
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+    expect(result.unfixed).toHaveLength(0)
+  })
 })

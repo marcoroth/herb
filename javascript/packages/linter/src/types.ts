@@ -255,6 +255,7 @@ export interface LintContext {
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
   indentWidth: number | undefined
+  indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
   partials: PartialIndex | undefined
   partialCallers: PartialCallerIndex | undefined
@@ -270,6 +271,7 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
   indentWidth: undefined,
+  indentStyle: undefined,
   framework: undefined,
   partials: undefined,
   partialCallers: undefined,

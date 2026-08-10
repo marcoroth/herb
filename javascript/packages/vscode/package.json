@@ -86,6 +86,17 @@
           "description": "Number of spaces for each indentation level.",
           "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
+        "languageServerHerb.formatter.indentStyle": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "space",
+            "tab"
+          ],
+          "default": "space",
+          "description": "Character used for indentation.",
+          "markdownDescription": "Character used for indentation.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
           "type": "number",
@@ -179,6 +190,11 @@
         "icon": "$(symbol-numeric)"
       },
       {
+        "command": "herb.setIndentStyle",
+        "title": "Herb: Set Indent Style",
+        "icon": "$(symbol-enum)"
+      },
+      {
         "command": "herb.setMaxLineLength",
         "title": "Herb: Set Max Line Length",
         "icon": "$(symbol-numeric)"
@@ -250,6 +266,16 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "herb.toggleLinter",
+          "when": "view == herbConfiguration && (viewItem == linterSetting || viewItem == personalLinterSetting)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.toggleFormatter",
+          "when": "view == herbConfiguration && (viewItem == formatterSetting || viewItem == personalFormatterSetting)",
+          "group": "inline"
+        },
         {
           "command": "herb.reprocessFile",
           "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",

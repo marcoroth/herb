@@ -59,6 +59,7 @@ export class CLI {
       --config-file <path>            explicitly specify path to .herb.yml config file
       --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
+      --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
@@ -75,6 +76,7 @@ export class CLI {
 
       herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
+      herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
@@ -90,6 +92,7 @@ export class CLI {
         init: { type: "boolean" },
         "config-file": { type: "string" },
         "indent-width": { type: "string" },
+        "indent-style": { type: "string" },
         "max-line-length": { type: "string" }
       },
       allowPositionals: true
@@ -113,6 +116,18 @@ export class CLI {
       indentWidth = parsed
     }
 
+    let indentStyle: "space" | "tab" | undefined
+
+    if (values["indent-style"]) {
+      if (values["indent-style"] !== "space" && values["indent-style"] !== "tab") {
+        console.error(
+          `Invalid indent-style: ${values["indent-style"]}. Must be "space" or "tab".`,
+        )
+        process.exit(1)
+      }
+      indentStyle = values["indent-style"]
+    }
+
     let maxLineLength: number | undefined
 
     if (values["max-line-length"]) {
@@ -134,12 +149,13 @@ export class CLI {
       isInitMode: values.init,
       configFile: values["config-file"],
       indentWidth,
+      indentStyle,
       maxLineLength
     }
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
 
     const startTime = Date.now()
     const startDate = new Date()
@@ -227,6 +243,10 @@ export class CLI {
 
       if (indentWidth !== undefined) {
         formatterConfig.indentWidth = indentWidth
+      }
+
+      if (indentStyle !== undefined) {
+        formatterConfig.indentStyle = indentStyle
       }
 
       if (maxLineLength !== undefined) {
