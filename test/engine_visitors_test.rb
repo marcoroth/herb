@@ -162,4 +162,81 @@ class EngineVisitorsTest < Minitest::Spec
     refute_nil engine.src
     assert_nil visitor.prism_node
   end
+
+  class ContextCapturingVisitor < Herb::Visitor
+    include Herb::Engine::ContextAware
+
+    attr_reader :seen
+
+    def visit_document_node(node)
+      @seen = context
+
+      super
+    end
+  end
+
+  test "the engine hands its context to a context aware visitor" do
+    visitor = ContextCapturingVisitor.new
+
+    Herb::Engine.new("<div>Hi</div>", filename: "app/views/x.html.erb", project_path: "/proj", visitors: [visitor])
+
+    assert_equal "app/views/x.html.erb", visitor.seen.relative_file_path
+    assert_equal "/proj", visitor.seen.project_path.to_s
+  end
+
+  test "the engine options are reachable from the context" do
+    visitor = ContextCapturingVisitor.new
+
+    Herb::Engine.new("<div>Hi</div>", escape: false, visitors: [visitor])
+
+    assert_equal false, visitor.seen.options[:escape]
+  end
+
+  test "the visitors option is kept out of the context to avoid a cycle" do
+    visitor = ContextCapturingVisitor.new
+
+    Herb::Engine.new("<div>Hi</div>", visitors: [visitor])
+
+    refute visitor.seen.options.key?(:visitors)
+  end
+
+  test "caller supplied data reaches the visitor" do
+    visitor = ContextCapturingVisitor.new
+
+    Herb::Engine.new("<div>Hi</div>", context: { theme: "dark" }, visitors: [visitor])
+
+    assert_equal "dark", visitor.seen[:theme]
+  end
+
+  test "an explicitly set context is not overwritten by the engine" do
+    visitor = ContextCapturingVisitor.new
+    visitor.context = Herb::Engine::VisitorContext.new(file_path: "explicit.html.erb")
+
+    Herb::Engine.new("<div>Hi</div>", filename: "engine.html.erb", visitors: [visitor])
+
+    assert_equal "explicit.html.erb", visitor.seen.relative_file_path
+  end
+
+  test "a reused visitor picks up the second engine's context" do
+    visitor = ContextCapturingVisitor.new
+
+    Herb::Engine.new("<div>Hi</div>", filename: "first.html.erb", visitors: [visitor])
+    assert_equal "first.html.erb", visitor.seen.relative_file_path
+
+    Herb::Engine.new("<div>Hi</div>", filename: "second.html.erb", visitors: [visitor])
+    assert_equal "second.html.erb", visitor.seen.relative_file_path
+  end
+
+  test "a visitor that is not context aware is left alone" do
+    visitor = Class.new(Herb::Visitor).new
+
+    engine = Herb::Engine.new("<div>Hi</div>", filename: "x.html.erb", visitors: [visitor])
+
+    refute_nil engine.src
+    refute_respond_to visitor, :context
+  end
+
+  test "a context aware visitor used without an engine still has a context" do
+    assert_equal "unknown", ContextCapturingVisitor.new.context.relative_file_path
+  end
 end

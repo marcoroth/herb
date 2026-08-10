@@ -1,0 +1,69 @@
+# Generated from lib/herb/engine/visitor_context.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Per-template information the engine hands to the visitors it runs before compilation.
+    #
+    # Alongside the template path, it carries the options the engine was built with, and any
+    # additional keys the caller wants to pass through to its own visitors:
+    #
+    #     Herb::Engine.new(source, filename: path, context: { theme: "dark" }, visitors: [MyVisitor.new])
+    #
+    #     class MyVisitor < Herb::Visitor
+    #       include Herb::Engine::ContextAware
+    #
+    #       def visit_html_element_node(node)
+    #         context.relative_file_path #=> "app/views/users/show.html.erb"
+    #         context.options[:escape]   #=> true
+    #         context[:theme]            #=> "dark"
+    #
+    #         super
+    #       end
+    #     end
+    class VisitorContext
+      UNKNOWN_FILE_PATH: String
+
+      attr_reader file_path: Pathname?
+
+      attr_reader project_path: Pathname
+
+      attr_reader relative_file_path: String
+
+      attr_reader options: Hash[Symbol, untyped]
+
+      attr_reader data: Hash[Symbol, untyped]
+
+      # : (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
+      def initialize: (?file_path: (String | Pathname)?, ?project_path: (String | Pathname)?, ?options: Hash[Symbol, untyped], **untyped) -> void
+
+      # : (Symbol) -> untyped
+      def []: (Symbol) -> untyped
+
+      # : (Symbol) -> bool
+      def key?: (Symbol) -> bool
+
+      # : (Symbol, ?untyped) -> untyped
+      def fetch: (Symbol, ?untyped) -> untyped
+
+      # : (**untyped) -> Herb::Engine::VisitorContext
+      def merge: (**untyped) -> Herb::Engine::VisitorContext
+
+      # : () -> Hash[Symbol, untyped]
+      def to_hash: () -> Hash[Symbol, untyped]
+
+      alias to_h to_hash
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : ((String | Pathname)?) -> Pathname?
+      def self.coerce_file_path: ((String | Pathname)?) -> Pathname?
+
+      # : ((String | Pathname)?) -> Pathname
+      def self.coerce_project_path: ((String | Pathname)?) -> Pathname
+
+      # : (Pathname?, Pathname) -> String
+      def self.derive_relative_file_path: (Pathname?, Pathname) -> String
+    end
+  end
+end
