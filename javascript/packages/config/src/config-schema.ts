@@ -48,7 +48,16 @@ export const FormatterConfigSchema = z.object({
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
-export const FrameworkSchema = z.enum(["ruby", "actionview", "hanami", "sinatra"]).optional()
+export const FRAMEWORKS = {
+  ruby: "Ruby",
+  actionview: "Action View",
+  hanami: "Hanami",
+  sinatra: "Sinatra",
+} as const
+
+export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
+
+export const FrameworkSchema = z.enum(FRAMEWORK_NAMES).optional()
   .describe("Framework context (default: 'ruby')")
 
 export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()

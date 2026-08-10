@@ -13,7 +13,7 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter, rules, fixabilityFor } from "@herb-tools/linter"
+import { Linter, rules, fixabilityFor, FRAMEWORKS } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 import { analyzeRuby } from "../analyze-ruby"
 
@@ -21,6 +21,7 @@ window.Herb = Herb
 window.analyze = analyze
 
 const URL_UPDATE_THROTTLE = 100
+const DEFAULT_FRAMEWORK = "actionview"
 
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
@@ -121,6 +122,7 @@ export default class extends Controller {
     "diagnosticsViewer",
     "diagnosticsContent",
     "diagnosticsFilter",
+    "linterFramework",
     "noDiagnostics",
     "diagnosticsList",
     "fullViewer",
@@ -184,6 +186,8 @@ export default class extends Controller {
       this.restorePrinterOptions()
       this.restoreFormatterOptions()
       this.restoreAutofixOptions()
+      this.populateFrameworkOptions()
+      this.restoreLinterOptions()
     }
 
     this.inputTarget.focus()
@@ -331,10 +335,12 @@ export default class extends Controller {
       const printerOptions = this.getPrinterOptions()
       const formatterOptions = this.getFormatterOptions()
       const autofixOptions = this.getAutofixOptions()
+      const linterOptions = this.getLinterOptions()
       this.setOptionsInURL(options)
       this.setPrinterOptionsInURL(printerOptions)
       this.setFormatterOptionsInURL(formatterOptions)
       this.setAutofixOptionsInURL(autofixOptions)
+      this.setLinterOptionsInURL(linterOptions)
     }
   }
 
@@ -625,6 +631,36 @@ export default class extends Controller {
 
     if (Object.keys(autofixOptionsFromURL).length > 0) {
       this.setAutofixOptions(autofixOptionsFromURL)
+    }
+  }
+
+  populateFrameworkOptions() {
+    if (!this.hasLinterFrameworkTarget) return
+
+    const options = Object.entries(FRAMEWORKS)
+      .map(([framework, label]) => new Option(label, framework, false, framework === DEFAULT_FRAMEWORK))
+      .sort((a, b) => a.text.localeCompare(b.text))
+
+    this.linterFrameworkTarget.replaceChildren(...options, new Option("Not set", ""))
+  }
+
+  restoreLinterOptions() {
+    const linterOptionsFromURL = this.getLinterOptionsFromURL()
+
+    if (Object.keys(linterOptionsFromURL).length > 0) {
+      this.setLinterOptions(linterOptionsFromURL)
+    }
+  }
+
+  setLinterOptions(linterOptions) {
+    if (!this.hasLinterFrameworkTarget) return
+    if (!linterOptions.hasOwnProperty('framework')) return
+
+    const framework = linterOptions.framework || ""
+    const isKnownFramework = Array.from(this.linterFrameworkTarget.options).some(option => option.value === framework)
+
+    if (isKnownFramework) {
+      this.linterFrameworkTarget.value = framework
     }
   }
 
@@ -1401,7 +1437,7 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const linter = new Linter(Herb)
-      const result = linter.autofix(value)
+      const result = linter.autofix(value, this.getLinterOptions())
 
       if (result && typeof result === "object" && "source" in result) {
         const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
@@ -1455,7 +1491,7 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const linter = new Linter(Herb)
-      const result = linter.autofix(value, undefined, undefined, { includeUnsafe: true })
+      const result = linter.autofix(value, this.getLinterOptions(), undefined, { includeUnsafe: true })
 
       if (result && typeof result === "object" && "source" in result) {
         const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
@@ -1507,7 +1543,8 @@ export default class extends Controller {
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
     const autofixOptions = this.getAutofixOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions)
+    const linterOptions = this.getLinterOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions, linterOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -2053,6 +2090,11 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onLinterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
   getPrinterOptions() {
     const options = {}
     if (this.hasPrinterIgnoreErrorsTarget) {
@@ -2070,6 +2112,16 @@ export default class extends Controller {
       if (!isNaN(value) && value > 0) {
         options.maxLineLength = value
       }
+    }
+
+    return options
+  }
+
+  getLinterOptions() {
+    const options = {}
+
+    if (this.hasLinterFrameworkTarget) {
+      options.framework = this.linterFrameworkTarget.value || undefined
     }
 
     return options
@@ -2244,6 +2296,37 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(autofixOptionsString))
       } catch (e) {
         console.warn('Failed to parse autofix options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setLinterOptionsInURL(linterOptions) {
+    const nonDefaultLinterOptions = {}
+
+    if (linterOptions.hasOwnProperty('framework') && linterOptions.framework !== DEFAULT_FRAMEWORK) {
+      nonDefaultLinterOptions.framework = linterOptions.framework ?? null
+    }
+
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultLinterOptions).length > 0) {
+        params.set('linterOptions', JSON.stringify(nonDefaultLinterOptions))
+      } else {
+        params.delete('linterOptions')
+      }
+    })
+  }
+
+  getLinterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const linterOptionsString = urlParams.get('linterOptions')
+
+    if (linterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(linterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse linter options from URL:', e)
       }
     }
 
