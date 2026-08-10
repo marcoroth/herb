@@ -9,6 +9,12 @@ supports_block: true
 signature: "label_tag(name = nil, content_or_options = nil, options = nil, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/FormTagHelper.html#method-i-label_tag"
 
+content:
+  source: "block_or_arg"
+  arg_position: 2
+  skip_if_hash: true
+  positional_arguments_with_block: 1
+
 description: |-
   Creates a label element. Accepts a block.
 

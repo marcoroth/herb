@@ -9,6 +9,12 @@ supports_block: true
 signature: "phone_to(phone_number, name = nil, html_options = {}, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-phone_to"
 
+content:
+  source: "block_or_arg"
+  arg_position: 2
+  skip_if_hash: true
+  positional_arguments_with_block: 1
+
 description: |-
   Creates a TEL anchor link tag to the specified phone_number. When the link is clicked, the default app to make phone calls is opened and prepopulated with the phone number.
 

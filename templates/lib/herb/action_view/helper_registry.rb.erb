@@ -94,6 +94,35 @@ module Herb
       end
     end
 
+    class HelperContent
+      attr_reader :source #: Symbol
+      attr_reader :arg_position #: Integer?
+      attr_reader :skip_if_hash #: bool
+      attr_reader :to_s_suffix_when_single #: bool
+      attr_reader :positional_arguments_with_block #: Integer?
+
+      #: (Symbol, Integer?, bool, bool, Integer?) -> void
+      def initialize(source, arg_position, skip_if_hash, to_s_suffix_when_single, positional_arguments_with_block)
+        @source = source
+        @arg_position = arg_position
+        @skip_if_hash = skip_if_hash
+        @to_s_suffix_when_single = to_s_suffix_when_single
+        @positional_arguments_with_block = positional_arguments_with_block
+      end
+
+      #: () -> bool
+      def first_arg? = @source == :first_arg
+
+      #: () -> bool
+      def block_or_arg? = @source == :block_or_arg
+
+      #: () -> bool
+      def skip_if_hash? = @skip_if_hash
+
+      #: () -> bool
+      def to_s_suffix_when_single? = @to_s_suffix_when_single
+    end
+
     class HelperEntry
       attr_reader :name #: String
       attr_reader :type #: Symbol
@@ -107,17 +136,18 @@ module Herb
       attr_reader :signature #: String
       attr_reader :documentation_url #: String
       attr_reader :implicit_attribute #: HelperImplicitAttribute?
+      attr_reader :content #: HelperContent?
       attr_reader :arguments #: Array[HelperArgument]
       attr_reader :options #: Array[HelperOption]
       attr_reader :block_arguments #: Array[HelperBlockArgument]
       attr_reader :special_behaviors #: Array[Symbol]
       attr_reader :aliases #: Array[String]
 
-      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      #: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, content: HelperContent?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
       def initialize( # rubocop:disable Metrics/ParameterLists
         name:, type:, source:, gem:, output:, visibility:, tag_name:, is_void:, supports_block:,
         preferred_for_tag:, supported:, detect_style:, description:, signature:, documentation_url:,
-        implicit_attribute:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
+        implicit_attribute:, content:, arguments:, options:, block_arguments:, special_behaviors:, aliases:
       )
         @name = name
         @type = type
@@ -135,6 +165,7 @@ module Herb
         @signature = signature
         @documentation_url = documentation_url
         @implicit_attribute = implicit_attribute
+        @content = content
         @arguments = arguments
         @options = options
         @block_arguments = block_arguments
@@ -159,6 +190,9 @@ module Herb
 
       #: () -> bool
       def implicit_attribute? = !@implicit_attribute.nil?
+
+      #: () -> bool
+      def content? = !@content.nil?
 
       #: () -> bool
       def call_name_detect? = @detect_style == :call_name
@@ -195,6 +229,17 @@ module Herb
         ),
       <%- else -%>
         implicit_attribute: nil,
+      <%- end -%>
+      <%- if helper.content? -%>
+        content: HelperContent.new(
+          :<%= helper.content.source %>,
+          <%= helper.content.arg_position || "nil" %>,
+          <%= helper.content.skip_if_hash %>,
+          <%= helper.content.to_s_suffix_when_single %>,
+          <%= helper.content.positional_arguments_with_block || "nil" %>
+        ),
+      <%- else -%>
+        content: nil,
       <%- end -%>
         arguments: [
         <%- helper.arguments.each do |arg| -%>

@@ -63,6 +63,15 @@ pub struct HelperImplicitAttribute {
 }
 
 #[derive(Debug, Clone)]
+pub struct HelperContent {
+  pub source: &'static str,
+  pub arg_position: Option<usize>,
+  pub skip_if_hash: bool,
+  pub to_s_suffix_when_single: bool,
+  pub positional_arguments_with_block: Option<usize>,
+}
+
+#[derive(Debug, Clone)]
 pub struct HelperEntry {
   pub name: &'static str,
   pub helper_type: HelperType,
@@ -80,6 +89,7 @@ pub struct HelperEntry {
   pub signature: &'static str,
   pub documentation_url: &'static str,
   pub implicit_attribute: Option<&'static HelperImplicitAttribute>,
+  pub content: Option<&'static HelperContent>,
   pub arguments: &'static [HelperArgument],
   pub options: &'static [HelperOption],
   pub block_arguments: &'static [HelperBlockArgument],
@@ -95,6 +105,16 @@ static <%= helper.constant_name %>_IMPLICIT_ATTR: HelperImplicitAttribute = Help
   source_with_block: <%= helper.implicit_attribute.source_with_block ? "Some(\"#{helper.implicit_attribute.source_with_block}\")" : "None" %>,
   wrapper: "<%= helper.implicit_attribute.wrapper %>",
   skip_wrapping_for: &[<%= helper.implicit_attribute.skip_wrapping_for.map { |s| "\"#{s}\"" }.join(", ") %>],
+};
+
+<%- end -%>
+<%- if helper.content? -%>
+static <%= helper.constant_name %>_CONTENT: HelperContent = HelperContent {
+  source: "<%= helper.content.source %>",
+  arg_position: <%= helper.content.arg_position ? "Some(#{helper.content.arg_position})" : "None" %>,
+  skip_if_hash: <%= helper.content.skip_if_hash %>,
+  to_s_suffix_when_single: <%= helper.content.to_s_suffix_when_single %>,
+  positional_arguments_with_block: <%= helper.content.positional_arguments_with_block ? "Some(#{helper.content.positional_arguments_with_block})" : "None" %>,
 };
 
 <%- end -%>
@@ -119,6 +139,7 @@ static REGISTRY: [HelperEntry; <%= helpers.size %>] = [
     signature: "<%= helper.escaped_signature %>",
     documentation_url: "<%= helper.documentation_url %>",
     implicit_attribute: <%= helper.implicit_attribute? ? "Some(&#{helper.constant_name}_IMPLICIT_ATTR)" : "None" %>,
+    content: <%= helper.content? ? "Some(&#{helper.constant_name}_CONTENT)" : "None" %>,
     arguments: &[
     <%- helper.arguments.each do |arg| -%>
       HelperArgument { name: "<%= arg.name %>", position: <%= arg.position %>, argument_type: "<%= arg.type_display %>", optional: <%= arg.optional %>, default: <%= arg.default ? "Some(\"#{arg.escaped_default}\")" : "None" %>, splat: <%= arg.splat %>, description: "<%= arg.escaped_description %>" },
