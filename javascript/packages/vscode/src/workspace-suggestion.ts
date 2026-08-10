@@ -56,6 +56,8 @@ export function registerWorkspaceSuggestion(context: vscode.ExtensionContext) {
     const root = outsideWorkspaceRoot(
       { fsPath: document.uri.fsPath, scheme: document.uri.scheme, languageId: document.languageId },
       folders,
+      // Bound rather than passed bare: it reads `this.configPath` and
+      // `this.PROJECT_INDICATORS`, so an unbound reference throws.
       startPath => Config.findProjectRootSync(startPath)
     )
 

@@ -148,10 +148,36 @@ export async function activate(context: vscode.ExtensionContext) {
   settingsCommands = new HerbSettingsCommands(context, configProvider)
   void settingsCommands
 
-  vscode.window.createTreeView('herbFileStatus', { treeDataProvider: analysisProvider })
-  vscode.window.createTreeView('herbConfiguration', { treeDataProvider: configProvider })
+  const fileStatusView = vscode.window.createTreeView('herbFileStatus', { treeDataProvider: analysisProvider })
+  const configurationView = vscode.window.createTreeView('herbConfiguration', { treeDataProvider: configProvider })
+
   vscode.window.createTreeView('herbInformation', { treeDataProvider: informationProvider })
   vscode.window.createTreeView('herbSupport', { treeDataProvider: supportProvider })
+
+  const describeScopedFolder = () => {
+    const folders = vscode.workspace.workspaceFolders ?? []
+    // These views read the first folder only, so say which one it is and how
+    // many are being left out once the choice stops being obvious.
+    const multiRoot = folders.length > 1
+    const others = folders.length - 1
+    const description = multiRoot ? folders[0].name : undefined
+    const message = multiRoot
+      ? `Showing ${folders[0].name}. ${others} other workspace ${others === 1 ? 'folder is' : 'folders are'} not included.`
+      : undefined
+
+    fileStatusView.description = description
+    fileStatusView.message = message
+    configurationView.description = description
+    configurationView.message = message
+  }
+
+  describeScopedFolder()
+
+  context.subscriptions.push(
+    fileStatusView,
+    configurationView,
+    vscode.workspace.onDidChangeWorkspaceFolders(describeScopedFolder)
+  )
 
   const codeActionProvider = new HerbCodeActionProvider()
 
