@@ -4,6 +4,8 @@ import type { TextEdit } from "vscode-languageclient/node"
 
 import { Config } from "@herb-tools/config"
 
+import { registerWorkspaceSuggestion } from "./workspace-suggestion"
+
 import { Client } from "./client"
 import { HerbAnalysisProvider } from "./herb-analysis-provider"
 import { HerbCodeActionProvider } from "./code-action-provider"
@@ -274,6 +276,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(async () => {
     await updateConfigStatusBarItem()
   }))
+
+  registerWorkspaceSuggestion(context)
 
   await updateConfigStatusBarItem()
   await runAutoAnalysis()
