@@ -3,6 +3,8 @@ import { describe, test, expect, beforeEach, afterEach, vi } from "vitest"
 import "../src/styles.css"
 
 import { RuntimePanel, buildExcerptDocument } from "../src/runtime-panel"
+
+import type { RuntimePanelOptions } from "../src/runtime-panel"
 import { MAX_RUNTIME_DIAGNOSTICS, normalizeDiagnostic, resetRuntimeReportWarnings } from "../src/runtime-report"
 
 import type { CodeBlockNode } from "@herb-tools/highlighter"
@@ -98,8 +100,8 @@ function embed(payload: unknown) {
   document.body.appendChild(script)
 }
 
-function createPanel() {
-  const panel = new RuntimePanel()
+function createPanel(options: RuntimePanelOptions = {}) {
+  const panel = new RuntimePanel(options)
 
   panels.push(panel)
 
@@ -676,6 +678,32 @@ describe("clear", () => {
     panel.report({ template: "app/views/posts/_post.html.erb", message: "Fresh finding", code: "demo-fresh", severity: "warning", origin: "demo-source" })
 
     expect(cards()).toHaveLength(1)
+  })
+
+  test("renders paths as editor buttons when a handler is provided", () => {
+    embed(PAYLOAD)
+
+    const opened: Array<[string, number, number]> = []
+
+    createPanel({ onOpenFile: (file, line, column) => opened.push([file, line, column]) })
+
+    const frame = document.querySelector(".hdt-frame-target") as HTMLElement
+
+    expect(frame.tagName).toBe("BUTTON")
+
+    frame.click()
+
+    expect(opened).toHaveLength(1)
+    expect(opened[0][0]).toBe("app/views/posts/_actions.html.erb")
+  })
+
+  test("renders paths as plain text without a handler", () => {
+    embed(PAYLOAD)
+
+    createPanel()
+
+    expect((document.querySelector(".hdt-frame-target") as HTMLElement).tagName).toBe("SPAN")
+    expect(document.querySelector(".hdt-path")).toBeNull()
   })
 
   test("keeps per-occurrence detail from a later duplicate", () => {

@@ -28,6 +28,7 @@ export interface RuntimeReportHandle {
 
 export interface RuntimePanelOptions {
   autoInit?: boolean;
+  onOpenFile?: (file: string, line: number, column: number) => void;
 }
 
 interface PanelEntry {
@@ -173,6 +174,7 @@ export class RuntimePanel {
   private lastCount = 0;
   private bumped = false;
   private primed = false;
+  private onOpenFile: ((file: string, line: number, column: number) => void) | null = null;
   private state: PanelState = { dismissed: false, open: false, origin: ALL_ORIGINS };
   private root: HTMLElement | null = null;
   private renderer: SyntaxRenderer | null = null;
@@ -181,6 +183,8 @@ export class RuntimePanel {
   private destroyed = false;
 
   constructor(options: RuntimePanelOptions = {}) {
+    this.onOpenFile = options.onOpenFile ?? null;
+
     if (options.autoInit !== false) {
       this.init();
     }
@@ -453,6 +457,32 @@ export class RuntimePanel {
     void this.hydrateHighlighting();
   }
 
+  private firstLineFor(entries: PanelEntry[]): number {
+    for (const entry of entries) {
+      const line = entry.diagnostic.location?.start.line;
+
+      if (typeof line === 'number') {
+        return line;
+      }
+    }
+
+    return 1;
+  }
+
+  private pathHTML(label: string, file: string, line: number, column: number, className: string): string {
+    const text = escapeHTML(label);
+
+    if (this.onOpenFile === null) {
+      return `<span class="${className}">${text}</span>`;
+    }
+
+    return [
+      `<button type="button" class="${className} hdt-path" data-hdt-action="open"`,
+      ` data-hdt-file="${escapeHTML(file)}" data-hdt-line="${line}" data-hdt-column="${column}"`,
+      ` title="Open ${text} in editor">${text}</button>`,
+    ].join('');
+  }
+
   private rootHTML(): string {
     const badgeCount = this.diagnosticCount;
     const openClass = this.state.open ? ' hdt-open' : '';
@@ -551,7 +581,7 @@ export class RuntimePanel {
     for (const [template, groupEntries] of groups) {
       sections.push([
         `<section class="hdt-group">`,
-        `<h2 class="hdt-group-title">${escapeHTML(template)}<span class="hdt-group-count">${groupEntries.length}</span></h2>`,
+        `<h2 class="hdt-group-title">${this.pathHTML(template, template, this.firstLineFor(groupEntries), 1, 'hdt-group-path')}<span class="hdt-group-count">${groupEntries.length}</span></h2>`,
         groupEntries.map(entry => this.cardHTML(entry)).join(''),
         `</section>`,
       ].join(''));
@@ -704,7 +734,7 @@ export class RuntimePanel {
     const items = frames.map(frame => {
       const via = frame.via === null ? '' : `<span class="hdt-frame-via">${escapeHTML(VIA_LABELS[frame.via] ?? frame.via)}</span>`;
 
-      return `<li class="hdt-frame">${via}<span class="hdt-frame-target">${escapeHTML(frameLabel(frame))}</span></li>`;
+      return `<li class="hdt-frame">${via}${this.pathHTML(frameLabel(frame), frame.template, frame.line ?? 1, frame.column ?? 1, 'hdt-frame-target')}</li>`;
     });
 
     return [
@@ -769,6 +799,15 @@ export class RuntimePanel {
 
           this.saveState();
           this.render();
+        } else if (action === 'open') {
+          const file = element.getAttribute('data-hdt-file');
+
+          if (file !== null && this.onOpenFile !== null) {
+            const line = Number(element.getAttribute('data-hdt-line') ?? '1');
+            const column = Number(element.getAttribute('data-hdt-column') ?? '1');
+
+            this.onOpenFile(file, Number.isFinite(line) ? line : 1, Number.isFinite(column) ? column : 1);
+          }
         }
       });
     });

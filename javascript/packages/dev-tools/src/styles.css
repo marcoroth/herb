@@ -1372,3 +1372,23 @@
     animation: none;
   }
 }
+
+.hdt-path {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hdt-path:hover {
+  text-decoration: underline;
+}
+
+.hdt-path:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 3px;
+}

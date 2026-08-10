@@ -1148,6 +1148,10 @@ export class HerbOverlay {
     }
   }
 
+  public openInEditor(file: string, line: number, column: number) {
+    this.openFileInEditor(file, line, column);
+  }
+
   private openFileInEditor(file: string, line: number, column: number) {
     const absolutePath = file.startsWith('/') ? file : (this.projectPath ? `${this.projectPath}/${file}` : file);
 
@@ -1224,6 +1228,8 @@ export class HerbOverlay {
   }
 
   private initializeRuntimePanel() {
-    this.panel = new RuntimePanel();
+    this.panel = new RuntimePanel({
+      onOpenFile: (file, line, column) => this.openInEditor(file, line, column),
+    });
   }
 }
