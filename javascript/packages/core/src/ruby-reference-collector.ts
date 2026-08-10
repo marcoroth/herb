@@ -1,7 +1,7 @@
 import { RUBY_KEYWORDS } from "./ruby-keywords.js"
 
 import { PrismVisitor, PrismNodes } from "./prism/index.js"
-import { helperExists } from "./action-view-helpers.js"
+import { viewHelperExists } from "./action-view-helpers.js"
 
 import type { PrismLocation } from "./prism/index.js"
 
@@ -22,7 +22,7 @@ export function isProbableLocal(name: string): boolean {
   if (PREDICATE_OR_BANG.test(name)) return false
   if (ROUTE_HELPER.test(name)) return false
 
-  return !helperExists(name)
+  return !viewHelperExists(name)
 }
 
 export interface RubyReference {

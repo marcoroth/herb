@@ -210,6 +210,58 @@ describe("ActionViewNoHelperShadowingRule", () => {
     })
   })
 
+  describe("form builder helpers", () => {
+    test("block argument named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <% buttons.each do |button| %>
+          <%= link_to button.title, button.path %>
+        <% end %>
+      `)
+    })
+
+    test("block argument named submit is allowed", () => {
+      expectNoOffenses(dedent`
+        <% actions.each do |submit| %>
+          <%= submit %>
+        <% end %>
+      `)
+    })
+
+    test("local variable named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <% button = params[:button] %>
+        <%= button %>
+      `)
+    })
+
+    test("strict local named button is allowed", () => {
+      expectNoOffenses(dedent`
+        <%# locals: (button:) %>
+        <%= button %>
+      `)
+    })
+
+    test("block argument named button_tag is still flagged", () => {
+      expectHint("Local variable `button_tag` shadows the Action View `button_tag` helper. Rename it to avoid confusion (for example `button_tag_item`).")
+
+      assertOffenses(dedent`
+        <% items.each do |button_tag| %>
+          <%= button_tag %>
+        <% end %>
+      `)
+    })
+
+    test("block argument named submit_tag is still flagged", () => {
+      expectHint("Local variable `submit_tag` shadows the Action View `submit_tag` helper. Rename it to avoid confusion (for example `submit_tag_item`).")
+
+      assertOffenses(dedent`
+        <% items.each do |submit_tag| %>
+          <%= submit_tag %>
+        <% end %>
+      `)
+    })
+  })
+
   describe("iteration blocks", () => {
     test("iteration block argument named tag is flagged as a warning", () => {
       expectWarning("Local variable `tag` shadows the Action View `tag` helper. Rename it to avoid confusion (for example `tag_item`).")

@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { PrismVisitor } from "@herb-tools/core"
 
-import { getHelperEntries, isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
+import { getHelperEntries, getHelpersByReceiver, isRubyParameterNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig, LintSeverity } from "../types.js"
 
@@ -19,7 +19,7 @@ import type {
   Location,
 } from "@herb-tools/core"
 
-const ALL_HELPER_NAMES = new Set(getHelperEntries().filter(helper => helper.visibility === "public").flatMap(helper => [helper.name, ...helper.aliases]))
+const ALL_HELPER_NAMES = new Set(getHelpersByReceiver("view").filter(helper => helper.visibility === "public").flatMap(helper => [helper.name, ...helper.aliases]))
 const TRANSFORMED_HELPER_NAMES = new Set(getHelperEntries().filter(helper => helper.supported).flatMap(helper => [helper.name, ...helper.aliases]))
 
 interface LocalBinding {

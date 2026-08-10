@@ -6,6 +6,7 @@ export enum HelperType {
 
 export type HelperDetectStyle = "call_name" | "receiver_call"
 export type HelperOutput = "html" | "text" | "url" | "boolean" | "void" | "object"
+export type HelperReceiver = "view" | "form_builder"
 
 export interface HelperArgument {
   readonly name: string
@@ -57,6 +58,7 @@ export interface HelperEntry {
   readonly gem: string
   readonly output: HelperOutput
   readonly visibility: "public" | "internal"
+  readonly receiver: HelperReceiver
   readonly tagName: string | null
   readonly isVoid: boolean
   readonly supportsBlock: boolean
@@ -83,6 +85,7 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   gem: "<%= helper.gem %>",
   output: "<%= helper.output %>",
   visibility: "<%= helper.visibility %>",
+  receiver: "<%= helper.receiver %>",
   tagName: <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
   isVoid: <%= helper.void? %>,
   supportsBlock: <%= helper.supports_block %>,
@@ -176,6 +179,10 @@ export function helperExists(name: string): boolean {
   return name in HELPER_REGISTRY
 }
 
+export function viewHelperExists(name: string): boolean {
+  return HELPER_REGISTRY[name]?.receiver === "view"
+}
+
 export function getHelpersForTag(tagName: string): HelperEntry[] {
   return HELPERS_BY_TAG_NAME[tagName] ?? []
 }
@@ -197,6 +204,10 @@ export function getHelpersByGem(gem: string): HelperEntry[] {
 
 export function getHelpersByOutput(output: HelperOutput): HelperEntry[] {
   return Object.values(HELPER_REGISTRY).filter(entry => entry.output === output)
+}
+
+export function getHelpersByReceiver(receiver: HelperReceiver): HelperEntry[] {
+  return Object.values(HELPER_REGISTRY).filter(entry => entry.receiver === receiver)
 }
 
 export function getHelpersByModule(moduleName: string): HelperEntry[] {
