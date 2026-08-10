@@ -132,6 +132,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-empty-headings`](./html-no-empty-headings.md) - Disallow empty heading elements
 - [`html-no-event-handler-attributes`](./html-no-event-handler-attributes.md) - Disallow inline event handler attributes
 - [`html-no-inline-script-elements`](./html-no-inline-script-elements.md) - Disallow inline script elements
+- [`html-no-literal-nbsp`](./html-no-literal-nbsp.md) - Disallow literal non-breaking spaces, prefer `&nbsp;`
 - [`html-no-nested-forms`](./html-no-nested-forms.md) - Prevents nested form elements, including Rails form helpers
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
