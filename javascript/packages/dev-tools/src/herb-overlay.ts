@@ -346,6 +346,8 @@ export class HerbOverlay {
         this.menuOpen = !this.menuOpen;
 
         if (this.menuOpen) {
+          this.panel?.close();
+
           menuTrigger.classList.add('active');
           menuPanel.classList.add('open');
         } else {
@@ -1230,6 +1232,7 @@ export class HerbOverlay {
   private initializeRuntimePanel() {
     this.panel = new RuntimePanel({
       onOpenFile: (file, line, column) => this.openInEditor(file, line, column),
+      onOpen: () => this.closeMenu(),
     });
   }
 }

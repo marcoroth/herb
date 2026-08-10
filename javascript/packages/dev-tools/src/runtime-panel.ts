@@ -29,6 +29,7 @@ export interface RuntimeReportHandle {
 export interface RuntimePanelOptions {
   autoInit?: boolean;
   onOpenFile?: (file: string, line: number, column: number) => void;
+  onOpen?: () => void;
 }
 
 interface PanelEntry {
@@ -179,6 +180,7 @@ export class RuntimePanel {
   private bumped = false;
   private primed = false;
   private onOpenFile: ((file: string, line: number, column: number) => void) | null = null;
+  private onOpen: (() => void) | null = null;
   private state: PanelState = { dismissed: false, open: false, origin: ALL_ORIGINS };
   private root: HTMLElement | null = null;
   private renderer: SyntaxRenderer | null = null;
@@ -188,6 +190,7 @@ export class RuntimePanel {
 
   constructor(options: RuntimePanelOptions = {}) {
     this.onOpenFile = options.onOpenFile ?? null;
+    this.onOpen = options.onOpen ?? null;
 
     if (options.autoInit !== false) {
       this.init();
@@ -264,6 +267,8 @@ export class RuntimePanel {
     this.state.open = true;
     this.state.dismissed = false;
 
+    this.onOpen?.();
+
     this.saveState();
     this.render();
   }
@@ -288,6 +293,8 @@ export class RuntimePanel {
 
     if (options.open === true) {
       this.state.open = true;
+
+      this.onOpen?.();
     }
 
     this.saveState();

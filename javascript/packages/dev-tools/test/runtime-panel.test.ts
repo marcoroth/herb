@@ -720,6 +720,28 @@ describe("clear", () => {
     expect(message.querySelector("code.hdt-inline-code")!.textContent).toBe("<img onerror=alert(1)>")
   })
 
+  test("notifies the host when it opens so the menu can close", () => {
+    embed(PAYLOAD)
+
+    let opens = 0
+
+    const panel = createPanel({ onOpen: () => { opens += 1 } })
+
+    expect(opens).toBe(0)
+
+    panel.open()
+
+    expect(opens).toBe(1)
+
+    panel.close()
+
+    expect(opens).toBe(1)
+
+    panel.show({ open: true })
+
+    expect(opens).toBe(2)
+  })
+
   test("renders paths as editor buttons when a handler is provided", () => {
     embed(PAYLOAD)
 
