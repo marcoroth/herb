@@ -1,5 +1,44 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`CLI call chain output > counts the call sites a partial is only sometimes at fault on 1`] = `
+"[error] Nested \`<form>\` elements are not allowed. At least one call site renders this file inside a \`<form>\`. (html-no-nested-forms)
+
+app/views/posts/_actions.html.erb:1:1
+
+  →   1 │ <form action="/posts/1" method="post">
+        │  ~~~~
+      2 │   <button type="submit">Delete</button>
+      3 │ </form>
+
+
+        invalid on 1 of 2 call sites
+
+        rendered from app/views/posts/index.html.erb:5:8  <table> › <tr> › <td> › <form>  ← offending call site
+          →   5 │         <%= render "posts/actions" %>
+
+        rendered into app/views/layouts/application.html.erb:7:10  <html> › <body> › <main>
+          →   7 │     <main><%= yield %></main>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-no-nested-forms (1 offense in 1 file)
+
+
+ Summary:
+  Checked      4 files
+  Files        1 with offenses | 3 clean (4 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 4 files, linting..."
+`;
+
 exports[`CLI call chain output > labels every path in the output project relative 1`] = `
 "[error] Element \`<style>\` must be placed inside the \`<head>\` tag. (html-head-only-elements)
 
@@ -199,6 +238,8 @@ app/views/posts/_card.html.erb:2:2
       4 │
 
 
+        invalid on 1 of 2 call sites
+
         rendered from app/views/posts/index.html.erb:3:2  <section>
           →   3 │   <%= render "posts/card" %>
 
@@ -235,7 +276,9 @@ app/views/posts/_badge.html.erb:1:1
       2 │
 
 
-        rendered from app/views/posts/show.html.erb:2:2  <a>
+        invalid on 1 of 2 call sites
+
+        rendered from app/views/posts/show.html.erb:2:2  <a>  ← offending call site
           →   2 │   <%= render "posts/badge" %>
 
         rendered into app/views/layouts/application.html.erb:7:10  <html> › <body> › <main>
@@ -259,4 +302,48 @@ app/views/posts/_badge.html.erb:1:1
  TIP: Run herb-lint --init to create a .herb.yml and lock the version.
       This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
 Found 4 files, linting..."
+`;
+
+exports[`CLI call chain output > says so when a partial is only ever reached through a dynamic render 1`] = `
+"[error] Opening tag name \`<IMG>\` should be lowercase. Use \`<img>\` instead. (html-tag-name-lowercase) [Correctable]
+
+app/views/posts/_row.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <IMG src="/icon.png">
+        │    ~~~
+      3 │ </div>
+      4 │
+
+
+        call sites unknown, 1 render call in this project could not be resolved
+
+
+        Running --fix would correct this to:
+
+        app/views/posts/_row.html.erb
+
+              1 │ <div>
+          -   2 │   <IMG src="/icon.png">
+          +     │   <img src="/icon.png">
+              3 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-tag-name-lowercase (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      1 offense | 1 autocorrectable using \`--fix\`
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
 `;

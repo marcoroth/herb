@@ -25,6 +25,9 @@ module Herb
       ].freeze
 
       # Keep in sync with getEditorUrl in javascript/packages/dev-tools/src/herb-overlay.ts
+      LINE_TOKEN = "__HERB_LINE__"
+      COLUMN_TOKEN = "__HERB_COLUMN__"
+
       EDITOR_URL_TEMPLATES = {
         "atom" => "atom://core/open/file?filename=%<path>s&line=%<line>s&column=%<column>s",
         "cursor" => "cursor://file/%<path>s:%<line>s:%<column>s",
@@ -147,7 +150,22 @@ module Herb
           color: var(--tpl-faint);
         }
 
-        .herb-parser-error-overlay .herb-tpl-brand { color: var(--tpl-fix); font-weight: 600; }
+        .herb-parser-error-overlay .herb-tpl-brand { color: var(--tpl-fix); font-weight: 600; text-transform: none; letter-spacing: 0.04em; }
+
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number {
+          cursor: pointer;
+          border-radius: 3px;
+        }
+
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:hover {
+          color: var(--tpl-text);
+          background: var(--tpl-surface-2);
+        }
+
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:focus-visible {
+          outline: 2px solid var(--tpl-danger);
+          outline-offset: 1px;
+        }
         .herb-parser-error-overlay .herb-tpl-eyebrow-kind { font-family: var(--tpl-mono); text-transform: none; letter-spacing: 0; }
 
         .herb-parser-error-overlay .herb-tpl-title {
@@ -551,6 +569,50 @@ module Herb
             }
           });
 
+          var editorTemplate = root.getAttribute("data-herb-tpl-editor-template");
+
+          if (editorTemplate) {
+            var numbers = root.querySelectorAll(".herb-tpl-excerpt .herb-line-number[data-line]");
+
+            numbers.forEach(function (number) {
+              number.setAttribute("role", "button");
+              number.setAttribute("tabindex", "0");
+              number.setAttribute("title", "Open line " + number.getAttribute("data-line") + " in editor");
+            });
+
+            if (numbers.length > 0) root.dataset.herbTplLineLinks = "1";
+
+            function openLine(number) {
+              var line = number.getAttribute("data-line");
+
+              if (!line) return;
+
+              window.location.href = editorTemplate
+                .split("__HERB_LINE__").join(line)
+                .split("__HERB_COLUMN__").join("1");
+            }
+
+            root.addEventListener("click", function (event) {
+              var number = event.target.closest(".herb-tpl-excerpt .herb-line-number[data-line]");
+
+              if (!number) return;
+
+              event.preventDefault();
+              openLine(number);
+            });
+
+            root.addEventListener("keydown", function (event) {
+              if (event.key !== "Enter" && event.key !== " ") return;
+
+              var number = event.target.closest(".herb-tpl-excerpt .herb-line-number[data-line]");
+
+              if (!number) return;
+
+              event.preventDefault();
+              openLine(number);
+            });
+          }
+
           var sheet = root.querySelector(".herb-tpl-sheet");
           if (sheet) sheet.focus({ preventScroll: true });
         })();
@@ -572,7 +634,7 @@ module Herb
         return "" if @errors.empty?
 
         <<~HTML
-          <div class="herb-parser-error-overlay">
+          <div class="herb-parser-error-overlay"#{editor_template_attribute}>
             <style>
               #{stylesheet_block}
             </style>
@@ -859,7 +921,8 @@ module Herb
           filename: @filename,
           context_lines: CONTEXT_LINES,
           messages: @overlay_messages,
-          markers: "spans"
+          markers: "spans",
+          line_numbers: "element"
         )
       end
 
@@ -937,6 +1000,22 @@ module Herb
         return nil unless path
 
         format(EDITOR_URL_TEMPLATES.fetch(editor_key), path: path, line: line.to_i, column: column.to_i)
+      end
+
+      def editor_href_template
+        path = absolute_path
+
+        return nil unless path
+
+        format(EDITOR_URL_TEMPLATES.fetch(editor_key), path: path, line: LINE_TOKEN, column: COLUMN_TOKEN)
+      end
+
+      def editor_template_attribute
+        template = editor_href_template
+
+        return "" unless template
+
+        %( data-herb-tpl-editor-template="#{escape_attr(template)}")
       end
 
       def get_error_suggestion(error)

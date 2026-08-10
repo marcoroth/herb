@@ -168,6 +168,33 @@ const HOVER_MESSAGE_RULES: &str = r#".herb-highlight.herb-messages-hover .herb-l
   display: block;
 }"#;
 
+const LINE_NUMBER_ELEMENT_RULES: &str = r#".herb-highlight[data-herb-line-numbers="element"] .herb-line[data-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-old-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-new-line]::before {
+  content: none;
+}
+
+.herb-highlight .herb-line-number {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-line-marked > .herb-line-number {
+  font-weight: bold;
+}
+
+.herb-highlight .herb-diff-removed > .herb-line-number {
+  color: var(--herb-severity-error, #F14C4C);
+}
+
+.herb-highlight .herb-diff-added > .herb-line-number {
+  color: var(--herb-diff-added-number, #0DBC79);
+}"#;
+
 fn named_css(named: NamedColor) -> &'static str {
   match named {
     NamedColor::Reset | NamedColor::Bold | NamedColor::Dim => "inherit",
@@ -251,6 +278,7 @@ pub fn generate_stylesheet(dark: &ColorScheme, label: &str, light: Option<(&Colo
     DIAGNOSTIC_RULES.to_string(),
     DIFF_RULES.to_string(),
     HOVER_MESSAGE_RULES.to_string(),
+    LINE_NUMBER_ELEMENT_RULES.to_string(),
     format!(".herb-highlight {{\n{}\n}}", properties(dark, "  ")),
   ];
 

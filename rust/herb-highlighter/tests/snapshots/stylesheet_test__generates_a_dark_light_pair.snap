@@ -238,6 +238,33 @@ expression: "generate_stylesheet(get_theme(Theme::OneDark), \"onedark:github-lig
   display: block;
 }
 
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-old-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-new-line]::before {
+  content: none;
+}
+
+.herb-highlight .herb-line-number {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-line-marked > .herb-line-number {
+  font-weight: bold;
+}
+
+.herb-highlight .herb-diff-removed > .herb-line-number {
+  color: var(--herb-severity-error, #F14C4C);
+}
+
+.herb-highlight .herb-diff-added > .herb-line-number {
+  color: var(--herb-diff-added-number, #0DBC79);
+}
+
 .herb-highlight {
   --herb-token-nbsp: #5C6370;
   --herb-token-identifier: #ABB2BF;

@@ -84,7 +84,7 @@ module Herb
       end
 
       #: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String, ?markers: String) -> Array[String]
-      def html_fragments(source:, errors:, filename:, context_lines: 2, messages: "both", markers: "spans") # rubocop:disable Metrics/ParameterLists
+      def html_fragments(source:, errors:, filename:, context_lines: 2, messages: "both", markers: "spans", line_numbers: "css") # rubocop:disable Metrics/ParameterLists
         return [] unless available?
 
         fragments = with_tempfiles(source, errors) do |source_path, diagnostics_path|
@@ -98,6 +98,7 @@ module Herb
           ]
 
           args << "--html-messages" << "hover" if messages == "both"
+          args << "--html-line-numbers" << "element" if line_numbers == "element"
           args << source_path
 
           output = run(args)

@@ -6,6 +6,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Location, Position } from "@herb-tools/core"
+import { colorize } from "@herb-tools/highlighter"
 
 import { DetailedFormatter } from "../../src/cli/formatters/detailed-formatter.js"
 
@@ -199,5 +200,159 @@ describe("DetailedFormatter call chain", () => {
     const output = plain(await render(processedFile(root, chain(located)), root))
 
     expect(output).not.toContain("rendered from")
+  })
+
+  test("colors the breadcrumb of a frame the same way as before when no call site is singled out", async () => {
+    const root = project(files)
+    const output = await render(processedFile(root, chain(frames)), root)
+
+    expect(output).toContain(colorize("  <section>", "gray"))
+    expect(output).toContain(colorize("  <html> › <body> › <main>", "gray"))
+    expect(output).not.toContain("invalid on")
+    expect(output).not.toContain("offending call site")
+    expect(output).not.toContain("call sites unknown")
+  })
+})
+
+describe("DetailedFormatter mixed call sites", () => {
+  const files = {
+    "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <main><%= yield %></main>\n  </body>\n</html>\n`,
+    "app/views/posts/index.html.erb": `<table>\n  <%= render "posts/row" %>\n</table>\n`,
+    "app/views/posts/_row.html.erb": `<div>\n  <style>.row {}</style>\n</div>\n`,
+  }
+
+  const frames: AncestorChain["frames"] = [
+    { file: "app/views/layouts/application.html.erb", ancestors: ["html", "body", "main"], via: "layout", location: { line: 3, column: 10 } },
+    { file: "app/views/posts/index.html.erb", ancestors: ["table"], via: "render", location: { line: 2, column: 2 } },
+  ]
+
+  function processedFile(root: string, offendingCallSites?: ProcessedFile["offendingCallSites"]): ProcessedFile {
+    return {
+      filename: join(root, "app/views/posts/_row.html.erb"),
+      offense: offenseAt(2, 2),
+      renderedFrom: chain(frames, 3),
+      offendingCallSites,
+    }
+  }
+
+  test("heads the chain with the share of call sites the offense applies to", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { offending: 1, total: 3 }), root))
+
+    expect(output).toContain("invalid on 1 of 3 call sites")
+  })
+
+  test("says call site in the singular for a lone call site", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { offending: 0, total: 1 }), root))
+
+    expect(output).not.toContain("invalid on")
+  })
+
+  test("marks the frame that nests the file in an offending element", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { offending: 1, total: 3, tags: ["table"] }), root))
+
+    const rendered = output.split("\n").filter(line => line.includes("rendered "))
+
+    expect(rendered[0]).toContain("← offending call site")
+    expect(rendered[1]).not.toContain("← offending call site")
+  })
+
+  test("colors the offending element apart from the rest of the breadcrumb", async () => {
+    const root = project(files)
+    const output = await render(processedFile(root, { offending: 1, total: 3, tags: ["table"] }), root)
+
+    expect(output).toContain(colorize("<table>", "yellow"))
+    expect(output).toContain(colorize("<main>", "gray"))
+  })
+
+  test("marks no frame when the offending elements are not known", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { offending: 1, total: 3 }), root))
+
+    expect(output).toContain("invalid on 1 of 3 call sites")
+    expect(output).not.toContain("← offending call site")
+  })
+
+  test("heads nothing when every call site is at fault", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { offending: 3, total: 3 }), root))
+
+    expect(output).not.toContain("invalid on")
+    expect(output).toContain("rendered from app/views/posts/index.html.erb:2:2")
+  })
+
+  test("keeps the call chain of an offense without a split byte for byte", async () => {
+    const root = project(files)
+    const marked = await render(processedFile(root, { offending: 3, total: 3, tags: ["table"] }), root)
+    const plainRail = await render(processedFile(root), root)
+
+    expect(plainRail).toContain(colorize("  <table>", "gray"))
+    expect(marked).toBe(plainRail)
+  })
+})
+
+describe("DetailedFormatter unknown call sites", () => {
+  const files = {
+    "app/views/posts/_row.html.erb": `<div>\n  <style>.row {}</style>\n</div>\n`,
+  }
+
+  function processedFile(root: string, unknownCallSites?: ProcessedFile["unknownCallSites"]): ProcessedFile {
+    return {
+      filename: join(root, "app/views/posts/_row.html.erb"),
+      offense: offenseAt(2, 2),
+      unknownCallSites,
+    }
+  }
+
+  test("says nothing for an offense whose call sites were resolved", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root), root))
+
+    expect(output).not.toContain("call sites unknown")
+  })
+
+  test("names the renders that could not be resolved", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 0, unresolvedRenders: 2, skippedFiles: 0 }), root))
+
+    expect(output).toContain("call sites unknown, 2 render calls in this project could not be resolved")
+  })
+
+  test("says render call in the singular for a single one", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 0, unresolvedRenders: 1, skippedFiles: 0 }), root))
+
+    expect(output).toContain("call sites unknown, 1 render call in this project could not be resolved")
+  })
+
+  test("names the files left out of the index when every render resolved", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 0, unresolvedRenders: 0, skippedFiles: 3 }), root))
+
+    expect(output).toContain("call sites unknown, 3 files were left out of the call site index")
+  })
+
+  test("says nothing renders the file when the index is complete", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 0, unresolvedRenders: 0, skippedFiles: 0 }), root))
+
+    expect(output).toContain("call sites unknown, no file in this project renders it")
+  })
+
+  test("blames the callers when the file has some that lead nowhere", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 2, unresolvedRenders: 0, skippedFiles: 0 }), root))
+
+    expect(output).toContain("call sites unknown, not every call site could be traced back to a document")
+  })
+
+  test("invents no frames for a file whose call sites are unknown", async () => {
+    const root = project(files)
+    const output = plain(await render(processedFile(root, { callers: 0, unresolvedRenders: 1, skippedFiles: 0 }), root))
+
+    expect(output).not.toContain("rendered from")
+    expect(output).not.toContain("rendered into")
   })
 })

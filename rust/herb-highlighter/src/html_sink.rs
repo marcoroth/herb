@@ -39,9 +39,17 @@ pub enum MessageStyle {
   Hover,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LineNumberStyle {
+  #[default]
+  Css,
+  Element,
+}
+
 pub struct HTMLSinkOptions {
   pub theme_label: String,
   pub show_line_numbers: bool,
+  pub line_number_style: LineNumberStyle,
   pub markers: MarkerMode,
   pub diff_layout: DiffLayout,
   pub message_style: MessageStyle,
@@ -52,11 +60,18 @@ impl Default for HTMLSinkOptions {
     Self {
       theme_label: DEFAULT_THEME.as_str().to_string(),
       show_line_numbers: true,
+      line_number_style: LineNumberStyle::Css,
       markers: MarkerMode::Spans,
       diff_layout: DiffLayout::Unified,
       message_style: MessageStyle::Inline,
     }
   }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DiffColumn {
+  Old,
+  New,
 }
 
 pub fn escape_html(text: &str) -> String {
@@ -117,6 +132,26 @@ fn line_content(line: &[(&str, &StyleRole)]) -> String {
   }
 
   content
+}
+
+fn uses_line_number_elements(options: &HTMLSinkOptions) -> bool {
+  options.line_number_style == LineNumberStyle::Element && options.show_line_numbers
+}
+
+fn line_numbers_attribute(options: &HTMLSinkOptions) -> String {
+  if uses_line_number_elements(options) {
+    " data-herb-line-numbers=\"element\"".to_string()
+  } else {
+    String::new()
+  }
+}
+
+fn line_number_element(number: usize, options: &HTMLSinkOptions) -> String {
+  if uses_line_number_elements(options) {
+    format!("<span class=\"herb-line-number\" data-line=\"{number}\">{number}</span>")
+  } else {
+    String::new()
+  }
 }
 
 fn is_linkable(url: &str) -> bool {
@@ -324,8 +359,9 @@ fn render_listing(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkO
       .collect();
 
     return format!(
-      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\"{}>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
       escape_html(&options.theme_label),
+      line_numbers_attribute(options),
       line_spans.join("\n")
     );
   };
@@ -339,12 +375,20 @@ fn render_listing(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkO
     let line_spans: Vec<String> = block
       .lines
       .iter()
-      .map(|info| format!("<span class=\"herb-line\" data-line=\"{}\">{}</span>", info.number, content_for(info)))
+      .map(|info| {
+        format!(
+          "<span class=\"herb-line\" data-line=\"{}\">{}{}</span>",
+          info.number,
+          line_number_element(info.number, options),
+          content_for(info)
+        )
+      })
       .collect();
 
     return format!(
-      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n<figcaption class=\"herb-file-header\">{}</figcaption>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+      "<figure class=\"herb-highlight\" data-herb-theme=\"{}\"{}>\n<figcaption class=\"herb-file-header\">{}</figcaption>\n<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
       escape_html(&options.theme_label),
+      line_numbers_attribute(options),
       escape_html(path),
       line_spans.join("\n")
     );
@@ -360,13 +404,16 @@ fn render_listing(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkO
         _ => "",
       };
 
-      let data_line = if options.show_line_numbers {
-        format!(" data-line=\"{}\"", info.number)
+      let (data_line, number_element) = if options.show_line_numbers {
+        (format!(" data-line=\"{}\"", info.number), line_number_element(info.number, options))
       } else {
-        String::new()
+        (String::new(), String::new())
       };
 
-      format!("<span class=\"herb-line{emphasis_class}\"{data_line}>{}</span>", content_for(info))
+      format!(
+        "<span class=\"herb-line{emphasis_class}\"{data_line}>{number_element}{}</span>",
+        content_for(info)
+      )
     })
     .collect();
 
@@ -377,8 +424,9 @@ fn render_listing(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkO
   };
 
   format!(
-    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"herb-highlight\" data-herb-theme=\"{}\"{}>\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
     escape_html(&options.theme_label),
+    line_numbers_attribute(options),
     line_spans.join("\n")
   )
 }
@@ -457,9 +505,12 @@ fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options
   };
 
   let mut attributes = format!("class=\"{class}\"");
+  let mut number_element = String::new();
 
   if options.show_line_numbers {
     attributes.push_str(&format!(" data-line=\"{}\"", info.number));
+
+    number_element = line_number_element(info.number, options);
   }
 
   if let Some(severity) = marked_severity {
@@ -483,7 +534,7 @@ fn render_annotated_line(info: &LineInfo, pieces: &[(&str, &StyleRole)], options
     MarkerMode::Spans => marked_line_content(pieces, &info.annotations),
   };
 
-  let mut result = format!("<span {attributes}>{content}");
+  let mut result = format!("<span {attributes}>{number_element}{content}");
 
   if emit_messages {
     for annotation in &info.annotations {
@@ -546,9 +597,10 @@ fn render_card(header: &HeaderData<'_>, file: &FileData<'_>, block: &BlockData<'
   };
 
   format!(
-    "<figure class=\"{}\" data-herb-theme=\"{}\">\n{header_html}\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"{}\" data-herb-theme=\"{}\"{}>\n{header_html}\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
     figure_class("herb-highlight herb-diagnostic", options),
     escape_html(&options.theme_label),
+    line_numbers_attribute(options),
     annotated_line_spans(block, options, options.message_style == MessageStyle::Hover).join("\n")
   )
 }
@@ -560,9 +612,10 @@ fn render_inline(path: Option<&str>, block: &BlockData<'_>, options: &HTMLSinkOp
   };
 
   format!(
-    "<figure class=\"{}\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"{}\" data-herb-theme=\"{}\"{}>\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
     figure_class("herb-highlight", options),
     escape_html(&options.theme_label),
+    line_numbers_attribute(options),
     annotated_line_spans(block, options, true).join("\n")
   )
 }
@@ -590,13 +643,14 @@ fn render_diff(path: Option<&str>, original_runs: &[StyledRun], modified_runs: &
     }
 
     for row in &hunk.rows {
-      rows.push(diff_row_span(row, &original_pieces, &modified_pieces, options));
+      rows.push(diff_row_span(row, &original_pieces, &modified_pieces, options, DiffColumn::Old));
     }
   }
 
   format!(
-    "<figure class=\"herb-highlight herb-diff\" data-herb-theme=\"{}\">\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
+    "<figure class=\"herb-highlight herb-diff\" data-herb-theme=\"{}\"{}>\n{figcaption}<pre class=\"herb-code\"><code>{}</code></pre>\n</figure>",
     escape_html(&options.theme_label),
+    line_numbers_attribute(options),
     rows.join("\n")
   )
 }
@@ -618,14 +672,15 @@ fn render_split_diff(
     }
 
     for (left_index, right_index) in hunk.split_row_pairs() {
-      left.push(split_diff_cell(hunk, left_index, original_pieces, modified_pieces, options));
-      right.push(split_diff_cell(hunk, right_index, original_pieces, modified_pieces, options));
+      left.push(split_diff_cell(hunk, left_index, original_pieces, modified_pieces, options, DiffColumn::Old));
+      right.push(split_diff_cell(hunk, right_index, original_pieces, modified_pieces, options, DiffColumn::New));
     }
   }
 
   format!(
-    "<figure class=\"herb-highlight herb-diff herb-diff-split\" data-herb-theme=\"{}\">\n{figcaption}<div class=\"herb-diff-columns\">\n<pre class=\"herb-code herb-diff-column herb-diff-column-old\"><code>{}</code></pre>\n<pre class=\"herb-code herb-diff-column herb-diff-column-new\"><code>{}</code></pre>\n</div>\n</figure>",
+    "<figure class=\"herb-highlight herb-diff herb-diff-split\" data-herb-theme=\"{}\"{}>\n{figcaption}<div class=\"herb-diff-columns\">\n<pre class=\"herb-code herb-diff-column herb-diff-column-old\"><code>{}</code></pre>\n<pre class=\"herb-code herb-diff-column herb-diff-column-new\"><code>{}</code></pre>\n</div>\n</figure>",
     escape_html(&options.theme_label),
+    line_numbers_attribute(options),
     left.join("\n"),
     right.join("\n")
   )
@@ -637,9 +692,10 @@ fn split_diff_cell(
   original_pieces: &[Vec<(&str, &StyleRole)>],
   modified_pieces: &[Vec<(&str, &StyleRole)>],
   options: &HTMLSinkOptions,
+  column: DiffColumn,
 ) -> String {
   match index {
-    Some(index) => diff_row_span(&hunk.rows[index], original_pieces, modified_pieces, options),
+    Some(index) => diff_row_span(&hunk.rows[index], original_pieces, modified_pieces, options, column),
     None => "<span class=\"herb-line herb-diff-empty\"></span>".to_string(),
   }
 }
@@ -649,16 +705,23 @@ fn diff_row_span(
   original_pieces: &[Vec<(&str, &StyleRole)>],
   modified_pieces: &[Vec<(&str, &StyleRole)>],
   options: &HTMLSinkOptions,
+  column: DiffColumn,
 ) -> String {
   let content = diff_row_content(row, original_pieces, modified_pieces);
 
   let mut attributes = String::new();
+  let mut number = None;
 
   let class = match row.kind {
     DiffLineType::Context => {
       if options.show_line_numbers {
-        attributes.push_str(&format!(" data-old-line=\"{}\"", row.old_line.expect("context rows carry an old line number")));
-        attributes.push_str(&format!(" data-new-line=\"{}\"", row.new_line.expect("context rows carry a new line number")));
+        let old_line = row.old_line.expect("context rows carry an old line number");
+        let new_line = row.new_line.expect("context rows carry a new line number");
+
+        attributes.push_str(&format!(" data-old-line=\"{old_line}\""));
+        attributes.push_str(&format!(" data-new-line=\"{new_line}\""));
+
+        number = Some(if column == DiffColumn::New { new_line } else { old_line });
       }
 
       "herb-diff-context"
@@ -666,7 +729,11 @@ fn diff_row_span(
 
     DiffLineType::Removed => {
       if options.show_line_numbers {
-        attributes.push_str(&format!(" data-old-line=\"{}\"", row.old_line.expect("removed rows carry an old line number")));
+        let old_line = row.old_line.expect("removed rows carry an old line number");
+
+        attributes.push_str(&format!(" data-old-line=\"{old_line}\""));
+
+        number = Some(old_line);
       }
 
       "herb-diff-removed"
@@ -674,14 +741,20 @@ fn diff_row_span(
 
     DiffLineType::Added => {
       if options.show_line_numbers {
-        attributes.push_str(&format!(" data-new-line=\"{}\"", row.new_line.expect("added rows carry a new line number")));
+        let new_line = row.new_line.expect("added rows carry a new line number");
+
+        attributes.push_str(&format!(" data-new-line=\"{new_line}\""));
+
+        number = Some(new_line);
       }
 
       "herb-diff-added"
     }
   };
 
-  format!("<span class=\"herb-line {class}\"{attributes}>{content}</span>")
+  let number_element = number.map(|number| line_number_element(number, options)).unwrap_or_default();
+
+  format!("<span class=\"herb-line {class}\"{attributes}>{number_element}{content}</span>")
 }
 
 fn diff_row_content(row: &DiffRowInfo, original_pieces: &[Vec<(&str, &StyleRole)>], modified_pieces: &[Vec<(&str, &StyleRole)>]) -> String {

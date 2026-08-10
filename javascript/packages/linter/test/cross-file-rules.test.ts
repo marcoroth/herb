@@ -468,6 +468,70 @@ describe("renderedFrom on the offense", () => {
   })
 })
 
+describe("offendingCallSites on the offense", () => {
+  test("counts the call sites at fault for a mixed verdict", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <main><%= yield %></main>\n  </body>\n</html>`,
+      "app/views/posts/index.html.erb": `<div><%= render "posts/badge" %></div>`,
+      "app/views/posts/show.html.erb": `<a href="/all"><%= render "posts/badge" %></a>`,
+      "app/views/posts/edit.html.erb": `<section><%= render "posts/badge" %></section>`,
+      "app/views/posts/_badge.html.erb": `<a href="/inner">Inner</a>`,
+    }, HTMLNoNestedLinksRule, "app/views/posts/_badge.html.erb")
+
+    expect(offense.offendingCallSites).toEqual({ offending: 1, total: 3, tags: ["a"] })
+  })
+
+  test("names the tags that make a call site offending", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <main><%= yield %></main>\n  </body>\n</html>`,
+      "app/views/posts/index.html.erb": `<div><%= render "posts/actions" %></div>`,
+      "app/views/posts/show.html.erb": `<form action="/all"><%= render "posts/actions" %></form>`,
+      "app/views/posts/_actions.html.erb": `<form action="/inner"><button>Go</button></form>`,
+    }, HTMLNoNestedFormsRule, "app/views/posts/_actions.html.erb")
+
+    expect(offense.offendingCallSites!.tags).toEqual(["form"])
+  })
+
+  test("counts every call site nesting the file the same way", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <main><%= yield %></main>\n  </body>\n</html>`,
+      "app/views/posts/index.html.erb": `<div><%= render "posts/badge" %></div>\n<div><%= render "posts/badge" %></div>`,
+      "app/views/posts/show.html.erb": `<a href="/all"><%= render "posts/badge" %></a>`,
+      "app/views/posts/_badge.html.erb": `<a href="/inner">Inner</a>`,
+    }, HTMLNoNestedLinksRule, "app/views/posts/_badge.html.erb")
+
+    expect(offense.offendingCallSites).toEqual({ offending: 1, total: 3, tags: ["a"] })
+  })
+
+  test("counts the call sites of a rule that judges the whole placement", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <head><%= render "shared/thing" %></head>\n  <body><%= render "shared/thing" %></body>\n</html>`,
+      "app/views/shared/_thing.html.erb": `<meta charset="utf-8">`,
+    }, HTMLHeadOnlyElementsRule, "app/views/shared/_thing.html.erb")
+
+    expect(offense.offendingCallSites).toEqual({ offending: 1, total: 2 })
+  })
+
+  test("leaves offendingCallSites unset when every call site is at fault", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <main><%= yield %></main>\n  </body>\n</html>`,
+      "app/views/posts/index.html.erb": `<a href="/all"><%= render "posts/badge" %></a>`,
+      "app/views/posts/_badge.html.erb": `<a href="/inner">Inner</a>`,
+    }, HTMLNoNestedLinksRule, "app/views/posts/_badge.html.erb")
+
+    expect(offense.message).toContain("Every call site")
+    expect(offense.offendingCallSites).toBeUndefined()
+  })
+
+  test("leaves offendingCallSites unset for an offense decided by the file alone", async () => {
+    const [offense] = await offensesInProject({
+      "app/views/layouts/application.html.erb": `<html>\n  <body>\n    <style>.x {}</style>\n  </body>\n</html>`,
+    }, HTMLHeadOnlyElementsRule, "app/views/layouts/application.html.erb")
+
+    expect(offense.offendingCallSites).toBeUndefined()
+  })
+})
+
 describe("Action View helper call sites", () => {
   test("reports a link in a partial rendered inside a link_to block", async () => {
     const offenses = await lintInProject({

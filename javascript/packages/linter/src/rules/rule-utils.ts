@@ -43,7 +43,7 @@ import { staticAncestorAttributes } from "../ancestor-attributes.js"
 
 import type * as Nodes from "@herb-tools/core"
 import type { DiagnosticTag } from "@herb-tools/core"
-import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext, OffendingCallSites } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -146,11 +146,20 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    * Like `addOffense`, but records the frames that explain the offense, so a
    * formatter can show why it applies. A chain with no frames is dropped, since
    * there would be nothing to render.
+   *
+   * `callSites` is for offenses only some call sites are at fault for, and says
+   * how many of them that is.
    */
-  protected addOffenseWithChain(message: string, location: Location, chain: AncestorChain | null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
+  protected addOffenseWithChain(message: string, location: Location, chain: AncestorChain | null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[], callSites?: OffendingCallSites): void {
     const offense = this.createOffense(message, location, autofixContext, severity, tags)
 
-    this.offenses.push(chain && chain.frames.length > 0 ? { ...offense, renderedFrom: chain } : offense)
+    if (!chain || chain.frames.length === 0) {
+      this.offenses.push(offense)
+
+      return
+    }
+
+    this.offenses.push(callSites ? { ...offense, renderedFrom: chain, offendingCallSites: callSites } : { ...offense, renderedFrom: chain })
   }
 
   /**
@@ -291,6 +300,7 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
 export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
   private elementStack: HTMLElementNode[] = []
   private detachedBlockDepth = 0
+  private pendingCallSites: OffendingCallSites | null = null
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     this.elementStack.push(node)
@@ -389,7 +399,7 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * not enough information to tell, both of which rules should stay silent on.
    */
   protected isInsideElementAcrossCallers(...tagNames: string[]): AncestorVerdict {
-    return ancestorVerdict(this.renderedContext, this.ancestorTagNames, ...tagNames)
+    return this.verdictAcrossCallers(this.ancestorTagNames, tagNames)
   }
 
   /**
@@ -399,7 +409,37 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    * checks don't report the same nesting twice.
    */
   protected isRenderedInsideElement(...tagNames: string[]): AncestorVerdict {
-    return ancestorVerdict(this.renderedContext, [], ...tagNames)
+    return this.verdictAcrossCallers([], tagNames)
+  }
+
+  /**
+   * Judges the call sites and remembers how they split, so the next offense
+   * added with a call chain can report the split without every rule having to
+   * count call sites itself.
+   */
+  private verdictAcrossCallers(localAncestors: string[], tagNames: string[]): AncestorVerdict {
+    const verdict = ancestorVerdict(this.renderedContext, localAncestors, ...tagNames)
+
+    this.pendingCallSites = verdict === "mixed" ? this.callSiteSplit(chain => chain.tags.some(tag => tagNames.includes(tag)), tagNames) : null
+
+    return verdict
+  }
+
+  /**
+   * How many call sites a predicate holds for, out of how many there are.
+   *
+   * Chains stand for every path that nests this file the same way, so the
+   * counts add up their occurrences rather than the chains themselves.
+   */
+  private callSiteSplit(offending: (chain: AncestorChain) => boolean, tagNames?: string[]): OffendingCallSites {
+    const { chains } = this.renderedContext
+    const occurrences = (total: number, chain: AncestorChain) => total + chain.occurrences
+
+    return {
+      offending: chains.filter(offending).reduce(occurrences, 0),
+      total: chains.reduce(occurrences, 0),
+      ...(tagNames ? { tags: [...tagNames] } : {}),
+    }
   }
 
   /**
@@ -444,6 +484,8 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
     const { chains } = this.renderedContext
     const local = this.ancestorTagNames
 
+    this.pendingCallSites = null
+
     if (chains.length === 0) return { verdict: "unknown", chain: null }
 
     const localAttributes = this.ancestorAttributes
@@ -453,7 +495,12 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
     ))
 
     if (offending.length === chains.length) return { verdict: "always", chain: offending[0] }
-    if (offending.length > 0) return { verdict: "mixed", chain: offending[0] }
+
+    if (offending.length > 0) {
+      this.pendingCallSites = this.callSiteSplit(chain => offending.includes(chain))
+
+      return { verdict: "mixed", chain: offending[0] }
+    }
 
     return { verdict: "never", chain: null }
   }
@@ -467,9 +514,16 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
    *
    * Nothing is recorded for a file judged on its own contents, which is what a
    * whole document and a `content_for` body both are.
+   *
+   * A `mixed` verdict from the helpers above also carries how the call sites
+   * split, and is spent on the first offense that follows it.
    */
   protected addOffenseWithCallChain(message: string, location: Location, chain: AncestorChain | null = this.renderedContext.chains[0] ?? null, autofixContext?: TAutofixContext, severity?: LintSeverity, tags?: DiagnosticTag[]): void {
-    this.addOffenseWithChain(message, location, chain, autofixContext, severity, tags)
+    const callSites = this.pendingCallSites
+
+    this.pendingCallSites = null
+
+    this.addOffenseWithChain(message, location, chain, autofixContext, severity, tags, callSites ?? undefined)
   }
 
   /**

@@ -57,21 +57,25 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
 `
   }
 
-  private callChainFor({ renderedFrom }: ProcessedFile): string | undefined {
-    if (!renderedFrom || !this.highlighter) return undefined
-    if (renderedFrom.frames.length === 0) return undefined
+  private callChainFor({ renderedFrom, offendingCallSites, unknownCallSites }: ProcessedFile): string | undefined {
+    if (!renderedFrom || !this.highlighter) return this.unknownCallSitesFor(unknownCallSites)
+    if (renderedFrom.frames.length === 0) return this.unknownCallSitesFor(unknownCallSites)
 
     const indent = "        "
     const sections: string[] = []
+    const header = this.callSiteSplitFor(offendingCallSites)
+    const offendingTags = header ? offendingCallSites?.tags ?? [] : []
 
     for (const frame of [...renderedFrom.frames].reverse()) {
       if (!frame.location) continue
 
+      const offends = frame.ancestors.some(tag => offendingTags.includes(tag))
       const verb = FRAME_VERBS[frame.via] ?? FRAME_VERBS.render
-      const nesting = frame.ancestors.length > 0 ? colorize(`  ${frame.ancestors.map(tag => `<${tag}>`).join(" › ")}`, "gray") : ""
+      const nesting = this.nestingFor(frame.ancestors, offendingTags)
+      const marker = offends ? colorize("  ← offending call site", "yellow") : ""
       const label = `${frame.file}:${frame.location.line}:${frame.location.column}`
       const target = colorize(hyperlink(label, fileUrl(this.absolutePath(frame.file))), "cyan")
-      const heading = `${colorize(verb, "gray")} ${target}${nesting}`
+      const heading = `${colorize(verb, "gray")} ${target}${nesting}${marker}`
 
       const source = this.sourceOf(frame.file)
       if (source === undefined) continue
@@ -97,7 +101,49 @@ ${colorize("        Tip: run with ", "gray")}${colorize("--show-fix-diff", "bold
       ? `\n${indent}${colorize(`and ${others} other call site${others === 1 ? "" : "s"} nesting it the same way`, "gray")}`
       : ""
 
-    return `\n${sections.join("\n\n")}${footer}\n`
+    const rail = `${sections.join("\n\n")}${footer}`
+
+    return header ? `\n${indent}${header}\n\n${rail}\n` : `\n${rail}\n`
+  }
+
+  private nestingFor(ancestors: string[], offendingTags: string[]): string {
+    if (ancestors.length === 0) return ""
+
+    if (offendingTags.length === 0) {
+      return colorize(`  ${ancestors.map(tag => `<${tag}>`).join(" › ")}`, "gray")
+    }
+
+    const separator = colorize(" › ", "gray")
+    const tags = ancestors.map(tag => colorize(`<${tag}>`, offendingTags.includes(tag) ? "yellow" : "gray"))
+
+    return `  ${tags.join(separator)}`
+  }
+
+  private callSiteSplitFor(callSites?: ProcessedFile["offendingCallSites"]): string | undefined {
+    if (!callSites) return undefined
+    if (callSites.offending === 0 || callSites.offending >= callSites.total) return undefined
+
+    const offending = colorize(String(callSites.offending), "yellow")
+    const total = colorize(String(callSites.total), "bold")
+    const noun = callSites.total === 1 ? "call site" : "call sites"
+
+    return `${colorize("invalid on ", "gray")}${offending}${colorize(" of ", "gray")}${total} ${colorize(noun, "gray")}`
+  }
+
+  private unknownCallSitesFor(unknownCallSites?: ProcessedFile["unknownCallSites"]): string | undefined {
+    if (!unknownCallSites) return undefined
+
+    const { callers, unresolvedRenders, skippedFiles } = unknownCallSites
+    const indent = "        "
+
+    const reason = () => {
+      if (callers > 0) return "not every call site could be traced back to a document"
+      if (unresolvedRenders > 0) return `${unresolvedRenders} render call${unresolvedRenders === 1 ? "" : "s"} in this project could not be resolved`
+      if (skippedFiles > 0) return `${skippedFiles} file${skippedFiles === 1 ? "" : "s"} were left out of the call site index`
+      return "no file in this project renders it"
+    }
+
+    return `\n${indent}${colorize(`call sites unknown, ${reason()}`, "gray")}\n`
   }
 
   private absolutePath(filename: string): string {

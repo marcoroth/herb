@@ -205,6 +205,33 @@ const DIAGNOSTIC_RULES = `.herb-highlight .herb-severity-label { font-weight: bo
   display: block;
 }`
 
+const LINE_NUMBER_ELEMENT_RULES = `.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-old-line]::before,
+.herb-highlight[data-herb-line-numbers="element"] .herb-line[data-new-line]::before {
+  content: none;
+}
+
+.herb-highlight .herb-line-number {
+  display: inline-block;
+  width: 3ch;
+  margin-right: 1ch;
+  text-align: right;
+  color: var(--herb-line-number, #666666);
+  user-select: none;
+}
+
+.herb-highlight .herb-line-marked > .herb-line-number {
+  font-weight: bold;
+}
+
+.herb-highlight .herb-diff-removed > .herb-line-number {
+  color: var(--herb-severity-error, #F14C4C);
+}
+
+.herb-highlight .herb-diff-added > .herb-line-number {
+  color: var(--herb-diff-added-number, #0DBC79);
+}`
+
 function cssColor(color: Color): string {
   if (color.startsWith("#")) {
     return color.toUpperCase()
@@ -254,6 +281,7 @@ export function generateStylesheet(dark: ColorScheme, label: string, light?: Lig
     tokenRules,
     `.herb-highlight .herb-tag-name { color: var(--herb-token-html-tag-start); }\n.herb-highlight .herb-attr-name { color: var(--herb-attr-name); }\n.herb-highlight .herb-attr-value { color: var(--herb-attr-value); }\n.herb-highlight .herb-comment { color: var(--herb-token-html-comment-start); }`,
     DIAGNOSTIC_RULES,
+    LINE_NUMBER_ELEMENT_RULES,
     `.herb-highlight {\n${propertyBlock(dark, "  ")}\n}`,
   ]
 

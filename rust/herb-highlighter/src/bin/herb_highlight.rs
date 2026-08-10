@@ -9,7 +9,7 @@ use herb_highlighter::diff_renderer::{DiffLayout, DiffRenderOptions};
 use herb_highlighter::document::{Document, Node};
 use herb_highlighter::document_builder::DiffDocumentOptions;
 use herb_highlighter::highlighter::{HighlightOptions, Highlighter};
-use herb_highlighter::html_sink::{wrap_document_html, HTMLSinkOptions, MarkerMode, MessageStyle};
+use herb_highlighter::html_sink::{wrap_document_html, HTMLSinkOptions, LineNumberStyle, MarkerMode, MessageStyle};
 use herb_highlighter::stylesheet::generate_stylesheet;
 use herb_highlighter::themes::{resolve_theme, DEFAULT_THEME, THEME_NAMES};
 use herb_highlighter::unified_diff::parse_unified_diff;
@@ -32,6 +32,7 @@ Options:
   --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
   --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
   --html-messages        diagnostic message style for html output (inline|hover) [default: inline]
+  --html-line-numbers    line number rendering for html output (css|element) [default: css]
   --html-fragment-separator  separator line printed between html fragments in split mode
   --focus                line number to focus on (shows only that line with context)
   --context-lines        number of context lines around focus line [default: 2]
@@ -80,6 +81,7 @@ struct Arguments {
   html_markers: MarkerMode,
   html_chrome_document: bool,
   html_messages: MessageStyle,
+  html_line_numbers: LineNumberStyle,
   html_fragment_separator: Option<String>,
 }
 
@@ -121,6 +123,7 @@ impl CLI {
         "--html-markers" => values.html_markers = next_value(&arguments, &mut index, &inline_value),
         "--html-chrome" => values.html_chrome = next_value(&arguments, &mut index, &inline_value),
         "--html-messages" => values.html_messages = next_value(&arguments, &mut index, &inline_value),
+        "--html-line-numbers" => values.html_line_numbers = next_value(&arguments, &mut index, &inline_value),
         "--html-fragment-separator" => values.html_fragment_separator = next_value(&arguments, &mut index, &inline_value),
         "--focus" => values.focus = next_value(&arguments, &mut index, &inline_value),
         "--context-lines" => values.context_lines = next_value(&arguments, &mut index, &inline_value),
@@ -181,6 +184,7 @@ impl CLI {
         ("--html-markers", values.html_markers.is_some()),
         ("--html-chrome", values.html_chrome.is_some()),
         ("--html-messages", values.html_messages.is_some()),
+        ("--html-line-numbers", values.html_line_numbers.is_some()),
         ("--html-fragment-separator", values.html_fragment_separator.is_some()),
       ] {
         if present {
@@ -216,6 +220,16 @@ impl CLI {
 
       Some(value) => {
         eprintln!("Invalid html messages mode: {value}. Valid modes: inline, hover.");
+        process::exit(1);
+      }
+    };
+
+    let html_line_numbers = match values.html_line_numbers.as_deref() {
+      None | Some("css") => LineNumberStyle::Css,
+      Some("element") => LineNumberStyle::Element,
+
+      Some(value) => {
+        eprintln!("Invalid html line numbers mode: {value}. Valid modes: css, element.");
         process::exit(1);
       }
     };
@@ -316,6 +330,7 @@ impl CLI {
       html_markers,
       html_chrome_document,
       html_messages,
+      html_line_numbers,
       html_fragment_separator: values.html_fragment_separator.clone(),
     }
   }
@@ -575,6 +590,7 @@ impl CLI {
     let sink_options = HTMLSinkOptions {
       theme_label: arguments.theme.clone(),
       show_line_numbers: arguments.show_line_numbers,
+      line_number_style: arguments.html_line_numbers,
       markers: arguments.html_markers,
       diff_layout: DiffLayout::Unified,
       message_style: arguments.html_messages,
@@ -680,6 +696,7 @@ impl CLI {
       let sink_options = HTMLSinkOptions {
         theme_label: arguments.theme.clone(),
         show_line_numbers: arguments.show_line_numbers,
+        line_number_style: arguments.html_line_numbers,
         markers: arguments.html_markers,
         message_style: arguments.html_messages,
         ..Default::default()
@@ -765,6 +782,7 @@ struct ParsedValues {
   html_markers: Option<String>,
   html_chrome: Option<String>,
   html_messages: Option<String>,
+  html_line_numbers: Option<String>,
   html_fragment_separator: Option<String>,
 }
 

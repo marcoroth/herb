@@ -14,6 +14,10 @@ module Herb
       ERROR_CLASS_PRIORITRY: untyped
 
       # Keep in sync with getEditorUrl in javascript/packages/dev-tools/src/herb-overlay.ts
+      LINE_TOKEN: ::String
+
+      COLUMN_TOKEN: ::String
+
       EDITOR_URL_TEMPLATES: untyped
 
       EDITOR_ALIASES: untyped
@@ -79,6 +83,10 @@ module Herb
       def absolute_path: () -> untyped
 
       def editor_href: (untyped line, untyped column) -> untyped
+
+      def editor_href_template: () -> untyped
+
+      def editor_template_attribute: () -> untyped
 
       def get_error_suggestion: (untyped error) -> untyped
 

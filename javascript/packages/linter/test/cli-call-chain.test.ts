@@ -120,6 +120,33 @@ describe("CLI call chain output", () => {
     expect(output).not.toContain("rendered from app/views/layouts/application.html.erb:4")
   })
 
+  test("counts the call sites a partial is only sometimes at fault on", () => {
+    const root = project({
+      "app/views/layouts/application.html.erb": LAYOUT,
+      "app/views/posts/index.html.erb": `<table class="posts">\n  <tr>\n    <td>\n      <form action="/search">\n        <%= render "posts/actions" %>\n      </form>\n    </td>\n  </tr>\n</table>\n`,
+      "app/views/posts/show.html.erb": `<section class="post">\n  <%= render "posts/actions" %>\n</section>\n`,
+      "app/views/posts/_actions.html.erb": `<form action="/posts/1" method="post">\n  <button type="submit">Delete</button>\n</form>\n`,
+    })
+
+    const { output } = runLinterIn(root, "--only", "html-no-nested-forms")
+
+    expect(output).toMatchSnapshot()
+    expect(output).toContain("invalid on 1 of 2 call sites")
+  })
+
+  test("says so when a partial is only ever reached through a dynamic render", () => {
+    const root = project({
+      "app/views/layouts/application.html.erb": LAYOUT,
+      "app/views/posts/index.html.erb": `<section>\n  <%= render row_partial %>\n</section>\n`,
+      "app/views/posts/_row.html.erb": `<div>\n  <IMG src="/icon.png">\n</div>\n`,
+    })
+
+    const { output } = runLinterIn(root, "--only", "html-tag-name-lowercase")
+
+    expect(output).toMatchSnapshot()
+    expect(output).not.toContain("rendered from")
+  })
+
   test("points a missing strict local at the declaration it violates", () => {
     const root = project({
       "app/views/layouts/application.html.erb": LAYOUT,

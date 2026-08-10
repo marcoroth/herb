@@ -10,7 +10,7 @@ import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
-import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
+import { deserializeDiagnostic, didyoumean, isPartialPath, projectRelativePath } from "@herb-tools/core"
 import { fixabilityFor } from "../fixability.js"
 import { buildPartialIndex, refreshPartialAfterFix } from "../partial-index-builder.js"
 import { buildPartialCallerIndex } from "../partial-caller-builder.js"
@@ -21,7 +21,7 @@ import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
 import type { Fixability } from "../fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
-import type { LintOffense, RuleClass } from "../types.js"
+import type { LintOffense, OffendingCallSites, RuleClass, UnknownCallSites } from "../types.js"
 import type { PartialCallerIndex, PartialIndex } from "@herb-tools/core"
 
 const AUTOMATIC_FIX_DIFF_LIMIT = 20
@@ -31,6 +31,10 @@ export interface ProcessedFile {
   offense: Diagnostic
   /** The call chain that justified the offense, when it came from where the file is rendered. */
   renderedFrom?: AncestorChain
+  /** How many call sites the offense applies to, when only some of them do. */
+  offendingCallSites?: OffendingCallSites
+  /** Set when the file is a partial whose call sites could not be resolved. */
+  unknownCallSites?: UnknownCallSites
   content?: string
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
@@ -226,6 +230,31 @@ export class FileProcessor {
     return fixabilityFor(offense, ruleClass)
   }
 
+  /**
+   * Why a partial's call sites could not be resolved, so the report can say
+   * that instead of showing nothing.
+   *
+   * Only partials are considered. Every other template is rendered by
+   * something outside the view layer, so having no call site is the norm there
+   * rather than a gap.
+   */
+  private unknownCallSitesFor(filename: string): UnknownCallSites | undefined {
+    const callers = this.partialCallers
+
+    if (!callers) return undefined
+    if (!isPartialPath(filename)) return undefined
+
+    const file = projectRelativePath(filename, this.projectPath)
+
+    if (callers.contextOf(file).resolved) return undefined
+
+    return {
+      callers: callers.callersOf(file).length,
+      unresolvedRenders: callers.unresolvedRenderCount,
+      skippedFiles: callers.skippedFileCount,
+    }
+  }
+
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
     const jobs = context?.jobs ?? 1
     const shouldParallelize = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
@@ -375,6 +404,8 @@ export class FileProcessor {
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
+            offendingCallSites: offense.offendingCallSites,
+            unknownCallSites: this.unknownCallSitesFor(filename),
             ...this.fixabilityFor(offense)
           })
 
@@ -401,6 +432,8 @@ export class FileProcessor {
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
+            offendingCallSites: offense.offendingCallSites,
+            unknownCallSites: this.unknownCallSitesFor(filename),
             ...this.fixabilityFor(offense)
           })
 
@@ -562,6 +595,8 @@ export class FileProcessor {
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
           renderedFrom: offense.renderedFrom,
+          offendingCallSites: offense.offendingCallSites,
+          unknownCallSites: this.unknownCallSitesFor(offense.filename),
           autocorrectable: offense.autocorrectable,
           unsafeAutocorrectable: offense.unsafeAutocorrectable
         })

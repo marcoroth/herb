@@ -13,7 +13,7 @@ import { partialCallerIndexFrom } from "../partial-caller-builder.js"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, OffendingCallSites } from "../types.js"
 import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/core"
 
 export interface WorkerInput {
@@ -34,6 +34,7 @@ export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
   renderedFrom?: AncestorChain
+  offendingCallSites?: OffendingCallSites
   autocorrectable: boolean
   unsafeAutocorrectable: boolean
 }
@@ -135,6 +136,7 @@ async function run() {
           filename,
           offense,
           renderedFrom: offense.renderedFrom,
+          offendingCallSites: offense.offendingCallSites,
           ...fixabilityOf(offense)
         })
 
@@ -157,6 +159,7 @@ async function run() {
           filename,
           offense,
           renderedFrom: offense.renderedFrom,
+          offendingCallSites: offense.offendingCallSites,
           ...fixabilityOf(offense)
         })
 

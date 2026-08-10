@@ -314,7 +314,7 @@ module Engine
       refute_includes html, "<span> before the closing tag"
     end
 
-    test "parser overlay chrome never styles a highlighter class" do
+    test "parser overlay chrome only styles allowlisted highlighter classes" do
       source = "<div><span>Content</div>"
       errors = parser_errors_for(source)
 
@@ -322,7 +322,41 @@ module Engine
         source, errors, bridge: FakeBridge.new(available: false)
       ).generate_html
 
-      refute_match(/\.herb-(?!tpl-|parser-error-overlay)/, html)
+      refute_match(/\.herb-(?!tpl-|parser-error-overlay|line-number)/, html)
+    end
+
+    test "parser overlay only styles the highlighter line number under the line link attribute" do
+      source = "<div><span>Content</div>"
+      errors = parser_errors_for(source)
+
+      html = Herb::Engine::ParserErrorOverlay.new(
+        source, errors, bridge: FakeBridge.new(available: false)
+      ).generate_html
+
+      styles = html[%r{<style>(.+?)</style>}m, 1].to_s
+      selectors = styles.scan(/^[^\n{]*\.herb-line-number[^\n{]*/)
+
+      refute_empty selectors
+
+      selectors.each do |selector|
+        assert_includes selector, "[data-herb-tpl-line-links]"
+        assert_includes selector, ".herb-tpl-excerpt"
+      end
+    end
+
+    test "parser overlay requests line number elements and carries an editor template" do
+      source = "<div><span>Content</div>"
+      errors = parser_errors_for(source)
+      bridge = FakeBridge.new(available: true, fragments: ["<figure class=\"herb-highlight\" data-herb-theme=\"onedark\" data-herb-line-numbers=\"element\"></figure>"])
+
+      with_editor("code") do
+        html = Herb::Engine::ParserErrorOverlay.new(
+          source, errors, filename: "app/views/x.html.erb", project_path: "/srv/app", bridge: bridge
+        ).generate_html
+
+        assert_equal "element", bridge.html_fragments_calls.first[:line_numbers]
+        assert_includes html, %(data-herb-tpl-editor-template="vscode://file//srv/app/app/views/x.html.erb:__HERB_LINE__:__HERB_COLUMN__")
+      end
     end
 
     test "parser overlay escapes a hostile filename in every attribute context" do

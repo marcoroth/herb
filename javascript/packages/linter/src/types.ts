@@ -43,6 +43,30 @@ export interface BaseAutofixContext {
 }
 
 /**
+ * The share of a file's call sites an offense applies to, for offenses the call
+ * sites disagree about.
+ *
+ * `tags` names the ancestors that make a call site offending, when the check
+ * was about ancestor names, so a formatter can point at the frames that
+ * introduce them.
+ */
+export interface OffendingCallSites {
+  offending: number
+  total: number
+  tags?: string[]
+}
+
+/**
+ * Why the call sites of a file are unknown, so a formatter can say so instead
+ * of leaving the absent call chain to be read as "nothing renders this".
+ */
+export interface UnknownCallSites {
+  callers: number
+  unresolvedRenders: number
+  skippedFiles: number
+}
+
+/**
  * A lint offense without severity bound. Rules produce these, and the Linter
  * binds severity based on the rule's defaultConfig and user config overrides.
  */
@@ -54,6 +78,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   severity?: LintSeverity
   /** The call chain that justified the offense */
   renderedFrom?: AncestorChain
+  /** How many call sites the offense applies to, when only some of them do */
+  offendingCallSites?: OffendingCallSites
 }
 
 /**

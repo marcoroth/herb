@@ -15,7 +15,7 @@ import { parseUnifiedDiff } from "./unified-diff.js"
 
 import type { DiffHunk } from "./diff-computer.js"
 import type { Document } from "./document.js"
-import type { MarkerMode, MessageStyle } from "./html-sink.js"
+import type { LineNumberStyle, MarkerMode, MessageStyle } from "./html-sink.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 
@@ -35,6 +35,7 @@ export class CLI {
       --html-markers         diagnostic marker strategy for html output (highlight-api|spans) [default: spans]
       --html-chrome          wrap html output in a standalone page (fragment|document) [default: fragment]
       --html-messages        diagnostic message style for html output (inline|hover) [default: inline]
+      --html-line-numbers    line number rendering for html output (css|element) [default: css]
       --html-fragment-separator  separator line printed between html fragments in split mode
       --focus                line number to focus on (shows only that line with context)
       --context-lines        number of context lines around focus line [default: 2]
@@ -70,7 +71,7 @@ export class CLI {
       process.exit(1)
     }
 
-    if (["--theme", "--format", "--focus", "--context-lines", "--max-width", "--diagnostics", "--html-markers", "--html-chrome", "--html-messages", "--html-fragment-separator"].includes(last)) {
+    if (["--theme", "--format", "--focus", "--context-lines", "--max-width", "--diagnostics", "--html-markers", "--html-chrome", "--html-messages", "--html-line-numbers", "--html-fragment-separator"].includes(last)) {
       args.pop()
     }
 
@@ -96,6 +97,7 @@ export class CLI {
           "html-markers": { type: "string" },
           "html-chrome": { type: "string" },
           "html-messages": { type: "string" },
+          "html-line-numbers": { type: "string" },
           "html-fragment-separator": { type: "string" },
         },
         allowPositionals: true,
@@ -173,7 +175,7 @@ export class CLI {
       process.exit(1)
     }
 
-    for (const flag of ["html-markers", "html-chrome", "html-messages", "html-fragment-separator"] as const) {
+    for (const flag of ["html-markers", "html-chrome", "html-messages", "html-line-numbers", "html-fragment-separator"] as const) {
       if (values[flag] !== undefined && format !== "html") {
         console.error(`Error: --${flag} requires --format html.`)
         process.exit(1)
@@ -204,6 +206,15 @@ export class CLI {
     }
 
     const htmlMessages = htmlMessagesValue as MessageStyle
+
+    const htmlLineNumbersValue = values["html-line-numbers"] || "css"
+
+    if (htmlLineNumbersValue !== "css" && htmlLineNumbersValue !== "element") {
+      console.error(`Invalid html line numbers mode: ${htmlLineNumbersValue}. Valid modes: css, element.`)
+      process.exit(1)
+    }
+
+    const htmlLineNumbers = htmlLineNumbersValue as LineNumberStyle
 
     const htmlFragmentSeparator = values["html-fragment-separator"]
 
@@ -327,6 +338,7 @@ export class CLI {
       htmlMarkers,
       htmlChrome,
       htmlMessages,
+      htmlLineNumbers,
       htmlFragmentSeparator,
     }
   }
@@ -373,8 +385,8 @@ export class CLI {
     }
   }
 
-  private async runDiff(inputs: string[], options: { theme: string, format: string, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number, htmlMarkers: MarkerMode, htmlChrome: string, htmlMessages: MessageStyle, htmlFragmentSeparator?: string }): Promise<void> {
-    const { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlMessages, htmlFragmentSeparator } = options
+  private async runDiff(inputs: string[], options: { theme: string, format: string, contextLines: number, showLineNumbers: boolean, wrapLines: boolean, truncateLines: boolean, maxWidth?: number, htmlMarkers: MarkerMode, htmlChrome: string, htmlMessages: MessageStyle, htmlLineNumbers: LineNumberStyle, htmlFragmentSeparator?: string }): Promise<void> {
+    const { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlMessages, htmlLineNumbers, htmlFragmentSeparator } = options
 
     let diffs: { path: string, hunks?: DiffHunk[], original?: string, modified?: string }[]
 
@@ -426,7 +438,7 @@ export class CLI {
         return
       }
 
-      const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers, diffLayout: "unified" as const, messageStyle: htmlMessages }
+      const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers, diffLayout: "unified" as const, messageStyle: htmlMessages, lineNumberStyle: htmlLineNumbers }
 
       const fragments = documents.map(document => highlighter.renderHTML(document, sinkOptions))
 
@@ -460,7 +472,7 @@ export class CLI {
   }
 
   async run() {
-    const { positionals, diffMode, theme, format, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics, htmlMarkers, htmlChrome, htmlMessages, htmlFragmentSeparator } =
+    const { positionals, diffMode, theme, format, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics, htmlMarkers, htmlChrome, htmlMessages, htmlLineNumbers, htmlFragmentSeparator } =
       await this.parseArguments()
 
     const isDiffSubcommand = positionals[0] === "diff"
@@ -468,7 +480,7 @@ export class CLI {
     if (diffMode || isDiffSubcommand) {
       const inputs = isDiffSubcommand ? positionals.slice(1) : positionals
 
-      await this.runDiff(inputs, { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlMessages, htmlFragmentSeparator })
+      await this.runDiff(inputs, { theme, format, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, htmlMarkers, htmlChrome, htmlMessages, htmlLineNumbers, htmlFragmentSeparator })
 
       return
     }
@@ -528,7 +540,7 @@ export class CLI {
           splitDiagnostics,
         })
 
-        const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers, messageStyle: htmlMessages }
+        const sinkOptions = { themeLabel: theme, showLineNumbers, markers: htmlMarkers, messageStyle: htmlMessages, lineNumberStyle: htmlLineNumbers }
 
         let output = htmlFragmentSeparator !== undefined
           ? highlighter.renderHTMLFragments(document, sinkOptions)

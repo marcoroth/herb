@@ -30,6 +30,9 @@ const DIAG_WARN: Diagnostic = {
   message: "avoid inline spans",
 }
 
+const DIFF_BEFORE = "<div>\n  <p>one</p>\n  <p>two</p>\n  <span>tail</span>\n</div>"
+const DIFF_AFTER = "<div>\n  <p>one</p>\n  <p>tres</p>\n  <span>tail</span>\n</div>"
+
 const OVERLAP_CONTENT = "<div id=\"x\">text</div>"
 
 const DIAG_OVERLAP_ERROR: Diagnostic = {
@@ -146,6 +149,35 @@ describe("HTMLDiagnostic", () => {
     const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", messageStyle: "hover" })
 
     expect(result).toMatchSnapshot()
+  })
+
+  test("renders line number elements in a file listing", () => {
+    const document = highlighter.buildDocument(PATH, CONTENT)
+    const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", lineNumberStyle: "element" })
+
+    expect(result).toMatchSnapshot()
+  })
+
+  test("renders line number elements with diagnostics", () => {
+    const document = highlighter.buildDocument(PATH, CONTENT, { diagnostics: [DIAG_MULTI, DIAG_WARN] })
+    const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", lineNumberStyle: "element" })
+
+    expect(result).toMatchSnapshot()
+  })
+
+  test("renders line number elements in a diff", () => {
+    const document = highlighter.buildDiff(PATH, DIFF_BEFORE, DIFF_AFTER)
+    const result = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", lineNumberStyle: "element" })
+
+    expect(result).toMatchSnapshot()
+  })
+
+  test("css line numbers are byte identical to the default output", () => {
+    const document = highlighter.buildDocument(PATH, CONTENT, { diagnostics: [DIAG_MULTI, DIAG_WARN] })
+    const base = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans" })
+    const css = renderDocumentHTML(document, { themeLabel: "onedark", showLineNumbers: true, markers: "spans", lineNumberStyle: "css" })
+
+    expect(css).toBe(base)
   })
 
   test("renders hover messages on a card", () => {

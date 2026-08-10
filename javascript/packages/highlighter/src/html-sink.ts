@@ -38,12 +38,15 @@ export type MarkerMode = "highlight-api" | "spans"
 
 export type MessageStyle = "inline" | "hover"
 
+export type LineNumberStyle = "css" | "element"
+
 export interface HTMLSinkOptions {
   themeLabel: string
   showLineNumbers: boolean
   markers: MarkerMode
   diffLayout?: "unified" | "split"
   messageStyle?: MessageStyle
+  lineNumberStyle?: LineNumberStyle
 }
 
 export interface LinePiece {
@@ -116,6 +119,20 @@ function renderLineContent(pieces: LinePiece[]): string {
   }
 
   return content
+}
+
+function usesLineNumberElements(options: HTMLSinkOptions): boolean {
+  return options.showLineNumbers && (options.lineNumberStyle ?? "css") === "element"
+}
+
+function lineNumberElement(number: number): string {
+  return `<span class="herb-line-number" data-line="${number}">${number}</span>`
+}
+
+function figureAttributes(options: HTMLSinkOptions): string {
+  const lineNumbers = usesLineNumberElements(options) ? ` data-herb-line-numbers="element"` : ""
+
+  return ` data-herb-theme="${escapeHTML(options.themeLabel)}"${lineNumbers}`
 }
 
 function isLinkableUrl(url: string): boolean {
@@ -240,8 +257,9 @@ function renderAnnotatedLine(info: LineInfo, pieces: LinePiece[], options: HTMLS
     : renderLineContent(pieces)
 
   const messages = emitMessages ? renderAnnotationMessages(info.annotations) : ""
+  const number = usesLineNumberElements(options) ? lineNumberElement(info.number) : ""
 
-  return `<span${attributes}>${content}${messages}</span>`
+  return `<span${attributes}>${number}${content}${messages}</span>`
 }
 
 function renderDiagnosticHeader(node: DiagnosticHeaderNode): string {
@@ -268,7 +286,7 @@ function renderCard(header: DiagnosticHeaderNode, fileHeader: FileHeaderNode, bl
 
   const figureClass = hover ? "herb-highlight herb-diagnostic herb-messages-hover" : "herb-highlight herb-diagnostic"
 
-  return `<figure class="${figureClass}" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${renderDiagnosticHeader(header)}\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+  return `<figure class="${figureClass}"${figureAttributes(options)}>\n${renderDiagnosticHeader(header)}\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
 
 function renderInline(fileHeader: FileHeaderNode | null, block: CodeBlockNode, options: HTMLSinkOptions): string {
@@ -282,25 +300,26 @@ function renderInline(fileHeader: FileHeaderNode | null, block: CodeBlockNode, o
 
   const figureClass = hover ? "herb-highlight herb-messages-hover" : "herb-highlight"
 
-  return `<figure class="${figureClass}" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+  return `<figure class="${figureClass}"${figureAttributes(options)}>\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
 
 function renderListing(fileHeader: FileHeaderNode | null, block: CodeBlockNode, options: HTMLSinkOptions): string {
   const pieces = splitRunsIntoLines(block.runs)
   const contentFor = (info: LineInfo) => renderLineContent(pieces[info.number - block.firstLine] ?? [])
+  const numberFor = (info: LineInfo) => usesLineNumberElements(options) ? lineNumberElement(info.number) : ""
 
   if (fileHeader === null) {
     const lineSpans = block.lines.map(info => `<span class="herb-line">${contentFor(info)}</span>`)
 
-    return `<figure class="herb-highlight" data-herb-theme="${escapeHTML(options.themeLabel)}">\n<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+    return `<figure class="herb-highlight"${figureAttributes(options)}>\n<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
   }
 
   const hasFocus = block.lines.some(info => info.emphasis.kind === "Focus" || info.emphasis.kind === "Dimmed")
 
   if (!hasFocus && options.showLineNumbers) {
-    const lineSpans = block.lines.map(info => `<span class="herb-line" data-line="${info.number}">${contentFor(info)}</span>`)
+    const lineSpans = block.lines.map(info => `<span class="herb-line" data-line="${info.number}">${numberFor(info)}${contentFor(info)}</span>`)
 
-    return `<figure class="herb-highlight" data-herb-theme="${escapeHTML(options.themeLabel)}">\n<figcaption class="herb-file-header">${escapeHTML(fileHeader.path)}</figcaption>\n<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+    return `<figure class="herb-highlight"${figureAttributes(options)}>\n<figcaption class="herb-file-header">${escapeHTML(fileHeader.path)}</figcaption>\n<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
   }
 
   const lineSpans = block.lines.map(info => {
@@ -309,13 +328,15 @@ function renderListing(fileHeader: FileHeaderNode | null, block: CodeBlockNode, 
       : info.emphasis.kind === "Dimmed" ? " herb-line-dimmed" : ""
     const dataLine = options.showLineNumbers ? ` data-line="${info.number}"` : ""
 
-    return `<span class="herb-line${emphasisClass}"${dataLine}>${contentFor(info)}</span>`
+    return `<span class="herb-line${emphasisClass}"${dataLine}>${numberFor(info)}${contentFor(info)}</span>`
   })
 
   const figcaption = options.showLineNumbers ? `<figcaption class="herb-file-header">${escapeHTML(fileHeader.path)}</figcaption>\n` : ""
 
-  return `<figure class="herb-highlight" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
+  return `<figure class="herb-highlight"${figureAttributes(options)}>\n${figcaption}<pre class="herb-code"><code>${lineSpans.join("\n")}</code></pre>\n</figure>`
 }
+
+type DiffColumn = "old" | "new"
 
 const HUNK_SEPARATOR_ROW = `<span class="herb-line herb-diff-hunk-separator"></span>`
 const EMPTY_DIFF_CELL = `<span class="herb-line herb-diff-empty"></span>`
@@ -382,22 +403,32 @@ function diffRowContent(row: DiffRowInfo, originalPieces: LinePiece[][], modifie
   return renderInlineMarkedContent(pieces, row.inlineRanges, markClass)
 }
 
-function renderDiffRow(row: DiffRowInfo, content: string, showLineNumbers: boolean): string {
+function diffRowNumber(row: DiffRowInfo, column: DiffColumn): number {
+  if (row.kind === "added") return row.newLine!
+  if (row.kind === "removed") return row.oldLine!
+
+  return column === "new" ? row.newLine! : row.oldLine!
+}
+
+function renderDiffRow(row: DiffRowInfo, content: string, options: HTMLSinkOptions, column: DiffColumn): string {
+  const showLineNumbers = options.showLineNumbers
+  const number = usesLineNumberElements(options) ? lineNumberElement(diffRowNumber(row, column)) : ""
+
   if (row.kind === "context") {
     const attributes = showLineNumbers ? ` data-old-line="${row.oldLine}" data-new-line="${row.newLine}"` : ""
 
-    return `<span class="herb-line herb-diff-context"${attributes}>${content}</span>`
+    return `<span class="herb-line herb-diff-context"${attributes}>${number}${content}</span>`
   }
 
   if (row.kind === "removed") {
     const attributes = showLineNumbers ? ` data-old-line="${row.oldLine}"` : ""
 
-    return `<span class="herb-line herb-diff-removed"${attributes}>${content}</span>`
+    return `<span class="herb-line herb-diff-removed"${attributes}>${number}${content}</span>`
   }
 
   const attributes = showLineNumbers ? ` data-new-line="${row.newLine}"` : ""
 
-  return `<span class="herb-line herb-diff-added"${attributes}>${content}</span>`
+  return `<span class="herb-line herb-diff-added"${attributes}>${number}${content}</span>`
 }
 
 function pairDiffRows(hunk: DiffHunkInfo): { left: DiffRowInfo | null, right: DiffRowInfo | null }[] {
@@ -447,9 +478,9 @@ function renderSplitDiff(
   const left: string[] = []
   const right: string[] = []
 
-  const cellFor = (row: DiffRowInfo | null): string => row === null
+  const cellFor = (row: DiffRowInfo | null, column: DiffColumn): string => row === null
     ? EMPTY_DIFF_CELL
-    : renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options.showLineNumbers)
+    : renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options, column)
 
   block.hunks.forEach((hunk, hunkIndex) => {
     if (hunkIndex > 0) {
@@ -458,12 +489,12 @@ function renderSplitDiff(
     }
 
     for (const { left: leftRow, right: rightRow } of pairDiffRows(hunk)) {
-      left.push(cellFor(leftRow))
-      right.push(cellFor(rightRow))
+      left.push(cellFor(leftRow, "old"))
+      right.push(cellFor(rightRow, "new"))
     }
   })
 
-  return `<figure class="herb-highlight herb-diff herb-diff-split" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<div class="herb-diff-columns">\n<pre class="herb-code herb-diff-column herb-diff-column-old"><code>${left.join("\n")}</code></pre>\n<pre class="herb-code herb-diff-column herb-diff-column-new"><code>${right.join("\n")}</code></pre>\n</div>\n</figure>`
+  return `<figure class="herb-highlight herb-diff herb-diff-split"${figureAttributes(options)}>\n${figcaption}<div class="herb-diff-columns">\n<pre class="herb-code herb-diff-column herb-diff-column-old"><code>${left.join("\n")}</code></pre>\n<pre class="herb-code herb-diff-column herb-diff-column-new"><code>${right.join("\n")}</code></pre>\n</div>\n</figure>`
 }
 
 function renderDiff(fileHeader: FileHeaderNode | null, block: DiffBlockNode, options: HTMLSinkOptions): string {
@@ -484,11 +515,11 @@ function renderDiff(fileHeader: FileHeaderNode | null, block: DiffBlockNode, opt
     if (hunkIndex > 0) rows.push(HUNK_SEPARATOR_ROW)
 
     for (const row of hunk.rows) {
-      rows.push(renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options.showLineNumbers))
+      rows.push(renderDiffRow(row, diffRowContent(row, originalPieces, modifiedPieces), options, "old"))
     }
   })
 
-  return `<figure class="herb-highlight herb-diff" data-herb-theme="${escapeHTML(options.themeLabel)}">\n${figcaption}<pre class="herb-code"><code>${rows.join("\n")}</code></pre>\n</figure>`
+  return `<figure class="herb-highlight herb-diff"${figureAttributes(options)}>\n${figcaption}<pre class="herb-code"><code>${rows.join("\n")}</code></pre>\n</figure>`
 }
 
 function renderProgressRule(node: ProgressRuleNode): string {
