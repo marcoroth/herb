@@ -9,6 +9,12 @@ supports_block: true
 signature: "mail_to(email_address, name = nil, html_options = {}, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-mail_to"
 
+content:
+  source: "block_or_arg"
+  arg_position: 2
+  skip_if_hash: true
+  positional_arguments_with_block: 1
+
 description: |-
   Creates a mailto link tag to the specified email_address, which is also used as the name of the link unless name is specified. Additional HTML attributes for the link can be passed in html_options.
 

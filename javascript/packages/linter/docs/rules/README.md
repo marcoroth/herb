@@ -19,6 +19,7 @@ This page contains documentation for all Herb Linter rules.
 
 #### Action View
 
+- [`actionview-no-content-argument-with-block`](./actionview-no-content-argument-with-block.md) - Disallow passing a content argument to a helper that is given a block
 - [`actionview-no-dynamic-partial-path`](./actionview-no-dynamic-partial-path.md) - Disallow partial paths that are built at runtime
 - [`actionview-no-helper-shadowing`](./actionview-no-helper-shadowing.md) - Disallow shadowing Action View helpers with block variables
 - [`actionview-no-implicit-partial`](./actionview-no-implicit-partial.md) - Disallow `render` calls that infer the partial from an object

@@ -9,6 +9,11 @@ supports_block: true
 signature: "button_to(name = nil, options = nil, html_options = nil, &block)"
 documentation_url: "https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-button_to"
 
+content:
+  source: "block_or_arg"
+  arg_position: 1
+  positional_arguments_with_block: 1
+
 description: |-
   Generates a form containing a single button that submits to the URL created by the set of options. This is the safest method to ensure links that cause changes to your data are not triggered by search bots or accelerators.
 

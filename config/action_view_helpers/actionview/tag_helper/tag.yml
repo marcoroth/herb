@@ -15,6 +15,7 @@ content:
   source: "block_or_arg"
   arg_position: 1
   skip_if_hash: true
+  positional_arguments_with_block: 0
 
 description: |-
   Returns an HTML5 compliant tag with a tag proxy. Every tag can be built with `tag.<tag name>(optional content, options)`. Supports `data-*` and `aria-*` attributes via nested hashes. Sub-attributes are dasherized. Respects HTML5 void elements.

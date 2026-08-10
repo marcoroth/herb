@@ -17,6 +17,16 @@ static const helper_implicit_attribute_T <%= helper.safe_name %>_implicit_attrib
 };
 
 <%- end -%>
+<%- if helper.content? -%>
+static const helper_content_T <%= helper.safe_name %>_content = {
+  .source = "<%= helper.content.source %>",
+  .arg_position = <%= helper.content.arg_position || -1 %>,
+  .skip_if_hash = <%= helper.content.skip_if_hash %>,
+  .to_s_suffix_when_single = <%= helper.content.to_s_suffix_when_single %>,
+  .positional_arguments_with_block = <%= helper.content.positional_arguments_with_block || -1 %>,
+};
+
+<%- end -%>
 <%- if helper.arguments.any? -%>
 static const helper_argument_T <%= helper.safe_name %>_arguments[] = {
 <%- helper.arguments.each do |arg| -%>
@@ -62,6 +72,7 @@ static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
     .signature = "<%= helper.escaped_signature %>",
     .documentation_url = "<%= helper.documentation_url %>",
     .implicit_attribute = <%= helper.implicit_attribute? ? "&#{helper.safe_name}_implicit_attribute" : "NULL" %>,
+    .content = <%= helper.content? ? "&#{helper.safe_name}_content" : "NULL" %>,
     .arguments = <%= helper.arguments.any? ? "#{helper.safe_name}_arguments" : "NULL" %>,
     .arguments_count = <%= helper.arguments.size %>,
     .options = <%= helper.options.any? ? "#{helper.safe_name}_options" : "NULL" %>,

@@ -17,6 +17,7 @@ export * from "./action-view-utils.js"
 export * from "./herb-disable-comment-base.js"
 export * from "./ujs-base.js"
 
+export * from "./actionview-no-content-argument-with-block.js"
 export * from "./actionview-no-dynamic-partial-path.js"
 export * from "./actionview-no-helper-shadowing.js"
 export * from "./actionview-no-implicit-partial.js"

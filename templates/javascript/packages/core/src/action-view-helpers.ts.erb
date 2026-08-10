@@ -40,6 +40,16 @@ export interface HelperImplicitAttribute {
   readonly skipWrappingFor: string[]
 }
 
+export type HelperContentSource = "first_arg" | "block_or_arg"
+
+export interface HelperContent {
+  readonly source: HelperContentSource
+  readonly argPosition: number | null
+  readonly skipIfHash: boolean
+  readonly toSSuffixWhenSingle: boolean
+  readonly positionalArgumentsWithBlock: number | null
+}
+
 export interface HelperEntry {
   readonly name: string
   readonly type: HelperType
@@ -57,6 +67,7 @@ export interface HelperEntry {
   readonly signature: string
   readonly documentationURL: string
   readonly implicitAttribute: HelperImplicitAttribute | null
+  readonly content: HelperContent | null
   readonly arguments: HelperArgument[]
   readonly options: HelperOption[]
   readonly blockArguments: HelperBlockArgument[]
@@ -91,6 +102,17 @@ const <%= helper.lower_camel_case_name %>Entry: HelperEntry = {
   },
   <%- else -%>
   implicitAttribute: null,
+  <%- end -%>
+  <%- if helper.content? -%>
+  content: {
+    source: "<%= helper.content.source %>",
+    argPosition: <%= helper.content.arg_position || "null" %>,
+    skipIfHash: <%= helper.content.skip_if_hash %>,
+    toSSuffixWhenSingle: <%= helper.content.to_s_suffix_when_single %>,
+    positionalArgumentsWithBlock: <%= helper.content.positional_arguments_with_block || "null" %>,
+  },
+  <%- else -%>
+  content: null,
   <%- end -%>
   arguments: [
   <%- helper.arguments.each do |arg| -%>

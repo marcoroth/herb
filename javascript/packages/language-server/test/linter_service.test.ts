@@ -301,10 +301,11 @@ describe("LinterService", () => {
       return service
     }
 
-    function settingsWithLinter() {
+    function settingsWithLinter(relatedInformation = true) {
       const settings = new Settings(mockParams, mockConnection)
 
       settings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+      settings.hasDiagnosticRelatedInformationCapability = relatedInformation
 
       return settings
     }
@@ -337,6 +338,76 @@ describe("LinterService", () => {
       const result = await service.lintDocument(document)
 
       expect(result.diagnostics.some(diagnostic => diagnostic.code === "html-head-only-elements")).toBe(false)
+    })
+
+    test("points at the call site that renders the file inside the element", async () => {
+      const callers = new PartialCallerIndex(
+        new Map([[PARTIAL, [{
+          caller: "app/views/posts/index.html.erb",
+          locals: [],
+          ancestors: ["a"],
+          via: "render" as const,
+          location: { line: 12, column: 4 }
+        }]]]),
+        new Set(),
+        new Map(),
+        new Set()
+      )
+
+      const service = new LinterService(mockConnection, settingsWithLinter(), mockProject, partialIndexService, callerServiceFor(callers))
+
+      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+
+      const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<a href="/">link</a>`)
+      const result = await service.lintDocument(document)
+
+      const nested = result.diagnostics.find(diagnostic => diagnostic.code === "html-no-nested-links")
+
+      expect(nested).toBeDefined()
+      expect(nested?.relatedInformation).toHaveLength(1)
+      expect(nested?.relatedInformation?.[0].location.uri).toContain("app/views/posts/index.html.erb")
+      expect(nested?.relatedInformation?.[0].location.range.start.line).toBe(11)
+      expect(nested?.relatedInformation?.[0].message).toBe("rendered from here inside <a>")
+      expect(nested?.message).not.toContain("Rendered from")
+    })
+
+    test("omits related information when nothing rendered the file", async () => {
+      const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
+      const service = new LinterService(mockConnection, settingsWithLinter(), mockProject, partialIndexService, callerServiceFor(empty))
+
+      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+
+      const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<meta charset="UTF-8">`)
+      const result = await service.lintDocument(document)
+
+      expect(result.diagnostics.every(diagnostic => diagnostic.relatedInformation === undefined)).toBe(true)
+    })
+
+    test("names the call site in the message when the client cannot show related information", async () => {
+      const callers = new PartialCallerIndex(
+        new Map([[PARTIAL, [{
+          caller: "app/views/posts/index.html.erb",
+          locals: [],
+          ancestors: ["a"],
+          via: "render" as const,
+          location: { line: 12, column: 4 }
+        }]]]),
+        new Set(),
+        new Map(),
+        new Set()
+      )
+
+      const service = new LinterService(mockConnection, settingsWithLinter(false), mockProject, partialIndexService, callerServiceFor(callers))
+
+      vi.spyOn(partialIndexService, "relativePathFor").mockReturnValue(PARTIAL)
+
+      const document = TextDocument.create(`file:///${PARTIAL}`, "erb", 1, `<a href="/">link</a>`)
+      const result = await service.lintDocument(document)
+
+      const nested = result.diagnostics.find(diagnostic => diagnostic.code === "html-no-nested-links")
+
+      expect(nested?.message).toContain("Rendered from `app/views/posts/index.html.erb:12:4`.")
+      expect(nested?.relatedInformation).toBeUndefined()
     })
   })
 })

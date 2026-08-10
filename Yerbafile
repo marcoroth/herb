@@ -199,6 +199,7 @@ rules:
             - arg_position
             - skip_if_hash
             - to_s_suffix_when_single
+            - positional_arguments_with_block
 
       - sort_keys:
           path: "arguments[]"

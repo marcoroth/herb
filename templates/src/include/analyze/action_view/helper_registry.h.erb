@@ -46,6 +46,14 @@ typedef struct {
   const char* wrapper;
 } helper_implicit_attribute_T;
 
+typedef struct {
+  const char* source;
+  int arg_position;
+  bool skip_if_hash;
+  bool to_s_suffix_when_single;
+  int positional_arguments_with_block;
+} helper_content_T;
+
 typedef enum {
   HELPER_OUTPUT_HTML,
   HELPER_OUTPUT_TEXT,
@@ -73,6 +81,7 @@ typedef struct {
   const char* signature;
   const char* documentation_url;
   const helper_implicit_attribute_T* implicit_attribute;
+  const helper_content_T* content;
   const helper_argument_T* arguments;
   size_t arguments_count;
   const helper_option_T* options;

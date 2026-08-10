@@ -573,6 +573,33 @@ module Herb
       def initialize: (String, String, String?, String, Array[String]) -> void
     end
 
+    class HelperContent
+      attr_reader source: Symbol
+
+      attr_reader arg_position: Integer?
+
+      attr_reader skip_if_hash: bool
+
+      attr_reader to_s_suffix_when_single: bool
+
+      attr_reader positional_arguments_with_block: Integer?
+
+      # : (Symbol, Integer?, bool, bool, Integer?) -> void
+      def initialize: (Symbol, Integer?, bool, bool, Integer?) -> void
+
+      # : () -> bool
+      def first_arg?: () -> bool
+
+      # : () -> bool
+      def block_or_arg?: () -> bool
+
+      # : () -> bool
+      def skip_if_hash?: () -> bool
+
+      # : () -> bool
+      def to_s_suffix_when_single?: () -> bool
+    end
+
     class HelperEntry
       attr_reader name: String
 
@@ -598,6 +625,8 @@ module Herb
 
       attr_reader implicit_attribute: HelperImplicitAttribute?
 
+      attr_reader content: HelperContent?
+
       attr_reader arguments: Array[HelperArgument]
 
       attr_reader options: Array[HelperOption]
@@ -608,8 +637,8 @@ module Herb
 
       attr_reader aliases: Array[String]
 
-      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
-      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      # : (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, content: HelperContent?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
+      def initialize: (name: String, type: Symbol, source: String, gem: String, output: Symbol, visibility: String, tag_name: String?, is_void: bool, supports_block: bool, preferred_for_tag: bool, supported: bool, detect_style: Symbol, description: String, signature: String, documentation_url: String, implicit_attribute: HelperImplicitAttribute?, content: HelperContent?, arguments: Array[HelperArgument], options: Array[HelperOption], block_arguments: Array[HelperBlockArgument], special_behaviors: Array[Symbol], aliases: Array[String]) -> void
 
       # : () -> bool
       def void?: () -> bool
@@ -628,6 +657,9 @@ module Herb
 
       # : () -> bool
       def implicit_attribute?: () -> bool
+
+      # : () -> bool
+      def content?: () -> bool
 
       # : () -> bool
       def call_name_detect?: () -> bool
