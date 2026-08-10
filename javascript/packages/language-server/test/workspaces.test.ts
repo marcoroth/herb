@@ -200,6 +200,21 @@ describe("Workspaces", () => {
     expect((await workspaces.ensure(uriFor(folder, "app/views/posts/index.html.erb")))?.root).toBe(folder)
   })
 
+  test("hands concurrent callers the same fully indexed workspace", async () => {
+    const folder = project(FILES)
+    const workspaces = registryFor(folder)
+
+    const first = workspaces.ensure(uriFor(folder, "app/views/posts/index.html.erb"))
+
+    const indexedOnResolve = workspaces
+      .ensure(uriFor(folder, "app/views/posts/_outer.html.erb"))
+      .then(workspace => workspace!.partialIndexService.index?.size ?? 0)
+
+    expect(await indexedOnResolve).toBeGreaterThan(0)
+    expect(await first).toBe(await workspaces.ensure(uriFor(folder, "app/views/posts/_outer.html.erb")))
+    expect(workspaces.all()).toHaveLength(1)
+  })
+
   test("resolves the innermost project for a path under both", async () => {
     const folder = project(FILES)
     const workspaces = registryFor(folder)

@@ -22,6 +22,7 @@ export class Workspaces {
   private readonly shared: SharedServices
 
   private readonly byRoot: Map<string, Workspace> = new Map()
+  private readonly initializing: Map<string, Promise<Workspace>> = new Map()
   private readonly rootByDirectory: Map<string, string> = new Map()
 
   constructor(connection: Connection, settings: Settings, shared: SharedServices) {
@@ -44,6 +45,9 @@ export class Workspaces {
     const root = this.rootFor(uri)
     if (root === null) return null
 
+    const pending = this.initializing.get(root)
+    if (pending) return pending
+
     const existing = this.byRoot.get(root)
     if (existing) return existing
 
@@ -51,11 +55,17 @@ export class Workspaces {
 
     this.byRoot.set(root, workspace)
 
-    await workspace.initialize()
+    const initialized = workspace.initialize().then(() => {
+      this.connection.console.log(`[Workspace] Indexed ${root}`)
 
-    this.connection.console.log(`[Workspace] Indexed ${root}`)
+      return workspace
+    }).finally(() => {
+      this.initializing.delete(root)
+    })
 
-    return workspace
+    this.initializing.set(root, initialized)
+
+    return initialized
   }
 
   containing(path: string): Workspace | null {
@@ -90,6 +100,8 @@ export class Workspaces {
     for (const [directory, cached] of this.rootByDirectory) {
       if (cached === root) this.rootByDirectory.delete(directory)
     }
+
+    this.initializing.delete(root)
 
     return this.byRoot.delete(root)
   }
