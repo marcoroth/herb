@@ -2,6 +2,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Connection, Diagnostic } from "vscode-languageserver/node"
 
 import { WorkspaceFolders } from "./workspace_folders"
+
+import type { Project } from "./project"
+import type { LinterWarning } from "./linter_service"
 import { ParserService } from "./parser_service"
 import { Documents } from "./documents"
 import { ConfigService } from "./config_service"
@@ -16,6 +19,7 @@ export class DiagnosticsPublisher {
   private readonly workspaceFolders: WorkspaceFolders
   private readonly projects: Projects
   private readonly published: Set<string> = new Set()
+  private readonly presentWarning?: (warning: LinterWarning) => void
 
   constructor(
     connection: Connection,
@@ -24,6 +28,7 @@ export class DiagnosticsPublisher {
     configService: ConfigService,
     workspaceFolders: WorkspaceFolders,
     projects: Projects,
+    presentWarning?: (warning: LinterWarning) => void,
   ) {
     this.connection = connection
     this.documents = documents
@@ -31,6 +36,7 @@ export class DiagnosticsPublisher {
     this.configService = configService
     this.workspaceFolders = workspaceFolders
     this.projects = projects
+    this.presentWarning = presentWarning
   }
 
   clear(uri: string) {
@@ -49,21 +55,24 @@ export class DiagnosticsPublisher {
     }
   }
 
-  async validate(textDocument: TextDocument) {
+  async validate(textDocument: TextDocument, project: Project | null) {
     if (!this.workspaceFolders.includes(textDocument.uri)) {
       this.clear(textDocument.uri)
 
       return
     }
 
-    const project = await this.projects.ensure(textDocument.uri)
     let allDiagnostics: Diagnostic[] = []
 
     if (isConfigDocument(textDocument.uri)) {
       allDiagnostics = await (project?.configService ?? this.configService).validateDocument(textDocument)
     } else {
       const parseResult = this.parserService.parseDocument(textDocument)
-      const lintResult = project ? await project.linterService.lintDocument(textDocument) : { diagnostics: [] }
+      const lintResult = project ? await project.linterService.lintDocument(textDocument) : { diagnostics: [], warnings: [] }
+
+      for (const warning of lintResult.warnings) {
+        this.presentWarning?.(warning)
+      }
 
       allDiagnostics = [
         ...parseResult.diagnostics,
@@ -75,7 +84,7 @@ export class DiagnosticsPublisher {
   }
 
   async refreshDocument(document: TextDocument) {
-    await this.validate(document)
+    await this.validate(document, await this.projects.ensure(document.uri))
   }
 
   async refreshAllDocuments() {

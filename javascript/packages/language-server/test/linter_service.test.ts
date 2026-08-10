@@ -305,6 +305,40 @@ describe("LinterService", () => {
     })
   })
 
+  describe("custom rule warnings", () => {
+    test("reports a broken custom rule as data instead of talking to the client", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+
+      linterService["failedCustomRules"].set("custom-rules", "boom")
+
+      const result = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
+
+      expect(result.warnings).toHaveLength(1)
+      expect(result.warnings[0].message).toContain("boom")
+      expect(result.warnings[0].configPath).toContain(".herb.yml")
+    })
+
+    test("reports the same failure only once", async () => {
+      const userSettings = new UserSettings(mockConnection, capabilities)
+      userSettings.getDocumentSettings = vi.fn().mockResolvedValue({ linter: { enabled: true } })
+
+      const linterService = new LinterService(mockConnection, userSettings, capabilities, projectFor(userSettings), partialIndexService)
+
+      linterService["failedCustomRules"].set("custom-rules", "boom")
+
+      await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
+
+      linterService["linter"] = undefined
+
+      const second = await linterService.lintDocument(createTestDocument("<div>Test</div>\n"))
+
+      expect(second.warnings).toEqual([])
+    })
+  })
+
   describe("cross-file rules", () => {
     const PARTIAL = "app/views/shared/_meta.html.erb"
 

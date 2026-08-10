@@ -23,10 +23,20 @@ import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { isConfigDocument, lintToDiagnosticSeverity, lintToDiagnosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
-const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
+  warnings: LinterWarning[]
+}
+
+/**
+ * Something the user should be told about their linter setup. The service
+ * reports these rather than talking to the client itself, so that what it does
+ * is decided by whoever owns the connection.
+ */
+export interface LinterWarning {
+  message: string
+  configPath: string
 }
 
 export class LinterService {
@@ -111,11 +121,12 @@ export class LinterService {
   }
 
   /**
-   * Show warning message to user about failed custom rules
+   * Reports each custom-rule failure once, so a broken config does not nag on
+   * every keystroke.
    */
-  private showCustomRuleWarnings(): void {
+  private takeCustomRuleWarnings(): LinterWarning[] {
     if (this.failedCustomRules.size === 0 || this.hasShownCustomRuleWarning) {
-      return
+      return []
     }
 
     this.hasShownCustomRuleWarning = true
@@ -125,16 +136,7 @@ export class LinterService {
       ? `Failed to load custom linter rules: ${failures[0][1]}`
       : `Failed to load custom linter rules:\n${failures.map(([_, error], i) => `${i + 1}. ${error}`).join('\n')}`
 
-    if (this.capabilities.hasShowDocument) {
-      this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
-        if (action?.title === OPEN_CONFIG_ACTION) {
-          const configPath = `${this.project.root}/.herb.yml`
-          this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
-        }
-      })
-    } else {
-      this.connection.window.showWarningMessage(message)
-    }
+    return [{ message, configPath: `${this.project.root}/.herb.yml` }]
   }
 
   private shouldLintFile(uri: string): boolean {
@@ -191,22 +193,23 @@ export class LinterService {
 
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
     if (!this.shouldLintFile(textDocument.uri)) {
-      return { diagnostics: [] }
+      return { diagnostics: [], warnings: [] }
     }
 
     const settings = await this.project.settingsFor(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
     if (!linterEnabled) {
-      return { diagnostics: [] }
+      return { diagnostics: [], warnings: [] }
     }
 
     const projectConfig = this.config
+    const warnings: LinterWarning[] = []
 
     if (!this.linter) {
       await this.loadCustomRules()
 
-      this.showCustomRuleWarnings()
+      warnings.push(...this.takeCustomRuleWarnings())
 
       const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
 
@@ -276,6 +279,6 @@ export class LinterService {
       return diagnostic
     })
 
-    return { diagnostics }
+    return { diagnostics, warnings }
   }
 }
