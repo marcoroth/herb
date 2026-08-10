@@ -5,6 +5,8 @@ require "json"
 require "time"
 require "pathname"
 
+require_relative "engine/visitor_context"
+require_relative "engine/context_aware"
 require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
@@ -18,8 +20,22 @@ require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug,
-                :validation_error_template, :visitors, :enabled_validators
+    attr_reader :src, :context, :bufvar, :debug, :validation_error_template, :visitors, :enabled_validators
+
+    #: () -> Pathname?
+    def filename
+      @context.file_path
+    end
+
+    #: () -> Pathname
+    def project_path
+      @context.project_path
+    end
+
+    #: () -> String
+    def relative_file_path
+      @context.relative_file_path
+    end
 
     # @rbs!
     #   def self.optimize_warning_issued: () -> bool
@@ -56,15 +72,12 @@ module Herb
     end
 
     def initialize(input, properties = {})
-      @filename = properties[:filename] ? ::Pathname.new(properties[:filename]) : nil
-      @project_path = ::Pathname.new(properties[:project_path] || Dir.pwd)
-
-      if @filename
-        absolute_filename = @filename.absolute? ? @filename : @project_path + @filename
-        @relative_file_path = absolute_filename.relative_path_from(@project_path).to_s
-      else
-        @relative_file_path = "unknown"
-      end
+      @context = VisitorContext.new(
+        file_path: properties[:filename],
+        project_path: properties[:project_path],
+        options: context_options(properties),
+        **(properties[:context] || {})
+      )
 
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
@@ -92,8 +105,8 @@ module Herb
 
       if @debug && @visitors.empty?
         debug_visitor = DebugVisitor.new(
-          file_path: @filename,
-          project_path: @project_path
+          file_path: filename,
+          project_path: project_path
         )
 
         @visitors << debug_visitor
@@ -157,6 +170,8 @@ module Herb
         end
 
         @visitors.each do |visitor|
+          visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
+
           ast.accept(visitor)
         end
 
@@ -420,7 +435,7 @@ module Herb
     def handle_parser_errors(parser_errors, input, _ast)
       case @validation_mode
       when :raise
-        formatter = ErrorFormatter.new(input, parser_errors, filename: @filename)
+        formatter = ErrorFormatter.new(input, parser_errors, filename: filename)
         message = formatter.format_all
 
         raise CompilationError, "\n#{message}"
@@ -445,12 +460,12 @@ module Herb
           security_error[:message],
           line: security_error[:location]&.start&.line,
           column: security_error[:location]&.start&.column,
-          filename: @filename,
+          filename: filename,
           suggestion: security_error[:suggestion]
         )
       end
 
-      formatter = ErrorFormatter.new(input, errors, filename: @filename)
+      formatter = ErrorFormatter.new(input, errors, filename: filename)
       message = formatter.format_all
       raise CompilationError, "\n#{message}"
     end
@@ -465,7 +480,7 @@ module Herb
         column = location&.start&.column || 0
 
         source = input || @src
-        overlay_generator = ValidationErrorOverlay.new(source, error, filename: @relative_file_path)
+        overlay_generator = ValidationErrorOverlay.new(source, error, filename: relative_file_path)
         html_fragment = overlay_generator.generate_fragment
 
         escaped_message = escape_attr(error[:message])
@@ -479,7 +494,7 @@ module Herb
             data-code="#{error[:code]}"
             data-line="#{line}"
             data-column="#{column}"
-            data-filename="#{escape_attr(@relative_file_path)}"
+            data-filename="#{escape_attr(relative_file_path)}"
             data-message="#{escaped_message}"
             #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
             data-timestamp="#{Time.now.utc.iso8601}"
@@ -508,7 +523,7 @@ module Herb
       overlay_generator = ParserErrorOverlay.new(
         input,
         parser_errors,
-        filename: @relative_file_path
+        filename: relative_file_path
       )
 
       error_html = overlay_generator.generate_html
@@ -518,6 +533,11 @@ module Herb
     #: () -> Array[Herb::Visitor]
     def default_visitors
       []
+    end
+
+    #: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+    def context_options(properties)
+      properties.except(:visitors, :src, :context)
     end
 
     #: () -> Hash[Symbol, untyped]

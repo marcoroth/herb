@@ -45,6 +45,7 @@ In addition to Erubi options, `Herb::Engine` supports:
 | `validators`      | `{}`      | Per-validator overrides (e.g., `{ security: false }`)                                 |
 | `parser_options`  | `{}`      | [Parser options](/parser-options) forwarded to the parser (e.g., `{ strict: false }`) |
 | `visitors`        | `[]`      | AST visitors to run before compilation                                                |
+| `context`         | `{}`      | Extra keys to pass through to the visitors (see [Visitor context](#visitor-context))   |
 | `project_path`    | `Dir.pwd` | Project root for relative path resolution                                             |
 | `validate_ruby`   | `false`   | Raise if the compiled output isn't valid Ruby                                         |
 | `optimize`        | `false`   | Compile-time optimizations for Action View helpers (experimental)                     |
@@ -133,6 +134,48 @@ parser_options = Herb::Visitor.parser_options_for(visitors, strict: false)
 result = Herb.parse(source, **parser_options)
 
 visitors.each { |visitor| result.visit(visitor) }
+```
+
+### Visitor context
+
+A visitor that includes `Herb::Engine::ContextAware` is handed a `Herb::Engine::VisitorContext` before the engine walks the AST, so it doesn't have to be told things the engine already knows:
+
+```ruby
+class MyVisitor < Herb::Visitor
+  include Herb::Engine::ContextAware
+
+  def visit_html_element_node(node)
+    context.relative_file_path #=> "app/views/users/show.html.erb"
+    context.file_path          #=> #<Pathname:app/views/users/show.html.erb>
+    context.project_path       #=> #<Pathname:/my/project>
+    context.options[:escape]   #=> true
+
+    super
+  end
+end
+
+Herb::Engine.new(source, filename: "app/views/users/show.html.erb", visitors: [MyVisitor.new])
+```
+
+`relative_file_path` is the file path resolved against `project_path`, and is `"unknown"` when there is no file path. `file_path` stays exactly as it was given, so a visitor can still match on how the path was written. It is named `file_path` rather than `filename` because it holds a path, not a base name. The engine option keeps the name `filename` for [Erubi compatibility](#erubi-compatibility). `options` holds the options the engine was built with, without `visitors` and `src`.
+
+Pass `context` to the engine to add your own keys, reachable with `#[]` and `#fetch`:
+
+```ruby
+Herb::Engine.new(source, context: { theme: "dark" }, visitors: [MyVisitor.new])
+
+# inside the visitor
+context[:theme]              #=> "dark"
+context.fetch(:missing, 1)   #=> 1
+```
+
+A context is immutable, and `#merge` returns a new one. Setting `context=` yourself always wins over the engine, which is what lets a visitor run standalone against any AST:
+
+```ruby
+visitor = MyVisitor.new
+visitor.context = Herb::Engine::VisitorContext.new(file_path: "app/views/users/show.html.erb")
+
+Herb.parse(source).value.accept(visitor)
 ```
 
 ### `AutoCloseOmittedTagsVisitor`

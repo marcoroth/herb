@@ -4,11 +4,7 @@ module Herb
   class Engine
     attr_reader src: untyped
 
-    attr_reader filename: untyped
-
-    attr_reader project_path: untyped
-
-    attr_reader relative_file_path: untyped
+    attr_reader context: untyped
 
     attr_reader bufvar: untyped
 
@@ -19,6 +15,15 @@ module Herb
     attr_reader visitors: untyped
 
     attr_reader enabled_validators: untyped
+
+    # : () -> Pathname?
+    def filename: () -> Pathname?
+
+    # : () -> Pathname
+    def project_path: () -> Pathname
+
+    # : () -> String
+    def relative_file_path: () -> String
 
     def self.optimize_warning_issued: () -> bool
 
@@ -108,6 +113,9 @@ module Herb
 
     # : () -> Array[Herb::Visitor]
     def default_visitors: () -> Array[Herb::Visitor]
+
+    # : (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+    def context_options: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
 
     # : () -> Hash[Symbol, untyped]
     def default_parser_options: () -> Hash[Symbol, untyped]
