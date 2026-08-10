@@ -453,7 +453,7 @@ describe("fix diffs", () => {
     panel.open()
 
     expect(cards()).toHaveLength(1)
-    expect(document.querySelector(".hdt-message")!.textContent).toBe("Nested `<form>` elements are not allowed.")
+    expect(document.querySelector(".hdt-message")!.textContent).toBe("Nested <form> elements are not allowed.")
     expect(document.querySelectorAll(".hdt-frame")).not.toHaveLength(0)
     expect(document.querySelector(".hdt-fix")).toBeNull()
     expect(document.querySelector("[data-hdt-fix-pending]")).toBeNull()
@@ -680,6 +680,44 @@ describe("clear", () => {
     panel.report({ template: "app/views/posts/_post.html.erb", message: "Fresh finding", code: "demo-fresh", severity: "warning", origin: "demo-source" })
 
     expect(cards()).toHaveLength(1)
+  })
+
+  test("renders backtick fragments in messages as code", () => {
+    embed({
+      version: 1,
+      sources: { "a.html.erb": "<form></form>" },
+      diagnostics: [{
+        template: "a.html.erb",
+        message: "Nested `<form>` elements are not allowed.",
+        suggestion: "Use `link_to` instead.",
+        code: "demo-code",
+        severity: "error",
+        location: { start: { line: 1, column: 1 }, end: { line: 1, column: 6 } },
+      }],
+    })
+
+    createPanel()
+
+    const message = document.querySelector(".hdt-message")!
+    const suggestion = document.querySelector(".hdt-suggestion")!
+
+    expect(message.querySelector("code.hdt-inline-code")!.textContent).toBe("<form>")
+    expect(message.textContent).not.toContain("`")
+    expect(suggestion.querySelector("code.hdt-inline-code")!.textContent).toBe("link_to")
+  })
+
+  test("escapes markup before turning backticks into code", () => {
+    embed({
+      version: 1,
+      diagnostics: [{ template: "a.html.erb", message: "Avoid `<img onerror=alert(1)>` here" }],
+    })
+
+    createPanel()
+
+    const message = document.querySelector(".hdt-message")!
+
+    expect(message.querySelector("img")).toBeNull()
+    expect(message.querySelector("code.hdt-inline-code")!.textContent).toBe("<img onerror=alert(1)>")
   })
 
   test("renders paths as editor buttons when a handler is provided", () => {

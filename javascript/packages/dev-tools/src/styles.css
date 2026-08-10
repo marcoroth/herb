@@ -1418,3 +1418,12 @@
   font-size: 9px;
   opacity: 0.8;
 }
+
+.hdt-inline-code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(120, 130, 150, 0.16);
+  color: inherit;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.92em;
+}

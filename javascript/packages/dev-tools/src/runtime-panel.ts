@@ -1,4 +1,4 @@
-import { DocumentBuilder, renderDocumentHTML } from '@herb-tools/highlighter';
+import { DocumentBuilder, TextFormatter, renderDocumentHTML } from '@herb-tools/highlighter';
 
 import { HIGHLIGHTER_THEME, loadHighlighter, releaseHighlighterStyles, retainHighlighterStyles } from './highlighter-bridge.js';
 
@@ -63,6 +63,10 @@ function escapeHTML(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function inlineCodeHTML(text: string): string {
+  return TextFormatter.replaceBackticks(escapeHTML(text), '<code class="hdt-inline-code">', '</code>');
 }
 
 function safeUrl(url: string | null): string | null {
@@ -611,13 +615,13 @@ export class RuntimePanel {
       ].join('');
 
     const repeat = entry.count > 1 ? `<span class="hdt-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : '';
-    const suggestion = diagnostic.suggestion === null ? '' : `<p class="hdt-suggestion">${escapeHTML(diagnostic.suggestion)}</p>`;
+    const suggestion = diagnostic.suggestion === null ? '' : `<p class="hdt-suggestion">${inlineCodeHTML(diagnostic.suggestion)}</p>`;
     const excerpt = this.excerptHTML(diagnostic);
 
     return [
       `<article class="hdt-card" data-hdt-origin="${escapeHTML(diagnostic.origin)}" data-hdt-kind="${escapeHTML(diagnostic.kind)}">`,
       `<div class="hdt-card-head">${marker}${code}${docs}<span class="hdt-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}</div>`,
-      `<p class="hdt-message">${escapeHTML(diagnostic.message)}</p>`,
+      `<p class="hdt-message">${inlineCodeHTML(diagnostic.message)}</p>`,
       suggestion,
       excerpt,
       this.stackHTML(diagnostic),
