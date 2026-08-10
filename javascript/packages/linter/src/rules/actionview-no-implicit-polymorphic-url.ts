@@ -107,7 +107,7 @@ function routeParts(node: PrismNode): PrismNode[] {
   return elements.filter(element => !isPrismNodeType(element, "NilNode"))
 }
 
-function routeCallForArray(elements: PrismNode[]): string | null {
+function routeCallForArray(elements: PrismNode[], source: string): string | null {
   const segments: string[] = []
   const routeArguments: string[] = []
 
@@ -121,10 +121,19 @@ function routeCallForArray(elements: PrismNode[]): string | null {
 
     const name = variableName(element)
 
-    if (!name) return null
+    if (name) {
+      segments.push(name.replace(/^@/, ""))
+      routeArguments.push(name)
+      continue
+    }
 
-    segments.push(name.replace(/^@/, ""))
-    routeArguments.push(name)
+    if (isModelReaderCall(element)) {
+      segments.push(element.name)
+      routeArguments.push(substringFromByteOffset(source, element.location.startOffset, element.location.length))
+      continue
+    }
+
+    return null
   }
 
   return routeCall(`${segments.join("_")}_path`, routeArguments)
@@ -132,6 +141,10 @@ function routeCallForArray(elements: PrismNode[]): string | null {
 
 class ImplicitPolymorphicURLCollector extends PrismVisitor {
   public readonly urls: ImplicitPolymorphicURL[] = []
+
+  constructor(private readonly source: string) {
+    super()
+  }
 
   visitCallNode(node: PrismNode): void {
     const url = urlArgument(node)
@@ -146,11 +159,13 @@ class ImplicitPolymorphicURLCollector extends PrismVisitor {
     if (url && isPrismNodeType(argument, "ArrayNode")) {
       const parts = routeParts(argument)
 
-      this.urls.push({ ...url, routeCall: parts.length === 0 ? null : routeCallForArray(parts), routable: parts.length > 0 })
+      this.urls.push({ ...url, routeCall: parts.length === 0 ? null : routeCallForArray(parts, this.source), routable: parts.length > 0 })
     }
 
     if (url && isModelReaderCall(argument)) {
-      this.urls.push({ ...url, routeCall: null, routable: true })
+      const reader = substringFromByteOffset(this.source, argument.location.startOffset, argument.location.length)
+
+      this.urls.push({ ...url, routeCall: routeCall(`${argument.name}_path`, [reader]), routable: true })
     }
 
     this.visitChildNodes(node)
@@ -180,7 +195,7 @@ export class ActionViewNoImplicitPolymorphicURLRule extends ParserRule {
 
     if (!prismNode || !source) return []
 
-    const collector = new ImplicitPolymorphicURLCollector()
+    const collector = new ImplicitPolymorphicURLCollector(source)
 
     collector.visit(prismNode)
 
