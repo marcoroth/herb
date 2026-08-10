@@ -1,7 +1,7 @@
 import { meetsSeverityThreshold } from "@herb-tools/core"
 
 import { SummaryReporter } from "./summary-reporter.js"
-import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, type JSONOutput } from "./formatters/index.js"
+import { SimpleFormatter, DetailedFormatter, GitHubActionsFormatter, HTMLFormatter, type JSONOutput } from "./formatters/index.js"
 
 import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ThemeInput } from "@herb-tools/highlighter"
@@ -56,6 +56,14 @@ export class OutputManager {
         this.summaryReporter.displayMostViolatedRules(ruleOffenses)
         this.summaryReporter.displaySummary(this.summaryData(results, options))
       }
+    } else if (options.formatOption === "html") {
+      const formatter = new HTMLFormatter(context?.projectPath, {
+        filesChecked: files.length,
+        ruleCount,
+        toolVersion: options.toolVersion
+      })
+
+      await formatter.format(reportedOffenses)
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
         offenses: reportedOffenses.map(({ filename, offense }) => ({
@@ -167,6 +175,8 @@ export class OutputManager {
   outputInfo(message: string, options: OutputOptions): void {
     if (options.useGitHubActions) {
       // GitHub Actions format doesn't output anything for info messages
+    } else if (options.formatOption === "html") {
+      console.log(HTMLFormatter.messageDocument(message))
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
         offenses: [],
@@ -206,6 +216,8 @@ export class OutputManager {
   outputError(message: string, options: OutputOptions): void {
     if (options.useGitHubActions) {
       console.log(`::error::${message}`)
+    } else if (options.formatOption === "html") {
+      console.log(HTMLFormatter.messageDocument(message))
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
         offenses: [],

@@ -393,7 +393,7 @@ export class CLI {
       process.exit(0)
     }
 
-    const silent = formatOption === 'json'
+    const silent = formatOption === 'json' || formatOption === 'html'
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
 
@@ -470,7 +470,7 @@ export class CLI {
         this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
-      if (files.length > 1 && formatOption !== 'json' && !useGitHubActions) {
+      if (files.length > 1 && formatOption !== 'json' && formatOption !== 'html' && !useGitHubActions) {
         console.error(colorize(`Found ${files.length} files, linting...`, "gray"))
       }
 
@@ -528,7 +528,7 @@ export class CLI {
         logLevelLoweredBy: lowered?.flag
       })
 
-      const showTips = formatOption !== 'json' && !useGitHubActions
+      const showTips = formatOption !== 'json' && formatOption !== 'html' && !useGitHubActions
 
       if (!Config.exists(this.projectPath) && showTips) {
         console.log("")

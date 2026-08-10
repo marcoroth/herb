@@ -34,6 +34,7 @@ export interface WorkerOffense {
   filename: string
   offense: SerializedDiagnostic
   renderedFrom?: AncestorChain
+  otherCallSites?: AncestorChain[]
   offendingCallSites?: OffendingCallSites
   autocorrectable: boolean
   unsafeAutocorrectable: boolean
@@ -136,6 +137,7 @@ async function run() {
           filename,
           offense,
           renderedFrom: offense.renderedFrom,
+          otherCallSites: offense.otherCallSites,
           offendingCallSites: offense.offendingCallSites,
           ...fixabilityOf(offense)
         })
@@ -159,6 +161,7 @@ async function run() {
           filename,
           offense,
           renderedFrom: offense.renderedFrom,
+          otherCallSites: offense.otherCallSites,
           offendingCallSites: offense.offendingCallSites,
           ...fixabilityOf(offense)
         })

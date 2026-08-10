@@ -12,7 +12,7 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json"
+export type FormatOption = "simple" | "detailed" | "json" | "html"
 
 export interface ParsedArguments {
   patterns: string[]
@@ -69,9 +69,10 @@ export class ArgumentParser {
                                     lower-severity offenses are still counted in the summary, but aren't
                                     printed or annotated in CI
                                     --only and --all-rules lower this level unless it's passed explicitly
-      --format                      output format (simple|detailed|json) [default: detailed]
+      --format                      output format (simple|detailed|json|html) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
+      --html                        write a standalone HTML report to stdout (shortcut for --format html)
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
@@ -106,6 +107,7 @@ export class ArgumentParser {
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
+        html: { type: "boolean" },
         github: { type: "boolean" },
         "no-github": { type: "boolean" },
         theme: { type: "string" },
@@ -136,7 +138,7 @@ export class ArgumentParser {
     const isGitHubActions = process.env.GITHUB_ACTIONS === "true"
 
     let formatOption: FormatOption = "detailed"
-    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
+    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json" || values.format === "html")) {
       formatOption = values.format
     }
 
@@ -148,10 +150,19 @@ export class ArgumentParser {
       formatOption = "json"
     }
 
-    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+    if (values.html) {
+      formatOption = "html"
+    }
+
+    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"] && formatOption !== "html"
 
     if (useGitHubActions && formatOption === "json") {
       console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+      process.exit(1)
+    }
+
+    if (values.github && formatOption === "html") {
+      console.error("Error: --github cannot be used with --html format. The annotations would end up inside the report document.")
       process.exit(1)
     }
 

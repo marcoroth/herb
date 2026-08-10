@@ -78,6 +78,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   severity?: LintSeverity
   /** The call chain that justified the offense */
   renderedFrom?: AncestorChain
+  /** The remaining call sites of the file, the ones `renderedFrom` does not stand for */
+  otherCallSites?: AncestorChain[]
   /** How many call sites the offense applies to, when only some of them do */
   offendingCallSites?: OffendingCallSites
 }

@@ -1,0 +1,347 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`HTML report > groups the offenses of several files 1`] = `
+"<main class="herb-report-root">
+<header class="herb-report-masthead">
+<h1 class="herb-report-title">Herb Linter report</h1>
+<p class="herb-report-project">/private/project</p>
+<p class="herb-report-version">Herb 0.0.0</p>
+<ul class="herb-report-stats">
+<li class="herb-report-stat"><span class="herb-report-stat-value">3</span><span class="herb-report-stat-label">offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">2</span><span class="herb-report-stat-label">files with offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">0</span><span class="herb-report-stat-label">clean files</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">3</span><span class="herb-report-stat-label">errors</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">3</span><span class="herb-report-stat-label">autocorrectable</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">rule enabled</span></li>
+</ul>
+</header>
+<section class="herb-report-rail">
+<h2 class="herb-report-rail-title">Rules with offenses</h2>
+<ul class="herb-report-rule-list">
+<li class="herb-report-rule"><a class="herb-report-rule-name" href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a><span class="herb-report-rule-count">3</span></li>
+</ul>
+</section>
+<details class="herb-report-file" open>
+<summary class="herb-report-file-summary">
+<span class="herb-report-file-name">app/views/posts/index.html.erb</span>
+<span class="herb-report-file-count">1 offense</span>
+</summary>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">html-tag-name-lowercase</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Opening tag name <code>&lt;IMG&gt;</code> should be lowercase. Use <code>&lt;img&gt;</code> instead.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/index.html.erb" rel="noopener noreferrer">app/views/posts/index.html.erb:2:3</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">IMG</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-line-number" data-line="4">4</span></span></code></pre>
+</figure>
+</div>
+<details class="herb-report-fix">
+<summary class="herb-report-fix-summary">Not applied. Running <code class="herb-report-flag">--fix</code> would correct this to</summary>
+<div class="herb-report-fix-diff">
+<figure class="herb-highlight herb-diff" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<figcaption class="herb-file-header">app/views/posts/index.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">IMG</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">img</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+</details>
+</article>
+</details>
+<details class="herb-report-file" open>
+<summary class="herb-report-file-summary">
+<span class="herb-report-file-name">app/views/posts/show.html.erb</span>
+<span class="herb-report-file-count">2 offenses</span>
+</summary>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">html-tag-name-lowercase</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Opening tag name <code>&lt;SPAN&gt;</code> should be lowercase. Use <code>&lt;span&gt;</code> instead.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/show.html.erb" rel="noopener noreferrer">app/views/posts/show.html.erb:2:3</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">SPAN</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-line-number" data-line="4">4</span></span></code></pre>
+</figure>
+</div>
+<details class="herb-report-fix">
+<summary class="herb-report-fix-summary">Not applied. Running <code class="herb-report-flag">--fix</code> would correct this to</summary>
+<div class="herb-report-fix-diff">
+<figure class="herb-highlight herb-diff" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<figcaption class="herb-file-header">app/views/posts/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">span</span></mark><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">span</span></mark><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+</details>
+</article>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">html-tag-name-lowercase</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Closing tag name <code>&lt;/SPAN&gt;</code> should be lowercase. Use <code>&lt;/span&gt;</code> instead.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/show.html.erb" rel="noopener noreferrer">app/views/posts/show.html.erb:2:14</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">SPAN</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-line-number" data-line="4">4</span></span></code></pre>
+</figure>
+</div>
+<details class="herb-report-fix">
+<summary class="herb-report-fix-summary">Not applied. Running <code class="herb-report-flag">--fix</code> would correct this to</summary>
+<div class="herb-report-fix-diff">
+<figure class="herb-highlight herb-diff" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<figcaption class="herb-file-header">app/views/posts/show.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">SPAN</span></mark><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">span</span></mark><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Post</span><span class="herb-token-html-tag-start-close">&lt;/</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">span</span></mark><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+</details>
+</article>
+</details>
+</main>"
+`;
+
+exports[`HTML report > renders a mixed verdict call chain 1`] = `
+"<main class="herb-report-root">
+<header class="herb-report-masthead">
+<h1 class="herb-report-title">Herb Linter report</h1>
+<p class="herb-report-project">/private/project</p>
+<p class="herb-report-version">Herb 0.0.0</p>
+<ul class="herb-report-stats">
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">offense</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">file with offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">3</span><span class="herb-report-stat-label">clean files</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">error</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">rule enabled</span></li>
+</ul>
+</header>
+<section class="herb-report-rail">
+<h2 class="herb-report-rail-title">Rules with offenses</h2>
+<ul class="herb-report-rule-list">
+<li class="herb-report-rule"><a class="herb-report-rule-name" href="https://herb-tools.dev/linter/rules/html-no-nested-forms" rel="noopener noreferrer">html-no-nested-forms</a><span class="herb-report-rule-count">1</span></li>
+</ul>
+</section>
+<details class="herb-report-file" open>
+<summary class="herb-report-file-summary">
+<span class="herb-report-file-name">app/views/posts/_actions.html.erb</span>
+<span class="herb-report-file-count">1 offense</span>
+</summary>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">html-no-nested-forms</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Nested <code>&lt;form&gt;</code> elements are not allowed. At least one call site renders this file inside a <code>&lt;form&gt;</code>.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/html-no-nested-forms" rel="noopener noreferrer">html-no-nested-forms</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/_actions.html.erb" rel="noopener noreferrer">app/views/posts/_actions.html.erb:1:1</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-marked" data-line="1" data-herb-severity="error"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">form</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">action</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">posts</span><span class="herb-token-slash">/</span><span class="herb-attr-value">1</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">method</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">post</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">button</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">type</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">submit</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-identifier">Delete</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">button</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">form</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+<section class="herb-report-chain">
+<p class="herb-report-chain-title">Render stack<span class="herb-report-chain-order">innermost first</span></p>
+<p class="herb-report-chain-verdict">invalid on <span class="herb-report-verdict-offending">1</span> of <span class="herb-report-verdict-total">2</span> call sites</p>
+<ol class="herb-report-frames">
+<li class="herb-report-frame herb-report-frame-terminal">
+<p class="herb-report-frame-heading">
+<span class="herb-report-frame-index">1</span>
+<span class="herb-report-frame-verb">reported in</span>
+<span class="herb-report-frame-target">app/views/posts/_actions.html.erb:1:1</span>
+<span class="herb-report-frame-marker">this file</span>
+</p>
+</li>
+<li class="herb-report-frame herb-report-frame-offending">
+<details class="herb-report-frame-body" open>
+<summary class="herb-report-frame-heading">
+<span class="herb-report-frame-index">2</span>
+<span class="herb-report-frame-verb">rendered from</span>
+<span class="herb-report-frame-target">app/views/posts/index.html.erb:5:8</span>
+<span class="herb-report-breadcrumb"><span class="herb-report-tag">&lt;table&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;tr&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;td&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag herb-report-tag-offending">&lt;form&gt;</span></span>
+<span class="herb-report-frame-marker">offending call site</span>
+</summary>
+<div class="herb-report-frame-excerpt"><figure class="herb-highlight" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<pre class="herb-code"><code><span class="herb-line" data-line="5"><span class="herb-line-number" data-line="5">5</span><span class="herb-token-whitespace">        </span><span class="herb-token-erb-start">&lt;%=</span> render &quot;posts/actions&quot; <span class="herb-token-erb-end">%&gt;</span></span></code></pre>
+</figure></div>
+<p class="herb-report-frame-open"><a href="file:///private/project/app/views/posts/index.html.erb" rel="noopener noreferrer">Open app/views/posts/index.html.erb</a></p>
+</details>
+</li>
+<li class="herb-report-frame">
+<details class="herb-report-frame-body">
+<summary class="herb-report-frame-heading">
+<span class="herb-report-frame-index">3</span>
+<span class="herb-report-frame-verb">rendered into</span>
+<span class="herb-report-frame-target">app/views/layouts/application.html.erb:7:10</span>
+<span class="herb-report-breadcrumb"><span class="herb-report-tag">&lt;html&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;body&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;main&gt;</span></span>
+</summary>
+<div class="herb-report-frame-excerpt"><figure class="herb-highlight" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<pre class="herb-code"><code><span class="herb-line" data-line="7"><span class="herb-line-number" data-line="7">7</span><span class="herb-token-whitespace">    </span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">main</span><span class="herb-token-html-tag-end">&gt;</span><span class="herb-token-erb-start">&lt;%=</span> <span class="herb-ruby-keyword">yield</span> <span class="herb-token-erb-end">%&gt;</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">main</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure></div>
+<p class="herb-report-frame-open"><a href="file:///private/project/app/views/layouts/application.html.erb" rel="noopener noreferrer">Open app/views/layouts/application.html.erb</a></p>
+</details>
+</li>
+</ol>
+<details class="herb-report-others">
+<summary class="herb-report-others-summary">Also rendered from 1 other call site</summary>
+<ul class="herb-report-other-list">
+<li class="herb-report-other"><span class="herb-report-other-target">app/views/posts/show.html.erb:2:2</span><span class="herb-report-breadcrumb"><span class="herb-report-tag">&lt;html&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;body&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;main&gt;</span><span class="herb-report-tag-separator">›</span><span class="herb-report-tag">&lt;section&gt;</span></span></li>
+</ul>
+</details>
+</section>
+</article>
+</details>
+</main>"
+`;
+
+exports[`HTML report > renders the autofix diff without applying it 1`] = `
+"<main class="herb-report-root">
+<header class="herb-report-masthead">
+<h1 class="herb-report-title">Herb Linter report</h1>
+<p class="herb-report-project">/private/project</p>
+<p class="herb-report-version">Herb 0.0.0</p>
+<ul class="herb-report-stats">
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">offense</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">file with offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">0</span><span class="herb-report-stat-label">clean files</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">error</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">autocorrectable</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">rule enabled</span></li>
+</ul>
+</header>
+<section class="herb-report-rail">
+<h2 class="herb-report-rail-title">Rules with offenses</h2>
+<ul class="herb-report-rule-list">
+<li class="herb-report-rule"><a class="herb-report-rule-name" href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a><span class="herb-report-rule-count">1</span></li>
+</ul>
+</section>
+<details class="herb-report-file" open>
+<summary class="herb-report-file-summary">
+<span class="herb-report-file-name">app/views/posts/index.html.erb</span>
+<span class="herb-report-file-count">1 offense</span>
+</summary>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">html-tag-name-lowercase</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Opening tag name <code>&lt;IMG&gt;</code> should be lowercase. Use <code>&lt;img&gt;</code> instead.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/html-tag-name-lowercase" rel="noopener noreferrer">html-tag-name-lowercase</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/index.html.erb" rel="noopener noreferrer">app/views/posts/index.html.erb:2:3</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-dimmed" data-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">IMG</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-line-number" data-line="4">4</span></span></code></pre>
+</figure>
+</div>
+<details class="herb-report-fix">
+<summary class="herb-report-fix-summary">Not applied. Running <code class="herb-report-flag">--fix</code> would correct this to</summary>
+<div class="herb-report-fix-diff">
+<figure class="herb-highlight herb-diff" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<figcaption class="herb-file-header">app/views/posts/index.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-context" data-old-line="1" data-new-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-removed" data-old-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-removed"><span class="herb-tag-name">IMG</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><span class="herb-token-html-tag-start">&lt;</span><mark class="herb-diff-inline-added"><span class="herb-tag-name">img</span></mark><span class="herb-token-whitespace"> </span><span class="herb-attr-name">src</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">icon</span><span class="herb-token-character">.</span><span class="herb-attr-value">png</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">alt</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">Icon</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span>
+<span class="herb-line herb-diff-context" data-old-line="3" data-new-line="3"><span class="herb-line-number" data-line="3">3</span><span class="herb-token-html-tag-start-close">&lt;/</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+</details>
+</article>
+</details>
+</main>"
+`;
+
+exports[`HTML report > reports a clean run as a document of its own 1`] = `
+"<main class="herb-report-root">
+<header class="herb-report-masthead">
+<h1 class="herb-report-title">Herb Linter report</h1>
+<p class="herb-report-project">/private/project</p>
+<p class="herb-report-version">Herb 0.0.0</p>
+<ul class="herb-report-stats">
+<li class="herb-report-stat"><span class="herb-report-stat-value">0</span><span class="herb-report-stat-label">offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">0</span><span class="herb-report-stat-label">files with offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">clean file</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">rule enabled</span></li>
+</ul>
+</header>
+<p class="herb-report-notice">No offenses were found.</p>
+</main>"
+`;
+
+exports[`HTML report > says so when the call sites could not be resolved 1`] = `
+"<main class="herb-report-root">
+<header class="herb-report-masthead">
+<h1 class="herb-report-title">Herb Linter report</h1>
+<p class="herb-report-project">/private/project</p>
+<p class="herb-report-version">Herb 0.0.0</p>
+<ul class="herb-report-stats">
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">offense</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">file with offenses</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">2</span><span class="herb-report-stat-label">clean files</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">error</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">correctable with --fix-unsafely</span></li>
+<li class="herb-report-stat"><span class="herb-report-stat-value">1</span><span class="herb-report-stat-label">rule enabled</span></li>
+</ul>
+</header>
+<section class="herb-report-rail">
+<h2 class="herb-report-rail-title">Rules with offenses</h2>
+<ul class="herb-report-rule-list">
+<li class="herb-report-rule"><a class="herb-report-rule-name" href="https://herb-tools.dev/linter/rules/erb-strict-locals-required" rel="noopener noreferrer">erb-strict-locals-required</a><span class="herb-report-rule-count">1</span></li>
+</ul>
+</section>
+<details class="herb-report-file" open>
+<summary class="herb-report-file-summary">
+<span class="herb-report-file-name">app/views/posts/_row.html.erb</span>
+<span class="herb-report-file-count">1 offense</span>
+</summary>
+<article class="herb-report-card">
+<header class="herb-report-card-header">
+<span class="herb-report-dot herb-report-dot-error"></span>
+<span class="herb-report-card-rule">erb-strict-locals-required</span>
+</header>
+<div class="herb-report-excerpt">
+<figure class="herb-highlight herb-diagnostic" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<header class="herb-diagnostic-header"><span class="herb-severity-label herb-severity-error">error</span> <span class="herb-diagnostic-message">Partial is missing a strict locals declaration. Add <code>&lt;%# locals: (...) %&gt;</code> at the top of the file.</span> <span class="herb-diagnostic-code">(<a href="https://herb-tools.dev/linter/rules/erb-strict-locals-required" rel="noopener noreferrer">erb-strict-locals-required</a>)</span></header>
+<figcaption class="herb-file-header"><a href="file:///private/project/app/views/posts/_row.html.erb" rel="noopener noreferrer">app/views/posts/_row.html.erb:1:0</a></figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-line-marked" data-line="1" data-herb-severity="error"><span class="herb-line-number" data-line="1">1</span><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start">&lt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">div</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark></span>
+<span class="herb-line herb-line-marked" data-line="2" data-herb-severity="error"><span class="herb-line-number" data-line="2">2</span><span class="herb-token-whitespace">  </span><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start">&lt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">span</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-identifier">Row</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start-close">&lt;/</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">span</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark></span>
+<span class="herb-line herb-line-marked" data-line="3" data-herb-severity="error"><span class="herb-line-number" data-line="3">3</span><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-start-close">&lt;/</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-tag-name">div</span></mark><mark class="herb-marker herb-marker-error"><span class="herb-token-html-tag-end">&gt;</span></mark></span>
+<span class="herb-line herb-line-dimmed" data-line="4"><span class="herb-line-number" data-line="4">4</span></span></code></pre>
+</figure>
+</div>
+<p class="herb-report-chain-unknown">call sites unknown, 1 render call in this project could not be resolved</p>
+<details class="herb-report-fix">
+<summary class="herb-report-fix-summary">Not applied. Running <code class="herb-report-flag">--fix-unsafely</code> would correct this to</summary>
+<div class="herb-report-fix-diff">
+<figure class="herb-highlight herb-diff" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<figcaption class="herb-file-header">app/views/posts/_row.html.erb</figcaption>
+<pre class="herb-code"><code><span class="herb-line herb-diff-added" data-new-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-erb-start">&lt;%#</span> locals: (**) <span class="herb-token-erb-end">%&gt;</span></span>
+<span class="herb-line herb-diff-added" data-new-line="2"><span class="herb-line-number" data-line="2">2</span></span>
+<span class="herb-line herb-diff-context" data-old-line="1" data-new-line="3"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">div</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure>
+</div>
+</details>
+</article>
+</details>
+</main>"
+`;

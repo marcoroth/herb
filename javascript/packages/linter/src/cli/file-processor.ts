@@ -31,6 +31,8 @@ export interface ProcessedFile {
   offense: Diagnostic
   /** The call chain that justified the offense, when it came from where the file is rendered. */
   renderedFrom?: AncestorChain
+  /** The remaining call sites of the file, the ones `renderedFrom` does not stand for. */
+  otherCallSites?: AncestorChain[]
   /** How many call sites the offense applies to, when only some of them do. */
   offendingCallSites?: OffendingCallSites
   /** Set when the file is a partial whose call sites could not be resolved. */
@@ -112,12 +114,12 @@ export class FileProcessor {
     try {
       const result = await loadCustomRules({
         baseDir: context.projectPath,
-        silent: formatOption === 'json'
+        silent: formatOption === 'json' || formatOption === 'html'
       })
 
       this.customRules = result.rules
 
-      if (result.rules.length > 0 && formatOption !== 'json') {
+      if (result.rules.length > 0 && formatOption !== 'json' && formatOption !== 'html') {
         const ruleText = result.rules.length === 1 ? 'rule' : 'rules'
         console.log(colorize(`\nLoaded ${result.rules.length} custom ${ruleText}:`, "green"))
 
@@ -137,7 +139,7 @@ export class FileProcessor {
         console.log()
       }
     } catch (error) {
-      if (formatOption !== 'json') {
+      if (formatOption !== 'json' && formatOption !== 'html') {
         console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
       }
     }
@@ -394,7 +396,7 @@ export class FileProcessor {
 
           filesFixed++
 
-          if (formatOption !== 'json') {
+          if (formatOption !== 'json' && formatOption !== 'html') {
             console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} ${autofixResult.fixed.length === 1 ? "offense" : "offenses"}`, "green")}`)
           }
         }
@@ -404,6 +406,7 @@ export class FileProcessor {
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
+            otherCallSites: offense.otherCallSites,
             offendingCallSites: offense.offendingCallSites,
             unknownCallSites: this.unknownCallSitesFor(filename),
             ...this.fixabilityFor(offense)
@@ -423,7 +426,7 @@ export class FileProcessor {
           filesWithOffenses++
         }
       } else if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && formatOption !== 'json') {
+        if (files.length === 1 && formatOption !== 'json' && formatOption !== 'html') {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
@@ -432,6 +435,7 @@ export class FileProcessor {
             filename,
             offense: offense,
             renderedFrom: offense.renderedFrom,
+            otherCallSites: offense.otherCallSites,
             offendingCallSites: offense.offendingCallSites,
             unknownCallSites: this.unknownCallSitesFor(filename),
             ...this.fixabilityFor(offense)
@@ -595,6 +599,7 @@ export class FileProcessor {
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
           renderedFrom: offense.renderedFrom,
+          otherCallSites: offense.otherCallSites,
           offendingCallSites: offense.offendingCallSites,
           unknownCallSites: this.unknownCallSitesFor(offense.filename),
           autocorrectable: offense.autocorrectable,
@@ -613,7 +618,7 @@ export class FileProcessor {
         ruleOffenses.set(rule, existing)
       }
 
-      if (formatOption !== 'json') {
+      if (formatOption !== 'json' && formatOption !== 'html') {
         for (const fixMessage of result.fixMessages) {
           const [filename, countStr] = fixMessage.split("\t")
           const count = parseInt(countStr, 10)

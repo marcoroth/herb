@@ -24,6 +24,7 @@ import {
 
 import type {
   AncestorChain,
+  CallFrame,
   PartialDeclaration,
   AncestorVerdict,
   ERBOpenTagNode,
@@ -103,6 +104,30 @@ function blockOpensWith(node: Nodes.ERBBlockNode, helpers: Set<string>): boolean
   return helpers.has(call)
 }
 
+function sameFrame(a: CallFrame, b: CallFrame): boolean {
+  if (a.file !== b.file) return false
+  if (a.via !== b.via) return false
+  if (a.location?.line !== b.location?.line) return false
+  if (a.location?.column !== b.location?.column) return false
+
+  return a.ancestors.length === b.ancestors.length && a.ancestors.every((tag, index) => tag === b.ancestors[index])
+}
+
+/**
+ * Whether two chains describe the same path through the same call sites.
+ *
+ * Occurrences are left out, since they count the paths a chain stands for
+ * rather than saying which path it is.
+ */
+function sameChain(a: AncestorChain, b: AncestorChain): boolean {
+  if (a === b) return true
+  if (a.frames.length !== b.frames.length) return false
+  if (a.tags.length !== b.tags.length) return false
+  if (!a.tags.every((tag, index) => tag === b.tags[index])) return false
+
+  return a.frames.every((frame, index) => sameFrame(frame, b.frames[index]))
+}
+
 /**
  * Base visitor class that provides common functionality for rule visitors
  */
@@ -159,7 +184,25 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
       return
     }
 
-    this.offenses.push(callSites ? { ...offense, renderedFrom: chain, offendingCallSites: callSites } : { ...offense, renderedFrom: chain })
+    const others = this.otherCallSitesFor(chain)
+
+    this.offenses.push({
+      ...offense,
+      renderedFrom: chain,
+      ...(others ? { otherCallSites: others } : {}),
+      ...(callSites ? { offendingCallSites: callSites } : {}),
+    })
+  }
+
+  /**
+   * The call sites the reported chain does not stand for, for the offenses that
+   * have any.
+   *
+   * A file judged on its own contents has none to report, so the base visitor
+   * never carries any.
+   */
+  protected otherCallSitesFor(_chain: AncestorChain): AncestorChain[] | undefined {
+    return undefined
   }
 
   /**
@@ -524,6 +567,19 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
     this.pendingCallSites = null
 
     this.addOffenseWithChain(message, location, chain, autofixContext, severity, tags, callSites ?? undefined)
+  }
+
+  /**
+   * Every other chain that nests this file, so a report can show the call sites
+   * the reported one leaves out.
+   *
+   * The reported chain is matched by value rather than by identity, because the
+   * offense travels through a worker as plain data and comes back as a copy.
+   */
+  protected otherCallSitesFor(chain: AncestorChain): AncestorChain[] | undefined {
+    const others = this.renderedContext.chains.filter(candidate => !sameChain(candidate, chain))
+
+    return others.length > 0 ? others : undefined
   }
 
   /**
