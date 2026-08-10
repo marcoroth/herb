@@ -37,9 +37,9 @@ import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoClassDefinitionsRule } from "./rules/erb-no-class-definitions.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
-import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
+import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoDuplicateBranchElementsRule } from "./rules/erb-no-duplicate-branch-elements.js"
 import { ERBNoEmptyControlFlowRule } from "./rules/erb-no-empty-control-flow.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
@@ -49,6 +49,7 @@ import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-condit
 import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
 import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
 import { ERBNoOutputInAttributePositionRule } from "./rules/erb-no-output-in-attribute-position.js"
@@ -137,8 +138,8 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { SourceIndentationRule } from "./rules/source-indentation.js"
 
-import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 import { SVGNoDeprecatedTagsRule } from "./rules/svg-no-deprecated-tags.js"
+import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 import { TurboPermanentNoMisleadingValueRule } from "./rules/turbo-permanent-no-misleading-value.js"
 import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
@@ -186,11 +187,11 @@ export const rules: RuleClass[] = [
   ERBNoCaseNodeChildrenRule,
   ERBNoClassDefinitionsRule,
   ERBNoCommentedOutOutputTagsRule,
-  ERBNoDebugOutputRule,
-  ERBNoEmptyControlFlowRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
+  ERBNoDebugOutputRule,
   ERBNoDuplicateBranchElementsRule,
+  ERBNoEmptyControlFlowRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
@@ -198,6 +199,7 @@ export const rules: RuleClass[] = [
   ERBNoInstanceVariablesInPartialsRule,
   ERBNoInterpolatedClassNamesRule,
   ERBNoJavascriptTagHelperRule,
+  ERBNoModuleDefinitionsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
   ERBNoOutputInAttributePositionRule,
@@ -205,10 +207,6 @@ export const rules: RuleClass[] = [
   ERBNoReturnRule,
   ERBNoShadowedBlockArgumentRule,
   ERBNoSilentStatementRule,
-  ERBNoUnusedBlockArgumentRule,
-  ERBNoUnusedExpressionsRule,
-  ERBNoUnusedLiteralsRule,
-  ERBNoUnusedLocalVariableRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBNoSleepRule,
   ERBNoStatementInScriptRule,
@@ -217,6 +215,10 @@ export const rules: RuleClass[] = [
   ERBNoUnsafeJSAttributeRule,
   ERBNoUnsafeRawRule,
   ERBNoUnsafeScriptInterpolationRule,
+  ERBNoUnusedBlockArgumentRule,
+  ERBNoUnusedExpressionsRule,
+  ERBNoUnusedLiteralsRule,
+  ERBNoUnusedLocalVariableRule,
   ERBPreferDirectOutputRule,
   ERBPreferDoEndBlocksRule,
   ERBPreferEachOverMapRule,
@@ -286,8 +288,8 @@ export const rules: RuleClass[] = [
 
   SourceIndentationRule,
 
-  SVGTagNameCapitalizationRule,
   SVGNoDeprecatedTagsRule,
+  SVGTagNameCapitalizationRule,
 
   TurboPermanentNoMisleadingValueRule,
   TurboPermanentRequireIdRule,
