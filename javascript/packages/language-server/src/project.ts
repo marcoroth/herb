@@ -61,7 +61,7 @@ export class Project {
     this.linterService = new LinterService(connection, userSettings, capabilities, this, this.partialIndexService, this.partialCallerIndexService)
     this.autofixService = new AutofixService(connection, undefined, this.partialIndexService, this.partialCallerIndexService)
     this.codeActionProvider = new CodeActionProvider(this, undefined, this.partialIndexService, this.partialCallerIndexService)
-    this.formattingProvider = new FormattingProvider(connection, shared.documents.documents, this, userSettings, capabilities)
+    this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
     this.completionProvider = new CompletionProvider(shared.parserService, this.partialIndexService)
 
     this.referencesProvider = new ReferencesProvider(

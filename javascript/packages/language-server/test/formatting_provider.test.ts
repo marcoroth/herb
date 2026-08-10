@@ -7,6 +7,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 
 import { FormattingProvider } from '../src/formatting_provider'
 import { Project } from '../src/project'
+import { Documents } from '../src/documents'
 import { UserSettings } from '../src/user_settings'
 import { Capabilities } from '../src/capabilities'
 
@@ -15,7 +16,7 @@ import { Config } from '@herb-tools/config'
 
 describe('FormattingProvider', () => {
   let connection: Connection
-  let documents: TextDocuments<TextDocument>
+  let documents: Documents
   let project: Project
   let userSettings: UserSettings
   let formattingProvider: FormattingProvider
@@ -34,7 +35,7 @@ describe('FormattingProvider', () => {
 
     documents = {
       get: vi.fn()
-    } as unknown as TextDocuments<TextDocument>
+    } as unknown as Documents
 
     project = {
       root: '/test/project',

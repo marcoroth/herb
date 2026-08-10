@@ -1,8 +1,9 @@
-import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
+import { Connection, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
 import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
+import { Documents } from "./documents"
 import { Project } from "./project"
 import { UserSettings } from "./user_settings"
 import { Capabilities } from "./capabilities"
@@ -13,7 +14,7 @@ const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
 export class FormattingProvider {
   private connection: Connection
-  private documents: TextDocuments<TextDocument>
+  private documents: Documents
   private project: Project
   private userSettings: UserSettings
   private capabilities: Capabilities
@@ -22,7 +23,7 @@ export class FormattingProvider {
   private postRewriters: StringRewriter[] = []
   private failedRewriters: Map<string, string> = new Map()
 
-  constructor(connection: Connection, documents: TextDocuments<TextDocument>, project: Project, userSettings: UserSettings, capabilities: Capabilities) {
+  constructor(connection: Connection, documents: Documents, project: Project, userSettings: UserSettings, capabilities: Capabilities) {
     this.connection = connection
     this.documents = documents
     this.project = project
