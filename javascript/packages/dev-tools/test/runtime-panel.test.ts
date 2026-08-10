@@ -236,7 +236,8 @@ describe("cards", () => {
 
     expect(card.querySelector(".hdt-dot-error")).not.toBeNull()
     expect(card.querySelector(".hdt-code")!.textContent).toBe("html-no-nested-forms")
-    expect(card.querySelector(".hdt-code")!.getAttribute("href")).toBe("https://herb-tools.dev/linter/rules/html-no-nested-forms")
+    expect(card.querySelector(".hdt-code")!.getAttribute("href")).toBeNull()
+    expect(card.querySelector(".hdt-docs")!.getAttribute("href")).toBe("https://herb-tools.dev/linter/rules/html-no-nested-forms")
     expect(card.querySelector(".hdt-suggestion")!.textContent).toBe("Remove the inner form.")
   })
 
@@ -342,6 +343,7 @@ describe("cards", () => {
 
     expect(code.tagName).toBe("SPAN")
     expect(code.getAttribute("href")).toBeNull()
+    expect(document.querySelector(".hdt-docs")).toBeNull()
   })
 })
 

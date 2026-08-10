@@ -598,11 +598,17 @@ export class RuntimePanel {
       : `<span class="hdt-dot hdt-dot-${escapeHTML(diagnostic.severity ?? 'error')}" aria-hidden="true"></span>`;
 
     const url = safeUrl(diagnostic.docsUrl);
-    const code = diagnostic.code === null
+    const code = diagnostic.code === null ? '' : `<span class="hdt-code">${escapeHTML(diagnostic.code)}</span>`;
+
+    const docs = url === null
       ? ''
-      : url === null
-        ? `<span class="hdt-code">${escapeHTML(diagnostic.code)}</span>`
-        : `<a class="hdt-code" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(diagnostic.code)}</a>`;
+      : [
+        `<a class="hdt-docs" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer"`,
+        ` title="Open the documentation for ${escapeHTML(diagnostic.code ?? 'this rule')}">`,
+        `<span class="hdt-docs-text">Docs</span>`,
+        `<span class="hdt-docs-glyph" aria-hidden="true">↗</span>`,
+        `</a>`,
+      ].join('');
 
     const repeat = entry.count > 1 ? `<span class="hdt-repeat" title="Reported ${entry.count} times">×${entry.count}</span>` : '';
     const suggestion = diagnostic.suggestion === null ? '' : `<p class="hdt-suggestion">${escapeHTML(diagnostic.suggestion)}</p>`;
@@ -610,7 +616,7 @@ export class RuntimePanel {
 
     return [
       `<article class="hdt-card" data-hdt-origin="${escapeHTML(diagnostic.origin)}" data-hdt-kind="${escapeHTML(diagnostic.kind)}">`,
-      `<div class="hdt-card-head">${marker}${code}<span class="hdt-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}</div>`,
+      `<div class="hdt-card-head">${marker}${code}${docs}<span class="hdt-origin">${escapeHTML(diagnostic.origin)}</span>${repeat}</div>`,
       `<p class="hdt-message">${escapeHTML(diagnostic.message)}</p>`,
       suggestion,
       excerpt,

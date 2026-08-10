@@ -1392,3 +1392,29 @@
   outline-offset: 2px;
   border-radius: 3px;
 }
+
+.hdt-docs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #4b5563;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.6;
+  text-decoration: none;
+}
+
+.hdt-docs:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+  color: #111827;
+}
+
+.hdt-docs-glyph {
+  font-size: 9px;
+  opacity: 0.8;
+}
