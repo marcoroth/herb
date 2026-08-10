@@ -41,6 +41,14 @@ describe("stringIndexFromByteOffset", () => {
     expect(stringIndexFromByteOffset(source, 0)).toBe(0)
     expect(stringIndexFromByteOffset(source, -1)).toBe(0)
   })
+
+  test("counts a leading byte order mark as one character", () => {
+    const source = "﻿card_event"
+
+    expect(stringIndexFromByteOffset(source, 3)).toBe(1)
+    expect(stringIndexFromByteOffset(source, 8)).toBe(6)
+    expect(source.substring(1)).toBe("card_event")
+  })
 })
 
 describe("substringFromByteOffset", () => {
@@ -54,5 +62,9 @@ describe("substringFromByteOffset", () => {
 
   test("returns an empty string for a zero length", () => {
     expect(substringFromByteOffset("é card_event", 3, 0)).toBe("")
+  })
+
+  test("slices past a leading byte order mark", () => {
+    expect(substringFromByteOffset("﻿card_event", 3, 10)).toBe("card_event")
   })
 })

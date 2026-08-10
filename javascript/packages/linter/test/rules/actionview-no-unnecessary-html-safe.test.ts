@@ -115,4 +115,10 @@ describe("actionview-no-unnecessary-html-safe", () => {
 
     assertOffenses(`<div title="<%= "a & b".html_safe %>">y</div>`)
   })
+
+  it("flags a String literal in a template starting with a byte order mark", () => {
+    expectError('Avoid calling `.html_safe` on the String literal `"hello"`. Write the content directly in the template instead.', { line: 2, column: 6 })
+
+    assertOffenses(`﻿<div>\n  <%= "hello".html_safe %>\n</div>`)
+  })
 })

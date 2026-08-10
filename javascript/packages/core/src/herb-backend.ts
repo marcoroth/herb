@@ -46,6 +46,10 @@ export abstract class HerbBackend {
 
   /**
    * Lexes the given source string into a `LexResult`.
+   *
+   * The `source` on the returned result is always the exact string that was
+   * passed in, so byte offsets reported by the backend stay aligned with it.
+   *
    * @param source - The source code to lex.
    * @returns A `LexResult` instance.
    * @throws Error if the backend is not loaded.
@@ -53,7 +57,9 @@ export abstract class HerbBackend {
   lex(source: string): LexResult {
     this.ensureBackend()
 
-    return LexResult.from(this.backend.lex(ensureString(source)))
+    const string = ensureString(source)
+
+    return LexResult.from({ ...this.backend.lex(string), source: string })
   }
 
   /**
@@ -65,6 +71,10 @@ export abstract class HerbBackend {
 
   /**
    * Parses the given source string into a `ParseResult`.
+   *
+   * The `source` on the returned result is always the exact string that was
+   * passed in, so byte offsets reported by the backend stay aligned with it.
+   *
    * @param source - The source code to parse.
    * @param options - Optional parsing options.
    * @returns A `ParseResult` instance.
@@ -74,8 +84,9 @@ export abstract class HerbBackend {
     this.ensureBackend()
 
     const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+    const string = ensureString(source)
 
-    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
+    return ParseResult.from({ ...this.backend.parse(string, mergedOptions), source: string })
   }
 
   /**

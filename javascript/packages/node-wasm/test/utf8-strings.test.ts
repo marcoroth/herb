@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "../src"
+import { substringFromByteOffset } from "@herb-tools/core"
 
 describe("UTF-8 string handling", () => {
   beforeAll(async () => {
@@ -85,6 +86,33 @@ describe("UTF-8 string handling", () => {
     test("non-breaking space is preserved", () => {
       const result = Herb.parse('<p>before\u00A0after</p>')
       expect(result.value.inspect().trim()).toMatchSnapshot()
+    })
+  })
+
+  describe("byte order mark", () => {
+    const source = '\uFEFF<div>\n  <% value %>\n</div>'
+
+    test("parse returns the source unchanged", () => {
+      expect(Herb.parse(source).source).toBe(source)
+    })
+
+    test("lex returns the source unchanged", () => {
+      expect(Herb.lex(source).source).toBe(source)
+    })
+
+    test("does not shift Prism byte offsets against the source", () => {
+      const withBOM = Herb.parse(source, { prism_nodes: true })
+      const withoutBOM = Herb.parse(source.slice(1), { prism_nodes: true })
+
+      const offsetOf = (result: typeof withBOM) => {
+        const node = result.value.children.find(child => child.type === "AST_HTML_ELEMENT_NODE") as any
+        const erb = node.body.find((child: any) => child.type === "AST_ERB_CONTENT_NODE")
+
+        return erb.prismNode.location.startOffset
+      }
+
+      expect(offsetOf(withBOM)).toBe(offsetOf(withoutBOM) + 3)
+      expect(substringFromByteOffset(source, offsetOf(withBOM), 5)).toBe("value")
     })
   })
 })

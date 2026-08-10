@@ -56,6 +56,10 @@ export function deserializePrismParseResult(bytes: Uint8Array, source: string): 
  * coming from a Prism node must be converted before being used with
  * `String#substring`/`String#slice` or compared against `string.length`.
  *
+ * The decoder is created with `ignoreBOM` so that a template starting with a
+ * UTF-8 byte order mark keeps it as a character. Without it the decoded prefix
+ * silently drops the leading `U+FEFF` and every index comes back one too small.
+ *
  * @param source - The original source string the byte offset is relative to
  * @param byteOffset - A UTF-8 byte offset, e.g. from `node.location.startOffset`
  * @returns The UTF-16 string index corresponding to `byteOffset`
@@ -66,7 +70,7 @@ export function stringIndexFromByteOffset(source: string, byteOffset: number): n
   const bytes = new TextEncoder().encode(source)
   const clampedOffset = Math.min(byteOffset, bytes.length)
 
-  return new TextDecoder().decode(bytes.subarray(0, clampedOffset)).length
+  return new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes.subarray(0, clampedOffset)).length
 }
 
 /**

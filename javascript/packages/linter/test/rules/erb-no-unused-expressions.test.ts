@@ -509,5 +509,11 @@ describe("ERBNoUnusedExpressionsRule", () => {
 
       assertOffenses(`<p><% link_to('→ next', path) %></p>`)
     })
+
+    test("reports the correct message and location when the template starts with a byte order mark", () => {
+      expectError("Avoid unused expressions in silent ERB tags. `<% helper_method(arg) %>` is evaluated but its return value is discarded. Use `<%= helper_method(arg) %>` to output the value or remove the expression.", [2, 5])
+
+      assertOffenses(`﻿<div>\n  <% helper_method(arg) %>\n</div>`)
+    })
   })
 })
