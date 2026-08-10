@@ -29,7 +29,7 @@ import { DefinitionService } from "./definition_service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
 import { isPartialPath } from "@herb-tools/core"
-import { isConfigDocument } from "./utils"
+import { isConfigDocument, isPathInside, pathFromUri } from "./utils"
 import { version } from "../package.json"
 
 import type { FileEvent } from "vscode-languageserver/node"
@@ -111,6 +111,8 @@ export class Server {
 
           this.connection.console.log(`[Workspace] Folders changed, dropped ${dropped.length} project(s)`)
 
+          this.service.diagnostics.clearWhere(uri => dropped.some(root => isPathInside(pathFromUri(uri), root)))
+
           await this.service.diagnostics.refreshAllDocuments()
         })
       }
@@ -141,14 +143,6 @@ export class Server {
       }
 
       await this.service.refresh()
-    })
-
-    this.connection.onDidOpenTextDocument(async (params) => {
-      const document = this.service.documentService.get(params.textDocument.uri)
-
-      if (document) {
-        await this.service.diagnostics.refreshDocument(document)
-      }
     })
 
     this.connection.onDidChangeWatchedFiles(async (params) => {

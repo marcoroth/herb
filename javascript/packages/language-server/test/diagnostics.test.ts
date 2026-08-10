@@ -103,6 +103,40 @@ describe("Diagnostics", () => {
     expect(published[0].diagnostics.length).toBeGreaterThan(0)
   })
 
+  test("clearWhere retracts every published document the predicate matches", async () => {
+    const { diagnostics, published } = diagnosticsFor([WORKSPACE])
+    const other = `${WORKSPACE}/app/views/other.html.erb`
+
+    await diagnostics.validate(documentFor(INSIDE))
+    await diagnostics.validate(documentFor(other))
+
+    published.length = 0
+    diagnostics.clearWhere(uri => uri === INSIDE)
+
+    expect(published).toEqual([{ uri: INSIDE, diagnostics: [] }])
+  })
+
+  test("clearWhere leaves documents the server never reported on alone", async () => {
+    const { diagnostics, published } = diagnosticsFor([WORKSPACE])
+
+    published.length = 0
+    diagnostics.clearWhere(() => true)
+
+    expect(published).toEqual([])
+  })
+
+  test("clearWhere does not retract the same document twice", async () => {
+    const { diagnostics, published } = diagnosticsFor([WORKSPACE])
+
+    await diagnostics.validate(documentFor(INSIDE))
+
+    published.length = 0
+    diagnostics.clearWhere(() => true)
+    diagnostics.clearWhere(() => true)
+
+    expect(published).toHaveLength(1)
+  })
+
   test("clear retracts the diagnostics of a document", () => {
     const { diagnostics, published } = diagnosticsFor([WORKSPACE])
 
