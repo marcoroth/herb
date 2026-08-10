@@ -112,6 +112,30 @@ describe("erb-strict-locals-required autofix", () => {
     expect(result.source).toContain("<%# locals: (title: nil) %>")
   })
 
+  test("names a local sharing its name with a form builder only helper", () => {
+    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
+    const partial = "app/views/posts/_card.html.erb"
+
+    const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
+
+    const source = '<%= link_to button.title, button.path %><%= submit %>'
+    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+
+    expect(result.source).toContain("<%# locals: (button: nil, submit: nil) %>")
+  })
+
+  test("does not name the top level counterparts of form builder helpers", () => {
+    const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
+    const partial = "app/views/posts/_card.html.erb"
+
+    const callers = callerIndexWithLocals(partial, [{ caller: "app/views/posts/index.html.erb", locals: [] }])
+
+    const source = '<%= button_tag "Save" %><%= submit_tag "Go" %><span><%= title %></span>'
+    const result = linter.autofix(source, { fileName: partial, partialCallers: callers }, undefined, { includeUnsafe: true })
+
+    expect(result.source).toContain("<%# locals: (title: nil) %>")
+  })
+
   test("does not name a variable bound inside the partial", () => {
     const linter = new Linter(Herb, [ERBStrictLocalsRequiredRule])
     const partial = "app/views/posts/_card.html.erb"

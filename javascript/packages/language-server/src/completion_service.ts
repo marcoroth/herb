@@ -81,6 +81,7 @@ function publicHelpers(): HelperEntry[] {
 
   for (const helper of getHelperEntries()) {
     if (helper.visibility !== "public") continue
+    if (helper.receiver !== "view") continue
     if (helpers.has(helper.name)) continue
 
     helpers.set(helper.name, helper)

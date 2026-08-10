@@ -4,6 +4,7 @@ source: "ActionView::Helpers::FormBuilder#submit"
 gem: "actionview"
 output: "html"
 visibility: "public"
+receiver: "form_builder"
 supported: false
 supports_block: false
 signature: "submit(value = nil, options = {})"

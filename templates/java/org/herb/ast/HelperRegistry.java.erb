@@ -165,6 +165,7 @@ class HelperEntry {
   private final String gem;
   private final String output;
   private final String visibility;
+  private final String receiver;
   private final String tagName;
   private final boolean isVoid;
   private final boolean supportsBlock;
@@ -183,7 +184,7 @@ class HelperEntry {
   private final List<String> aliases;
 
   HelperEntry(
-    String name, HelperType type, String source, String gem, String output, String visibility, String tagName,
+    String name, HelperType type, String source, String gem, String output, String visibility, String receiver, String tagName,
     boolean isVoid, boolean supportsBlock, boolean preferredForTag, boolean supported, String detectStyle, String description,
     String signature, String documentationUrl, HelperImplicitAttribute implicitAttribute, HelperContent content,
     List<HelperArgument> arguments, List<HelperOption> options, List<HelperBlockArgument> blockArguments,
@@ -195,6 +196,7 @@ class HelperEntry {
     this.gem = gem;
     this.output = output;
     this.visibility = visibility;
+    this.receiver = receiver;
     this.tagName = tagName;
     this.isVoid = isVoid;
     this.supportsBlock = supportsBlock;
@@ -219,6 +221,7 @@ class HelperEntry {
   public String getGem() { return gem; }
   public String getOutput() { return output; }
   public String getVisibility() { return visibility; }
+  public String getReceiver() { return receiver; }
   public String getTagName() { return tagName; }
   public boolean isVoid() { return isVoid; }
   public boolean supportsBlock() { return supportsBlock; }
@@ -264,6 +267,7 @@ public final class HelperRegistry {
         "<%= helper.gem %>",
         "<%= helper.output %>",
         "<%= helper.visibility %>",
+        "<%= helper.receiver %>",
         <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
         <%= helper.void? %>,
         <%= helper.supports_block %>,

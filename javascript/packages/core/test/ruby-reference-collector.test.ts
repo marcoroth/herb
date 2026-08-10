@@ -233,4 +233,15 @@ describe("isProbableLocal", () => {
     expect(isProbableLocal("link_to")).toBe(false)
     expect(isProbableLocal("image_tag")).toBe(false)
   })
+
+  test("treats form builder only helpers as probable locals", () => {
+    expect(isProbableLocal("button")).toBe(true)
+    expect(isProbableLocal("submit")).toBe(true)
+  })
+
+  test("still rejects the top level counterparts of form builder helpers", () => {
+    expect(isProbableLocal("button_tag")).toBe(false)
+    expect(isProbableLocal("button_to")).toBe(false)
+    expect(isProbableLocal("submit_tag")).toBe(false)
+  })
 })
