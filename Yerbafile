@@ -156,6 +156,7 @@ rules:
             - gem
             - output
             - visibility
+            - receiver
             - supported
             - supports_block
             - signature

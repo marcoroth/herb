@@ -29,6 +29,8 @@ Renaming the variable (for example to `tag_item`) keeps the helper unambiguous a
 
 Calling a method that happens to be named after a helper on some object (for example `record.link_to`) is **not** reported: that is a regular method call, not a local variable that shadows the helper.
 
+Helpers that only exist on the form builder are also **not** reported. `button` and `submit` are reachable as `f.button` and `f.submit` inside a `form_with` block, and never as bare names in a template, so a local variable named `button` shadows nothing. The top-level equivalents `button_tag`, `button_to`, and `submit_tag` are still reported.
+
 ## Examples
 
 ### Good
@@ -53,6 +55,12 @@ Calling a method that happens to be named after a helper on some object (for exa
 
 ```erb
 <%= record.link_to %>
+```
+
+```erb
+<% buttons.each do |button| %>
+  <%= link_to button.title, button.path %>
+<% end %>
 ```
 
 ### Bad

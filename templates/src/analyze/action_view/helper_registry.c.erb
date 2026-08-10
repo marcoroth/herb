@@ -62,6 +62,7 @@ static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
     .gem = "<%= helper.gem %>",
     .output = HELPER_OUTPUT_<%= helper.output.upcase %>,
     .visibility = "<%= helper.visibility %>",
+    .receiver = "<%= helper.receiver %>",
     .tag_name = <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "NULL" %>,
     .is_void = <%= helper.void? %>,
     .supports_block = <%= helper.supports_block %>,
