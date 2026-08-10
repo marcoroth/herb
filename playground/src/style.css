@@ -229,6 +229,31 @@ code.language-tree {
   border-radius: 2px;
 }
 
+/* Highlighted diagnostic cards */
+.diagnostic-item .herb-highlight {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: #282c34;
+  color: #dcdfe4;
+  font-size: 0.8125rem;
+}
+
+.diagnostic-item .herb-highlight[data-herb-appearance="light"] {
+  background: #ffffff;
+  color: #383a42;
+}
+
+.diagnostic-item .herb-highlight .herb-diagnostic-header {
+  font-size: 0.875rem;
+}
+
+.diagnostic-item .herb-highlight .herb-file-header {
+  display: block;
+  margin-bottom: 0.5em;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
 /* Diff operation cards */
 .diff-operation {
   margin-bottom: 0.5rem;

@@ -1,6 +1,6 @@
 import { Token, RUBY_KEYWORDS } from "@herb-tools/core"
-import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "./color.js"
+import { loadDefaultBackend } from "./default-backend.js"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { Color } from "./color.js"
@@ -26,15 +26,19 @@ type SyntaxRenderState = {
 export class SyntaxRenderer {
   private colors: ColorScheme
   private isColorEnabled: boolean
-  private herb: HerbBackend
+  private herb?: HerbBackend
 
   public constructor(colors: ColorScheme, herb?: HerbBackend) {
     this.colors = colors
-    this.isColorEnabled = process.env.NO_COLOR === undefined
-    this.herb = herb || Herb
+    this.isColorEnabled = typeof process === "undefined" || process.env.NO_COLOR === undefined
+    this.herb = herb
   }
 
   public async initialize(): Promise<void> {
+    if (!this.herb) {
+      this.herb = await loadDefaultBackend()
+    }
+
     if (this.herb.isLoaded) {
       return
     }
@@ -43,7 +47,7 @@ export class SyntaxRenderer {
   }
 
   public get initialized(): boolean {
-    return this.herb.isLoaded
+    return this.herb?.isLoaded ?? false
   }
 
   public highlight(content: string): string {

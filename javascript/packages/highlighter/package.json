@@ -17,6 +17,11 @@
   "module": "./dist/index.js",
   "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
+  "browser": {
+    "fs": "./browser/fs.js",
+    "path": "./browser/path.js",
+    "@herb-tools/node-wasm": false
+  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -43,6 +48,7 @@
     "README.md",
     "src/",
     "bin/",
+    "browser/",
     "dist/",
     "themes/",
     "assets/"

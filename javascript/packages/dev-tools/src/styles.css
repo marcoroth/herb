@@ -210,6 +210,18 @@
   letter-spacing: -0.025em;
 }
 
+.herb-tooltip .herb-erb-code.herb-erb-code-highlighted {
+  color: #abb2bf;
+  font-weight: 400;
+  background: #282c34;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.herb-tooltip .herb-erb-code.herb-erb-code-highlighted .herb-comment {
+  font-style: normal;
+}
+
 .herb-tooltip::before {
   content: '';
   position: absolute;

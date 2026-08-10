@@ -49,6 +49,9 @@ In addition to Erubi options, `Herb::Engine` supports:
 | `validate_ruby`   | `false`   | Raise if the compiled output isn't valid Ruby                                         |
 | `optimize`        | `false`   | Compile-time optimizations for Action View helpers (experimental)                     |
 | `debug`           | `false`   | Enable debug mode                                                                     |
+| `overlay_messages` | `"both"` | Where error overlays show messages, `"header"` or `"both"`                            |
+| `highlighter`     | `true`    | Whether error overlays render excerpts through the `herb-highlight` CLI               |
+| `highlighter_path` | `nil`    | Path to a specific `herb-highlight` binary for the overlay bridge                     |
 
 Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`, together with any other [parser option](/parser-options):
 
@@ -80,6 +83,23 @@ Controls how the engine presents validation results:
 - **`:raise`** — Raises `SecurityError` or `CompilationError` (default, used in tests and CLI)
 - **`:overlay`** — Renders errors as in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
 - **`:none`** — Skips validation entirely
+
+## Error Overlay Highlighting
+
+In `:overlay` mode the engine renders each error's excerpt through the [`herb-highlight` CLI](/projects/highlighter), which supplies the syntax highlighting, the marked ranges, and the stylesheet the overlay embeds. The binary is discovered automatically. An explicit `highlighter_path` wins, then the monorepo binary when Node is available, then `herb-highlight` on `PATH`. When no binary is found, or when `highlighter: false` disables the bridge, overlays fall back to a plain excerpt.
+
+```ruby
+Herb::Engine.new(source,
+  validation_mode: :overlay,
+  highlighter_path: "/usr/local/bin/herb-highlight",
+)
+```
+
+`overlay_messages` controls where each overlay card shows its messages. With `"both"`, the default, a message appears in the card header and again in the excerpt as a hover tooltip on the marked line. With `"header"` the excerpt keeps its markers but the message appears only in the header.
+
+```ruby
+Herb::Engine.new(source, validation_mode: :overlay, overlay_messages: "header")
+```
 
 ## Transform Visitors
 

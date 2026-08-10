@@ -1,8 +1,50 @@
 import { ErrorOverlay } from './error-overlay';
+import { SyntaxRenderer, renderPlainHTML, generateStylesheet, resolveTheme } from '@herb-tools/highlighter';
 
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
+}
+
+const HIGHLIGHTER_THEME = 'onedark';
+const HIGHLIGHTER_STYLE_ID = 'herb-highlighter-styles';
+
+let highlighterSetup: Promise<SyntaxRenderer | null> | null = null;
+
+function loadHighlighter(): Promise<SyntaxRenderer | null> {
+  if (!highlighterSetup) {
+    highlighterSetup = (async () => {
+      const { Herb } = await import('@herb-tools/browser');
+      const renderer = new SyntaxRenderer(resolveTheme(HIGHLIGHTER_THEME), Herb);
+      await renderer.initialize();
+      return renderer;
+    })().catch((error) => {
+      console.warn('[HerbDevTools] Syntax highlighting unavailable:', error);
+      return null;
+    });
+  }
+
+  return highlighterSetup;
+}
+
+function injectHighlighterStyles() {
+  if (document.getElementById(HIGHLIGHTER_STYLE_ID)) {
+    return;
+  }
+
+  const style = document.createElement('style');
+  style.id = HIGHLIGHTER_STYLE_ID;
+  style.textContent = generateStylesheet(resolveTheme(HIGHLIGHTER_THEME), HIGHLIGHTER_THEME);
+  document.head.appendChild(style);
+}
+
+function escapeHTML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 export class HerbOverlay {
@@ -19,6 +61,7 @@ export class HerbOverlay {
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private errorOverlay: ErrorOverlay | null = null;
+  private syntaxRenderer: SyntaxRenderer | null = null;
   private destroyed = false;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
@@ -55,6 +98,7 @@ export class HerbOverlay {
   }
 
   private init() {
+    this.initializeHighlighter();
     this.loadProjectPath();
     this.loadDefaultEditor();
     this.loadSettings();
@@ -84,8 +128,35 @@ export class HerbOverlay {
 
     this.errorOverlay?.destroy();
     this.errorOverlay = null;
+    this.syntaxRenderer = null;
 
+    document.getElementById(HIGHLIGHTER_STYLE_ID)?.remove();
     document.querySelector('.herb-floating-menu')?.remove();
+  }
+
+  private initializeHighlighter() {
+    void loadHighlighter().then((renderer) => {
+      if (!renderer || this.destroyed) {
+        return;
+      }
+
+      this.syntaxRenderer = renderer;
+      injectHighlighterStyles();
+    });
+  }
+
+  private renderHighlightedERB(erb: string): string | null {
+    const renderer = this.syntaxRenderer;
+
+    if (!renderer || !renderer.initialized) {
+      return null;
+    }
+
+    try {
+      return renderPlainHTML(renderer.highlightRuns(erb), HIGHLIGHTER_THEME);
+    } catch (_error) {
+      return null;
+    }
   }
 
   private loadProjectPath() {
@@ -881,12 +952,15 @@ export class HerbOverlay {
     const tooltip = document.createElement('div');
     tooltip.className = 'herb-tooltip';
 
+    const highlightedERB = this.renderHighlightedERB(erb);
+    const erbCodeClass = highlightedERB === null ? 'herb-erb-code' : 'herb-erb-code herb-erb-code-highlighted';
+
     tooltip.innerHTML = `
       <div class="herb-location" data-tooltip="Open in Editor">
-        <span class="herb-file-path">${relativePath}:${line}:${column}</span>
+        <span class="herb-file-path">${escapeHTML(relativePath)}:${escapeHTML(line)}:${escapeHTML(column)}</span>
         <button class="herb-copy-path-btn" data-tooltip="Copy file path">📋</button>
       </div>
-      <div class="herb-erb-code">${erb}</div>
+      <div class="${erbCodeClass}">${highlightedERB === null ? escapeHTML(erb) : highlightedERB}</div>
     `;
 
     let hideTimeout: number | null = null;

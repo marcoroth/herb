@@ -16,6 +16,7 @@ import { Herb } from "@herb-tools/browser"
 import { Linter, rules, fixabilityFor, FRAMEWORKS } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 import { analyzeRuby } from "../analyze-ruby"
+import { loadDiagnosticsHighlighter, renderDiagnosticHTML } from "../highlight-diagnostics"
 
 window.Herb = Herb
 window.analyze = analyze
@@ -324,6 +325,11 @@ export default class extends Controller {
 
   async load() {
     await Herb.load()
+
+    if (!this.isRubyMode) {
+      this.diagnosticsHighlighter = await loadDiagnosticsHighlighter(Herb)
+    }
+
     this.analyze()
   }
 
@@ -573,17 +579,20 @@ export default class extends Controller {
   }
 
   getDiagnosticsAsText() {
-    const diagnosticItems = this.diagnosticsContentTarget.querySelectorAll('.diagnostic-item')
+    const diagnostics = this.getFilteredDiagnostics().filter(diagnostic => diagnostic.code !== 'parser-no-errors')
 
-    if (diagnosticItems.length === 0) {
+    if (diagnostics.length === 0) {
       return 'No diagnostics to display'
     }
 
     let text = 'Diagnostics:\n\n'
-    diagnosticItems.forEach(item => {
-      const message = item.querySelector('.text-sm.font-medium').textContent.trim()
-      const location = item.querySelector('.text-xs.text-gray-400').textContent.trim()
-      text += `• ${message}\n  ${location}\n\n`
+
+    diagnostics.forEach(diagnostic => {
+      const line = diagnostic.line || diagnostic.startLineNumber || 1
+      const column = diagnostic.column || diagnostic.startColumn || 0
+      const code = diagnostic.code ? ` • ${diagnostic.code}` : ''
+
+      text += `• ${diagnostic.message}\n  Line ${line}:${column}${code}\n\n`
     })
 
     return text
@@ -2419,22 +2428,7 @@ export default class extends Controller {
             data-end-line="${endLine}"
             data-end-column="${endColumn}"
           >
-            <div class="flex items-start gap-3">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-start justify-between mb-1">
-                  <div class="text-sm font-medium text-gray-100">
-                    ${this.escapeHtml(diagnostic.message)}
-                  </div>
-                  ${diagnostic.source ? `<span class="px-2 py-0.5 text-xs rounded ${diagnostic.source.toLowerCase().includes('linter') ? 'bg-blue-600' : 'bg-red-600'} text-white ml-2 flex-shrink-0">${diagnostic.source}</span>` : ''}
-                </div>
-
-                <div class="text-xs text-gray-400 flex items-center gap-2">
-                  ${diagnostic.severity ? `<span class="px-1.5 py-0.5 rounded text-xs font-medium ${diagnostic.severity === 'error' ? 'bg-red-600 text-red-100' : diagnostic.severity === 'warning' ? 'bg-yellow-600 text-yellow-100' : 'bg-gray-600 text-gray-100'}">${diagnostic.severity.toUpperCase()}</span>` : ''}
-                  <span>Line ${startLine}:${startColumn - 1}</span>
-                  ${diagnostic.code ? `<span>• ${diagnostic.code}</span>` : ''}
-                </div>
-              </div>
-            </div>
+            ${this.renderDiagnosticItem(diagnostic, startLine, startColumn)}
           </div>
         `
       })
@@ -2469,6 +2463,12 @@ export default class extends Controller {
     )
 
     this.diagnosticsListTarget.innerHTML = html
+
+    const appearance = this.isDarkMode ? 'dark' : 'light'
+
+    this.diagnosticsListTarget.querySelectorAll('.herb-highlight').forEach(figure => {
+      figure.setAttribute('data-herb-appearance', appearance)
+    })
 
     this.diagnosticsListTarget.querySelectorAll('.diagnostic-item').forEach(item => {
       item.addEventListener('click', () => {
@@ -2514,6 +2514,41 @@ export default class extends Controller {
         }
       })
     })
+  }
+
+  renderDiagnosticItem(diagnostic, startLine, startColumn) {
+    if (this.diagnosticsHighlighter) {
+      const source = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+      try {
+        return renderDiagnosticHTML(this.diagnosticsHighlighter, source, diagnostic)
+      } catch (error) {
+        console.error('Failed to render highlighted diagnostic:', error)
+      }
+    }
+
+    return this.renderPlainDiagnosticItem(diagnostic, startLine, startColumn)
+  }
+
+  renderPlainDiagnosticItem(diagnostic, startLine, startColumn) {
+    return `
+      <div class="flex items-start gap-3">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between mb-1">
+            <div class="text-sm font-medium text-gray-100">
+              ${this.escapeHtml(diagnostic.message)}
+            </div>
+            ${diagnostic.source ? `<span class="px-2 py-0.5 text-xs rounded ${diagnostic.source.toLowerCase().includes('linter') ? 'bg-blue-600' : 'bg-red-600'} text-white ml-2 flex-shrink-0">${this.escapeHtml(diagnostic.source)}</span>` : ''}
+          </div>
+
+          <div class="text-xs text-gray-400 flex items-center gap-2">
+            ${diagnostic.severity ? `<span class="px-1.5 py-0.5 rounded text-xs font-medium ${diagnostic.severity === 'error' ? 'bg-red-600 text-red-100' : diagnostic.severity === 'warning' ? 'bg-yellow-600 text-yellow-100' : 'bg-gray-600 text-gray-100'}">${this.escapeHtml(diagnostic.severity.toUpperCase())}</span>` : ''}
+            <span>Line ${startLine}:${startColumn - 1}</span>
+            ${diagnostic.code ? `<span>• ${this.escapeHtml(diagnostic.code)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `
   }
 
   setupTooltip() {

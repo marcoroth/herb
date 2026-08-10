@@ -17,6 +17,15 @@ export interface ValidationData {
 const optimizationMismatches: Set<string> = new Set();
 let optimizationBadgeInitialized = false;
 
+function escapeHTML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function scanForOptimizationMismatches() {
   const templates = document.querySelectorAll('template[data-herb-optimization-mismatch]') as NodeListOf<HTMLTemplateElement>;
 
@@ -169,7 +178,7 @@ function renderOptimizationBadge() {
     </div>
 
     <div class="herb-optimization-panel-list">
-      ${displayNames.map(f => `<div class="herb-optimization-panel-item">${f.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`).join('')}
+      ${displayNames.map(f => `<div class="herb-optimization-panel-item">${escapeHTML(f)}</div>`).join('')}
     </div>
 
     <div class="herb-optimization-panel-hint">
@@ -483,14 +492,14 @@ export class ErrorOverlay {
           ${this.allValidationData.map((validationData, index) => `
             ${index > 0 ? '<div class="herb-file-separator"></div>' : ''}
             <div class="herb-error-file-section">
-              <div class="herb-error-file">${validationData.filename} (${this.getErrorSummary(validationData.validationErrors)})</div>
+              <div class="herb-error-file">${this.escapeHtml(validationData.filename)} (${this.getErrorSummary(validationData.validationErrors)})</div>
               <div class="herb-error-list">
                 ${validationData.validationErrors.map(error => `
-                  <div class="herb-error-item ${error.severity}">
+                  <div class="herb-error-item ${this.escapeAttr(String(error.severity))}">
                     <div class="herb-error-message">${this.escapeHtml(error.message)}</div>
-                    ${error.location ? `<div class="herb-error-location">Line ${error.location.line}, Column ${error.location.column}</div>` : ''}
+                    ${error.location ? `<div class="herb-error-location">Line ${this.escapeHtml(String(error.location.line))}, Column ${this.escapeHtml(String(error.location.column))}</div>` : ''}
                     ${error.suggestion ? `<div class="herb-error-suggestion">💡 ${this.escapeHtml(error.suggestion)}</div>` : ''}
-                    <div class="herb-error-source">${error.source}${error.code ? ` (${error.code})` : ''}</div>
+                    <div class="herb-error-source">${this.escapeHtml(String(error.source))}${error.code ? ` (${this.escapeHtml(String(error.code))})` : ''}</div>
                   </div>
                 `).join('')}
               </div>
