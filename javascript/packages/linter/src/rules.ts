@@ -26,6 +26,7 @@ import { ActionViewNoUnnecessaryTagAttributesRule } from "./rules/actionview-no-
 import { ActionViewNoUnusedStrictLocalsRule } from "./rules/actionview-no-unused-strict-locals.js"
 import { ActionViewNoVoidElementContentRule } from "./rules/actionview-no-void-element-content.js"
 import { ActionViewPreferCollectionRenderRule } from "./rules/actionview-prefer-collection-render.js"
+import { ActionViewPreferLinkToHelperRule } from "./rules/actionview-prefer-link-to-helper.js"
 import { ActionViewPreferPluralizeHelperRule } from "./rules/actionview-prefer-pluralize-helper.js"
 import { ActionViewPreferQualifiedPartialPathRule } from "./rules/actionview-prefer-qualified-partial-path.js"
 import { ActionViewStrictLocalsFirstLineRule } from "./rules/actionview-strict-locals-first-line.js"
@@ -170,6 +171,7 @@ export const rules: RuleClass[] = [
   ActionViewNoUnusedStrictLocalsRule,
   ActionViewNoVoidElementContentRule,
   ActionViewPreferCollectionRenderRule,
+  ActionViewPreferLinkToHelperRule,
   ActionViewPreferPluralizeHelperRule,
   ActionViewPreferQualifiedPartialPathRule,
   ActionViewStrictLocalsFirstLineRule,

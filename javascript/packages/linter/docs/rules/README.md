@@ -34,6 +34,7 @@ This page contains documentation for all Herb Linter rules.
 - [`actionview-no-unused-strict-locals`](./actionview-no-unused-strict-locals.md) - Disallow strict locals that are never used in the partial
 - [`actionview-no-void-element-content`](./actionview-no-void-element-content.md) - Disallow content arguments for void Action View elements
 - [`actionview-prefer-collection-render`](./actionview-prefer-collection-render.md) - Prefer collection rendering over rendering a partial in a loop
+- [`actionview-prefer-link-to-helper`](./actionview-prefer-link-to-helper.md) - Prefer `link_to` over a manual `<a>` tag with an ERB `href`
 - [`actionview-prefer-pluralize-helper`](./actionview-prefer-pluralize-helper.md) - Prefer the `pluralize` helper over a separate count and `String#pluralize`
 - [`actionview-prefer-qualified-partial-path`](./actionview-prefer-qualified-partial-path.md) - Prefer partial paths qualified from the view root
 - [`actionview-strict-locals-first-line`](./actionview-strict-locals-first-line.md) - Require strict locals on the first line of partials with a blank line after.

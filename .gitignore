@@ -193,3 +193,5 @@ compile_flags.txt
 
 # Local .envrc overrides
 .envrc.local
+
+.github/pull_request.md
