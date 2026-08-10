@@ -99,6 +99,8 @@ module Herb
         @visitors << debug_visitor
       end
 
+      @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
+
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
