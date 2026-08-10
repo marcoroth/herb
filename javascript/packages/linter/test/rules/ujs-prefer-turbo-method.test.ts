@@ -9,8 +9,8 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(UJSPreferTurboMethodRule)
 
-const ATTRIBUTE_MESSAGE = "Avoid the deprecated `@rails/ujs` attribute `data-method`. Use `data-turbo-method` instead."
-const OPTION_MESSAGE = "Avoid the deprecated `@rails/ujs` option, which renders `data-method`. Use `data: { turbo_method: ... }` instead."
+const ATTRIBUTE_MESSAGE = "`data-method` is a deprecated `@rails/ujs` attribute. Use `data-turbo-method` instead, which only works once the app has migrated from `@rails/ujs` to Turbo."
+const OPTION_MESSAGE = "This option renders `data-method`, a deprecated `@rails/ujs` attribute. Use `data: { turbo_method: ... }` instead, which renders `data-turbo-method` and only works once the app has migrated from `@rails/ujs` to Turbo."
 
 describe("ujs-prefer-turbo-method", () => {
   describe("HTML attributes", () => {

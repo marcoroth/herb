@@ -8,8 +8,8 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(UJSPreferTurboConfirmRule)
 
-const ATTRIBUTE_MESSAGE = "Avoid the deprecated `@rails/ujs` attribute `data-confirm`. Use `data-turbo-confirm` instead."
-const OPTION_MESSAGE = "Avoid the deprecated `@rails/ujs` option, which renders `data-confirm`. Use `data: { turbo_confirm: ... }` instead."
+const ATTRIBUTE_MESSAGE = "`data-confirm` is a deprecated `@rails/ujs` attribute. Use `data-turbo-confirm` instead, which only works once the app has migrated from `@rails/ujs` to Turbo."
+const OPTION_MESSAGE = "This option renders `data-confirm`, a deprecated `@rails/ujs` attribute. Use `data: { turbo_confirm: ... }` instead, which renders `data-turbo-confirm` and only works once the app has migrated from `@rails/ujs` to Turbo."
 
 describe("ujs-prefer-turbo-confirm", () => {
   describe("HTML attributes", () => {

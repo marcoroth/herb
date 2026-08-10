@@ -55,5 +55,6 @@ This is the one deprecated `@rails/ujs` attribute whose removal is not always a 
 ## References
 
 * [Rails Guides: Working with JavaScript in Rails](https://guides.rubyonrails.org/working_with_javascript_in_rails.html)
+* [turbo-rails: Upgrading from Rails UJS / Turbolinks to Turbo](https://github.com/hotwired/turbo-rails/blob/main/UPGRADING.md#upgrading-from-rails-ujs--turbolinks-to-turbo)
 * [Turbo Handbook: Drive](https://turbo.hotwired.dev/handbook/drive)
 * [Turbo Handbook: Streams](https://turbo.hotwired.dev/handbook/streams)
