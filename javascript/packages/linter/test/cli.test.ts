@@ -7,13 +7,13 @@ describe("CLI Output Formatting", () => {
     await Herb.load()
   })
 
-  function runLinter(fixture: string, ...args: (string | Record<string, string>)[]): { output: string, exitCode: number } {
+  function runLinter(fixture: string, ...args: (string | Record<string, string | undefined>)[]): { output: string, exitCode: number } {
     try {
       const { execSync } = require("child_process")
-      let env: Record<string, string> = {}
+      let env: Record<string, string | undefined> = {}
 
       if (typeof args[args.length - 1] === "object") {
-        env = args.pop() as Record<string, string>
+        env = args.pop() as Record<string, string | undefined>
       }
 
       const allArgs = [...(args as string[]), "--no-timing"].join(' ')
@@ -2089,6 +2089,27 @@ describe("CLI Output Formatting", () => {
           try { unlinkSync(configPath) } catch {}
         }
       })
+    })
+  })
+
+  describe("New rules available hint", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("keeps the space before the version label inside the gray sequence", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          version: 0.4.1
+        `)
+
+        const { output } = runLinter("test-file-with-errors.html.erb", "--simple", { NO_COLOR: undefined })
+        const ruleLine = output.split("\n").find(line => line.includes("svg-tag-name-capitalization") && line.includes("introduced in"))
+
+        expect(ruleLine, `expected a version-skipped rule line in:\n${output}`).toBeDefined()
+        expect(ruleLine).toMatchSnapshot()
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
     })
   })
 
