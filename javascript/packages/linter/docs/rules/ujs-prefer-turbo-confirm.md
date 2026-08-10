@@ -10,7 +10,7 @@ Disallow the `data-confirm` attribute and the Action View helper option that ren
 
 Before Rails 7, Rails shipped `@rails/ujs` by default, which added JavaScript behavior to elements through helper options and `data-*` attributes. Rails 7 stopped including it, and Turbo covers the same behavior with its own attributes.
 
-`data-confirm` made `@rails/ujs` prompt the user with the given question before proceeding, and cancel the action if the user declined. `data-turbo-confirm` is a drop-in replacement, so the migration is mechanical.
+`data-confirm` made `@rails/ujs` prompt the user with the given question before proceeding, and cancel the action if the user declined. `data-turbo-confirm` is a drop-in replacement, so the migration is mechanical. The attribute is handled by Turbo, though, so the swap only takes effect once the app has migrated from `@rails/ujs` to Turbo.
 
 Once `@rails/ujs` is gone the attribute is inert, and the failure is silent rather than loud: the link or button still works, but the confirmation prompt simply stops appearing. A destructive action that was guarded now fires on the first click.
 
@@ -54,4 +54,5 @@ Once `@rails/ujs` is gone the attribute is inert, and the failure is silent rath
 
 * [Rails `link_to` API](https://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html#method-i-link_to)
 * [Rails Guides: Working with JavaScript in Rails](https://guides.rubyonrails.org/working_with_javascript_in_rails.html)
+* [turbo-rails: Upgrading from Rails UJS / Turbolinks to Turbo](https://github.com/hotwired/turbo-rails/blob/main/UPGRADING.md#upgrading-from-rails-ujs--turbolinks-to-turbo)
 * [Turbo Handbook: Drive](https://turbo.hotwired.dev/handbook/drive)

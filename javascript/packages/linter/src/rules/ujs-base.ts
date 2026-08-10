@@ -14,18 +14,18 @@ export interface UJSAttributeDescriptor {
 
 function attributeMessage({ attribute, replacement }: UJSAttributeDescriptor): string {
   if (!replacement) {
-    return `Avoid the deprecated \`@rails/ujs\` attribute \`${attribute}\`. Turbo handles links and form submissions by default, so it can be removed.`
+    return `\`${attribute}\` is a deprecated \`@rails/ujs\` attribute. Turbo handles links and form submissions by default, so remove it once the app has migrated from \`@rails/ujs\` to Turbo.`
   }
 
-  return `Avoid the deprecated \`@rails/ujs\` attribute \`${attribute}\`. Use \`${replacement.attribute}\` instead.`
+  return `\`${attribute}\` is a deprecated \`@rails/ujs\` attribute. Use \`${replacement.attribute}\` instead, which only works once the app has migrated from \`@rails/ujs\` to Turbo.`
 }
 
 function optionMessage({ attribute, replacement }: UJSAttributeDescriptor): string {
   if (!replacement) {
-    return `Avoid the deprecated \`@rails/ujs\` option, which renders \`${attribute}\`. Turbo handles links and form submissions by default, so it can be removed.`
+    return `This option renders \`${attribute}\`, a deprecated \`@rails/ujs\` attribute. Turbo handles links and form submissions by default, so remove it once the app has migrated from \`@rails/ujs\` to Turbo.`
   }
 
-  return `Avoid the deprecated \`@rails/ujs\` option, which renders \`${attribute}\`. Use \`${replacement.option}\` instead.`
+  return `This option renders \`${attribute}\`, a deprecated \`@rails/ujs\` attribute. Use \`${replacement.option}\` instead, which renders \`${replacement.attribute}\` and only works once the app has migrated from \`@rails/ujs\` to Turbo.`
 }
 
 function symbolKey(node: PrismNode): string | null {

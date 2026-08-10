@@ -8,8 +8,8 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(UJSPreferTurboSubmitsWithRule)
 
-const ATTRIBUTE_MESSAGE = "Avoid the deprecated `@rails/ujs` attribute `data-disable-with`. Use `data-turbo-submits-with` instead."
-const OPTION_MESSAGE = "Avoid the deprecated `@rails/ujs` option, which renders `data-disable-with`. Use `data: { turbo_submits_with: ... }` instead."
+const ATTRIBUTE_MESSAGE = "`data-disable-with` is a deprecated `@rails/ujs` attribute. Use `data-turbo-submits-with` instead, which only works once the app has migrated from `@rails/ujs` to Turbo."
+const OPTION_MESSAGE = "This option renders `data-disable-with`, a deprecated `@rails/ujs` attribute. Use `data: { turbo_submits_with: ... }` instead, which renders `data-turbo-submits-with` and only works once the app has migrated from `@rails/ujs` to Turbo."
 
 describe("ujs-prefer-turbo-submits-with", () => {
   describe("HTML attributes", () => {

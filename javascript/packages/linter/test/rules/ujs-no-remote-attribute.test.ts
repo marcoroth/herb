@@ -8,8 +8,8 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(UJSNoRemoteAttributeRule)
 
-const ATTRIBUTE_MESSAGE = "Avoid the deprecated `@rails/ujs` attribute `data-remote`. Turbo handles links and form submissions by default, so it can be removed."
-const OPTION_MESSAGE = "Avoid the deprecated `@rails/ujs` option, which renders `data-remote`. Turbo handles links and form submissions by default, so it can be removed."
+const ATTRIBUTE_MESSAGE = "`data-remote` is a deprecated `@rails/ujs` attribute. Turbo handles links and form submissions by default, so remove it once the app has migrated from `@rails/ujs` to Turbo."
+const OPTION_MESSAGE = "This option renders `data-remote`, a deprecated `@rails/ujs` attribute. Turbo handles links and form submissions by default, so remove it once the app has migrated from `@rails/ujs` to Turbo."
 
 describe("ujs-no-remote-attribute", () => {
   describe("HTML attributes", () => {
