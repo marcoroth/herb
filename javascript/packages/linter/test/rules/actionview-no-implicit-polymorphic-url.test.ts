@@ -161,8 +161,8 @@ describe("actionview-no-implicit-polymorphic-url", () => {
     `)
   })
 
-  it("flags an Array URL holding a method call, without naming a route helper", () => {
-    expectInfo("Avoid passing `[:admin, @user.account]` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper, or `polymorphic_path([:admin, @user.account])` when the route has to be resolved from the model.")
+  it("flags an Array URL holding a method call", () => {
+    expectInfo("Avoid passing `[:admin, @user.account]` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `admin_account_path(@user.account)`, or `polymorphic_path([:admin, @user.account])` when the route has to be resolved from the model.")
 
     assertOffenses(`<%= link_to "Account", [:admin, @user.account] %>`)
   })
@@ -200,13 +200,13 @@ describe("actionview-no-implicit-polymorphic-url", () => {
   })
 
   it("flags a model object read off another model", () => {
-    expectInfo("Avoid passing `@user.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper, or `polymorphic_path(@user.account)` when the route has to be resolved from the model.", { line: 1, column: 23 })
+    expectInfo("Avoid passing `@user.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `account_path(@user.account)`, or `polymorphic_path(@user.account)` when the route has to be resolved from the model.", { line: 1, column: 23 })
 
     assertOffenses(`<%= link_to "Account", @user.account %>`)
   })
 
   it("flags a model object read off a block-local record", () => {
-    expectInfo("Avoid passing `user.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper, or `polymorphic_path(user.account)` when the route has to be resolved from the model.")
+    expectInfo("Avoid passing `user.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `account_path(user.account)`, or `polymorphic_path(user.account)` when the route has to be resolved from the model.")
 
     assertOffenses(dedent`
       <% @users.each do |user| %>
@@ -216,15 +216,21 @@ describe("actionview-no-implicit-polymorphic-url", () => {
   })
 
   it("flags a model object read through a safe navigation call", () => {
-    expectInfo("Avoid passing `@user&.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper, or `polymorphic_path(@user&.account)` when the route has to be resolved from the model.")
+    expectInfo("Avoid passing `@user&.account` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `account_path(@user&.account)`, or `polymorphic_path(@user&.account)` when the route has to be resolved from the model.")
 
     assertOffenses(`<%= link_to "Account", @user&.account %>`)
   })
 
   it("flags a model object read off a chain of models", () => {
-    expectInfo("Avoid passing `@post.author.profile` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper, or `polymorphic_path(@post.author.profile)` when the route has to be resolved from the model.")
+    expectInfo("Avoid passing `@post.author.profile` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `profile_path(@post.author.profile)`, or `polymorphic_path(@post.author.profile)` when the route has to be resolved from the model.")
 
     assertOffenses(`<%= link_to "Profile", @post.author.profile %>`)
+  })
+
+  it("flags a model object passed to a `link_to` nested in another helper call", () => {
+    expectInfo("Avoid passing `changeset.user` directly to `link_to`. The URL is resolved implicitly through polymorphic routing, so what actually gets rendered can't be read off the template or traced by tooling. Use an explicit route helper like `user_path(changeset.user)`, or `polymorphic_path(changeset.user)` when the route has to be resolved from the model.")
+
+    assertOffenses(`<%= t(".created_by_html", :link_user => link_to(changeset.user.display_name, changeset.user)) %>`)
   })
 
   it("passes for a method call named after a URL", () => {
