@@ -1207,6 +1207,8 @@
   padding: 8px;
   border-radius: 6px;
   background: #111827;
+  color: #c8ccd4;
+  color-scheme: dark;
   overflow-x: auto;
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   font-size: 11px;
@@ -1259,4 +1261,72 @@
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   font-size: 11px;
   word-break: break-all;
+}
+
+.herb-floating-menu:has(.hdt-attached .hdt-badge) {
+  display: flex;
+  align-items: stretch;
+}
+
+.herb-floating-menu:has(.hdt-attached .hdt-badge) .herb-menu-trigger {
+  border-radius: 0;
+  border-left: none;
+}
+
+.hdt-badge-slot {
+  display: flex;
+  align-items: stretch;
+}
+
+.hdt-runtime-root.hdt-attached {
+  position: static;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  pointer-events: auto;
+}
+
+.hdt-runtime-root.hdt-attached .hdt-badge {
+  order: 0;
+  box-sizing: border-box;
+  align-self: stretch;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid #c0c0c0;
+  border-top: none;
+  border-right: none;
+  border-radius: 0 0 0 10px;
+  background: #fffbeb;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.hdt-runtime-root.hdt-attached .hdt-badge:hover {
+  background: #fef3c7;
+  border-color: #c0c0c0;
+  border-top: none;
+  border-right: none;
+}
+
+.hdt-runtime-root.hdt-attached .hdt-panel {
+  position: fixed;
+  top: 30px;
+  right: 8px;
+}
+
+@keyframes hdt-bump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.hdt-badge-count.hdt-bump {
+  display: inline-block;
+  animation: hdt-bump 420ms cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hdt-badge-count.hdt-bump {
+    animation: none;
+  }
 }

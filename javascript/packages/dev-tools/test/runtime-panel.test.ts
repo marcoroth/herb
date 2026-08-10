@@ -254,13 +254,11 @@ describe("cards", () => {
     expect(document.querySelector(".hdt-excerpt")).toBeNull()
   })
 
-  test("renders an empty state for a payload with zero diagnostics", () => {
+  test("renders nothing for a payload with zero diagnostics", () => {
     embed({ version: 1, diagnostics: [] })
     createPanel()
 
-    expect(root()).not.toBeNull()
-    expect(document.querySelector(".hdt-empty")!.textContent).toContain("Nothing to report")
-    expect(document.querySelector(".hdt-badge-count")!.textContent).toBe("0")
+    expect(root()).toBeNull()
   })
 
   test("survives a malformed payload without rendering chrome", () => {
@@ -385,7 +383,7 @@ describe("filters", () => {
     expect(cards()[0].getAttribute("data-hdt-origin")).toBe("herb-a11y")
   })
 
-  test("shows an empty state when a filter matches nothing", () => {
+  test("falls back to all origins when the filtered origin is cleared", () => {
     embed(PAYLOAD)
 
     const panel = createPanel()
@@ -394,7 +392,8 @@ describe("filters", () => {
 
     panel.clear("herb-a11y")
 
-    expect(document.querySelector(".hdt-empty")!.textContent).toContain("No entries from this origin")
+    expect(document.querySelector(".hdt-filter-active")!.getAttribute("data-hdt-origin")).toBe("*")
+    expect(cards().length).toBeGreaterThan(0)
   })
 })
 
@@ -498,6 +497,37 @@ describe("clear", () => {
     expect(origins).toEqual(["herb-linter", "herb-runtime"])
   })
 
+  test("falls back to all origins when the selected filter no longer matches anything", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    ;(document.querySelector('[data-hdt-origin="herb-linter"]') as HTMLElement).click()
+
+    expect(cards().length).toBeGreaterThan(0)
+
+    panel.clear()
+    panel.report({ template: "app/views/posts/_post.html.erb", message: "Fresh finding", code: "demo-fresh", severity: "warning", origin: "demo-source" })
+
+    expect(cards()).toHaveLength(1)
+  })
+
+  test("bounces the count only when a new diagnostic arrives", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    expect(document.querySelector(".hdt-badge-count")!.classList.contains("hdt-bump")).toBe(false)
+
+    panel.report({ template: "app/views/posts/_post.html.erb", message: "New one", code: "demo-bounce", severity: "warning" })
+
+    expect(document.querySelector(".hdt-badge-count")!.classList.contains("hdt-bump")).toBe(true)
+
+    panel.open()
+
+    expect(document.querySelector(".hdt-badge-count")!.classList.contains("hdt-bump")).toBe(false)
+  })
+
   test("removes everything without an argument", () => {
     embed(PAYLOAD)
 
@@ -506,7 +536,7 @@ describe("clear", () => {
     panel.clear()
 
     expect(cards()).toHaveLength(0)
-    expect(document.querySelector(".hdt-empty")).not.toBeNull()
+    expect(root()).toBeNull()
   })
 
   test("removes hook entries and payload entries alike", () => {

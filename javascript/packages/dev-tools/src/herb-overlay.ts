@@ -227,6 +227,8 @@ export class HerbOverlay {
 
     const menuHTML = `
       <div class="herb-floating-menu">
+        <span class="hdt-badge-slot" data-hdt-badge-slot></span>
+
         <button class="herb-menu-trigger" id="herbMenuTrigger">
           <span class="herb-icon">🌿</span>
           <span class="herb-text">Herb</span>

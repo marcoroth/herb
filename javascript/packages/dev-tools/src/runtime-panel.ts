@@ -154,6 +154,9 @@ export class RuntimePanel {
   private renderTree: RenderTreeNode[] = [];
   private sources: Record<string, string> = {};
   private hasPayload = false;
+  private lastCount = 0;
+  private bumped = false;
+  private primed = false;
   private state: PanelState = { dismissed: false, open: false, origin: ALL_ORIGINS };
   private root: HTMLElement | null = null;
   private renderer: SyntaxRenderer | null = null;
@@ -389,7 +392,19 @@ export class RuntimePanel {
       return;
     }
 
-    const shouldShow = this.hasPayload || this.entries.length > 0;
+    if (this.state.origin !== ALL_ORIGINS && !this.entries.some(entry => entry.diagnostic.origin === this.state.origin)) {
+      this.state.origin = ALL_ORIGINS;
+
+      this.saveState();
+    }
+
+    const currentCount = this.diagnosticCount;
+
+    this.bumped = this.primed && currentCount > this.lastCount;
+    this.lastCount = currentCount;
+    this.primed = true;
+
+    const shouldShow = this.entries.length > 0;
 
     if (!shouldShow || this.state.dismissed) {
       this.root?.remove();
@@ -398,11 +413,18 @@ export class RuntimePanel {
       return;
     }
 
-    if (this.root === null || !this.root.isConnected) {
-      this.root = document.createElement('div');
-      this.root.className = ROOT_CLASS;
+    const slot = document.querySelector('[data-hdt-badge-slot]');
+    const host = slot ?? document.body;
 
-      document.body.appendChild(this.root);
+    if (this.root === null || !this.root.isConnected || this.root.parentElement !== host) {
+      this.root?.remove();
+
+      this.root = document.createElement('div');
+      this.root.className = slot ? `${ROOT_CLASS} hdt-attached` : ROOT_CLASS;
+
+      host.appendChild(this.root);
+    } else {
+      this.root.className = slot ? `${ROOT_CLASS} hdt-attached` : ROOT_CLASS;
     }
 
     this.root.innerHTML = this.rootHTML();
@@ -415,11 +437,12 @@ export class RuntimePanel {
   private rootHTML(): string {
     const badgeCount = this.diagnosticCount;
     const openClass = this.state.open ? ' hdt-open' : '';
+    const bumpClass = this.bumped ? ' hdt-bump' : '';
 
     return [
       `<button type="button" class="hdt-badge${openClass}" data-hdt-action="toggle" title="${escapeHTML(this.summary())}" aria-expanded="${this.state.open}">`,
       `<span class="hdt-badge-glyph" aria-hidden="true">⚠️</span>`,
-      `<span class="hdt-badge-count">${badgeCount}</span>`,
+      `<span class="hdt-badge-count${bumpClass}">${badgeCount}</span>`,
       `</button>`,
       `<section class="hdt-panel${openClass}" aria-label="Herb runtime diagnostics">`,
       this.headerHTML(),
