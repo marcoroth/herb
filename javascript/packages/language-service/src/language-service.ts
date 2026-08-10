@@ -4,7 +4,7 @@ import { CompletionItemKind, InsertTextFormat } from "vscode-html-languageservic
 import { buildHTMLDocument } from "./herb-html-document.js"
 import { getLanguageService as getUpstreamLanguageService } from "vscode-html-languageservice"
 
-import { TOKEN_LIST_ATTRIBUTES } from "@herb-tools/core"
+import { TOKEN_LIST_ATTRIBUTES, getHelper } from "@herb-tools/core"
 
 import type { ParseOptions } from "@herb-tools/core"
 import type { LanguageServiceOptions } from "./types.js"
@@ -23,6 +23,8 @@ export function getLanguageService(options?: LanguageServiceOptions): LanguageSe
   const upstream = getUpstreamLanguageService(options)
   const herb = options?.herb
   const dataProviders = options?.customDataProviders ?? []
+
+  const framework = options?.framework
 
   const tokenListAttributes = new Set([
     ...TOKEN_LIST_ATTRIBUTES,
@@ -60,6 +62,9 @@ export function getLanguageService(options?: LanguageServiceOptions): LanguageSe
       htmlDocument: HTMLDocument,
       options?: CompletionConfiguration,
     ): CompletionList {
+      const blockArgumentResult = getBlockArgumentCompletions(document, position, { framework })
+      if (blockArgumentResult) return blockArgumentResult
+
       const erbResult = tryERBAttributeCompletion(document, position, htmlDocument, dataProviders, tokenListAttributes)
       if (erbResult) return erbResult
 
@@ -147,6 +152,205 @@ export function getLanguageService(options?: LanguageServiceOptions): LanguageSe
       dataProviders.push(...customDataProviders)
     },
   }
+}
+
+function hasClosingPipe(source: string, offset: number): boolean {
+  const newline = source.indexOf("\n", offset)
+  const closing = source.indexOf("%>", offset)
+
+  const ends = [newline, closing].filter(index => index !== -1)
+  const end = ends.length > 0 ? Math.min(...ends) : source.length
+
+  return source.slice(offset, end).includes("|")
+}
+
+function currentERBTag(source: string, offset: number): string | null {
+  const opening = source.lastIndexOf("<%", offset)
+  if (opening === -1) return null
+
+  const closing = source.lastIndexOf("%>", offset - 2)
+  if (closing > opening) return null
+
+  return source.slice(opening, offset)
+}
+
+export function getBlockArgumentCompletions(document: TextDocument, position: Position, options?: { framework?: string }): CompletionList | null {
+  const source = document.getText()
+  const offset = document.offsetAt(position)
+  const tag = currentERBTag(source, offset)
+
+  if (!tag) return null
+
+  const block = tag.match(/\bdo\s*(\|[^|]*)?$/)
+  if (!block) return null
+
+  const typed = block[1] !== undefined
+  const closed = typed && hasClosingPipe(source, offset)
+  const suggestions = helperSuggestions(tag, options?.framework) ?? iterationSuggestions(tag)
+
+  if (!suggestions) return null
+
+  const declared = typed ? block[1].slice(1).split(",").length - 1 : 0
+
+  const items: CompletionItem[] = suggestions.flatMap((suggestion, index) => {
+    const names = suggestion.names.slice(declared)
+
+    if (names.length === 0) return []
+
+    const label = names.join(", ")
+
+    return [{
+      label: typed ? label : `|${label}|`,
+      kind: CompletionItemKind.Variable,
+      detail: suggestion.detail,
+      documentation: suggestion.documentation,
+      insertText: typed ? (closed ? label : `${label}|`) : `|${label}|`,
+      insertTextFormat: InsertTextFormat.PlainText,
+      sortText: String(index),
+    }]
+  })
+
+  if (items.length === 0) return null
+
+  return { isIncomplete: false, items }
+}
+
+interface BlockArgumentSuggestion {
+  names: string[]
+  detail?: string
+  documentation?: string
+}
+
+function helperSuggestions(tag: string, framework?: string): BlockArgumentSuggestion[] | null {
+  if (framework !== "actionview") return null
+
+  const call = tag.match(/^<%=?-?\s*([a-z_][A-Za-z0-9_]*)/)
+  if (!call) return null
+
+  const helper = getHelper(call[1])
+  if (!helper?.supportsBlock) return null
+  if (helper.blockArguments.length === 0) return null
+
+  return helper.blockArguments.map((argument, index) => ({
+    names: helper.blockArguments.slice(0, index + 1).map(blockArgument => blockArgument.name),
+    detail: argument.type,
+    documentation: helper.blockArguments.slice(0, index + 1).map(blockArgument => `\`${blockArgument.name}\`: ${blockArgument.description}`).join("\n\n"),
+  }))
+}
+
+const ITERATION_METHODS = new Set([
+  "each",
+  "each_with_index",
+  "filter_map",
+  "find",
+  "detect",
+  "flat_map",
+  "group_by",
+  "map",
+  "reject",
+  "select",
+  "sort_by",
+])
+
+const COUNTER_METHODS = new Set(["times", "upto", "downto", "step"])
+
+function counterSuggestions(): BlockArgumentSuggestion[] {
+  const detail = "Iteration counter"
+
+  return [
+    { names: ["i"], detail },
+    { names: ["index"], detail },
+  ]
+}
+
+function iterationSuggestions(tag: string): BlockArgumentSuggestion[] | null {
+  const call = tag.match(/\.\s*([a-z_]+)(\([^)]*\))?\s*do\s*(\|[^|]*)?$/)
+  if (!call) return null
+
+  if (COUNTER_METHODS.has(call[1])) return counterSuggestions()
+  if (!ITERATION_METHODS.has(call[1])) return null
+
+  const chain = tag.slice(0, call.index)
+  const element = elementNameFrom(chain)
+
+  if (!element) return null
+
+  const receiver = chain.replace(/^<%=?-?\s*/, "").trim()
+  const detail = `Element of \`${receiver}\``
+
+  if (call[1] === "each_with_index") {
+    return [
+      { names: [element, "index"], detail },
+      { names: [element], detail },
+    ]
+  }
+
+  return [{ names: [element], detail }]
+}
+
+function elementNameFrom(chain: string): string | null {
+  const segments = chain.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []
+
+  for (const segment of [...segments].reverse()) {
+    const element = singularize(segment)
+
+    if (element) return element
+  }
+
+  return modelName(chain)
+}
+
+function modelName(chain: string): string | null {
+  const constant = chain.match(/^<%=?-?\s*((?:[A-Z][A-Za-z0-9_]*::)*[A-Z][A-Za-z0-9_]*)\s*\./)
+  if (!constant) return null
+
+  return constant[1]
+    .split("::")
+    .pop()!
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+}
+
+const IRREGULAR_PLURALS: Record<string, string> = {
+  children: "child",
+  people: "person",
+  men: "man",
+  women: "woman",
+  feet: "foot",
+  teeth: "tooth",
+  geese: "goose",
+  mice: "mouse",
+  indices: "index",
+  vertices: "vertex",
+  matrices: "matrix",
+}
+
+const UNCOUNTABLE = new Set([
+  "address",
+  "alias",
+  "bus",
+  "class",
+  "data",
+  "gas",
+  "information",
+  "lens",
+  "news",
+  "series",
+  "species",
+  "status",
+])
+
+function singularize(word: string): string | null {
+  const lower = word.toLowerCase()
+
+  if (IRREGULAR_PLURALS[lower]) return IRREGULAR_PLURALS[lower]
+  if (UNCOUNTABLE.has(lower)) return null
+
+  if (/[^aeiou]ies$/.test(word)) return `${word.slice(0, -3)}y`
+  if (/(ch|sh|ss|x|z)es$/.test(word)) return word.slice(0, -2)
+  if (/[^s]s$/.test(word)) return word.slice(0, -1)
+
+  return null
 }
 
 function tryERBAttributeCompletion(document: TextDocument, position: Position, htmlDocument: HTMLDocument, dataProviders: IHTMLDataProvider[], tokenListAttributes: Set<string>): CompletionList | null {
