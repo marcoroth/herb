@@ -5,29 +5,88 @@ module Herb
     class ParserErrorOverlay
       CONTEXT_LINES: ::Integer
 
+      OPEN_LIMIT: ::Integer
+
+      VISIBLE_LIMIT: ::Integer
+
+      TAB_WIDTH: ::Integer
+
       ERROR_CLASS_PRIORITRY: untyped
 
-      def initialize: (untyped source, untyped errors, ?filename: untyped, ?overlay_messages: untyped, ?bridge: untyped) -> untyped
+      # Keep in sync with getEditorUrl in javascript/packages/dev-tools/src/herb-overlay.ts
+      EDITOR_URL_TEMPLATES: untyped
+
+      EDITOR_ALIASES: untyped
+
+      CHROME_CSS: ::String
+
+      CHROME_JS: ::String
+
+      def initialize: (untyped source, untyped errors, ?filename: untyped, ?overlay_messages: untyped, ?bridge: untyped, ?project_path: untyped) -> untyped
 
       def generate_html: () -> untyped
 
       private
 
-      def generate_error_sections: () -> untyped
+      def stylesheet_block: () -> untyped
 
-      def generate_code_section: (untyped error, untyped index) -> untyped
+      def masthead_html: () -> untyped
+
+      def meta_html: () -> untyped
+
+      def body_html: () -> untyped
+
+      def footer_html: () -> untyped
+
+      def item_htmls: () -> untyped
+
+      def render_item: (untyped group, untyped rank, untyped seen) -> untyped
+
+      def tools_html: (untyped line, untyped column) -> untyped
+
+      def fix_html: (untyped group, untyped seen) -> untyped
+
+      def excerpt_html: (untyped group) -> untyped
+
+      def fallback_html: (untyped group) -> untyped
+
+      def fallback_rows: (untyped group, untyped line, untyped column) -> untyped
+
+      def caret_for: (untyped content, untyped column, untyped hint) -> untyped
+
+      def expand_tabs: (untyped text) -> untyped
+
+      def groups: () -> untyped
 
       def bridge_fragments: () -> untyped
 
-      def generate_fallback_code_lines: (untyped error, untyped line_num, untyped col_num) -> untyped
+      def severity_for: (untyped error) -> untyped
 
-      def generate_suggestions_section: (untyped suggestions) -> untyped
+      def line_of: (untyped error) -> untyped
+
+      def column_of: (untyped error) -> untyped
+
+      def humanize: (untyped name) -> untyped
+
+      def pluralize: (untyped count, untyped word) -> untyped
+
+      def file_role: () -> untyped
+
+      def partial_render_name: () -> untyped
+
+      def editor_key: () -> untyped
+
+      def absolute_path: () -> untyped
+
+      def editor_href: (untyped line, untyped column) -> untyped
 
       def get_error_suggestion: (untyped error) -> untyped
 
       def get_inline_hint: (untyped error) -> untyped
 
       def escape_html: (untyped text) -> untyped
+
+      def escape_attr: (untyped text) -> untyped
     end
   end
 end

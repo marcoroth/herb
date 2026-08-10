@@ -104,7 +104,7 @@ module Engine
 
       assert_includes engine.src, "data-herb-parser-error"
       assert_includes engine.src, "Add missing closing tag"
-      assert_includes engine.src, "suggestions-"
+      assert_includes engine.src, "herb-tpl-fix-title"
     end
 
     test ":overlay mode compiles parser errors in a process that only loads herb" do

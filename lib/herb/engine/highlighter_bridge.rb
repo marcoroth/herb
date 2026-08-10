@@ -83,14 +83,14 @@ module Herb
         end
       end
 
-      #: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String) -> Array[String]
-      def html_fragments(source:, errors:, filename:, context_lines: 2, messages: "both")
+      #: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String, ?markers: String) -> Array[String]
+      def html_fragments(source:, errors:, filename:, context_lines: 2, messages: "both", markers: "spans") # rubocop:disable Metrics/ParameterLists
         return [] unless available?
 
-        with_tempfiles(source, errors) do |source_path, diagnostics_path|
+        fragments = with_tempfiles(source, errors) do |source_path, diagnostics_path|
           args = [
             "--format", "html",
-            "--html-markers", "highlight-api",
+            "--html-markers", markers,
             "--diagnostics", diagnostics_path,
             "--split-diagnostics",
             "--html-fragment-separator=#{FRAGMENT_SEPARATOR}",
@@ -107,6 +107,8 @@ module Herb
 
           relabeled.split(FRAGMENT_SEPARATOR).map(&:strip).reject(&:empty?)
         end
+
+        fragments || []
       end
 
       #: (?String theme) -> String?
@@ -120,18 +122,6 @@ module Herb
         cache[theme] = output if output
 
         output
-      end
-
-      #: () -> String?
-      def markers_script
-        return @markers_script if defined?(@markers_script)
-
-        @markers_script = begin
-          bin = path
-          asset = bin ? File.expand_path("../assets/herb-markers.js", File.dirname(bin)) : nil
-
-          asset && File.file?(asset) ? File.read(asset) : nil
-        end
       end
 
       #: (Array[untyped] errors) -> Array[Hash[Symbol, untyped]]
@@ -182,6 +172,8 @@ module Herb
         end
 
         yield source_file.path, diagnostics_file&.path
+      rescue StandardError
+        nil
       ensure
         source_file&.unlink
         diagnostics_file&.unlink

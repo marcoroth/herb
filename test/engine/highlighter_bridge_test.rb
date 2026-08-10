@@ -176,7 +176,7 @@ module Engine
         assert_equal 14, command.length
         assert_equal bin, command[0]
         assert_equal ["--format", "html"], command[1, 2]
-        assert_equal ["--html-markers", "highlight-api"], command[3, 2]
+        assert_equal ["--html-markers", "spans"], command[3, 2]
         assert_equal "--diagnostics", command[5]
         assert command[6].end_with?(".json")
         assert_equal "--split-diagnostics", command[7]
@@ -184,6 +184,26 @@ module Engine
         assert_equal ["--context-lines", "3"], command[9, 2]
         assert_equal ["--html-messages", "hover"], command[11, 2]
         assert command[13].end_with?(".html.erb")
+      end
+    end
+
+    test "html_fragments accepts a markers keyword and defaults to spans" do
+      parameters = Herb::Engine::HighlighterBridge.instance_method(:html_fragments).parameters
+
+      assert_includes parameters, [:key, :markers]
+
+      Dir.mktmpdir do |dir|
+        bin = create_executable(dir)
+        bridge = build_bridge(highlighter_path: bin)
+        invocations = []
+
+        stub_capture3(invocations, stdout: "<figure></figure>") do
+          bridge.html_fragments(source: "<div></div>", errors: [], filename: nil)
+          bridge.html_fragments(source: "<div></div>", errors: [], filename: nil, markers: "highlight-api")
+        end
+
+        assert_equal ["--html-markers", "spans"], invocations.first[3, 2]
+        assert_equal ["--html-markers", "highlight-api"], invocations.last[3, 2]
       end
     end
 
@@ -300,6 +320,23 @@ module Engine
         invocations = []
 
         stub_capture3(invocations, stdout: "broken", success: false) do
+          fragments = bridge.html_fragments(
+            source: "<div></div>",
+            errors: [{ message: "boom", location: nil }],
+            filename: "a.erb"
+          )
+
+          assert_equal [], fragments
+        end
+      end
+    end
+
+    test "html_fragments returns an empty array when tempfiles cannot be created" do
+      Dir.mktmpdir do |dir|
+        bin = create_executable(dir)
+        bridge = build_bridge(highlighter_path: bin)
+
+        Tempfile.stub(:new, ->(*) { raise Errno::ENOSPC }) do
           fragments = bridge.html_fragments(
             source: "<div></div>",
             errors: [{ message: "boom", location: nil }],

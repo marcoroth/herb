@@ -177,7 +177,7 @@ module Herb
       end
 
       if @validation_error_template
-        escaped_html = @validation_error_template.gsub("'", "\\\\'")
+        escaped_html = @validation_error_template.gsub(/[\\']/) { |character| "\\#{character}" }
         @src << " #{@bufvar} << ('#{escaped_html}'.html_safe).to_s;"
       end
 
@@ -525,6 +525,7 @@ module Herb
         parser_errors,
         filename: @relative_file_path,
         overlay_messages: @overlay_messages,
+        project_path: @project_path,
         bridge: @highlighter_bridge
       )
 

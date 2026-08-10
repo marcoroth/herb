@@ -662,6 +662,20 @@ export class ErrorOverlay {
     }
   }
 
+  private activateScripts(root: ParentNode) {
+    root.querySelectorAll('script').forEach(inert => {
+      const script = document.createElement('script');
+
+      Array.from(inert.attributes).forEach(attribute => {
+        script.setAttribute(attribute.name, attribute.value);
+      });
+
+      script.text = inert.textContent ?? '';
+
+      inert.parentNode?.replaceChild(script, inert);
+    });
+  }
+
   private displayParserErrorOverlay(htmlContent: string) {
     const existingOverlay = document.querySelector('.herb-parser-error-overlay');
     if (existingOverlay) {
@@ -676,6 +690,8 @@ export class ErrorOverlay {
     if (overlay) {
       document.body.appendChild(overlay);
       overlay.style.display = 'flex';
+
+      this.activateScripts(overlay);
     } else {
       console.error('[ErrorOverlay] No parser error overlay found in HTML template');
     }
@@ -739,6 +755,7 @@ export class ErrorOverlay {
 
     document.body.appendChild(overlay);
 
+    this.activateScripts(overlay);
     this.setupValidationOverlayHandlers(overlay);
   }
 

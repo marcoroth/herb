@@ -79,7 +79,8 @@ module Herb
           errors: [@error],
           filename: @filename,
           context_lines: CONTEXT_LINES,
-          messages: @overlay_messages
+          messages: @overlay_messages,
+          markers: "spans"
         ).first
       end
 

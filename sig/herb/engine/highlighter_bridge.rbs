@@ -31,14 +31,11 @@ module Herb
       # : (source: String, line: Integer, filename: untyped, ?context_lines: Integer) -> String?
       def ansi_focus: (source: String, line: Integer, filename: untyped, ?context_lines: Integer) -> String?
 
-      # : (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String) -> Array[String]
-      def html_fragments: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String) -> Array[String]
+      # : (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String, ?markers: String) -> Array[String]
+      def html_fragments: (source: String, errors: Array[untyped], filename: untyped, ?context_lines: Integer, ?messages: String, ?markers: String) -> Array[String]
 
       # : (?String theme) -> String?
       def stylesheet: (?String theme) -> String?
-
-      # : () -> String?
-      def markers_script: () -> String?
 
       # : (Array[untyped] errors) -> Array[Hash[Symbol, untyped]]
       def diagnostics_for: (Array[untyped] errors) -> Array[Hash[Symbol, untyped]]
