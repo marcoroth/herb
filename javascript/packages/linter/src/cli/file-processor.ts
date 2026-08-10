@@ -233,10 +233,62 @@ export class FileProcessor {
     await this.buildPartialIndexOnce(context)
 
     if (shouldParallelize) {
-      return this.processFilesInParallel(files, jobs, formatOption, context)
+      return this.collapseOncePerRunOffenses(await this.processFilesInParallel(files, jobs, formatOption, context))
     }
 
-    return this.processFilesSequentially(files, formatOption, context)
+    return this.collapseOncePerRunOffenses(await this.processFilesSequentially(files, formatOption, context))
+  }
+
+  private collapseOncePerRunOffenses(result: ProcessingResult): ProcessingResult {
+    const oncePerRun = new Set(rules.filter(rule => rule.reportsOncePerRun === true).map(rule => rule.ruleName))
+
+    if (oncePerRun.size === 0) return result
+
+    const seen = new Set<string>()
+    const dropped: ProcessedFile[] = []
+
+    result.allOffenses = result.allOffenses.filter(item => {
+      const rule = (item.offense as LintOffense).rule
+
+      if (!oncePerRun.has(rule)) return true
+      if (!seen.has(rule)) {
+        seen.add(rule)
+
+        return true
+      }
+
+      dropped.push(item)
+
+      return false
+    })
+
+    if (dropped.length === 0) return result
+
+    const remainingFiles = new Set(result.allOffenses.map(item => item.filename))
+
+    for (const item of dropped) {
+      const severity = (item.offense as LintOffense).severity
+
+      if (severity === "error") result.totalErrors--
+      if (severity === "warning") result.totalWarnings--
+      if (severity === "info") result.totalInfo--
+      if (severity === "hint") result.totalHints--
+
+      const ruleData = result.ruleOffenses.get((item.offense as LintOffense).rule)
+
+      if (ruleData) {
+        ruleData.count--
+        ruleData.files.delete(item.filename)
+      }
+    }
+
+    const droppedFiles = new Set(dropped.map(item => item.filename))
+
+    for (const filename of droppedFiles) {
+      if (!remainingFiles.has(filename)) result.filesWithOffenses--
+    }
+
+    return result
   }
 
   private async buildPartialIndexOnce(context?: ProcessingContext): Promise<void> {

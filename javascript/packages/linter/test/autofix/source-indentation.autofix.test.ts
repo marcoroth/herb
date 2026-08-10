@@ -16,7 +16,7 @@ describe("source-indentation autofix", () => {
     const expected = "  this is a line\n  another line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -28,7 +28,7 @@ describe("source-indentation autofix", () => {
     const expected = "    this is a line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -40,7 +40,7 @@ describe("source-indentation autofix", () => {
     const expected = "        this is a line\n      another line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -51,7 +51,7 @@ describe("source-indentation autofix", () => {
     const input = "   this is a line\n   another line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -62,7 +62,7 @@ describe("source-indentation autofix", () => {
     const input = "this is a line\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -73,7 +73,7 @@ describe("source-indentation autofix", () => {
     const input = "hello\tworld\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(input)
     expect(result.fixed).toHaveLength(0)
@@ -85,7 +85,7 @@ describe("source-indentation autofix", () => {
     const expected = "<div>\n  <p>hello</p>\n</div>\n"
 
     const linter = new Linter(Herb, [SourceIndentationRule])
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)
@@ -120,7 +120,7 @@ describe("source-indentation autofix", () => {
     })
 
     const linter = Linter.from(Herb, config)
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(2)
@@ -166,7 +166,7 @@ describe("source-indentation autofix", () => {
     })
 
     const linter = Linter.from(Herb, config)
-    const result = linter.autofix(input)
+    const result = linter.autofix(input, { framework: "ruby" })
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(1)

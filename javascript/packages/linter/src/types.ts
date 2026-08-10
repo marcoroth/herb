@@ -115,6 +115,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static autofixRequiresContext = false
   /** Indicates whether this rule consumes parser errors (like parser-no-errors). Rules with this flag are not skipped when parse results contain errors. */
   static consumesParserErrors = false
+  /** Indicates that the rule reports about the project rather than the file, so a CLI run collapses its offenses down to the first one. Defaults to false. */
+  static reportsOncePerRun = false
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName
@@ -243,6 +245,7 @@ export interface LexerRuleConstructor {
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
+  reportsOncePerRun?: boolean
 }
 
 /**
@@ -344,6 +347,7 @@ export interface SourceRuleConstructor {
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
+  reportsOncePerRun?: boolean
 }
 
 /**
@@ -360,6 +364,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   autofixRequiresContext?: boolean
   reindentAfterAutofix?: boolean
   consumesParserErrors?: boolean
+  reportsOncePerRun?: boolean
 }
 
 export type LexerRuleClass = LexerRuleConstructor
