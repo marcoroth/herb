@@ -7,7 +7,8 @@ import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loa
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
-import { Settings } from "./settings"
+import { UserSettings } from "./user_settings"
+import { Capabilities } from "./capabilities"
 import { Project } from "./project"
 
 import type { AncestorChain } from "@herb-tools/core"
@@ -30,7 +31,8 @@ export interface LintServiceResult {
 
 export class LinterService {
   private readonly connection: Connection
-  private readonly settings: Settings
+  private readonly userSettings: UserSettings
+  private readonly capabilities: Capabilities
   private readonly project: Project
   private readonly partialIndexService: PartialIndexService
   private readonly partialCallerIndexService?: PartialCallerIndexService
@@ -43,9 +45,10 @@ export class LinterService {
   private hasShownCustomRuleWarning = false
   private customRulePaths: Map<string, string> = new Map()
 
-  constructor(connection: Connection, settings: Settings, project: Project, partialIndexService: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
+  constructor(connection: Connection, userSettings: UserSettings, capabilities: Capabilities, project: Project, partialIndexService: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
     this.connection = connection
-    this.settings = settings
+    this.userSettings = userSettings
+    this.capabilities = capabilities
     this.project = project
     this.partialIndexService = partialIndexService
     this.partialCallerIndexService = partialCallerIndexService
@@ -76,7 +79,7 @@ export class LinterService {
       return
     }
 
-    const baseDir = this.project.projectPath
+    const baseDir = this.project.root
 
     try {
       const { rules: customRules, ruleInfo, warnings: duplicateWarnings } = await loadCustomRulesFromFs({ baseDir, silent: true })
@@ -122,10 +125,10 @@ export class LinterService {
       ? `Failed to load custom linter rules: ${failures[0][1]}`
       : `Failed to load custom linter rules:\n${failures.map(([_, error], i) => `${i + 1}. ${error}`).join('\n')}`
 
-    if (this.settings.hasShowDocumentCapability) {
+    if (this.capabilities.hasShowDocument) {
       this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
         if (action?.title === OPEN_CONFIG_ACTION) {
-          const configPath = `${this.project.projectPath}/.herb.yml`
+          const configPath = `${this.project.root}/.herb.yml`
           this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
         }
       })
@@ -145,13 +148,13 @@ export class LinterService {
     const hasConfigFile = Config.exists(config.projectPath)
     if (!hasConfigFile) return true
 
-    const relativePath = filePath.replace(this.project.projectPath + '/', '')
+    const relativePath = filePath.replace(this.project.root + '/', '')
 
     return config.isLinterEnabledForPath(relativePath)
   }
 
   private messageFor(offense: { message: string, renderedFrom?: AncestorChain }): string {
-    if (this.settings.hasDiagnosticRelatedInformationCapability) return offense.message
+    if (this.capabilities.hasDiagnosticRelatedInformation) return offense.message
 
     const frames = (offense.renderedFrom?.frames ?? []).filter(frame => frame.location !== null)
 
@@ -176,7 +179,7 @@ export class LinterService {
 
       information.push({
         location: {
-          uri: `file://${join(this.project.projectPath, frame.file)}`,
+          uri: `file://${join(this.project.root, frame.file)}`,
           range: Range.create(position, position)
         },
         message: `${FRAME_VERBS[frame.via] ?? FRAME_VERBS.render} here${nesting}`
@@ -191,7 +194,7 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const settings = await this.settings.getDocumentSettings(textDocument.uri)
+    const settings = await this.userSettings.getDocumentSettings(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
     if (!linterEnabled) {
@@ -262,7 +265,7 @@ export class LinterService {
         diagnostic.tags = tags
       }
 
-      if (this.settings.hasDiagnosticRelatedInformationCapability) {
+      if (this.capabilities.hasDiagnosticRelatedInformation) {
         const relatedInformation = this.callChainFor(offense)
 
         if (relatedInformation.length > 0) {

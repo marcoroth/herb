@@ -41,7 +41,7 @@ function project(files: Record<string, string>): Project {
     writeFileSync(file, contents, "utf-8")
   }
 
-  return { projectPath: root, herbBackend: Herb } as Project
+  return { root: root, herbBackend: Herb } as Project
 }
 
 async function serviceFor(files: Record<string, string>): Promise<{ service: PartialCallerIndexService, project: Project }> {
@@ -58,7 +58,7 @@ async function serviceFor(files: Record<string, string>): Promise<{ service: Par
 }
 
 function uriFor(project: Project, path: string): string {
-  return pathToFileURL(join(project.projectPath, path)).toString()
+  return pathToFileURL(join(project.root, path)).toString()
 }
 
 function callers(service: PartialCallerIndexService, partial = CARD): string[] {
@@ -118,7 +118,7 @@ describe("PartialCallerIndexService", () => {
   test("picks up a call site written to disk", async () => {
     const { service, project } = await serviceFor(PROJECT)
 
-    writeFileSync(join(project.projectPath, SHOW), `<%= render "posts/card" %>\n`, "utf-8")
+    writeFileSync(join(project.root, SHOW), `<%= render "posts/card" %>\n`, "utf-8")
 
     expect(service.updateFromDisk(uriFor(project, SHOW))).toBe(true)
     expect(callers(service).sort()).toEqual([SHOW, INDEX])

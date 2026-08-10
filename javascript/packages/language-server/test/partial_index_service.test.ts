@@ -30,11 +30,11 @@ function project(files: Record<string, string>): Project {
     writeFileSync(file, contents, "utf-8")
   }
 
-  return { projectPath: root, herbBackend: Herb } as Project
+  return { root: root, herbBackend: Herb } as Project
 }
 
 function uriFor(project: Project, path: string): string {
-  return pathToFileURL(join(project.projectPath, path)).toString()
+  return pathToFileURL(join(project.root, path)).toString()
 }
 
 async function serviceFor(files: Record<string, string>): Promise<{ service: PartialIndexService, project: Project }> {
@@ -112,7 +112,7 @@ describe("PartialIndexService", () => {
   test("picks up a partial created on disk", async () => {
     const { service, project } = await serviceFor({ "app/views/users/_card.html.erb": `<%# locals: (user:) %>\n` })
 
-    writeFileSync(join(project.projectPath, "app/views/users/_avatar.html.erb"), `<%# locals: (user:) %>\n`, "utf-8")
+    writeFileSync(join(project.root, "app/views/users/_avatar.html.erb"), `<%# locals: (user:) %>\n`, "utf-8")
 
     expect(service.updateFromDisk(uriFor(project, "app/views/users/_avatar.html.erb"))).toBe(true)
     expect(service.index?.size).toBe(2)
