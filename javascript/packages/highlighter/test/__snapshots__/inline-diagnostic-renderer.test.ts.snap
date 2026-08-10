@@ -11,7 +11,7 @@ exports[`InlineDiagnosticRenderer > marks every line a multi-line diagnostic spa
   →   4 │   <% end %>
         │   ~~~~~~~~~
         │   [warning] Multi-line offense (multi-line-rule)
-
+        │
       5 │ </div>"
 `;
 
@@ -22,7 +22,7 @@ exports[`InlineDiagnosticRenderer > renders a single-line diagnostic with its me
   →   2 │ line <error> content
         │      ~~~~~
         │      [error] Test error message (test-rule)
-
+        │
       3 │ line 3"
 `;
 

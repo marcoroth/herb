@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0006_tag.attributes with dynamic boolean attribute"
+input: "{source: \"<option <%= tag.attributes(selected: option == current) %>>One</option>\", locals: {option: \"one\", current: \"two\"}, options: {action_view_helpers: true}}"
+---
+<option >One</option>

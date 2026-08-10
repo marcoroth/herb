@@ -20,8 +20,10 @@
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
     "@herb-tools/browser": "0.10.3",
+    "@herb-tools/core": "0.10.3",
     "@herb-tools/formatter": "0.10.3",
     "@herb-tools/linter": "0.10.3",
+    "@herb-tools/printer": "0.10.3",
     "@herb-tools/rewriter": "0.10.3",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.7.2",

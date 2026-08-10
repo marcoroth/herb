@@ -110,3 +110,90 @@ export function isCallOnLocal(node: PrismNode, localNames: Set<string>): boolean
   return false
 }
 
+
+export interface RenderPartialExpression {
+  node: PrismNode
+  explicit: boolean
+}
+
+export function renderPartialExpression(call: PrismNode): RenderPartialExpression | null {
+  if (!isPrismNodeType(call, "CallNode")) return null
+
+  const args = call.arguments_?.arguments_ ?? []
+  const [first] = args
+
+  if (!first) return null
+
+  const named = namedPartialArgument(args)
+
+  if (named) return { node: named, explicit: true }
+
+  if (isPrismNodeType(first, "KeywordHashNode")) return null
+
+  return { node: first, explicit: false }
+}
+
+function namedPartialArgument(args: PrismNode[]): PrismNode | null {
+  for (const argument of args) {
+    if (!isPrismNodeType(argument, "KeywordHashNode")) continue
+
+    for (const element of argument.elements ?? []) {
+      if (!isPrismNodeType(element, "AssocNode")) continue
+      if (!isPrismNodeType(element.key, "SymbolNode")) continue
+      if (element.key.unescaped?.value !== "partial") continue
+
+      return element.value
+    }
+  }
+
+  return null
+}
+
+export function isStaticPartialPath(node: PrismNode): boolean {
+  if (isPrismNodeType(node, "StringNode")) return true
+
+  if (isPrismNodeType(node, "IfNode")) {
+    return branchesOf(node).every(branch => branch !== null && isStaticPartialPath(branch))
+  }
+
+  return false
+}
+
+function branchesOf(node: PrismNode): (PrismNode | null)[] {
+  const branches: (PrismNode | null)[] = [onlyStatement(node.statements)]
+  const subsequent = node.subsequent
+
+  if (!subsequent) return [...branches, null]
+
+  if (isPrismNodeType(subsequent, "ElseNode")) return [...branches, onlyStatement(subsequent.statements)]
+
+  return [...branches, subsequent]
+}
+
+function onlyStatement(statements: PrismNode | null | undefined): PrismNode | null {
+  if (!isPrismNodeType(statements, "StatementsNode")) return null
+
+  const body = statements.body ?? []
+
+  return body.length === 1 ? body[0] : null
+}
+
+const OUTPUT_TAG_OPENINGS = new Set(["<%=", "<%=="])
+
+export function isOutputRender(node: { tag_opening?: { value?: string } | null }): boolean {
+  const opening = node.tag_opening?.value
+
+  return opening !== undefined && OUTPUT_TAG_OPENINGS.has(opening)
+}
+
+export function constructsObject(node: PrismNode): boolean {
+  let current: PrismNode | undefined = node
+
+  while (current) {
+    if (isPrismNodeType(current, "CallNode") && current.name === "new") return true
+
+    current = current.receiver ?? undefined
+  }
+
+  return false
+}

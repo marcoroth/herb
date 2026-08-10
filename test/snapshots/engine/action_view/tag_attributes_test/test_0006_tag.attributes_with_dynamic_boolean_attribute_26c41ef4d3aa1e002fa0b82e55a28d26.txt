@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::TagAttributesTest#test_0006_tag.attributes with dynamic boolean attribute"
+input: "{source: \"<option <%= tag.attributes(selected: option == current) %>>One</option>\", options: {optimize: true, locals: {option: \"one\", current: \"two\"}}}"
+---
+_buf = ::String.new; _buf << '<option '.freeze; if (option == current); _buf << 'selected'.freeze; end; _buf << '>One</option>'.freeze;
+_buf.to_s

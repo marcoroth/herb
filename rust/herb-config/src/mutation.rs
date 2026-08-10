@@ -35,7 +35,7 @@ fn apply_mutation_to_document(document: &mut yerba::Document, mutation: &Value, 
       continue;
     }
 
-    set_or_insert(document, &path, &scalar_text(value))?;
+    set_or_insert(document, &path, value)?;
   }
 
   Ok(())
@@ -63,12 +63,18 @@ fn replace_or_insert_value(document: &mut yerba::Document, path: &str, value: &V
   insert_value(document, path, value)
 }
 
-fn set_or_insert(document: &mut yerba::Document, path: &str, value: &str) -> Result<(), String> {
+fn set_or_insert(document: &mut yerba::Document, path: &str, value: &Value) -> Result<(), String> {
+  let text = scalar_text(value);
+
   if document.is_valid_selector(path) {
-    document.set(path, value).map_err(|error| format!("failed to set `{}`: {}", path, error))
+    let result = match value {
+      Value::Bool(_) | Value::Number(_) => document.set_plain(path, &text),
+      _ => document.set(path, &text),
+    };
+    result.map_err(|error| format!("failed to set `{}`: {}", path, error))
   } else {
     document
-      .insert_into(path, value, yerba::InsertPosition::Last)
+      .insert_into(path, &text, yerba::InsertPosition::Last)
       .map_err(|error| format!("failed to insert `{}`: {}", path, error))
   }
 }

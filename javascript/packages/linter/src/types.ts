@@ -2,7 +2,7 @@ import { Diagnostic, LexResult, ParseResult, Location } from "@herb-tools/core"
 
 import type { DiagnosticTag, HerbError } from "@herb-tools/core"
 import type { rules } from "./rules.js"
-import type { Node, ParserOptions } from "@herb-tools/core"
+import type { AncestorChain, HerbBackend, Node, ParserOptions, PartialCallerIndex, PartialIndex } from "@herb-tools/core"
 import type { Framework, RuleConfig, SeverityConfig, LinterMode } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 import type { RuleVersion } from "@herb-tools/core"
@@ -51,6 +51,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   autofixContext?: TAutofixContext
   /** If set, overrides rule-level severity for this specific offense */
   severity?: LintSeverity
+  /** The call chain that justified the offense */
+  renderedFrom?: AncestorChain
 }
 
 /**
@@ -113,6 +115,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static autofixRequiresContext = false
   /** Indicates whether this rule consumes parser errors (like parser-no-errors). Rules with this flag are not skipped when parse results contain errors. */
   static consumesParserErrors = false
+  /** Indicates that the rule reports about the project rather than the file, so a CLI run collapses its offenses down to the first one. Defaults to false. */
+  static reportsOncePerRun = false
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName
@@ -241,6 +245,7 @@ export interface LexerRuleConstructor {
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
+  reportsOncePerRun?: boolean
 }
 
 /**
@@ -253,7 +258,12 @@ export interface LintContext {
   ignoredOffensesByLine: Map<number, Set<string>> | undefined
   ignoreDisableComments: boolean | undefined
   indentWidth: number | undefined
+  indentStyle: "space" | "tab" | undefined
   framework: Framework | undefined
+  partials: PartialIndex | undefined
+  partialCallers: PartialCallerIndex | undefined
+  projectPath: string | undefined
+  herb: HerbBackend | undefined
 }
 
 /**
@@ -265,7 +275,12 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
   ignoredOffensesByLine: undefined,
   ignoreDisableComments: undefined,
   indentWidth: undefined,
-  framework: undefined
+  indentStyle: undefined,
+  framework: undefined,
+  partials: undefined,
+  partialCallers: undefined,
+  projectPath: undefined,
+  herb: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -334,6 +349,7 @@ export interface SourceRuleConstructor {
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
   autofixRequiresContext?: boolean
+  reportsOncePerRun?: boolean
 }
 
 /**
@@ -350,6 +366,7 @@ export type ParserRuleClass = (new () => ParserRule) & {
   autofixRequiresContext?: boolean
   reindentAfterAutofix?: boolean
   consumesParserErrors?: boolean
+  reportsOncePerRun?: boolean
 }
 
 export type LexerRuleClass = LexerRuleConstructor

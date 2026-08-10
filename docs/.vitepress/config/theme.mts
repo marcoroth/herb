@@ -53,6 +53,7 @@ const defaultSidebar = [
       { text: "Cursor", link: "/integrations/editors/cursor" },
       { text: "Helix", link: "/integrations/editors/helix" },
       { text: "Neovim", link: "/integrations/editors/neovim" },
+      { text: "Nova", link: "/integrations/editors/nova" },
       { text: "RubyMine", link: "/integrations/editors/rubymine" },
       { text: "Sublime Text", link: "/integrations/editors/sublime" },
       { text: "Vim", link: "/integrations/editors/vim" },
@@ -69,6 +70,7 @@ const defaultSidebar = [
       { text: "GitLab CI", link: "/integrations/ci/gitlab" },
       { text: "Bitbucket Pipelines", link: "/integrations/ci/bitbucket" },
       { text: "Reviewdog", link: "/integrations/ci/reviewdog" },
+      { text: "Git Hooks", link: "/integrations/git-hooks" },
     ],
   },
   {

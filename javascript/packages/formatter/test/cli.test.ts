@@ -1,9 +1,51 @@
 import dedent from "dedent"
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
-import { join } from "path"
+import { join, resolve } from "path"
+import { spawn } from "child_process"
 
 import { execBinary, expectExitCode } from "./cli/cli-helpers"
+
+import type { ExecResult } from "./cli/cli-helpers"
+
+const execGit = (args: string[], cwd: string): Promise<ExecResult> => {
+  return new Promise((resolvePromise) => {
+    const child = spawn("git", args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, NO_COLOR: "1", GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_SYSTEM: "/dev/null" }
+    })
+
+    let stdout = ""
+    let stderr = ""
+
+    child.stdout.on("data", (data) => { stdout += data.toString() })
+    child.stderr.on("data", (data) => { stderr += data.toString() })
+
+    child.on("close", (code) => {
+      resolvePromise({ stdout, stderr, exitCode: code || 0 })
+    })
+  })
+}
+
+const setupGitRepositoryWithPreCommitHook = async (directory: string, formatArgs: string) => {
+  const binary = resolve(process.cwd(), "bin/herb-format")
+
+  await mkdir(join(directory, ".git-hooks"), { recursive: true })
+  await writeFile(join(directory, "unformatted.html.erb"), '<div><p>   Not formatted   </p></div>')
+  await writeFile(
+    join(directory, ".git-hooks", "pre-commit"),
+    `#!/bin/sh\nset -e\n"${process.execPath}" "${binary}" ${formatArgs}\n`.trimEnd() + "\n",
+    { mode: 0o755 }
+  )
+
+  await execGit(["init", "--quiet"], directory)
+  await execGit(["config", "core.hooksPath", ".git-hooks"], directory)
+  await execGit(["config", "commit.gpgsign", "false"], directory)
+  await execGit(["config", "user.email", "test@example.com"], directory)
+  await execGit(["config", "user.name", "Test"], directory)
+  await execGit(["add", "-A"], directory)
+}
 
 describe("CLI Binary", () => {
   beforeEach(async () => {
@@ -156,6 +198,27 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stderr).toContain("⚠️  Experimental Preview")
     expect(result.stdout).toBe("\n")
+  })
+
+  it("should format configured files when stdin is a non-TTY null device", async () => {
+    const directory = "test-non-tty-null-stdin"
+    const input = '<div><p>   Not formatted   </p></div>'
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "unformatted.html.erb"), input)
+
+    try {
+      const result = await execBinary([], undefined, { cwd: directory, stdin: "ignore" })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: unformatted.html.erb")
+
+      const formattedContent = await readFile(join(directory, "unformatted.html.erb"), "utf-8")
+      expect(formattedContent).not.toBe(input)
+      expect(formattedContent).toContain("<div>")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
   })
 
   it("should handle no files found in empty directory", async () => {
@@ -312,6 +375,163 @@ describe("CLI Binary", () => {
     })
   }
 
+  it("should skip files that don't match the configured file patterns", async () => {
+    const directory = "test-unsupported-files"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "script.js"), script)
+    await writeFile(join(directory, "page.html.erb"), '<div><p>   Not formatted   </p></div>')
+
+    try {
+      const result = await execBinary(["script.js", "page.html.erb"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("script.js")
+      expect(result.stderr).toContain("Use --force to format it anyway")
+      expect(result.stdout).toContain("Formatted: page.html.erb")
+
+      expect(await readFile(join(directory, "script.js"), "utf-8")).toBe(script)
+      expect(await readFile(join(directory, "page.html.erb"), "utf-8")).toBe("<div>\n  <p>Not formatted</p>\n</div>\n")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format files that don't match the configured file patterns with --force", async () => {
+    const directory = "test-unsupported-files-force"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, "script.js"), script)
+
+    try {
+      const result = await execBinary(["--force", "script.js"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: script.js")
+      expect(await readFile(join(directory, "script.js"), "utf-8")).not.toBe(script)
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format files added to the include patterns in .herb.yml", async () => {
+    const directory = "test-include-config"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, ".herb.yml"), dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+      files:
+        include:
+          - "**/*.xml.erb"
+    `)
+    await writeFile(join(directory, "feed.xml.erb"), '<?xml version="1.0"?><root><item/></root>')
+
+    try {
+      const result = await execBinary(["feed.xml.erb"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).not.toContain("match the configured file patterns")
+      expect(result.stdout).toContain("Formatted: feed.xml.erb")
+
+      const formatted = await readFile(join(directory, "feed.xml.erb"), "utf-8")
+      expect(formatted).toContain("<item />")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should still skip files outside the include patterns in .herb.yml", async () => {
+    const directory = "test-include-config-skip"
+    const script = "function greet(name) {\n  if (name < 3) {\n    return 'hi'\n  }\n}\n"
+
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, ".herb.yml"), dedent`
+      version: 0.10.3
+      formatter:
+        enabled: true
+      files:
+        include:
+          - "**/*.xml.erb"
+    `)
+    await writeFile(join(directory, "script.js"), script)
+
+    try {
+      const result = await execBinary(["script.js"], undefined, { cwd: directory })
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("script.js")
+      expect(result.stderr).toContain("Use --force to format it anyway")
+      expect(await readFile(join(directory, "script.js"), "utf-8")).toBe(script)
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should accept every default file pattern", async () => {
+    const directory = "test-default-patterns"
+    const files = ["a.herb", "b.html.erb", "c.html.herb", "d.html", "e.html+phone.erb", "f.rhtml", "g.turbo_stream.erb"]
+
+    await mkdir(directory, { recursive: true })
+
+    for (const file of files) {
+      await writeFile(join(directory, file), '<div><p>   Not formatted   </p></div>')
+    }
+
+    try {
+      const result = await execBinary(["--check", ...files], undefined, { cwd: directory })
+
+      expectExitCode(result, 1)
+      expect(result.stderr).not.toContain("match the configured file patterns")
+
+      for (const file of files) {
+        expect(result.stdout).toContain(file)
+      }
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should check configured files with --check from a git pre-commit hook", async () => {
+    const directory = "test-git-hook-check"
+
+    try {
+      await setupGitRepositoryWithPreCommitHook(directory, "--check")
+
+      const result = await execGit(["commit", "-m", "test"], directory)
+      const output = result.stdout + result.stderr
+
+      expect(output).not.toContain("--check mode is not supported with stdin")
+      expect(result.exitCode).toBe(1)
+      expect(output).toContain("unformatted.html.erb")
+      expect(output).toContain("not formatted")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should format configured files from a git pre-commit hook", async () => {
+    const directory = "test-git-hook-format"
+
+    try {
+      await setupGitRepositoryWithPreCommitHook(directory, "")
+
+      const result = await execGit(["commit", "-m", "test"], directory)
+      const output = result.stdout + result.stderr
+
+      expect(result.exitCode).toBe(0)
+      expect(output).toContain("Formatted: unformatted.html.erb")
+
+      const formattedContent = await readFile(join(directory, "unformatted.html.erb"), "utf-8")
+      expect(formattedContent).toBe("<div>\n  <p>Not formatted</p>\n</div>\n")
+    } finally {
+      await rm(directory, { recursive: true }).catch(() => {})
+    }
+  })
+
   it("should pass --check with a non-TTY stdin when all files are formatted", async () => {
     const directory = "test-non-tty-stdin-formatted"
     const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
@@ -427,6 +647,29 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("    <p>Test</p>") // 4 spaces instead of 2
   })
 
+  it("should show --indent-style option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("herb-format --indent-style")
+    expect(result.stdout).toContain("character used for indentation")
+  })
+
+  it("should accept valid --indent-style", async () => {
+    const input = '<div>\n<p>Test</p>\n</div>'
+    const result = await execBinary(["--indent-style", "tab"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("\t<p>Test</p>")
+  })
+
+  it("should reject invalid --indent-style", async () => {
+    const result = await execBinary(["--indent-style", "nope"], '<div></div>')
+
+    expectExitCode(result, 1)
+    expect(result.stderr).toContain("Invalid indent-style")
+  })
+
   it("should show --max-line-length option in help", async () => {
     const result = await execBinary(["--help"])
 
@@ -467,7 +710,7 @@ describe("CLI Binary", () => {
       `
 
       await writeFile("test-fixtures/test.xml.erb", content)
-      const result = await execBinary(["test-fixtures/test.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/test.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
@@ -484,7 +727,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/file2.xml.erb", content2)
       await writeFile("test-fixtures/ignored.html.erb", "<div></div>")
 
-      const result = await execBinary(["test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/file1.xml.erb")
@@ -499,7 +742,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/top.xml.erb", content)
       await writeFile("test-fixtures/nested/deep.xml.erb", content)
 
-      const result = await execBinary(["test-fixtures/**/*.xml.erb"])
+      const result = await execBinary(["--force", "test-fixtures/**/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/top.xml.erb")
@@ -514,7 +757,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/file.xml.erb", xmlContent)
       await writeFile("test-fixtures/file.html.erb", htmlContent)
 
-      const result = await execBinary(["test-fixtures/*.erb"])
+      const result = await execBinary(["--force", "test-fixtures/*.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/file.xml.erb")
@@ -537,7 +780,7 @@ describe("CLI Binary", () => {
       await writeFile("test-fixtures/good.xml.erb", wellFormattedContent + '\n')
       await writeFile("test-fixtures/bad.xml.erb", poorlyFormattedContent)
 
-      const result = await execBinary(["--check", "test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--check", "--force", "test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 1)
       expect(result.stdout).toContain("The following")
@@ -567,7 +810,7 @@ describe("CLI Binary", () => {
 
       await writeFile("test-fixtures/test.xml.erb", content)
 
-      const result = await execBinary(["./test-fixtures/*.xml.erb"])
+      const result = await execBinary(["--force", "./test-fixtures/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
@@ -595,7 +838,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/sub2/file3.xml.erb", content)
       await writeFile("test-advanced/sub2/ignore.html.erb", "<div></div>")
 
-      const result = await execBinary(["test-advanced/**/file*.xml.erb"])
+      const result = await execBinary(["--force", "test-advanced/**/file*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-advanced/sub1/file1.xml.erb")
@@ -613,7 +856,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/manifest.xml.erb", content)
       await writeFile("test-advanced/other.erb", content)
 
-      const result = await execBinary(["test-advanced/{config,manifest}.xml.erb"])
+      const result = await execBinary(["--force", "test-advanced/{config,manifest}.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-advanced/config.xml.erb")
@@ -653,7 +896,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/specific.xml.erb", xmlContent)
       await writeFile("test-advanced/another.html.erb", htmlContent)
 
-      const result1 = await execBinary(["test-advanced/specific.xml.erb"])
+      const result1 = await execBinary(["--force", "test-advanced/specific.xml.erb"])
       expectExitCode(result1, 0)
       expect(result1.stdout).toContain("Formatted: test-advanced/specific.xml.erb")
 
@@ -684,7 +927,7 @@ describe("CLI Binary", () => {
       await writeFile("test-advanced/good2.xml.erb", formattedContent + '\n')
       await writeFile("test-advanced/sub1/bad.xml.erb", unformattedContent)
 
-      const result = await execBinary(["--check", "test-advanced/**/*.xml.erb"])
+      const result = await execBinary(["--check", "--force", "test-advanced/**/*.xml.erb"])
 
       expectExitCode(result, 1)
       expect(result.stdout).toContain("The following")
@@ -790,7 +1033,7 @@ describe("CLI Binary", () => {
       await writeFile("test-multi/pattern1.xml.erb", '<?xml version="1.0"?><root></root>')
       await writeFile("test-multi/pattern2.xml.erb", '<?xml version="1.0"?><config></config>')
 
-      const result = await execBinary(["test-multi/specific.html.erb", "test-multi/*.xml.erb"])
+      const result = await execBinary(["--force", "test-multi/specific.html.erb", "test-multi/*.xml.erb"])
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("Formatted: test-multi/specific.html.erb")

@@ -13,7 +13,7 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter } from "@herb-tools/linter"
+import { Linter, rules, fixabilityFor } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 import { analyzeRuby } from "../analyze-ruby"
 
@@ -1793,7 +1793,7 @@ export default class extends Controller {
     if (this.hasAutofixUnsafeWrapperTarget) {
       const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
       const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
-        result.lintResult.offenses.some(offense => offense.autofixContext && offense.autofixContext.unsafe === true))
+        result.lintResult.offenses.some(offense => fixabilityFor(offense, rules.find(rule => rule.ruleName === offense.rule)).unsafeAutocorrectable))
 
       if (hasParserErrors || !hasUnsafeOffenses) {
         this.autofixUnsafeWrapperTarget.classList.add('hidden')

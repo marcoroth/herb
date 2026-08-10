@@ -1,8 +1,11 @@
-import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
+import { ClientCapabilities, Connection, InitializeParams, ResourceOperationKind } from "vscode-languageserver/node"
 import { Config } from "@herb-tools/config"
 
 import { defaultFormatOptions } from "@herb-tools/formatter"
+import { pathFromUri } from "./utils"
 import { version } from "../package.json"
+
+const FILE_SCHEME = "file://"
 
 // TODO: ideally we could just Config all the way through
 export interface PersonalHerbSettings {
@@ -16,7 +19,14 @@ export interface PersonalHerbSettings {
   formatter?: {
     enabled?: boolean
     indentWidth?: number
+    indentStyle?: "space" | "tab"
     maxLineLength?: number
+  }
+}
+
+export interface HerbInitializationOptions extends PersonalHerbSettings {
+  experimental?: {
+    extractToPartialCommand?: boolean
   }
 }
 
@@ -29,6 +39,7 @@ export class Settings {
     formatter: {
       enabled: false,
       indentWidth: defaultFormatOptions.indentWidth,
+      indentStyle: defaultFormatOptions.indentStyle,
       maxLineLength: defaultFormatOptions.maxLineLength
     }
   }
@@ -99,6 +110,7 @@ export class Settings {
         formatter: {
           enabled: settings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
           indentWidth: settings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+          indentStyle: settings.formatter?.indentStyle ?? this.defaultSettings.formatter!.indentStyle!,
           maxLineLength: settings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
         }
       }
@@ -113,15 +125,49 @@ export class Settings {
       formatter: {
         enabled: projectConfig.isFormatterEnabled,
         indentWidth: projectConfig.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+        indentStyle: projectConfig.formatter?.indentStyle ?? this.defaultSettings.formatter!.indentStyle!,
         maxLineLength: projectConfig.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
       }
     }
+  }
+
+  get supportsDefinitionLinks(): boolean {
+    return this.capabilities.textDocument?.definition?.linkSupport === true
+  }
+
+  get supportsResourceCreation(): boolean {
+    return this.capabilities.workspace?.workspaceEdit?.resourceOperations?.includes(ResourceOperationKind.Create) ?? false
+  }
+
+  get supportsExtractToPartialCommand(): boolean {
+    const options = this.params.initializationOptions as HerbInitializationOptions | undefined | null
+
+    return options?.experimental?.extractToPartialCommand === true
   }
 
   get projectPath(): string {
     const uri = this.params.workspaceFolders?.at(0)?.uri ?? this.params.rootUri ?? this.params.rootPath ?? ""
 
     return uri.replace(/^file:\/\//, "")
+  }
+
+  get workspacePaths(): string[] {
+    const folders = this.params.workspaceFolders?.map(folder => folder.uri) ?? []
+    const roots = folders.length > 0 ? folders : [this.params.rootUri ?? this.params.rootPath ?? ""]
+
+    return roots.filter(root => root !== "").map(root => pathFromUri(root).replace(/\/$/, ""))
+  }
+
+  includes(uri: string): boolean {
+    if (!uri.startsWith(FILE_SCHEME)) return true
+
+    const roots = this.workspacePaths
+
+    if (roots.length === 0) return true
+
+    const path = pathFromUri(uri)
+
+    return roots.some(root => path === root || path.startsWith(`${root}/`))
   }
 
   getDocumentSettings(resource: string): Thenable<PersonalHerbSettings> {

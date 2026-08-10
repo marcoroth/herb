@@ -138,6 +138,27 @@ export class CLI {
     return { files, explicitFile }
   }
 
+  protected rejectUnsupportedFiles(files: string[], config: Config, force: boolean, formatOption: FormatOption): string[] {
+    if (force) {
+      return files
+    }
+
+    const supported = files.filter(file => config.isPathIncludedForTool(file, 'linter'))
+    const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'linter'))
+
+    if (unsupported.length > 0 && formatOption !== 'json') {
+      console.error(`⚠️  Skipped ${unsupported.length} ${unsupported.length === 1 ? 'file' : 'files'} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
+
+      for (const file of unsupported) {
+        console.error(`  ${colorize(relative(process.cwd(), resolve(file)), "cyan")}`)
+      }
+
+      console.error(`   Use --force to lint ${unsupported.length === 1 ? 'it' : 'them'} anyway.\n`)
+    }
+
+    return supported
+  }
+
   protected async beforeProcess(): Promise<void> {
     // Hook for subclasses to add custom output before processing
   }
@@ -250,8 +271,7 @@ export class CLI {
         await Herb.load()
 
         const files = await config.findFilesForTool('linter', this.projectPath)
-        const upgradeProcessor = new FileProcessor()
-        const results = await upgradeProcessor.processFiles(files, 'json', upgradeContext)
+        const results = await this.fileProcessor.processFiles(files, 'json', upgradeContext)
 
         for (const { offense } of results.allOffenses) {
           if (offense.severity !== "error" && offense.severity !== "warning") continue
@@ -334,8 +354,7 @@ export class CLI {
         jobs,
       }
 
-      const processor = new FileProcessor()
-      const results = await processor.processFiles(files, 'json', disableFailingContext)
+      const results = await this.fileProcessor.processFiles(files, 'json', disableFailingContext)
       const failingRules = new Map<string, number>()
       const PROTECTED_RULES = new Set(["parser-no-errors"])
 
@@ -444,7 +463,7 @@ export class CLI {
           }
         }
 
-        files = [...new Set(allFiles)]
+        files = this.rejectUnsupportedFiles([...new Set(allFiles)], config, force, formatOption)
       }
 
       if (files.length === 0) {

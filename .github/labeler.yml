@@ -182,6 +182,7 @@ highlighter:
   - changed-files:
     - any-glob-to-any-file:
       - '**/javascript/packages/highlighter/**/*'
+      - '**/rust/herb-highlighter/**/*'
 
 node:
   - changed-files:

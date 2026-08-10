@@ -9,6 +9,14 @@ export function isConfigDocument(uriOrPath: string): boolean {
   return path.basename(uriOrPath) === Config.configPath || Config.isMisnamedConfigPath(uriOrPath)
 }
 
+export function pathFromUri(uri: string): string {
+  return decodeURIComponent(uri.replace(/^file:\/\//, ""))
+}
+
+export function uriFromPath(filePath: string): string {
+  return `file://${filePath.split("/").map(segment => encodeURIComponent(segment)).join("/")}`
+}
+
 export function camelize(value: string) {
   return value.replace(/(?:[_-])([a-z0-9])/g, (_, char) => char.toUpperCase())
 }

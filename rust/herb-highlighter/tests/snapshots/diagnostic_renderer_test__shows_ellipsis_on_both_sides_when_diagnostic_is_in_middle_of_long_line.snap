@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[error] Avoid 'should-be' in class names (class-naming-convention)
+
+/test/file.erb:1:45
+
+  →   1 │ …-class-name-that-should-be-truncated-when-th…
+        │                ~~~~~~~~~

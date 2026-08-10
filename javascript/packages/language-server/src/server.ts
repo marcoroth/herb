@@ -14,17 +14,26 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  DocumentSymbolParams,
   HoverParams,
   CompletionParams,
+  DefinitionParams,
+  ReferenceParams,
   TextDocumentIdentifier,
   Range,
+  FileChangeType,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
+import { DefinitionService } from "./definition_service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
+import { isPartialPath } from "@herb-tools/core"
 import { isConfigDocument } from "./utils"
 import { version } from "../package.json"
+
+import type { FileEvent } from "vscode-languageserver/node"
+import type { ExtractToPartialResult } from "./extract_code_action_service"
 
 export class Server {
   private service!: Service
@@ -63,14 +72,17 @@ export class Server {
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
           codeActionProvider: {
-            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite]
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll, CodeActionKind.RefactorRewrite, CodeActionKind.RefactorExtract]
           },
           foldingRangeProvider: true,
           documentHighlightProvider: true,
           hoverProvider: true,
           completionProvider: {
-            triggerCharacters: [".", ":", "<", "&"],
+            triggerCharacters: [".", ":", "<", "&", "\"", "'", "/", ",", " ", "@"],
           },
+          definitionProvider: true,
+          referencesProvider: true,
+          documentSymbolProvider: true,
         },
       }
 
@@ -160,6 +172,8 @@ export class Server {
           await Promise.all(documents.map(document =>
             this.service.diagnostics.refreshDocument(document)
           ))
+        } else if (await this.updatePartialIndex(event)) {
+          await this.service.diagnostics.refreshAllDocuments()
         }
       }
     })
@@ -189,7 +203,7 @@ export class Server {
 
       if (!document) return null
 
-      return this.service.hoverService.getHover(document, params.position)
+      return this.service.hoverService.getHover(document, params.position) ?? this.service.definitionService.getHover(document, params.position)
     })
 
     this.connection.onCompletion((params: CompletionParams) => {
@@ -219,8 +233,45 @@ export class Server {
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
       const rewriteCodeActions = this.service.rewriteCodeActionService.getCodeActions(document, params.range)
+      const extractCodeActions = this.service.extractCodeActionService.getCodeActions(document, params.range)
 
-      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions)
+      return autofixCodeActions.concat(linterDisableCodeActions).concat(rewriteCodeActions).concat(extractCodeActions)
+    })
+
+    this.connection.onRequest<ExtractToPartialResult, void>('herb/extractToPartial', (params: { textDocument: TextDocumentIdentifier, range: Range, name: string }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return { error: "The document isn't open." }
+
+      return this.service.extractCodeActionService.extractToPartial(document, params.range, params.name)
+    })
+
+    this.connection.onDefinition((params: DefinitionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const links = this.service.definitionService.getDefinition(document, params.position)
+
+      if (this.service.settings.supportsDefinitionLinks) return links
+
+      return DefinitionService.asLocations(links)
+    })
+
+    this.connection.onReferences((params: ReferenceParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.referencesService.getReferences(document, params.position, params.context.includeDeclaration)
+    })
+
+    this.connection.onDocumentSymbol((params: DocumentSymbolParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentSymbolService.getDocumentSymbols(document)
     })
 
     this.connection.onFoldingRanges((params: FoldingRangeParams) => {
@@ -246,6 +297,34 @@ export class Server {
 
       return this.service.commentService.toggleBlockComment(document, params.range)
     })
+  }
+
+  private async updatePartialIndex(event: FileEvent): Promise<boolean> {
+    const partials = this.service.partialIndexService
+    const callers = this.service.partialCallerIndexService
+
+    if (event.type === FileChangeType.Deleted) {
+      const stoppedCalling = callers.remove(event.uri)
+
+      this.service.diagnostics.clear(event.uri)
+
+      return partials.remove(event.uri) || stoppedCalling
+    }
+
+    const isOpen = this.service.documentService.get(event.uri) !== undefined
+    const changed = isOpen ? false : partials.updateFromDisk(event.uri)
+
+    if (event.type === FileChangeType.Created && isPartialPath(event.uri)) {
+      await callers.initialize()
+
+      return true
+    }
+
+    if (!isOpen) {
+      return callers.updateFromDisk(event.uri) || changed
+    }
+
+    return changed
   }
 
   listen() {

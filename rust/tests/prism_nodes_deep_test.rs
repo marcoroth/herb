@@ -1,3 +1,5 @@
+#![cfg(feature = "prism")]
+
 mod common;
 
 use herb::{parse_with_options, ParserOptions};

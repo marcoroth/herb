@@ -1,7 +1,8 @@
-import { colorize, hyperlink, severityColor, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
-import { applyDimToStyledText } from "./util.js"
+import { colorize, hyperlink, severityColor } from "./color.js"
+import { visibleWidth, ANSI_REGEX_START, ANSI_ESCAPE } from "./ansi.js"
+import { dimStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
-import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import * as gutter from "./gutter.js"
 import { computeDiagnosticMarkers } from "./diagnostic-markers.js"
 
 import type { DiagnosticMarker } from "./diagnostic-markers.js"
@@ -43,9 +44,9 @@ export class DiagnosticRenderer {
     diagnosticEnd: number,
     maxWidth: number
   ): { line: string; adjustedStart: number; adjustedEnd: number } {
-    const plainLine = line.replace(ANSI_REGEX, "")
+    const plainLineLength = visibleWidth(line)
 
-    if (plainLine.length <= maxWidth) {
+    if (plainLineLength <= maxWidth) {
       return { line, adjustedStart: diagnosticStart, adjustedEnd: diagnosticEnd }
     }
 
@@ -65,11 +66,11 @@ export class DiagnosticRenderer {
       }
     }
 
-    if (diagnosticStart > plainLine.length - maxWidth / 3) {
+    if (diagnosticStart > plainLineLength - maxWidth / 3) {
       const availableWidth = maxWidth - ellipsisLength
-      const startPos = Math.max(0, plainLine.length - availableWidth)
+      const startPos = Math.max(0, plainLineLength - availableWidth)
 
-      const visiblePortion = this.extractPortionFromPosition(line, startPos, plainLine.length)
+      const visiblePortion = this.extractPortionFromPosition(line, startPos, plainLineLength)
       const truncated = ellipsis + visiblePortion
 
       return {
@@ -81,7 +82,7 @@ export class DiagnosticRenderer {
 
     const contextWidth = maxWidth - (ellipsisLength * 2)
     const contextStart = Math.max(0, diagnosticStart - contextWidth / 3)
-    const contextEnd = Math.min(plainLine.length, contextStart + contextWidth)
+    const contextEnd = Math.min(plainLineLength, contextStart + contextWidth)
 
     const visiblePortion = this.extractPortionFromPosition(line, contextStart, contextEnd)
     const truncated = ellipsis + visiblePortion + ellipsis
@@ -186,11 +187,8 @@ export class DiagnosticRenderer {
       lineOffset = 0
     }
 
-    const separator = colorize("│", "gray")
-    const gutterPrefix = showLineNumbers ? `        ${separator} ` : ""
-    const availableWidth = showLineNumbers
-      ? Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
-      : maxWidth
+    const gutterPrefix = showLineNumbers ? gutter.continuationPrefix() : ""
+    const contentWidth = showLineNumbers ? gutter.availableWidth(maxWidth) : maxWidth
 
     let contextOutput = ""
 
@@ -202,24 +200,16 @@ export class DiagnosticRenderer {
       let markerStart = marker ? marker.start : 0
       let markerLength = marker ? Math.max(1, marker.end - marker.start) : 0
 
-      const lineNumber = isTargetLine
-        ? colorize(i.toString().padStart(3, " "), "bold")
-        : colorize(i.toString().padStart(3, " "), "gray")
+      const prefix = showLineNumbers ? gutter.linePrefix(i, isTargetLine, isTargetLine ? color : undefined) : ""
 
-      const prefix = isTargetLine
-        ? colorize("  → ", color)
-        : "    "
-
-      const linePrefix = showLineNumbers ? `${prefix}${lineNumber} ${separator} ` : ""
-
-      const displayLine = isTargetLine ? line : applyDimToStyledText(line)
+      const displayLine = isTargetLine ? line : dimStyledText(line)
 
       if (shouldWrap) {
-        const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+        const wrappedLines = LineWrapper.wrapLine(displayLine, contentWidth, "")
 
         for (let j = 0; j < wrappedLines.length; j++) {
           if (j === 0) {
-            contextOutput += `${linePrefix}${wrappedLines[j]}\n`
+            contextOutput += `${prefix}${wrappedLines[j]}\n`
           } else {
             contextOutput += `${gutterPrefix}${wrappedLines[j]}\n`
           }
@@ -228,25 +218,25 @@ export class DiagnosticRenderer {
         let truncatedLine: string
 
         if (marker) {
-          const result = this.truncateLineForDiagnostic(displayLine, marker.start, marker.end, availableWidth)
+          const result = this.truncateLineForDiagnostic(displayLine, marker.start, marker.end, contentWidth)
           truncatedLine = result.line
           markerStart = result.adjustedStart
           markerLength = Math.max(1, result.adjustedEnd - result.adjustedStart)
         } else {
-          truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
+          truncatedLine = LineWrapper.truncateLine(displayLine, contentWidth)
         }
 
-        contextOutput += `${linePrefix}${truncatedLine}\n`
+        contextOutput += `${prefix}${truncatedLine}\n`
       } else {
-        contextOutput += `${linePrefix}${displayLine}\n`
+        contextOutput += `${prefix}${displayLine}\n`
       }
 
       if (marker) {
-        const pointerPrefix = showLineNumbers ? `        ${separator}` : ""
+        const pointer_prefix = showLineNumbers ? gutter.pointerPrefix() : ""
         const pointerSpacing = " ".repeat(Math.max(0, markerStart + (showLineNumbers ? 1 : 0)))
         const pointer = colorize("~".repeat(markerLength), color)
 
-        contextOutput += `${pointerPrefix}${pointerSpacing}${pointer}\n`
+        contextOutput += `${pointer_prefix}${pointerSpacing}${pointer}\n`
       }
     }
 

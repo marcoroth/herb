@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { ElementStackVisitor } from "./rule-utils.js"
 import { getHelpersForTag, getTagLocalName, isERBOutputNode, isHTMLOpenTagNode, PrismVisitor } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
@@ -22,7 +22,7 @@ class FormHelperCallCollector extends PrismVisitor {
   }
 }
 
-class NestedFormVisitor extends BaseRuleVisitor {
+class NestedFormVisitor extends ElementStackVisitor {
   private formDepth = 0
 
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -36,6 +36,21 @@ class NestedFormVisitor extends BaseRuleVisitor {
         "Nested `<form>` elements are not allowed. Move the inner `<form>` outside of the enclosing `<form>`, or associate its controls using the `form` attribute.",
         this.elementLocation(node),
       )
+    } else {
+      const verdict = this.isRenderedInsideElement("form")
+
+      if (verdict === "always") {
+        this.addOffenseWithCallChain(
+          "Nested `<form>` elements are not allowed. Every call site renders this file inside a `<form>`, so associate its controls using the `form` attribute instead.",
+          this.elementLocation(node),
+        )
+      } else if (verdict === "mixed") {
+        this.addOffenseWithCallChain(
+          "Nested `<form>` elements are not allowed. At least one call site renders this file inside a `<form>`.",
+          this.elementLocation(node),
+          this.renderedChainInside("form"),
+        )
+      }
     }
 
     this.formDepth++
@@ -71,12 +86,29 @@ class NestedFormVisitor extends BaseRuleVisitor {
   }
 
   private checkNestedHelper(helperName: string, location: Location): void {
-    if (this.formDepth === 0) return
+    if (this.formDepth > 0) {
+      this.addOffense(
+        `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another \`<form>\`. Move it outside of the enclosing \`<form>\`.`,
+        location,
+      )
 
-    this.addOffense(
-      `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another \`<form>\`. Move it outside of the enclosing \`<form>\`.`,
-      location,
-    )
+      return
+    }
+
+    const verdict = this.isRenderedInsideElement("form")
+
+    if (verdict === "always") {
+      this.addOffenseWithCallChain(
+        `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another \`<form>\`. Every call site renders this file inside a \`<form>\`.`,
+        location,
+      )
+    } else if (verdict === "mixed") {
+      this.addOffenseWithCallChain(
+        `\`${helperName}\` renders its own \`<form>\` element and cannot be nested inside another \`<form>\`. At least one call site renders this file inside a \`<form>\`.`,
+        location,
+        this.renderedChainInside("form"),
+      )
+    }
   }
 
   private formHelperName(node: ERBBlockNode | ERBContentNode): string | null {

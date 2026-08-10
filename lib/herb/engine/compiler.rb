@@ -157,13 +157,6 @@ module Herb
       end
 
       def visit_html_close_tag_node(node)
-        tag_name = node.tag_name&.value&.downcase
-
-        if @engine.content_for_head && tag_name == "head"
-          escaped_html = @engine.content_for_head.gsub("'", "\\\\'")
-          @tokens << [:expr, "'#{escaped_html}'.html_safe", current_context]
-        end
-
         add_text(node.tag_opening&.value)
         add_text(node.tag_name&.value)
         add_text(node.tag_closing&.value)

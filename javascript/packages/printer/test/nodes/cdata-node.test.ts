@@ -12,10 +12,8 @@ describe("CDATANode Printing", () => {
   })
 
   test("can print empty CDATA section from node", () => {
-    const node = CDATANode.from({
-      type: "AST_CDATA_NODE",
+    const node = CDATANode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_CDATA_START", "<![CDATA["),
       children: [],
       tag_closing: createToken("TOKEN_CDATA_END", "]]>")
@@ -25,17 +23,13 @@ describe("CDATANode Printing", () => {
   })
 
   test("can print CDATA with text content from node", () => {
-    const literalNode = LiteralNode.from({
-      type: "AST_LITERAL_NODE",
+    const literalNode = LiteralNode.build({
       location: createLocation(),
-      errors: [],
       content: "Hello World"
     })
 
-    const node = CDATANode.from({
-      type: "AST_CDATA_NODE",
+    const node = CDATANode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_CDATA_START", "<![CDATA["),
       children: [literalNode],
       tag_closing: createToken("TOKEN_CDATA_END", "]]>")
@@ -45,17 +39,13 @@ describe("CDATANode Printing", () => {
   })
 
   test("can print CDATA with XML-like content from node", () => {
-    const literalNode = LiteralNode.from({
-      type: "AST_LITERAL_NODE",
+    const literalNode = LiteralNode.build({
       location: createLocation(),
-      errors: [],
       content: "<sender>John Smith</sender>"
     })
 
-    const node = CDATANode.from({
-      type: "AST_CDATA_NODE",
+    const node = CDATANode.build({
       location: createLocation(),
-      errors: [],
       tag_opening: createToken("TOKEN_CDATA_START", "<![CDATA["),
       children: [literalNode],
       tag_closing: createToken("TOKEN_CDATA_END", "]]>")

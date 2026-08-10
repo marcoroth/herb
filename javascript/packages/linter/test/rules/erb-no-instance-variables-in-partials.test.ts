@@ -24,7 +24,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags instance variables in partials", () => {
-    expectError("Avoid using instance variables in partials. Pass `@post` as a local variable instead.", [2, 6])
+    expectError("Avoid using instance variables in partials. Use the local variable `post` instead of `@post` and pass it in via `locals`.", [2, 6])
 
     assertOffenses(dedent`
       <div>
@@ -34,8 +34,8 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags multiple instance variables in partials", () => {
-    expectError("Avoid using instance variables in partials. Pass `@post` as a local variable instead.", [2, 6])
-    expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.", [3, 6])
+    expectError("Avoid using instance variables in partials. Use the local variable `post` instead of `@post` and pass it in via `locals`.", [2, 6])
+    expectError("Avoid using instance variables in partials. Use the local variable `user` instead of `@user` and pass it in via `locals`.", [3, 6])
 
     assertOffenses(dedent`
       <div>
@@ -46,7 +46,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags instance variables in silent ERB tags in partials", () => {
-    expectError("Avoid using instance variables in partials. Pass `@posts` as a local variable instead.", [1, 3])
+    expectError("Avoid using instance variables in partials. Use the local variable `posts` instead of `@posts` and pass it in via `locals`.", [1, 3])
 
     assertOffenses(dedent`
       <% @posts.each do |post| %>
@@ -81,7 +81,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags instance variables in deeply nested partials path", () => {
-    expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.", [1, 4])
+    expectError("Avoid using instance variables in partials. Use the local variable `user` instead of `@user` and pass it in via `locals`.", [1, 4])
 
     assertOffenses(dedent`
       <%= @user.name %>
@@ -101,7 +101,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags instance variable writes in partials", () => {
-    expectError("Avoid setting instance variables in partials. Use a local variable instead of `@record`.", [1, 3])
+    expectError("Avoid setting instance variables in partials. Assign the local variable `record` instead of `@record`.", [1, 3])
 
     assertOffenses(dedent`
       <% @record = "hello" %>
@@ -109,7 +109,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("flags instance variables in if conditions", () => {
-    expectError("Avoid using instance variables in partials. Pass `@show` as a local variable instead.", [1, 6])
+    expectError("Avoid using instance variables in partials. Use the local variable `show` instead of `@show` and pass it in via `locals`.", [1, 6])
 
     assertOffenses(dedent`
       <% if @show %>
@@ -119,7 +119,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
   })
 
   test("reports the correct location when preceded by a multi-byte character", () => {
-    expectError("Avoid using instance variables in partials. Pass `@show` as a local variable instead.", [2, 6])
+    expectError("Avoid using instance variables in partials. Use the local variable `show` instead of `@show` and pass it in via `locals`.", [2, 6])
 
     assertOffenses(dedent`
       <%# é %>
@@ -131,7 +131,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
 
   describe("control flow @ruby/prism drops from traversal", () => {
     test("reports instance variables inside a case/when branch", () => {
-      expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.")
+      expectError("Avoid using instance variables in partials. Use the local variable `user` instead of `@user` and pass it in via `locals`.")
 
       assertOffenses(dedent`
         <% case kind %>
@@ -142,7 +142,7 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
     })
 
     test("reports instance variables inside a case/in branch", () => {
-      expectError("Avoid using instance variables in partials. Pass `@user` as a local variable instead.")
+      expectError("Avoid using instance variables in partials. Use the local variable `user` instead of `@user` and pass it in via `locals`.")
 
       assertOffenses(dedent`
         <% case [kind, active] %>
@@ -153,8 +153,8 @@ describe("ERBNoInstanceVariablesInPartialsRule", () => {
     })
 
     test("reports instance variables assigned by a multiple assignment", () => {
-      expectError("Avoid setting instance variables in partials. Use a local variable instead of `@first`.")
-      expectError("Avoid setting instance variables in partials. Use a local variable instead of `@second`.")
+      expectError("Avoid setting instance variables in partials. Assign the local variable `first` instead of `@first`.")
+      expectError("Avoid setting instance variables in partials. Assign the local variable `second` instead of `@second`.")
 
       assertOffenses(dedent`
         <% @first, @second = 1, 2 %>

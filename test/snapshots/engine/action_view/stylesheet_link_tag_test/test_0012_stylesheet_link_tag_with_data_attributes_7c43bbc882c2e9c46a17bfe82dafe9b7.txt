@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0012_stylesheet_link_tag with data attributes"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", data: { turbo_track: \\\"reload\\\" } %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" data-turbo-track="reload" />'.freeze;
+_buf.to_s

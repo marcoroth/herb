@@ -1,0 +1,10 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[error] Test diagnostic positioning (test-positioning)
+
+/test/file.erb:1:50
+
+  →   1 │ …ame-that-should-be-truncated">Cont…
+        │             ~~~~~

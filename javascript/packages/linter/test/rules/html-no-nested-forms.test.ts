@@ -3,6 +3,7 @@ import { describe, test } from "vitest"
 
 import { HTMLNoNestedFormsRule } from "../../src/rules/html-no-nested-forms.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoNestedFormsRule)
 
@@ -235,5 +236,35 @@ describe("html-no-nested-forms", () => {
     assertOffenses(dedent`
       <form><div><form></form></div></form>
     `)
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_fields.html.erb"
+
+    test("fails when every call site renders the file inside a form", () => {
+      expectError("Nested `<form>` elements are not allowed. Every call site renders this file inside a `<form>`, so associate its controls using the `form` attribute instead.")
+
+      assertOffenses(`<form action="/inner"></form>`, renderedFrom(partial, ["html", "body", "form"]))
+    })
+
+    test("fails when only some call sites render the file inside a form", () => {
+      expectError("Nested `<form>` elements are not allowed. At least one call site renders this file inside a `<form>`.")
+
+      assertOffenses(`<form action="/inner"></form>`, renderedFrom(partial, ["html", "body", "form"], ["html", "body", "div"]))
+    })
+
+    test("passes when no call site renders the file inside a form", () => {
+      expectNoOffenses(`<form action="/inner"></form>`, renderedFrom(partial, ["html", "body", "div"]))
+    })
+
+    test("passes when nothing renders the file", () => {
+      expectNoOffenses(`<form action="/inner"></form>`, renderedFromNowhere(partial))
+    })
+
+    test("fails for a form helper rendered inside a form", () => {
+      expectError("`form_tag` renders its own `<form>` element and cannot be nested inside another `<form>`. Every call site renders this file inside a `<form>`.")
+
+      assertOffenses(`<%= form_tag "/inner" do %><% end %>`, renderedFrom(partial, ["html", "body", "form"]))
+    })
   })
 })

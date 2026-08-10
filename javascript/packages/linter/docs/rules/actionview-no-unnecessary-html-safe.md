@@ -14,6 +14,16 @@ Because the content is static, `.html_safe` is not protecting anything either. T
 
 Note that dropping just the `.html_safe` call is not equivalent, since Action View escapes the remaining literal: `<%= "<strong>Sale</strong>" %>` renders as `&lt;strong&gt;Sale&lt;/strong&gt;`. The content has to move out of the ERB tag for the output to stay the same.
 
+## Autofix
+
+The offense is autocorrectable whenever the content can move into the template unchanged. In three cases it is reported without a fix, because writing the content directly would leave the template unparseable.
+
+The first is content that is not balanced markup on its own, such as `"<div>"`, `"</div>"` or `"<b>a<i>b</i></b>"` with the tags crossed. Inlining it would change the element nesting of the surrounding document, even though the rendered bytes stay the same. The rule parses the content to decide this, so balanced content like `"<strong>Sale</strong>"`, `"<br>"` or `"<div>a</div><div>b</div>"` is still corrected.
+
+The second is a literal inside an unquoted attribute value, such as `<div id=<%= "a b".html_safe %>>`. The value ends at the first ERB tag, so the content would not stay part of it.
+
+The third is content containing the quote that encloses the attribute value. Note that `.html_safe` skips escaping, so unlike a plain `<%= %>` tag the quote is not turned into `&quot;`. Such a template already renders a broken attribute, and the fix is to escape the quote rather than to inline it.
+
 ## Examples
 
 ### ✅ Good

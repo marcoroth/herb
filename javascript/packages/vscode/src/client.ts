@@ -1,7 +1,7 @@
 import * as path from "path"
 
 import { workspace, ExtensionContext, Disposable, window } from "vscode"
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, WorkspaceEdit } from "vscode-languageclient/node"
 import { Config } from "@herb-tools/config"
 
 export class Client {
@@ -69,6 +69,12 @@ export class Client {
     return await this.client.sendRequest(method, params)
   }
 
+  async applyWorkspaceEdit(edit: WorkspaceEdit): Promise<boolean> {
+    const workspaceEdit = await this.client.protocol2CodeConverter.asWorkspaceEdit(edit)
+
+    return await workspace.applyEdit(workspaceEdit)
+  }
+
   async updateConfiguration() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
     let settings: any
@@ -85,6 +91,7 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
@@ -103,6 +110,7 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           trace: {
@@ -113,7 +121,7 @@ export class Client {
     } else {
       settings = {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         trace: { server: 'verbose' },
       }
     }
@@ -166,6 +174,12 @@ export class Client {
     }
   }
 
+  private get experimentalCapabilities() {
+    return {
+      extractToPartialCommand: true,
+    }
+  }
+
   private async getInitializationOptions() {
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
 
@@ -181,6 +195,7 @@ export class Client {
           formatter: {
             enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            indentStyle: projectConfig.formatter?.indentStyle ?? 'space',
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
             rewriter: projectConfig.formatter?.rewriter,
@@ -188,6 +203,7 @@ export class Client {
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
+          experimental: this.experimentalCapabilities,
         }
       } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
@@ -199,18 +215,21 @@ export class Client {
           formatter: {
             enabled: vscodeConfig.get('formatter.enabled', false),
             indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            indentStyle: vscodeConfig.get('formatter.indentStyle', 'space'),
             maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
+          experimental: this.experimentalCapabilities,
         }
       }
     } else {
       return {
         linter: { enabled: true },
-        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        formatter: { enabled: false, indentWidth: 2, indentStyle: 'space', maxLineLength: 80 },
         trace: { server: 'verbose' },
+        experimental: this.experimentalCapabilities,
       }
     }
   }

@@ -34,14 +34,11 @@ module Herb
 
       #: (Herb::Token, Herb::Location) -> Herb::AST::HTMLCloseTagNode
       def explicit_close_tag(tag_name, location)
-        Herb::AST::HTMLCloseTagNode.new(
-          "HTMLCloseTagNode",
-          location,
-          [],
-          Herb::Token.from("TOKEN_HTML_TAG_START_CLOSE", "</", location: location),
-          tag_name,
-          [],
-          Herb::Token.from("TOKEN_HTML_TAG_END", ">", location: location)
+        Herb::AST::HTMLCloseTagNode.build(
+          location: location,
+          tag_opening: Herb::Token.from("TOKEN_HTML_TAG_START_CLOSE", "</", location: location),
+          tag_name: tag_name,
+          tag_closing: Herb::Token.from("TOKEN_HTML_TAG_END", ">", location: location)
         )
       end
     end

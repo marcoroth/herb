@@ -140,7 +140,9 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       return Err("Failed to parse source".to_string());
     }
 
-    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void).ok_or_else(|| {
+    let shared_source: std::sync::Arc<str> = std::sync::Arc::from(source);
+
+    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void, &shared_source).ok_or_else(|| {
       crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
       crate::ffi::hb_allocator_destroy(&mut allocator);
       "Failed to convert AST".to_string()
@@ -390,6 +392,9 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       track_whitespace_changes: options.track_whitespace_changes,
     };
 
+    let shared_old_source: std::sync::Arc<str> = std::sync::Arc::from(old_source);
+    let shared_new_source: std::sync::Arc<str> = std::sync::Arc::from(new_source);
+
     let diff_result = crate::ffi::herb_diff(old_root, new_root, &diff_options, &mut diff_allocator);
 
     let identical = crate::ffi::herb_diff_trees_identical(diff_result);
@@ -415,13 +420,13 @@ pub fn diff_with_options(old_source: &str, new_source: &str, options: &DiffOptio
       }
 
       let old_node = if !operation_ref.old_node.is_null() {
-        crate::ast::nodes::convert_node(operation_ref.old_node as *const std::ffi::c_void)
+        crate::ast::nodes::convert_node(operation_ref.old_node as *const std::ffi::c_void, &shared_old_source)
       } else {
         None
       };
 
       let new_node = if !operation_ref.new_node.is_null() {
-        crate::ast::nodes::convert_node(operation_ref.new_node as *const std::ffi::c_void)
+        crate::ast::nodes::convert_node(operation_ref.new_node as *const std::ffi::c_void, &shared_new_source)
       } else {
         None
       };

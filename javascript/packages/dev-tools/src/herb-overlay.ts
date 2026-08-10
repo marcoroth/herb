@@ -19,6 +19,7 @@ export class HerbOverlay {
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private errorOverlay: ErrorOverlay | null = null;
+  private destroyed = false;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
   private static readonly EDITOR_OPTIONS = [
@@ -65,6 +66,26 @@ export class HerbOverlay {
     this.initializeErrorOverlay();
     this.setupTurboListeners();
     this.applySettings();
+
+    document.addEventListener('click', this.handleDocumentClick);
+  }
+
+  public destroy() {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
+
+    document.removeEventListener('click', this.handleDocumentClick);
+    document.removeEventListener('turbo:load', this.handleTurboNavigation);
+    document.removeEventListener('turbo:render', this.handleTurboNavigation);
+    document.removeEventListener('turbo:visit', this.handleTurboNavigation);
+
+    this.errorOverlay?.destroy();
+    this.errorOverlay = null;
+
+    document.querySelector('.herb-floating-menu')?.remove();
   }
 
   private loadProjectPath() {
@@ -279,33 +300,39 @@ export class HerbOverlay {
 
         this.saveSettings();
       });
-
-      document.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const floatingMenu = document.querySelector('.herb-floating-menu');
-
-        if (floatingMenu && !floatingMenu.contains(target) && this.menuOpen) {
-          this.menuOpen = false;
-          menuTrigger.classList.remove('active');
-          menuPanel.classList.remove('open');
-          this.saveSettings();
-        }
-      });
     }
   }
 
+  private handleDocumentClick = (event: MouseEvent) => {
+    if (!this.menuOpen) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    const floatingMenu = document.querySelector('.herb-floating-menu');
+
+    if (floatingMenu && !floatingMenu.contains(target)) {
+      this.closeMenu();
+    }
+  }
+
+  private closeMenu() {
+    this.menuOpen = false;
+
+    document.getElementById('herbMenuTrigger')?.classList.remove('active');
+    document.getElementById('herbMenuPanel')?.classList.remove('open');
+
+    this.saveSettings();
+  }
+
+  private handleTurboNavigation = () => {
+    this.reinitializeAfterNavigation();
+  }
+
   private setupTurboListeners() {
-    document.addEventListener('turbo:load', () => {
-      this.reinitializeAfterNavigation();
-    });
-
-    document.addEventListener('turbo:render', () => {
-      this.reinitializeAfterNavigation();
-    });
-
-    document.addEventListener('turbo:visit', () => {
-      this.reinitializeAfterNavigation();
-    });
+    document.addEventListener('turbo:load', this.handleTurboNavigation);
+    document.addEventListener('turbo:render', this.handleTurboNavigation);
+    document.addEventListener('turbo:visit', this.handleTurboNavigation);
   }
 
   private reinitializeAfterNavigation() {

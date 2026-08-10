@@ -1,7 +1,8 @@
-import { colorize, ANSI_REGEX } from "./color.js"
-import { applyDimToStyledText, applyBackground, sliceStyled } from "./util.js"
+import { colorize } from "./color.js"
+import { visibleWidth } from "./ansi.js"
+import { dimStyledText, applyBackground, sliceStyled } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
-import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
+import { separator, GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter.js"
 import { computeDiffHunks, computeInlineRanges } from "./diff-computer.js"
 
 import type { DiffHunk, DiffLine, InlineRange } from "./diff-computer.js"
@@ -172,12 +173,12 @@ export class DiffRenderer {
       }
     }
 
-    const separator = colorize("│", "gray")
+    const columnSeparator = separator()
     const availableWidth = showLineNumbers
       ? Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH - indent.length)
       : Math.max(MIN_CONTENT_WIDTH, maxWidth - indent.length)
 
-    const gutterPrefix = showLineNumbers ? `${indent}        ${separator} ` : indent
+    const gutterPrefix = showLineNumbers ? `${indent}        ${columnSeparator} ` : indent
 
     let output = ""
 
@@ -200,7 +201,7 @@ export class DiffRenderer {
         const highlighted = this.highlightedContentFor(line, highlightedOriginalLines, highlightedModifiedLines)
         const displayLine = composite ?? this.styleContent(highlighted, line, inlineRanges.get(line), removedLineStyle)
         const linePrefix = showLineNumbers
-          ? `${indent}${composite ? this.collapsedGutterFor(line) : this.gutterFor(line)}${separator} `
+          ? `${indent}${composite ? this.collapsedGutterFor(line) : this.gutterFor(line)}${columnSeparator} `
           : `${indent}${composite ? colorize("± ", "yellow") : this.markerFor(line)}`
 
         if (wrapLines) {
@@ -266,10 +267,10 @@ export class DiffRenderer {
     ranges: InlineRange[] | undefined,
     removedLineStyle: "tint" | "dim" | "none",
   ): string {
-    if (line.type === "context") return applyDimToStyledText(highlighted)
+    if (line.type === "context") return dimStyledText(highlighted)
 
     if (line.type === "removed" && removedLineStyle === "dim") {
-      return applyDimToStyledText(highlighted)
+      return dimStyledText(highlighted)
     }
 
     const lineColor = line.type === "added"
@@ -333,7 +334,7 @@ export class DiffRenderer {
   ): string {
     const { columnWidth, highlightInlineChanges, removedLineStyle, indent } = options
 
-    const separator = colorize("│", "gray")
+    const columnSeparator = separator()
     const divider = ` ${colorize("┃", "gray")} `
     const contentWidth = columnWidth - GUTTER_WIDTH
 
@@ -343,14 +344,14 @@ export class DiffRenderer {
       const inlineRanges = highlightInlineChanges ? this.inlineRangesFor(hunk) : new Map<DiffLine, InlineRange[]>()
 
       if (hunkIndex > 0) {
-        const gutter = `        ${separator} ${colorize("⋮", "gray")}`
+        const gutter = `        ${columnSeparator} ${colorize("⋮", "gray")}`
 
         output += `${indent}${this.padStyled(gutter, columnWidth)}${divider}${gutter}\n`
       }
 
       for (const { left, right } of this.rowsFor(hunk)) {
-        const leftCell = this.splitCell(left, "old", highlightedOriginalLines, highlightedModifiedLines, inlineRanges, removedLineStyle, contentWidth, separator)
-        const rightCell = this.splitCell(right, "new", highlightedOriginalLines, highlightedModifiedLines, inlineRanges, removedLineStyle, contentWidth, separator)
+        const leftCell = this.splitCell(left, "old", highlightedOriginalLines, highlightedModifiedLines, inlineRanges, removedLineStyle, contentWidth, columnSeparator)
+        const rightCell = this.splitCell(right, "new", highlightedOriginalLines, highlightedModifiedLines, inlineRanges, removedLineStyle, contentWidth, columnSeparator)
 
         output += `${indent}${this.padStyled(leftCell, columnWidth)}${divider}${rightCell}\n`
       }
@@ -378,7 +379,7 @@ export class DiffRenderer {
   }
 
   private padStyled(text: string, width: number): string {
-    const printableLength = text.replace(ANSI_REGEX, "").length
+    const printableLength = visibleWidth(text)
 
     return text + " ".repeat(Math.max(0, width - printableLength))
   }

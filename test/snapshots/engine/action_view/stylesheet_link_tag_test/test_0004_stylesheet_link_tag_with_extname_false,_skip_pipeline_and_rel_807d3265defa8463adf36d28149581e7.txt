@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0004_stylesheet_link_tag with extname false, skip_pipeline and rel"
+input: "{source: \"<%= stylesheet_link_tag \\\"style.less\\\", extname: false, skip_pipeline: true, rel: \\\"stylesheet/less\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet/less" href="/stylesheets/style.less" />

@@ -21,6 +21,8 @@ import {
   reportDiagnosticIssue
 } from "./issue-reporter"
 
+import type { ExtractToPartialArguments, ExtractToPartialResult } from "./types"
+
 let client: Client
 let analysisProvider: HerbAnalysisProvider
 let configProvider: HerbConfigProvider
@@ -118,6 +120,12 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(configStatusBarItem)
 
   client = new Client(context)
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('herb.extractToPartial', async (args?: ExtractToPartialArguments) => {
+      await extractToPartial(args)
+    })
+  )
 
   await client.start()
 
@@ -295,6 +303,71 @@ async function sendCommentRequest(editor: vscode.TextEditor, method: string) {
       }
     })
   }
+}
+
+async function extractToPartial(args?: ExtractToPartialArguments) {
+  const request = args ?? selectionArguments()
+
+  if (!request) {
+    await vscode.window.showErrorMessage("Herb: Select the markup you want to extract into a partial first.")
+
+    return
+  }
+
+  await promptAndExtract(request)
+}
+
+function selectionArguments(): ExtractToPartialArguments | null {
+  const editor = vscode.window.activeTextEditor
+
+  if (!editor || editor.selection.isEmpty) return null
+
+  return {
+    uri: editor.document.uri.toString(),
+    range: {
+      start: { line: editor.selection.start.line, character: editor.selection.start.character },
+      end: { line: editor.selection.end.line, character: editor.selection.end.character }
+    },
+    suggestedName: "",
+    locals: []
+  }
+}
+
+async function promptAndExtract(args: ExtractToPartialArguments) {
+  const locals = args.locals.length > 0 ? ` Locals: ${args.locals.map(local => `${local}:`).join(", ")}` : ""
+
+  const name = await vscode.window.showInputBox({
+    title: "Extract to partial",
+    prompt: `Name for the new partial, optionally with a path relative to app/views.${locals}`,
+    value: args.suggestedName,
+    validateInput: (value) => {
+      return /^[a-zA-Z0-9_\-/]+$/.test(value.trim()) ? null : "Use letters, numbers, underscores, dashes and slashes."
+    }
+  })
+
+  if (!name) return
+
+  const result = await client.sendRequest<ExtractToPartialResult>('herb/extractToPartial', {
+    textDocument: { uri: args.uri },
+    range: args.range,
+    name
+  })
+
+  if (!result || "error" in result) {
+    await vscode.window.showErrorMessage(`Herb: ${result?.error ?? "Could not extract the selection into a partial."}`)
+
+    return
+  }
+
+  const applied = await client.applyWorkspaceEdit(result.edit)
+
+  if (!applied) {
+    await vscode.window.showErrorMessage("Herb: Could not apply the extraction.")
+
+    return
+  }
+
+  await vscode.window.showTextDocument(vscode.Uri.parse(result.uri))
 }
 
 async function runAutoAnalysis() {

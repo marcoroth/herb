@@ -39,17 +39,16 @@ engine = Herb::Engine.new(source,
 
 In addition to Erubi options, `Herb::Engine` supports:
 
-| Option | Default | Description |
-|---|---|---|
-| `validation_mode` | `:raise` | How to handle validation errors: `:raise`, `:overlay`, or `:none` |
-| `validators` | `{}` | Per-validator overrides (e.g., `{ security: false }`) |
-| `parser_options` | `{}` | [Parser options](/parser-options) forwarded to the parser (e.g., `{ strict: false }`) |
-| `visitors` | `[]` | AST visitors to run before compilation |
-| `project_path` | `Dir.pwd` | Project root for relative path resolution |
-| `content_for_head` | `nil` | HTML injected before the closing `</head>` tag |
-| `validate_ruby` | `false` | Raise if the compiled output isn't valid Ruby |
-| `optimize` | `false` | Compile-time optimizations for Action View helpers (experimental) |
-| `debug` | `false` | Enable debug mode |
+| Option            | Default   | Description                                                                           |
+|-------------------|-----------|---------------------------------------------------------------------------------------|
+| `validation_mode` | `:raise`  | How to handle validation errors: `:raise`, `:overlay`, or `:none`                     |
+| `validators`      | `{}`      | Per-validator overrides (e.g., `{ security: false }`)                                 |
+| `parser_options`  | `{}`      | [Parser options](/parser-options) forwarded to the parser (e.g., `{ strict: false }`) |
+| `visitors`        | `[]`      | AST visitors to run before compilation                                                |
+| `project_path`    | `Dir.pwd` | Project root for relative path resolution                                             |
+| `validate_ruby`   | `false`   | Raise if the compiled output isn't valid Ruby                                         |
+| `optimize`        | `false`   | Compile-time optimizations for Action View helpers (experimental)                     |
+| `debug`           | `false`   | Enable debug mode                                                                     |
 
 Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`, together with any other [parser option](/parser-options):
 
@@ -61,11 +60,11 @@ Herb::Engine.new(source, parser_options: { strict: false })
 
 The engine runs validators on parsed templates to catch errors before compilation. Each validator can be enabled or disabled via [`.herb.yml` configuration](/configuration#engine-configuration) or per-instance overrides.
 
-| Validator | Description |
-|---|---|
-| Security | Detects ERB output in unsafe positions (attribute names, attribute positions) |
-| Nesting | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`) |
-| Accessibility | Validates accessibility-related attributes |
+| Validator     | Description                                                                   |
+|---------------|-------------------------------------------------------------------------------|
+| Security      | Detects ERB output in unsafe positions (attribute names, attribute positions) |
+| Nesting       | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`)                  |
+| Accessibility | Validates accessibility-related attributes                                    |
 
 Disable security validator for this template:
 ```ruby
@@ -88,10 +87,11 @@ The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that
 
 Herb ships the following transform visitors:
 
-| Visitor | Description |
-|---|---|
-| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones |
-| `ComponentVisitor` | Rewrites capitalized tags into `render` calls (experimental) |
+| Visitor                       | Description                                                  |
+|-------------------------------|--------------------------------------------------------------|
+| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones             |
+| `ContentForVisitor`           | Appends HTML to the end of every matching element            |
+| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -126,6 +126,59 @@ The engine renders:
 ```
 
 The closing tag is inserted where the parser determined the element ends, which keeps the surrounding whitespace (and therefore the rendering of `inline-block` elements) identical to the template without the visitor.
+
+### `ContentForVisitor`
+
+Appends HTML to the end of every element matching a tag name, so that it ends up right before that element's closing tag.
+
+```ruby
+require "herb/engine/content_for_visitor"
+
+Herb::Engine.new(source, visitors: [
+  Herb::Engine::ContentForVisitor.new("<p>Footer</p>", tag_name: "main")
+])
+```
+
+Tag names are matched case-insensitively, and every matching element in the template gets the content, including nested ones.
+
+Pass `attributes` to narrow which elements match. Every condition in the hash has to hold:
+
+```ruby
+Herb::Engine::ContentForVisitor.new(
+  "<p>Footer</p>",
+  tag_name: "main",
+  attributes: { "id" => "content", "data-role" => /page/, "hidden" => false }
+)
+```
+
+| Condition     | Matches when                                 |
+|---------------|----------------------------------------------|
+| `true`        | The attribute is present, whatever its value |
+| `false`       | The attribute is absent                      |
+| A `Regexp`    | The attribute value matches it               |
+| Anything else | The attribute value is equal to it           |
+
+Attribute names are matched case-insensitively, and may be given as strings or symbols. An attribute whose value is built from ERB has no value known at compile time, so it matches `true` but never a string or `Regexp` condition.
+
+Multiple visitors compose, and each appends after the last, in the order you pass them.
+
+Given this template and a visitor for the `head` tag:
+
+```html+erb
+<head>
+  <title>Hello</title>
+</head>
+```
+
+The engine renders:
+
+```html
+<head>
+  <title>Hello</title>
+<meta name="herb" content="1"></head>
+```
+
+The content is emitted as a Ruby string literal marked `html_safe`, so it is never escaped, and quotes, backslashes and `#{}` in it are not interpreted.
 
 ### `ComponentVisitor`
 

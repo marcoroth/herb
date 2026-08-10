@@ -27,6 +27,11 @@ module Herb
         <%- end -%>
       end
 
+      #: (<%= [*node.fields.map { |field| "?#{field.name}: #{field.nilable_ruby_type}" }, "?location: Location", "?errors: Array[Herb::Errors::Error]"].join(", ") %>) -> <%= node.name %>
+      def self.build(<%= [*node.fields.map { |field| "#{field.name}: #{field.default_ruby_value}" }, "location: Location.zero", "errors: []"].join(", ") %>)
+        new(<%= ["\"#{node.name}\"", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
+      end
+
       <%- if node.fields.any? { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
       <%- prism_field = node.fields.find { |f| f.is_a?(Herb::Template::PrismSerializedField) || f.is_a?(Herb::Template::PrismNodeField) } -%>
       #: () -> Prism::node?

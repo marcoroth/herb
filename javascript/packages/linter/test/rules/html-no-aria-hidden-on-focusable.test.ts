@@ -22,9 +22,17 @@ describe("html-no-aria-hidden-on-focusable", () => {
     assertOffenses(`<button aria-hidden="true">Hidden button</button>`)
   })
 
+  test("passes for disabled button with aria-hidden='true'", () => {
+    expectNoOffenses(`<button disabled aria-hidden="true">Unavailable</button>`)
+  })
+
   test("fails for input with aria-hidden='true'", () => {
     expectWarning("Elements that are focusable should not have `aria-hidden=\"true\"` because it will cause confusion for assistive technology users.")
     assertOffenses(`<input type="text" aria-hidden="true">`)
+  })
+
+  test("passes for hidden input with aria-hidden='true'", () => {
+    expectNoOffenses(`<input type="hidden" aria-hidden="true">`)
   })
 
   test("fails for select with aria-hidden='true'", () => {

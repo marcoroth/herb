@@ -1,0 +1,7 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[error] Test error message (test-rule)
+
+/test/file.erb:999:1

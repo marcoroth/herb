@@ -1,0 +1,36 @@
+---
+source: herb-highlighter/tests/integration_test.rs
+expression: "String::from_utf8_lossy(&output.stdout)"
+---
+Usage: herb-highlight [file] [options]
+
+Arguments:
+  file                   File to highlight (required)
+
+Options:
+  -h, --help             how help
+  -v, --version          show version
+  --theme                color theme (onedark|github-light|dracula|tokyo-night|simple) or path to custom theme file [default: onedark]
+  --focus                line number to focus on (shows only that line with context)
+  --context-lines        number of context lines around focus line [default: 2]
+  --no-line-numbers      hide line numbers and file path header
+  --wrap-lines           enable line wrapping [default: true]
+  --no-wrap-lines        disable line wrapping
+  --truncate-lines       enable line truncation (mutually exclusive with --wrap-lines)
+  --max-width            maximum width for line wrapping/truncation [default: terminal width]
+  --diagnostics          JSON string or file path containing diagnostics to render
+  --split-diagnostics    render each diagnostic individually (requires --diagnostics)
+  --diff                 render a diff instead of a file
+
+Diff two files, which can also be spelled as the `diff` subcommand:
+
+  herb-highlight diff before.html.erb after.html.erb
+  herb-highlight --diff before.html.erb after.html.erb
+
+Or render a diff that was made elsewhere, taken from the argument or from stdin:
+
+  git diff -- app/views | herb-highlight diff
+  herb-highlight diff fix.json
+
+That accepts unified diff text as produced by `git diff`, or JSON as
+{"original": "...", "modified": "..."} or {"hunks": [...]}

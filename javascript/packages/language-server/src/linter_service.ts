@@ -8,6 +8,8 @@ import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { Project } from "./project"
+import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { isConfigDocument, lintToDignosticSeverity, lintToDignosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
@@ -21,6 +23,8 @@ export class LinterService {
   private readonly connection: Connection
   private readonly settings: Settings
   private readonly project: Project
+  private readonly partialIndexService: PartialIndexService
+  private readonly partialCallerIndexService?: PartialCallerIndexService
   private readonly source = "Herb Linter "
   private linter?: Linter
   private allRules: RuleClass[] = rules
@@ -29,10 +33,12 @@ export class LinterService {
   private hasShownCustomRuleWarning = false
   private customRulePaths: Map<string, string> = new Map()
 
-  constructor(connection: Connection, settings: Settings, project: Project) {
+  constructor(connection: Connection, settings: Settings, project: Project, partialIndexService: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
     this.connection = connection
     this.settings = settings
     this.project = project
+    this.partialIndexService = partialIndexService
+    this.partialCallerIndexService = partialCallerIndexService
   }
 
   /**
@@ -152,6 +158,8 @@ export class LinterService {
       const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
 
       const config = Config.fromObject({
+        framework: projectConfig?.config?.framework,
+        template_engine: projectConfig?.config?.template_engine,
         linter: {
           ...linterConfig,
           rules: {
@@ -171,7 +179,12 @@ export class LinterService {
     }
 
     const content = textDocument.getText()
-    const lintResult = this.linter.lint(content, { fileName: textDocument.uri })
+
+    const lintResult = this.linter.lint(content, {
+      fileName: this.partialIndexService.relativePathFor(textDocument.uri) ?? textDocument.uri,
+      partials: this.partialIndexService.index,
+      partialCallers: this.partialCallerIndexService?.index,
+    })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {
       const range = lspRangeFromLocation(offense.location)

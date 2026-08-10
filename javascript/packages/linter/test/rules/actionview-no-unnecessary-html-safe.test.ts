@@ -97,4 +97,22 @@ describe("actionview-no-unnecessary-html-safe", () => {
   it("passes for plain HTML", () => {
     expectNoOffenses(`<div style="display: none;"></div>`)
   })
+
+  it("flags a String literal in an unquoted attribute value", () => {
+    expectError('Avoid calling `.html_safe` on the String literal `"a b"`. Write the content directly in the template instead.')
+
+    assertOffenses(`<div id=<%= "a b".html_safe %>>y</div>`)
+  })
+
+  it("flags a String literal containing the enclosing double quote", () => {
+    expectError('Avoid calling `.html_safe` on the String literal `"say \\"hi\\""`. Write the content directly in the template instead.')
+
+    assertOffenses(`<div title="<%= "say \\"hi\\"".html_safe %>">y</div>`)
+  })
+
+  it("flags a String literal containing `&` in a quoted attribute value", () => {
+    expectError('Avoid calling `.html_safe` on the String literal `"a & b"`. Write the content directly in the template instead.')
+
+    assertOffenses(`<div title="<%= "a & b".html_safe %>">y</div>`)
+  })
 })

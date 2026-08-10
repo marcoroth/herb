@@ -2,22 +2,32 @@ import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, TextEd
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Config } from "@herb-tools/config"
+import { VALID_FRAMEWORKS, isValidFramework } from "@herb-tools/core"
 import { Project } from "./project"
+import { PartialIndexService } from "./partial_index_service"
+import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 
 import { getFullDocumentRange, lspRangeFromLocation } from "./range_utils"
 
+import type { Framework, HerbConfigOptions } from "@herb-tools/config"
 import type { LintOffense } from "@herb-tools/linter"
+
+const FRAMEWORK_OPTION_RULE = "herb-config-framework-option"
 
 export class CodeActionService {
   private project: Project
+  private partialIndexService?: PartialIndexService
+  private partialCallerIndexService?: PartialCallerIndexService
   private config?: Config
   private linter: Linter
 
-  constructor(project: Project, config?: Config) {
+  constructor(project: Project, config?: Config, partialIndexService?: PartialIndexService, partialCallerIndexService?: PartialCallerIndexService) {
     this.project = project
     this.config = config
+    this.partialIndexService = partialIndexService
+    this.partialCallerIndexService = partialCallerIndexService
     this.linter = Linter.from(Herb, config)
   }
 
@@ -47,6 +57,8 @@ export class CodeActionService {
       if (disableLineAction) {
         actions.push(disableLineAction)
       }
+
+      actions.push(...this.createSetFrameworkActions(diagnostic, ruleName))
 
       const disableInConfigAction = this.createDisableInConfigAction(
         diagnostic,
@@ -84,7 +96,11 @@ export class CodeActionService {
     const codeActions: CodeAction[] = []
     const text = document.getText()
 
-    const lintResult = this.linter.lint(text, { fileName: document.uri })
+    const lintResult = this.linter.lint(text, {
+      fileName: this.partialIndexService?.relativePathFor(document.uri) ?? document.uri,
+      partials: this.partialIndexService?.index,
+      partialCallers: this.partialCallerIndexService?.index,
+    })
     const offenses = lintResult.offenses
 
     const relevantDiagnostics = params.context.diagnostics.filter(diagnostic => {
@@ -259,7 +275,63 @@ export class CodeActionService {
     return action
   }
 
+  private createSetFrameworkActions(diagnostic: Diagnostic, ruleName: string): CodeAction[] {
+    if (ruleName !== FRAMEWORK_OPTION_RULE) return []
+    if (this.config?.framework) return []
+
+    const projectPath = this.project.projectPath
+
+    if (!projectPath) return []
+
+    const configUri = `file://${Config.configPathFromProjectPath(projectPath)}`
+    const suggested = this.suggestedFramework(diagnostic)
+    const frameworks = suggested ? [suggested] : VALID_FRAMEWORKS
+
+    return frameworks.flatMap(framework => {
+      const edit = this.createConfigMutationEdit({ framework })
+
+      if (!edit) return []
+
+      const action: CodeAction = {
+        title: `Herb Linter: Set \`framework: ${framework}\` in \`.herb.yml\``,
+        kind: CodeActionKind.QuickFix,
+        diagnostics: [diagnostic],
+        edit,
+        command: {
+          title: 'Open .herb.yml',
+          command: 'vscode.open',
+          arguments: [configUri]
+        }
+      }
+
+      return [action]
+    })
+  }
+
+  private suggestedFramework(diagnostic: Diagnostic): Framework | undefined {
+    const message = typeof diagnostic.message === "string" ? diagnostic.message : diagnostic.message.value
+    const match = message.match(/looks like `(\w+)`/)
+
+    if (!match || !isValidFramework(match[1])) return undefined
+
+    return match[1]
+  }
+
   private createConfigDisableEdit(ruleName: string): WorkspaceEdit | null {
+    if (this.config?.isRuleDisabled(ruleName)) {
+      return null
+    }
+
+    return this.createConfigMutationEdit({
+      linter: {
+        rules: {
+          [ruleName]: { enabled: false }
+        }
+      }
+    })
+  }
+
+  private createConfigMutationEdit(mutation: Partial<HerbConfigOptions>): WorkspaceEdit | null {
     try {
       const projectPath = this.project.projectPath
 
@@ -267,20 +339,8 @@ export class CodeActionService {
         return null
       }
 
-      if (this.config?.isRuleDisabled(ruleName)) {
-        return null
-      }
-
       const configPath = Config.configPathFromProjectPath(projectPath)
       const configUri = `file://${configPath}`
-
-      const mutation = {
-        linter: {
-          rules: {
-            [ruleName]: { enabled: false }
-          }
-        }
-      }
 
       const configExists = Config.exists(configPath)
       let newContent = ''

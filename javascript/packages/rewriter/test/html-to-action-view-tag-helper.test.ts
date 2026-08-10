@@ -463,6 +463,76 @@ describe("HTMLToActionViewTagHelperRewriter", () => {
     })
   })
 
+  describe("stylesheet_link_tag for stylesheet link elements", () => {
+    test("stylesheet link", () => {
+      expect(transform('<link rel="stylesheet" href="application.css">')).toBe(
+        '<%= stylesheet_link_tag "application.css" %>'
+      )
+    })
+
+    test("stylesheet link self-closing", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" />')).toBe(
+        '<%= stylesheet_link_tag "application.css" %>'
+      )
+    })
+
+    test("stylesheet link with media", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" media="all">')).toBe(
+        '<%= stylesheet_link_tag "application.css", media: "all" %>'
+      )
+    })
+
+    test("stylesheet link with data attributes", () => {
+      expect(transform('<link rel="stylesheet" href="application.css" data-turbo-track="reload">')).toBe(
+        '<%= stylesheet_link_tag "application.css", data: { turbo_track: "reload" } %>'
+      )
+    })
+
+    test("stylesheet link with ERB href", () => {
+      expect(transform('<link rel="stylesheet" href="<%= stylesheet_path("application") %>">')).toBe(
+        '<%= stylesheet_link_tag stylesheet_path("application") %>'
+      )
+    })
+
+    test("stylesheet link with attribute order preserved", () => {
+      expect(transform('<link href="application.css" media="print" rel="stylesheet">')).toBe(
+        '<%= stylesheet_link_tag "application.css", media: "print" %>'
+      )
+    })
+  })
+
+  describe("tag.link for other link elements", () => {
+    test("non-stylesheet link", () => {
+      expect(transform('<link rel="icon" href="favicon.ico">')).toBe(
+        '<%= tag.link rel: "icon", href: "favicon.ico" %>'
+      )
+    })
+
+    test("preload link", () => {
+      expect(transform('<link rel="preload" href="font.woff2" as="font">')).toBe(
+        '<%= tag.link rel: "preload", href: "font.woff2", as: "font" %>'
+      )
+    })
+
+    test("link without rel", () => {
+      expect(transform('<link href="application.css">')).toBe(
+        '<%= tag.link href: "application.css" %>'
+      )
+    })
+
+    test("stylesheet link without href", () => {
+      expect(transform('<link rel="stylesheet">')).toBe(
+        '<%= tag.link rel: "stylesheet" %>'
+      )
+    })
+
+    test("link with dynamic rel", () => {
+      expect(transform('<link rel="<%= rel %>" href="application.css">')).toBe(
+        '<%= tag.link rel: rel, href: "application.css" %>'
+      )
+    })
+  })
+
   describe("ERB in attribute values", () => {
     test("single ERB expression becomes Ruby variable", () => {
       expect(transform('<div class="<%= class_name %>">Content</div>')).toBe(

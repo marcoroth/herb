@@ -43,6 +43,7 @@ export const FormatterConfigSchema = z.object({
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from formatting"),
   indentWidth: z.number().int().positive().optional().describe("Number of spaces per indentation level"),
+  indentStyle: z.enum(["space", "tab"]).optional().describe("Indentation character to use ('space' or 'tab')"),
   maxLineLength: z.number().int().positive().optional().describe("Maximum line length before wrapping"),
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()

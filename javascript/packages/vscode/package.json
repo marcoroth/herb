@@ -45,6 +45,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "[erb]": {
+        "editor.quickSuggestions": {
+          "other": true,
+          "comments": false,
+          "strings": true
+        }
+      }
+    },
     "configuration": {
       "type": "object",
       "title": "Herb (HTML+ERB)",
@@ -76,6 +85,17 @@
           "default": 2,
           "description": "Number of spaces for each indentation level.",
           "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.formatter.indentStyle": {
+          "scope": "resource",
+          "type": "string",
+          "enum": [
+            "space",
+            "tab"
+          ],
+          "default": "space",
+          "description": "Character used for indentation.",
+          "markdownDescription": "Character used for indentation.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
@@ -150,6 +170,11 @@
         "when": "editorLangId == erb"
       },
       {
+        "command": "herb.extractToPartial",
+        "title": "Herb: Extract to Partial",
+        "when": "editorLangId == erb"
+      },
+      {
         "command": "herb.toggleLinter",
         "title": "Herb: Toggle Linter",
         "icon": "$(symbol-boolean)"
@@ -163,6 +188,11 @@
         "command": "herb.setIndentWidth",
         "title": "Herb: Set Indent Width",
         "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.setIndentStyle",
+        "title": "Herb: Set Indent Style",
+        "icon": "$(symbol-enum)"
       },
       {
         "command": "herb.setMaxLineLength",
@@ -236,6 +266,16 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "herb.toggleLinter",
+          "when": "view == herbConfiguration && (viewItem == linterSetting || viewItem == personalLinterSetting)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.toggleFormatter",
+          "when": "view == herbConfiguration && (viewItem == formatterSetting || viewItem == personalFormatterSetting)",
+          "group": "inline"
+        },
         {
           "command": "herb.reprocessFile",
           "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",

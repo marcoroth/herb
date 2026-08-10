@@ -204,48 +204,34 @@ module Herb
 
       #: (Herb::AST::HTMLElementNode, String) -> Herb::AST::ERBContentNode
       def erb_content_node(element_node, code)
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode",
-          element_node.location,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%="),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " #{code}"),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          false,
-          true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          location: element_node.location,
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code}"),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
         )
       end
 
       #: (Herb::AST::HTMLElementNode, String, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
       def erb_block_node(element_node, code, body)
-        Herb::AST::ERBBlockNode.new(
-          "ERBBlockNode",
-          element_node.location,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%="),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " #{code}"),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          body,
-          [],
-          nil,
-          nil,
-          nil,
-          erb_end_node(element_node)
+        Herb::AST::ERBBlockNode.build(
+          location: element_node.location,
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code}"),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          body: body,
+          end_node: erb_end_node(element_node)
         )
       end
 
       #: (Herb::AST::HTMLElementNode) -> Herb::AST::ERBEndNode
       def erb_end_node(element_node)
-        Herb::AST::ERBEndNode.new(
-          "ERBEndNode",
-          element_node.location,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%"),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " end "),
-          Herb::Token.from("TOKEN_ERB_END", "%>")
+        Herb::AST::ERBEndNode.build(
+          location: element_node.location,
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " end "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>")
         )
       end
     end

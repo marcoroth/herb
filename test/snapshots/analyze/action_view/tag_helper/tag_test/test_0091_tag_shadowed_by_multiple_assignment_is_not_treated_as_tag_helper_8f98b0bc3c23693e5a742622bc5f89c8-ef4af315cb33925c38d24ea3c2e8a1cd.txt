@@ -1,0 +1,28 @@
+---
+source: "Analyze::ActionView::TagHelper::TagTest#test_0091_tag shadowed by multiple assignment is not treated as tag helper"
+input: |2-
+<% label, tag = @pair %>
+<%= tag.name %>
+options: {action_view_helpers: true}
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (4 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:24))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " label, tag = @pair " (location: (1:2)-(1:22))
+    │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (1:24)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (2:0)-(2:15))
+    │   ├── tag_opening: "<%=" (location: (2:0)-(2:3))
+    │   ├── content: " tag.name " (location: (2:3)-(2:13))
+    │   ├── tag_closing: "%>" (location: (2:13)-(2:15))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (2:15)-(3:0))
+        └── content: "\n"

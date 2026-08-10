@@ -1,6 +1,6 @@
 import dedent from "dedent"
 
-import { readFileSync, writeFileSync, statSync, existsSync } from "fs"
+import { readFileSync, writeFileSync, statSync, fstatSync, existsSync } from "fs"
 import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
 import { parseArgs } from "util"
@@ -59,6 +59,7 @@ export class CLI {
       --config-file <path>            explicitly specify path to .herb.yml config file
       --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
+      --indent-style <space|tab>      character used for indentation (default: space)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
@@ -68,13 +69,14 @@ export class CLI {
       herb-format templates/                      # Format all configured files within the given directory
       herb-format "templates/**/*.html.erb"       # Format all \`**/*.html.erb\` files in the templates/ directory
       herb-format "**/*.html.erb"                 # Format all \`*.html.erb\` files using glob pattern
-      herb-format "**/*.xml.erb"                  # Format all \`*.xml.erb\` files using glob pattern
+      herb-format --force "**/*.xml.erb"          # Format files not covered by the configured patterns
 
       herb-format --check                         # Check if all configured files are formatted
       herb-format --check templates/              # Check if all configured files in templates/ are formatted
 
       herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
+      herb-format --indent-style tab              # Format with tab indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
   `
@@ -90,6 +92,7 @@ export class CLI {
         init: { type: "boolean" },
         "config-file": { type: "string" },
         "indent-width": { type: "string" },
+        "indent-style": { type: "string" },
         "max-line-length": { type: "string" }
       },
       allowPositionals: true
@@ -113,6 +116,18 @@ export class CLI {
       indentWidth = parsed
     }
 
+    let indentStyle: "space" | "tab" | undefined
+
+    if (values["indent-style"]) {
+      if (values["indent-style"] !== "space" && values["indent-style"] !== "tab") {
+        console.error(
+          `Invalid indent-style: ${values["indent-style"]}. Must be "space" or "tab".`,
+        )
+        process.exit(1)
+      }
+      indentStyle = values["indent-style"]
+    }
+
     let maxLineLength: number | undefined
 
     if (values["max-line-length"]) {
@@ -134,12 +149,13 @@ export class CLI {
       isInitMode: values.init,
       configFile: values["config-file"],
       indentWidth,
+      indentStyle,
       maxLineLength
     }
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, indentStyle, maxLineLength } = this.parseArguments()
 
     const startTime = Date.now()
     const startDate = new Date()
@@ -164,7 +180,7 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
-      const isUsingStdin = (!file && !isCheckMode && !process.stdin.isTTY) || file === "-"
+      const isUsingStdin = (!file && !isCheckMode && this.hasStdinInput()) || file === "-"
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
@@ -227,6 +243,10 @@ export class CLI {
 
       if (indentWidth !== undefined) {
         formatterConfig.indentWidth = indentWidth
+      }
+
+      if (indentStyle !== undefined) {
+        formatterConfig.indentStyle = indentStyle
       }
 
       if (maxLineLength !== undefined) {
@@ -413,7 +433,7 @@ export class CLI {
           process.exit(1)
         }
 
-        const files = [...new Set(allFiles)]
+        const files = this.rejectUnsupportedFiles([...new Set(allFiles)], config, isForceMode)
 
         if (files.length === 0) {
           console.log(`No files found matching patterns: ${positionals.join(', ')}`)
@@ -497,6 +517,42 @@ export class CLI {
     reporter.displaySummary(data)
 
     process.exit(isCheckMode && changedFiles.length > 0 ? 1 : 0)
+  }
+
+  private rejectUnsupportedFiles(files: string[], config: Config, isForceMode: boolean | undefined): string[] {
+    if (isForceMode) {
+      return files
+    }
+
+    const supported = files.filter(file => config.isPathIncludedForTool(file, 'formatter'))
+    const unsupported = files.filter(file => !config.isPathIncludedForTool(file, 'formatter'))
+
+    if (unsupported.length > 0) {
+      console.error(`⚠️  Skipped ${unsupported.length} ${pluralize(unsupported.length, 'file')} that ${unsupported.length === 1 ? "doesn't" : "don't"} match the configured file patterns:`)
+
+      for (const file of unsupported) {
+        console.error(`  ${colorize(relative(process.cwd(), resolve(file)), "cyan")}`)
+      }
+
+      console.error(`   Use --force to format ${unsupported.length === 1 ? 'it' : 'them'} anyway.`)
+      console.error()
+    }
+
+    return supported
+  }
+
+  private hasStdinInput(): boolean {
+    if (process.stdin.isTTY) {
+      return false
+    }
+
+    try {
+      const stats = fstatSync(0)
+
+      return stats.isFIFO() || stats.isFile() || stats.isSocket()
+    } catch {
+      return false
+    }
   }
 
   private async readStdin(): Promise<string> {
