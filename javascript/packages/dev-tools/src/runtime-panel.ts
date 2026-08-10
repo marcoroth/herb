@@ -1,4 +1,4 @@
-import { renderDocumentHTML } from '@herb-tools/highlighter';
+import { DocumentBuilder, renderDocumentHTML } from '@herb-tools/highlighter';
 
 import { HIGHLIGHTER_THEME, loadHighlighter, releaseHighlighterStyles, retainHighlighterStyles } from './highlighter-bridge.js';
 
@@ -11,10 +11,11 @@ import {
 } from './runtime-report.js';
 
 import type { SyntaxRenderer } from '@herb-tools/highlighter';
-import type { Annotation, Document as HighlightDocument, LineInfo, StyledRun } from '@herb-tools/highlighter';
+import type { Annotation, Document as HighlightDocument, HTMLSinkOptions, LineInfo, StyledRun } from '@herb-tools/highlighter';
 
 import type {
   NormalizedDiagnostic,
+  NormalizedFix,
   NormalizedRuntimeReport,
   RenderStackFrame,
   RenderTreeNode,
@@ -43,6 +44,7 @@ interface PanelState {
 
 const ALL_ORIGINS = '*';
 const CONTEXT_LINES = 2;
+const DIFF_CONTEXT_LINES = 1;
 const STATE_KEY = 'herb-dev-tools-runtime-panel';
 const ROOT_CLASS = 'hdt-runtime-root';
 
@@ -160,6 +162,7 @@ export class RuntimePanel {
   private state: PanelState = { dismissed: false, open: false, origin: ALL_ORIGINS };
   private root: HTMLElement | null = null;
   private renderer: SyntaxRenderer | null = null;
+  private builder: DocumentBuilder | null = null;
   private hydrating = false;
   private destroyed = false;
 
@@ -179,6 +182,7 @@ export class RuntimePanel {
     this.root?.remove();
     this.root = null;
     this.renderer = null;
+    this.builder = null;
 
     releaseHighlighterStyles();
   }
@@ -188,7 +192,7 @@ export class RuntimePanel {
     const keys: string[] = [];
 
     for (const candidate of candidates) {
-      const diagnostic = normalizeDiagnostic(candidate);
+      const diagnostic = normalizeDiagnostic(candidate, this.sources);
 
       if (diagnostic === null) {
         continue;
@@ -431,7 +435,7 @@ export class RuntimePanel {
 
     this.bindHandlers();
 
-    void this.hydrateExcerpts();
+    void this.hydrateHighlighting();
   }
 
   private rootHTML(): string {
@@ -566,6 +570,7 @@ export class RuntimePanel {
       suggestion,
       excerpt,
       this.stackHTML(diagnostic),
+      this.fixHTML(diagnostic),
       `</article>`,
     ].join('');
   }
@@ -589,7 +594,7 @@ export class RuntimePanel {
   private renderExcerpt(source: string, diagnostic: NormalizedDiagnostic): string | null {
     const renderer = this.renderer;
 
-    if (renderer === null || !renderer.initialized) {
+    if (renderer === null || !this.highlightingReady()) {
       return null;
     }
 
@@ -600,15 +605,78 @@ export class RuntimePanel {
         return null;
       }
 
-      return renderDocumentHTML(document, {
-        themeLabel: HIGHLIGHTER_THEME,
-        showLineNumbers: true,
-        markers: 'spans',
-        lineNumberStyle: 'element',
-      });
+      return renderDocumentHTML(document, this.sinkOptions());
     } catch (_error) {
       return null;
     }
+  }
+
+  private sinkOptions(): HTMLSinkOptions {
+    return {
+      themeLabel: HIGHLIGHTER_THEME,
+      showLineNumbers: true,
+      markers: 'spans',
+      lineNumberStyle: 'element',
+    };
+  }
+
+  private fixHTML(diagnostic: NormalizedDiagnostic): string {
+    const fix = diagnostic.fix;
+
+    if (fix === null) {
+      return '';
+    }
+
+    const source = this.sources[diagnostic.template];
+
+    if (source === undefined) {
+      return '';
+    }
+
+    if (!this.highlightingReady()) {
+      return `<div class="hdt-fix-pending" data-hdt-fix-pending hidden></div>`;
+    }
+
+    const rendered = this.renderFix(source, fix);
+
+    if (rendered === null) {
+      return '';
+    }
+
+    const unsafe = fix.kind === 'unsafe';
+    const lead = unsafe ? 'Not applied. This fix is unsafe. Running' : 'Not applied. Running';
+    const command = unsafe ? 'herb lint --fix-unsafely' : 'herb lint --fix';
+
+    return [
+      `<details class="hdt-fix" data-hdt-fix="${escapeHTML(fix.kind)}">`,
+      `<summary class="hdt-fix-summary">${escapeHTML(lead)} <code class="hdt-fix-command">${escapeHTML(command)}</code> would change this template to</summary>`,
+      `<div class="hdt-fix-diff">${rendered}</div>`,
+      `</details>`,
+    ].join('');
+  }
+
+  private renderFix(source: string, fix: NormalizedFix): string | null {
+    const builder = this.builder;
+
+    if (builder === null) {
+      return null;
+    }
+
+    try {
+      const document = builder.buildDiff('', source, fix.source, { contextLines: DIFF_CONTEXT_LINES });
+
+      if (document.nodes.length === 0) {
+        return null;
+      }
+
+      return renderDocumentHTML(document, { ...this.sinkOptions(), diffLayout: 'unified' });
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  private highlightingReady(): boolean {
+    return this.renderer !== null && this.renderer.initialized;
   }
 
   private stackHTML(diagnostic: NormalizedDiagnostic): string {
@@ -632,12 +700,12 @@ export class RuntimePanel {
     ].join('');
   }
 
-  private async hydrateExcerpts() {
+  private async hydrateHighlighting() {
     if (this.hydrating || this.destroyed) {
       return;
     }
 
-    if (!this.root || this.root.querySelector('[data-hdt-excerpt-pending]') === null) {
+    if (!this.root || this.root.querySelector('[data-hdt-excerpt-pending], [data-hdt-fix-pending]') === null) {
       return;
     }
 
@@ -652,6 +720,7 @@ export class RuntimePanel {
     }
 
     this.renderer = renderer;
+    this.builder = new DocumentBuilder(renderer);
 
     this.render();
   }

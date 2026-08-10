@@ -161,6 +161,63 @@ describe("normalizeDiagnostic", () => {
   })
 })
 
+describe("fix", () => {
+  const original = "<form>\n</form>\n"
+  const fixed = "<div>\n</div>\n"
+  const sources = { "app/views/posts/_actions.html.erb": original }
+
+  function normalizedFix(fix: unknown, map: Record<string, string> = sources) {
+    return normalizeDiagnostic({
+      template: "app/views/posts/_actions.html.erb",
+      message: "Nested `<form>` elements are not allowed.",
+      fix,
+    }, map)!.fix
+  }
+
+  test("keeps a fix that rewrites the template", () => {
+    expect(normalizedFix({ kind: "unsafe", source: fixed })).toEqual({ kind: "unsafe", source: fixed })
+  })
+
+  test("defaults kind to safe", () => {
+    expect(normalizedFix({ source: fixed })!.kind).toBe("safe")
+    expect(normalizedFix({ kind: "reckless", source: fixed })!.kind).toBe("safe")
+  })
+
+  test("drops a fix without a string source", () => {
+    expect(normalizedFix({ kind: "safe" })).toBeNull()
+    expect(normalizedFix({ kind: "safe", source: 42 })).toBeNull()
+    expect(normalizedFix({ kind: "safe", source: null })).toBeNull()
+    expect(normalizedFix("safe")).toBeNull()
+    expect(normalizedFix(undefined)).toBeNull()
+  })
+
+  test("drops a fix that changes nothing", () => {
+    expect(normalizedFix({ kind: "safe", source: original })).toBeNull()
+  })
+
+  test("keeps a fix for a template that ships no source", () => {
+    expect(normalizedFix({ kind: "safe", source: fixed }, {})).toEqual({ kind: "safe", source: fixed })
+  })
+
+  test("compares against the source of the payload it arrives in", () => {
+    const report = normalizeRuntimeReport({
+      version: 1,
+      diagnostics: [
+        { template: "a.html.erb", message: "unchanged", fix: { source: "<b></b>\n" } },
+        { template: "a.html.erb", message: "changed", fix: { source: "<i></i>\n" } },
+      ],
+      sources: { "a.html.erb": "<b></b>\n" },
+    })
+
+    expect(report!.diagnostics[0].fix).toBeNull()
+    expect(report!.diagnostics[1].fix).toEqual({ kind: "safe", source: "<i></i>\n" })
+  })
+
+  test("defaults to null when the entry carries no fix", () => {
+    expect(diagnostic().fix).toBeNull()
+  })
+})
+
 describe("normalizeRenderTree", () => {
   test("drops nodes without an id or template and de-duplicates ids", () => {
     const report = normalizeRuntimeReport({

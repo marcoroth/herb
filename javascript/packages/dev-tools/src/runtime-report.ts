@@ -16,6 +16,10 @@ export const RUNTIME_KINDS = ['diagnostic', 'metric'] as const;
 
 export const KNOWN_ORIGINS = ['herb-parser', 'herb-linter', 'herb-a11y', 'herb-runtime'] as const;
 
+export const FIX_KINDS = ['safe', 'unsafe'] as const;
+
+export const DEFAULT_FIX_KIND: FixKind = 'safe';
+
 export type RenderVia = typeof RENDER_VIA_VALUES[number];
 
 export type RuntimeSeverity = typeof RUNTIME_SEVERITIES[number];
@@ -23,6 +27,8 @@ export type RuntimeSeverity = typeof RUNTIME_SEVERITIES[number];
 export type RuntimeKind = typeof RUNTIME_KINDS[number];
 
 export type KnownOrigin = typeof KNOWN_ORIGINS[number];
+
+export type FixKind = typeof FIX_KINDS[number];
 
 export interface RuntimePosition {
   line: number;
@@ -42,6 +48,16 @@ export interface RenderTreeNode {
   location?: RuntimePosition;
 }
 
+export interface RuntimeFix {
+  kind?: FixKind;
+  source: string;
+}
+
+export interface NormalizedFix {
+  kind: FixKind;
+  source: string;
+}
+
 export interface RuntimeDiagnostic {
   template: string;
   message: string;
@@ -54,6 +70,7 @@ export interface RuntimeDiagnostic {
   suggestion?: string;
   docsUrl?: string;
   value?: string;
+  fix?: RuntimeFix;
 }
 
 export interface RuntimeReport {
@@ -75,6 +92,7 @@ export interface NormalizedDiagnostic {
   suggestion: string | null;
   docsUrl: string | null;
   value: string | null;
+  fix: NormalizedFix | null;
 }
 
 export interface NormalizedRuntimeReport {
@@ -157,6 +175,28 @@ function normalizeKind(value: unknown): RuntimeKind {
   return RUNTIME_KINDS.includes(value as RuntimeKind) ? (value as RuntimeKind) : 'diagnostic';
 }
 
+function normalizeFixKind(value: unknown): FixKind {
+  return FIX_KINDS.includes(value as FixKind) ? (value as FixKind) : DEFAULT_FIX_KIND;
+}
+
+function normalizeFix(value: unknown, template: string, sources: Record<string, string>): NormalizedFix | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const source = value.source;
+
+  if (typeof source !== 'string') {
+    return null;
+  }
+
+  if (sources[template] === source) {
+    return null;
+  }
+
+  return { kind: normalizeFixKind(value.kind), source };
+}
+
 export function normalizeRenderTree(value: unknown): RenderTreeNode[] {
   if (!Array.isArray(value)) {
     return [];
@@ -198,7 +238,7 @@ export function normalizeRenderTree(value: unknown): RenderTreeNode[] {
   return nodes;
 }
 
-export function normalizeDiagnostic(value: unknown): NormalizedDiagnostic | null {
+export function normalizeDiagnostic(value: unknown, sources: Record<string, string> = {}): NormalizedDiagnostic | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -225,6 +265,7 @@ export function normalizeDiagnostic(value: unknown): NormalizedDiagnostic | null
     suggestion: asString(value.suggestion),
     docsUrl: asString(value.docsUrl),
     value: asString(value.value),
+    fix: normalizeFix(value.fix, template, sources),
   };
 }
 
@@ -265,11 +306,12 @@ export function normalizeRuntimeReport(value: unknown): NormalizedRuntimeReport 
     return null;
   }
 
+  const sources = normalizeSources(value.sources);
   const diagnostics: NormalizedDiagnostic[] = [];
 
   if (Array.isArray(value.diagnostics)) {
     for (const candidate of value.diagnostics) {
-      const diagnostic = normalizeDiagnostic(candidate);
+      const diagnostic = normalizeDiagnostic(candidate, sources);
 
       if (diagnostic !== null) {
         diagnostics.push(diagnostic);
@@ -281,7 +323,7 @@ export function normalizeRuntimeReport(value: unknown): NormalizedRuntimeReport 
     version: RUNTIME_REPORT_VERSION,
     renderTree: normalizeRenderTree(value.renderTree),
     diagnostics,
-    sources: normalizeSources(value.sources),
+    sources,
   };
 }
 

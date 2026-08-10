@@ -50,6 +50,42 @@ const PAYLOAD = {
   ],
 }
 
+const FIXABLE_SOURCE = `<div class="actions">\n  <form action="/posts" method="post">\n    <button>Delete</button>\n  </form>\n</div>\n`
+
+const FIXED_SOURCE = `<div class="actions">\n  <button>Delete</button>\n</div>\n`
+
+function fixPayload(fix: unknown, sources: Record<string, string> | null = { "app/views/posts/_actions.html.erb": FIXABLE_SOURCE }) {
+  return {
+    version: 1,
+    diagnostics: [{
+      template: "app/views/posts/_actions.html.erb",
+      message: "Nested `<form>` elements are not allowed.",
+      code: "html-no-nested-forms",
+      severity: "error",
+      origin: "herb-linter",
+      location: { start: { line: 2, column: 3 }, end: { line: 4, column: 10 } },
+      fix,
+    }],
+    ...(sources === null ? {} : { sources }),
+  }
+}
+
+async function waitForFix() {
+  const deadline = Date.now() + 30000
+
+  while (Date.now() < deadline) {
+    const rendered = document.querySelector(".hdt-fix") as HTMLDetailsElement | null
+
+    if (rendered !== null) {
+      return rendered
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 25))
+  }
+
+  throw new Error("Timed out waiting for the fix diff to hydrate")
+}
+
 let panels: RuntimePanel[] = []
 
 function embed(payload: unknown) {
@@ -304,6 +340,136 @@ describe("cards", () => {
 
     expect(code.tagName).toBe("SPAN")
     expect(code.getAttribute("href")).toBeNull()
+  })
+})
+
+describe("fix diffs", () => {
+  test("renders a safe fix as a collapsed diff that says it was not applied", async () => {
+    embed(fixPayload({ kind: "safe", source: FIXED_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const details = await waitForFix()
+    const summary = details.querySelector(".hdt-fix-summary")!
+
+    expect(details.tagName).toBe("DETAILS")
+    expect(details.open).toBe(false)
+    expect(details.getAttribute("data-hdt-fix")).toBe("safe")
+    expect(summary.textContent).toContain("Not applied")
+    expect(summary.querySelector(".hdt-fix-command")!.textContent).toBe("herb lint --fix")
+    expect(summary.textContent).not.toContain("unsafe")
+    expect(details.querySelector(".hdt-fix-diff .herb-diff")).not.toBeNull()
+    expect(details.querySelectorAll(".hdt-fix-diff .herb-diff-removed").length).toBeGreaterThan(0)
+    expect(details.querySelectorAll(".hdt-fix-diff .herb-diff-added").length).toBeGreaterThan(0)
+  })
+
+  test("labels an unsafe fix differently", async () => {
+    embed(fixPayload({ kind: "unsafe", source: FIXED_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const details = await waitForFix()
+    const summary = details.querySelector(".hdt-fix-summary")!
+
+    expect(details.getAttribute("data-hdt-fix")).toBe("unsafe")
+    expect(summary.textContent).toContain("Not applied")
+    expect(summary.textContent).toContain("unsafe")
+    expect(summary.querySelector(".hdt-fix-command")!.textContent).toBe("herb lint --fix-unsafely")
+  })
+
+  test("falls back to a safe label for an unrecognized kind", async () => {
+    embed(fixPayload({ kind: "reckless", source: FIXED_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const details = await waitForFix()
+
+    expect(details.getAttribute("data-hdt-fix")).toBe("safe")
+    expect(details.querySelector(".hdt-fix-command")!.textContent).toBe("herb lint --fix")
+  })
+
+  test("gives the diff a foreground that differs from its background", async () => {
+    embed(fixPayload({ source: FIXED_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    const details = await waitForFix()
+
+    details.open = true
+
+    const diff = details.querySelector(".hdt-fix-diff") as HTMLElement
+    const styles = getComputedStyle(diff)
+
+    expect(styles.backgroundColor).not.toBe("rgba(0, 0, 0, 0)")
+    expect(styles.color).not.toBe(styles.backgroundColor)
+
+    const line = diff.querySelector(".herb-line") as HTMLElement
+
+    expect(line).not.toBeNull()
+    expect(getComputedStyle(line).color).not.toBe(styles.backgroundColor)
+  })
+
+  test("drops a fix without a string source", () => {
+    embed(fixPayload({ kind: "safe" }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(cards()).toHaveLength(1)
+    expect(document.querySelector(".hdt-fix")).toBeNull()
+    expect(document.querySelector("[data-hdt-fix-pending]")).toBeNull()
+  })
+
+  test("drops a fix whose source is what the template already says", () => {
+    embed(fixPayload({ kind: "safe", source: FIXABLE_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(cards()).toHaveLength(1)
+    expect(document.querySelector(".hdt-fix")).toBeNull()
+    expect(document.querySelector("[data-hdt-fix-pending]")).toBeNull()
+  })
+
+  test("renders the rest of the card when the template has no source", () => {
+    embed(fixPayload({ kind: "safe", source: FIXED_SOURCE }, null))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(cards()).toHaveLength(1)
+    expect(document.querySelector(".hdt-message")!.textContent).toBe("Nested `<form>` elements are not allowed.")
+    expect(document.querySelectorAll(".hdt-frame")).not.toHaveLength(0)
+    expect(document.querySelector(".hdt-fix")).toBeNull()
+    expect(document.querySelector("[data-hdt-fix-pending]")).toBeNull()
+  })
+
+  test("renders the card before the backend resolves and fills the diff in afterwards", async () => {
+    embed(fixPayload({ kind: "safe", source: FIXED_SOURCE }))
+
+    const panel = createPanel()
+
+    panel.open()
+
+    expect(cards()).toHaveLength(1)
+    expect(document.querySelector(".hdt-badge-count")!.textContent).toBe("1")
+    expect(document.querySelector(".hdt-fix")).toBeNull()
+    expect(document.querySelector("[data-hdt-fix-pending]")).not.toBeNull()
+
+    await waitForFix()
+
+    expect(document.querySelector("[data-hdt-fix-pending]")).toBeNull()
   })
 })
 

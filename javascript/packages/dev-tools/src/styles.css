@@ -1215,6 +1215,48 @@
   line-height: 1.5;
 }
 
+.hdt-fix {
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.hdt-fix-summary {
+  padding: 6px 8px;
+  color: #374151;
+  font-size: 11px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.hdt-fix-summary:hover {
+  color: #111827;
+}
+
+.hdt-fix-command {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  color: #111827;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 10px;
+}
+
+.hdt-fix-diff {
+  margin: 0 8px 8px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #111827;
+  color: #c8ccd4;
+  color-scheme: dark;
+  overflow-x: auto;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
 .hdt-stack {
   margin-top: 8px;
   border-top: 1px solid #f3f4f6;

@@ -52,7 +52,8 @@ page can simply emit a fresh payload.
       "origin": "herb-linter",
       "location": { "start": { "line": 1, "column": 1 }, "end": { "line": 1, "column": 38 } },
       "suggestion": "Remove the inner form.",
-      "docsUrl": "https://herb-tools.dev/linter/rules/html-no-nested-forms"
+      "docsUrl": "https://herb-tools.dev/linter/rules/html-no-nested-forms",
+      "fix": { "kind": "safe", "source": "<div>\n</div>\n" }
     }
   ],
   "sources": {
@@ -122,6 +123,7 @@ render stack rather than a hung page.
 | `suggestion` | no | string | What to do about it. |
 | `docsUrl` | no | string | Absolute `http` or `https` URL. |
 | `value` | no | string | Badge text for a `metric`. |
+| `fix` | no | object | `{ kind, source }`, the template as this one fix would rewrite it. |
 
 An entry missing `template` or `message` is dropped. Everything else falls back to a default, so a
 partially populated entry still renders.
@@ -173,6 +175,33 @@ An entry with no `location` renders with no code excerpt and no line in its inne
 That is a supported state, not a degraded one, because some findings genuinely have no single
 position.
 
+#### `fix`
+
+`fix` describes what this one finding's autocorrect would do, and emitting it is entirely optional.
+The producer Herb expects here is the Ruby side calling into the Rust linter, which already knows
+how to compute a correction without writing it to disk.
+
+| Field | Required | Type | Notes |
+| --- | --- | --- | --- |
+| `source` | yes | string | The complete template source after applying this one fix. |
+| `kind` | no | string | `safe` or `unsafe`. Defaults to `safe`. |
+
+`source` is the whole file, not a patch. It carries the same meaning as the linter's `fixedContent`,
+which is the template as it would read once this single correction has been applied and nothing else.
+The panel computes the diff itself, so a producer never has to think about hunks or line offsets.
+
+`kind` is used only for labelling. A `safe` fix is one the linter would apply under `--fix`, an
+`unsafe` fix is one it would apply only under `--fix-unsafely`. An unrecognized `kind` falls back to
+`safe`.
+
+Nothing about `fix` is ever applied to the page or to the file on disk. The panel renders it as a
+collapsed diff whose summary says so.
+
+The whole `fix` is dropped when `source` is missing or is not a string, and when `source` is byte for
+byte identical to the entry in `sources` for the same template, since a fix that changes nothing has
+nothing to show. A `fix` on a template that has no entry in `sources` is kept but cannot be rendered,
+because the panel has no original to diff against. That card renders everything else as usual.
+
 #### `docsUrl`
 
 Only absolute `http` and `https` URLs are linked. Anything else, including `javascript:` and
@@ -189,6 +218,9 @@ diagnostic range marked and two lines of context on either side. When it is abse
 without an excerpt. Omitting `sources` is a legitimate way to keep the payload small on a page with
 many templates.
 
+`sources` is also the original half of every diff, so a `fix` on a template that is not in `sources`
+renders no diff. A producer that emits fixes should emit the matching source.
+
 ## Degradation rules
 
 Every part of the payload is optional-tolerant. A malformed or partial payload shows what it can and
@@ -201,6 +233,8 @@ never throws. Concretely:
   does not discard its neighbours.
 - A payload with an empty `diagnostics` array is valid and renders an empty state. This is a useful
   signal, since it distinguishes "checked and clean" from "not checked".
+- A `fix` that is unusable is dropped on its own. The card keeps its message, excerpt, and render
+  stack.
 
 ## Client-side hook
 
