@@ -1,4 +1,4 @@
-import { Position, Range } from "vscode-languageserver/node"
+import { Position, Range } from "vscode-languageserver-types"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { SerializedPosition, SerializedLocation, Node, Token, ERBNode, HTMLOpenTagNode } from "@herb-tools/core"
 

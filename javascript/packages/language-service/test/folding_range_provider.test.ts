@@ -14,7 +14,7 @@ describe("FoldingRangeProvider", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
     service = new FoldingRangeProvider(parserService)
   })
 

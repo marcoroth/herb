@@ -1,11 +1,11 @@
 import { Visitor } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
-import { DocumentSymbol, SymbolKind } from "vscode-languageserver/node"
+import { nodeToRange, lspRangeFromLocation, erbTagToRange } from "./range_utils"
+import { DocumentSymbol, SymbolKind } from "vscode-languageserver-types"
 
 import { getAttributes, getAttributeName, getStaticAttributeValue, getTagName, getTokenList } from "@herb-tools/core"
-import { nodeToRange, lspRangeFromLocation, erbTagToRange } from "./range_utils"
 
-import type { Range } from "vscode-languageserver/node"
+import type { Range } from "vscode-languageserver-types"
 import type { TextDocument } from "vscode-languageserver-textdocument"
 import type { DocumentNode, ERBContentNode, ERBNode, ERBRenderNode, HTMLAttributeNode, HTMLElementNode, Node } from "@herb-tools/core"
 

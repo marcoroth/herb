@@ -2,18 +2,18 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { isPartialPath } from "@herb-tools/core"
-import { uriFromPath } from "./utils"
 
 import { Location, Position, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Project } from "./project"
-import { DefinitionProvider } from "./definition_provider"
+import { DefinitionProvider } from "@herb-tools/language-service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { PartialIndexService } from "./partial_index_service"
 import { Documents } from "./documents"
 
-import type { PartialReference } from "./definition_provider"
+import type { PartialReference } from "@herb-tools/language-service"
+import { uriFromPath } from "@herb-tools/language-service"
 
 const LANGUAGE_ID = "erb"
 const DECLARATION_RANGE = Range.create(Position.create(0, 0), Position.create(0, 0))

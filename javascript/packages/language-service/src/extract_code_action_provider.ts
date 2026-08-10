@@ -1,14 +1,13 @@
-import { existsSync } from "fs"
-import { posix as path } from "path"
+import * as path from "./posix_path"
 
-import { CodeAction, CodeActionKind, CreateFile, OptionalVersionedTextDocumentIdentifier, Range, TextDocumentEdit, TextEdit, WorkspaceEdit } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, CreateFile, OptionalVersionedTextDocumentIdentifier, Range, TextDocumentEdit, TextEdit, WorkspaceEdit } from "vscode-languageserver-types"
 
 import { ExtractPartialAnalyzer } from "./extract_partial_analyzer"
-import { pathFromUri, uriFromPath } from "./utils"
 import { ParserService } from "./parser_service"
+import type { ExtractedLocal } from "./extract_partial_analyzer"
+import { pathFromUri, uriFromPath } from "./uri"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
-import type { ExtractedLocal } from "./extract_partial_analyzer"
 
 const VIEWS_DIRECTORY = "/app/views/"
 const DEFAULT_TEMPLATE_EXTENSION = "html.erb"
@@ -57,10 +56,12 @@ export function isExtractToPartialFailure(result: ExtractToPartialResult): resul
 export class ExtractCodeActionProvider {
   private analyzer: ExtractPartialAnalyzer
   private capabilities: ExtractCodeActionCapabilities
+  private fileExists: (path: string) => boolean
 
-  constructor(parserService: ParserService, capabilities: ExtractCodeActionCapabilities) {
+  constructor(parserService: ParserService, capabilities: ExtractCodeActionCapabilities, fileExists: (path: string) => boolean) {
     this.analyzer = new ExtractPartialAnalyzer(parserService)
     this.capabilities = capabilities
+    this.fileExists = fileExists
   }
 
   getCodeActions(document: TextDocument, requestedRange: Range): CodeAction[] {
@@ -114,7 +115,7 @@ export class ExtractCodeActionProvider {
       return { error: `\`${name}\` isn't a valid partial name.` }
     }
 
-    if (existsSync(target.path)) {
+    if (this.fileExists(target.path)) {
       return { error: `\`${this.relativePath(document.uri, target.path)}\` already exists.` }
     }
 

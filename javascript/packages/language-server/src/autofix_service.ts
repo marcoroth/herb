@@ -5,7 +5,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 import { Config } from "@herb-tools/config"
 
-import { getFullDocumentRange } from "./range_utils"
+import { getFullDocumentRange } from "@herb-tools/language-service"
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 

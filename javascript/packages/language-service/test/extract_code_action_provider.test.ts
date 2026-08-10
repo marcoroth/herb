@@ -1,14 +1,13 @@
 import dedent from "dedent"
 
 import { describe, it, expect, beforeAll } from "vitest"
-import { Range, CodeActionKind } from "vscode-languageserver/node"
+import { Range, CodeActionKind } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { ExtractCodeActionProvider, isExtractToPartialFailure } from "../src/extract_code_action_provider"
 import { ParserService } from "../src/parser_service"
-
-import type { TextDocumentEdit, CreateFile } from "vscode-languageserver/node"
+import type { TextDocumentEdit, CreateFile } from "vscode-languageserver-types"
 import type { ExtractToPartialSuccess } from "../src/extract_code_action_provider"
 
 const URI = "file:///project/app/views/users/show.html.erb"
@@ -18,14 +17,14 @@ describe("ExtractCodeActionProvider", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
-  function createService(supportsExtractToPartialCommand = false) {
+  function createService(supportsExtractToPartialCommand = false, fileExists: (path: string) => boolean = () => false) {
     return new ExtractCodeActionProvider(parserService, {
       supportsResourceCreation: true,
       supportsExtractToPartialCommand
-    })
+    }, fileExists)
   }
 
   function createDocument(content: string, uri = URI): TextDocument {
@@ -115,7 +114,7 @@ describe("ExtractCodeActionProvider", () => {
     it("does not offer an action when the client can't create files", () => {
       const content = `<div>Hello</div>`
 
-      const service = new ExtractCodeActionProvider(parserService, { supportsResourceCreation: false, supportsExtractToPartialCommand: false })
+      const service = new ExtractCodeActionProvider(parserService, { supportsResourceCreation: false, supportsExtractToPartialCommand: false }, () => false)
 
       expect(service.getCodeActions(createDocument(content), selectionOf(content, content))).toHaveLength(0)
     })

@@ -7,7 +7,6 @@ import { AutofixService } from "./autofix_service"
 import { CodeActionProvider } from "./code_action_provider"
 import { FormattingProvider } from "./formatting_provider"
 import { ReferencesProvider } from "./references_provider"
-import { CompletionProvider } from "./completion_provider"
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 
@@ -17,8 +16,9 @@ import type { Connection } from "vscode-languageserver/node"
 import type { UserSettings, PersonalHerbSettings } from "./user_settings"
 import type { Capabilities } from "./capabilities"
 import type { Documents } from "./documents"
-import type { ParserService } from "./parser_service"
-import type { DefinitionProvider } from "./definition_provider"
+import { CompletionProvider } from "@herb-tools/language-service"
+
+import type { ParserService, DefinitionProvider } from "@herb-tools/language-service"
 
 export interface SharedServices {
   documents: Documents
@@ -62,7 +62,11 @@ export class Project {
     this.autofixService = new AutofixService(connection, undefined, this.partialIndexService, this.partialCallerIndexService)
     this.codeActionProvider = new CodeActionProvider(this, undefined, this.partialIndexService, this.partialCallerIndexService)
     this.formattingProvider = new FormattingProvider(connection, shared.documents, this, userSettings, capabilities)
-    this.completionProvider = new CompletionProvider(shared.parserService, this.partialIndexService)
+    this.completionProvider = new CompletionProvider(
+      shared.parserService,
+      this.partialIndexService.index,
+      uri => this.partialIndexService.relativePathFor(uri),
+    )
 
     this.referencesProvider = new ReferencesProvider(
       this,

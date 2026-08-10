@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs"
 import { Connection, InitializeParams } from "vscode-languageserver/node"
 
 import { Herb } from "@herb-tools/node-wasm"
@@ -7,17 +8,11 @@ import { Capabilities } from "./capabilities"
 import { WorkspaceFolders } from "./workspace_folders"
 import { Documents } from "./documents"
 import { DiagnosticsPublisher } from "./diagnostics_publisher"
-import { ParserService } from "./parser_service"
+import { ParserService, FoldingRangeProvider, DocumentHighlightProvider, HoverProvider, RewriteCodeActionProvider, CommentProvider, DocumentSymbolProvider, ExtractCodeActionProvider, DefinitionProvider } from "@herb-tools/language-service"
 import { ConfigService } from "./config_service"
 import { SaveOrchestrator } from "./save_orchestrator"
-import { FoldingRangeProvider } from "./folding_range_provider"
-import { DocumentHighlightProvider } from "./document_highlight_provider"
-import { HoverProvider } from "./hover_provider"
-import { RewriteCodeActionProvider } from "./rewrite_code_action_provider"
-import { ExtractCodeActionProvider } from "./extract_code_action_provider"
-import { DefinitionProvider } from "./definition_provider"
-import { CommentProvider } from "./comment_provider"
-import { DocumentSymbolProvider } from "./document_symbol_provider"
+
+
 import { Projects } from "./projects"
 
 import type { LinterWarning } from "./linter_service"
@@ -51,9 +46,19 @@ export class Session {
     this.userSettings = new UserSettings(this.connection, this.capabilities)
     this.workspaceFolders = new WorkspaceFolders(params)
     this.documents = new Documents(this.connection)
-    this.parserService = new ParserService()
+    this.parserService = new ParserService(Herb)
     this.configService = new ConfigService(this.workspaceFolders.primary)
-    this.definitionProvider = new DefinitionProvider(this.parserService)
+    this.definitionProvider = new DefinitionProvider(
+      this.parserService,
+      existsSync,
+      filePath => {
+        try {
+          return readFileSync(filePath, "utf-8")
+        } catch {
+          return null
+        }
+      }
+    )
 
     this.projects = new Projects(this.connection, this.workspaceFolders, {
       documents: this.documents,
@@ -67,12 +72,12 @@ export class Session {
     this.saveOrchestrator = new SaveOrchestrator(this.connection, this.projects)
     this.foldingRangeProvider = new FoldingRangeProvider(this.parserService)
     this.documentHighlightProvider = new DocumentHighlightProvider(this.parserService)
-    this.hoverProvider = new HoverProvider(this.parserService)
-    this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService)
+    this.hoverProvider = new HoverProvider(this.parserService, process.cwd())
+    this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService, process.cwd())
     this.commentProvider = new CommentProvider(this.parserService)
     this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
 
-    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities)
+    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities, existsSync)
 
     if (params.initializationOptions) {
       this.userSettings.global = params.initializationOptions as PersonalHerbSettings

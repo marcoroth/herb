@@ -1,8 +1,8 @@
-import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node"
+import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Herb, Visitor } from "@herb-tools/node-wasm"
+import { Visitor } from "@herb-tools/core"
 
-import type { Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/node-wasm"
+import type { HerbBackend, Node, HerbError, DocumentNode, ParseResult, ParseOptions } from "@herb-tools/core"
 
 import { lspRangeFromLocation } from "./range_utils"
 
@@ -39,9 +39,15 @@ export interface ParseServiceResult {
 }
 
 export class ParserService {
+  private readonly backend: HerbBackend
+
+  constructor(backend: HerbBackend) {
+    this.backend = backend
+  }
+
   parseDocument(textDocument: TextDocument): ParseServiceResult {
     const content = textDocument.getText()
-    const result = Herb.parse(content)
+    const result = this.backend.parse(content)
 
     const errorVisitor = new ErrorVisitor()
     result.visit(errorVisitor)
@@ -53,6 +59,6 @@ export class ParserService {
   }
 
   parseContent(content: string, options?: ParseOptions): ParseResult {
-    return Herb.parse(content, options)
+    return this.backend.parse(content, options)
   }
 }

@@ -25,15 +25,15 @@ import {
 } from "vscode-languageserver/node"
 
 import { Session } from "./session"
-import { DefinitionProvider } from "./definition_provider"
 import { PersonalHerbSettings } from "./user_settings"
 import { Config } from "@herb-tools/config"
 import { isPartialPath } from "@herb-tools/core"
-import { isConfigDocument, isPathInside, pathFromUri } from "./utils"
+import { isConfigDocument, isPathInside } from "./utils"
 import { version } from "../package.json"
 
 import type { FileEvent } from "vscode-languageserver/node"
-import type { ExtractToPartialResult } from "./extract_code_action_provider"
+import type { ExtractToPartialResult } from "@herb-tools/language-service"
+import { DefinitionProvider, pathFromUri } from "@herb-tools/language-service"
 
 export class Server {
   private session!: Session

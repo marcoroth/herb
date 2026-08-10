@@ -1,4 +1,4 @@
-import { TextEdit, Range, Position } from "vscode-languageserver/node"
+import { TextEdit, Range, Position } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { ParserService } from "./parser_service"

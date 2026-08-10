@@ -1,6 +1,5 @@
-import { pathFromUri } from "./utils"
-
 import type { InitializeParams, WorkspaceFoldersChangeEvent } from "vscode-languageserver/node"
+import { pathFromUri } from "@herb-tools/language-service"
 
 const FILE_SCHEME = "file://"
 

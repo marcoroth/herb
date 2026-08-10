@@ -5,7 +5,7 @@ import { WorkspaceFolders } from "./workspace_folders"
 
 import type { Project } from "./project"
 import type { LinterWarning } from "./linter_service"
-import { ParserService } from "./parser_service"
+import { ParserService } from "@herb-tools/language-service"
 import { Documents } from "./documents"
 import { ConfigService } from "./config_service"
 import { Projects } from "./projects"
