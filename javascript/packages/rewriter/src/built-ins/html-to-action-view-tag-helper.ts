@@ -1,5 +1,5 @@
 import { Visitor, ERBOpenTagNode, ERBEndNode, HTMLElementNode, HTMLVirtualCloseTagNode, Token, findPreferredHelperForTag, HELPER_REGISTRY } from "@herb-tools/core"
-import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isWhitespaceNode } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isHTMLOpenTagNode, isHTMLTextNode, isHTMLAttributeNode, isERBContentNode, isERBOutputNode, isWhitespaceNode } from "@herb-tools/core"
 
 import { ASTRewriter } from "../ast-rewriter.js"
 import { asMutable } from "../mutable.js"
@@ -7,21 +7,86 @@ import { asMutable } from "../mutable.js"
 import type { RewriteContext } from "../context.js"
 import type { Node, HTMLAttributeValueNode } from "@herb-tools/core"
 
-function serializeAttributeValue(value: HTMLAttributeValueNode): string {
-  const hasERB = value.children.some(child => isERBContentNode(child))
+const ENTITY_REFERENCE = /&(#[0-9]+|#[xX][0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/
 
-  if (hasERB && value.children.length === 1 && isERBContentNode(value.children[0])) {
-    return value.children[0].content?.value?.trim() ?? '""'
+const OPENING_BRACKETS = new Set(["(", "[", "{"])
+const CLOSING_BRACKETS = new Set([")", "]", "}"])
+const WHITESPACE = new Set([" ", "\t", "\n", "\r", "\f", "\v"])
+
+const RUBY_LABEL = /^[a-z_][a-z0-9_]*$/
+
+// TODO: extract to config/
+const BOOLEAN_ATTRIBUTES = new Set(["allowfullscreen", "async", "autobuffer", "autofocus", "autoplay", "checked", "controls", "default", "defer", "disabled", "formnovalidate", "hidden", "inert", "ismap", "itemscope", "loop", "multiple", "muted", "novalidate", "open", "pubdate", "readonly", "required", "reversed", "scoped", "seamless", "selected", "sortable", "truespeed", "typemustmatch"])
+
+export interface SerializedAttributes {
+  attributes: string
+  href: string | null
+  id: string | null
+  src: string | null
+  rel: string | null
+}
+
+function hasTopLevelWhitespace(expression: string): boolean {
+  let depth = 0
+  let quote: string | null = null
+
+  for (let index = 0; index < expression.length; index++) {
+    const character = expression[index]
+
+    if (quote) {
+      if (character === "\\") index++
+      else if (character === quote) quote = null
+
+      continue
+    }
+
+    if (character === '"' || character === "'") quote = character
+    else if (OPENING_BRACKETS.has(character)) depth++
+    else if (CLOSING_BRACKETS.has(character)) depth--
+    else if (depth === 0 && WHITESPACE.has(character)) return true
+  }
+
+  return false
+}
+
+function escapeForDoubleQuotedString(content: string): string {
+  return content.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/#(?=[{@$])/g, "\\#")
+}
+
+function serializeExpression(node: Node): string | null {
+  if (!isERBContentNode(node)) return null
+  if (!isERBOutputNode(node)) return null
+
+  const expression = node.content?.value?.trim() ?? ""
+
+  return expression === "" ? null : expression
+}
+
+function serializeAttributeValue(value: HTMLAttributeValueNode): string | null {
+  const children = value.children ?? []
+
+  if (children.length === 1 && isERBContentNode(children[0])) {
+    const expression = serializeExpression(children[0])
+    if (!expression) return null
+
+    return hasTopLevelWhitespace(expression) ? `(${expression})` : expression
   }
 
   const parts: string[] = []
 
-  for (const child of value.children) {
+  for (const child of children) {
     if (isLiteralNode(child)) {
-      parts.push(child.content)
-    } else if (isERBContentNode(child)) {
-      parts.push(`#{${child.content?.value?.trim() ?? ""}}`)
+      if (ENTITY_REFERENCE.test(child.content)) return null
+
+      parts.push(escapeForDoubleQuotedString(child.content))
+
+      continue
     }
+
+    const expression = serializeExpression(child)
+    if (!expression) return null
+
+    parts.push(`#{${expression}}`)
   }
 
   return `"${parts.join("")}"`
@@ -44,17 +109,10 @@ function getStaticAttributeValue(children: Node[], attributeName: string): strin
   return null
 }
 
-interface SerializedAttributes {
-  attributes: string
-  href: string | null
-  id: string | null
-  src: string | null
-  rel: string | null
-}
-
-function serializeAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean, extractRel?: boolean } = {}): SerializedAttributes {
+export function serializeTagHelperAttributes(children: Node[], options: { extractHref?: boolean, extractId?: boolean, extractSrc?: boolean, extractRel?: boolean } = {}): SerializedAttributes | null {
   const regular: string[] = []
   const prefixed: Map<string, string[]> = new Map()
+  const seen = new Set<string>()
 
   let href: string | null = null
   let id: string | null = null
@@ -62,12 +120,21 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
   let rel: string | null = null
 
   for (const child of children) {
-    if (!isHTMLAttributeNode(child)) continue
+    if (!isHTMLAttributeNode(child)) return null
 
-    const name = getStaticAttributeName(child.name!)
-    if (!name) continue
+    const name = getStaticAttributeName(child.name!)?.toLowerCase()
+
+    if (!name) return null
+
+    if (seen.has(name)) return null
+
+    seen.add(name)
+
+    if (!child.value && !BOOLEAN_ATTRIBUTES.has(name)) return null
 
     const value = child.value ? serializeAttributeValue(child.value) : "true"
+
+    if (!value) return null
 
     if (options.extractHref && name === "href") {
       href = value
@@ -93,12 +160,17 @@ function serializeAttributes(children: Node[], options: { extractHref?: boolean,
 
     if (dataMatch) {
       const [, prefix, rest] = dataMatch
+      const key = dashToUnderscore(rest)
+
+      if (!RUBY_LABEL.test(key)) return null
 
       if (!prefixed.has(prefix)) {
         prefixed.set(prefix, [])
       }
 
-      prefixed.get(prefix)!.push(`${dashToUnderscore(rest)}: ${value}`)
+      prefixed.get(prefix)!.push(`${key}: ${value}`)
+    } else if (!RUBY_LABEL.test(name)) {
+      return null
     } else {
       regular.push(`${name}: ${value}`)
     }
@@ -147,12 +219,16 @@ class HTMLToActionViewTagHelperVisitor extends Visitor {
     const hasSrcAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "src")
     const hasHrefAttribute = attributes.some(child => isHTMLAttributeNode(child) && getStaticAttributeName(child.name!) === "href")
     const isStylesheetLink = tagName.value === "link" && hasHrefAttribute && getStaticAttributeValue(attributes, "rel") === "stylesheet"
-    const { attributes: attributesString, href, id, src } = serializeAttributes(attributes, {
+    const serialized = serializeTagHelperAttributes(attributes, {
       extractHref: implicitAttrName === "href" || isStylesheetLink,
       extractId: implicitAttrName === "id",
       extractSrc: implicitAttrName === "src" || tagName.value === "script",
       extractRel: isStylesheetLink,
     })
+
+    if (!serialized) return
+
+    const { attributes: attributesString, href, id, src } = serialized
     const hasBody = node.body && node.body.length > 0 && !node.is_void
     const isInlineContent = hasBody && isTextOnlyBody(node.body)
 
