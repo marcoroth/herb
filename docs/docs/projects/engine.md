@@ -91,6 +91,7 @@ Herb ships the following transform visitors:
 |-------------------------------|--------------------------------------------------------------|
 | `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones             |
 | `ContentForVisitor`           | Appends HTML to the end of every matching element            |
+| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                    |
 | `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
@@ -102,6 +103,37 @@ Herb::Engine.new(source, visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.ne
 ```
 
 Your own visitors are passed the same way. See [Visitors](/bindings/ruby/reference#visitors) for how to write one.
+
+A visitor that needs the AST to carry more than the defaults can say so with `required_parser_option`, and one that only works better that way with `recommended_parser_option`:
+
+```ruby
+class PrismProgramVisitor < Herb::Visitor
+  required_parser_option prism_program: true
+  recommended_parser_option strict: false
+end
+```
+
+The engine turns both on before it parses, so passing the visitor is all it takes. What differs is how a conflict with the [parser options](/parser-options) passed to the engine is settled:
+
+| Declaration                  | Option not passed to the engine | Passed with the same value | Passed with a different value                |
+|------------------------------|---------------------------------|----------------------------|----------------------------------------------|
+| `required_parser_option`     | The engine turns it on          | Nothing to settle          | Raises `ArgumentError`                       |
+| `recommended_parser_option`  | The engine turns it on          | Nothing to settle          | Warns, and the value passed to the engine wins |
+
+A requirement raises because a visitor that doesn't get it can't do its work, and silently overriding what you asked for would be worse than saying so. Two visitors requiring the same option differently raises for the same reason.
+
+Every declaration adds to the ones a parent class made, and a subclass can override an inherited value by declaring it again. `required_parser_options` and `recommended_parser_options` return what a visitor ends up asking for.
+
+Both declarations come from `Herb::Visitor::ParserOptionRequirements`, which `Herb::Visitor` includes. A class that is passed to the engine as a visitor without inheriting from `Herb::Visitor` can include it as well.
+
+The engine settles this through `Herb::Visitor.parser_options_for`, which takes the visitors and the options to start from and returns what to parse with. Anything else that runs a set of visitors over a document it parses itself can use it the same way:
+
+```ruby
+parser_options = Herb::Visitor.parser_options_for(visitors, strict: false)
+result = Herb.parse(source, **parser_options)
+
+visitors.each { |visitor| result.visit(visitor) }
+```
 
 ### `AutoCloseOmittedTagsVisitor`
 
@@ -179,6 +211,93 @@ The engine renders:
 ```
 
 The content is emitted as a Ruby string literal marked `html_safe`, so it is never escaped, and quotes, backslashes and `#{}` in it are not interpreted.
+
+### `HTMLSafeAssertionsVisitor`
+
+Wraps the receiver of every `.html_safe` call in a template with a runtime assertion, so that marking a value as HTML-safe raises when the value contains HTML that the browser executes.
+
+```ruby
+require "herb/engine/html_safe_assertions_visitor"
+
+Herb::Engine.new(source, visitors: [Herb::Engine::HTMLSafeAssertionsVisitor.new])
+```
+
+This template:
+
+```html+erb
+<div><%= @user.bio.html_safe %></div>
+```
+
+Compiles as if it had been written as:
+
+```html+erb
+<div><%= ::Herb::Engine::HTMLSafeAssertions.check(@user.bio, file: __FILE__, line: 1, column: 6, source: "<%= @user.bio.html_safe %>", mode: :raise).html_safe %></div>
+```
+
+The value keeps flowing through `.html_safe` unchanged, and the assertion runs on every render. A value that is already HTML-safe is never checked, since `.html_safe` is a no-op on it.
+
+The calls are found in the Prism program that the [`prism_program`](/parser-options) parser option attaches to the document, so a call is wrapped wherever it appears, including in control flow such as `<% elsif b.html_safe %>`. Calls inside an ERB comment are not wrapped, since they are not part of the program. The visitor declares the option through `required_parser_option`, which the engine turns on for it. Parsing an AST for this visitor by hand needs the same option:
+
+```ruby
+Herb.parse(source, prism_program: true)
+```
+
+The error surfaces while the template renders, not while it compiles, unlike the ones the [validators](#validators) raise. Rendering the template with a bio of `<script>alert(1)</script>` raises `Herb::Engine::HTMLSafeAssertions::UnsafeHTMLError`:
+
+```
+Unsafe `.html_safe` call in app/views/users/show.html.erb:1:6
+
+    <%= @user.bio.html_safe %>
+
+The value contains a `<script>` element, which the browser executes.
+
+    "<script>alert(1)</script>"
+
+Escape the value or run it through `sanitize` instead of marking it as HTML-safe.
+```
+
+The value is checked against these heuristics:
+
+| Check            | Reports                                                           |
+|------------------|-------------------------------------------------------------------|
+| `script_element` | A `<script>` element                                              |
+| `event_handler`  | An inline event handler attribute, such as `onerror` or `onclick` |
+| `javascript_url` | A `javascript:` or `vbscript:` URL                                |
+| `data_url`       | A `data:text/html` URL                                            |
+| `risky_element`  | An `<iframe>`, `<object>`, `<embed>`, `<base>` or `<portal>`      |
+| `meta_refresh`   | A `<meta http-equiv="refresh">` element                           |
+
+The visitor takes the following options:
+
+| Option      | Default  | Description                                                                             |
+|-------------|----------|-----------------------------------------------------------------------------------------|
+| `mode`      | `:raise` | `:raise` raises on a violation, `:warn` warns and keeps rendering                       |
+| `ignore`    | `[]`     | Checks to skip, given by name                                                           |
+| `file_path` | `nil`    | Path baked into the assertion. Defaults to `__FILE__`, which Rails sets to the template |
+
+```ruby
+Herb::Engine::HTMLSafeAssertionsVisitor.new(mode: :warn, ignore: [:risky_element])
+```
+
+Set `on_violation` to report violations somewhere else instead of raising or warning. It receives the same error object, and is consulted before `mode`:
+
+```ruby
+Herb::Engine::HTMLSafeAssertions.on_violation = ->(error) do
+  ErrorTracking.capture_exception(error)
+end
+```
+
+`.html_safe` passed as a block argument has no receiver to wrap, so the symbol becomes a block that checks every element it is called with:
+
+```html+erb
+<%= items.map(&:html_safe).join %>
+```
+
+```html+erb
+<%= items.map(&proc { |value| ::Herb::Engine::HTMLSafeAssertions.check(value, ...).html_safe }).join %>
+```
+
+Since the assertions run on every render, this visitor is meant for development and test environments. In production, either leave it out or run it with `mode: :warn`.
 
 ### `ComponentVisitor`
 

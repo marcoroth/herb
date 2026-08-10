@@ -1,6 +1,12 @@
+require_relative "visitor/parser_option_requirements"
+
 module Herb
   class Visitor
     include AST::Helpers
+    include ParserOptionRequirements
+
+    # @rbs!
+    #   extend Herb::Visitor::ParserOptionRequirements::ClassMethods
 
     #: (Herb::AST::Node?) -> void
     def visit(node)
