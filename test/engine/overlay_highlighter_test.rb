@@ -322,7 +322,10 @@ module Engine
         source, errors, bridge: FakeBridge.new(available: false)
       ).generate_html
 
-      refute_match(/\.herb-(?!tpl-|parser-error-overlay|line-number)/, html)
+      styles = html[%r{<style>(.+?)</style>}m, 1].to_s
+
+      refute_empty styles
+      refute_match(/\.herb-(?!tpl-|parser-error-overlay|line-number)/, styles)
     end
 
     test "parser overlay only styles the highlighter line number under the line link attribute" do

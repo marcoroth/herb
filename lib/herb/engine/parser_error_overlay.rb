@@ -152,20 +152,29 @@ module Herb
 
         .herb-parser-error-overlay .herb-tpl-brand { color: var(--tpl-fix); font-weight: 600; text-transform: none; letter-spacing: 0.04em; }
 
-        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number {
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number,
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-tpl-line-number {
           cursor: pointer;
           border-radius: 3px;
         }
 
-        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:hover {
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:hover,
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-tpl-line-number:hover {
           color: var(--tpl-text);
           background: var(--tpl-surface-2);
         }
 
-        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:focus-visible {
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-line-number:focus-visible,
+        .herb-parser-error-overlay[data-herb-tpl-line-links] .herb-tpl-excerpt .herb-tpl-line-number:focus-visible {
           outline: 2px solid var(--tpl-danger);
           outline-offset: 1px;
         }
+
+        .herb-parser-error-overlay .herb-tpl-chip-link { color: inherit; text-decoration: none; }
+        .herb-parser-error-overlay .herb-tpl-chip-link:hover { text-decoration: underline; }
+
+        .herb-parser-error-overlay .herb-tpl-excerpt [data-herb-tpl-caption] { cursor: pointer; }
+        .herb-parser-error-overlay .herb-tpl-excerpt [data-herb-tpl-caption]:hover { text-decoration: underline; }
         .herb-parser-error-overlay .herb-tpl-eyebrow-kind { font-family: var(--tpl-mono); text-transform: none; letter-spacing: 0; }
 
         .herb-parser-error-overlay .herb-tpl-title {
@@ -416,8 +425,7 @@ module Herb
         .herb-parser-error-overlay .herb-tpl-plain-file { margin-bottom: 10px; }
         .herb-parser-error-overlay .herb-tpl-pre { white-space: pre-wrap; overflow-wrap: anywhere; }
         .herb-parser-error-overlay .herb-tpl-row { color: var(--tpl-text); }
-        .herb-parser-error-overlay .herb-tpl-row::before {
-          content: attr(data-line);
+        .herb-parser-error-overlay .herb-tpl-line-number {
           display: inline-block;
           width: 3ch;
           margin-right: 1ch;
@@ -426,7 +434,7 @@ module Herb
           user-select: none;
         }
         .herb-parser-error-overlay .herb-tpl-row-dim { opacity: 0.6; }
-        .herb-parser-error-overlay .herb-tpl-row-marked::before { color: var(--tpl-danger); font-weight: 700; }
+        .herb-parser-error-overlay .herb-tpl-row-marked > .herb-tpl-line-number { color: var(--tpl-danger); font-weight: 700; }
         .herb-parser-error-overlay .herb-tpl-caret {
           margin-left: 4ch;
           color: var(--tpl-danger);
@@ -572,7 +580,8 @@ module Herb
           var editorTemplate = root.getAttribute("data-herb-tpl-editor-template");
 
           if (editorTemplate) {
-            var numbers = root.querySelectorAll(".herb-tpl-excerpt .herb-line-number[data-line]");
+            var numberSelector = ".herb-tpl-excerpt .herb-line-number[data-line], .herb-tpl-excerpt .herb-tpl-line-number[data-line]";
+            var numbers = root.querySelectorAll(numberSelector);
 
             numbers.forEach(function (number) {
               number.setAttribute("role", "button");
@@ -582,34 +591,61 @@ module Herb
 
             if (numbers.length > 0) root.dataset.herbTplLineLinks = "1";
 
-            function openLine(number) {
-              var line = number.getAttribute("data-line");
-
+            function openAt(line, column) {
               if (!line) return;
 
               window.location.href = editorTemplate
                 .split("__HERB_LINE__").join(line)
-                .split("__HERB_COLUMN__").join("1");
+                .split("__HERB_COLUMN__").join(column || "1");
             }
 
-            root.addEventListener("click", function (event) {
-              var number = event.target.closest(".herb-tpl-excerpt .herb-line-number[data-line]");
+            function openLine(number) {
+              openAt(number.getAttribute("data-line"), "1");
+            }
 
-              if (!number) return;
+            root.querySelectorAll(".herb-tpl-item[data-herb-tpl-line]").forEach(function (item) {
+              var caption = item.querySelector(".herb-tpl-excerpt .herb-file-header");
+
+              if (!caption) return;
+
+              caption.setAttribute("role", "button");
+              caption.setAttribute("tabindex", "0");
+              caption.setAttribute("title", "Open " + caption.textContent.trim() + " in editor");
+              caption.dataset.herbTplCaption = "1";
+            });
+
+            function captionFor(target) {
+              var caption = target.closest("[data-herb-tpl-caption]");
+
+              if (!caption) return null;
+
+              return caption.closest(".herb-tpl-item[data-herb-tpl-line]");
+            }
+
+            function activate(event) {
+              var number = event.target.closest(numberSelector);
+
+              if (number) {
+                event.preventDefault();
+                openLine(number);
+
+                return;
+              }
+
+              var item = captionFor(event.target);
+
+              if (!item) return;
 
               event.preventDefault();
-              openLine(number);
-            });
+              openAt(item.getAttribute("data-herb-tpl-line"), item.getAttribute("data-herb-tpl-column"));
+            }
+
+            root.addEventListener("click", activate);
 
             root.addEventListener("keydown", function (event) {
               if (event.key !== "Enter" && event.key !== " ") return;
 
-              var number = event.target.closest(".herb-tpl-excerpt .herb-line-number[data-line]");
-
-              if (!number) return;
-
-              event.preventDefault();
-              openLine(number);
+              activate(event);
             });
           }
 
@@ -691,7 +727,7 @@ module Herb
 
         chips = [] #: Array[String]
 
-        chips << %(<li class="herb-tpl-chip herb-tpl-chip-file"><span class="herb-tpl-glyph" aria-hidden="true">ERB</span>#{escape_html(@filename)}</li>)
+        chips << %(<li class="herb-tpl-chip herb-tpl-chip-file"><span class="herb-tpl-glyph" aria-hidden="true">ERB</span>#{file_chip_body}</li>)
         chips << %(<li class="herb-tpl-chip">#{escape_html(file_role)}</li>)
 
         if render_name
@@ -774,7 +810,7 @@ module Herb
         open_attribute = rank <= OPEN_LIMIT ? " open" : ""
 
         <<~HTML
-          <li class="herb-tpl-item" data-herb-tpl-severity="#{escape_attr(severity)}">
+          <li class="herb-tpl-item" data-herb-tpl-severity="#{escape_attr(severity)}" data-herb-tpl-line="#{line}" data-herb-tpl-column="#{column}">
             #{tools_html(line, column)}
             <details class="herb-tpl-card"#{open_attribute}>
               <summary class="herb-tpl-card-head">
@@ -868,7 +904,9 @@ module Herb
           content = @lines[number - 1].to_s.chomp
           row_class = number == line ? "herb-tpl-row herb-tpl-row-marked" : "herb-tpl-row herb-tpl-row-dim"
 
-          rows << %(<span class="#{row_class}" data-line="#{number.to_i}">#{escape_html(content)}</span>)
+          gutter = %(<span class="herb-tpl-line-number" data-line="#{number.to_i}">#{number.to_i}</span>)
+
+          rows << %(<span class="#{row_class}" data-line="#{number.to_i}">#{gutter}#{escape_html(content)}</span>)
 
           next unless number == line && column.positive?
 
@@ -1008,6 +1046,17 @@ module Herb
         return nil unless path
 
         format(EDITOR_URL_TEMPLATES.fetch(editor_key), path: path, line: LINE_TOKEN, column: COLUMN_TOKEN)
+      end
+
+      def file_chip_body
+        primary = groups.first
+        line = primary ? primary[:line].to_i : 1
+        column = primary ? primary[:column].to_i : 1
+        href = editor_href(line, column)
+
+        return escape_html(@filename) unless href
+
+        %(<a class="herb-tpl-chip-link" href="#{escape_attr(href)}" title="Open #{escape_attr(@filename)} in editor" data-herb-tpl-open data-herb-tpl-file="#{escape_attr(@filename)}" data-herb-tpl-line="#{line}" data-herb-tpl-column="#{column}" rel="noopener">#{escape_html(@filename)}</a>)
       end
 
       def editor_template_attribute

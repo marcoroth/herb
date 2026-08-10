@@ -86,6 +86,8 @@ module Herb
 
       def editor_href_template: () -> untyped
 
+      def file_chip_body: () -> untyped
+
       def editor_template_attribute: () -> untyped
 
       def get_error_suggestion: (untyped error) -> untyped
