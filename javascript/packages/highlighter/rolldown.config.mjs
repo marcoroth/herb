@@ -1,7 +1,3 @@
-import typescript from "@rollup/plugin-typescript"
-import { nodeResolve } from "@rollup/plugin-node-resolve"
-import json from "@rollup/plugin-json"
-import commonjs from "@rollup/plugin-commonjs"
 import { createRequire } from "module"
 
 // Bundle the CLI entry point into a single CommonJS file.
@@ -27,16 +23,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 
   // Library exports (ESM)
@@ -48,16 +34,6 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: true,
-        declarationDir: "./dist/types",
-        rootDir: "src/",
-      }),
-    ],
   },
 
   // Library exports (CommonJS)
@@ -69,15 +45,5 @@ export default [
       sourcemap: true,
     },
     external: isExternal,
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
   },
 ]

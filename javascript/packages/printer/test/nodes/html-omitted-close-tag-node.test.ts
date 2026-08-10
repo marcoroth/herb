@@ -1,7 +1,7 @@
 import dedent from "dedent"
 import { describe, test, beforeAll, expect } from "vitest"
 
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node-wasm"
 import { HTMLOmittedCloseTagNode } from "@herb-tools/core"
 import { IdentityPrinter } from "../../src/index.js"
 
