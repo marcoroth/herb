@@ -19,6 +19,7 @@ import {
   findAttributeByName,
   hasAttribute,
   isERBOpenTagNode,
+  isRubyLiteralNode,
 } from "@herb-tools/core"
 
 import type {
@@ -344,6 +345,15 @@ export abstract class ElementStackVisitor<TAutofixContext extends BaseAutofixCon
       const name = getTagLocalName(element)
       return name !== null && tagNames.includes(name)
     })
+  }
+
+  /**
+   * Whether the current position sits inside a block whose contents render
+   * somewhere else, such as `content_for`. The surrounding markup says nothing
+   * about where these nodes end up.
+   */
+  protected get isInsideDetachedBlock(): boolean {
+    return this.detachedBlockDepth > 0
   }
 
   /**
@@ -1286,6 +1296,32 @@ export function findElementAttribute(node: HTMLElementNode, name: string): HTMLA
   }
 
   return getAttribute(node, name)
+}
+
+const NESTED_ATTRIBUTE_VALUE_PREFIX = "::Herb::Engine.nested_attribute_value("
+
+/**
+ * Whether an Action View helper option resolves to `nil`. Action View drops
+ * these attributes when it renders the element, so rules that require an
+ * attribute to be present should treat them as absent.
+ */
+export function isNilAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const value = attributeNode.value
+
+  if (!value) return false
+  if (value.children.length !== 1) return false
+
+  const child = value.children[0]
+
+  if (!isRubyLiteralNode(child)) return false
+
+  let content = child.content.trim()
+
+  if (content.startsWith(NESTED_ATTRIBUTE_VALUE_PREFIX) && content.endsWith(")")) {
+    content = content.slice(NESTED_ATTRIBUTE_VALUE_PREFIX.length, -1).trim()
+  }
+
+  return content === "nil"
 }
 
 const NON_JS_SCRIPT_TYPES = new Set([

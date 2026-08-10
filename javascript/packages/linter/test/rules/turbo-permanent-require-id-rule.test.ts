@@ -91,10 +91,7 @@ describe("turbo-permanent-require-id", () => {
       expectNoOffenses('<%= tag.div id: "cart-#{cart.id}", data: { turbo_permanent: true } %>')
     })
 
-    // ActionView drops `id` entirely when the value is nil, so this renders a permanent
-    // element with no id at all. The parser still emits the attribute node, so the rule
-    // sees an id and stays quiet.
-    test.fails("fails for a nil id, which ActionView omits entirely", () => {
+    test("fails for a nil id, which ActionView omits entirely", () => {
       expectError(MESSAGE)
 
       assertOffenses('<%= tag.div id: nil, data: { turbo_permanent: true } %>')

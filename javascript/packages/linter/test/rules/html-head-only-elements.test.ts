@@ -69,8 +69,14 @@ describe("html-head-only-elements", () => {
     `)
   })
 
-  test.todo("fails for head-only elements on the top-level when other body-elements are present", () => {
-    expectNoOffenses(dedent`
+  test("fails for head-only elements on the top-level when other body-elements are present", () => {
+    expectError("Element `<meta>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+    expectError("Element `<link>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+    expectError("Element `<base>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+    expectError("Element `<title>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+    expectError("Element `<style>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+
+    assertOffenses(dedent`
       <meta>
       <link>
       <base>
@@ -78,6 +84,56 @@ describe("html-head-only-elements", () => {
       <style></style>
 
       <div></div>
+    `)
+  })
+
+  test("fails when a head-only element follows top-level body content", () => {
+    expectError("Element `<meta>` must be placed inside the `<head>` tag. This template also renders the body-only element `<div>`, so one of the two is misplaced.")
+
+    assertOffenses(dedent`
+      <div></div>
+      <meta>
+    `)
+  })
+
+  test("passes when the body-only element is in a mutually exclusive branch", () => {
+    expectNoOffenses(dedent`
+      <% if head_context? %>
+        <meta>
+      <% else %>
+        <div></div>
+      <% end %>
+    `)
+  })
+
+  test("passes when the head-only elements render into a detached block", () => {
+    expectNoOffenses(dedent`
+      <% content_for :head do %>
+        <title>Posts</title>
+        <meta name="robots" content="noindex">
+      <% end %>
+
+      <div></div>
+    `)
+  })
+
+  test("passes when the only body-only element already sits inside an explicit body", () => {
+    expectNoOffenses(dedent`
+      <meta>
+
+      <html>
+        <body>
+          <div></div>
+        </body>
+      </html>
+    `)
+  })
+
+  test("passes when the body-only element only appears inside a template element", () => {
+    expectNoOffenses(dedent`
+      <meta>
+
+      <template><div></div></template>
     `)
   })
 
