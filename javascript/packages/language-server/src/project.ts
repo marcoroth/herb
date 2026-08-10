@@ -96,6 +96,7 @@ export class Project {
     this.codeActionProvider.setConfig(this.config)
     this.autofixService.setConfig(this.config)
     this.linterService.setConfig(this.config)
+    this.completionProvider.setFramework(this.config?.config?.framework)
     this.linterService.rebuildLinter()
   }
 

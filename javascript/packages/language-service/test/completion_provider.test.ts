@@ -1329,4 +1329,39 @@ describe("CompletionProvider", () => {
       expect(service.getCompletions(document, document.positionAt(content.length))).toBeNull()
     })
   })
+
+  describe("block arguments", () => {
+    let actionViewService: CompletionProvider
+
+    beforeAll(() => {
+      actionViewService = new CompletionProvider(new ParserService(Herb))
+      actionViewService.setFramework("actionview")
+    })
+
+    function labelsFor(content: string): string[] {
+      const document = createDocument(content)
+      const result = actionViewService.getCompletions(document, Position.create(0, content.length))
+
+      return result ? result.items.map(item => item.label) : []
+    }
+
+    it("offers the arguments a helper yields, with the pipes", () => {
+      expect(labelsFor("<%= form_with model: @user do ")).toContain("|form|")
+    })
+
+    it("drops the pipes once the user has started them", () => {
+      expect(labelsFor("<%= form_with model: @user do |")).toContain("form")
+    })
+
+    it("stays quiet for a call that yields nothing", () => {
+      expect(labelsFor("<% cache @post do ")).toEqual([])
+    })
+
+    it("stays quiet when the project isn't an Action View project", () => {
+      const document = createDocument("<%= form_with model: @user do ")
+      const result = service.getCompletions(document, Position.create(0, 29))
+
+      expect(result ? result.items.map(item => item.label) : []).not.toContain("|form|")
+    })
+  })
 })

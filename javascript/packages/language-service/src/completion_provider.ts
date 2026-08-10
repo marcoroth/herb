@@ -13,6 +13,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor, RubyReferenceCollector, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries, partialNameForFile, strictLocalsDeclaration, templateNameForFile, HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
+import { getBlockArgumentCompletions } from "./language-service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
 
 import type { PartialIndex, Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, PartialDeclaration, RubyReference } from "@herb-tools/core"
@@ -147,6 +148,7 @@ export class CompletionProvider {
   private parserService: ParserService
   private partials?: PartialIndex
   private relativePathFor: (uri: string) => string | null
+  private framework?: string
 
   constructor(
     parserService: ParserService,
@@ -156,6 +158,10 @@ export class CompletionProvider {
     this.parserService = parserService
     this.partials = partials
     this.relativePathFor = relativePathFor
+  }
+
+  setFramework(framework?: string) {
+    this.framework = framework
   }
 
   getCompletions(document: TextDocument, position: Position): CompletionList | null {
@@ -252,6 +258,10 @@ export class CompletionProvider {
         ? this.getStrictLocalCompletions(argument, position, document)
         : this.getRenderKeywordCompletions(argument, position, document)
     }
+
+    const blockArguments = getBlockArgumentCompletions(document, position, { framework: this.framework })
+
+    if (blockArguments) return blockArguments
 
     const tagDotMatch = textBeforeCursor.match(TAG_DOT_PATTERN)
 
