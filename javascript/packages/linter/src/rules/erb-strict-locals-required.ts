@@ -102,13 +102,11 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
     if (visitor.foundStrictLocals) return []
 
     const document = result.value
-    const firstChild = document.children[0]
-    const end = firstChild ? firstChild.location.end : Location.zero.end
 
     return [
       this.createOffense(
         "Partial is missing a strict locals declaration. Add `<%# locals: (...) %>` at the top of the file.",
-        Location.from(1, 0, end.line, end.column),
+        this.firstLineOf(document),
         { node: document, declaration: this.declarationFor(document, context), unsafe: true }
       )
     ]
@@ -121,6 +119,12 @@ export class ERBStrictLocalsRequiredRule extends ParserRule<StrictLocalsRequired
     result.value.children.unshift(createLiteral(`${declaration}\n\n`))
 
     return result
+  }
+
+  private firstLineOf(document: DocumentNode): Location {
+    const [firstLine] = (document.source ?? "").split("\n")
+
+    return Location.from(1, 0, 1, firstLine?.length ?? 0)
   }
 
   private declarationFor(document: DocumentNode, context?: Partial<LintContext>): string {
