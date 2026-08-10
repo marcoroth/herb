@@ -5,6 +5,11 @@
   "projectType": "library",
   "targets": {
     "build": {
+      "outputs": [
+        "{workspaceRoot}/lib/herb/herb.*",
+        "{workspaceRoot}/tmp",
+        "{workspaceRoot}/vendor/prism"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "command": "bundle exec rake compile"

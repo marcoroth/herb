@@ -13,7 +13,7 @@
         ],
       },
       "inputs": ["{projectRoot}/**/*"],
-      "outputs": ["{workspaceRoot}/src/*.o", "{workspaceRoot}/src/libherb.a"],
+      "outputs": ["{workspaceRoot}/build/libherb.a", "{workspaceRoot}/src/**/*.o"],
       "dependsOn": ["templates:generate", "prism:build"]
     },
     "clean": {

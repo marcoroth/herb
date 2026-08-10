@@ -5,6 +5,7 @@
   "projectType": "application",
   "targets": {
     "build": {
+      "outputs": ["{projectRoot}/dist"],
       "executor": "nx:run-script",
       "options": {
         "script": "build"
