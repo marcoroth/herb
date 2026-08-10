@@ -1,33 +1,51 @@
-# Linter Rule: Prefer the `pluralize` helper over `String#pluralize` for counts
+# Linter Rule: Prefer the `pluralize` helper over a separate count and `String#pluralize`
 
 **Rule:** `actionview-prefer-pluralize-helper`
 
 ## Description
 
-Prefer Rails' `ActionView::Helpers::TextHelper#pluralize` helper over calling `String#pluralize` with a count in ERB templates.
+Disallow rendering a count in one ERB output tag and the noun it belongs to, pluralized with `String#pluralize`, in the next. The `ActionView::Helpers::TextHelper#pluralize` helper renders both from a single tag.
+
+```
+Prefer the `pluralize` helper over separate count and `String#pluralize` output. Use `<%= pluralize(aliases.size, "Known Alias") %>` instead.
+```
 
 ## Rationale
 
-Both `pluralize("Alias", count)` and `"Alias".pluralize(count)` inflect a word based on a count, but they behave differently. The `pluralize` helper prepends the count to the resulting string (e.g. `pluralize(2, "person")` returns `"2 people"`), which is almost always what you want when rendering a count next to a noun. It also handles the `1`/singular case correctly and reads naturally in a template.
+The two `pluralize` methods do different jobs. The helper takes the count first and renders it in front of the word, so `pluralize(2, "Known Alias")` returns `"2 Known Aliases"`. `String#pluralize` only inflects the word, so `"Known Alias".pluralize(2)` returns `"Known Aliases"` and the count has to go in an output tag of its own.
 
-Reaching for `String#pluralize(count)` usually means the count is rendered separately, leading to duplicated output like `<%= aliases.size %> <%= "Alias".pluralize(aliases.size) %>`. Consolidating on the `pluralize` helper keeps the count and the noun together, avoids the extra output tag, and makes the intent clearer.
+Writing both tags side by side splits one phrase across two tags and evaluates the count twice. The helper does the whole job once, and the singular and plural forms stay in one place where a translator or a reviewer can see them together.
+
+A `String#pluralize` call on its own is not reported. Rendering the word without its count is exactly what that method is for, and a column header like `<%= "Known Alias".pluralize(aliases.size) %>` is correct as written.
+
+The two counts have to be syntactically identical for the pair to be reported, so `<%= aliases.count %>` next to `"Alias".pluralize(aliases.size)` is left alone. A pair separated by an HTML element or by another ERB tag is left alone too, since the two tags cannot be collapsed into one without moving the markup between them.
+
+A `String#pluralize` call that passes a locale is not reported, because the helper takes a plural form rather than a locale in that position.
 
 ## Examples
 
 ### ✅ Good
 
 ```erb
-<%= pluralize("Known Alias", aliases.size) %>
+<%= pluralize(aliases.size, "Known Alias") %>
 ```
 
 ```erb
-Known <%= pluralize("Alias", aliases.size) %>
+<%= "Known Alias".pluralize(aliases.size) %>
+```
+
+```erb
+<%= aliases.count %> <%= "Known Alias".pluralize(aliases.size) %>
 ```
 
 ### 🚫 Bad
 
 ```erb
 <%= aliases.size %><%= "Known Alias".pluralize(aliases.size) %>
+```
+
+```erb
+<%= aliases.size %> <%= "Known Alias".pluralize(aliases.size) %>
 ```
 
 ```erb
