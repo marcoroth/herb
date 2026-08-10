@@ -1,0 +1,64 @@
+# Generated from lib/herb/engine/diagnostic.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # One finding about a template, whoever found it and whenever they found it.
+    #
+    # A validator finds things while the template compiles, an accessibility check or a collector
+    # finds them while it renders, and the parser finds them before either. They all describe the
+    # same thing: a severity, a position in a template, and something to say about it. Keeping one
+    # shape means one wire format and one reader in the dev tools, rather than one per producer.
+    class Diagnostic
+      SEVERITIES: untyped
+
+      attr_reader severity: Symbol
+
+      attr_reader source: String
+
+      attr_reader code: String
+
+      attr_reader message: String
+
+      attr_reader filename: String?
+
+      attr_reader line: Integer?
+
+      attr_reader column: Integer?
+
+      attr_reader suggestion: String?
+
+      attr_reader documentation_url: String?
+
+      attr_reader data: Hash[Symbol, untyped]
+
+      attr_reader phase: Symbol
+
+      # : (severity: Symbol, source: String, code: String, message: String, ?filename: String?, ?line: Integer?, ?column: Integer?, ?suggestion: String?, ?documentation_url: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped]) -> void
+      def initialize: (severity: Symbol, source: String, code: String, message: String, ?filename: String?, ?line: Integer?, ?column: Integer?, ?suggestion: String?, ?documentation_url: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped]) -> void
+
+      # : (Herb::Errors::Error, source: String, ?filename: String?, ?severity: Symbol, ?phase: Symbol, ?suggestion: String?, ?documentation_url: String?) -> Diagnostic
+      def self.from_error: (Herb::Errors::Error, source: String, ?filename: String?, ?severity: Symbol, ?phase: Symbol, ?suggestion: String?, ?documentation_url: String?) -> Diagnostic
+
+      # : (String) -> String
+      def self.code_for: (String) -> String
+
+      # : () -> bool
+      def error?: () -> bool
+
+      # : () -> bool
+      def warning?: () -> bool
+
+      # : () -> bool
+      def info?: () -> bool
+
+      # : () -> Hash[Symbol, untyped]
+      def to_h: () -> Hash[Symbol, untyped]
+
+      # : (?untyped) -> String
+      def to_json: (?untyped) -> String
+
+      # : () -> String
+      def to_s: () -> String
+    end
+  end
+end

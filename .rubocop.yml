@@ -149,6 +149,7 @@ Metrics/ParameterLists:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/dev/runner.rb
+    - lib/herb/engine/diagnostic.rb
     - lib/herb/diff_operation.rb
     - lib/herb/engine/validators/security_validator.rb
     - lib/herb/errors.rb

@@ -57,8 +57,6 @@ module Herb
         def to_s: () -> String
       end
 
-      # Attaches a collector for the life of the process, so that a scope can be opened and
-      # closed without naming its collectors every time.
       # : (untyped) -> Array[untyped]
       def self.register: (untyped) -> Array[untyped]
 
@@ -68,17 +66,12 @@ module Herb
       # : () -> void
       def self.unregister_all: () -> void
 
-      # Opens a recording scope. Anything left behind by a scope that never finished is
-      # discarded, so a leaked scope heals on the next one rather than growing.
       # : (?collectors: Array[untyped]) -> void
       def self.start: (?collectors: Array[untyped]) -> void
 
-      # Closes the scope and returns what was collected.
       # : () -> Array[untyped]
       def self.finish: () -> Array[untyped]
 
-      # Sugar over `start` and `finish` for scripts and tests. Collectors passed here are
-      # attached for the duration of the block, on top of anything already registered.
       # : (?collectors: Array[untyped]) { () -> untyped } -> Array[untyped]
       def self.track: (?collectors: Array[untyped]) { () -> untyped } -> Array[untyped]
 
@@ -97,6 +90,9 @@ module Herb
       # : (Symbol, untyped) -> void
       def self.record: (Symbol, untyped) -> void
 
+      # : () -> Array[Herb::Engine::Diagnostic]
+      def self.diagnostics: () -> Array[Herb::Engine::Diagnostic]
+
       # : () -> Array[untyped]
       def self.report: () -> Array[untyped]
 
@@ -106,8 +102,6 @@ module Herb
       # : () -> bool
       def self.tracking?: () -> bool
 
-      # A scope belongs to the thread that opened it, so that concurrent requests don't collect
-      # into each other.
       # : () -> Hash[Symbol, untyped]
       def self.state: () -> Hash[Symbol, untyped]
 

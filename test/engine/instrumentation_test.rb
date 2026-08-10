@@ -7,6 +7,7 @@ require_relative "../../lib/herb/engine/instrumentation/query_collector"
 require_relative "../../lib/herb/engine/instrumentation_visitor"
 
 require "active_support"
+require "json"
 
 module Engine
   class InstrumentationTest < Minitest::Spec
@@ -130,6 +131,115 @@ module Engine
       assert_equal ["index.html.erb"], collector.identifiers
     end
 
+    test "a tag keeps its value when it is the last expression of a block" do
+      assert_equal "1", evaluate("<% data = wrap do %><% {n: 1} %><% end %><%= data[:n] %>", wrap: ->(&block) { block.call })
+    end
+
+    test "a local assigned in an output tag stays visible to later tags" do
+      assert_equal "5|5", evaluate("<%= total = 5 %>|<%= total %>")
+    end
+
+    test "a local assigned in a statement tag stays visible to later tags" do
+      assert_equal "5", evaluate("<% total = 5 %><%= total %>")
+    end
+
+    test "a frame is left even when a tag raises" do
+      engine = Herb::Engine.new("<%= boom %>", instrumentation_options)
+
+      Herb::Engine::Instrumentation.track do
+        context = Object.new
+        context.define_singleton_method(:boom) { raise "boom" }
+
+        assert_raises(RuntimeError) { context.instance_eval(engine.src) }
+      end
+
+      assert_empty Herb::Engine::Instrumentation.stack
+    end
+
+    test "an assignment in an output tag is framed rather than wrapped" do
+      assert_compiled_snapshot("<%= total = items.sum %>", instrumentation_options)
+    end
+
+    test "a registered collector is used without naming it per scope" do
+      collector = Herb::Engine::Instrumentation::QueryCollector.new
+
+      Herb::Engine::Instrumentation.register(collector)
+
+      begin
+        engine = Herb::Engine.new("<%= lookup %>", instrumentation_options)
+
+        Herb::Engine::Instrumentation.start
+
+        test_case = self
+        context = Object.new
+        context.define_singleton_method(:lookup) { test_case.send(:query, "SELECT 1") }
+        context.instance_eval(engine.src)
+
+        report = Herb::Engine::Instrumentation.finish
+
+        assert_equal ["SELECT 1"], report.first[:queries]
+      ensure
+        Herb::Engine::Instrumentation.unregister_all
+      end
+    end
+
+    test "finish returns the report and closes the scope" do
+      Herb::Engine::Instrumentation.start
+      Herb::Engine::Instrumentation.at("index.html.erb", 1, 0) { nil }
+
+      assert_predicate Herb::Engine::Instrumentation, :tracking?
+
+      Herb::Engine::Instrumentation.finish
+
+      refute_predicate Herb::Engine::Instrumentation, :tracking?
+      assert_empty Herb::Engine::Instrumentation.report
+    end
+
+    test "a scope that was never finished is discarded by the next one" do
+      Herb::Engine::Instrumentation.start
+      Herb::Engine::Instrumentation.enter("index.html.erb", 1, 0)
+
+      Herb::Engine::Instrumentation.start
+
+      assert_empty Herb::Engine::Instrumentation.stack
+      assert_empty Herb::Engine::Instrumentation.finish
+    end
+
+    test "a tag that ran one query is reported as information" do
+      diagnostic = diagnose("<%= lookup %>", lookup: -> { query("SELECT 1") }).first
+
+      assert_equal :info, diagnostic.severity
+      assert_equal "query-in-template", diagnostic.code
+      assert_equal "This tag ran 1 query", diagnostic.message
+      assert_nil diagnostic.suggestion
+    end
+
+    test "a tag that ran more than one query is reported as a warning" do
+      diagnostic = diagnose("<% [1, 2, 3].each do |i| %><%= lookup %><% end %>", lookup: -> { query("SELECT 1") }).first
+
+      assert_equal :warning, diagnostic.severity
+      assert_equal "n-plus-one", diagnostic.code
+      assert_equal "This tag ran 3 queries", diagnostic.message
+      assert_includes diagnostic.suggestion, "controller"
+    end
+
+    test "a diagnostic carries the position and the queries behind it" do
+      diagnostic = diagnose("<%= lookup %>", lookup: -> { query("SELECT 1") }).first
+
+      assert_equal ["index.html.erb", 1, 0], [diagnostic.filename, diagnostic.line, diagnostic.column]
+      assert_equal ["SELECT 1"], diagnostic.data[:queries]
+      assert_equal :runtime, diagnostic.phase
+      assert_equal "QueryCollector", diagnostic.source
+    end
+
+    test "a diagnostic serializes for the wire" do
+      diagnostic = diagnose("<%= lookup %>", lookup: -> { query("SELECT 1") }).first
+      parsed = JSON.parse(diagnostic.to_json)
+
+      assert_equal "info", parsed["severity"]
+      assert_equal "index.html.erb", parsed["filename"]
+    end
+
     test "leaves the stack empty after tracking" do
       track { Herb::Engine::Instrumentation.at("index.html.erb", 1, 0) { nil } }
 
@@ -153,6 +263,41 @@ module Engine
         end
 
         context.instance_eval(engine.src)
+      end
+    end
+
+    def evaluate(source, **locals)
+      engine = Herb::Engine.new(source, instrumentation_options)
+
+      context = Object.new
+
+      locals.each do |name, value|
+        context.define_singleton_method(name) { |&block| block ? value.call(&block) : value.call }
+      end
+
+      Herb::Engine::Instrumentation.track { context.instance_eval(engine.src) }
+
+      context.instance_eval(engine.src)
+    end
+
+    def diagnose(source, **locals)
+      collector = Herb::Engine::Instrumentation::QueryCollector.new
+      engine = Herb::Engine.new(source, instrumentation_options)
+
+      Herb::Engine::Instrumentation.start(collectors: [collector])
+
+      begin
+        context = Object.new
+
+        locals.each do |name, value|
+          context.define_singleton_method(name) { |&block| block ? value.call(&block) : value.call }
+        end
+
+        collector.attach { context.instance_eval(engine.src) }
+
+        Herb::Engine::Instrumentation.diagnostics
+      ensure
+        Herb::Engine::Instrumentation.finish
       end
     end
 

@@ -18,6 +18,30 @@ module Herb
           notifications.subscribed(method(:handle_event), EVENT, &block)
         end
 
+        #: (Array[untyped]) -> Array[Herb::Engine::Diagnostic]
+        def diagnostics(entries)
+          entries.filter_map do |entry|
+            queries = entry[KEY]
+
+            next if queries.empty?
+
+            count = queries.size
+
+            Diagnostic.new(
+              severity: count > 1 ? :warning : :info,
+              source: "QueryCollector",
+              code: count > 1 ? "n-plus-one" : "query-in-template",
+              message: "This tag ran #{count} #{count == 1 ? "query" : "queries"}",
+              filename: entry.filename,
+              line: entry.line,
+              column: entry.column,
+              suggestion: count > 1 ? "Load the records in the controller, or preload the association" : nil,
+              documentation_url: nil,
+              data: { queries: queries }
+            )
+          end
+        end
+
         #: () -> void
         def detach
           return unless @subscriber && notifications

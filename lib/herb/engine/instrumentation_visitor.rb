@@ -17,6 +17,14 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       INSTRUMENTATION = "::Herb::Engine::Instrumentation"
 
+      ASSIGNMENT_NODES = [
+        :LocalVariableWriteNode,
+        :LocalVariableOperatorWriteNode,
+        :LocalVariableOrWriteNode,
+        :LocalVariableAndWriteNode,
+        :MultiWriteNode
+      ].freeze
+
       ARRAY_PROPERTIES = [:children, :body, :statements].freeze
       NODE_PROPERTIES = [:subsequent, :else_clause, :rescue_clause, :ensure_clause].freeze
 
@@ -83,12 +91,12 @@ module Herb
         rewritten = nodes.flat_map { |node|
           instrument(node)
 
-          if output?(node)
+          if framed?(node)
+            [enter_node(node), node, leave_node(node)]
+          elsif output?(node)
             [wrapped_output(node)]
           elsif statement?(node)
             [wrapped_statement(node)]
-          elsif block?(node)
-            [enter_node(node), node, leave_node(node)]
           else
             [node]
           end
@@ -112,6 +120,25 @@ module Herb
       end
 
       #: (Herb::AST::Node) -> bool
+      def framed?(node)
+        block?(node) || (output?(node) && assignment?(node))
+      end
+
+      #: (Herb::AST::Node) -> bool
+      def assignment?(node)
+        return false unless node.respond_to?(:parsed_prism_node)
+        return false unless defined?(::Prism)
+
+        parsed = node.parsed_prism_node # steep:ignore
+
+        return false unless parsed
+
+        ASSIGNMENT_NODES.any? { |name| ::Prism.const_defined?(name) && parsed.is_a?(::Prism.const_get(name)) }
+      rescue StandardError
+        false
+      end
+
+      #: (Herb::AST::Node) -> bool
       def block?(node)
         return false if node.is_a?(Herb::AST::ERBRenderNode)
         return false unless node.respond_to?(:end_node)
@@ -127,11 +154,11 @@ module Herb
       end
 
       def wrapped_output(node)
-        erb_node(node, "<%=", "#{INSTRUMENTATION}.at(#{position(node)}) { #{code(node)} }")
+        erb_node(node, "<%=", "#{INSTRUMENTATION}.at(#{position(node)}) {\n#{code(node)}\n}")
       end
 
       def wrapped_statement(node)
-        erb_node(node, "<%", "#{INSTRUMENTATION}.enter(#{position(node)}); #{code(node)}; #{INSTRUMENTATION}.leave")
+        erb_node(node, "<%", "#{INSTRUMENTATION}.enter(#{position(node)}); begin\n#{code(node)}\nensure; #{INSTRUMENTATION}.leave; end")
       end
 
       def enter_node(node)

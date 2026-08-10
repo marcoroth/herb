@@ -10,10 +10,11 @@ module Herb
 
         IGNORED_NAMES: untyped
 
-        # With a block the subscription lasts for the block, which is what `track` uses. Without
-        # one it lasts until `detach`, which is what `register` uses.
         # : () ?{ () -> untyped } -> untyped
         def attach: () ?{ () -> untyped } -> untyped
+
+        # : (Array[untyped]) -> Array[Herb::Engine::Diagnostic]
+        def diagnostics: (Array[untyped]) -> Array[Herb::Engine::Diagnostic]
 
         # : () -> void
         def detach: () -> void

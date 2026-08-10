@@ -14,6 +14,8 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       INSTRUMENTATION: ::String
 
+      ASSIGNMENT_NODES: untyped
+
       ARRAY_PROPERTIES: untyped
 
       NODE_PROPERTIES: untyped
@@ -24,8 +26,6 @@ module Herb
 
       attr_accessor experimental_warning_issued: bool
 
-      # The engine sets this before the visitor runs, so that a single instance can be shared
-      # across templates.
       attr_accessor filename: String?
 
       # : (?filename: String?) -> void
@@ -40,8 +40,6 @@ module Herb
 
       def instrument: (untyped node) -> untyped
 
-      # Every instrumented template announces itself, so that a collector can pair what a tag
-      # asked for with what actually rendered.
       def announce: (untyped node) -> untyped
 
       def rewrite: (untyped nodes) -> untyped
@@ -51,6 +49,12 @@ module Herb
 
       # : (Herb::AST::Node) -> bool
       def statement?: (Herb::AST::Node) -> bool
+
+      # : (Herb::AST::Node) -> bool
+      def framed?: (Herb::AST::Node) -> bool
+
+      # : (Herb::AST::Node) -> bool
+      def assignment?: (Herb::AST::Node) -> bool
 
       # : (Herb::AST::Node) -> bool
       def block?: (Herb::AST::Node) -> bool

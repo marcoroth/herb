@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../herb"
+require_relative "diagnostic"
 
 module Herb
   class Engine
@@ -179,6 +180,17 @@ module Herb
           nil
         end
 
+        #: () -> Array[Herb::Engine::Diagnostic]
+        def diagnostics
+          entries = report
+
+          each_collector.flat_map { |collector|
+            next [] unless collector.respond_to?(:diagnostics)
+
+            collector.diagnostics(entries)
+          }
+        end
+
         #: () -> Array[untyped]
         def report
           (state[:entries] || {}).values.sort_by { |entry| [entry.filename.to_s, entry.line, entry.column] }
@@ -201,8 +213,10 @@ module Herb
 
         private
 
-        def each_collector(&)
-          (state[:collectors] || registered).each(&)
+        def each_collector(&block)
+          collectors = state[:collectors] || registered
+
+          block ? collectors.each(&block) : collectors
         end
 
         def attached(collectors, &block)
