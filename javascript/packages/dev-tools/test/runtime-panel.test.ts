@@ -678,6 +678,30 @@ describe("clear", () => {
     expect(cards()).toHaveLength(1)
   })
 
+  test("keeps per-occurrence detail from a later duplicate", () => {
+    embed(PAYLOAD)
+
+    const panel = createPanel()
+
+    const base = {
+      template: "app/views/posts/_post.html.erb",
+      message: "Duplicate detail check",
+      code: "demo-merge",
+      severity: "warning" as const,
+      origin: "demo-source",
+      location: { start: { line: 1, column: 1 }, end: { line: 1, column: 4 } },
+    }
+
+    panel.report(base)
+    panel.report({ ...base, suggestion: "Arrived with the second copy", docsUrl: "https://herb-tools.dev/linter/rules/demo-merge" })
+
+    const card = [...document.querySelectorAll(".hdt-card")].find(element => element.textContent!.includes("Duplicate detail check"))!
+
+    expect(card.textContent).toContain("Arrived with the second copy")
+    expect(card.querySelector("a[href='https://herb-tools.dev/linter/rules/demo-merge']")).not.toBeNull()
+    expect(card.textContent).toContain("2")
+  })
+
   test("bounces the count only when a new diagnostic arrives", () => {
     embed(PAYLOAD)
 

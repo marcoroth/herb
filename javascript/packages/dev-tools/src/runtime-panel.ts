@@ -151,6 +151,20 @@ export function buildExcerptDocument(source: string, runs: StyledRun[], diagnost
   };
 }
 
+function mergeDiagnostics(existing: NormalizedDiagnostic, incoming: NormalizedDiagnostic): NormalizedDiagnostic {
+  return {
+    ...existing,
+    node: existing.node ?? incoming.node,
+    code: existing.code ?? incoming.code,
+    severity: existing.severity ?? incoming.severity,
+    location: existing.location ?? incoming.location,
+    suggestion: existing.suggestion ?? incoming.suggestion,
+    docsUrl: existing.docsUrl ?? incoming.docsUrl,
+    value: existing.value ?? incoming.value,
+    fix: existing.fix ?? incoming.fix,
+  };
+}
+
 export class RuntimePanel {
   private entries: PanelEntry[] = [];
   private renderTree: RenderTreeNode[] = [];
@@ -326,6 +340,7 @@ export class RuntimePanel {
 
     if (existing !== undefined) {
       existing.count += 1;
+      existing.diagnostic = mergeDiagnostics(existing.diagnostic, diagnostic);
 
       return key;
     }
