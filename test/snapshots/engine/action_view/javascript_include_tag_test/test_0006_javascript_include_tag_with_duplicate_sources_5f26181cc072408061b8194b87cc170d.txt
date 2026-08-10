@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0006_javascript_include_tag with duplicate sources"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", \\\"application\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js"></script>

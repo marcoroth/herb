@@ -673,7 +673,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with defer", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: true %>`)).toBe(
-        `<script defer src="<%= javascript_path("application") %>"></script>`
+        `<script src="<%= javascript_path("application") %>" defer></script>`
       )
     })
 
@@ -688,7 +688,7 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with nonce true resolves to content_security_policy_nonce", () => {
       expect(transform(`<%= javascript_include_tag "application", nonce: true %>`)).toBe(
-        `<script nonce="<%= content_security_policy_nonce %>" src="<%= javascript_path("application") %>"></script>`
+        `<script src="<%= javascript_path("application") %>" nonce="<%= content_security_policy_nonce %>"></script>`
       )
     })
 
@@ -700,13 +700,13 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with interpolated nonce", () => {
       expect(transform('<%= javascript_include_tag "application", nonce: "static-#{dynamic}" %>')).toBe(
-        '<script nonce="static-<%= dynamic %>" src="<%= javascript_path("application") %>"></script>'
+        '<script src="<%= javascript_path("application") %>" nonce="static-<%= dynamic %>"></script>'
       )
     })
 
     test("javascript_include_tag with data attributes", () => {
       expect(transform(`<%= javascript_include_tag "application", data: { turbo_track: "reload" } %>`)).toBe(
-        `<script data-turbo-track="reload" src="<%= javascript_path("application") %>"></script>`
+        `<script src="<%= javascript_path("application") %>" data-turbo-track="reload"></script>`
       )
     })
 
@@ -736,25 +736,25 @@ describe("ActionViewTagHelperToHTMLRewriter", () => {
 
     test("javascript_include_tag with URL and nonce", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", nonce: true %>`)).toBe(
-        `<script nonce="<%= content_security_policy_nonce %>" src="http://www.example.com/xmlhr.js"></script>`
+        `<script src="http://www.example.com/xmlhr.js" nonce="<%= content_security_policy_nonce %>"></script>`
       )
     })
 
     test("javascript_include_tag with URL and async", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", async: true %>`)).toBe(
-        `<script async src="http://www.example.com/xmlhr.js"></script>`
+        `<script src="http://www.example.com/xmlhr.js" async></script>`
       )
     })
 
     test("javascript_include_tag with URL and defer", () => {
       expect(transform(`<%= javascript_include_tag "http://www.example.com/xmlhr.js", defer: true %>`)).toBe(
-        `<script defer src="http://www.example.com/xmlhr.js"></script>`
+        `<script src="http://www.example.com/xmlhr.js" defer></script>`
       )
     })
 
     test("javascript_include_tag with defer as string", () => {
       expect(transform(`<%= javascript_include_tag "application", defer: "true" %>`)).toBe(
-        `<script defer="true" src="<%= javascript_path("application") %>"></script>`
+        `<script src="<%= javascript_path("application") %>" defer="true"></script>`
       )
     })
 

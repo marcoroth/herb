@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0019_stylesheet_link_tag with preload_links_header"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", preload_links_header: false %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" />'.freeze;
+_buf.to_s

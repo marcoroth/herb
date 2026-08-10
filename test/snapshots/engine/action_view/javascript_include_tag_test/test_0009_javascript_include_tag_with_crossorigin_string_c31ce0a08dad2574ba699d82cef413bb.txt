@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0009_javascript_include_tag with crossorigin string"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", crossorigin: \\\"use-credentials\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<script src="/javascripts/application.js" crossorigin="use-credentials"></script>

@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::JavascriptIncludeTagTest#test_0012_javascript_include_tag with integrity"
+input: "{source: \"<%= javascript_include_tag \\\"application\\\", integrity: \\\"sha256-abc\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<script src="'.freeze; _buf << ::Herb::Engine.attr((javascript_path("application"))); _buf << '" integrity="sha256-abc"></script>'.freeze;
+_buf.to_s

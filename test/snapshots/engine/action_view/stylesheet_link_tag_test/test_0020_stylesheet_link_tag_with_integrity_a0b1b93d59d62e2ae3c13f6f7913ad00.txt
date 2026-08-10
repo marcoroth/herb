@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0020_stylesheet_link_tag with integrity"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", integrity: \\\"sha256-abc\\\" %>\", options: {optimize: true}}"
+---
+_buf = ::String.new; _buf << '<link rel="stylesheet" href="'.freeze; _buf << ::Herb::Engine.attr((stylesheet_path("application"))); _buf << '" integrity="sha256-abc" />'.freeze;
+_buf.to_s
