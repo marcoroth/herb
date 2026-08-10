@@ -1,4 +1,4 @@
-export { getLanguageService } from "./language-service.js"
+export { getLanguageService, getBlockArgumentCompletions } from "./language-service.js"
 export { findTokenIndex, HerbHTMLNode } from "./herb-html-node.js"
 export { buildHTMLDocument } from "./herb-html-document.js"
 export { buildLineOffsetTable, positionToOffset, locationToOffsets } from "./offset-utils.js"
