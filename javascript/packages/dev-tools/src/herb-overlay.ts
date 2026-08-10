@@ -1,41 +1,13 @@
 import { ErrorOverlay } from './error-overlay';
-import { SyntaxRenderer, renderPlainHTML, generateStylesheet, resolveTheme } from '@herb-tools/highlighter';
+import { RuntimePanel } from './runtime-panel';
+import { HIGHLIGHTER_THEME, loadHighlighter, releaseHighlighterStyles, retainHighlighterStyles } from './highlighter-bridge';
+import { renderPlainHTML } from '@herb-tools/highlighter';
+
+import type { SyntaxRenderer } from '@herb-tools/highlighter';
 
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
-}
-
-const HIGHLIGHTER_THEME = 'onedark';
-const HIGHLIGHTER_STYLE_ID = 'herb-highlighter-styles';
-
-let highlighterSetup: Promise<SyntaxRenderer | null> | null = null;
-
-function loadHighlighter(): Promise<SyntaxRenderer | null> {
-  if (!highlighterSetup) {
-    highlighterSetup = (async () => {
-      const { Herb } = await import('@herb-tools/browser');
-      const renderer = new SyntaxRenderer(resolveTheme(HIGHLIGHTER_THEME), Herb);
-      await renderer.initialize();
-      return renderer;
-    })().catch((error) => {
-      console.warn('[HerbDevTools] Syntax highlighting unavailable:', error);
-      return null;
-    });
-  }
-
-  return highlighterSetup;
-}
-
-function injectHighlighterStyles() {
-  if (document.getElementById(HIGHLIGHTER_STYLE_ID)) {
-    return;
-  }
-
-  const style = document.createElement('style');
-  style.id = HIGHLIGHTER_STYLE_ID;
-  style.textContent = generateStylesheet(resolveTheme(HIGHLIGHTER_THEME), HIGHLIGHTER_THEME);
-  document.head.appendChild(style);
 }
 
 function escapeHTML(value: string): string {
@@ -61,6 +33,7 @@ export class HerbOverlay {
   private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private errorOverlay: ErrorOverlay | null = null;
+  private panel: RuntimePanel | null = null;
   private syntaxRenderer: SyntaxRenderer | null = null;
   private destroyed = false;
 
@@ -108,10 +81,15 @@ export class HerbOverlay {
     this.setupToggleSwitches();
     this.setupEditorDropdown();
     this.initializeErrorOverlay();
+    this.initializeRuntimePanel();
     this.setupTurboListeners();
     this.applySettings();
 
     document.addEventListener('click', this.handleDocumentClick);
+  }
+
+  public get runtimePanel(): RuntimePanel | null {
+    return this.panel;
   }
 
   public destroy() {
@@ -128,20 +106,24 @@ export class HerbOverlay {
 
     this.errorOverlay?.destroy();
     this.errorOverlay = null;
+    this.panel?.destroy();
+    this.panel = null;
     this.syntaxRenderer = null;
 
-    document.getElementById(HIGHLIGHTER_STYLE_ID)?.remove();
+    releaseHighlighterStyles();
+
     document.querySelector('.herb-floating-menu')?.remove();
   }
 
   private initializeHighlighter() {
+    retainHighlighterStyles();
+
     void loadHighlighter().then((renderer) => {
       if (!renderer || this.destroyed) {
         return;
       }
 
       this.syntaxRenderer = renderer;
-      injectHighlighterStyles();
     });
   }
 
@@ -414,6 +396,7 @@ export class HerbOverlay {
     this.setupEditorDropdown();
     this.applySettings();
     this.updateMenuButtonState();
+    this.panel?.refresh();
   }
 
   private setupToggleSwitches() {
@@ -1236,5 +1219,9 @@ export class HerbOverlay {
 
   private initializeErrorOverlay() {
     this.errorOverlay = new ErrorOverlay();
+  }
+
+  private initializeRuntimePanel() {
+    this.panel = new RuntimePanel();
   }
 }
