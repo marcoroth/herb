@@ -104,9 +104,29 @@ A partial holding `<meta>` or `<link>` tags is reported when every call site ren
 
 Action View helpers that render an element count as ancestors, so a `content_tag`, `tag.div` or `link_to` block nests what it wraps just like the equivalent HTML would.
 
-The rule stays quiet whenever there is not enough information to be sure. A file nothing renders, and a chain that never reaches a layout, are both left alone. When only some call sites place the file in the wrong section, the offense is still reported and the call chain points at one that does.
+The rule stays quiet whenever there is not enough information to be sure, unless the template contradicts itself. A file nothing renders, and a chain that never reaches a layout, are both left alone. When only some call sites place the file in the wrong section, the offense is still reported and the call chain points at one that does.
 
 Layout resolution follows Rails' naming convention and cannot see a controller declaring `layout "..."` or `layout false`.
+
+## Templates that contradict themselves
+
+A template with no resolved call site is normally left alone, because nothing says which section it renders into. One case still gives an answer. When a template holds both a head-only element and a body-only element that always render together, wherever it ends up one of the two is in the wrong section, so the head-only elements are reported.
+
+```erb
+<meta name="description" content="Page description">
+
+<div>Body content</div>
+```
+
+Elements only count when they are guaranteed to render alongside each other. Branches of a conditional are mutually exclusive, a `content_for` block renders somewhere else entirely, a `<template>` is not rendered where it sits, and an element already inside an explicit `<head>` or `<body>` has an answer of its own. None of these are counted.
+
+```erb
+<% content_for :head do %>
+  <meta name="description" content="Page description">
+<% end %>
+
+<div>Body content</div>
+```
 
 ## References
 

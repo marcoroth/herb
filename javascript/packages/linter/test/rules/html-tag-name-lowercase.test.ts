@@ -41,7 +41,7 @@ describe("html-tag-name-lowercase", () => {
     expectNoOffenses('<img src="photo.jpg" />')
   })
 
-  test.skip("handles ERB templates", () => {
+  test("handles ERB templates", () => {
     expectNoOffenses('<div class="container"><%= content_tag(:DIV, "Hello world!") %></div>')
   })
 

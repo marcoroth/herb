@@ -4,8 +4,12 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import { isERBOutputNode, isPrismNodeType } from "@herb-tools/core"
 import { isActionViewHelperCall } from "./action-view-utils.js"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig, BaseAutofixContext, Mutable } from "../types.js"
 import type { ParseResult, ERBContentNode, ParserOptions, PrismNode } from "@herb-tools/core"
+
+interface ActionViewNoSilentHelperAutofixContext extends BaseAutofixContext {
+  node: Mutable<ERBContentNode>
+}
 
 function collectDiscardedHelperCalls(prismNode: PrismNode): { helperName: string }[] {
   const matches: { helperName: string }[] = []
@@ -63,7 +67,7 @@ function collectDiscardedHelperCalls(prismNode: PrismNode): { helperName: string
   return matches
 }
 
-class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
+class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor<ActionViewNoSilentHelperAutofixContext> {
   visitERBContentNode(node: ERBContentNode): void {
     this.checkSilentHelper(node)
     super.visitERBContentNode(node)
@@ -83,12 +87,15 @@ class ActionViewNoSilentHelperVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Avoid using \`${tagOpening} %>\` with \`${match.helperName}\`. Use \`<%= %>\` to ensure the helper's output is rendered.`,
         node.location,
+        { node: node as Mutable<ERBContentNode> },
       )
     }
   }
 }
 
-export class ActionViewNoSilentHelperRule extends ParserRule {
+export class ActionViewNoSilentHelperRule extends ParserRule<ActionViewNoSilentHelperAutofixContext> {
+  static unsafeAutocorrectable = true
+  static autofixRequiresContext = true
   static ruleName = "actionview-no-silent-helper"
   static introducedIn = this.version("0.9.0")
 
@@ -106,11 +113,24 @@ export class ActionViewNoSilentHelperRule extends ParserRule {
     }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ActionViewNoSilentHelperAutofixContext>[] {
     const visitor = new ActionViewNoSilentHelperVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<ActionViewNoSilentHelperAutofixContext>, result: ParseResult): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node } = offense.autofixContext
+
+    if (!node.tag_opening) return null
+    if (node.tag_opening.value === "<%=") return null
+
+    node.tag_opening.value = "<%="
+
+    return result
   }
 }

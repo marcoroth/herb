@@ -1,5 +1,5 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, isNilAttributeValue } from "./rule-utils.js"
 import { getAttributeName, getAttributes } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -9,9 +9,9 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
     if (!(attributeName === "role" && attributeValue === "heading")) return
 
-    const ariaLevelAttributes = getAttributes(parentNode).find(attribute => getAttributeName(attribute) === "aria-level")
+    const ariaLevelAttribute = getAttributes(parentNode).find(attribute => getAttributeName(attribute) === "aria-level")
 
-    if (ariaLevelAttributes) return
+    if (ariaLevelAttribute && !isNilAttributeValue(ariaLevelAttribute)) return
 
     this.addOffense(
       `Element with \`role="heading"\` must have an \`aria-level\` attribute.`,

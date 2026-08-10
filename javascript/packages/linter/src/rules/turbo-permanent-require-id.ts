@@ -1,4 +1,4 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor, isNilAttributeValue } from "./rule-utils.js"
 import { getAttribute } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
@@ -25,7 +25,7 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
 
     const idAttribute = getAttribute(node, "id")
 
-    if (!idAttribute) {
+    if (!idAttribute || isNilAttributeValue(idAttribute)) {
       this.addOffense(
         "Elements with `data-turbo-permanent` must have an `id` attribute. Without an `id`, Turbo can't track the element across page changes and the permanent behavior won't work as expected.",
         turboPermanentAttribute.location,
