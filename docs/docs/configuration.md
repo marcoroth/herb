@@ -63,6 +63,32 @@ This will generate a configuration file with sensible defaults:
 
 <<< @/../../javascript/packages/config/src/config-template.yml{yaml}
 
+## Framework Configuration <Badge type="info" text="^0.10.0" />
+
+The `framework` option tells Herb which framework renders your templates:
+
+```yaml [.herb.yml]
+framework: actionview
+```
+
+Every tool tailors itself to that answer. It decides what Herb may assume about a template, which rules apply, and which optimizations it can take. Each value describes something different:
+
+| Value | Templates |
+|---|---|
+| `ruby` (default) | plain ERB, with no framework helpers in scope |
+| `actionview` | Action View templates, with their helpers, partials, and strict locals |
+| `hanami` | Hanami views, with their parts and helpers |
+| `sinatra` | Sinatra templates, with their helpers |
+
+Rules that only make sense for one framework check this option and stay quiet otherwise, which is why `erb-prefer-image-tag-helper` never suggests `image_tag` in a project that doesn't render through Action View.
+
+When the option isn't set, Herb falls back to `ruby` and treats every template as plain ERB, which is the most conservative behavior it has. The [`herb-config-framework-option`](/linter/rules/herb-config-framework-option.md) rule reports that, and suggests a value when a template shows what renders it:
+
+```
+No `framework` is set in `.herb.yml`, so Herb assumes plain `ruby` templates. `image_tag` is an Action View helper, so this project looks like `actionview`. Set `framework: actionview` to get the rules, assumptions, and optimizations that come with it.
+```
+
+Setting the option to any value silences the rule, including `ruby` when that is what your project means. In an editor, the diagnostic carries a quick fix that writes the value into your `.herb.yml` for you.
 
 ## Command Line Overrides
 
