@@ -235,7 +235,7 @@ describe('FormattingProvider', () => {
     })
   })
 
-  describe('formatDocumentIgnoreConfig', () => {
+  describe('formatDocument with no settings', () => {
     it('should format even with null settings', async () => {
       const params: DocumentFormattingParams = {
         textDocument: { uri: 'file:///test/file.erb' },
@@ -247,7 +247,7 @@ describe('FormattingProvider', () => {
       const document = TextDocument.create('file:///test/file.erb', 'erb', 1, '<div>test</div>')
       vi.mocked(documents.get).mockReturnValue(document)
 
-      const result = await formattingProvider.formatDocumentIgnoreConfig(params)
+      const result = await formattingProvider.formatDocument(params)
 
       expect(result).toBeDefined()
       expect(result.length).toBeGreaterThan(0)
@@ -450,7 +450,7 @@ describe('FormattingProvider', () => {
     })
   })
 
-  describe('formatRangeIgnoreConfig', () => {
+  describe('formatRange with no settings', () => {
     it('should format range even with null settings', async () => {
       vi.mocked(userSettings.getDocumentSettings).mockResolvedValue(null as any)
 
@@ -470,7 +470,7 @@ describe('FormattingProvider', () => {
         options: { tabSize: 2, insertSpaces: true }
       }
 
-      const result = await formattingProvider.formatRangeIgnoreConfig(params)
+      const result = await formattingProvider.formatRange(params)
 
       expect(result).toBeDefined()
     })

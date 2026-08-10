@@ -68,10 +68,7 @@ export class Session {
     this.commentProvider = new CommentProvider(this.parserService)
     this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
 
-    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, {
-      supportsCreateFile: this.capabilities.supportsResourceCreation,
-      supportsPromptCommand: this.capabilities.supportsExtractToPartialCommand,
-    })
+    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities)
 
     if (params.initializationOptions) {
       this.userSettings.global = params.initializationOptions as PersonalHerbSettings

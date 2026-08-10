@@ -15,9 +15,14 @@ const DEFAULT_TEMPLATE_EXTENSION = "html.erb"
 const EXTRACT_TO_PARTIAL_COMMAND = "herb.extractToPartial"
 const SEGMENT_NAME = /^[a-zA-Z0-9_-]+$/
 
+/**
+ * The two client abilities this provider needs. Reading them off `Capabilities`
+ * keeps the answer live, rather than freezing whatever was true when the
+ * provider happened to be constructed.
+ */
 export interface ExtractCodeActionCapabilities {
-  supportsCreateFile: boolean
-  supportsPromptCommand: boolean
+  readonly supportsResourceCreation: boolean
+  readonly supportsExtractToPartialCommand: boolean
 }
 
 export interface ExtractToPartialArguments {
@@ -59,14 +64,14 @@ export class ExtractCodeActionProvider {
   }
 
   getCodeActions(document: TextDocument, requestedRange: Range): CodeAction[] {
-    if (!this.capabilities.supportsCreateFile) return []
+    if (!this.capabilities.supportsResourceCreation) return []
     if (!this.isTemplate(document.uri)) return []
 
     const analysis = this.analyzer.analyze(document, requestedRange)
 
     if (!analysis) return []
 
-    if (this.capabilities.supportsPromptCommand) {
+    if (this.capabilities.supportsExtractToPartialCommand) {
       const argument: ExtractToPartialArguments = {
         uri: document.uri,
         range: analysis.range,

@@ -310,9 +310,6 @@ export class FormattingProvider {
     return this.performFormatting(params)
   }
 
-  async formatDocumentIgnoreConfig(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    return this.performFormatting(params)
-  }
 
   private async performRangeFormatting(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
     const document = this.documents.get(params.textDocument.uri)
@@ -411,7 +408,4 @@ export class FormattingProvider {
     return this.performRangeFormatting(params)
   }
 
-  async formatRangeIgnoreConfig(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    return this.performRangeFormatting(params)
-  }
 }
