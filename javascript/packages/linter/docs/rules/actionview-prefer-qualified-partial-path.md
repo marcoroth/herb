@@ -33,6 +33,27 @@ When the project's partials are known, the message names the path to write. Othe
 
 Only output tags are reported. A `render` in a silent `<% %>` tag discards its output and is covered by [`actionview-no-silent-render`](./actionview-no-silent-render.md).
 
+## Autofix
+
+`--fix-unsafely` rewrites the name to the path from the view root, but only when the partial resolves to a file sitting in the same directory as the template that renders it:
+
+```erb
+<%# app/views/posts/index.html.erb, next to app/views/posts/_card.html.erb %>
+<%= render "card" %>
+```
+
+becomes
+
+```erb
+<%= render "posts/card" %>
+```
+
+Everywhere else the rewrite is not offered, and the offense reports the path to write without correcting it. A name resolved out of `app/views/application` is left alone, because a template that inherits from another controller may resolve it somewhere closer at runtime.
+
+The fix stays unsafe even for a co-located partial. Rails resolves an unqualified name against the prefixes of the controller doing the rendering, not against the directory the calling template happens to live in. Those agree for a template under the controller's own view directory, which is the convention this rule assumes, but a template rendered by a different controller resolves the name somewhere else, and writing the path from the view root pins it to the file next door.
+
+The rewrite is also skipped when the same quoted string appears more than once in the ERB tag, since the one to rewrite cannot be told apart from the rest.
+
 ## Examples
 
 ### ✅ Good
