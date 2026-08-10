@@ -365,7 +365,7 @@ export const REPORT_STYLESHEET = `:root {
 .herb-report-frame-heading::-webkit-details-marker { display: none; }
 .herb-report-frame-heading::marker { content: ""; }
 
-.herb-report-frame-terminal .herb-report-frame-heading {
+.herb-report-frame-terminal > .herb-report-frame-heading {
   cursor: default;
 }
 

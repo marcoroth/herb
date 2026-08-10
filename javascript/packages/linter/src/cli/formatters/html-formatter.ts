@@ -355,16 +355,37 @@ export class HTMLFormatter extends BaseFormatter {
 
     const location = `${this.displayPath(processed.filename)}:${processed.offense.location.start.line}:${processed.offense.location.start.column}`
 
-    const terminal = [
-      `<li class="herb-report-frame herb-report-frame-terminal">`,
-      `<p class="herb-report-frame-heading">`,
+    const terminalHeading = [
       `<span class="herb-report-frame-index">1</span>`,
       `<span class="herb-report-frame-verb">reported in</span>`,
       `<span class="herb-report-frame-target">${escapeHTML(location)}</span>`,
       `<span class="herb-report-frame-marker">this file</span>`,
-      `</p>`,
-      `</li>`,
     ].join("\n")
+
+    const terminalFragment = this.focusFragment(
+      processed.filename,
+      this.contentFor(processed),
+      processed.offense.location.start.line,
+    )
+
+    const terminal = terminalFragment === undefined
+      ? [
+        `<li class="herb-report-frame herb-report-frame-terminal">`,
+        `<p class="herb-report-frame-heading">`,
+        terminalHeading,
+        `</p>`,
+        `</li>`,
+      ].join("\n")
+      : [
+        `<li class="herb-report-frame herb-report-frame-terminal">`,
+        `<details class="herb-report-frame-body">`,
+        `<summary class="herb-report-frame-heading">`,
+        terminalHeading,
+        `</summary>`,
+        `<div class="herb-report-frame-excerpt">${terminalFragment}</div>`,
+        `</details>`,
+        `</li>`,
+      ].join("\n")
 
     return [
       `<section class="herb-report-chain">`,

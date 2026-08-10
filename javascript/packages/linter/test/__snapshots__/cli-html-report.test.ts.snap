@@ -164,12 +164,17 @@ exports[`HTML report > renders a mixed verdict call chain 1`] = `
 <p class="herb-report-chain-verdict">invalid on <span class="herb-report-verdict-offending">1</span> of <span class="herb-report-verdict-total">2</span> call sites</p>
 <ol class="herb-report-frames">
 <li class="herb-report-frame herb-report-frame-terminal">
-<p class="herb-report-frame-heading">
+<details class="herb-report-frame-body">
+<summary class="herb-report-frame-heading">
 <span class="herb-report-frame-index">1</span>
 <span class="herb-report-frame-verb">reported in</span>
 <span class="herb-report-frame-target">app/views/posts/_actions.html.erb:1:1</span>
 <span class="herb-report-frame-marker">this file</span>
-</p>
+</summary>
+<div class="herb-report-frame-excerpt"><figure class="herb-highlight" data-herb-theme="onedark:github-light" data-herb-line-numbers="element">
+<pre class="herb-code"><code><span class="herb-line" data-line="1"><span class="herb-line-number" data-line="1">1</span><span class="herb-token-html-tag-start">&lt;</span><span class="herb-tag-name">form</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">action</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-token-slash">/</span><span class="herb-attr-value">posts</span><span class="herb-token-slash">/</span><span class="herb-attr-value">1</span><span class="herb-attr-value">&quot;</span><span class="herb-token-whitespace"> </span><span class="herb-attr-name">method</span><span class="herb-token-equals">=</span><span class="herb-attr-value">&quot;</span><span class="herb-attr-value">post</span><span class="herb-attr-value">&quot;</span><span class="herb-token-html-tag-end">&gt;</span></span></code></pre>
+</figure></div>
+</details>
 </li>
 <li class="herb-report-frame herb-report-frame-offending">
 <details class="herb-report-frame-body" open>
