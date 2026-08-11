@@ -13,6 +13,7 @@ require_relative "engine/report/middleware"
 require_relative "engine/context_aware"
 require_relative "engine/diagnostics"
 require_relative "engine/debug_visitor"
+require_relative "engine/optimize_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/parser_error_overlay"
@@ -42,16 +43,6 @@ module Herb
       @context.relative_file_path
     end
 
-    # @rbs!
-    #   def self.optimize_warning_issued: () -> bool
-    #   def self.optimize_warning_issued=: (bool) -> bool
-
-    class << self
-      attr_accessor :optimize_warning_issued #: bool
-    end
-
-    self.optimize_warning_issued = false
-
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",
@@ -77,14 +68,7 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-      @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
-
-      if @optimize && !self.class.optimize_warning_issued
-        self.class.optimize_warning_issued = true
-
-        warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
-      end
 
       @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
 
@@ -114,11 +98,7 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      action_view_helpers = @optimize && source_may_contain_action_view_helpers?(input)
-      transform_conditionals = @optimize && action_view_helpers
-      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true,
-                                                            action_view_helpers: action_view_helpers,
-                                                            transform_conditionals: transform_conditionals)
+      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -199,26 +179,6 @@ module Herb
 
     def self.heredoc?(code)
       code.match?(/<<[~-]?\s*['"`]?\w/)
-    end
-
-    def source_may_contain_action_view_helpers?(source)
-      self.class.action_view_helper_pattern.match?(source)
-    end
-
-    def self.action_view_helper_pattern
-      @action_view_helper_pattern ||= begin
-        require_relative "action_view/helper_registry"
-
-        names = ::Herb::ActionView::HelperRegistry.supported.flat_map { |entry|
-          if entry.receiver_call_detect?
-            "#{entry.name}."
-          else
-            [entry.name, *entry.aliases]
-          end
-        }
-
-        Regexp.new("\\b(?:#{names.map { |name| Regexp.escape(name) }.join("|")})")
-      end
     end
 
     protected

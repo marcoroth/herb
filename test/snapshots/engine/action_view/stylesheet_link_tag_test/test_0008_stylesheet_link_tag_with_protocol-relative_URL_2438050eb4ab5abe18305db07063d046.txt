@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::StylesheetLinkTagTest#test_0008_stylesheet_link_tag with protocol-relative URL"
-input: "{source: \"<%= stylesheet_link_tag \\\"//cdn.example.com/style.css\\\" %>\", options: {optimize: true}}"
----
-_buf = ::String.new; _buf << '<link rel="stylesheet" href="//cdn.example.com/style.css" />'.freeze;
-_buf.to_s

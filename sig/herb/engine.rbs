@@ -12,8 +12,6 @@ module Herb
 
     attr_reader bufvar: untyped
 
-    attr_reader debug: untyped
-
     attr_reader visitors: untyped
 
     # : () -> Pathname?
@@ -24,12 +22,6 @@ module Herb
 
     # : () -> String
     def relative_file_path: () -> String
-
-    def self.optimize_warning_issued: () -> bool
-
-    def self.optimize_warning_issued=: (bool) -> bool
-
-    attr_accessor optimize_warning_issued: bool
 
     ESCAPE_TABLE: untyped
 
@@ -48,10 +40,6 @@ module Herb
     def self.comment?: (untyped code) -> untyped
 
     def self.heredoc?: (untyped code) -> untyped
-
-    def source_may_contain_action_view_helpers?: (untyped source) -> untyped
-
-    def self.action_view_helper_pattern: () -> untyped
 
     def add_text: (untyped text) -> untyped
 
