@@ -17,7 +17,7 @@ module Engine
     test "validation errors in ERB loops generate single template per location" do
       input = "<% 10.times do |i| %><div <%= i %>></div><% end %>"
 
-      assert_compiled_snapshot(input, validation_mode: :overlay, filename: "loop_test.html.erb")
+      assert_compiled_snapshot(input, visitors: Herb::Engine.default_visitors(fatal: false), filename: "loop_test.html.erb")
     end
 
     test "multiple identical errors at different locations generate separate templates" do
@@ -27,13 +27,13 @@ module Engine
         <div <%= @bad2 %>></div>
       ERB
 
-      assert_compiled_snapshot(input, validation_mode: :overlay, filename: "multi_test.html.erb")
+      assert_compiled_snapshot(input, visitors: Herb::Engine.default_visitors(fatal: false), filename: "multi_test.html.erb")
     end
 
     test "validation overlay includes deduplication metadata" do
       input = "<div <%= @test %>></div>"
 
-      assert_compiled_snapshot(input, validation_mode: :overlay, filename: "meta_test.html.erb")
+      assert_compiled_snapshot(input, visitors: Herb::Engine.default_visitors(fatal: false), filename: "meta_test.html.erb")
     end
   end
 end

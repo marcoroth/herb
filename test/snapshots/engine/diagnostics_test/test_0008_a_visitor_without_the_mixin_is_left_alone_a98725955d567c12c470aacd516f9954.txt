@@ -1,6 +1,0 @@
----
-source: "Engine::DiagnosticsTest#test_0008_a visitor without the mixin is left alone"
-input: "{source: \"<div>Hello</div>\", options: {filename: \"app/views/test.html.erb\", validation_mode: :overlay}}"
----
-_buf = ::String.new; _buf << '<div>Hello</div>'.freeze;
-_buf.to_s

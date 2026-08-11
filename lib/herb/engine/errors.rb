@@ -1,10 +1,24 @@
 # frozen_string_literal: true
 # typed: false
 
-# rbs_inline: disabled
-
 module Herb
   class Engine
+    class CompilationError < StandardError
+    end
+
+    class GeneratorTemplateError < CompilationError
+    end
+
+    class InvalidRubyError < CompilationError
+      attr_reader :compiled_source
+
+      def initialize(message, compiled_source: nil)
+        @compiled_source = compiled_source
+
+        super(message)
+      end
+    end
+
     class SecurityError < StandardError
       attr_reader :line, :column, :filename, :suggestion
 
@@ -36,29 +50,6 @@ module Herb
         parts << "Suggestion: #{@suggestion}" if @suggestion
 
         parts.join(" - ")
-      end
-    end
-
-    module ValidationErrors
-      class ValidationError
-        attr_reader :type, :location, :message
-
-        def initialize(type, location, message)
-          @type = type
-          @location = location
-          @message = message
-        end
-      end
-
-      class SecurityValidationError
-        attr_reader :type, :location, :message, :suggestion
-
-        def initialize(location, message, suggestion)
-          @type = "SecurityError"
-          @location = location
-          @message = message
-          @suggestion = suggestion
-        end
       end
     end
   end

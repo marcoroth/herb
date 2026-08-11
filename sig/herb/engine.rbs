@@ -4,6 +4,8 @@ module Herb
   class Engine
     SECURITY_VIOLATION_CODE: String
 
+    PARSER_ORIGIN: String
+
     attr_reader src: untyped
 
     attr_reader context: untyped
@@ -12,11 +14,12 @@ module Herb
 
     attr_reader debug: untyped
 
-    attr_reader validation_error_template: untyped
-
     attr_reader visitors: untyped
 
     attr_reader enabled_validators: untyped
+
+    # : (?fatal: bool, ?validators: Hash[Symbol, untyped]) -> Herb::Engine::VisitorStack
+    def self.default_visitors: (?fatal: bool, ?validators: Hash[Symbol, untyped]) -> Herb::Engine::VisitorStack
 
     # : () -> Pathname?
     def filename: () -> Pathname?
@@ -34,18 +37,6 @@ module Herb
     attr_accessor optimize_warning_issued: bool
 
     ESCAPE_TABLE: untyped
-
-    class CompilationError < StandardError
-    end
-
-    class GeneratorTemplateError < CompilationError
-    end
-
-    class InvalidRubyError < CompilationError
-      attr_reader compiled_source: untyped
-
-      def initialize: (untyped message, ?compiled_source: untyped) -> untyped
-    end
 
     def initialize: (untyped input, ?untyped properties) -> untyped
 
@@ -101,13 +92,10 @@ module Herb
 
     private
 
-    # : () -> Array[Herb::Engine::Validator]
-    def validation_visitors: () -> Array[Herb::Engine::Validator]
-
     def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
-    # : (Array[Herb::Diagnostic], String) -> void
-    def report: (Array[Herb::Diagnostic], String) -> void
+    # : (String) -> void
+    def report: (String) -> void
 
     # : (Array[Herb::Diagnostic]) -> void
     def emit_compile_diagnostics: (Array[Herb::Diagnostic]) -> void
@@ -118,13 +106,7 @@ module Herb
     # : (Array[Herb::Diagnostic], String) -> void
     def raise_for: (Array[Herb::Diagnostic], String) -> void
 
-    def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
-
-    # : () -> Array[Herb::Visitor]
-    def default_visitors: () -> Array[Herb::Visitor]
-
-    # : (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
-    def context_options: (Hash[Symbol, untyped]) -> Hash[Symbol, untyped]
+    def context_options: (untyped properties) -> untyped
 
     # : () -> Hash[Symbol, untyped]
     def default_parser_options: () -> Hash[Symbol, untyped]
