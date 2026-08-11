@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# typed: true
+# typed: false
 
 require_relative "../visitor"
 require_relative "context_aware"
@@ -57,6 +57,8 @@ module Herb
 
       #: (Herb::AST::DocumentNode) -> void
       def visit_document_node(node)
+        @inlining = [] #: Array[String]
+
         super
 
         inline(node)
@@ -107,11 +109,13 @@ module Herb
       #: (untyped) -> Array[untyped]
       def spliced(node)
         path = inliner.resolve_path(node)
+
         return [node] unless path
+        return [node] if @inlining.include?(path.to_s)
 
-        inliner.push(path)
+        @inlining.push(path.to_s)
 
-        partial = inliner.parse(File.read(path))
+        partial = parse(File.read(path))
 
         instrument(partial, path)
 
@@ -119,7 +123,7 @@ module Herb
 
         inline_nested(body)
 
-        inliner.pop(path)
+        @inlining.pop
 
         [erb(opening_for(node)), *body, erb(inliner.collection?(node) ? "end; end" : "end")]
       end
@@ -131,6 +135,14 @@ module Herb
         expand(body)
 
         nil
+      end
+
+      #: (String) -> untyped
+      def parse(source)
+        configured = context.options[:parser_options] || {} #: Hash[Symbol, untyped]
+        options = Herb::Visitor.parser_options_for([self], configured)
+
+        ::Herb.parse(source, **options, track_whitespace: true).value
       end
 
       #: (untyped, untyped) -> void
@@ -176,9 +188,9 @@ module Herb
       #: () -> untyped
       def inliner
         @inliner ||= begin
-          require_relative "render_inliner"
+          require_relative "inline_render_visitor/inliner"
 
-          RenderInliner.new(nil, project_path: context.project_path, filename: context.relative_file_path)
+          Inliner.new(project_path: context.project_path, filename: context.relative_file_path)
         end
       end
     end

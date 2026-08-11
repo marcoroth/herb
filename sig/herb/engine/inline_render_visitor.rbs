@@ -24,13 +24,9 @@ module Herb
 
       NODE_PROPERTIES: Array[Symbol]
 
-      # The engine asks this rather than being told through an option, so that wanting the
-      # optimization and having it are the same thing.
       # : () -> bool
       def self.inlines_renders?: () -> bool
 
-      # The partial's markup ends up in the compiled output of the template that rendered it, which
-      # is the whole point and also the thing that makes it a rewriter.
       # : () -> bool
       def self.rewrites_erb_source?: () -> bool
 
@@ -63,22 +59,15 @@ module Herb
       # : (untyped) -> bool
       def inlinable?: (untyped) -> bool
 
-      # The partial, wrapped in whatever binds its locals, in place of the tag that named it.
-      #
-      # The wrapper is `begin`/`end` rather than a block so the partial's locals stop at the end of
-      # the partial without taking the template's own locals with them.
       # : (untyped) -> Array[untyped]
       def spliced: (untyped) -> Array[untyped]
 
-      # A partial that renders a partial is inlined too, and the recursion guard the inliner keeps is
-      # what stops one that renders itself.
       # : (Array[untyped]) -> void
       def inline_nested: (Array[untyped]) -> void
 
-      # A partial that is inlined never renders, so nothing reports the render it would have been,
-      # and its tags never pass through the visitors the engine ran over the template. Its own
-      # instrumenting visitor answers both, and carries the partial's name so that what happens
-      # inside it is not reported against the file it landed in.
+      # : (String) -> untyped
+      def parse: (String) -> untyped
+
       # : (untyped, untyped) -> void
       def instrument: (untyped, untyped) -> void
 
