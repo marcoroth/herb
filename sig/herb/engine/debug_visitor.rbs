@@ -5,7 +5,15 @@ module Herb
     class DebugVisitor < Herb::Visitor
       include ContextAware
 
-      def initialize: () -> untyped
+      # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
+      # same stack to have anything to report. Without it the value is empty on every tag, so it is
+      # asked for rather than assumed.
+      #
+      #     Herb::Engine.new(source, visitors: [
+      #       Herb::Engine::DebugVisitor.new(node: true),
+      #       Herb::Engine::InstrumentationVisitor.new
+      #     ])
+      def initialize: (?node: untyped) -> untyped
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -44,6 +52,10 @@ module Herb
       def find_parent_element_for_open_tag: (untyped open_tag_node) -> untyped
 
       def add_debug_attributes_to_element: (untyped open_tag_node) -> untyped
+
+      def create_debug_node_attribute: () -> untyped
+
+      def current_node_erb: () -> untyped
 
       def create_debug_attribute: (untyped name, untyped value) -> untyped
 
