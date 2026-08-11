@@ -15,6 +15,7 @@ module Herb
     # @rbs inherits Array[untyped]
     class VisitorStack < Array
       class UnknownVisitorError < ArgumentError; end
+      class OrderError < ArgumentError; end
 
       #: (untyped) -> VisitorStack
       def self.build(visitors)
@@ -22,6 +23,32 @@ module Herb
         stack.replace(Array(visitors))
         stack
       end
+
+      #: () -> void
+      def validate_order!
+        each_with_index do |visitor, position|
+          next unless answers?(visitor, :reads_erb_source?)
+
+          rewriter = take(position).find { |earlier| answers?(earlier, :rewrites_erb_source?) }
+
+          next unless rewriter
+
+          raise OrderError, "#{visitor.class} reads the ERB a template was written with, so it has to run before #{rewriter.class}, which rewrites it. Put it earlier in `visitors:`."
+        end
+
+        nil
+      end
+
+      private
+
+      #: (untyped, Symbol) -> bool
+      def answers?(visitor, question)
+        klass = visitor.class
+
+        klass.respond_to?(question) && klass.public_send(question)
+      end
+
+      public
 
       #: (untyped) -> VisitorStack
       def use(visitor)

@@ -16,8 +16,21 @@ module Herb
       class UnknownVisitorError < ArgumentError
       end
 
+      class OrderError < ArgumentError
+      end
+
       # : (untyped) -> VisitorStack
       def self.build: (untyped) -> VisitorStack
+
+      # : () -> void
+      def validate_order!: () -> void
+
+      private
+
+      # : (untyped, Symbol) -> bool
+      def answers?: (untyped, Symbol) -> bool
+
+      public
 
       # : (untyped) -> VisitorStack
       def use: (untyped) -> VisitorStack

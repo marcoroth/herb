@@ -8,6 +8,14 @@ module Engine
     class SecondVisitor < Herb::Visitor; end
     class ThirdVisitor < Herb::Visitor; end
 
+    class ReadingVisitor < Herb::Visitor
+      def self.reads_erb_source? = true
+    end
+
+    class RewritingVisitor < Herb::Visitor
+      def self.rewrites_erb_source? = true
+    end
+
     def stack
       @stack ||= Herb::Engine::VisitorStack.build([FirstVisitor.new, SecondVisitor.new])
     end
@@ -153,6 +161,49 @@ module Engine
         engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert engine.visitors.include_visitor?(Herb::Engine::DebugVisitor)
+      end
+    end
+
+    describe "#validate_order!" do
+      def order(*visitors)
+        Herb::Engine::VisitorStack.build(visitors)
+      end
+
+      test "refuses a reader that runs after a rewriter" do
+        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+          order(RewritingVisitor.new, ReadingVisitor.new).validate_order!
+        end
+
+        assert_includes error.message, "ReadingVisitor"
+        assert_includes error.message, "RewritingVisitor"
+        assert_includes error.message, "has to run before"
+      end
+
+      test "accepts a reader that runs before a rewriter" do
+        assert_nil order(ReadingVisitor.new, RewritingVisitor.new).validate_order!
+      end
+
+      test "accepts either one on its own" do
+        assert_nil order(RewritingVisitor.new).validate_order!
+        assert_nil order(ReadingVisitor.new).validate_order!
+      end
+
+      test "leaves a visitor that says nothing about source free to run anywhere" do
+        assert_nil order(RewritingVisitor.new, FirstVisitor.new, SecondVisitor.new).validate_order!
+      end
+
+      test "looks past visitors in between" do
+        error = assert_raises(Herb::Engine::VisitorStack::OrderError) do
+          order(RewritingVisitor.new, FirstVisitor.new, ReadingVisitor.new).validate_order!
+        end
+
+        assert_includes error.message, "ReadingVisitor"
+      end
+
+      test "is what the engine checks before it compiles anything" do
+        assert_raises(Herb::Engine::VisitorStack::OrderError) do
+          Herb::Engine.new("<div>x</div>", visitors: [RewritingVisitor.new, ReadingVisitor.new])
+        end
       end
     end
   end

@@ -35,6 +35,9 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       include ContextAware
 
+      # : () -> bool
+      def self.rewrites_erb_source?: () -> bool
+
       SESSION: ::String
 
       ASSIGNMENT_NODES: untyped
