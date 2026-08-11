@@ -262,6 +262,26 @@ module Engine
         ], stack
       end
 
+      test "writes an entry the way an editor would take it" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 3, 8) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        assert_equal "app/views/posts/_card.html.erb:3:9 (1 queries)", session.entries.first.to_s
+      end
+
+      test "writes a tag with no location of its own as the first line" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 0, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        assert_equal "app/views/posts/_card.html.erb:1:1 (1 queries)", session.entries.first.to_s
+      end
+
       test "reports an empty stack outside of any tag" do
         assert_empty Herb::Engine::Report::Session.capture { nil }.stack
       end
