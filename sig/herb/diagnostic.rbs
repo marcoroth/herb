@@ -35,9 +35,6 @@ module Herb
     # : (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
     def initialize: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
 
-    # : (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
-    def self.from: (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
-
     # : (String, Hash[Symbol, untyped]) -> Diagnostic
     def self.from_compiled: (String, Hash[Symbol, untyped]) -> Diagnostic
 

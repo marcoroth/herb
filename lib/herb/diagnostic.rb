@@ -41,35 +41,6 @@ module Herb
       @error_class = error_class
     end
 
-    #: (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
-    def self.from(error, template:, origin:, severity: :error, phase: :compile)
-      return error if error.is_a?(Diagnostic)
-
-      if error.is_a?(Hash)
-        return new(
-          template: template,
-          message: error[:message].to_s,
-          severity: error[:severity] || severity,
-          origin: error[:source] || origin,
-          code: error[:code],
-          location: error[:location],
-          suggestion: error[:suggestion],
-          phase: phase
-        )
-      end
-
-      new(
-        template: template,
-        message: error.message,
-        severity: severity,
-        origin: origin,
-        code: code_for(error.type),
-        location: error.location,
-        phase: phase,
-        data: { type: error.type }
-      )
-    end
-
     #: (String, Hash[Symbol, untyped]) -> Diagnostic
     def self.from_compiled(template, entry)
       if entry[:line]

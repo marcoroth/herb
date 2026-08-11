@@ -17,6 +17,9 @@ module Herb
       # : (String, Location?, String) -> void
       def initialize: (String, Location?, String) -> void
 
+      # : (template: String, ?origin: String) -> Herb::Diagnostic
+      def to_diagnostic: (template: String, ?origin: String) -> Herb::Diagnostic
+
       # : () -> serialized_error
       def to_hash: () -> serialized_error
 
