@@ -36,7 +36,7 @@ export class PartialCallerIndexService {
     }
 
     try {
-      this.callers = await buildPartialCallerIndex(this.project.herbBackend, this.project.projectPath, partials, { resolveLayouts: false })
+      this.callers = await buildPartialCallerIndex(this.project.herbBackend, this.project.root, partials, { resolveLayouts: false })
 
       this.connection.console.log(`[Partials] Indexed call sites for ${this.callers.size} partials`)
     } catch (error) {
@@ -63,7 +63,7 @@ export class PartialCallerIndexService {
     if (!this.callers || !file) return false
 
     try {
-      return this.updateFromSource(uri, readFileSync(join(this.project.projectPath, file), "utf-8"))
+      return this.updateFromSource(uri, readFileSync(join(this.project.root, file), "utf-8"))
     } catch {
       return false
     }

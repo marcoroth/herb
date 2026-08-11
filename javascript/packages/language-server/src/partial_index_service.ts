@@ -25,7 +25,7 @@ export class PartialIndexService {
 
   async initialize(): Promise<void> {
     try {
-      this.partials = await buildPartialIndex(this.project.herbBackend, this.project.projectPath)
+      this.partials = await buildPartialIndex(this.project.herbBackend, this.project.root)
 
       this.connection.console.log(`[Partials] Indexed ${this.partials.size} partials under ${this.partials.viewRoot}`)
     } catch (error) {
@@ -37,7 +37,7 @@ export class PartialIndexService {
     if (!uri.startsWith("file://")) return null
 
     try {
-      const path = relative(this.project.projectPath, fileURLToPath(uri))
+      const path = relative(this.project.root, fileURLToPath(uri))
 
       return path.startsWith("..") ? null : path
     } catch {
@@ -58,7 +58,7 @@ export class PartialIndexService {
 
     if (!this.partials || !file) return false
 
-    const declaration = declarationFromFile(this.project.herbBackend, this.project.projectPath, file)
+    const declaration = declarationFromFile(this.project.herbBackend, this.project.root, file)
 
     if (!declaration) return false
 

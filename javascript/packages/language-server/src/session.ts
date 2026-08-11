@@ -1,0 +1,126 @@
+import { Connection, InitializeParams } from "vscode-languageserver/node"
+
+import { Herb } from "@herb-tools/node-wasm"
+
+import { UserSettings, PersonalHerbSettings } from "./user_settings"
+import { Capabilities } from "./capabilities"
+import { WorkspaceFolders } from "./workspace_folders"
+import { Documents } from "./documents"
+import { DiagnosticsPublisher } from "./diagnostics_publisher"
+import { ParserService } from "./parser_service"
+import { ConfigService } from "./config_service"
+import { SaveOrchestrator } from "./save_orchestrator"
+import { FoldingRangeProvider } from "./folding_range_provider"
+import { DocumentHighlightProvider } from "./document_highlight_provider"
+import { HoverProvider } from "./hover_provider"
+import { RewriteCodeActionProvider } from "./rewrite_code_action_provider"
+import { ExtractCodeActionProvider } from "./extract_code_action_provider"
+import { DefinitionProvider } from "./definition_provider"
+import { CommentProvider } from "./comment_provider"
+import { DocumentSymbolProvider } from "./document_symbol_provider"
+import { Projects } from "./projects"
+
+export class Session {
+  connection: Connection
+  capabilities: Capabilities
+  userSettings: UserSettings
+  workspaceFolders: WorkspaceFolders
+  projects: Projects
+
+  diagnostics: DiagnosticsPublisher
+  documents: Documents
+  parserService: ParserService
+  configService: ConfigService
+  saveOrchestrator: SaveOrchestrator
+  foldingRangeProvider: FoldingRangeProvider
+  documentHighlightProvider: DocumentHighlightProvider
+  hoverProvider: HoverProvider
+  rewriteCodeActionProvider: RewriteCodeActionProvider
+  extractCodeActionProvider: ExtractCodeActionProvider
+  definitionProvider: DefinitionProvider
+  commentProvider: CommentProvider
+  documentSymbolProvider: DocumentSymbolProvider
+
+  constructor(connection: Connection, params: InitializeParams) {
+    this.connection = connection
+    this.capabilities = new Capabilities(params)
+    this.userSettings = new UserSettings(this.connection, this.capabilities)
+    this.workspaceFolders = new WorkspaceFolders(params)
+    this.documents = new Documents(this.connection)
+    this.parserService = new ParserService()
+    this.configService = new ConfigService(this.workspaceFolders.primary)
+    this.definitionProvider = new DefinitionProvider(this.parserService)
+
+    this.projects = new Projects(this.connection, this.workspaceFolders, {
+      documents: this.documents,
+      parserService: this.parserService,
+      definitionProvider: this.definitionProvider,
+      userSettings: this.userSettings,
+      capabilities: this.capabilities,
+    })
+
+    this.diagnostics = new DiagnosticsPublisher(this.connection, this.documents, this.parserService, this.configService, this.workspaceFolders, this.projects)
+    this.saveOrchestrator = new SaveOrchestrator(this.connection, this.userSettings, this.projects)
+    this.foldingRangeProvider = new FoldingRangeProvider(this.parserService)
+    this.documentHighlightProvider = new DocumentHighlightProvider(this.parserService)
+    this.hoverProvider = new HoverProvider(this.parserService)
+    this.rewriteCodeActionProvider = new RewriteCodeActionProvider(this.parserService)
+    this.commentProvider = new CommentProvider(this.parserService)
+    this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
+
+    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, {
+      supportsCreateFile: this.capabilities.supportsResourceCreation,
+      supportsPromptCommand: this.capabilities.supportsExtractToPartialCommand,
+    })
+
+    if (params.initializationOptions) {
+      this.userSettings.global = params.initializationOptions as PersonalHerbSettings
+    }
+  }
+
+  async init() {
+    this.connection.console.log(`[Client] Diagnostic related information: ${this.capabilities.hasDiagnosticRelatedInformation ? "supported" : "not supported"}`)
+
+    await Herb.load()
+
+    this.documents.onDidClose((change) => {
+      this.userSettings.forget(change.document.uri)
+      this.diagnostics.clear(change.document.uri)
+    })
+
+    this.documents.onDidChangeContent(async (change) => {
+      const project = await this.projects.ensure(change.document.uri)
+
+      if (project) {
+        const callersChanged = project.partialCallerIndexService.updateFromSource(change.document.uri, change.document.getText())
+        const partialsChanged = project.partialIndexService.updateFromSource(change.document.uri, change.document.getText())
+
+        if (callersChanged || partialsChanged) {
+          await this.diagnostics.refreshAllDocuments()
+
+          return
+        }
+      }
+
+      await this.diagnostics.refreshDocument(change.document)
+    })
+  }
+
+  async refresh() {
+    this.projects.forget()
+
+    for (const project of this.projects.all()) {
+      await project.reindex()
+    }
+
+    await this.diagnostics.refreshAllDocuments()
+  }
+
+  async refreshConfig() {
+    this.projects.forget()
+
+    for (const project of this.projects.all()) {
+      await project.refreshConfig()
+    }
+  }
+}
