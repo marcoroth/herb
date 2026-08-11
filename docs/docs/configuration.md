@@ -177,6 +177,7 @@ linter:
       allowedTypes:
         - text/javascript
         - application/json
+      allowBlank: false
 
     # Rule with file pattern restrictions
     html-img-require-alt:

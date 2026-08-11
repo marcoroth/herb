@@ -3,8 +3,11 @@ import { HTMLAllowedScriptTypeRule } from "../../src/rules/html-allowed-script-t
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAllowedScriptTypeRule)
-const customOptions = createLinterTest(HTMLAllowedScriptTypeRule, {
+const configuredAllowedTypes = createLinterTest(HTMLAllowedScriptTypeRule, {
   allowedTypes: ["application/json"]
+})
+const blankTypesDisallowed = createLinterTest(HTMLAllowedScriptTypeRule, {
+  allowBlank: false
 })
 
 describe("html-allowed-script-type", () => {
@@ -58,14 +61,25 @@ describe("html-allowed-script-type", () => {
     expectNoOffenses('<input type="text">')
   })
 
-  describe("custom options", () => {
+  describe("with configured allowed types", () => {
     test("uses the configured allowed types", () => {
-      customOptions.expectNoOffenses('<script type="application/json"></script>')
+      configuredAllowedTypes.expectNoOffenses('<script type="application/json"></script>')
     })
 
     test("replaces the default allowed types", () => {
-      customOptions.expectError("Avoid using `text/javascript` as the `type` attribute for the `<script>` tag. Must be one of: `application/json` or blank.")
-      customOptions.assertOffenses('<script type="text/javascript"></script>')
+      configuredAllowedTypes.expectError("Avoid using `text/javascript` as the `type` attribute for the `<script>` tag. Must be one of: `application/json` or blank.")
+      configuredAllowedTypes.assertOffenses('<script type="text/javascript"></script>')
+    })
+  })
+
+  describe("with blank types disallowed", () => {
+    test("can require an explicit type", () => {
+      blankTypesDisallowed.expectError("`type` attribute required for `<script>` tag.")
+      blankTypesDisallowed.assertOffenses("<script></script>")
+    })
+
+    test("merges configured options with rule defaults", () => {
+      blankTypesDisallowed.expectNoOffenses('<script type="text/javascript"></script>')
     })
   })
 })

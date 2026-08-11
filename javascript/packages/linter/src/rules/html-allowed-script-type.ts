@@ -7,6 +7,7 @@ import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tool
 
 export interface HTMLAllowedScriptTypeOptions {
   allowedTypes: string[]
+  allowBlank: boolean
 }
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
@@ -25,9 +26,14 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   }
 
   private visitScriptNode(node: HTMLOpenTagNode): void {
+    const { allowBlank } = this.options
     const typeAttribute = getAttribute(node, "type")
 
     if (!typeAttribute) {
+      if (!allowBlank) {
+        this.addOffense("`type` attribute required for `<script>` tag.", node.location)
+      }
+
       return
     }
 
@@ -44,6 +50,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   }
 
   private validateTypeAttribute(typeAttribute: HTMLAttributeNode): void {
+    const { allowedTypes, allowBlank } = this.options
     const typeValue = getStaticAttributeValue(typeAttribute)
     if (typeValue === null) return
 
@@ -56,12 +63,12 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
       return
     }
 
-    if (this.options.allowedTypes.includes(typeValue)) return
+    if (allowedTypes.includes(typeValue)) return
 
     this.addOffense(
       `Avoid using \`${typeValue}\` as the \`type\` attribute for the \`<script>\` tag. ` +
-      `Must be one of: ${this.options.allowedTypes.map(t => `\`${t}\``).join(", ")}` +
-      " or blank.",
+      `Must be one of: ${allowedTypes.map(t => `\`${t}\``).join(", ")}` +
+      `${allowBlank ? " or blank" : ""}.`,
       typeAttribute.location
     )
   }
@@ -80,7 +87,8 @@ export class HTMLAllowedScriptTypeRule extends ParserRule<BaseAutofixContext, HT
 
   get defaultOptions(): HTMLAllowedScriptTypeOptions {
     return {
-      allowedTypes: ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"]
+      allowedTypes: ["text/javascript", "module", "importmap", "speculationrules", "application/ld+json"],
+      allowBlank: true
     }
   }
 

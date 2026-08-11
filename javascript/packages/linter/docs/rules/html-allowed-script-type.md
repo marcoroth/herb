@@ -77,6 +77,7 @@ An exception is made for `application/ld+json`, which the HTML specification tre
 The rule accepts these options:
 
 - `allowedTypes` (`string[]`): accepted static `type` values. Defaults to `text/javascript`, `module`, `importmap`, `speculationrules`, and `application/ld+json`.
+- `allowBlank` (`boolean`): whether a script may omit the `type` attribute. Defaults to `true`.
 
 ```yaml
 linter:
@@ -85,6 +86,7 @@ linter:
       allowedTypes:
         - text/javascript
         - application/json
+      allowBlank: false
 ```
 
 ## References
