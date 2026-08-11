@@ -76,14 +76,14 @@ module Engine
     end
 
     test "validation modes work with debug mode" do
-      engine1 = assert_compiled_snapshot(@valid_template, visitors: [], debug: true)
+      engine1 = assert_compiled_snapshot(@valid_template, visitors: [Herb::Engine::DebugVisitor.new])
       assert_kind_of String, engine1.src
 
-      engine2 = assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false), debug: true)
+      engine2 = assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false).use(Herb::Engine::DebugVisitor.new))
       assert_kind_of String, engine2.src
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, debug: true, visitors: Herb::Engine::Validators.all)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all.use(Herb::Engine::DebugVisitor.new))
       end
     end
 

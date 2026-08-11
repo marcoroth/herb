@@ -54,10 +54,7 @@ class EngineVisitorsTest < Minitest::Spec
   test "debug visitor can still be used explicitly" do
     html = "<div>Debug test</div>"
 
-    debug_visitor = Herb::Engine::DebugVisitor.new(
-      file_path: "test.html.erb",
-      project_path: "/project"
-    )
+    debug_visitor = Herb::Engine::DebugVisitor.new
 
     visitors = [debug_visitor]
 

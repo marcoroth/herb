@@ -144,13 +144,13 @@ module Engine
       end
 
       test "runs the debug visitor last, so it annotates the finished tree" do
-        engine = compile(visitors: [ThirdVisitor.new], debug: true)
+        engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert_equal Herb::Engine::DebugVisitor, classes(engine.visitors).last
       end
 
       test "adds the debug visitor even when the caller passed its own" do
-        engine = compile(visitors: [ThirdVisitor.new], debug: true)
+        engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert engine.visitors.include_visitor?(Herb::Engine::DebugVisitor)
       end
