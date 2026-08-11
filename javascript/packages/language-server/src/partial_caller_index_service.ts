@@ -1,14 +1,14 @@
 import { join } from "node:path"
 import { readFileSync } from "node:fs"
 
-import { isTemplatePath } from "@herb-tools/core"
-import { buildPartialCallerIndex, collectCallSites } from "@herb-tools/linter/partial-caller-builder"
+import { isTemplatePath } from "@herb-tools/analysis"
+import { buildPartialCallerIndex, collectCallSites } from "@herb-tools/analysis/node"
 
 import { PartialIndexService } from "./partial_index_service"
 import { Project } from "./project"
 
 import type { Connection } from "vscode-languageserver/node"
-import type { PartialCallerIndex, PartialCallSite } from "@herb-tools/core"
+import type { PartialCallerIndex, PartialCallSite } from "@herb-tools/analysis"
 
 export class PartialCallerIndexService {
   private readonly connection: Connection

@@ -1,13 +1,13 @@
 import { relative } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { isPartialPath } from "@herb-tools/core"
-import { buildPartialIndex, declarationFromFile, declarationFromSource } from "@herb-tools/linter/partial-index-builder"
+import { isPartialPath } from "@herb-tools/analysis"
+import { buildPartialIndex, declarationFromFile, declarationFromSource } from "@herb-tools/analysis/node"
 
 import { Project } from "./project"
 
 import type { Connection } from "vscode-languageserver/node"
-import type { PartialIndex } from "@herb-tools/core"
+import type { PartialIndex } from "@herb-tools/analysis"
 
 export class PartialIndexService {
   private readonly connection: Connection

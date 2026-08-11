@@ -11,7 +11,7 @@ import { UserSettings } from "./user_settings"
 import { Capabilities } from "./capabilities"
 import { Project } from "./project"
 
-import type { AncestorChain } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 
 const FRAME_VERBS: Record<string, string> = {
   render: "rendered from",

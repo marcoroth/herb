@@ -4,9 +4,9 @@ import {
   isPartialPath,
   partialNameForFile,
   resolvePartial,
-} from "../src/action-view-partial-resolution.js"
+} from "../src/partial-resolution"
 
-import type { PartialPaths } from "../src/action-view-partial-resolution.js"
+import type { PartialPaths } from "../src/partial-resolution"
 
 const VIEW_ROOT = "app/views"
 

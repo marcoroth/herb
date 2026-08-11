@@ -8,13 +8,13 @@ import { Config } from "@herb-tools/config"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
 import { fixabilityFor } from "../fixability.js"
-import { partialIndexFrom, refreshPartialAfterFix } from "../partial-index-builder.js"
-import { partialCallerIndexFrom } from "../partial-caller-builder.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { partialCallerIndexFrom } from "@herb-tools/analysis/node"
 
 import type { SerializedDiagnostic } from "@herb-tools/core"
 import type { Fixability } from "../fixability.js"
 import type { LintOffense } from "../types.js"
-import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/core"
+import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/analysis"
 
 export interface WorkerInput {
   files: string[]

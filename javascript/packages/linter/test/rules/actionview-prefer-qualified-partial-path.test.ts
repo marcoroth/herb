@@ -1,11 +1,11 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 
-import { PartialIndex } from "@herb-tools/core"
+import { PartialIndex } from "@herb-tools/analysis"
 import { ActionViewPreferQualifiedPartialPathRule } from "../../src/rules/actionview-prefer-qualified-partial-path.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-import type { PartialDeclaration } from "@herb-tools/core"
+import type { PartialDeclaration } from "@herb-tools/analysis"
 
 const { expectNoOffenses, expectInfo, assertOffenses } = createLinterTest(ActionViewPreferQualifiedPartialPathRule)
 

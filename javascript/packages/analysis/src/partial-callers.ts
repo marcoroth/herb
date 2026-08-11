@@ -1,4 +1,4 @@
-import type { StrictLocal } from "./action-view-partial-index.js"
+import type { StrictLocal } from "./partial-index"
 
 export type CallSiteKind = "render" | "layout" | "declaration"
 

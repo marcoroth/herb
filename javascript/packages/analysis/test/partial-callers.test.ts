@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest"
 
-import { PartialCallerIndex } from "../src/action-view-partial-callers.js"
+import { PartialCallerIndex } from "../src/partial-callers"
 
-import type { PartialCallSite } from "../src/action-view-partial-callers.js"
+import type { PartialCallSite } from "../src/partial-callers"
 
 const CARD = "app/views/posts/_card.html.erb"
 const BADGE = "app/views/posts/_badge.html.erb"

@@ -5,10 +5,10 @@ import { join, dirname } from "node:path"
 import { beforeAll, afterEach, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { strictLocalsDeclaration } from "@herb-tools/core"
+import { strictLocalsDeclaration } from "../src/partial-callers"
 
-import { buildPartialIndex } from "../src/partial-index-builder.js"
-import { buildPartialCallerIndex } from "../src/partial-caller-builder.js"
+import { buildPartialIndex } from "../src/partial-index-builder"
+import { buildPartialCallerIndex } from "../src/partial-caller-builder"
 
 const projects: string[] = []
 
@@ -138,7 +138,7 @@ describe("buildPartialCallerIndex", () => {
       "app/views/posts/index.html.erb": `<%= render "posts/card", title: "Hi" %>`,
     })
 
-    const restored = await import("@herb-tools/core").then(core => core.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers))))
+    const restored = await import("../src/partial-callers").then(module => module.PartialCallerIndex.from(JSON.parse(JSON.stringify(callers))))
 
     expect(restored.inferSignature("app/views/posts/_card.html.erb").locals.map(local => local.name)).toEqual(["title"])
   })

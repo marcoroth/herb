@@ -10,8 +10,8 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 import { Linter } from "../src/linter.js"
 
-import { buildPartialIndex } from "../src/partial-index-builder.js"
-import { buildPartialCallerIndex } from "../src/partial-caller-builder.js"
+import { buildPartialIndex } from "@herb-tools/analysis/node"
+import { buildPartialCallerIndex } from "@herb-tools/analysis/node"
 
 import { A11yNestedInteractiveElementsRule } from "../src/rules/a11y-nested-interactive-elements.js"
 import { A11yNoVisuallyHiddenInteractiveElementsRule } from "../src/rules/a11y-no-visually-hidden-interactive-elements.js"

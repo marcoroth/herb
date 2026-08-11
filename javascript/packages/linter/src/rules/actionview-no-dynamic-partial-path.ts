@@ -1,8 +1,9 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
-import { isOutputRender, isStaticPartialPath, renderPartialExpression } from "./prism-rule-utils.js"
+import { isStaticPartialPath } from "./prism-rule-utils.js"
+import { renderPartialExpression } from "@herb-tools/analysis"
 
-import { isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
+import { isERBOutputNode, isPrismNodeType, locationFromByteOffset } from "@herb-tools/core"
 
 import type { ERBRenderNode, ParseResult, ParserOptions, PrismNode } from "@herb-tools/core"
 import type { FullRuleConfig, LintContext, UnboundLintOffense } from "../types.js"
@@ -18,7 +19,7 @@ class ActionViewNoDynamicPartialPathVisitor extends BaseRuleVisitor {
     const call = node.prismNode
 
     if (!call) return
-    if (!isOutputRender(node)) return
+    if (!isERBOutputNode(node)) return
 
     const expression = renderPartialExpression(call)
 

@@ -70,28 +70,6 @@ export default [
     external: isExternal,
   },
 
-  // Partial index builder entry point (node only, used by the language server)
-  {
-    input: "src/partial-index-builder.ts",
-    output: {
-      file: "dist/partial-index-builder.js",
-      format: "esm",
-      sourcemap: true,
-    },
-    external: isExternal,
-  },
-
-  // Partial caller builder entry point (node only, used by the language server)
-  {
-    input: "src/partial-caller-builder.ts",
-    output: {
-      file: "dist/partial-caller-builder.js",
-      format: "esm",
-      sourcemap: true,
-    },
-    external: isExternal,
-  },
-
   // Loader entry point (includes custom rule loader)
   {
     input: "src/loader.ts",

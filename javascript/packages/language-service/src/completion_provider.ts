@@ -11,12 +11,14 @@ import {
 } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, RubyReferenceCollector, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries, partialNameForFile, strictLocalsDeclaration, templateNameForFile, HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
+import { Visitor, RubyReferenceCollector, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries, HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
+import { partialNameForFile, strictLocalsDeclaration, templateNameForFile } from "@herb-tools/analysis"
 import { ParserService } from "./parser_service"
 import { getBlockArgumentCompletions } from "./language-service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
 
-import type { PartialIndex, Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, PartialDeclaration, RubyReference } from "@herb-tools/core"
+import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, RubyReference } from "@herb-tools/core"
+import type { PartialIndex, PartialDeclaration } from "@herb-tools/analysis"
 
 const HTML_OPEN_TAG_PATTERN = /<(\w*)$/
 const CHARACTER_REFERENCE_PATTERN = /&([a-zA-Z]*)$/

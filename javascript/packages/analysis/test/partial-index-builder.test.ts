@@ -6,7 +6,7 @@ import { beforeAll, afterEach, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 
-import { buildPartialIndex, findViewRoot, refreshPartialAfterFix } from "../src/partial-index-builder.js"
+import { buildPartialIndex, findViewRoot, refreshPartialAfterFix } from "../src/partial-index-builder"
 
 const projects: string[] = []
 

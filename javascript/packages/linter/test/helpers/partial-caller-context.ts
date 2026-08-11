@@ -1,6 +1,6 @@
-import { PartialCallerIndex } from "@herb-tools/core"
+import { PartialCallerIndex } from "@herb-tools/analysis"
 
-import type { PartialCallSite } from "@herb-tools/core"
+import type { PartialCallSite } from "@herb-tools/analysis"
 
 export const LAYOUT = "app/views/layouts/application.html.erb"
 

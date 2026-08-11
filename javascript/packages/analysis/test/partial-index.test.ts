@@ -2,9 +2,9 @@ import { beforeAll, describe, expect, test } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 
-import { PartialIndex, declarationFromDocument } from "../src/action-view-partial-index.js"
+import { PartialIndex, declarationFromDocument } from "../src/partial-index"
 
-import type { PartialDeclaration } from "../src/action-view-partial-index.js"
+import type { PartialDeclaration } from "../src/partial-index"
 
 function declaration(file: string, locals: PartialDeclaration["locals"]): PartialDeclaration {
   return { file, hasDeclaration: true, hasKeywordRest: false, locals }
