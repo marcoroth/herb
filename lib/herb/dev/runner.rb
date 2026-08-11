@@ -119,8 +119,8 @@ module Herb
       end
 
       def require_cruise
-        require "cruise"
-      rescue LoadError
+        Herb.ensure_installed("cruise")
+      rescue StandardError
         abort <<~MESSAGE
           The 'cruise' gem is required for the Herb Dev Server.
 

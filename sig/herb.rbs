@@ -23,4 +23,7 @@ module Herb
   def self.reset_configuration!: () -> untyped
 
   def self.dev_server_port: (?untyped project_path) -> untyped
+
+  # : (*String gems) -> void
+  def self.ensure_installed: (*String gems) -> void
 end

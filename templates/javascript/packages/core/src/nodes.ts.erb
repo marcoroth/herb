@@ -289,6 +289,31 @@ export class <%= node.name %> extends Node {
     })
   }
 
+  static build(props: Partial<Omit<<%= node.name %>Props, "type">> = {}): <%= node.name %> {
+    return new <%= node.name %>({
+      type: "<%= node.type %>",
+      location: Location.zero,
+      errors: [],
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      <%= field.name %>: "",
+      <%- when Herb::Template::BooleanField -%>
+      <%= field.name %>: false,
+      <%- when Herb::Template::ArrayField -%>
+      <%= field.name %>: [],
+      <%- when Herb::Template::TokenField, Herb::Template::LocationField, Herb::Template::NodeField, Herb::Template::BorrowedNodeField, Herb::Template::PrismSerializedField, Herb::Template::PrismNodeField -%>
+      <%= field.name %>: null,
+      <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
+      // no-op for <%= field.name %>
+      <%- else -%>
+      <% raise "Unhandled class #{field.class}" %>
+      <%- end -%>
+      <%- end -%>
+      ...props,
+    })
+  }
+
   constructor(props: <%= node.name %>Props) {
     super(props.type, props.location, props.errors);
     <%- node.fields.each do |field| -%>

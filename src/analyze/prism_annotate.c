@@ -171,6 +171,7 @@ static token_T* get_content_token(const AST_NODE_T* node) {
     case AST_ERB_RENDER_NODE: return ((AST_ERB_RENDER_NODE_T*) node)->content;
     case AST_ERB_IF_NODE: return ((AST_ERB_IF_NODE_T*) node)->content;
     case AST_ERB_BLOCK_NODE: return ((AST_ERB_BLOCK_NODE_T*) node)->content;
+    case AST_ERB_ITERATION_BLOCK_NODE: return ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->content;
     case AST_ERB_CASE_NODE: return ((AST_ERB_CASE_NODE_T*) node)->content;
     case AST_ERB_CASE_MATCH_NODE: return ((AST_ERB_CASE_MATCH_NODE_T*) node)->content;
     case AST_ERB_WHILE_NODE: return ((AST_ERB_WHILE_NODE_T*) node)->content;
@@ -188,6 +189,7 @@ static void set_prism_node(AST_NODE_T* node, herb_prism_node_T prism_ref) {
     case AST_ERB_RENDER_NODE: ((AST_ERB_RENDER_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_IF_NODE: ((AST_ERB_IF_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_BLOCK_NODE: ((AST_ERB_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
+    case AST_ERB_ITERATION_BLOCK_NODE: ((AST_ERB_ITERATION_BLOCK_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_CASE_NODE: ((AST_ERB_CASE_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_CASE_MATCH_NODE: ((AST_ERB_CASE_MATCH_NODE_T*) node)->prism_node = prism_ref; break;
     case AST_ERB_WHILE_NODE: ((AST_ERB_WHILE_NODE_T*) node)->prism_node = prism_ref; break;

@@ -96,6 +96,42 @@ module Herb
         result.value
       end
 
+      attr_reader :filename
+
+      # The partial's path as a template name, which is what the report and every marker call a
+      # template.
+      def relative_path(path)
+        pathname = Pathname.new(path)
+
+        return pathname.to_s unless pathname.absolute?
+
+        pathname.relative_path_from(@project_path).to_s
+      rescue ArgumentError
+        pathname.to_s
+      end
+
+      # An instrumenting visitor for the partial, or nothing when the template being compiled is not
+      # instrumented in the first place.
+      #
+      # The partial's tree is compiled straight into the parent, so it never passes through the
+      # visitors the engine ran. Giving it its own visitor, carrying its own context, is what makes
+      # a tag inside an inlined partial report the partial rather than the file it landed in.
+      def instrumenter_for(path)
+        return nil unless instrumented?
+
+        visitor = @engine.visitors.find { |v| v.class.name.to_s.end_with?("InstrumentationVisitor") }
+
+        return nil unless visitor
+
+        instrumenter = visitor.class.new
+        instrumenter.context = VisitorContext.new(file_path: File.expand_path(path), project_path: File.expand_path(@project_path))
+        instrumenter
+      end
+
+      def instrumented?
+        @engine.visitors.any? { |visitor| visitor.class.name.to_s.end_with?("InstrumentationVisitor") }
+      end
+
       def push(path)
         @inlining_stack.add(path.to_s)
       end

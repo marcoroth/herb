@@ -1,0 +1,72 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0033_ERB tag without any closing delimiter inside a block"
+input: |2-
+<% @users.each do |user| %>
+  <h1><%= user.name </h1>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " @users.each do |user| " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:25))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "h1" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "h1" (location: (2:3)-(2:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ ERBContentNode (location: (2:6)-(2:20))
+    │   │   │   │       ├── errors: (1 error)
+    │   │   │   │       │   └── @ UnclosedERBTagError (location: (2:6)-(2:20))
+    │   │   │   │       │       ├── message: "ERB tag `<%=` at (2:6) is missing closing `%>`."
+    │   │   │   │       │       └── opening_tag: "<%=" (location: (2:6)-(2:9))
+    │   │   │   │       │
+    │   │   │   │       ├── tag_opening: "<%=" (location: (2:6)-(2:9))
+    │   │   │   │       ├── content: " user.name " (location: (2:9)-(2:20))
+    │   │   │   │       ├── tag_closing: ∅
+    │   │   │   │       ├── parsed: true
+    │   │   │   │       └── valid: true
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:20)-(2:25))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:20)-(2:22))
+    │   │   │   │       ├── tag_name: "h1" (location: (2:22)-(2:24))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:24)-(2:25))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── element_source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:25)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── block_arguments: (1 item)
+    │   │   └── @ RubyParameterNode (location: (1:19)-(1:23))
+    │   │       ├── name: "user" (location: (1:19)-(1:23))
+    │   │       ├── default_value: ∅
+    │   │       ├── kind: "positional"
+    │   │       └── required: true
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

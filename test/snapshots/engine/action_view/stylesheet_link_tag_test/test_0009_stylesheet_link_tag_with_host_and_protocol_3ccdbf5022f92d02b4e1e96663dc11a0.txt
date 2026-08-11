@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0009_stylesheet_link_tag with host and protocol"
+input: "{source: \"<%= stylesheet_link_tag \\\"style\\\", host: \\\"localhost\\\", protocol: \\\"https\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="https://localhost/stylesheets/style.css" />

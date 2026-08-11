@@ -1,0 +1,5 @@
+---
+source: herb-highlighter/tests/syntax_renderer_test.rs
+expression: "renderer(Theme::Simple).highlight(\"<div>test</div>\")"
+---
+[31m<[0m[31mdiv[0m[31m>[0m[37mtest[0m[31m</[0m[31mdiv[0m[31m>[0m

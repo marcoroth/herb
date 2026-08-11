@@ -6,5 +6,6 @@ module Herb
   def self.lex: (String input, ?arena_stats: bool) -> LexResult
   def self.extract_ruby: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool) -> String
   def self.extract_html: (String source) -> String
+  def self.diff: (String old_source, String new_source, ?track_whitespace_changes: bool) -> DiffResult
   def self.version: () -> String
 end

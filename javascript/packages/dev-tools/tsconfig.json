@@ -13,7 +13,8 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": false
+    "declaration": true,
+    "declarationDir": "./dist/types"
   },
   "include": [
     "src/**/*"

@@ -155,6 +155,31 @@ describe("erb-require-whitespace-inside-tags", () => {
     expectNoOffenses(html)
   })
 
+  it("should not report ERB comment tags that look like section dividers", () => {
+    const html = dedent`
+      <%# === Section === %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should not report ERB comment tags with double equals followed by space", () => {
+    const html = dedent`
+      <%#== raw_content %>
+    `
+
+    expectNoOffenses(html)
+  })
+
+  it("should report ERB comment tags with double equals and no space after", () => {
+    const html = dedent`
+      <%#==raw_content %>
+    `
+
+    expectInfo("Add whitespace after `<%#==`. This looks like a temporarily commented ERB tag.")
+    assertOffenses(html)
+  })
+
   it("should handle multi-line ERB comment tags", () => {
     const html = dedent`
       <%#
@@ -170,5 +195,12 @@ describe("erb-require-whitespace-inside-tags", () => {
     `
 
     expectNoOffenses(html)
+  })
+
+  it("allows escaped comment tag without whitespace after the opening", () => {
+    expectNoOffenses(dedent`
+      <%%# locals: (user:) %>
+      <p><%%= user.name %></p>
+    `)
   })
 })

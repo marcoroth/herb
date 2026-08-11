@@ -19,10 +19,8 @@ describe("ERBBlockNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBBlockNode.from({
-      type: "AST_ERB_BLOCK_NODE",
+    const node = ERBBlockNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " something do "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

@@ -95,6 +95,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       parser_options.strict_locals = (strictLocals == JNI_TRUE);
     }
 
+    jmethodID getIterationNodes =
+        (*env)->GetMethodID(env, optionsClass, "isIterationNodes", "()Z");
+
+    if (getIterationNodes != NULL) {
+      jboolean iterationNodes = (*env)->CallBooleanMethod(env, options, getIterationNodes);
+      parser_options.iteration_nodes = (iterationNodes == JNI_TRUE);
+    }
+
     jmethodID getPrismNodes =
         (*env)->GetMethodID(env, optionsClass, "isPrismNodes", "()Z");
 
@@ -133,6 +141,29 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     if (getHtml != NULL) {
       jboolean html = (*env)->CallBooleanMethod(env, options, getHtml);
       parser_options.html = (html == JNI_TRUE);
+    }
+
+    jmethodID getTimeout =
+        (*env)->GetMethodID(env, optionsClass, "getTimeout", "()I");
+
+    if (getTimeout != NULL) {
+      jint timeout = (*env)->CallIntMethod(env, options, getTimeout);
+      parser_options.timeout_ms = (uint32_t) timeout;
+    }
+
+    jmethodID getMaxErrors =
+        (*env)->GetMethodID(env, optionsClass, "getMaxErrors", "()Ljava/lang/Integer;");
+
+    if (getMaxErrors != NULL) {
+      jobject maxErrorsObj = (*env)->CallObjectMethod(env, options, getMaxErrors);
+
+      if (maxErrorsObj == NULL) {
+        parser_options.max_errors = 0;
+      } else {
+        jclass integerClass = (*env)->FindClass(env, "java/lang/Integer");
+        jmethodID intValue = (*env)->GetMethodID(env, integerClass, "intValue", "()I");
+        parser_options.max_errors = (uint32_t) (*env)->CallIntMethod(env, maxErrorsObj, intValue);
+      }
     }
   }
 
@@ -257,9 +288,25 @@ Java_org_herb_Herb_parseRuby(JNIEnv* env, jclass clazz, jstring source) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source) {
+Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring new_source, jobject options) {
   const char* old_src = (*env)->GetStringUTFChars(env, old_source, 0);
   const char* new_src = (*env)->GetStringUTFChars(env, new_source, 0);
+
+  herb_diff_options_T diff_options = HERB_DEFAULT_DIFF_OPTIONS;
+
+  if (options != NULL) {
+    jclass optionsClass = (*env)->GetObjectClass(env, options);
+    jmethodID getDetectWhitespaceChanges =
+        (*env)->GetMethodID(env, optionsClass, "isTrackWhitespaceChanges", "()Z");
+
+    if (getDetectWhitespaceChanges != NULL) {
+      jboolean trackWhitespaceChanges = (*env)->CallBooleanMethod(env, options, getDetectWhitespaceChanges);
+
+      if (trackWhitespaceChanges == JNI_TRUE) {
+        diff_options.track_whitespace_changes = true;
+      }
+    }
+  }
 
   hb_allocator_T old_allocator;
   hb_allocator_T new_allocator;
@@ -309,7 +356,7 @@ Java_org_herb_Herb_diff(JNIEnv* env, jclass clazz, jstring old_source, jstring n
     return NULL;
   }
 
-  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_allocator);
+  herb_diff_result_T* diff_result = herb_diff(old_root, new_root, &diff_options, &diff_allocator);
 
   jclass diff_result_class = (*env)->FindClass(env, "org/herb/DiffResult");
   jclass diff_operation_class = (*env)->FindClass(env, "org/herb/DiffOperation");

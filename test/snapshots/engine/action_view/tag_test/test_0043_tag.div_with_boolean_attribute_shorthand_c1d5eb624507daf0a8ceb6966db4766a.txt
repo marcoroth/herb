@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::TagTest#test_0043_tag.div with boolean attribute shorthand"
+input: "{source: \"<%= tag.div(hidden:) %>\", locals: {hidden: true}, options: {action_view_helpers: true}}"
+---
+<div hidden></div>

@@ -6,6 +6,12 @@ export { HerbOverlay, ErrorOverlay };
 export type { HerbDevToolsOptions, ValidationError, ValidationData };
 
 export function initHerbDevTools(options: HerbDevToolsOptions = {}): HerbOverlay {
+  if (typeof window !== 'undefined') {
+    const existingOverlay = (window as any).HerbDevTools?._overlay as HerbOverlay | undefined;
+
+    existingOverlay?.destroy();
+  }
+
   const overlay = new HerbOverlay(options);
 
   if (typeof window !== 'undefined') {

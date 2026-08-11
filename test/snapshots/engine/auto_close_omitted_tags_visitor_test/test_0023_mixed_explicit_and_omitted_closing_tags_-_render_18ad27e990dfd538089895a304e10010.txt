@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0023_mixed explicit and omitted closing tags - render"
+input: "{source: \"<ul><li>One</li><li>Two<li>Three</li></ul>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul><li>One</li><li>Two</li><li>Three</li></ul>

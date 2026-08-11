@@ -9,7 +9,12 @@
       "options": {
         "command": "bundle exec rake templates"
       },
-      "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/Rakefile", "{workspaceRoot}/config.yml"],
+      "inputs": [
+        "{projectRoot}/**/*",
+        "{workspaceRoot}/Rakefile",
+        "{workspaceRoot}/config.yml",
+        "{workspaceRoot}/config/**/*"
+      ],
       "dependsOn": ["prism:build"]
     }
   },

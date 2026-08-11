@@ -1,12 +1,11 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule, BaseAutofixContext } from "../types.js"
-import { ERBStringToDirectOutputRewriter } from "@herb-tools/rewriter"
+import { ERBStringToDirectOutputRewriter, isSafeToInline } from "@herb-tools/rewriter"
 
-import { locationFromOffset } from "./rule-utils.js"
-import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType } from "@herb-tools/core"
+import { isERBOutputNode, createLiteral, createERBOutputNode, findParentArray, isPrismNodeType , locationFromByteOffset } from "@herb-tools/core"
 
 import type { Mutable, ReplacementPart } from "@herb-tools/rewriter"
-import type { ParseResult, ERBContentNode, ParserOptions, Node } from "@herb-tools/core"
+import type { ParseResult, ERBContentNode, HTMLAttributeValueNode, ParserOptions, Node } from "@herb-tools/core"
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 interface PreferDirectOutputAutofixContext extends BaseAutofixContext {
@@ -15,6 +14,18 @@ interface PreferDirectOutputAutofixContext extends BaseAutofixContext {
 }
 
 class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofixContext> {
+  private attributeValue: HTMLAttributeValueNode | null = null
+
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+    const previousAttributeValue = this.attributeValue
+
+    this.attributeValue = node
+
+    super.visitHTMLAttributeValueNode(node)
+
+    this.attributeValue = previousAttributeValue
+  }
+
   visitERBContentNode(node: ERBContentNode): void {
     if (!isERBOutputNode(node)) return
 
@@ -30,8 +41,10 @@ class PreferDirectOutputVisitor extends BaseRuleVisitor<PreferDirectOutputAutofi
 
     const replacementParts = ERBStringToDirectOutputRewriter.extractReplacementParts(prismNode, source)
 
+    if (replacementParts && !isSafeToInline(replacementParts, { attributeValue: this.attributeValue })) return
+
     const { startOffset, length } = prismNode.location
-    const stringLocation = locationFromOffset(source, startOffset, length)
+    const stringLocation = locationFromByteOffset(source, startOffset, length)
 
     const autofixContext = replacementParts
       ? { node: node as Mutable<ERBContentNode>, replacementParts }

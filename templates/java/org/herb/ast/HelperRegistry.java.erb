@@ -6,34 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Type enum for all supported Action View tag helpers.
- */
-public enum HelperType {
-<%- helpers.each_with_index do |helper, index| -%>
-  <%= helper.constant_name %>("<%= helper.name %>")<%= index < helpers.size - 1 ? "," : ";" %>
-<%- end -%>
-
-  private final String name;
-
-  HelperType(String name) {
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public static HelperType fromName(String name) {
-    for (HelperType type : values()) {
-      if (type.name.equals(name)) {
-        return type;
-      }
-    }
-    return null;
-  }
-}
-
-/**
  * Argument metadata for a tag helper.
  */
 class HelperArgument {
@@ -86,6 +58,28 @@ class HelperOption {
   public String getDescription() { return description; }
 }
 
+class HelperBlockArgument {
+  private final String name;
+  private final int position;
+  private final String type;
+  private final boolean optional;
+  private final String description;
+
+  HelperBlockArgument(String name, int position, String type, boolean optional, String description) {
+    this.name = name;
+    this.position = position;
+    this.type = type;
+    this.optional = optional;
+    this.description = description;
+  }
+
+  public String getName() { return name; }
+  public int getPosition() { return position; }
+  public String getType() { return type; }
+  public boolean isOptional() { return optional; }
+  public String getDescription() { return description; }
+}
+
 /**
  * Implicit attribute metadata for a tag helper.
  */
@@ -109,6 +103,31 @@ class HelperImplicitAttribute {
 }
 
 /**
+ * Content metadata describing where a helper takes its rendered content from.
+ */
+class HelperContent {
+  private final String source;
+  private final Integer argPosition;
+  private final boolean skipIfHash;
+  private final boolean toSSuffixWhenSingle;
+  private final Integer positionalArgumentsWithBlock;
+
+  HelperContent(String source, Integer argPosition, boolean skipIfHash, boolean toSSuffixWhenSingle, Integer positionalArgumentsWithBlock) {
+    this.source = source;
+    this.argPosition = argPosition;
+    this.skipIfHash = skipIfHash;
+    this.toSSuffixWhenSingle = toSSuffixWhenSingle;
+    this.positionalArgumentsWithBlock = positionalArgumentsWithBlock;
+  }
+
+  public String getSource() { return source; }
+  public Integer getArgPosition() { return argPosition; }
+  public boolean skipIfHash() { return skipIfHash; }
+  public boolean toSSuffixWhenSingle() { return toSSuffixWhenSingle; }
+  public Integer getPositionalArgumentsWithBlock() { return positionalArgumentsWithBlock; }
+}
+
+/**
  * Registry entry containing all metadata for a single tag helper.
  */
 class HelperEntry {
@@ -118,6 +137,7 @@ class HelperEntry {
   private final String gem;
   private final String output;
   private final String visibility;
+  private final String receiver;
   private final String tagName;
   private final boolean isVoid;
   private final boolean supportsBlock;
@@ -128,16 +148,19 @@ class HelperEntry {
   private final String signature;
   private final String documentationUrl;
   private final HelperImplicitAttribute implicitAttribute;
+  private final HelperContent content;
   private final List<HelperArgument> arguments;
   private final List<HelperOption> options;
+  private final List<HelperBlockArgument> blockArguments;
   private final List<String> specialBehaviors;
   private final List<String> aliases;
 
   HelperEntry(
-    String name, HelperType type, String source, String gem, String output, String visibility, String tagName,
+    String name, HelperType type, String source, String gem, String output, String visibility, String receiver, String tagName,
     boolean isVoid, boolean supportsBlock, boolean preferredForTag, boolean supported, String detectStyle, String description,
-    String signature, String documentationUrl, HelperImplicitAttribute implicitAttribute,
-    List<HelperArgument> arguments, List<HelperOption> options, List<String> specialBehaviors, List<String> aliases
+    String signature, String documentationUrl, HelperImplicitAttribute implicitAttribute, HelperContent content,
+    List<HelperArgument> arguments, List<HelperOption> options, List<HelperBlockArgument> blockArguments,
+    List<String> specialBehaviors, List<String> aliases
   ) {
     this.name = name;
     this.type = type;
@@ -145,6 +168,7 @@ class HelperEntry {
     this.gem = gem;
     this.output = output;
     this.visibility = visibility;
+    this.receiver = receiver;
     this.tagName = tagName;
     this.isVoid = isVoid;
     this.supportsBlock = supportsBlock;
@@ -155,8 +179,10 @@ class HelperEntry {
     this.signature = signature;
     this.documentationUrl = documentationUrl;
     this.implicitAttribute = implicitAttribute;
+    this.content = content;
     this.arguments = arguments;
     this.options = options;
+    this.blockArguments = blockArguments;
     this.specialBehaviors = specialBehaviors;
     this.aliases = aliases;
   }
@@ -167,6 +193,7 @@ class HelperEntry {
   public String getGem() { return gem; }
   public String getOutput() { return output; }
   public String getVisibility() { return visibility; }
+  public String getReceiver() { return receiver; }
   public String getTagName() { return tagName; }
   public boolean isVoid() { return isVoid; }
   public boolean supportsBlock() { return supportsBlock; }
@@ -177,8 +204,10 @@ class HelperEntry {
   public String getSignature() { return signature; }
   public String getDocumentationUrl() { return documentationUrl; }
   public HelperImplicitAttribute getImplicitAttribute() { return implicitAttribute; }
+  public HelperContent getContent() { return content; }
   public List<HelperArgument> getArguments() { return arguments; }
   public List<HelperOption> getOptions() { return options; }
+  public List<HelperBlockArgument> getBlockArguments() { return blockArguments; }
   public List<String> getSpecialBehaviors() { return specialBehaviors; }
   public List<String> getAliases() { return aliases; }
 }
@@ -210,6 +239,7 @@ public final class HelperRegistry {
         "<%= helper.gem %>",
         "<%= helper.output %>",
         "<%= helper.visibility %>",
+        "<%= helper.receiver %>",
         <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "null" %>,
         <%= helper.void? %>,
         <%= helper.supports_block %>,
@@ -224,8 +254,14 @@ public final class HelperRegistry {
 <%- else -%>
         null,
 <%- end -%>
+<%- if helper.content? -%>
+        new HelperContent("<%= helper.content.source %>", <%= helper.content.arg_position || "null" %>, <%= helper.content.skip_if_hash %>, <%= helper.content.to_s_suffix_when_single %>, <%= helper.content.positional_arguments_with_block || "null" %>),
+<%- else -%>
+        null,
+<%- end -%>
         List.of(<%= helper.arguments.map { |arg| "new HelperArgument(\"#{arg.name}\", #{arg.position}, \"#{arg.type_display}\", #{arg.optional}, #{arg.default ? "\"#{arg.escaped_default}\"" : "null"}, #{arg.splat}, \"#{arg.escaped_description}\")" }.join(", ") %>),
         List.of(<%= helper.options.map { |opt| "new HelperOption(\"#{opt.name}\", \"#{opt.type_display}\", #{opt.maps_to ? "\"#{opt.maps_to}\"" : "null"}, \"#{opt.escaped_description}\")" }.join(", ") %>),
+        List.of(<%= helper.block_arguments.map { |arg| "new HelperBlockArgument(\"#{arg.name}\", #{arg.position}, \"#{arg.type_display}\", #{arg.optional}, \"#{arg.escaped_description}\")" }.join(", ") %>),
         List.of(<%= helper.special_behaviors.map { |b| "\"#{b}\"" }.join(", ") %>),
         List.of(<%= helper.aliases.map { |a| "\"#{a}\"" }.join(", ") %>)
       );

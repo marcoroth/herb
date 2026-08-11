@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../src/linter.js"
 import { rules } from "../src/rules.js"
+import { semverGreaterThan } from "@herb-tools/core"
 import { HTMLTagNameLowercaseRule } from "../src/rules/html-tag-name-lowercase.js"
 import { HTMLNoSelfClosingRule } from "../src/rules/html-no-self-closing.js"
 import { HTMLImgRequireAltRule } from "../src/rules/html-img-require-alt.js"
@@ -20,7 +21,7 @@ describe("Smart upgrade", () => {
       const { skippedByVersion } = Linter.filterRulesByConfig(rules, {}, "0.4.0")
 
       expect(skippedByVersion.length).toBeGreaterThan(0)
-      expect(skippedByVersion.every(rule => rule.introducedIn > "0.4.0")).toBe(true)
+      expect(skippedByVersion.every(rule => semverGreaterThan(rule.introducedIn, "0.4.0"))).toBe(true)
     })
 
     test("rules at or before config version are enabled", () => {

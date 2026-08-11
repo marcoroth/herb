@@ -1,7 +1,8 @@
-import { colors, ANSI_REGEX } from "./color.js"
+import { colors } from "./color.js"
+import { ANSI_REGEX } from "./ansi.js"
 
 export class TextFormatter {
-  static applyDimToStyledText(text: string): string {
+  static dimAnsiCodes(text: string): string {
     const isColorEnabled = process.env.NO_COLOR === undefined
     if (!isColorEnabled) return text
 

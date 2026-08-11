@@ -28,6 +28,16 @@ This rule catches these silent rendering issues and enforces that `render` is on
 <%= render @product %>
 ```
 
+Escaped ERB tags (`<%%` and `<%%=`) are ignored. They render as the literal text `<%`/`<%=` rather than being executed, so generator and scaffold templates that emit `render` calls into the file they generate are not flagged:
+
+```erb
+<%% cache [menu, @page] do %>
+  <ul class="nav">
+    <%%= render partial: menu.to_partial_path, collection: menu.children %>
+  </ul>
+<%% end %>
+```
+
 ### 🚫 Bad
 
 ```erb

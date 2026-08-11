@@ -1,0 +1,12 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[error] Long class name detected (class-name-length)
+
+/test/file.erb:2:13
+
+      1 │ <div class="short-line">Short</div>
+  →   2 │ <div class="this-is-a-very-long-class-name-t…
+        │              ~~~~~~~~~~~~~~~~~
+      3 │ <div class="another-short-line">Short</div>

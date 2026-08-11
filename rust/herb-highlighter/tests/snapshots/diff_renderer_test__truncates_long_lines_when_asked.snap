@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+/test/file.erb
+
+  -   1 │ <div class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…
+  +     │ <div class="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…

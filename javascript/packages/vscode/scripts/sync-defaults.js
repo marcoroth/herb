@@ -15,6 +15,10 @@ if (config['languageServerHerb.formatter.indentWidth']) {
   config['languageServerHerb.formatter.indentWidth'].default = defaults.formatter.indentWidth;
 }
 
+if (config['languageServerHerb.formatter.indentStyle']) {
+  config['languageServerHerb.formatter.indentStyle'].default = defaults.formatter.indentStyle;
+}
+
 if (config['languageServerHerb.formatter.maxLineLength']) {
   config['languageServerHerb.formatter.maxLineLength'].default = defaults.formatter.maxLineLength;
 }

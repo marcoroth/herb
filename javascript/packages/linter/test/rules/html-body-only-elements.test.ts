@@ -1,8 +1,10 @@
 import dedent from "dedent"
 
 import { describe, test } from "vitest"
+import { PartialCallerIndex } from "@herb-tools/analysis"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HTMLBodyOnlyElementsRule } from "../../src/rules/html-body-only-elements.js"
+import { LAYOUT, renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLBodyOnlyElementsRule)
 
@@ -143,5 +145,53 @@ describe("html-body-only-elements", () => {
         </body>
       </html>
     `)
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_widget.html.erb"
+
+    test("passes when the only call site renders the partial into the body", () => {
+      expectNoOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "body"]))
+    })
+
+    test("fails when the only call site renders the partial into the head", () => {
+      expectError("Element `<div>` must be placed inside the `<body>` tag.")
+
+      assertOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "head"]))
+    })
+
+    test("fails when only some call sites render the partial into the head", () => {
+      expectError("Element `<div>` must be placed inside the `<body>` tag. At least one call site renders this file inside the `<head>`.")
+
+      assertOffenses(`<div>Widget</div>`, renderedFrom(partial, ["html", "head"], ["html", "body"]))
+    })
+
+    test("passes when nothing renders the partial", () => {
+      expectNoOffenses(`<div>Widget</div>`, renderedFromNowhere(partial))
+    })
+
+    test("passes when the chain never reaches a document root", () => {
+      expectNoOffenses(`<div>Widget</div>`, {
+        fileName: partial,
+        partialCallers: new PartialCallerIndex(
+          new Map([[partial, [{ caller: "app/views/posts/index.html.erb", locals: [], ancestors: ["span"] }]]]),
+          new Set(),
+          new Map(),
+          new Set(),
+        ),
+      })
+    })
+
+    test("still trusts the local stack over the call sites for a whole document", () => {
+      expectError("Element `<div>` must be placed inside the `<body>` tag.")
+
+      assertOffenses(dedent`
+        <html>
+          <head>
+            <div>Widget</div>
+          </head>
+        </html>
+      `, renderedFromNowhere(LAYOUT))
+    })
   })
 })

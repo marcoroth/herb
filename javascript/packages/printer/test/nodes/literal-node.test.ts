@@ -11,10 +11,8 @@ describe("LiteralNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = LiteralNode.from({
-      type: "AST_LITERAL_NODE",
+    const node = LiteralNode.build({
       location,
-      errors: [],
       content: "example_content"
     })
 

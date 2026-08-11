@@ -1,0 +1,13 @@
+---
+source: herb-highlighter/tests/inline_diagnostic_renderer_test.rs
+expression: result
+---
+/test/file.erb
+
+  →   1 │ <% if true %>
+        │ ~~~~~~~~~~~~~
+  →   2 │   <span>content</span>
+        │   ~~~~~~~~~~~~~~~~~~~~
+  →   3 │ <% end %>
+        │ ~~~~~~~~~
+        │ [error] Multi-line offense (test-rule)

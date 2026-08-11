@@ -1,0 +1,15 @@
+---
+source: herb-highlighter/tests/diagnostic_renderer_test.rs
+expression: strip_ansi_colors(&result)
+---
+[warning] Multi-line offense (multi-line-rule)
+
+
+  <div id="gems">
+    <% @gems.each do |topic_gem| %>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      <%= render partial: "gem_card" %>
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    <% end %>
+    ~~~~~~~~~
+  </div>

@@ -1,7 +1,7 @@
 use crate::errors::{AnyError, ErrorNode};
 use crate::{Location, Token};
 use crate::union_types::*;
-use colored::*;
+use crate::style::Colorize;
 
 pub(crate) fn prettify_prism_tree(input: &str) -> String {
   let input = input.replace("+-- ", "├── ").replace("|   ", "│   ");
@@ -321,13 +321,35 @@ pub struct <%= node.name %> {
   <%- when Herb::Template::PrismSerializedField -%>
   pub <%= field.name %>: Option<Vec<u8>>,
   <%- when Herb::Template::PrismNodeField -%>
-  pub <%= field.name %>: Option<String>,
+  pub <%= field.name %>: Option<Vec<u8>>,
+  pub source: Option<std::sync::Arc<str>>,
+  #[cfg(feature = "prism")]
+  pub prism_cache: std::sync::OnceLock<Option<crate::prism::PrismNode>>,
   <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismContextField -%>
   // no-op for <%= field.name %>
   <%- end -%>
   <%- end -%>
 }
 
+<%- if node.fields.any? { |field| field.is_a?(Herb::Template::PrismNodeField) } -%>
+impl <%= node.name %> {
+  <%- node.fields.select { |field| field.is_a?(Herb::Template::PrismNodeField) }.each do |field| -%>
+  #[cfg(feature = "prism")]
+  pub fn prism(&self) -> Option<&crate::prism::PrismNode> {
+    self
+      .prism_cache
+      .get_or_init(|| {
+        let bytes = self.<%= field.name %>.as_ref()?;
+        let source = self.source.as_ref()?;
+
+        crate::prism::deserialize(bytes, source)
+      })
+      .as_ref()
+  }
+  <%- end -%>
+}
+
+<%- end -%>
 impl Node for <%= node.name %> {
   fn node_type(&self) -> &str {
     &self.node_type
@@ -428,11 +450,22 @@ impl Node for <%= node.name %> {
     <%- when Herb::Template::PrismSerializedField -%>
     output.push_str(&format!("{}{}: {}\n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|b| format!("({} bytes)", b.len()).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
     <%- when Herb::Template::PrismNodeField -%>
-    if let Some(ref prism_string) = self.<%= field.name %> {
+    if let Some(ref prism_bytes) = self.<%= field.name %> {
       let prefix = "<%= visibility.prefix %>";
       output.push_str(&format!("{}{}: \n", "<%= visibility.symbol %>".white(), "<%= field.name %>".white()));
       output.push_str(&format!("{}└── ", prefix));
-      let prettified = prettify_prism_tree(prism_string);
+
+      #[cfg(feature = "prism")]
+      let rendered = self
+        .source
+        .as_ref()
+        .and_then(|source| crate::prism::prettyprint(prism_bytes, source))
+        .unwrap_or_else(|| format!("({} bytes)", prism_bytes.len()));
+
+      #[cfg(not(feature = "prism"))]
+      let rendered = format!("({} bytes)", prism_bytes.len());
+
+      let prettified = prettify_prism_tree(&rendered);
       let indented = prettified.lines().enumerate().map(|(i, line)| {
         if i == 0 { line.to_string() } else { format!("{}    {}", prefix, line) }
       }).collect::<Vec<_>>().join("\n");

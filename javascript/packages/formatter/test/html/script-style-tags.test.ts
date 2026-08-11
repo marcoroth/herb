@@ -259,12 +259,7 @@ describe("@herb-tools/formatter - script and style tags", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <script
-        src="app.js"
-        defer
-        type="text/javascript"
-        id="main-script"
-      >
+      <script src="app.js" defer type="text/javascript" id="main-script">
         console.log("Fallback script");
       </script>
     `)

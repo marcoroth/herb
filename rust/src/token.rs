@@ -1,6 +1,6 @@
 use crate::location::Location;
 use crate::range::Range;
-use colored::*;
+use crate::style::Colorize;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

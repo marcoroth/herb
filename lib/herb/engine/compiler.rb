@@ -11,6 +11,8 @@ module Herb
       WHITESPACE_ONLY = /\A[ \t]+\z/
       WHITESPACE_ONLY_CAPTURE = /\A([ \t]+)\z/
 
+      SESSION = "::Herb::Engine::Report::Session".freeze #: String
+
       attr_reader :tokens
 
       def initialize(engine, options = {})
@@ -158,13 +160,6 @@ module Herb
       end
 
       def visit_html_close_tag_node(node)
-        tag_name = node.tag_name&.value&.downcase
-
-        if @engine.content_for_head && tag_name == "head"
-          escaped_html = @engine.content_for_head.gsub("'", "\\\\'")
-          @tokens << [:expr, "'#{escaped_html}'.html_safe", current_context]
-        end
-
         add_text(node.tag_opening&.value)
         add_text(node.tag_name&.value)
         add_text(node.tag_closing&.value)
@@ -214,18 +209,6 @@ module Herb
         return if inline_ruby_comment?(node)
 
         process_erb_tag(node)
-      end
-
-      def visit_erb_render_node(node)
-        if @render_inliner&.can_inline?(node)
-          if @render_inliner.collection?(node)
-            inline_collection(node)
-          else
-            inline_partial(node)
-          end
-        else
-          process_erb_tag(node)
-        end
       end
 
       def visit_erb_control_node(node, &)
@@ -337,6 +320,20 @@ module Herb
         end
       end
 
+      def visit_erb_iteration_block_node(node)
+        visit_erb_block_node(node)
+      end
+
+      def visit_erb_render_node(node)
+        if @render_inliner&.can_inline?(node)
+          return @render_inliner.collection?(node) ? inline_collection(node) : inline_partial(node)
+        end
+
+        return process_erb_tag(node) unless node.end_node
+
+        visit_erb_block_node(node)
+      end
+
       def visit_erb_block_end_node(node, escaped: false)
         remove_trailing_whitespace_from_last_token! if left_trim?(node)
 
@@ -385,7 +382,8 @@ module Herb
         add_code(";")
 
         partial_ast = @render_inliner.parse(source)
-        partial_ast&.accept(self)
+
+        inline_instrumented(resolved_path, partial_ast) { partial_ast&.accept(self) }
 
         add_code("; end;")
 
@@ -409,11 +407,28 @@ module Herb
         add_code(";")
 
         partial_ast = @render_inliner.parse(source)
-        partial_ast&.accept(self)
+
+        inline_instrumented(resolved_path, partial_ast) { partial_ast&.accept(self) }
 
         add_code("; end;")
 
         @render_inliner.pop(resolved_path)
+      end
+
+      # A partial that was inlined never renders, so nothing tells the session it happened, and the
+      # tags inside it never passed through the visitors the engine ran.
+      #
+      # Giving the partial's tree its own instrumenting visitor answers both at once: the visitor
+      # frames the render it would have been, and frames every tag inside it, all under the
+      # partial's own name. The call site comes from the frame the parent's visitor already put
+      # around the render tag, which is why nothing is emitted here by hand.
+      #: (untyped, untyped) { () -> void } -> void
+      def inline_instrumented(resolved_path, partial_ast)
+        instrumenter = @render_inliner.instrumenter_for(resolved_path)
+
+        partial_ast&.accept(instrumenter) if instrumenter
+
+        yield
       end
 
       def check_for_escaped_erb_tag!(opening)

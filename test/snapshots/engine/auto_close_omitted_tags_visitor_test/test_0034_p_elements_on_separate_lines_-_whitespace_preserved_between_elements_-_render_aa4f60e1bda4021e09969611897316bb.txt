@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0034_p elements on separate lines - whitespace preserved between elements - render"
+input: "{source: \"<p>First\\n<p>Second\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<p>First
+</p><p>Second</p>

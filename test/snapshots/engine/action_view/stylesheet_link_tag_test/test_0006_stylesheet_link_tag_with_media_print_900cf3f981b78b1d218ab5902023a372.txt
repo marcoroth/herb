@@ -1,0 +1,5 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0006_stylesheet_link_tag with media print"
+input: "{source: \"<%= stylesheet_link_tag \\\"style\\\", media: \\\"print\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/style.css" media="print" />

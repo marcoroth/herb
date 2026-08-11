@@ -33,6 +33,7 @@ require_relative "herb/ast/erb_render_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"
+require_relative "herb/diagnostic"
 
 require_relative "herb/cli"
 require_relative "herb/project"
@@ -117,6 +118,32 @@ module Herb
       entry&.port
     rescue StandardError
       nil
+    end
+
+    #: (*String gems) -> void
+    def ensure_installed(*gems)
+      missing = gems.reject do |name|
+        require name
+        true
+      rescue LoadError
+        false
+      end
+
+      return if missing.empty?
+
+      require "bundler/inline"
+
+      verbose = $VERBOSE
+      $VERBOSE = nil
+
+      begin
+        gemfile(true, quiet: true) do # steep:ignore
+          source "https://rubygems.org" # steep:ignore
+          missing.each { |name| gem name }
+        end
+      ensure
+        $VERBOSE = verbose
+      end
     end
   end
 end

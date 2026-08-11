@@ -15,6 +15,8 @@ module Herb
 
       WHITESPACE_ONLY_CAPTURE: ::Regexp
 
+      SESSION: String
+
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped
@@ -61,8 +63,6 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
-      def visit_erb_render_node: (untyped node) -> untyped
-
       def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
 
       def visit_erb_if_node: (untyped node) -> untyped
@@ -97,6 +97,10 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_iteration_block_node: (untyped node) -> untyped
+
+      def visit_erb_render_node: (untyped node) -> untyped
+
       def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
@@ -106,6 +110,16 @@ module Herb
       def inline_partial: (untyped node) -> untyped
 
       def inline_collection: (untyped node) -> untyped
+
+      # A partial that was inlined never renders, so nothing tells the session it happened, and the
+      # tags inside it never passed through the visitors the engine ran.
+      #
+      # Giving the partial's tree its own instrumenting visitor answers both at once: the visitor
+      # frames the render it would have been, and frames every tag inside it, all under the
+      # partial's own name. The call site comes from the frame the parent's visitor already put
+      # around the render tag, which is why nothing is emitted here by hand.
+      # : (untyped, untyped) { () -> void } -> void
+      def inline_instrumented: (untyped, untyped) { () -> void } -> void
 
       def check_for_escaped_erb_tag!: (untyped opening) -> untyped
 

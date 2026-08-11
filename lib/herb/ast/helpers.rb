@@ -5,11 +5,33 @@ module Herb
   module AST
     module Helpers
       #: (Herb::AST::Node?) -> bool
-      def erb_outputs?(node)
-        return false unless node.is_a?(Herb::AST::ERBContentNode)
+      def erb_node?(node)
+        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
+      end
 
-        opening = node.tag_opening&.value || ""
-        opening.include?("=") && !opening.start_with?("<%#")
+      #: (Herb::AST::Node?) -> String
+      def erb_opening(node)
+        token = case node
+                when Herb::AST::ERBContentNode, Herb::AST::ERBRenderNode then node.tag_opening
+                end
+
+        token&.value.to_s
+      end
+
+      #: (Herb::AST::Node?) -> bool
+      def erb_outputs?(node)
+        return false unless erb_node?(node)
+
+        erb_output?(erb_opening(node))
+      end
+
+      #: (Herb::AST::Node?) -> bool
+      def erb_statement?(node)
+        return false unless erb_node?(node)
+
+        opening = erb_opening(node)
+
+        opening.start_with?("<%") && !erb_output?(opening) && !erb_comment?(opening)
       end
 
       #: (String) -> bool
@@ -24,7 +46,21 @@ module Herb
 
       #: (String) -> bool
       def erb_output?(opening)
-        opening.include?("=")
+        opening.include?("=") && !erb_comment?(opening)
+      end
+
+      #: (Herb::AST::Node?) -> Herb::AST::HTMLOmittedCloseTagNode?
+      def omitted_close_tag(node)
+        return nil unless node.is_a?(Herb::AST::HTMLElementNode)
+
+        close_tag = node.close_tag
+
+        close_tag if close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+      end
+
+      #: (Herb::AST::Node?) -> bool
+      def omitted_close_tag?(node)
+        !omitted_close_tag(node).nil?
       end
 
       #: (Herb::AST::ERBContentNode) -> bool

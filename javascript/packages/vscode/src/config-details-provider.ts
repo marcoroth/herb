@@ -1,5 +1,5 @@
 import * as vscode from "vscode"
-import { Config } from "@herb-tools/config"
+import { Config, ALL_RULES_KEY } from "@herb-tools/config"
 
 interface ConfigQuickPickItem extends vscode.QuickPickItem {
   action?: () => Promise<void>
@@ -49,15 +49,24 @@ export async function showConfigDetails() {
   const linterEnabled = config?.linter?.enabled ?? vscodeConfig.get('linter.enabled', true)
   const disabledRules = config?.linter?.rules
     ? Object.entries(config.linter.rules)
-        .filter(([_, ruleConfig]) => ruleConfig.enabled === false)
+        .filter(([name, ruleConfig]) => name !== ALL_RULES_KEY && ruleConfig.enabled === false)
         .map(([name, _]) => name)
     : []
 
+  const rulesDisabledByDefault = config?.linter?.rules?.[ALL_RULES_KEY]?.enabled === false
+
   const linterIcon = linterEnabled ? "$(check)" : "$(x)"
   const linterStatus = linterEnabled ? "Enabled" : "Disabled"
-  const linterDetail = disabledRules.length > 0
-    ? `${disabledRules.length} rule${disabledRules.length === 1 ? '' : 's'} disabled: ${disabledRules.slice(0, 3).join(', ')}${disabledRules.length > 3 ? '...' : ''}`
-    : "All rules enabled"
+
+  let linterDetail: string
+
+  if (rulesDisabledByDefault) {
+    linterDetail = "All rules disabled by default"
+  } else if (disabledRules.length > 0) {
+    linterDetail = `${disabledRules.length} rule${disabledRules.length === 1 ? '' : 's'} disabled: ${disabledRules.slice(0, 3).join(', ')}${disabledRules.length > 3 ? '...' : ''}`
+  } else {
+    linterDetail = "All rules enabled"
+  }
 
   const linterItem: ConfigQuickPickItem = {
     label: `${linterIcon} Herb Linter: ${linterStatus}`,
@@ -79,11 +88,14 @@ export async function showConfigDetails() {
 
   const formatterEnabled = config?.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false)
   const indentWidth = config?.formatter?.indentWidth ?? vscodeConfig.get('formatter.indentWidth', 2)
+  const indentStyle = config?.formatter?.indentStyle ?? vscodeConfig.get('formatter.indentStyle', 'space')
   const maxLineLength = config?.formatter?.maxLineLength ?? vscodeConfig.get('formatter.maxLineLength', 80)
 
   const formatterIcon = formatterEnabled ? "$(check)" : "$(x)"
   const formatterStatus = formatterEnabled ? "Enabled" : "Disabled"
-  const formatterDetail = `Indent: ${indentWidth} spaces, Max length: ${maxLineLength}`
+  const formatterDetail = indentStyle === 'tab'
+    ? `Indent: tabs, Max length: ${maxLineLength}`
+    : `Indent: ${indentWidth} spaces, Max length: ${maxLineLength}`
 
   const formatterItem: ConfigQuickPickItem = {
     label: `${formatterIcon} Herb Formatter: ${formatterStatus}`,

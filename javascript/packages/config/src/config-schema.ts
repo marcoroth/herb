@@ -1,6 +1,8 @@
 import { z } from "zod"
 
-export const SeveritySchema = z.enum(["error", "warning", "info", "hint"])
+import { DIAGNOSTIC_SEVERITIES } from "@herb-tools/core"
+
+export const SeveritySchema = z.enum(DIAGNOSTIC_SEVERITIES)
 
 export const SeverityConfigSchema = z.union([
   SeveritySchema,
@@ -25,6 +27,7 @@ export const RuleConfigSchema = RuleConfigBaseSchema.optional()
 export const LinterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the linter is enabled"),
   failLevel: SeveritySchema.optional().describe("Exit with error code when diagnostics of this severity or higher are present (e.g., 'warning' will fail on warnings and errors)"),
+  logLevel: SeveritySchema.optional().describe("Only report diagnostics of this severity or higher (e.g., 'warning' hides info and hint diagnostics from the output and from CI annotations)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from linting"),
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),
@@ -40,34 +43,27 @@ export const FormatterConfigSchema = z.object({
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from formatting"),
   indentWidth: z.number().int().positive().optional().describe("Number of spaces per indentation level"),
+  indentStyle: z.enum(["space", "tab"]).optional().describe("Indentation character to use ('space' or 'tab')"),
   maxLineLength: z.number().int().positive().optional().describe("Maximum line length before wrapping"),
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
-export const ValidatorsConfigSchema = z.object({
-  security: z.boolean().optional().describe("Enable or disable the security validator (default: true)"),
-  nesting: z.boolean().optional().describe("Enable or disable the nesting validator (default: true)"),
-  accessibility: z.boolean().optional().describe("Enable or disable the accessibility validator (default: true)"),
-}).strict().optional()
+export const FRAMEWORKS = {
+  ruby: "Ruby",
+  actionview: "Action View",
+  hanami: "Hanami",
+  sinatra: "Sinatra",
+} as const
 
-export const FrameworkSchema = z.enum(["ruby", "actionview", "hanami", "sinatra"]).optional()
+export const FRAMEWORK_NAMES = Object.keys(FRAMEWORKS) as (keyof typeof FRAMEWORKS)[]
+
+export const FrameworkSchema = z.enum(FRAMEWORK_NAMES).optional()
   .describe("Framework context (default: 'ruby')")
 
 export const TemplateEngineSchema = z.enum(["erubi", "erb", "herb"]).optional()
   .describe("Template engine used for compilation (default: 'erubi')")
 
-export const ParserOptionsSchema = z.object({
-  strict: z.boolean().optional().describe("Enable strict parsing mode (default: true)"),
-  render_nodes: z.boolean().optional().describe("Enable render node detection"),
-  strict_locals: z.boolean().optional().describe("Enable strict locals detection"),
-}).strict().optional()
-
-export const EngineConfigSchema = z.object({
-  optimize: z.boolean().optional().describe("Enable compile-time optimizations (default: false)"),
-  debug: z.boolean().optional().describe("Enable debug mode (default: false)"),
-  parser_options: ParserOptionsSchema.describe("Parser options passed through to Herb.parse"),
-  validators: ValidatorsConfigSchema.describe("Per-validator enable/disable configuration"),
-}).strict().optional()
+export const EngineConfigSchema = z.record(z.string(), z.unknown()).nullish()
 
 export const HerbConfigSchema = z.object({
   version: z.string().describe("Configuration file version"),

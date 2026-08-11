@@ -12,7 +12,7 @@ describe("actionview-no-silent-helper autofix", () => {
     await Herb.load()
   })
 
-  test.skip("output tag is not modified", () => {
+  test("output tag is not modified", () => {
     const input = dedent`
       <%= link_to "Home", root_path %>
     `
@@ -25,7 +25,7 @@ describe("actionview-no-silent-helper autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag to output tag for link_to", () => {
+  test("fixes silent tag to output tag for link_to", () => {
     const input = dedent`
       <% link_to "Home", root_path %>
     `
@@ -42,7 +42,7 @@ describe("actionview-no-silent-helper autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag to output tag for content_tag", () => {
+  test("fixes silent tag to output tag for content_tag", () => {
     const input = dedent`
       <% content_tag :div, "Hello", class: "greeting" %>
     `
@@ -59,7 +59,7 @@ describe("actionview-no-silent-helper autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes trimmed silent tag to output tag", () => {
+  test("fixes trimmed silent tag to output tag", () => {
     const input = dedent`
       <%- link_to "Home", root_path %>
     `
@@ -76,7 +76,7 @@ describe("actionview-no-silent-helper autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  test.skip("fixes silent tag for turbo_frame_tag", () => {
+  test("fixes silent tag for turbo_frame_tag", () => {
     const input = dedent`
       <% turbo_frame_tag "test" %>
     `

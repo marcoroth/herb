@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsVisitorTest#test_0007_li elements without closing tags - render"
+input: "{source: \"<ul><li>One<li>Two</ul>\", locals: {}, options: {escape: false, parser_options: {strict: false}, visitors: [#<Herb::Engine::AutoCloseOmittedTagsVisitor>]}}"
+---
+<ul><li>One</li><li>Two</li></ul>

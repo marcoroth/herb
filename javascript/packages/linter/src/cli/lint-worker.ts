@@ -5,9 +5,16 @@ import { resolve } from "node:path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
-import { Diagnostic } from "@herb-tools/core"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
+import { fixabilityFor } from "../fixability.js"
+import { partialIndexFrom, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { partialCallerIndexFrom } from "@herb-tools/analysis/node"
+
+import type { SerializedDiagnostic } from "@herb-tools/core"
+import type { Fixability } from "../fixability.js"
+import type { LintOffense } from "../types.js"
+import type { AncestorChain, SerializedPartialCallerIndex, SerializedPartialIndex } from "@herb-tools/analysis"
 
 export interface WorkerInput {
   files: string[]
@@ -17,13 +24,18 @@ export interface WorkerInput {
   fixUnsafe: boolean
   ignoreDisableComments: boolean
   loadCustomRules: boolean
+  only?: string[]
+  allRules: boolean
+  partials?: SerializedPartialIndex
+  partialCallers?: SerializedPartialCallerIndex
 }
 
 export interface WorkerOffense {
   filename: string
-  offense: Diagnostic
-  content: string
+  offense: SerializedDiagnostic
+  renderedFrom?: AncestorChain
   autocorrectable: boolean
+  unsafeAutocorrectable: boolean
 }
 
 export interface WorkerResult {
@@ -64,7 +76,9 @@ async function run() {
     }
   }
 
-  const linter = Linter.from(Herb, config, customRules)
+  const linter = Linter.from(Herb, config, customRules, { only: data.only, all: data.allRules })
+  const partials = partialIndexFrom(data.partials)
+  const partialCallers = partialCallerIndexFrom(data.partialCallers)
 
   let totalErrors = 0
   let totalWarnings = 0
@@ -80,46 +94,48 @@ async function run() {
   const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
   const fixMessages: string[] = []
 
-  const isRuleAutocorrectable = (ruleName: string): boolean => {
+  const fixabilityOf = (offense: LintOffense): Fixability => {
     const ruleClass = linter.rules.find(
-      (rule) => rule.ruleName === ruleName
+      (rule) => rule.ruleName === offense.rule
     )
 
-    if (!ruleClass) return false
-
-    // TODO: fix types
-    return (ruleClass as any).autocorrectable === true
+    return fixabilityFor(offense, ruleClass)
   }
 
   for (const filename of data.files) {
     const filePath = data.projectPath ? resolve(data.projectPath, filename) : resolve(filename)
-    let content = readFileSync(filePath, "utf-8")
+    const content = readFileSync(filePath, "utf-8")
 
     const lintResult = linter.lint(content, {
       fileName: filename,
-      ignoreDisableComments: data.ignoreDisableComments
+      ignoreDisableComments: data.ignoreDisableComments,
+      partials,
+      partialCallers,
+      projectPath: data.projectPath
     })
 
     if (data.fix && lintResult.offenses.length > 0) {
       const autofixResult = linter.autofix(content, {
         fileName: filename,
-        ignoreDisableComments: data.ignoreDisableComments
+        ignoreDisableComments: data.ignoreDisableComments,
+        partials,
+        partialCallers,
+        projectPath: data.projectPath
       }, undefined, { includeUnsafe: data.fixUnsafe })
 
       if (autofixResult.fixed.length > 0) {
         writeFileSync(filePath, autofixResult.source, "utf-8")
+        refreshPartialAfterFix(Herb, partials, filename, content, autofixResult.source)
         filesFixed++
         fixMessages.push(`${filename}\t${autofixResult.fixed.length}`)
       }
-
-      content = autofixResult.source
 
       for (const offense of autofixResult.unfixed) {
         allOffenses.push({
           filename,
           offense,
-          content,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          renderedFrom: offense.renderedFrom,
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
@@ -140,8 +156,8 @@ async function run() {
         allOffenses.push({
           filename,
           offense,
-          content,
-          autocorrectable: isRuleAutocorrectable(offense.rule)
+          renderedFrom: offense.renderedFrom,
+          ...fixabilityOf(offense)
         })
 
         const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest"
+import dedent from "dedent"
 
 import { themes } from "../src/themes.js"
 import { stripAnsiColors } from "./util.js"
@@ -18,53 +19,58 @@ describe("FileRenderer", () => {
 
   describe("renderWithLineNumbers", () => {
     it("should render content with line numbers", () => {
-      const content = "line 1\nline 2\nline 3"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+      `
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("  1 │ line 1")
-      expect(stripAnsiColors(result)).toContain("  2 │ line 2")
-      expect(stripAnsiColors(result)).toContain("  3 │ line 3")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle single line content", () => {
       const content = "single line"
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("  1 │ single line")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle empty content", () => {
       const content = ""
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("  1 │")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle content with empty lines", () => {
-      const content = "line 1\n\nline 3"
+      const content = dedent`
+        line 1
+
+        line 3
+      `
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("1 │ line 1")
-      expect(stripAnsiColors(result)).toContain("  2 │")
-      expect(stripAnsiColors(result)).toContain("3 │ line 3")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should apply syntax highlighting", () => {
       const content = "<div>Hello</div>"
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("div")
-      expect(stripAnsiColors(result)).toContain("Hello")
+      expect(result).toMatchSnapshot()
     })
   })
 
   describe("renderWithFocusLine", () => {
     it("should highlight focus line and dim others", () => {
-      const content = "line 1\nline 2\nline 3\nline 4\nline 5"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+        line 4
+        line 5
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -73,17 +79,15 @@ describe("FileRenderer", () => {
         true,
       )
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("→") // Focus line indicator
-      expect(stripAnsiColors(result)).toContain("  2 │") // Context line above
-      expect(stripAnsiColors(result)).toContain("  3 │") // Focus line
-      expect(stripAnsiColors(result)).toContain("4 │") // Context line below
-      expect(stripAnsiColors(result)).not.toContain("1 │") // Outside context
-      expect(stripAnsiColors(result)).not.toContain("5 │") // Outside context
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle focus line at beginning of file", () => {
-      const content = "line 1\nline 2\nline 3"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -92,13 +96,15 @@ describe("FileRenderer", () => {
         true,
       )
 
-      expect(stripAnsiColors(result)).toContain("  1 │") // Focus line
-      expect(stripAnsiColors(result)).toContain("  2 │") // Context line
-      expect(stripAnsiColors(result)).not.toContain("3 │") // Outside context
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle focus line at end of file", () => {
-      const content = "line 1\nline 2\nline 3"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -107,13 +113,14 @@ describe("FileRenderer", () => {
         true,
       )
 
-      expect(stripAnsiColors(result)).toContain("  2 │") // Context line
-      expect(stripAnsiColors(result)).toContain("  3 │") // Focus line
-      expect(stripAnsiColors(result)).not.toContain("1 │") // Outside context
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle large context that exceeds file bounds", () => {
-      const content = "line 1\nline 2"
+      const content = dedent`
+        line 1
+        line 2
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -122,12 +129,15 @@ describe("FileRenderer", () => {
         true,
       )
 
-      expect(stripAnsiColors(result)).toContain("  1 │") // Focus line
-      expect(stripAnsiColors(result)).toContain("  2 │") // All available context
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should work without line numbers", () => {
-      const content = "line 1\nline 2\nline 3"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -136,15 +146,15 @@ describe("FileRenderer", () => {
         false,
       )
 
-      expect(stripAnsiColors(result)).not.toContain("/test/file.erb") // No file header
-      expect(stripAnsiColors(result)).not.toMatch(/\d+ │/) // No line numbers
-      expect(stripAnsiColors(result)).toContain("line 1")
-      expect(stripAnsiColors(result)).toContain("line 2")
-      expect(stripAnsiColors(result)).toContain("line 3")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should apply syntax highlighting", () => {
-      const content = "<div>line 1</div>\n<span>line 2</span>\n<p>line 3</p>"
+      const content = dedent`
+        <div>line 1</div>
+        <span>line 2</span>
+        <p>line 3</p>
+      `
       const result = renderer.renderWithFocusLine(
         "/test/file.erb",
         content,
@@ -153,30 +163,27 @@ describe("FileRenderer", () => {
         true,
       )
 
-      expect(stripAnsiColors(result)).toContain("div")
-      expect(stripAnsiColors(result)).toContain("span")
-      expect(stripAnsiColors(result)).toContain("→") // Focus line indicator
+      expect(result).toMatchSnapshot()
     })
   })
 
   describe("renderPlain", () => {
     it("should render content without line numbers or file headers", () => {
-      const content = "line 1\nline 2\nline 3"
+      const content = dedent`
+        line 1
+        line 2
+        line 3
+      `
       const result = renderer.renderPlain(content)
 
-      expect(stripAnsiColors(result)).not.toContain("│") // No line separators
-      expect(stripAnsiColors(result)).not.toMatch(/\s+\d+\s*│/) // No line numbers
-      expect(stripAnsiColors(result)).toContain("line 1")
-      expect(stripAnsiColors(result)).toContain("line 2")
-      expect(stripAnsiColors(result)).toContain("line 3")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should apply syntax highlighting", () => {
       const content = "<div>Hello World</div>"
       const result = renderer.renderPlain(content)
 
-      expect(stripAnsiColors(result)).toContain("div")
-      expect(stripAnsiColors(result)).toContain("Hello World")
+      expect(result).toMatchSnapshot()
     })
 
     it("should handle empty content", () => {
@@ -187,10 +194,16 @@ describe("FileRenderer", () => {
     })
 
     it("should preserve exact content structure", () => {
-      const content = "line 1\n\nline 3\n    indented line"
+      const content = dedent`
+        line 1
+
+        line 3
+            indented line
+      `
       const result = renderer.renderPlain(content)
 
-      expect(stripAnsiColors(result)).toContain("line 1\n\nline 3\n    indented line")
+      expect(stripAnsiColors(result)).toContain(content)
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
   })
 
@@ -206,8 +219,7 @@ describe("FileRenderer", () => {
         content,
       )
 
-      expect(stripAnsiColors(result)).toContain("/test/file.erb")
-      expect(stripAnsiColors(result)).toContain("div")
+      expect(result).toMatchSnapshot()
     })
 
     it("should work with simple theme", async () => {
@@ -218,8 +230,7 @@ describe("FileRenderer", () => {
       const content = "<span>test</span>"
       const result = simpleFileRenderer.renderPlain(content)
 
-      expect(stripAnsiColors(result)).toContain("span")
-      expect(stripAnsiColors(result)).toContain("test")
+      expect(result).toMatchSnapshot()
     })
   })
 
@@ -228,18 +239,14 @@ describe("FileRenderer", () => {
       const longContent = "This is a very long line that should be truncated when it exceeds the maximum width limit"
       const result = renderer.renderWithLineNumbers("/test/file.erb", longContent, false, 50, true)
 
-      const strippedResult = stripAnsiColors(result)
-      expect(strippedResult).toContain("…")
-      expect(strippedResult).not.toContain("maximum width limit") // This part should be cut off
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should truncate lines in renderPlain method", () => {
       const longContent = "This is another very long line that should be truncated when using renderPlain method"
       const result = renderer.renderPlain(longContent, 50, false, true)
 
-      const strippedResult = stripAnsiColors(result)
-      expect(strippedResult).toContain("…")
-      expect(strippedResult).not.toContain("renderPlain method") // This part should be cut off
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should not truncate lines shorter than maxWidth", () => {
@@ -247,8 +254,9 @@ describe("FileRenderer", () => {
       const result = renderer.renderWithLineNumbers("/test/file.erb", shortContent, false, 50, true)
 
       const strippedResult = stripAnsiColors(result)
+
       expect(strippedResult).not.toContain("…")
-      expect(strippedResult).toContain("Short line")
+      expect(strippedResult).toMatchSnapshot()
     })
   })
 
@@ -261,10 +269,7 @@ describe("FileRenderer", () => {
         const content = "<div>test</div>"
         const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-        // Should not contain ANSI escape codes (except for structure)
-        expect(stripAnsiColors(result)).toContain("/test/file.erb")
-        expect(stripAnsiColors(result)).toContain("div")
-        expect(stripAnsiColors(result)).toContain("test")
+        expect(result).toMatchSnapshot()
       } finally {
         if (originalNoColor === undefined) {
           delete process.env.NO_COLOR
@@ -278,29 +283,33 @@ describe("FileRenderer", () => {
   describe("edge cases", () => {
     it("should handle very long lines", () => {
       const longLine = "a".repeat(1000)
-      const content = `short line\n${longLine}\nshort line`
+      const content = dedent`
+        short line
+        ${longLine}
+        short line
+      `
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("short line")
       expect(stripAnsiColors(result)).toContain(longLine)
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle special characters", () => {
-      const content = `line with\ttabs\nline with "quotes"\nline with "single quotes"`
+      const content = dedent`
+        line with\ttabs
+        line with "quotes"
+        line with "single quotes"
+      `
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("tabs")
-      expect(stripAnsiColors(result)).toContain(`quotes"`)
-      expect(stripAnsiColors(result)).toContain('"single quotes"')
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
 
     it("should handle unicode characters", () => {
       const content = "Unicode: 🎉 émojis and àccénts"
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
-      expect(stripAnsiColors(result)).toContain("🎉")
-      expect(stripAnsiColors(result)).toContain("émojis")
-      expect(stripAnsiColors(result)).toContain("àccénts")
+      expect(stripAnsiColors(result)).toMatchSnapshot()
     })
   })
 })

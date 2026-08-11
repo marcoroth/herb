@@ -23,6 +23,22 @@ module Herb
 
       def parse: (untyped source) -> untyped
 
+      attr_reader filename: untyped
+
+      # The partial's path as a template name, which is what the report and every marker call a
+      # template.
+      def relative_path: (untyped path) -> untyped
+
+      # An instrumenting visitor for the partial, or nothing when the template being compiled is not
+      # instrumented in the first place.
+      #
+      # The partial's tree is compiled straight into the parent, so it never passes through the
+      # visitors the engine ran. Giving it its own visitor, carrying its own context, is what makes
+      # a tag inside an inlined partial report the partial rather than the file it landed in.
+      def instrumenter_for: (untyped path) -> untyped
+
+      def instrumented?: () -> untyped
+
       def push: (untyped path) -> untyped
 
       def pop: (untyped path) -> untyped

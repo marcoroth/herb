@@ -2,7 +2,10 @@
 
 set -e  # Exit on error
 
+direnv allow
 bundle install
 bundle exec rake templates
+bundle exec rake
+bundle exec rake compile
 yarn install
 yarn build
