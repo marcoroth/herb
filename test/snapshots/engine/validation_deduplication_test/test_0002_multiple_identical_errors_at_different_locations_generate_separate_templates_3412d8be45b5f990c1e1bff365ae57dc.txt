@@ -9,7 +9,7 @@ _buf = ::String.new; _buf << '<div '.freeze; _buf << (@bad1).to_s; _buf << '></d
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="1"
   data-column="5"
   data-filename="multi_test.html.erb"
@@ -56,7 +56,7 @@ _buf = ::String.new; _buf << '<div '.freeze; _buf << (@bad1).to_s; _buf << '></d
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="2"
   data-column="5"
   data-filename="multi_test.html.erb"
@@ -103,7 +103,7 @@ _buf = ::String.new; _buf << '<div '.freeze; _buf << (@bad1).to_s; _buf << '></d
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="3"
   data-column="5"
   data-filename="multi_test.html.erb"

@@ -19,8 +19,7 @@ module Herb
             warning(
               "Dynamic render call cannot be statically resolved",
               node.location,
-              code: "RenderDynamic",
-              source: "RenderValidator"
+              code: "RenderDynamic"
             )
           elsif node.static_partial?
             validate_partial_exists(node)
@@ -68,8 +67,7 @@ module Herb
           error(
             message,
             node.location,
-            code: "RenderUnresolved",
-            source: "RenderValidator"
+            code: "RenderUnresolved"
           )
         end
 

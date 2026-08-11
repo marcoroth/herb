@@ -6,7 +6,7 @@ _buf = ::String.new; _buf << '<div '.freeze; _buf << (@attr).to_s; _buf << ' dat
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="1"
   data-column="5"
   data-filename="unknown"
@@ -45,7 +45,7 @@ _buf = ::String.new; _buf << '<div '.freeze; _buf << (@attr).to_s; _buf << ' dat
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"
-  data-code="SecurityViolation"
+  data-code="security-violation"
   data-line="1"
   data-column="23"
   data-filename="unknown"

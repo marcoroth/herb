@@ -7,6 +7,7 @@ require "pathname"
 
 require_relative "engine/visitor_context"
 require_relative "engine/context_aware"
+require_relative "engine/diagnostics"
 require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
@@ -20,6 +21,8 @@ require_relative "engine/validators/render_validator"
 
 module Herb
   class Engine
+    SECURITY_VIOLATION_CODE = "security-violation" #: String
+
     attr_reader :src, :context, :bufvar, :debug, :validation_error_template, :visitors, :enabled_validators
 
     #: () -> Pathname?
@@ -173,6 +176,13 @@ module Herb
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
 
           ast.accept(visitor)
+        end
+
+        reporting_visitors = @visitors.select { |visitor| visitor.is_a?(Diagnostics) }
+
+        unless reporting_visitors.empty? || @validation_mode == :none
+          handle_validation_errors(reporting_visitors, input) if @validation_mode == :raise
+          add_validation_overlay(reporting_visitors, input) if @validation_mode == :overlay
         end
 
         compiler = Compiler.new(self, properties)
@@ -426,6 +436,8 @@ module Herb
       ]
 
       validators.select(&:enabled?).each do |validator|
+        validator.inherit_context(@context) if validator.is_a?(ContextAware)
+
         ast.accept(validator)
       end
 
@@ -449,19 +461,23 @@ module Herb
       end
     end
 
+    def enabled_reporters(reporters)
+      reporters.reject { |reporter| reporter.respond_to?(:enabled?) && !reporter.enabled? }
+    end
+
     def handle_validation_errors(validators, input)
-      errors = validators.select(&:enabled?).flat_map(&:errors)
+      errors = enabled_reporters(validators).flat_map(&:errors)
       return unless errors.any?
 
-      security_error = errors.find { |error| error[:source] == "SecurityValidator" }
+      security_error = errors.find { |error| error.code == SECURITY_VIOLATION_CODE }
 
       if security_error
         raise SecurityError.new(
-          security_error[:message],
-          line: security_error[:location]&.start&.line,
-          column: security_error[:location]&.start&.column,
+          security_error.message,
+          line: security_error.location&.start&.line,
+          column: security_error.location&.start&.column,
           filename: filename,
-          suggestion: security_error[:suggestion]
+          suggestion: security_error.suggestion
         )
       end
 
@@ -471,11 +487,11 @@ module Herb
     end
 
     def add_validation_overlay(validators, input = nil)
-      errors = validators.select(&:enabled?).flat_map(&:errors)
+      errors = enabled_reporters(validators).flat_map(&:diagnostics)
       return unless errors.any?
 
       templates = errors.map { |error|
-        location = error[:location]
+        location = error.location
         line = location&.start&.line || 0
         column = location&.start&.column || 0
 
@@ -483,26 +499,26 @@ module Herb
         overlay_generator = ValidationErrorOverlay.new(source, error, filename: relative_file_path)
         html_fragment = overlay_generator.generate_fragment
 
-        escaped_message = escape_attr(error[:message])
-        escaped_suggestion = error[:suggestion] ? escape_attr(error[:suggestion]) : ""
+        escaped_message = escape_attr(error.message)
+        escaped_suggestion = error.suggestion ? escape_attr(error.suggestion) : ""
 
         <<~TEMPLATE
           <template
             data-herb-validation-error
-            data-severity="#{error[:severity]}"
-            data-source="#{error[:source]}"
-            data-code="#{error[:code]}"
+            data-severity="#{error.severity}"
+            data-source="#{error.data[:validator]}"
+            data-code="#{error.code}"
             data-line="#{line}"
             data-column="#{column}"
             data-filename="#{escape_attr(relative_file_path)}"
             data-message="#{escaped_message}"
-            #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
+            #{"data-suggestion=\"#{escaped_suggestion}\"" if error.suggestion}
             data-timestamp="#{Time.now.utc.iso8601}"
           >#{html_fragment}</template>
         TEMPLATE
       }.join
 
-      @validation_error_template = templates
+      @validation_error_template = "#{@validation_error_template}#{templates}"
     end
 
     def escape_attr(text)

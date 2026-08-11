@@ -44,7 +44,7 @@ module Herb
             output << highlighted_output
           else
             errors_by_line = @errors.group_by do |error|
-              location = error.is_a?(Hash) ? error[:location] : error.location
+              location = error.location
               location&.start&.line
             end.compact
 
@@ -98,8 +98,8 @@ module Herb
       def format_error(error, number)
         output = String.new
 
-        error_name = if error.is_a?(Hash)
-                       error[:code] || "UnknownError"
+        error_name = if error.is_a?(Herb::Diagnostic)
+                       error.code || "UnknownError"
                      else
                        error.class.name.split("::").last.gsub(/Error$/, "")
                      end
@@ -107,13 +107,13 @@ module Herb
         output << "Error ##{number}: #{error_name}\n"
         output << ("-" * 40) << "\n"
 
-        location = error.is_a?(Hash) ? error[:location] : error.location
+        location = error.location
         if location
           output << "  File: #{@filename}\n"
           output << "  Location: Line #{location.start.line}, Column #{location.start.column}\n"
         end
 
-        error_message = error.is_a?(Hash) ? error[:message] : error.message
+        error_message = error.message
         output << "  Message: #{error_message}\n\n"
         output << format_source_context(error) if location
         output << format_error_details(error)
@@ -125,7 +125,7 @@ module Herb
 
       def format_source_context(error)
         output = String.new
-        location = error.is_a?(Hash) ? error[:location] : error.location
+        location = error.location
         line_num = location.start.line
         col_num = location.start.column
 
@@ -310,10 +310,10 @@ module Herb
       end
 
       def herb_error_to_diagnostic(error)
-        if error.is_a?(Hash)
-          location = error[:location]
+        if error.is_a?(Herb::Diagnostic)
+          location = error.location
           {
-            message: error[:message],
+            message: error.message,
             location: {
               start: {
                 line: location&.start&.line || 1,
@@ -324,9 +324,9 @@ module Herb
                 column: location&.end&.column || location&.start&.column || 1,
               },
             },
-            severity: error[:severity] || "error",
-            code: error[:code] || "UnknownError",
-            source: error[:source] || "herb-validator",
+            severity: error.severity || "error",
+            code: error.code || "UnknownError",
+            source: error.origin || "herb-validator",
           }
         else
           severity = case error
@@ -357,13 +357,13 @@ module Herb
 
       def format_error_header(error, number)
         output = String.new
-        output << if error.is_a?(Hash)
-                    "  #{number}. #{error[:code] || "UnknownError"}: #{error[:message]}\n"
+        output << if error.is_a?(Herb::Diagnostic)
+                    "  #{number}. #{error.code || "UnknownError"}: #{error.message}\n"
                   else
                     "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
                   end
 
-        location = error.is_a?(Hash) ? error[:location] : error.location
+        location = error.location
         output << "     Location: Line #{location.start.line}, Column #{location.start.column}\n" if location
 
         output

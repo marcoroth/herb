@@ -1,0 +1,78 @@
+# Generated from lib/herb/diagnostic.rb with RBS::Inline
+
+module Herb
+  class Diagnostic
+    UNKNOWN_ORIGIN: String
+
+    attr_reader template: String
+
+    attr_reader message: String
+
+    attr_reader node: String?
+
+    attr_reader code: String?
+
+    attr_reader severity: Symbol?
+
+    attr_reader kind: Symbol
+
+    attr_reader origin: String
+
+    attr_reader location: Herb::Location?
+
+    attr_reader suggestion: String?
+
+    attr_reader docs_url: String?
+
+    attr_reader value: String?
+
+    attr_reader phase: Symbol
+
+    attr_reader data: Hash[Symbol, untyped]
+
+    attr_reader error_class: Class?
+
+    # : (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+    def initialize: (template: String, message: String, ?severity: Symbol?, ?kind: Symbol, ?origin: String, ?node: String?, ?code: String?, ?location: Herb::Location?, ?suggestion: String?, ?docs_url: String?, ?value: String?, ?phase: Symbol, ?data: Hash[Symbol, untyped], ?error_class: Class?) -> void
+
+    # : (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
+    def self.from: (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
+
+    # : (String) -> String
+    def self.code_for: (String) -> String
+
+    # : () -> bool
+    def error?: () -> bool
+
+    # : () -> bool
+    def warning?: () -> bool
+
+    # : () -> bool
+    def info?: () -> bool
+
+    # : () -> bool
+    def hint?: () -> bool
+
+    # : () -> Array[untyped]
+    def key: () -> Array[untyped]
+
+    # : () -> Hash[Symbol, untyped]
+    def to_h: () -> Hash[Symbol, untyped]
+
+    alias to_hash to_h
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def to_s: () -> String
+
+    private
+
+    # : (Herb::Location) -> Hash[Symbol, untyped]
+    def serialized_location: (Herb::Location) -> Hash[Symbol, untyped]
+
+    # : (Herb::Position) -> Hash[Symbol, Integer]
+    def serialized_position: (Herb::Position) -> Hash[Symbol, Integer]
+  end
+end
