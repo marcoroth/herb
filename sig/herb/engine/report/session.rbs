@@ -38,6 +38,18 @@ module Herb
 
         def self.record_compile_diagnostics: (untyped template, untyped entries) -> untyped
 
+        # : [T] (String?, Integer, Integer) { () -> T } -> T
+        def self.at: [T] (String?, Integer, Integer) { () -> T } -> T
+
+        # : (String?, Integer, Integer) -> void
+        def self.enter: (String?, Integer, Integer) -> void
+
+        # : () -> void
+        def self.leave: () -> void
+
+        # : (Symbol, untyped) -> void
+        def self.observe: (Symbol, untyped) -> void
+
         # : (String, String?) -> void
         def self.source: (String, String?) -> void
 
@@ -64,6 +76,18 @@ module Herb
 
         # : () -> bool
         def empty?: () -> bool
+
+        # : (String?, Integer, Integer) -> void
+        def enter: (String?, Integer, Integer) -> void
+
+        # : () -> void
+        def leave: () -> void
+
+        # : (Symbol, untyped) -> void
+        def observe: (Symbol, untyped) -> void
+
+        # : () -> Array[Herb::Engine::Report::Entry]
+        def entries: () -> Array[Herb::Engine::Report::Entry]
       end
     end
   end
