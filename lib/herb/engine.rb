@@ -87,11 +87,7 @@ module Herb
 
       if properties[:ensure]
         @src << "begin; __original_outvar = #{@bufvar}"
-        @src << if /\A@[^@]/ =~ @bufvar
-                  "; "
-                else
-                  " if defined?(#{@bufvar}); "
-                end
+        @src << (/\A@[^@]/ =~ @bufvar ? "; " : " if defined?(#{@bufvar}); ")
       end
 
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
@@ -359,30 +355,9 @@ module Herb
 
     #: (Array[Herb::Diagnostic]) -> void
     def emit_compile_diagnostics(diagnostics)
-      entries = diagnostics.map { |diagnostic| compile_diagnostic_literal(diagnostic) }.join(", ")
+      entries = diagnostics.map(&:to_ruby).join(", ")
 
       @src << " ::Herb::Engine::Report::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
-    end
-
-    #: (Herb::Diagnostic) -> String
-    def compile_diagnostic_literal(diagnostic)
-      parts = [
-        "message: #{diagnostic.message.inspect}",
-        "severity: #{diagnostic.severity.inspect}",
-        "code: #{diagnostic.code.inspect}",
-        "origin: #{diagnostic.origin.inspect}"
-      ]
-
-      parts << "suggestion: #{diagnostic.suggestion.inspect}" if diagnostic.suggestion
-
-      location = diagnostic.location
-
-      if location
-        parts << "line: #{location.start.line}" << "column: #{location.start.column}"
-        parts << "end_line: #{location.end.line}" << "end_column: #{location.end.column}"
-      end
-
-      "{ #{parts.join(", ")} }"
     end
 
     #: (Array[Herb::Diagnostic], String) -> void

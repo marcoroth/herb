@@ -81,9 +81,6 @@ module Herb
     # : (Array[Herb::Diagnostic]) -> void
     def emit_compile_diagnostics: (Array[Herb::Diagnostic]) -> void
 
-    # : (Herb::Diagnostic) -> String
-    def compile_diagnostic_literal: (Herb::Diagnostic) -> String
-
     # : (Array[Herb::Diagnostic], String) -> void
     def raise_for: (Array[Herb::Diagnostic], String) -> void
 

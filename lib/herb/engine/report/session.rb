@@ -63,30 +63,9 @@ module Herb
         end
 
         def self.record_compile_diagnostics(template, entries)
-          entries.each { |entry| record(compile_diagnostic(template, entry)) }
+          entries.each { |entry| record(Herb::Diagnostic.from_compiled(template, entry)) }
 
           nil
-        end
-
-        #: (String, Hash[Symbol, untyped]) -> Herb::Diagnostic
-        def self.compile_diagnostic(template, entry)
-          Herb::Diagnostic.new(
-            template: template,
-            message: entry[:message],
-            severity: entry[:severity],
-            code: entry[:code],
-            origin: entry[:origin],
-            suggestion: entry[:suggestion],
-            location: compile_location(entry),
-            phase: :compile
-          )
-        end
-
-        #: (Hash[Symbol, untyped]) -> Herb::Location?
-        def self.compile_location(entry)
-          return nil unless entry[:line]
-
-          Herb::Location.from(entry[:line], entry[:column], entry[:end_line], entry[:end_column])
         end
 
         #: (String, String?) -> void

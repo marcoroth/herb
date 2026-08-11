@@ -38,6 +38,9 @@ module Herb
     # : (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
     def self.from: (untyped, template: String, origin: String, ?severity: Symbol, ?phase: Symbol) -> Diagnostic
 
+    # : (String, Hash[Symbol, untyped]) -> Diagnostic
+    def self.from_compiled: (String, Hash[Symbol, untyped]) -> Diagnostic
+
     # : (String) -> String
     def self.code_for: (String) -> String
 
@@ -60,6 +63,9 @@ module Herb
     def to_h: () -> Hash[Symbol, untyped]
 
     alias to_hash to_h
+
+    # : () -> String
+    def to_ruby: () -> String
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

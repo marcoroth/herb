@@ -38,12 +38,6 @@ module Herb
 
         def self.record_compile_diagnostics: (untyped template, untyped entries) -> untyped
 
-        # : (String, Hash[Symbol, untyped]) -> Herb::Diagnostic
-        def self.compile_diagnostic: (String, Hash[Symbol, untyped]) -> Herb::Diagnostic
-
-        # : (Hash[Symbol, untyped]) -> Herb::Location?
-        def self.compile_location: (Hash[Symbol, untyped]) -> Herb::Location?
-
         # : (String, String?) -> void
         def self.source: (String, String?) -> void
 

@@ -70,6 +70,24 @@ module Herb
       )
     end
 
+    #: (String, Hash[Symbol, untyped]) -> Diagnostic
+    def self.from_compiled(template, entry)
+      if entry[:line]
+        location = Herb::Location.from(entry[:line], entry[:column], entry[:end_line], entry[:end_column])
+      end
+
+      new(
+        template: template,
+        message: entry[:message],
+        severity: entry[:severity],
+        code: entry[:code],
+        origin: entry[:origin],
+        suggestion: entry[:suggestion],
+        location: location,
+        phase: :compile
+      )
+    end
+
     #: (String) -> String
     def self.code_for(type)
       type
@@ -123,6 +141,25 @@ module Herb
     end
 
     alias to_hash to_h
+
+    #: () -> String
+    def to_ruby
+      parts = [
+        "message: #{message.inspect}",
+        "severity: #{severity.inspect}",
+        "code: #{code.inspect}",
+        "origin: #{origin.inspect}"
+      ]
+
+      parts << "suggestion: #{suggestion.inspect}" if suggestion
+
+      if location
+        parts << "line: #{location.start.line}" << "column: #{location.start.column}"
+        parts << "end_line: #{location.end.line}" << "end_column: #{location.end.column}"
+      end
+
+      "{ #{parts.join(", ")} }"
+    end
 
     #: (?untyped) -> String
     def to_json(state = nil)
