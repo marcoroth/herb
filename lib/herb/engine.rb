@@ -7,7 +7,6 @@ require "pathname"
 
 require_relative "engine/visitor_context"
 require_relative "engine/visitor_stack"
-require_relative "engine/report"
 require_relative "engine/report/session"
 require_relative "engine/context_aware"
 require_relative "engine/diagnostics"

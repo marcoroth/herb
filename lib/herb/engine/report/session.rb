@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../report"
+require_relative "entry"
 
 module Herb
   class Engine
@@ -68,6 +69,35 @@ module Herb
           nil
         end
 
+        #: [T] (String?, Integer, Integer) { () -> T } -> T
+        def self.at(template, line, column)
+          enter(template, line, column)
+
+          yield
+        ensure
+          leave
+        end
+
+        #: (String?, Integer, Integer) -> void
+        def self.enter(template, line, column)
+          current.enter(template, line, column)
+        end
+
+        #: () -> void
+        def self.leave
+          current.leave
+        end
+
+        #: (Symbol, untyped) -> void
+        def self.observe(key, value)
+          current.observe(key, value)
+        end
+
+        #: () -> Array[Array[untyped]]
+        def self.stack
+          current.stack
+        end
+
         #: (String, String?) -> void
         def self.source(template, source)
           current.source(template, source)
@@ -87,6 +117,8 @@ module Herb
         def initialize(scoped: false, report: nil, previous: nil)
           @scoped = scoped
           @report = report || Report.new
+          @frames = [] #: Array[Array[untyped]]
+          @entries = {} #: Hash[Array[untyped], Herb::Engine::Report::Entry]
           @previous = previous
         end
 
@@ -112,7 +144,95 @@ module Herb
 
         #: () -> bool
         def empty?
-          report.empty?
+          report.empty? && entries.empty?
+        end
+
+        #: (String?, Integer, Integer) -> void
+        def enter(template, line, column)
+          @frames.push([template, line, column])
+
+          nil
+        end
+
+        #: () -> void
+        def leave
+          @frames.pop
+
+          nil
+        end
+
+        # Every tag still rendering, innermost first, the way `caller` reads.
+        #
+        # A tag that renders a partial is still open while the partial renders, so once more than one
+        # template is instrumented this is a render stack across all of them and not just within one.
+        # Only the innermost frame is what an observation is filed under, so anything wanting the rest
+        # has to take it while it still exists:
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Report::Session.observe(:queries, { sql: payload[:sql], stack: Herb::Engine::Report::Session.stack })
+        #     end
+        #
+        # Taking it costs an array per observation, which is why it is offered rather than recorded.
+        #: () -> Array[Array[untyped]]
+        def stack
+          @frames.reverse.map(&:dup)
+        end
+
+        #: (Symbol, untyped) -> void
+        def observe(key, value)
+          frame = @frames.last
+
+          return unless frame
+
+          entry = (@entries[frame] ||= Entry.new(frame[0], frame[1], frame[2]))
+          entry.observe(key, value)
+
+          nil
+        end
+
+        #: () -> Array[Herb::Engine::Report::Entry]
+        def entries
+          @entries.values.sort_by { |entry| [entry.template.to_s, entry.line, entry.column] }
+        end
+
+        # Turns what was observed under one key into one diagnostic per tag that saw any.
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+        #     end
+        #
+        #     session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+        #       "#{queries.size} SQL queries"
+        #     end
+        #
+        # A count is a measurement rather than a fault, so what comes out carries a badge and no
+        # severity. Three queries at one tag is worth showing every time and worth worrying about
+        # only sometimes, and which of those it is depends on what the tag is for. Reporting it as a
+        # warning would make that call on the reader's behalf and get it wrong often enough to train
+        # them to ignore it.
+        #: (Symbol, origin: String, ?code: String?, ?message: String?) { (Array[untyped]) -> String } -> Array[Herb::Diagnostic]
+        def measure(key, origin:, code: nil, message: nil)
+          entries.filter_map { |entry|
+            observed = entry[key]
+
+            next if observed.empty?
+
+            value = yield(observed)
+
+            record(
+              Herb::Diagnostic.new(
+                template: entry.template.to_s,
+                message: message || value,
+                severity: nil,
+                kind: :metric,
+                origin: origin,
+                code: code,
+                location: entry.location,
+                value: value,
+                data: { key => observed }
+              )
+            )
+          }
         end
       end
     end

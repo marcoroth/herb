@@ -18,6 +18,14 @@ module Herb
 
         BODY_END_TAG: Regexp
 
+        # Where the session for this request is left, so that anything holding the env can read what
+        # the page collected.
+        #
+        #     get "/posts"
+        #
+        #     request.env[Herb::Engine::Report::Middleware::ENV_KEY].entries
+        ENV_KEY: String
+
         # : (untyped, ?inject: bool) -> void
         def initialize: (untyped, ?inject: bool) -> void
 

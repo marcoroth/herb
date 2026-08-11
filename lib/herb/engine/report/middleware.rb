@@ -20,6 +20,15 @@ module Herb
         HTML_CONTENT_TYPE = %r{\Atext/html}i #: Regexp
         BODY_END_TAG = %r{</body>}i #: Regexp
 
+        # Where the session for this request is left, so that anything holding the env can read what
+        # the page collected.
+        #
+        #     get "/posts"
+        #
+        #     request.env[Herb::Engine::Report::Middleware::ENV_KEY].entries
+        #
+        ENV_KEY = "herb.report_session" #: String
+
         #: (untyped, ?inject: bool) -> void
         def initialize(app, inject: true)
           @app = app
@@ -28,7 +37,11 @@ module Herb
 
         #: (untyped) -> untyped
         def call(env)
-          session = Session.open
+          borrowed = Session.scoped?
+          session = borrowed ? Session.current : Session.open
+
+          env[ENV_KEY] = session if env.respond_to?(:[]=)
+
           response = @app.call(env)
 
           return response unless @inject
@@ -36,7 +49,7 @@ module Herb
 
           inject(response, session.report)
         ensure
-          Session.close
+          Session.close unless borrowed
         end
 
         private

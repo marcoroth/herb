@@ -41,15 +41,13 @@ In addition to Erubi options, `Herb::Engine` supports:
 
 | Option            | Default   | Description                                                                           |
 |-------------------|-----------|---------------------------------------------------------------------------------------|
-| `validation_mode` | `:raise`  | How to handle validation errors: `:raise`, `:overlay`, or `:none`                     |
-| `validators`      | `{}`      | Per-validator overrides (e.g., `{ security: false }`)                                 |
 | `parser_options`  | `{}`      | [Parser options](/parser-options) forwarded to the parser (e.g., `{ strict: false }`) |
 | `visitors`        | `[]`      | AST visitors to run before compilation                                                |
-| `context`         | `{}`      | Extra keys to pass through to the visitors (see [Visitor context](#visitor-context))   |
+| `context`         | `{}`      | Extra keys to pass through to the visitors (see [Visitor context](#visitor-context))  |
 | `project_path`    | `Dir.pwd` | Project root for relative path resolution                                             |
 | `validate_ruby`   | `false`   | Raise if the compiled output isn't valid Ruby                                         |
-| `optimize`        | `false`   | Compile-time optimizations for Action View helpers (experimental)                     |
-| `debug`           | `false`   | Enable debug mode                                                                     |
+
+The engine compiles whatever passes it is given and holds no opinion beyond that. Validation, debug annotations, and Action View optimizations are all visitors you pass in `visitors`, so there is no option to turn any of them on.
 
 Strict parsing is a parser option rather than an engine option, so it is set through `parser_options`, together with any other [parser option](/parser-options):
 
@@ -59,28 +57,70 @@ Herb::Engine.new(source, parser_options: { strict: false })
 
 ## Validators
 
-The engine runs validators on parsed templates to catch errors before compilation. Each validator can be enabled or disabled via [`.herb.yml` configuration](/configuration#engine-configuration) or per-instance overrides.
+Validators check a parsed template and report what they find. They are ordinary visitors, so nothing runs unless you pass it.
 
-| Validator     | Description                                                                   |
-|---------------|-------------------------------------------------------------------------------|
-| Security      | Detects ERB output in unsafe positions (attribute names, attribute positions) |
-| Nesting       | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`)                  |
-| Accessibility | Validates accessibility-related attributes                                    |
+| Validator                | Description                                                                   |
+|--------------------------|-------------------------------------------------------------------------------|
+| `SecurityValidator`      | Detects ERB output in unsafe positions (attribute names, attribute positions) |
+| `NestingValidator`       | Validates HTML nesting rules (e.g., no `<div>` inside `<p>`)                  |
+| `AccessibilityValidator` | Validates accessibility-related attributes                                    |
+| `RenderValidator`        | Validates `render` calls                                                      |
 
-Disable security validator for this template:
+`Validators.all` builds the set a project has switched on in [`.herb.yml`](/configuration#engine-configuration), which is the usual way to ask for them:
+
 ```ruby
-Herb::Engine.new(source, validators: { security: false })
+require "herb/engine/validators"
+
+Herb::Engine.new(source, visitors: Herb::Engine::Validators.all)
 ```
 
-See [Engine Configuration](/configuration#engine-configuration) for `.herb.yml` configuration.
+It takes the same per-validator overrides, so a template can opt out of one:
 
-## Validation Mode
+```ruby
+Herb::Engine.new(source, visitors: Herb::Engine::Validators.all(security: false))
+```
 
-Controls how the engine presents validation results:
+A caller that already knows what it wants can skip the configuration lookup and name them directly.
 
-- **`:raise`** — Raises `SecurityError` or `CompilationError` (default, used in tests and CLI)
-- **`:overlay`** — Renders errors as in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
-- **`:none`** — Skips validation entirely
+```ruby
+require "herb/engine/validators/security_validator"
+
+Herb::Engine.new(source, visitors: [Herb::Engine::Validators::SecurityValidator.new])
+```
+
+### Whether a finding refuses to compile
+
+Each validator decides that for itself, through `fatal:`. A fatal validator aborts compilation when it reports an error. One that is not fatal reports the same thing and lets the template compile, so the page still renders and the finding reaches the browser instead.
+
+```ruby
+Herb::Engine::Validators.all(fatal: false)
+```
+
+Validators are fatal by default. Which exception gets raised is the validator's own choice rather than something the engine infers from its class name, so `SecurityValidator` aborts with `Herb::Engine::SecurityError` while a validator that names no exception aborts with `Herb::Engine::CompilationError`.
+
+Because this is decided per validator rather than per engine, one compile can mix the two. Security problems can refuse to compile while accessibility findings only get reported:
+
+```ruby
+Herb::Engine.new(
+  source,
+  visitors: [
+    Herb::Engine::Validators::SecurityValidator.new(fatal: true),
+    Herb::Engine::Validators::AccessibilityValidator.new(fatal: false)
+  ]
+)
+```
+
+### Ordering
+
+`Validators.all` returns a `Herb::Engine::VisitorStack`, an ordered list that also accepts anything else you want to run:
+
+```ruby
+stack = Herb::Engine::Validators.all
+stack.use(MyVisitor.new)
+stack.insert_after(Herb::Engine::Validators::SecurityValidator, MyOtherVisitor.new)
+```
+
+`use` appends, `insert` and `insert_after` place a visitor relative to another one by class, and `include_visitor?` asks whether one is already there. Naming a class that is not in the stack raises `Herb::Engine::VisitorStack::UnknownVisitorError` rather than putting it somewhere arbitrary.
 
 ## Transform Visitors
 
@@ -88,12 +128,15 @@ The `visitors` option accepts [visitors](/bindings/ruby/reference#visitors) that
 
 Herb ships the following transform visitors:
 
-| Visitor                       | Description                                                  |
-|-------------------------------|--------------------------------------------------------------|
-| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones             |
-| `ContentForVisitor`           | Appends HTML to the end of every matching element            |
-| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                    |
-| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental) |
+| Visitor                       | Description                                                             |
+|-------------------------------|-------------------------------------------------------------------------|
+| `AutoCloseOmittedTagsVisitor` | Replaces omitted closing tags with explicit ones                        |
+| `ContentForVisitor`           | Appends HTML to the end of every matching element                       |
+| `HTMLSafeAssertionsVisitor`   | Checks every `.html_safe` call at runtime                               |
+| `ComponentVisitor`            | Rewrites capitalized tags into `render` calls (experimental)            |
+| `DebugVisitor`                | Annotates output with the template and position it came from            |
+| `OptimizeVisitor`             | Compile-time optimizations for Action View helpers (experimental)       |
+| `InstrumentationVisitor`      | Frames every ERB tag so a render can be attributed to it (experimental) |
 
 Transform visitors are not loaded when you `require "herb"`. Require the ones you want and pass them to the engine:
 
@@ -436,11 +479,127 @@ A partial with a body is rendered as a layout, so the body reaches the partial t
 <%= render layout: "users/card", locals: { title: "Hello" } do %>Body<% end %>
 ```
 
+## Diagnostics
+
+Anything the engine or a visitor finds is a `Herb::Diagnostic`, whoever found it and whenever they found it. One value object means a parse error, a security violation, and a measurement taken while the page rendered all reach the browser through the same channel, so a new checker gets delivery without inventing one.
+
+```ruby
+Herb::Diagnostic.new(
+  template: "app/views/posts/index.html.erb",
+  message: "This element is suspicious.",
+  code: "suspicious-element",
+  origin: "Herb Compiler",
+  severity: :warning,
+  location: node.location
+)
+```
+
+`origin` says who found it and is what a consumer groups by. `severity` is one of `:error`, `:warning`, `:info`, or `:hint`. `kind` is `:diagnostic` by default, or `:metric` for a measurement, which carries a `value` badge instead of a severity.
+
+Positions are Herb-native, counting lines from one and columns from zero, the same as everywhere else in Herb. The payload counts columns from one, and that shift happens in exactly one place, so a diagnostic built straight from a node needs no adjusting.
+
+### Reporting from a visitor
+
+Any visitor can report by including `Herb::Engine::Diagnostics`. It is a mixin rather than a base class, so a visitor that rewrites the tree can report as well:
+
+```ruby
+class SuspiciousElementVisitor < Herb::Visitor
+  include Herb::Engine::ContextAware
+  include Herb::Engine::Diagnostics
+
+  def visit_html_element_node(node)
+    warning("This element is suspicious.", node.location, code: "suspicious-element")
+
+    super
+  end
+end
+```
+
+`error`, `warning`, `info`, and `hint` each record and keep walking. The engine collects from every visitor that responds to `diagnostics` once the visitors have run, so reporting needs no wiring beyond including the mixin. `ContextAware` is what fills in the template name, because the engine hands every context-aware visitor its `VisitorContext`.
+
+Findings recorded this way are compiled into the template, so they reach the browser when it renders rather than being spliced into the HTML at compile time.
+
+### Delivering them to the browser
+
+A `Herb::Engine::Report::Session` is where everything found while one page renders collects, so findings from separate producers end up in one payload rather than one channel each. `Herb::Engine::Report::Middleware` scopes one to each request and injects the result:
+
+```ruby
+require "herb/engine/report/middleware"
+
+config.middleware.use Herb::Engine::Report::Middleware
+```
+
+It writes a single `data-herb-diagnostics` script before `</body>`. A response it cannot safely touch is returned untouched, and any error while injecting is swallowed in favour of the original response, so nothing here can be the reason a page fails.
+
+The session it used is left in the Rack env, which is how a test reads what a request collected:
+
+```ruby
+get "/posts"
+
+request.env[Herb::Engine::Report::Middleware::ENV_KEY].diagnostics
+```
+
+Wrapping a request works too. A session that is already open is one somebody means to read, so the middleware collects into that one rather than opening its own:
+
+```ruby
+session = Herb::Engine::Report::Session.capture { get "/posts" }
+```
+
+## Instrumentation <Badge type="warning" text="experimental" />
+
+`InstrumentationVisitor` frames every ERB tag with a call saying which tag is rendering, so whatever happens while it renders can be attributed to it rather than to the template as a whole.
+
+It supplies where, and something else has to supply what. A template compiled with it and rendered with nothing watching records nothing at all, and only costs a call per tag. What makes it worth having is anything that calls `Herb::Engine::Report::Session.observe` while a tag is rendering:
+
+```ruby
+require "herb/engine/instrumentation_visitor"
+
+engine = Herb::Engine.new(source, visitors: [Herb::Engine::InstrumentationVisitor.new])
+
+ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+  Herb::Engine::Report::Session.observe(:queries, payload[:sql]) unless payload[:cached]
+end
+```
+
+Nothing about that subscription belongs to Herb, which is the point. Because what gets watched is decided at render time rather than compiled in, watching something new never means recompiling a template.
+
+`Session#measure` turns what was observed into one diagnostic per tag that saw any:
+
+```ruby
+session.measure(:queries, origin: "Herb Engine", code: "sql-queries") do |queries|
+  "#{queries.size} SQL queries"
+end
+#=> app/views/posts/_card.html.erb:7:9: [sql-queries] 3 SQL queries
+```
+
+A count is a measurement rather than a fault, so what comes out carries a badge and no severity. Three queries at one tag is worth showing every time and worth worrying about only sometimes, and which of those it is depends on what the tag is for.
+
+### The render stack
+
+A tag that renders a partial stays open while that partial renders, so `Session.stack` is a render stack across every instrumented template and not only within one. It reads innermost first, the way `caller` does:
+
+```ruby
+Herb::Engine::Report::Session.stack
+#=> [["app/views/posts/_card.html.erb", 2, 2],
+#    ["app/views/posts/index.html.erb", 4, 4],
+#    ["app/views/layouts/application.html.erb", 2, 2]]
+```
+
+Each frame is `[template, line, column]`, with the column counted from zero as everywhere else in the AST. A template compiled without the visitor contributes no frames, so an uninstrumented partial part-way down a chain is skipped rather than showing as a gap.
+
+An observation is only filed under the innermost frame, so anything wanting the rest has to take it while it still exists, which is one line in the subscriber:
+
+```ruby
+Herb::Engine::Report::Session.observe(:queries, { sql: sql, stack: Herb::Engine::Report::Session.stack })
+```
+
+Instrumentation is experimental as it instruments every ERB tag.
+
 ## ReActionView Integration
 
-[ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It uses `validation_mode: :overlay` so validation errors appear as in-browser overlays during development instead of raising exceptions.
+[ReActionView](https://github.com/marcoroth/reactionview) registers `Herb::Engine` as the template handler for `.html.erb` and `.html.herb` files in Rails. It runs the validators with `fatal: false` in development, so problems reach the browser instead of raising and the page still renders.
 
-Validator settings from `.herb.yml` are respected automatically — no ReActionView-specific configuration needed.
+Validator settings from `.herb.yml` are respected automatically, with no ReActionView-specific configuration needed.
 
 ReActionView also lets you run transform visitors on every template it compiles, through `config.transform_visitors`:
 

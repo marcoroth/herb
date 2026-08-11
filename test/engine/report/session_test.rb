@@ -131,5 +131,187 @@ module Engine
       assert_equal 0, other
       assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
     end
+
+    describe "attributing what happens to the tag that caused it" do
+      def session_with_frames
+        Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 3, 7) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+          end
+
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 3")
+          end
+        end
+      end
+
+      test "keeps each position apart" do
+        entries = session_with_frames.entries
+
+        assert_equal([[1, 0], [3, 7]], entries.map { |entry| [entry.line, entry.column] })
+        assert_equal 1, entries.first[:queries].length
+        assert_equal 2, entries.last[:queries].length
+      end
+
+      test "orders them the way they appear in the template" do
+        assert_equal [1, 3], session_with_frames.entries.map(&:line)
+      end
+
+      test "drops what happens outside any tag" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        end
+
+        assert_empty session.entries
+      end
+
+      test "attributes to the innermost tag" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.at("a.html.erb", 2, 4) do
+              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            end
+          end
+        end
+
+        assert_equal([[2, 4]], session.entries.map { |entry| [entry.line, entry.column] })
+      end
+
+      test "leaves the frame even when the tag raises" do
+        session = Herb::Engine::Report::Session.capture do
+          begin
+            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) { raise "boom" }
+          rescue RuntimeError
+            nil
+          end
+
+          Herb::Engine::Report::Session.observe(:queries, "after the failure")
+        end
+
+        assert_empty session.entries
+      end
+
+      test "turns what one tag observed into a metric carrying a badge and no severity" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 7, 8) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+          end
+        end
+
+        diagnostic = session.measure(:queries, origin: "Herb Engine", code: "sql-queries") { |queries|
+          "#{queries.size} SQL queries"
+        }.first
+
+        assert_equal "2 SQL queries", diagnostic.value
+        assert_equal :metric, diagnostic.kind
+        assert_nil diagnostic.severity
+        assert_equal "a.html.erb", diagnostic.template
+        assert_equal 7, diagnostic.location.start.line
+        assert_equal ["SELECT 1", "SELECT 2"], diagnostic.data[:queries]
+      end
+
+      test "measures only the tags that observed something" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:renders, "partial")
+          end
+
+          Herb::Engine::Report::Session.at("a.html.erb", 2, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        measured = session.measure(:queries, origin: "Herb Engine") { |queries| queries.size.to_s }
+
+        assert_equal [2], measured.map { |diagnostic| diagnostic.location.start.line }.sort
+      end
+
+      test "puts what it measured into the payload" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        session.measure(:queries, origin: "Herb Engine", code: "sql-queries") { |queries|
+          "#{queries.size} SQL query"
+        }
+
+        assert_includes session.report.to_json, %("value":"1 SQL query")
+      end
+
+      test "reports every tag still rendering, innermost first" do
+        stack = nil
+
+        Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("layouts/application.html.erb", 2, 2) do
+            Herb::Engine::Report::Session.at("posts/index.html.erb", 4, 4) do
+              Herb::Engine::Report::Session.at("posts/_card.html.erb", 1, 2) do
+                stack = Herb::Engine::Report::Session.stack
+              end
+            end
+          end
+        end
+
+        assert_equal [
+          ["posts/_card.html.erb", 1, 2],
+          ["posts/index.html.erb", 4, 4],
+          ["layouts/application.html.erb", 2, 2]
+        ], stack
+      end
+
+      test "writes an entry the way an editor would take it" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 3, 8) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        assert_equal "app/views/posts/_card.html.erb:3:9 (1 queries)", session.entries.first.to_s
+      end
+
+      test "writes a tag with no location of its own as the first line" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("app/views/posts/_card.html.erb", 0, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        assert_equal "app/views/posts/_card.html.erb:1:1 (1 queries)", session.entries.first.to_s
+      end
+
+      test "reports an empty stack outside of any tag" do
+        assert_empty Herb::Engine::Report::Session.capture { nil }.stack
+      end
+
+      test "hands out a stack that cannot be used to corrupt the live one" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.stack.each(&:clear)
+
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        entry = session.entries.first
+
+        assert_equal ["a.html.erb", 1, 0], [entry.template, entry.line, entry.column]
+      end
+
+      test "collects the same position across renders into one entry" do
+        session = Herb::Engine::Report::Session.capture do
+          2.times do
+            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            end
+          end
+        end
+
+        assert_equal 1, session.entries.length
+        assert_equal 2, session.entries.first[:queries].length
+      end
+    end
   end
 end
