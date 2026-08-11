@@ -9,17 +9,12 @@ require_relative "engine/visitor_context"
 require_relative "engine/visitor_stack"
 require_relative "engine/report"
 require_relative "engine/report/session"
-require_relative "engine/report/middleware"
 require_relative "engine/context_aware"
 require_relative "engine/diagnostics"
-require_relative "engine/debug_visitor"
-require_relative "engine/optimize_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
-require_relative "engine/parser_error_overlay"
 require_relative "engine/errors"
 require_relative "engine/parse_error"
-require_relative "engine/validators"
 
 module Herb
   class Engine

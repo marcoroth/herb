@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 # typed: true
 
+require_relative "../visitor"
+
 module Herb
   class Engine
     # Asks the parser to resolve Action View helpers into the markup they produce, so the compiler
