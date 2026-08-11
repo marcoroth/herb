@@ -25,17 +25,18 @@ module Herb
       end
 
       def generate_fragment
-        location = @error[:location]
+        location = @error.location
         line_num = location&.start&.line || 1
         col_num = location&.start&.column || 1
 
-        validator_info = VALIDATOR_BADGES[@error[:source]] || { label: @error[:source], color: "#6b7280" }
-        severity_color = SEVERITY_COLORS[@error[:severity].to_s] || "#6b7280"
+        validator_name = @error.data[:validator] || @error.origin
+        validator_info = VALIDATOR_BADGES[validator_name] || { label: validator_name, color: "#6b7280" }
+        severity_color = SEVERITY_COLORS[@error.severity.to_s] || "#6b7280"
 
         code_snippet = generate_code_snippet(line_num, col_num)
 
         <<~HTML
-          <div class="herb-validation-item" data-severity="#{escape_attr(@error[:severity].to_s)}">
+          <div class="herb-validation-item" data-severity="#{escape_attr(@error.severity.to_s)}">
             <div class="herb-validation-header">
               <span class="herb-validation-badge" style="background: #{validator_info[:color]}">
                 #{escape_html(validator_info[:label])}
@@ -45,10 +46,10 @@ module Herb
               </span>
             </div>
             <div class="herb-validation-message" style="color: #{severity_color}">
-              #{escape_html(@error[:message])}
+              #{escape_html(@error.message)}
             </div>
             #{code_snippet}
-            #{generate_suggestion_html if @error[:suggestion]}
+            #{generate_suggestion_html if @error.suggestion}
           </div>
         HTML
       end
@@ -101,7 +102,7 @@ module Herb
         <<~HTML
           <div class="herb-validation-suggestion">
             <span class="herb-suggestion-icon">💡</span>
-            #{escape_html(@error[:suggestion])}
+            #{escape_html(@error.suggestion)}
           </div>
         HTML
       end

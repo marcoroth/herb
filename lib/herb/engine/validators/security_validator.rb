@@ -89,21 +89,7 @@ module Herb
         end
 
         def add_security_error(location, message, suggestion)
-          add_diagnostic(message, location, :error, code: "SecurityViolation", source: "SecurityValidator",
-                                                    suggestion: suggestion)
-        end
-
-        def add_diagnostic(message, location, severity, code: nil, source: nil, suggestion: nil)
-          diagnostic = {
-            message: message,
-            location: location,
-            severity: severity,
-            code: code,
-            source: source || self.class.name,
-            suggestion: suggestion,
-          }
-
-          @diagnostics << diagnostic
+          error(message, location, code: "SecurityViolation", suggestion: suggestion)
         end
       end
     end

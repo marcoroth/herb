@@ -33,6 +33,7 @@ require_relative "herb/ast/erb_render_node"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"
+require_relative "herb/diagnostic"
 
 require_relative "herb/cli"
 require_relative "herb/project"

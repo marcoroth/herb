@@ -2,40 +2,27 @@
 
 module Herb
   class Engine
+    # A visitor that reads the tree and reports what it finds without rewriting anything.
+    #
+    # Reporting itself lives in `Herb::Engine::Diagnostics` and is available to any visitor, so
+    # this class is only the convenience of the two mixins plus an enabled flag. A validator that
+    # wants to be one of the engine's own is expected to subclass it; a validator that comes from
+    # somewhere else can just include the mixins.
     class Validator < Herb::Visitor
-      attr_reader diagnostics: untyped
+      include ContextAware
 
-      attr_reader enabled: untyped
+      include Diagnostics
 
-      def initialize: (?enabled: untyped) -> untyped
+      attr_reader enabled: bool
 
-      def enabled?: () -> untyped
+      # : (?enabled: bool) -> void
+      def initialize: (?enabled: bool) -> void
 
-      def validate: (untyped node) -> untyped
+      # : () -> bool
+      def enabled?: () -> bool
 
-      def error: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
-
-      def warning: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
-
-      def info: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
-
-      def hint: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
-
-      def errors?: () -> untyped
-
-      def warnings?: () -> untyped
-
-      def errors: () -> untyped
-
-      def warnings: () -> untyped
-
-      def clear_diagnostics: () -> untyped
-
-      def diagnostic_count: (?untyped severity) -> untyped
-
-      private
-
-      def add_diagnostic: (untyped message, untyped location, untyped severity, ?code: untyped, ?source: untyped) -> untyped
+      # : (Herb::AST::Node) -> void
+      def validate: (Herb::AST::Node) -> void
     end
   end
 end
