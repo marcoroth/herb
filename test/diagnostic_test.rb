@@ -134,4 +134,45 @@ class DiagnosticTest < Minitest::Spec
 
     assert_equal "app/views/a.html.erb:1:1: [something-wrong] Something is wrong.", diagnostic.to_s
   end
+
+  describe "#to_ruby and .from_compiled" do
+    test "survives being written into Ruby source and read back" do
+      original = Herb::Diagnostic.new(
+        template: "app/views/a.html.erb",
+        message: %(A "quoted" and a\nnewline and \#{interpolation}),
+        severity: :warning,
+        code: "awkward-message",
+        origin: "Herb Compiler",
+        suggestion: "Do something else.",
+        location: Herb::Location.from(1, 0, 1, 37)
+      )
+
+      restored = Herb::Diagnostic.from_compiled("app/views/a.html.erb", eval(original.to_ruby))
+
+      assert_equal original.message, restored.message
+      assert_equal original.severity, restored.severity
+      assert_equal original.code, restored.code
+      assert_equal original.origin, restored.origin
+      assert_equal original.suggestion, restored.suggestion
+      assert_equal original.location.start.line, restored.location.start.line
+      assert_equal original.location.start.column, restored.location.start.column
+      assert_equal original.location.end.column, restored.location.end.column
+      assert_equal :compile, restored.phase
+    end
+
+    test "survives without a location" do
+      original = Herb::Diagnostic.new(template: "a.html.erb", message: "m", code: "c")
+      restored = Herb::Diagnostic.from_compiled("a.html.erb", eval(original.to_ruby))
+
+      assert_nil restored.location
+      assert_equal "m", restored.message
+    end
+
+    test "leaves out what it does not carry" do
+      literal = Herb::Diagnostic.new(template: "a.html.erb", message: "m").to_ruby
+
+      refute_includes literal, "suggestion:"
+      refute_includes literal, "line:"
+    end
+  end
 end
