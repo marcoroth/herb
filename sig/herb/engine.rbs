@@ -109,12 +109,14 @@ module Herb
     # : (Array[Herb::Diagnostic], String) -> void
     def report: (Array[Herb::Diagnostic], String) -> void
 
+    # : (Array[Herb::Diagnostic]) -> void
+    def emit_compile_diagnostics: (Array[Herb::Diagnostic]) -> void
+
+    # : (Herb::Diagnostic) -> String
+    def compile_diagnostic_literal: (Herb::Diagnostic) -> String
+
     # : (Array[Herb::Diagnostic], String) -> void
     def raise_for: (Array[Herb::Diagnostic], String) -> void
-
-    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
-
-    def escape_attr: (untyped text) -> untyped
 
     def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
 
