@@ -35,7 +35,7 @@ module Engine
     end
 
     def reporting_stack(visitor)
-      Herb::Engine.default_visitors(fatal: false).use(visitor)
+      Herb::Engine::Validators.all(fatal: false).use(visitor)
     end
 
     def compile_snapshot(source, **)
@@ -80,7 +80,7 @@ module Engine
     end
 
     test "keeps the position it was found at, still counting columns from zero" do
-      engine = compile_snapshot("<p><div>x</div></p>", visitors: Herb::Engine.default_visitors(fatal: false))
+      engine = compile_snapshot("<p><div>x</div></p>", visitors: Herb::Engine::Validators.all(fatal: false))
 
       location = render_into_session(engine).diagnostics.first.location
 
@@ -111,7 +111,7 @@ module Engine
     end
 
     test "a visitor without the mixin is left alone" do
-      engine = compile_snapshot("<div>Hello</div>", visitors: Herb::Engine.default_visitors(fatal: false))
+      engine = compile_snapshot("<div>Hello</div>", visitors: Herb::Engine::Validators.all(fatal: false))
 
       refute_includes engine.src, "record_compile_diagnostics"
     end

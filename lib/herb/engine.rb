@@ -18,28 +18,14 @@ require_relative "engine/error_formatter"
 require_relative "engine/parser_error_overlay"
 require_relative "engine/errors"
 require_relative "engine/parse_error"
-require_relative "engine/validators/security_validator"
-require_relative "engine/validators/nesting_validator"
-require_relative "engine/validators/accessibility_validator"
-require_relative "engine/validators/render_validator"
+require_relative "engine/validators"
 
 module Herb
   class Engine
     SECURITY_VIOLATION_CODE = "security-violation" #: String
     PARSER_ORIGIN = "Herb Parser" #: String
 
-    attr_reader :src, :context, :bufvar, :debug, :visitors, :enabled_validators
-
-    #: (?fatal: bool, ?validators: Hash[Symbol, untyped]) -> Herb::Engine::VisitorStack
-    def self.default_visitors(fatal: true, validators: {})
-      enabled = Herb.configuration.enabled_validators(validators)
-
-      stack = VisitorStack.new
-      stack.use(Validators::SecurityValidator.new(fatal: fatal)) if enabled[:security]
-      stack.use(Validators::NestingValidator.new(fatal: fatal)) if enabled[:nesting]
-      stack.use(Validators::AccessibilityValidator.new(fatal: fatal)) if enabled[:accessibility]
-      stack
-    end
+    attr_reader :src, :context, :bufvar, :debug, :visitors
 
     #: () -> Pathname?
     def filename
@@ -92,7 +78,6 @@ module Herb
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
       @debug = properties.fetch(:debug, Herb.configuration.engine_option("debug", false))
-      @enabled_validators = Herb.configuration.enabled_validators(properties[:validators] || {})
       @optimize = properties.fetch(:optimize, Herb.configuration.engine_option("optimize", false))
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
@@ -102,9 +87,7 @@ module Herb
         warn "[Herb] Compile-time optimizations are experimental. Output may differ from standard ActionView rendering."
       end
 
-      @visitors = VisitorStack.build(
-        properties.fetch(:visitors) { self.class.default_visitors(validators: properties[:validators] || {}) }
-      )
+      @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
       @visitors.use(DebugVisitor.new(file_path: filename, project_path: project_path)) if @debug
 
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
