@@ -1,5 +1,5 @@
 #include "../src/include/herb.h"
-#include "../src/include/util/hb_allocator.h"
+#include "../src/include/lib/hb_allocator.h"
 
 #include <stdio.h>
 #include <stdlib.h>

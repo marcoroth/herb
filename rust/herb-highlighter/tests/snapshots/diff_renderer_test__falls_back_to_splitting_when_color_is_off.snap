@@ -1,0 +1,8 @@
+---
+source: herb-highlighter/tests/diff_renderer_test.rs
+expression: result
+---
+      1 │ <div>
+  -   2 │   <span class='a'>one</span>
+  +     │   <span class="a">one</span>
+      3 │   <p>untouched</p>

@@ -30,7 +30,7 @@ typedef enum {
 
   TOKEN_ERB_START,   // <%, <%=, <%%=, <%#, <%-, <%==, <%%
   TOKEN_ERB_CONTENT, // Ruby Code
-  TOKEN_ERB_END,     // %>, -%>, %%>
+  TOKEN_ERB_END,     // %>, -%>, =%>, %%>, and recovered: >, %, -%, =%, %%, "% >"
 
   TOKEN_LT,          // <
   TOKEN_SLASH,       // /

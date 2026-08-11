@@ -1,0 +1,6 @@
+---
+source: "Engine::ComponentVisitorTest#test_0030_a component with a mixed body compiles the body inside the block"
+input: "{source: \"<Card><div>x</div><%= @thing %></Card>\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render Card.new do; _buf << '<div>x</div>'.freeze; _buf << (@thing).to_s; end);
+_buf.to_s

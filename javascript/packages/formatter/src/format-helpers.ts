@@ -303,6 +303,32 @@ export function shouldPreserveUserSpacing(child: Node, siblings: Node[], index: 
   return hasPreviousNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines
 }
 
+/**
+ * Count the blank lines represented by a run of consecutive newlines.
+ * The longest newline run in the content determines the count. Two
+ * newlines separate two lines with one blank line between them.
+ */
+export function countBlankLines(content: string): number {
+  let longestRun = 0
+
+  for (const run of content.match(/\n+/g) || []) {
+    if (run.length > longestRun) longestRun = run.length
+  }
+
+  return Math.max(0, longestRun - 1)
+}
+
+/**
+ * Map a user-authored blank line count to the count the formatter emits.
+ * A single blank line passes through, exactly two are kept as an
+ * intentional wider break, and anything larger collapses back to one.
+ */
+export function normalizeBlankLineCount(count: number): number {
+  if (count === 2) return 2
+
+  return count > 0 ? 1 : 0
+}
+
 
 /**
  * Check if children contain any text content with newlines

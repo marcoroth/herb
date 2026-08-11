@@ -13,6 +13,7 @@ module Engine
         escape: false,
         bufvar: "_buf",
         escapefunc: "::Herb::Engine.h",
+        visitors: Herb::Engine::Validators.all,
       }
     end
 

@@ -1,8 +1,11 @@
 import { describe, test } from "vitest"
 import { A11yNestedInteractiveElementsRule } from "../../src/rules/a11y-nested-interactive-elements.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(A11yNestedInteractiveElementsRule)
+
+const enabled = createLinterTest(A11yNestedInteractiveElementsRule, { enabled: true })
 
 describe("a11y-nested-interactive-elements", () => {
   test("passes for button without nested interactive elements", () => {
@@ -128,5 +131,35 @@ describe("a11y-nested-interactive-elements", () => {
     expectError('Found `<input>` nested inside of `<button>`. Nesting interactive elements produces invalid HTML, and assistive technologies, such as screen readers, might ignore or respond unexpectedly to such nested controls.')
 
     assertOffenses('<button><a href="#">Link</a><input type="text" /></button>')
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_control.html.erb"
+
+    test("fails when every call site renders the file inside a button", () => {
+      enabled.expectError("Found `<a>` nested inside of `<button>`. Every call site renders this file inside a `<button>`. Nesting interactive elements produces invalid HTML, and assistive technologies, such as screen readers, might ignore or respond unexpectedly to such nested controls.")
+
+      enabled.assertOffenses(`<a href="/inner">Inner</a>`, renderedFrom(partial, ["html", "body", "button"]))
+    })
+
+    test("fails when only some call sites render the file inside a button", () => {
+      enabled.expectError("Found `<a>` nested inside of `<button>`. At least one call site renders this file inside a `<button>`. Nesting interactive elements produces invalid HTML, and assistive technologies, such as screen readers, might ignore or respond unexpectedly to such nested controls.")
+
+      enabled.assertOffenses(`<a href="/inner">Inner</a>`, renderedFrom(partial, ["html", "body", "button"], ["html", "body", "div"]))
+    })
+
+    test("passes when nothing renders the file", () => {
+      enabled.expectNoOffenses(`<a href="/inner">Inner</a>`, renderedFromNowhere(partial))
+    })
+
+    test("keeps the summary exemption for links across call sites", () => {
+      enabled.expectNoOffenses(`<a href="/inner">Inner</a>`, renderedFrom(partial, ["html", "body", "details", "summary"]))
+    })
+
+    test("reports the innermost interactive ancestor from the callers", () => {
+      enabled.expectError("Found `<button>` nested inside of `<a>`. Every call site renders this file inside a `<a>`. Nesting interactive elements produces invalid HTML, and assistive technologies, such as screen readers, might ignore or respond unexpectedly to such nested controls.")
+
+      enabled.assertOffenses(`<button>Inner</button>`, renderedFrom(partial, ["html", "body", "button", "span", "a"]))
+    })
   })
 })

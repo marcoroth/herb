@@ -15,10 +15,10 @@
   "module": "./dist/herb-dev-tools.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn clean && tsc --emitDeclarationOnly && rolldown -c",
+    "dev": "rolldown -c -w",
     "clean": "rimraf dist",
-    "test": "echo 'TODO: add tests'",
+    "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {

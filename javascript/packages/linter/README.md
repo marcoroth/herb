@@ -328,6 +328,27 @@ The `--fix` flag automatically corrects offenses that have safe, deterministic f
 Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
 :::
 
+Corrections are previewed automatically while a run has at most 20 correctable offenses, so most runs show them without being asked. Past that the diffs would crowd out the offenses themselves, and a tip points at the flag instead:
+
+```bash
+npx @herb-tools/linter --show-fix-diff
+```
+
+Each correctable offense is followed by a syntax-highlighted diff of the correction, with the characters that would actually change picked out. Nothing is written to disk, the heading names the flag that would apply it:
+
+```
+        Running --fix would correct this to:
+
+        app/views/gems/index.html.erb
+
+              2 │   <img src="a.png">
+          -   3 │   <span class='card'>Hello</span>
+          +     │   <span class="card">Hello</span>
+              4 │ </div>
+```
+
+Offenses that need `--fix-unsafely` say so instead, so the heading always names the flag that applies. `--show-fix-diff` has no effect on `--json` output.
+
 **Help and Version:**
 ```bash
 # Show help
@@ -613,13 +634,14 @@ import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
 
 class NoDivTagsVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node) {
-    if (!node.tag_name) return
-    if (node.tag_name.value !== "div") return
+    if (node.tag_name?.value === "div") {
+      this.addOffense(
+        `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
+        node.tag_name.location
+      )
+    }
 
-    this.addOffense(
-      `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
-      node.tag_name.location
-    )
+    super.visitHTMLOpenTagNode(node)
   }
 }
 
@@ -635,7 +657,7 @@ export default class NoDivTagsRule extends ParserRule {
 ```
 
 ```js [.herb/rules/no-inline-styles.mjs]
-import { BaseRuleVisitor, getAttributes, getAttributeName } from "@herb-tools/linter"
+import { BaseRuleVisitor, ParserRule, getAttributes, getAttributeName } from "@herb-tools/linter"
 
 class NoInlineStylesVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node) {
@@ -647,8 +669,7 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
       if (attributeName === "style") {
         this.addOffense(
           `Avoid using inline \`style\` attributes. Use CSS classes instead.`,
-          attribute.location,
-          "warning"
+          attribute.location
         )
       }
     }
@@ -657,18 +678,42 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
   }
 }
 
-export default class NoInlineStylesRule {
+export default class NoInlineStylesRule extends ParserRule {
   static ruleName = "no-inline-styles"
 
-  check(parseResult, context) {
+  get defaultConfig() {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result, context) {
     const visitor = new NoInlineStylesVisitor(this.ruleName, context)
-    visitor.visit(parseResult.value)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }
 ```
 
 :::
+
+**Calling `super` in visitor methods:**
+
+Each `visitFooNode()` method in the base visitor does up to three things:
+
+1. Calls `this.visitNode(node)`, a generic hook that runs for every node type
+2. Calls `this.visitERBNode(node)`, a shared hook that only runs for ERB node types
+3. Calls `this.visitChildNodes(node)`, which traverses the node's children
+
+For example, `visitHTMLOpenTagNode()` calls `visitNode()` and `visitChildNodes()`, while `visitERBContentNode()` calls `visitNode()`, `visitERBNode()`, and `visitChildNodes()`.
+
+Overriding a `visitFooNode()` method without calling `super` skips all three steps. Most importantly, `visitChildNodes()` is never called, so traversal stops at that node and the rule won't see anything below it. For leaf nodes like `ERBContentNode` this makes no difference, but for nodes with children like `HTMLElementNode`, `HTMLOpenTagNode`, or `ERBBlockNode` it means nested offenses go unreported.
+
+As a general rule, always call `super.visitFooNode(node)` unless you deliberately want to control traversal yourself. If you do, there are two alternatives:
+
+- `this.visitChildNodes(node)` traverses all children, but skips the `visitNode()` and `visitERBNode()` hooks
+- `this.visit(node.someChild)` visits only the children you pick
 
 **Rule Configuration:**
 

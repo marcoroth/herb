@@ -11,10 +11,8 @@ describe("ERBWhenNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBWhenNode.from({
-      type: "AST_ERB_WHEN_NODE",
+    const node = ERBWhenNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " when String "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),

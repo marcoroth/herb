@@ -17,6 +17,16 @@ static const helper_implicit_attribute_T <%= helper.safe_name %>_implicit_attrib
 };
 
 <%- end -%>
+<%- if helper.content? -%>
+static const helper_content_T <%= helper.safe_name %>_content = {
+  .source = "<%= helper.content.source %>",
+  .arg_position = <%= helper.content.arg_position || -1 %>,
+  .skip_if_hash = <%= helper.content.skip_if_hash %>,
+  .to_s_suffix_when_single = <%= helper.content.to_s_suffix_when_single %>,
+  .positional_arguments_with_block = <%= helper.content.positional_arguments_with_block || -1 %>,
+};
+
+<%- end -%>
 <%- if helper.arguments.any? -%>
 static const helper_argument_T <%= helper.safe_name %>_arguments[] = {
 <%- helper.arguments.each do |arg| -%>
@@ -33,6 +43,14 @@ static const helper_option_T <%= helper.safe_name %>_options[] = {
 };
 
 <%- end -%>
+<%- if helper.block_arguments.any? -%>
+static const helper_block_argument_T <%= helper.safe_name %>_block_arguments[] = {
+<%- helper.block_arguments.each do |arg| -%>
+  { .name = "<%= arg.name %>", .type = "<%= arg.type_display %>", .optional = <%= arg.optional %>, .description = "<%= arg.escaped_description %>" },
+<%- end -%>
+};
+
+<%- end -%>
 <%- end -%>
 static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
 <%- helpers.each do |helper| -%>
@@ -44,6 +62,7 @@ static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
     .gem = "<%= helper.gem %>",
     .output = HELPER_OUTPUT_<%= helper.output.upcase %>,
     .visibility = "<%= helper.visibility %>",
+    .receiver = "<%= helper.receiver %>",
     .tag_name = <%= helper.tag_name ? "\"#{helper.tag_name}\"" : "NULL" %>,
     .is_void = <%= helper.void? %>,
     .supports_block = <%= helper.supports_block %>,
@@ -54,10 +73,13 @@ static const helper_registry_entry_T registry_entries[HELPER_COUNT] = {
     .signature = "<%= helper.escaped_signature %>",
     .documentation_url = "<%= helper.documentation_url %>",
     .implicit_attribute = <%= helper.implicit_attribute? ? "&#{helper.safe_name}_implicit_attribute" : "NULL" %>,
+    .content = <%= helper.content? ? "&#{helper.safe_name}_content" : "NULL" %>,
     .arguments = <%= helper.arguments.any? ? "#{helper.safe_name}_arguments" : "NULL" %>,
     .arguments_count = <%= helper.arguments.size %>,
     .options = <%= helper.options.any? ? "#{helper.safe_name}_options" : "NULL" %>,
     .options_count = <%= helper.options.size %>,
+    .block_arguments = <%= helper.block_arguments.any? ? "#{helper.safe_name}_block_arguments" : "NULL" %>,
+    .block_arguments_count = <%= helper.block_arguments.size %>,
   },
 <%- end -%>
 };

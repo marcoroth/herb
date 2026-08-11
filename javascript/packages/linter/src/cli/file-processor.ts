@@ -1,33 +1,41 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { Config } from "@herb-tools/config"
+import { Worker } from "node:worker_threads"
+
 import { rules } from "../rules.js"
 import { loadCustomRules } from "../loader.js"
-import { Config } from "@herb-tools/config"
-
-import { Worker } from "node:worker_threads"
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { availableParallelism } from "node:os"
 import { colorize } from "@herb-tools/highlighter"
 import { deserializeDiagnostic, didyoumean } from "@herb-tools/core"
-
-import { fixabilityFor } from "./fixability.js"
+import { fixabilityFor } from "../fixability.js"
+import { buildPartialIndex, refreshPartialAfterFix } from "@herb-tools/analysis/node"
+import { buildRenderGraph } from "@herb-tools/analysis/node"
 
 import type { Diagnostic } from "@herb-tools/core"
+import type { AncestorChain } from "@herb-tools/analysis"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
 import type { WorkerInput, WorkerResult } from "./lint-worker.js"
-import type { Fixability } from "./fixability.js"
+import type { Fixability } from "../fixability.js"
 import type { VersionSkippedRule } from "../linter.js"
 import type { LintOffense, RuleClass } from "../types.js"
+import type { RenderGraph, PartialIndex } from "@herb-tools/analysis"
+
+const AUTOMATIC_FIX_DIFF_LIMIT = 20
 
 export interface ProcessedFile {
   filename: string
   offense: Diagnostic
+  /** The call chain that justified the offense, when it came from where the file is rendered. */
+  renderedFrom?: AncestorChain
   content?: string
   autocorrectable?: boolean
   unsafeAutocorrectable?: boolean
+  fixedContent?: string
 }
 
 export interface ProcessingContext {
@@ -37,6 +45,7 @@ export interface ProcessingContext {
   fix?: boolean
   fixUnsafe?: boolean
   ignoreDisableComments?: boolean
+  showFixDiff?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
   hasConfigFile?: boolean
@@ -86,6 +95,9 @@ export class FileProcessor {
   private linter: Linter | null = null
   private customRulesLoaded: boolean = false
   private customRules: RuleClass[] | undefined = undefined
+  private partials: PartialIndex | undefined = undefined
+  private partialCallers: RenderGraph | undefined = undefined
+  private projectPath: string | undefined = undefined
 
   /**
    * Loads the project's custom rules once and caches them for subsequent calls.
@@ -163,6 +175,52 @@ export class FileProcessor {
     return didyoumean(ruleName, availableRuleNames, SUGGESTION_DISTANCE_THRESHOLD) ?? undefined
   }
 
+  private async attachFixPreviews(allOffenses: ProcessedFile[], formatOption: FormatOption, context?: ProcessingContext): Promise<void> {
+    if (formatOption === "json") return
+
+    const correctable = allOffenses.filter(item => item.autocorrectable || item.unsafeAutocorrectable)
+
+    if (correctable.length === 0) return
+    if (!context?.showFixDiff && correctable.length > AUTOMATIC_FIX_DIFF_LIMIT) return
+
+    if (!this.linter) {
+      const customRules = await this.loadCustomRulesOnce(context, formatOption)
+
+      this.linter = Linter.from(Herb, context?.config, customRules, { only: context?.only, all: context?.allRules })
+    }
+
+    const contents = new Map<string, string>()
+
+    for (const item of correctable) {
+      if (!contents.has(item.filename)) {
+        const filePath = context?.projectPath ? resolve(context.projectPath, item.filename) : resolve(item.filename)
+
+        try {
+          contents.set(item.filename, item.content ?? readFileSync(filePath, "utf-8"))
+        } catch {
+          continue
+        }
+      }
+
+      const content = contents.get(item.filename)
+
+      if (content === undefined) continue
+
+      try {
+        const result = this.linter.autofix(content, {
+          fileName: item.filename,
+          ignoreDisableComments: context?.ignoreDisableComments,
+        }, [item.offense as LintOffense], { includeUnsafe: true })
+
+        if (result.fixed.length > 0 && result.source !== content) {
+          item.fixedContent = result.source
+        }
+      } catch {
+        continue
+      }
+    }
+  }
+
   private fixabilityFor(offense: LintOffense): Fixability {
     const ruleClass = this.linter?.rules.find(rule => rule.ruleName === offense.rule)
 
@@ -173,11 +231,87 @@ export class FileProcessor {
     const jobs = context?.jobs ?? 1
     const shouldParallelize = jobs > 1 && files.length >= PARALLEL_FILE_THRESHOLD
 
+    await this.buildPartialIndexOnce(context)
+
     if (shouldParallelize) {
-      return this.processFilesInParallel(files, jobs, formatOption, context)
+      return this.collapseOncePerRunOffenses(await this.processFilesInParallel(files, jobs, formatOption, context))
     }
 
-    return this.processFilesSequentially(files, formatOption, context)
+    return this.collapseOncePerRunOffenses(await this.processFilesSequentially(files, formatOption, context))
+  }
+
+  private collapseOncePerRunOffenses(result: ProcessingResult): ProcessingResult {
+    const oncePerRun = new Set(rules.filter(rule => rule.reportsOncePerRun === true).map(rule => rule.ruleName))
+
+    if (oncePerRun.size === 0) return result
+
+    const seen = new Set<string>()
+    const dropped: ProcessedFile[] = []
+
+    result.allOffenses = result.allOffenses.filter(item => {
+      const rule = (item.offense as LintOffense).rule
+
+      if (!oncePerRun.has(rule)) return true
+      if (!seen.has(rule)) {
+        seen.add(rule)
+
+        return true
+      }
+
+      dropped.push(item)
+
+      return false
+    })
+
+    if (dropped.length === 0) return result
+
+    const remainingFiles = new Set(result.allOffenses.map(item => item.filename))
+
+    for (const item of dropped) {
+      const severity = (item.offense as LintOffense).severity
+
+      if (severity === "error") result.totalErrors--
+      if (severity === "warning") result.totalWarnings--
+      if (severity === "info") result.totalInfo--
+      if (severity === "hint") result.totalHints--
+
+      const ruleData = result.ruleOffenses.get((item.offense as LintOffense).rule)
+
+      if (ruleData) {
+        ruleData.count--
+        ruleData.files.delete(item.filename)
+      }
+    }
+
+    const droppedFiles = new Set(dropped.map(item => item.filename))
+
+    for (const filename of droppedFiles) {
+      if (!remainingFiles.has(filename)) result.filesWithOffenses--
+    }
+
+    return result
+  }
+
+  private async buildPartialIndexOnce(context?: ProcessingContext): Promise<void> {
+    if (this.partials) return
+
+    const projectPath = context?.projectPath || process.cwd()
+
+    this.projectPath = projectPath
+
+    try {
+      this.partials = await buildPartialIndex(Herb, projectPath)
+    } catch {
+      this.partials = undefined
+    }
+
+    if (!this.partials) return
+
+    try {
+      this.partialCallers = await buildRenderGraph(Herb, projectPath, this.partials)
+    } catch {
+      this.partialCallers = undefined
+    }
   }
 
   private async processFilesSequentially(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
@@ -206,7 +340,10 @@ export class FileProcessor {
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,
-        ignoreDisableComments: context?.ignoreDisableComments
+        ignoreDisableComments: context?.ignoreDisableComments,
+        partials: this.partials,
+        partialCallers: this.partialCallers,
+        projectPath: this.projectPath
       })
 
       if (ruleCount === 0) {
@@ -216,11 +353,16 @@ export class FileProcessor {
       if (context?.fix && lintResult.offenses.length > 0) {
         const autofixResult = this.linter.autofix(content, {
           fileName: filename,
-          ignoreDisableComments: context?.ignoreDisableComments
+          ignoreDisableComments: context?.ignoreDisableComments,
+          partials: this.partials,
+          partialCallers: this.partialCallers,
+          projectPath: this.projectPath
         }, undefined, { includeUnsafe: context?.fixUnsafe })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")
+
+          refreshPartialAfterFix(Herb, this.partials, filename, content, autofixResult.source)
 
           filesFixed++
 
@@ -233,6 +375,7 @@ export class FileProcessor {
           allOffenses.push({
             filename,
             offense: offense,
+            renderedFrom: offense.renderedFrom,
             ...this.fixabilityFor(offense)
           })
 
@@ -258,6 +401,7 @@ export class FileProcessor {
           allOffenses.push({
             filename,
             offense: offense,
+            renderedFrom: offense.renderedFrom,
             ...this.fixabilityFor(offense)
           })
 
@@ -300,6 +444,8 @@ export class FileProcessor {
       result.totalWouldBeIgnored = totalWouldBeIgnored
     }
 
+    await this.attachFixPreviews(allOffenses, formatOption, context)
+
     return result
   }
 
@@ -324,6 +470,8 @@ export class FileProcessor {
     aggregated.rulesSkippedByVersion = filterResult.skippedByVersion
     aggregated.rulesDisabledByConfig = filterResult.disabledByConfig
     aggregated.rulesNotEnabledByDefault = filterResult.notEnabledByDefault
+
+    await this.attachFixPreviews(aggregated.allOffenses, formatOption, context)
 
     return aggregated
   }
@@ -360,6 +508,8 @@ export class FileProcessor {
         loadCustomRules: context?.loadCustomRules || false,
         only: context?.only,
         allRules: context?.allRules || false,
+        partials: this.partials?.toJSON(),
+        partialCallers: this.partialCallers?.toJSON(),
       }
 
       const worker = new Worker(workerPath, { workerData })
@@ -412,6 +562,7 @@ export class FileProcessor {
         allOffenses.push({
           filename: offense.filename,
           offense: deserializeDiagnostic(offense.offense),
+          renderedFrom: offense.renderedFrom,
           autocorrectable: offense.autocorrectable,
           unsafeAutocorrectable: offense.unsafeAutocorrectable
         })

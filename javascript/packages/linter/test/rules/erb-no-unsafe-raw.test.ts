@@ -4,6 +4,7 @@ import { describe, test } from "vitest"
 
 import { ERBNoUnsafeRawRule } from "../../src/rules/erb-no-unsafe-raw.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoUnsafeRawRule)
 
@@ -93,6 +94,46 @@ describe("ERBNoUnsafeRawRule", () => {
 
       assertOffenses(dedent`
         <p><%= user_input.html_safe %></p>
+      `)
+    })
+
+    test("html_safe on an interpolated String is not allowed", () => {
+      expectError(HTML_SAFE_MESSAGE)
+
+      assertOffenses(dedent`
+        <p><%= "<strong>#{user_input}</strong>".html_safe %></p>
+      `)
+    })
+  })
+
+  describe(".html_safe on String literals", () => {
+    test("html_safe on a String literal is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= "<strong>Sale</strong>".html_safe %></p>
+      `)
+    })
+
+    test("html_safe on a String literal in attribute position is allowed", () => {
+      expectNoOffenses(`<div <%= 'style="display: none;"'.html_safe %>></div>`)
+    })
+
+    test("html_safe on a String literal in an attribute value is allowed", () => {
+      expectNoOffenses(dedent`
+        <div class="<%= 'btn btn-primary'.html_safe %>"></div>
+      `)
+    })
+
+    test("html_safe on a String literal argument is allowed", () => {
+      expectNoOffenses(dedent`
+        <p><%= link_to "<strong>Sale</strong>".html_safe, sale_path %></p>
+      `)
+    })
+
+    test("html_safe on a String literal with another call in between is not allowed", () => {
+      expectError(HTML_SAFE_MESSAGE)
+
+      assertOffenses(dedent`
+        <p><%= "<strong>Sale</strong>".dup.html_safe %></p>
       `)
     })
   })
@@ -189,6 +230,26 @@ describe("ERBNoUnsafeRawRule", () => {
       expectNoOffenses(dedent`
         <a onclick="method(<%= unsafe.to_json %>)"></a>
       `)
+    })
+  })
+
+  describe("across call sites", () => {
+    const partial = "app/views/shared/_snippet.html.erb"
+
+    test("stays silent when every call site renders the file inside a script", () => {
+      expectNoOffenses(`<%= raw(payload) %>`, renderedFrom(partial, ["html", "body", "script"]))
+    })
+
+    test("reports when only some call sites render the file inside a script", () => {
+      expectError("Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.")
+
+      assertOffenses(`<%= raw(payload) %>`, renderedFrom(partial, ["html", "body", "script"], ["html", "body", "div"]))
+    })
+
+    test("reports when nothing renders the file", () => {
+      expectError("Avoid `raw()` in ERB output. It bypasses HTML escaping and can cause cross-site scripting (XSS) vulnerabilities.")
+
+      assertOffenses(`<%= raw(payload) %>`, renderedFromNowhere(partial))
     })
   })
 })

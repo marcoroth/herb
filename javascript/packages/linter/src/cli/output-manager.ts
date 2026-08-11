@@ -7,7 +7,7 @@ import type { DiagnosticSeverity } from "@herb-tools/core"
 import type { ThemeInput } from "@herb-tools/highlighter"
 import type { FormatOption } from "./argument-parser.js"
 import type { ProcessedFile, ProcessingResult } from "./file-processor.js"
-import type { SummaryData } from "./summary-reporter.js"
+import type { SummaryData, RuleFilterFlag } from "./summary-reporter.js"
 
 interface OutputOptions {
   formatOption: FormatOption
@@ -21,6 +21,8 @@ interface OutputOptions {
   toolVersion?: string
   failLevel?: DiagnosticSeverity
   logLevel?: DiagnosticSeverity
+  logLevelLoweredFrom?: DiagnosticSeverity
+  logLevelLoweredBy?: RuleFilterFlag
 }
 
 interface LintResults extends ProcessingResult {
@@ -47,7 +49,7 @@ export class OutputManager {
       if (options.formatOption !== "json") {
         const regularFormatter = options.formatOption === "simple"
           ? new SimpleFormatter()
-          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
+          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath, context?.showFixDiff)
 
         await regularFormatter.format(reportedOffenses, files.length === 1)
 
@@ -92,7 +94,7 @@ export class OutputManager {
     } else {
       const formatter = options.formatOption === "simple"
         ? new SimpleFormatter()
-        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath)
+        : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines, context?.projectPath, context?.showFixDiff)
 
       await formatter.format(reportedOffenses, files.length === 1)
 
@@ -137,6 +139,8 @@ export class OutputManager {
       filesNotFailing: notFailingFiles.size,
       failLevel,
       logLevel,
+      logLevelLoweredFrom: options.logLevelLoweredFrom,
+      logLevelLoweredBy: options.logLevelLoweredBy,
       ruleCount,
       startTime: options.startTime,
       startDate: options.startDate,

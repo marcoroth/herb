@@ -75,6 +75,17 @@ export function isDebugOutputCall(node: PrismNode): boolean {
   return false
 }
 
+export function isSleepCall(node: PrismNode): boolean {
+  if (!isPrismNodeType(node, "CallNode")) return false
+  if (node.name !== "sleep") return false
+
+  const receiver = node.receiver
+
+  if (!receiver) return true
+
+  return isPrismNodeType(receiver, "ConstantReadNode") && receiver.name === "Kernel"
+}
+
 export function rootReceiver(node: PrismNode): PrismNode {
   let current = node
 
@@ -99,3 +110,44 @@ export function isCallOnLocal(node: PrismNode, localNames: Set<string>): boolean
   return false
 }
 
+
+export function isStaticPartialPath(node: PrismNode): boolean {
+  if (isPrismNodeType(node, "StringNode")) return true
+
+  if (isPrismNodeType(node, "IfNode")) {
+    return branchesOf(node).every(branch => branch !== null && isStaticPartialPath(branch))
+  }
+
+  return false
+}
+
+function branchesOf(node: PrismNode): (PrismNode | null)[] {
+  const branches: (PrismNode | null)[] = [onlyStatement(node.statements)]
+  const subsequent = node.subsequent
+
+  if (!subsequent) return [...branches, null]
+
+  if (isPrismNodeType(subsequent, "ElseNode")) return [...branches, onlyStatement(subsequent.statements)]
+
+  return [...branches, subsequent]
+}
+
+function onlyStatement(statements: PrismNode | null | undefined): PrismNode | null {
+  if (!isPrismNodeType(statements, "StatementsNode")) return null
+
+  const body = statements.body ?? []
+
+  return body.length === 1 ? body[0] : null
+}
+
+export function constructsObject(node: PrismNode): boolean {
+  let current: PrismNode | undefined = node
+
+  while (current) {
+    if (isPrismNodeType(current, "CallNode") && current.name === "new") return true
+
+    current = current.receiver ?? undefined
+  }
+
+  return false
+}

@@ -5,7 +5,7 @@ import { Linter } from "@herb-tools/linter"
 import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
 import { rewrite, ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 
-import type { LintResult, AutofixResult } from "@herb-tools/linter"
+import type { LintResult, AutofixResult, Framework } from "@herb-tools/linter"
 import type { FormatOptions } from "@herb-tools/formatter"
 import type { PrintOptions } from "@herb-tools/printer"
 
@@ -22,7 +22,11 @@ export type AutofixOptions = {
   includeUnsafe?: boolean
 }
 
-export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}) {
+export type LinterOptions = {
+  framework?: Framework
+}
+
+export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: PrintOptions = DEFAULT_PRINT_OPTIONS, formatterOptions: FormatOptions = {}, autofixOptions: AutofixOptions = {}, linterOptions: LinterOptions = {}) {
   const startTime = performance.now()
 
   const parseResult = await safeExecute<ParseResult>(
@@ -85,13 +89,14 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
 
   if (parseResult && parseResult.value) {
     const linter = new Linter(herb)
+    const lintContext = { framework: linterOptions.framework }
 
     lintResult = await safeExecute<LintResult>(
-      new Promise((resolve) => resolve(linter.lint(source))),
+      new Promise((resolve) => resolve(linter.lint(source, lintContext))),
     )
 
     try {
-      autofixResult = new Linter(herb).autofix(source, undefined, undefined, { includeUnsafe: autofixOptions.includeUnsafe === true })
+      autofixResult = new Linter(herb).autofix(source, lintContext, undefined, { includeUnsafe: autofixOptions.includeUnsafe === true })
     } catch (error) {
       console.error(error)
 

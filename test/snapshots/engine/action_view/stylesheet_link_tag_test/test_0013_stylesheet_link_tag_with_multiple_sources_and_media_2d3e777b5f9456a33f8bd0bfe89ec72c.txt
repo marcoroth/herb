@@ -1,0 +1,6 @@
+---
+source: "Engine::ActionView::StylesheetLinkTagTest#test_0013_stylesheet_link_tag with multiple sources and media"
+input: "{source: \"<%= stylesheet_link_tag \\\"application\\\", \\\"admin\\\", media: \\\"all\\\" %>\", locals: {}, options: {action_view_helpers: true}}"
+---
+<link rel="stylesheet" href="/stylesheets/application.css" media="all" />
+<link rel="stylesheet" href="/stylesheets/admin.css" media="all" />

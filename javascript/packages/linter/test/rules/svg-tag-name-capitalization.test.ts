@@ -1,8 +1,11 @@
 import { describe, test } from "vitest"
 import { SVGTagNameCapitalizationRule } from "../../src/rules/svg-tag-name-capitalization.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
+import { renderedFrom, renderedFromNowhere } from "../helpers/partial-caller-context.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(SVGTagNameCapitalizationRule)
+
+const PARTIAL = "app/views/shared/_icon.html.erb"
 
 describe("svg-tag-name-capitalization", () => {
   test("passes for correctly cased SVG elements", () => {
@@ -180,5 +183,22 @@ describe("svg-tag-name-capitalization", () => {
         <P>Outside SVG again</P>
       </div>
     `)
+  })
+
+  describe("across call sites", () => {
+    test("reports miscased SVG tags when every call site renders the file inside an svg", () => {
+      expectError("Opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.")
+      expectError("Closing SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.")
+
+      assertOffenses(`<lineargradient id="g"></lineargradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"]))
+    })
+
+    test("stays quiet when only some call sites supply an svg", () => {
+      expectNoOffenses(`<lineargradient id="g"></lineargradient>`, renderedFrom(PARTIAL, ["html", "body", "svg"], ["html", "body", "div"]))
+    })
+
+    test("stays quiet when nothing renders the file", () => {
+      expectNoOffenses(`<lineargradient id="g"></lineargradient>`, renderedFromNowhere(PARTIAL))
+    })
   })
 })

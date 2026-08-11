@@ -2,6 +2,24 @@
 
 Rust bindings for Herb - An ecosystem of powerful and seamless developer tools for HTML+ERB templates.
 
+## Crates
+
+This is a Cargo workspace. `herb` is the binding to the C library, the rest build on top of it.
+
+| Crate                                    | Binary           | Description                                                  |
+|------------------------------------------|------------------|--------------------------------------------------------------|
+| [`herb`](./)                             | `herb-rust`      | Bindings to the Herb C library: lexing, parsing, and the AST |
+| [`herb-config`](./herb-config)           |                  | Shared configuration utilities, reads `.herb.yml`            |
+| [`herb-highlighter`](./herb-highlighter) | `herb-highlight` | Syntax highlighter, snippet renderer and diagnostic renderer |
+| [`herb-printer`](./herb-printer)         | `herb-print`     | Printers that reconstruct source from a Herb AST             |
+
+Each binary sits behind the crate's `cli` feature, so a library consumer does not pull in its dependencies:
+
+```bash
+cargo build -p herb-highlighter --features herb-highlighter/cli
+cargo build -p herb-printer --features herb-printer/cli
+```
+
 ## Building
 
 ### Prerequisites
@@ -12,9 +30,9 @@ Rust bindings for Herb - An ecosystem of powerful and seamless developer tools f
 ### Build
 
 ```bash
-make build        # Build debug binary
-make release      # Build release binary
-make all          # Generate templates and build
+make build
+make release
+make all
 ```
 
 ## Usage
@@ -27,6 +45,13 @@ make all          # Generate templates and build
 ./bin/herb-rust lex path/to/file.erb
 
 ./bin/herb-rust parse path/to/file.erb
+```
+
+The other crates ship their own binaries:
+
+```bash
+cargo run -p herb-highlighter --features herb-highlighter/cli -- path/to/file.html.erb
+cargo run -p herb-printer --features herb-printer/cli -- path/to/file.html.erb
 ```
 
 ### As a Library
@@ -52,6 +77,7 @@ fn main() {
 ## Testing
 
 ```bash
+make test
 cargo test
 ```
 
@@ -60,11 +86,13 @@ cargo test
 Before publishing to crates.io, vendor the C sources:
 
 ```bash
-make vendor                        # Vendor C sources from ../src and prism
-cargo publish --allow-dirty        # Publish to crates.io
+make vendor
+cargo publish --allow-dirty
 ```
 
 The `vendor/` directory is gitignored to avoid committing duplicate files. The `make vendor` task copies C sources from the parent directory into `vendor/libherb` and `vendor/prism` so the published crate is self-contained.
+
+Only `herb` is published today. The other crates carry the metadata to be published with `cargo publish -p <crate>`, and depend on each other by version as well as by path so that packaging resolves. They have to go out in dependency order, `herb` and `herb-config` before `herb-printer`, since Cargo resolves the version side of a path dependency against crates.io.
 
 ## Cleaning
 

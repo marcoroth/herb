@@ -13,12 +13,15 @@ import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 import { makeTreeCollapsible, expandAllNodes as expandAll, collapseAllNodes as collapseAll, revealTreeLine } from "../tree-collapse"
 
 import { Herb } from "@herb-tools/browser"
-import { Linter } from "@herb-tools/linter"
+import { Linter, rules, fixabilityFor, FRAMEWORKS } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 import { analyzeRuby } from "../analyze-ruby"
 
 window.Herb = Herb
 window.analyze = analyze
+
+const URL_UPDATE_THROTTLE = 100
+const DEFAULT_FRAMEWORK = "actionview"
 
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
@@ -119,6 +122,7 @@ export default class extends Controller {
     "diagnosticsViewer",
     "diagnosticsContent",
     "diagnosticsFilter",
+    "linterFramework",
     "noDiagnostics",
     "diagnosticsList",
     "fullViewer",
@@ -140,8 +144,14 @@ export default class extends Controller {
     "diffCheckpointButton",
     "diffSnapshotButton",
     "diffCheckButton",
+    "diffWhitespaceCheckbox",
     "diffParseError",
   ]
+
+  pendingHash = null
+  pendingSearch = null
+  urlUpdateTimeout = null
+  lastURLUpdateAt = 0
 
   get isRubyMode() {
     return this.modeValue === "ruby"
@@ -176,6 +186,8 @@ export default class extends Controller {
       this.restorePrinterOptions()
       this.restoreFormatterOptions()
       this.restoreAutofixOptions()
+      this.populateFrameworkOptions()
+      this.restoreLinterOptions()
     }
 
     this.inputTarget.focus()
@@ -286,6 +298,13 @@ export default class extends Controller {
 
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
+
+    if (this.urlUpdateTimeout !== null) {
+      clearTimeout(this.urlUpdateTimeout)
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }
+
     this.removeTooltip()
     this.removeAutofixTooltip()
     this.removeAutofixUnsafeTooltip()
@@ -309,18 +328,75 @@ export default class extends Controller {
   }
 
   updateURL() {
-    window.parent.location.hash = this.compressedValue
+    this.queueURLUpdate({ hash: this.compressedValue })
 
     if (!this.isRubyMode) {
       const options = this.getParserOptions()
       const printerOptions = this.getPrinterOptions()
       const formatterOptions = this.getFormatterOptions()
       const autofixOptions = this.getAutofixOptions()
+      const linterOptions = this.getLinterOptions()
       this.setOptionsInURL(options)
       this.setPrinterOptionsInURL(printerOptions)
       this.setFormatterOptionsInURL(formatterOptions)
       this.setAutofixOptionsInURL(autofixOptions)
+      this.setLinterOptionsInURL(linterOptions)
     }
+  }
+
+  updateSearchParams(update) {
+    const params = new URLSearchParams(
+      this.pendingSearch !== null ? this.pendingSearch : window.parent.location.search,
+    )
+
+    update(params)
+
+    this.queueURLUpdate({ search: params.toString() })
+  }
+
+  queueURLUpdate({ hash, search }) {
+    if (hash !== undefined) this.pendingHash = hash
+    if (search !== undefined) this.pendingSearch = search
+
+    if (this.urlUpdateTimeout !== null) return
+    if (!this.hasPendingURLUpdate) return
+
+    const elapsed = Date.now() - this.lastURLUpdateAt
+
+    this.urlUpdateTimeout = setTimeout(() => {
+      this.urlUpdateTimeout = null
+      this.flushURLUpdate()
+    }, Math.max(0, URL_UPDATE_THROTTLE - elapsed))
+  }
+
+  get hasPendingURLUpdate() {
+    const location = window.parent.location
+
+    if (this.pendingHash !== null && this.pendingHash !== location.hash.slice(1)) return true
+    if (this.pendingSearch !== null && this.pendingSearch !== new URLSearchParams(location.search).toString()) return true
+
+    return false
+  }
+
+  flushURLUpdate() {
+    const location = window.parent.location
+    const hash = this.pendingHash
+    const search = this.pendingSearch
+
+    this.pendingHash = null
+    this.pendingSearch = null
+    this.lastURLUpdateAt = Date.now()
+
+    if (hash !== null && hash !== location.hash.slice(1)) {
+      location.hash = hash
+    }
+
+    if (search === null || search === new URLSearchParams(location.search).toString()) return
+
+    const url = new URL(location)
+    url.search = search
+
+    window.parent.history.replaceState({}, '', url)
   }
 
   async insert(event) {
@@ -558,6 +634,36 @@ export default class extends Controller {
     }
   }
 
+  populateFrameworkOptions() {
+    if (!this.hasLinterFrameworkTarget) return
+
+    const options = Object.entries(FRAMEWORKS)
+      .map(([framework, label]) => new Option(label, framework, false, framework === DEFAULT_FRAMEWORK))
+      .sort((a, b) => a.text.localeCompare(b.text))
+
+    this.linterFrameworkTarget.replaceChildren(...options, new Option("Not set", ""))
+  }
+
+  restoreLinterOptions() {
+    const linterOptionsFromURL = this.getLinterOptionsFromURL()
+
+    if (Object.keys(linterOptionsFromURL).length > 0) {
+      this.setLinterOptions(linterOptionsFromURL)
+    }
+  }
+
+  setLinterOptions(linterOptions) {
+    if (!this.hasLinterFrameworkTarget) return
+    if (!linterOptions.hasOwnProperty('framework')) return
+
+    const framework = linterOptions.framework || ""
+    const isKnownFramework = Array.from(this.linterFrameworkTarget.options).some(option => option.value === framework)
+
+    if (isKnownFramework) {
+      this.linterFrameworkTarget.value = framework
+    }
+  }
+
   setAutofixOptions(autofixOptions) {
     if (this.hasAutofixIncludeUnsafeTarget && autofixOptions.hasOwnProperty('includeUnsafe')) {
       this.autofixIncludeUnsafeTarget.checked = Boolean(autofixOptions.includeUnsafe)
@@ -606,19 +712,17 @@ export default class extends Controller {
   }
 
   updateTabInURL(tabName) {
-    const url = new URL(window.parent.location)
+    this.updateSearchParams((params) => {
+      if (tabName && tabName !== 'parse') {
+        params.set('tab', tabName)
+      } else {
+        params.delete('tab')
+      }
 
-    if (tabName && tabName !== 'parse') {
-      url.searchParams.set('tab', tabName)
-    } else {
-      url.searchParams.delete('tab')
-    }
-
-    if (tabName !== 'diagnostics') {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+      if (tabName !== 'diagnostics') {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   getClosestButton(element) {
@@ -786,12 +890,34 @@ export default class extends Controller {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
 
     try {
-      const result = Herb.diff(this.diffSnapshotSource, value)
-      this.renderDiffResult(result)
+      const result = Herb.diff(this.diffSnapshotSource, value, this.diffOptions())
+      this.renderDiffResult(result, this.diffSnapshotSource !== value)
     } catch (error) {
       console.error("Diff error:", error)
       this.updateDiffStatus("Error computing diff")
     }
+  }
+
+  diffOptions() {
+    if (!this.hasDiffWhitespaceCheckboxTarget) return {}
+
+    return { track_whitespace_changes: this.diffWhitespaceCheckboxTarget.checked }
+  }
+
+  onDiffOptionChange(_event) {
+    this.updateURL()
+    this.diffNoChangeset = false
+
+    if (this.diffMode === "checkpoint") {
+      if (this.diffSnapshotSource) { this.diffCheckpoint() }
+
+      return
+    }
+
+    this.diffFeedEntries = []
+    this.previousSource = null
+
+    this.updateDiff()
   }
 
   // alias for data-action naming
@@ -805,6 +931,7 @@ export default class extends Controller {
 
   clearDiffFeed() {
     this.diffFeedEntries = []
+    this.diffNoChangeset = false
     this.previousSource = this.editor ? this.editor.getValue() : this.inputTarget.value
 
     if (this.hasDiffOutputTarget) {
@@ -843,9 +970,13 @@ export default class extends Controller {
     this.hideDiffParseError()
 
     try {
-      const result = Herb.diff(this.previousSource, value)
+      const result = Herb.diff(this.previousSource, value, this.diffOptions())
 
-      if (!result.identical) {
+      if (result.identical) {
+        this.diffNoChangeset = true
+      } else {
+        this.diffNoChangeset = false
+
         if (!this.diffFeedEntries) { this.diffFeedEntries = [] }
 
         this.diffFeedEntries.unshift({
@@ -871,7 +1002,10 @@ export default class extends Controller {
     if (!this.hasDiffOutputTarget) return
 
     if (!this.diffFeedEntries || this.diffFeedEntries.length === 0) {
-      if (latestResult && latestResult.identical) {
+      if (this.diffNoChangeset) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else if (latestResult && latestResult.identical) {
         this.diffOutputTarget.innerHTML = '<span class="diff-empty">No changes detected.</span>'
         this.updateDiffStatus("Identical")
       }
@@ -882,7 +1016,7 @@ export default class extends Controller {
     const totalOperations = this.diffFeedEntries.reduce((sum, entry) => sum + entry.operations.length, 0)
     this.updateDiffStatus(`${totalOperations} change${totalOperations === 1 ? "" : "s"} in ${this.diffFeedEntries.length} edit${this.diffFeedEntries.length === 1 ? "" : "s"}`)
 
-    let html = ""
+    let html = this.diffNoChangeset ? this.renderNoChangesetNotice() : ""
 
     this.diffFeedEntries.forEach((entry, entryIndex) => {
       const time = entry.timestamp.toLocaleTimeString()
@@ -964,12 +1098,18 @@ export default class extends Controller {
     this.analyze()
   }
 
-  renderDiffResult(result) {
+  renderDiffResult(result, sourceChanged = false) {
     if (!this.hasDiffOutputTarget) return
 
     if (result.identical) {
-      this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
-      this.updateDiffStatus("Identical")
+      if (sourceChanged) {
+        this.diffOutputTarget.innerHTML = this.renderNoChangesetNotice()
+        this.updateDiffStatus("No changeset")
+      } else {
+        this.diffOutputTarget.innerHTML = '<span class="diff-empty">Trees are identical - no differences found.</span>'
+        this.updateDiffStatus("Identical")
+      }
+
       return
     }
 
@@ -978,12 +1118,28 @@ export default class extends Controller {
     this.diffOutputTarget.innerHTML = this.renderOperations(operations)
   }
 
+  renderNoChangesetNotice() {
+    const tracking = this.diffOptions().track_whitespace_changes
+
+    const hint = tracking
+      ? "The edit does not affect the syntax tree."
+      : "Whitespace that HTML collapses is not reported. Enable \"Track insignificant whitespace changes\" to see it."
+
+    let html = `<div class="diff-no-changeset">`
+    html += `<div class="text-sm font-semibold"><i class="fas fa-circle-info mr-2"></i>Source changed, but no changeset was emitted.</div>`
+    html += `<div class="text-xs diff-no-changeset-hint">${hint}</div>`
+    html += `</div>`
+
+    return html
+  }
+
   renderOperations(operations) {
     const typeStyles = {
       node_inserted:          { css: "inserted",   icon: "fa-plus" },
       node_removed:           { css: "removed",    icon: "fa-minus" },
       node_replaced:          { css: "replaced",   icon: "fa-right-left" },
       text_changed:           { css: "changed",    icon: "fa-pen" },
+      whitespace_changed:     { css: "whitespace", icon: "fa-arrows-left-right-to-line" },
       erb_content_changed:    { css: "erb",        icon: "fa-code" },
       attribute_added:        { css: "attribute",  icon: "fa-plus" },
       attribute_removed:      { css: "removed",    icon: "fa-minus" },
@@ -1068,8 +1224,16 @@ export default class extends Controller {
     return html
   }
 
+  visualizeWhitespace(value) {
+    return value.replace(/\t/g, "\u2192").replace(/\n/g, "\u23ce").replace(/ /g, "\u00b7")
+  }
+
   extractNodeValue(node, operationType) {
     if (!node) return null
+
+    if (operationType === "whitespace_changed") {
+      return node.content ? this.visualizeWhitespace(node.content) : null
+    }
 
     if (operationType === "text_changed" || node.type === "AST_HTML_TEXT_NODE") {
       return node.content || null
@@ -1273,7 +1437,7 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const linter = new Linter(Herb)
-      const result = linter.autofix(value)
+      const result = linter.autofix(value, this.getLinterOptions())
 
       if (result && typeof result === "object" && "source" in result) {
         const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
@@ -1327,7 +1491,7 @@ export default class extends Controller {
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const linter = new Linter(Herb)
-      const result = linter.autofix(value, undefined, undefined, { includeUnsafe: true })
+      const result = linter.autofix(value, this.getLinterOptions(), undefined, { includeUnsafe: true })
 
       if (result && typeof result === "object" && "source" in result) {
         const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
@@ -1379,7 +1543,8 @@ export default class extends Controller {
     const printerOptions = this.getPrinterOptions()
     const formatterOptions = this.getFormatterOptions()
     const autofixOptions = this.getAutofixOptions()
-    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions)
+    const linterOptions = this.getLinterOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions, autofixOptions, linterOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -1393,7 +1558,7 @@ export default class extends Controller {
         const diagnostic = error.toMonacoDiagnostic()
 
         diagnostic.source = "Herb Parser"
-        diagnostic.code = diagnostic.code || error.constructor?.name || 'parser-error'
+        diagnostic.code = diagnostic.code || error.code || error.type || 'parser-error'
 
         return diagnostic
       }))
@@ -1665,7 +1830,7 @@ export default class extends Controller {
     if (this.hasAutofixUnsafeWrapperTarget) {
       const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
       const hasUnsafeOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) &&
-        result.lintResult.offenses.some(offense => offense.autofixContext && offense.autofixContext.unsafe === true))
+        result.lintResult.offenses.some(offense => fixabilityFor(offense, rules.find(rule => rule.ruleName === offense.rule)).unsafeAutocorrectable))
 
       if (hasParserErrors || !hasUnsafeOffenses) {
         this.autofixUnsafeWrapperTarget.classList.add('hidden')
@@ -1925,6 +2090,11 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onLinterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
   getPrinterOptions() {
     const options = {}
     if (this.hasPrinterIgnoreErrorsTarget) {
@@ -1942,6 +2112,16 @@ export default class extends Controller {
       if (!isNaN(value) && value > 0) {
         options.maxLineLength = value
       }
+    }
+
+    return options
+  }
+
+  getLinterOptions() {
+    const options = {}
+
+    if (this.hasLinterFrameworkTarget) {
+      options.framework = this.linterFrameworkTarget.value || undefined
     }
 
     return options
@@ -1973,8 +2153,6 @@ export default class extends Controller {
   }
 
   setOptionsInURL(options) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       track_whitespace: false,
       analyze: true,
@@ -2002,18 +2180,16 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultOptions).length > 0) {
-      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
-    } else {
-      url.searchParams.delete('options')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultOptions).length > 0) {
+        params.set('options', JSON.stringify(nonDefaultOptions))
+      } else {
+        params.delete('options')
+      }
+    })
   }
 
   setPrinterOptionsInURL(printerOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       ignoreErrors: false,
     }
@@ -2029,13 +2205,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultPrinterOptions).length > 0) {
-      url.searchParams.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
-    } else {
-      url.searchParams.delete('printerOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultPrinterOptions).length > 0) {
+        params.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
+      } else {
+        params.delete('printerOptions')
+      }
+    })
   }
 
   getPrinterOptionsFromURL() {
@@ -2054,8 +2230,6 @@ export default class extends Controller {
   }
 
   setFormatterOptionsInURL(formatterOptions) {
-    const url = new URL(window.parent.location)
-
     const nonDefaultFormatterOptions = {}
 
     Object.keys(formatterOptions).forEach(key => {
@@ -2064,13 +2238,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
-      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
-    } else {
-      url.searchParams.delete('formatterOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+        params.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+      } else {
+        params.delete('formatterOptions')
+      }
+    })
   }
 
   getFormatterOptionsFromURL() {
@@ -2089,8 +2263,6 @@ export default class extends Controller {
   }
 
   setAutofixOptionsInURL(autofixOptions) {
-    const url = new URL(window.parent.location)
-
     const defaults = {
       includeUnsafe: false,
     }
@@ -2106,13 +2278,13 @@ export default class extends Controller {
       }
     })
 
-    if (Object.keys(nonDefaultAutofixOptions).length > 0) {
-      url.searchParams.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
-    } else {
-      url.searchParams.delete('autofixOptions')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultAutofixOptions).length > 0) {
+        params.set('autofixOptions', JSON.stringify(nonDefaultAutofixOptions))
+      } else {
+        params.delete('autofixOptions')
+      }
+    })
   }
 
   getAutofixOptionsFromURL() {
@@ -2124,6 +2296,37 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(autofixOptionsString))
       } catch (e) {
         console.warn('Failed to parse autofix options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setLinterOptionsInURL(linterOptions) {
+    const nonDefaultLinterOptions = {}
+
+    if (linterOptions.hasOwnProperty('framework') && linterOptions.framework !== DEFAULT_FRAMEWORK) {
+      nonDefaultLinterOptions.framework = linterOptions.framework ?? null
+    }
+
+    this.updateSearchParams((params) => {
+      if (Object.keys(nonDefaultLinterOptions).length > 0) {
+        params.set('linterOptions', JSON.stringify(nonDefaultLinterOptions))
+      } else {
+        params.delete('linterOptions')
+      }
+    })
+  }
+
+  getLinterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const linterOptionsString = urlParams.get('linterOptions')
+
+    if (linterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(linterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse linter options from URL:', e)
       }
     }
 
@@ -2142,15 +2345,13 @@ export default class extends Controller {
   }
 
   updateDiagnosticsFilterInURL(filter) {
-    const url = new URL(window.parent.location)
-
-    if (filter && filter !== 'all') {
-      url.searchParams.set('diagnosticsFilter', filter)
-    } else {
-      url.searchParams.delete('diagnosticsFilter')
-    }
-
-    window.parent.history.replaceState({}, '', url)
+    this.updateSearchParams((params) => {
+      if (filter && filter !== 'all') {
+        params.set('diagnosticsFilter', filter)
+      } else {
+        params.delete('diagnosticsFilter')
+      }
+    })
   }
 
   updateDiagnosticsViewer(diagnostics) {

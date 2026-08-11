@@ -19,7 +19,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        108 enabled | all rules via --all-rules"
+  Rules        140 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`--only\` replaces the counts from a disabled \`all\` 1`] = `
@@ -50,7 +50,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 108 not enabled
+  Rules        0 enabled | 140 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -71,7 +71,7 @@ exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` su
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        0 enabled | 108 not enabled
+  Rules        0 enabled | 140 not enabled
 
  No rules enabled:
   Every linter rule is turned off, so no offenses can be reported.
@@ -102,7 +102,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        108 enabled"
+  Rules        140 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > \`all: enabled: true\` reports no version-skipped rules 1`] = `
@@ -124,7 +124,7 @@ test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        108 enabled"
+  Rules        140 enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > reports enabled and not-enabled rules when no \`all\` is configured 1`] = `
@@ -146,7 +146,7 @@ test/fixtures/test-file-with-errors.html.erb:
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted back in on top of \`all: enabled: false\` count as enabled 1`] = `
@@ -165,7 +165,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        1 enabled | 107 not enabled"
+  Rules        1 enabled | 139 not enabled"
 `;
 
 exports[`CLI Output Formatting > \`all\` pseudo rule in .herb.yml > \`Rules\` summary line > rules opted out on top of \`all: enabled: true\` count as disabled 1`] = `
@@ -184,7 +184,7 @@ test-file-with-errors.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        107 enabled | 1 disabled"
+  Rules        139 enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports every offense for the fixture with --all-rules 1`] = `
@@ -214,7 +214,7 @@ test/fixtures/all-rules.html.erb:
   Failing      0 offenses
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        108 enabled | all rules via --all-rules"
+  Rules        140 enabled | all rules via --all-rules"
 `;
 
 exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture with the default rule set 1`] = `
@@ -226,7 +226,7 @@ exports[`CLI Output Formatting > --all-rules > reports nothing for the fixture w
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
@@ -257,6 +257,15 @@ test/fixtures/ignored.html.erb:6:3
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
 
@@ -270,6 +279,15 @@ test/fixtures/ignored.html.erb:6:14
         │               ~~~
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
@@ -285,6 +303,15 @@ test/fixtures/ignored.html.erb:7:3
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
       9 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              6 │   <DIV>hello</DIV>
+          -   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+          +     │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+              8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
 
@@ -298,6 +325,15 @@ test/fixtures/ignored.html.erb:7:14
         │               ~~~
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
       9 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              6 │   <DIV>hello</DIV>
+          -   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+          +     │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+              8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
@@ -341,7 +377,7 @@ test/fixtures/ignored.html.erb:8:8
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Note         3 additional offenses reported (would have been ignored)
   Fixable      7 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > counts the hidden offenses and suggests the level that reveals them 1`] = `
@@ -359,7 +395,7 @@ exports[`CLI Output Formatting > --log-level > counts the hidden offenses and su
   Not failing  2 info | 1 hint (3 offenses across 1 file, below --fail-level=error)
   Not shown    3 offenses hidden, show them with --log-level=hint
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > doesn't report offenses below the given level 1`] = `
@@ -376,7 +412,7 @@ exports[`CLI Output Formatting > --log-level > doesn't report offenses below the
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        91 enabled | 16 not enabled | 1 disabled"
+  Rules        118 enabled | 21 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > prefers the CLI flag over the config file 1`] = `
@@ -395,7 +431,7 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        91 enabled | 16 not enabled | 1 disabled"
+  Rules        118 enabled | 21 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > reads logLevel from the config file 1`] = `
@@ -412,7 +448,7 @@ exports[`CLI Output Formatting > --log-level > reads logLevel from the config fi
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        91 enabled | 16 not enabled | 1 disabled"
+  Rules        118 enabled | 21 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still counts hidden offenses towards the exit code 1`] = `
@@ -428,7 +464,7 @@ exports[`CLI Output Formatting > --log-level > still counts hidden offenses towa
   Offenses     1 hint (1 offense across 1 file)
   Not shown    1 offense hidden, show it with --log-level=hint
   Fixable      0 offenses
-  Rules        91 enabled | 16 not enabled | 1 disabled"
+  Rules        118 enabled | 21 not enabled | 1 disabled"
 `;
 
 exports[`CLI Output Formatting > --log-level > still reports offenses at or above the given level 1`] = `
@@ -447,7 +483,128 @@ test-file-with-errors.html.erb:
   Failing      0 offenses
   Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
   Fixable      0 offenses
-  Rules        91 enabled | 16 not enabled | 1 disabled"
+  Rules        118 enabled | 21 not enabled | 1 disabled"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --all-rules > keeps the log level when it is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Not shown    1 offense hidden, show it with --log-level=hint
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        140 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --all-rules > lowers the log level to report the rules it was asked for 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      2 errors (2 offenses across 1 file)
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Log level    hint | lowered from warning by --all-rules
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`
+  Rules        140 enabled | all rules via --all-rules"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > keeps the log level when it is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Not shown    1 offense hidden, show it with --log-level=hint
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to report the rules it was asked for 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 hint (1 offense across 1 file, below --fail-level=error)
+  Log level    hint | lowered from warning by --only
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > lowers the log level to the lowest severity of the run 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  3:3  ⚠ Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+
+ Rule offenses:
+  html-img-require-alt (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
+  Log level    info | lowered from error by --only
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only"
+`;
+
+exports[`CLI Output Formatting > --log-level > with --only > stays quiet when the configured log level hides nothing 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+test-file-with-errors.html.erb:
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        1 enabled | filtered by --only"
 `;
 
 exports[`CLI Output Formatting > Excluded Files > skips excluded file in subdirectory with README.md project indicator 1`] = `
@@ -489,6 +646,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -502,6 +668,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 
  Rule offenses:
@@ -514,7 +689,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -529,6 +704,13 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   →   1 │ <div>No trailing newline</div>
         │                              ~
 
+        Running --fix would correct this to:
+
+        test/fixtures/no-trailing-newline.html.erb
+
+              1 │ <div>No trailing newline</div>
+          +     │
+
 
 
  Rule offenses:
@@ -539,11 +721,25 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      1 offense | 1 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 2`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[info] The partial \`post\` is looked up relative to the directory of the template rendering it. Moving this template changes which file that resolves to, and renaming the partial means hunting for callers that never spell its full name. Write the full path from the view root so it resolves to the same file from any template, and a search for that path finds every caller. (actionview-prefer-qualified-partial-path)
+
+test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:21
+
+      7 │ <% end %>
+      8 │ 
+  →   9 │ <%=  render partial: "post",
+        │                      ~~~~~~
+     10 │            as: :post
+     11 │ %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -554,8 +750,16 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:2
       2 │ 
       3 │ <%
 
+        Running --fix would correct this to:
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/4] ⎯⎯⎯⎯
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
+
+          -   1 │ <%  extra_whitespace  %>
+          +     │ <% extra_whitespace  %>
+              2 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace before \`%>\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -566,8 +770,16 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:20
       2 │ 
       3 │ <%
 
+        Running --fix would correct this to:
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/4] ⎯⎯⎯⎯
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
+
+          -   1 │ <%  extra_whitespace  %>
+          +     │ <%  extra_whitespace %>
+              2 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
 
 [error] Remove extra whitespace after \`<%=\`. (erb-no-extra-whitespace-inside-tags) [Correctable]
 
@@ -580,10 +792,19 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:9:3
      10 │            as: :post
      11 │ %>
 
+        Running --fix would correct this to:
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/4] ⎯⎯⎯⎯
+        test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb
 
-[error] Avoid unused expressions in silent ERB tags. \`extra_whitespace\` is evaluated but its return value is discarded. Use \`<%= ... %>\` to output the value or remove the expression. (erb-no-unused-expressions)
+              8 │ 
+          -   9 │ <%=  render partial: "post",
+          +     │ <%= render partial: "post",
+             10 │            as: :post
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
+
+[error] Avoid unused expressions in silent ERB tags. \`<% extra_whitespace %>\` is evaluated but its return value is discarded. Use \`<%= extra_whitespace %>\` to output the value or remove the expression. (erb-no-unused-expressions)
 
 test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
@@ -596,14 +817,16 @@ test/fixtures/erb-no-extra-whitespace-inside-tags.html.erb:1:4
 
  Rule offenses:
   erb-no-extra-whitespace-inside-tags (3 offenses in 1 file)
+  actionview-prefer-qualified-partial-path (1 offense in 1 file)
   erb-no-unused-expressions (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     4 errors (4 offenses across 1 file)
-  Fixable      4 offenses | 3 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Failing      4 errors (4 offenses across 1 file)
+  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
+  Fixable      5 offenses | 3 autocorrectable using \`--fix\`
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
@@ -620,6 +843,15 @@ test/fixtures/ignored.html.erb:6:3
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -634,6 +866,15 @@ test/fixtures/ignored.html.erb:6:14
       7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
       8 │   <% %> <%# herb:disable erb-no-empty-tags %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/ignored.html.erb
+
+              5 │ 
+          -   6 │   <DIV>hello</DIV>
+          +     │   <div>hello</div>
+              7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+
 
 
  Rule offenses:
@@ -645,8 +886,10 @@ test/fixtures/ignored.html.erb:6:14
   Offenses     2 errors (2 offenses across 1 file)
   Ignored      3 offenses suppressed with herb:disable
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
+
+exports[`CLI Output Formatting > New rules available hint > keeps the space before the version label inside the gray sequence 1`] = `"  ]8;;https://herb-tools.dev/linter/rules/svg-tag-name-capitalization\\[37msvg-tag-name-capitalization[0m]8;;\\[90m (introduced in 0.4.2)[0m"`;
 
 exports[`CLI Output Formatting > allows tag.attributes in attribute position 1`] = `
 "✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
@@ -659,6 +902,17 @@ test/fixtures/tag-attributes.html.erb:1:0
         │ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       2 │   Content
       3 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/tag-attributes.html.erb
+
+          -   1 │ <div <%= tag.attributes(class: ["one", "two", "three"]) %>>
+          +     │ <%= tag.div(class: ["one", "two", "three"]) do %>
+              2 │   Content
+          -   3 │ </div>
+          +     │ <% end %>
+              4 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
@@ -674,6 +928,15 @@ test/fixtures/tag-attributes.html.erb:5:0
       6 │ 
       7 │ <button class="primary" <%= tag.attributes(id: "cta", aria: { expanded: false }) %>>Click</button>
 
+        Running --fix would correct this to:
+
+        test/fixtures/tag-attributes.html.erb
+
+              4 │ 
+          -   5 │ <input <%= tag.attributes(type: :text, aria: { label: "Search" }) %>>
+          +     │ <%= tag.input(type: :text, aria: { label: "Search" }) %>
+              6 │
+
 
 
  Rule offenses:
@@ -685,7 +948,7 @@ test/fixtures/tag-attributes.html.erb:5:0
   Failing      0 offenses
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -711,7 +974,7 @@ test/fixtures/parser-errors.html.erb:2:16
   Checked      1 file
   Offenses     1 error (1 offense across 1 file)
   Fixable      0 offenses
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -770,6 +1033,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id=test1 class="" data-value=bar>
+              4 │   <img />
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/14] ⎯⎯⎯⎯
 
@@ -784,6 +1056,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id="test1" class='' data-value=bar>
+              4 │   <img />
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/14] ⎯⎯⎯⎯
 
@@ -797,6 +1078,15 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
         │                                   ~~~
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
+
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              2 │ 
+          -   3 │ <div id=test1 class='' data-value=bar>
+          +     │ <div id=test1 class='' data-value="bar">
+              4 │   <img />
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/14] ⎯⎯⎯⎯
@@ -910,6 +1200,15 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
       5 │   <a class="" class="">Link 1</a>
       6 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/multiple-rule-offenses.html.erb
+
+              3 │ <div id=test1 class='' data-value=bar>
+          -   4 │   <img />
+          +     │   <img>
+              5 │   <a class="" class="">Link 1</a>
+
 
 
  Most frequent rule offenses:
@@ -927,7 +1226,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:7
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -943,6 +1242,15 @@ test/fixtures/few-rule-offenses.html.erb:2:8
       3 │   <img src=image>
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
+          -   2 │ <div id=test class=foo>
+          +     │ <div id="test" class=foo>
+              3 │   <img src=image>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
 
@@ -955,6 +1263,15 @@ test/fixtures/few-rule-offenses.html.erb:2:19
         │                    ~~~
       3 │   <img src=image>
       4 │ </div>
+
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
+          -   2 │ <div id=test class=foo>
+          +     │ <div id=test class="foo">
+              3 │   <img src=image>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
@@ -969,6 +1286,15 @@ test/fixtures/few-rule-offenses.html.erb:3:11
         │            ~~~~~
       4 │ </div>
       5 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/few-rule-offenses.html.erb
+
+              2 │ <div id=test class=foo>
+          -   3 │   <img src=image>
+          +     │   <img src="image">
+              4 │ </div>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
@@ -1025,7 +1351,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
   Failing      4 errors (4 offenses across 1 file)
   Not failing  2 warnings (2 offenses across 1 file, below --fail-level=error)
   Fixable      6 offenses | 3 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -1043,6 +1369,14 @@ test/fixtures/bad-file.html.erb:1:1
         │  ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1054,6 +1388,14 @@ test/fixtures/bad-file.html.erb:1:16
         │                 ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 
  Rule offenses:
@@ -1064,7 +1406,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -1076,7 +1418,7 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
@@ -1112,6 +1454,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -1125,6 +1476,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 
  Rule offenses:
@@ -1137,7 +1497,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -1153,6 +1513,15 @@ test/fixtures/test-file-simple.html.erb:2:3
       3 │ </div>
       4 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1166,6 +1535,15 @@ test/fixtures/test-file-simple.html.erb:2:22
       3 │ </div>
       4 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
 
 
  Rule offenses:
@@ -1176,7 +1554,7 @@ test/fixtures/test-file-simple.html.erb:2:22
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -1223,7 +1601,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 92,
+    "ruleCount": 119,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1245,7 +1623,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 92,
+    "ruleCount": 119,
     "totalErrors": 0,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1319,7 +1697,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 92,
+    "ruleCount": 119,
     "totalErrors": 2,
     "totalHints": 0,
     "totalIgnored": 0,
@@ -1359,6 +1737,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -1372,6 +1759,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 
  Rule offenses:
@@ -1384,7 +1780,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -1403,7 +1799,7 @@ test/fixtures/test-file-simple.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -1422,7 +1818,7 @@ test/fixtures/bad-file.html.erb:
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -1434,7 +1830,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles boolean attributes 1`] = `
@@ -1446,7 +1842,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
   Checked      1 file
   Offenses     0 offenses
   Fixable      0 offenses
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
@@ -1460,6 +1856,14 @@ test/fixtures/bad-file.html.erb:1:1
         │  ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
@@ -1471,6 +1875,14 @@ test/fixtures/bad-file.html.erb:1:16
         │                 ~~~~
       2 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/bad-file.html.erb
+
+          -   1 │ <SPAN>Bad file</SPAN>
+          +     │ <span>Bad file</span>
+              2 │
+
 
 
  Rule offenses:
@@ -1481,7 +1893,7 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors (2 offenses across 1 file)
   Fixable      2 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
@@ -1497,6 +1909,15 @@ test/fixtures/disabled-1.html.erb:12:19
         │                    ~~~~~~~~~~~~~~~~~~~~
      13 │ 
      14 │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-1.html.erb
+
+             11 │ 
+          -  12 │   <div>hello</div> <% # herb:disable %>
+          +     │   <div>hello</div> <%# herb:disable %>
+             13 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/8] ⎯⎯⎯⎯
@@ -1615,7 +2036,7 @@ test/fixtures/disabled-1.html.erb:14:19
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Ignored      8 offenses suppressed with herb:disable
   Fixable      8 offenses | 1 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
@@ -1720,6 +2141,15 @@ test/fixtures/disabled-2.html.erb:4:3
       5 │ 
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              3 │ 
+          -   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+          +     │   <div></div><%# herb:disable this-rule-doesnt-exist %>
+              5 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/13] ⎯⎯⎯⎯
 
@@ -1733,6 +2163,15 @@ test/fixtures/disabled-2.html.erb:4:9
         │          ~~~
       5 │ 
       6 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              3 │ 
+          -   4 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+          +     │   <div></div><%# herb:disable this-rule-doesnt-exist %>
+              5 │
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/13] ⎯⎯⎯⎯
@@ -1749,6 +2188,15 @@ test/fixtures/disabled-2.html.erb:10:3
      11 │ 
      12 │   <DIV></DIV><%# herb:disable disable %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              9 │ 
+          -  10 │   <DIV></DIV><%# herb:disable herb %>
+          +     │   <div></div><%# herb:disable herb %>
+             11 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/13] ⎯⎯⎯⎯
 
@@ -1764,6 +2212,15 @@ test/fixtures/disabled-2.html.erb:10:9
      11 │ 
      12 │   <DIV></DIV><%# herb:disable disable %>
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+              9 │ 
+          -  10 │   <DIV></DIV><%# herb:disable herb %>
+          +     │   <div></div><%# herb:disable herb %>
+             11 │
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/13] ⎯⎯⎯⎯
 
@@ -1778,6 +2235,15 @@ test/fixtures/disabled-2.html.erb:12:3
      13 │ </div>
      14 │
 
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+             11 │ 
+          -  12 │   <DIV></DIV><%# herb:disable disable %>
+          +     │   <div></div><%# herb:disable disable %>
+             13 │ </div>
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [11/13] ⎯⎯⎯⎯
 
@@ -1791,6 +2257,15 @@ test/fixtures/disabled-2.html.erb:12:9
         │          ~~~
      13 │ </div>
      14 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/disabled-2.html.erb
+
+             11 │ 
+          -  12 │   <DIV></DIV><%# herb:disable disable %>
+          +     │   <div></div><%# herb:disable disable %>
+             13 │ </div>
 
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [12/13] ⎯⎯⎯⎯
@@ -1820,7 +2295,26 @@ test/fixtures/disabled-2.html.erb:2:44
   Not failing  7 warnings (7 offenses across 1 file, below --fail-level=error)
   Ignored      5 offenses suppressed with herb:disable
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
+`;
+
+exports[`CLI Output Formatting > missing \`framework\` option > reports the missing option per template 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/test/fixtures/.herb.yml
+
+clean-file.html.erb:
+  1:0  ⚠ No \`framework\` is set in \`.herb.yml\`, so Herb assumes plain \`ruby\` templates. Set \`framework\` to one of \`ruby\`, \`actionview\`, \`hanami\`, or \`sinatra\` so Herb can tailor its assumptions, rules, and optimizations to your framework. (herb-config-framework-option)
+
+
+ Rule offenses:
+  herb-config-framework-option (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Failing      0 offenses
+  Not failing  1 info (1 offense across 1 file, below --fail-level=error)
+  Fixable      0 offenses
+  Rules        1 enabled | 139 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > points at --log-level when many offenses don't fail the build 1`] = `
@@ -1858,7 +2352,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled
+  Rules        119 enabled | 21 not enabled
 
  TIP: 11 of the logged offenses don't fail the build.
       Run herb-lint --log-level=error to stop logging them, or set linter.logLevel in your .herb.yml.
@@ -1890,7 +2384,7 @@ multiple-rule-offenses.html.erb:
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Not shown    11 offenses hidden, show them with --log-level=hint
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when --log-level is passed explicitly, even when it hides nothing 1`] = `
@@ -1928,7 +2422,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when logLevel is set in the config file 1`] = `
@@ -1966,7 +2460,7 @@ multiple-rule-offenses.html.erb:
   Failing      3 errors (3 offenses across 1 file)
   Not failing  1 info | 10 hints (11 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > non-failing offenses tip > stays quiet when only a handful of offenses don't fail the build 1`] = `
@@ -2004,7 +2498,160 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors (8 offenses across 1 file)
   Not failing  6 warnings (6 offenses across 1 file, below --fail-level=error)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
+`;
+
+exports[`CLI Output Formatting > points at the flag instead of previewing once there are too many corrections 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/many-correctable.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>item 1</SPAN>
+        │    ~~~~
+      3 │   <SPAN>item 2</SPAN>
+      4 │   <SPAN>item 3</SPAN>
+
+        Tip: run with --show-fix-diff to preview the correction"
+`;
+
+exports[`CLI Output Formatting > previews every correction when --show-fix-diff is passed, however many there are 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/many-correctable.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>item 1</SPAN>
+        │    ~~~~
+      3 │   <SPAN>item 2</SPAN>
+      4 │   <SPAN>item 3</SPAN>
+
+        Running --fix would correct this to:
+
+        test/fixtures/many-correctable.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>item 1</SPAN>
+          +     │   <span>item 1</span>
+              3 │   <SPAN>item 2</SPAN>"
+`;
+
+exports[`CLI Output Formatting > previews the correction the same way when --show-fix-diff is passed explicitly 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        119 enabled | 21 not enabled"
+`;
+
+exports[`CLI Output Formatting > previews the correction under each correctable offense 1`] = `
+"✓ Using Herb config file at /test/herb/javascript/packages/linter/.herb.yml
+
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
+
+test/fixtures/test-file-simple.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │ </div>
+      4 │
+
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-simple.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │ </div>
+
+
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is hint 1`] = `
@@ -2041,7 +2688,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is info 1`] = `
@@ -2078,7 +2725,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > groups every severity into one line when --fail-level is warning 1`] = `
@@ -2115,7 +2762,7 @@ test/fixtures/multiple-rule-offenses.html.erb:
   Checked      1 file
   Offenses     8 errors | 6 warnings (14 offenses across 1 file)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > moves a severity between buckets as --fail-level is lowered 1`] = `
@@ -2153,7 +2800,7 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors | 4 warnings | 1 info (13 offenses across 1 file)
   Not failing  1 hint (1 offense across 1 file, below --fail-level=info)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > summary offense buckets > splits the buckets when only some severities fail the build 1`] = `
@@ -2191,7 +2838,7 @@ multiple-rule-offenses.html.erb:
   Failing      8 errors | 4 warnings (12 offenses across 1 file)
   Not failing  1 info | 1 hint (2 offenses across 1 file, below --fail-level=warning)
   Fixable      14 offenses | 4 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;
 
 exports[`CLI Output Formatting > unsafe autocorrectable offenses > counts and tags them separately from offenses --fix can correct 1`] = `
@@ -2268,6 +2915,15 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
@@ -2281,6 +2937,15 @@ test/fixtures/test-file-with-errors.html.erb:2:22
       3 │   <img src="test.jpg">
       4 │ </div>
 
+        Running --fix would correct this to:
+
+        test/fixtures/test-file-with-errors.html.erb
+
+              1 │ <div>
+          -   2 │   <SPAN>Test content</SPAN>
+          +     │   <span>Test content</span>
+              3 │   <img src="test.jpg">
+
 
 
  Rule offenses:
@@ -2293,5 +2958,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
   Failing      2 errors (2 offenses across 1 file)
   Not failing  1 warning (1 offense across 1 file, below --fail-level=error)
   Fixable      3 offenses | 2 autocorrectable using \`--fix\`
-  Rules        92 enabled | 16 not enabled"
+  Rules        119 enabled | 21 not enabled"
 `;

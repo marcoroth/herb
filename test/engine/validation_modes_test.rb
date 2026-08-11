@@ -20,9 +20,9 @@ module Engine
       end
     end
 
-    test ":raise mode raises SecurityError for security violations" do
+    test "a fatal validator raises SecurityError for security violations" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, validation_mode: :raise)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERB output tags"
@@ -30,86 +30,93 @@ module Engine
       assert_equal 5, error.column
     end
 
-    test ":raise mode raises CompilationError for other validation errors" do
+    test "a fatal validator raises CompilationError for other validation errors" do
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(@invalid_nesting_template, validation_mode: :raise)
+        Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
-      assert_includes error.message, "InvalidNestingError"
+      assert_includes error.message, "invalid-nesting"
       assert_includes error.message, "Block element <div> cannot be nested inside <p>"
     end
 
-    test ":raise mode is the default behavior" do
+    test "a fatal validator is the default behavior" do
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, validation_mode: :raise)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all)
       end
     end
 
-    test ":none mode skips all validation" do
-      assert_compiled_snapshot(@invalid_security_template, validation_mode: :none)
-      assert_compiled_snapshot('<div data-<%= @name %>="value">Content</div>', validation_mode: :none)
+    test "no validators skips all validation" do
+      assert_compiled_snapshot(@invalid_security_template, visitors: [])
+      assert_compiled_snapshot('<div data-<%= @name %>="value">Content</div>', visitors: [])
     end
 
-    test ":overlay mode compiles successfully with validation errors" do
-      assert_compiled_snapshot(@invalid_security_template, validation_mode: :overlay)
+    test "a non-fatal validator compiles successfully with validation errors" do
+      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
-    test ":overlay mode with valid template does not include validation errors" do
-      assert_compiled_snapshot(@valid_template, validation_mode: :overlay)
+    test "a non-fatal validator with valid template does not include validation errors" do
+      assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
-    test "invalid validation_mode raises ArgumentError" do
-      error = assert_raises(ArgumentError) do
-        Herb::Engine.new(@valid_template, validation_mode: :invalid)
-      end
-
-      assert_includes error.message, "validation_mode must be one of :raise, :overlay, or :none"
-      assert_includes error.message, ":invalid"
-    end
-
-    test ":overlay mode includes filename in HTML" do
+    test "a non-fatal validator includes filename in HTML" do
       filename = "/path/to/template.html.erb"
       project_path = "/path"
 
-      assert_compiled_snapshot(@invalid_security_template, validation_mode: :overlay, filename: filename, project_path: project_path)
+      assert_compiled_snapshot(@invalid_security_template, visitors: Herb::Engine::Validators.all(fatal: false), filename: filename, project_path: project_path)
     end
 
-    test ":overlay mode with multiple validation errors" do
+    test "a non-fatal validator with multiple validation errors" do
       complex_invalid_template = '<div <%= @attr %> data-<%= @name %>="value">Content</div>'
 
-      assert_compiled_snapshot(complex_invalid_template, validation_mode: :overlay)
+      assert_compiled_snapshot(complex_invalid_template, visitors: Herb::Engine::Validators.all(fatal: false))
     end
 
     test "validation modes work with debug mode" do
-      engine1 = assert_compiled_snapshot(@valid_template, validation_mode: :none, debug: true)
+      engine1 = assert_compiled_snapshot(@valid_template, visitors: [Herb::Engine::DebugVisitor.new])
       assert_kind_of String, engine1.src
 
-      engine2 = assert_compiled_snapshot(@valid_template, validation_mode: :overlay, debug: true)
+      engine2 = assert_compiled_snapshot(@valid_template, visitors: Herb::Engine::Validators.all(fatal: false).use(Herb::Engine::DebugVisitor.new))
       assert_kind_of String, engine2.src
 
       assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@invalid_security_template, validation_mode: :raise, debug: true)
+        Herb::Engine.new(@invalid_security_template, visitors: Herb::Engine::Validators.all.use(Herb::Engine::DebugVisitor.new))
       end
     end
 
-    test ":overlay mode compiles parser errors into the template" do
-      engine = Herb::Engine.new("<div><span>Content</div>", validation_mode: :overlay)
+    test "a template that cannot be parsed raises rather than compiling something untrue" do
+      error = assert_raises(Herb::Engine::ParseError) do
+        Herb::Engine.new("<div><span>Content</div>", filename: "app/views/broken.html.erb")
+      end
 
-      assert_includes engine.src, "data-herb-parser-error"
-      assert_includes engine.src, "Add missing closing tag"
-      assert_includes engine.src, "suggestions-"
+      assert_equal ["missing-closing-tag"], error.diagnostics.map(&:code)
+      assert_equal "app/views/broken.html.erb", error.filename
+      assert_equal "<div><span>Content</div>", error.source
+      assert_equal 1, error.line_number
     end
 
-    test ":overlay mode compiles parser errors in a process that only loads herb" do
+    test "carries its source annotated the way an error page wants it" do
+      error = assert_raises(Herb::Engine::ParseError) do
+        Herb::Engine.new("<div>\n<span>Content\n</div>", filename: "app/views/broken.html.erb")
+      end
+
+      assert_includes error.annotated_source_code.join("\n"), "<span>Content"
+      assert_match(/\A\s+\d+\s{2}/, error.annotated_source_code.first)
+    end
+
+    test "reports a parse error in a process that only loads herb" do
       script = <<~RUBY
         require "herb"
         require "herb/engine"
-        Herb::Engine.new("<div><span>Content</div>", validation_mode: :overlay)
-        print "ok"
+
+        begin
+          Herb::Engine.new("<div><span>Content</div>")
+        rescue Herb::Engine::ParseError
+          print "ok"
+        end
       RUBY
 
       lib = File.expand_path("../../lib", __dir__)

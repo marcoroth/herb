@@ -1,0 +1,7 @@
+---
+source: "Engine::ComponentVisitorTest#test_0018_an ERB expression mixed with text in an attribute value keeps both"
+input: "{source: \"<MyComponent name=\\\"Hi <%= @user.name %>!\\\" />\", options: {visitors: [#<Herb::Engine::ComponentVisitor>]}}"
+---
+_buf = ::String.new; _buf << (render MyComponent.new(name: "Hi #{@user.name}!")
+).to_s;
+_buf.to_s

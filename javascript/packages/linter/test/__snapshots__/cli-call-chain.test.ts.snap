@@ -1,0 +1,262 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CLI call chain output > labels every path in the output project relative 1`] = `
+"[error] Element \`<style>\` must be placed inside the \`<head>\` tag. (html-head-only-elements)
+
+app/views/posts/_card.html.erb:2:2
+
+      1 │ <div>
+  →   2 │   <style>.card {}</style>
+        │   ~~~~~~~~~~~~~~~~~~~~~~~
+      3 │ </div>
+      4 │
+
+
+        rendered from app/views/posts/index.html.erb:2:2  <section>
+          →   2 │   <%= render "posts/card" %>
+
+        rendered into app/views/layouts/application.html.erb:7:10  <html> › <body> › <main>
+          →   7 │     <main><%= yield %></main>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-head-only-elements (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
+`;
+
+exports[`CLI call chain output > points a missing strict local at the declaration it violates 1`] = `
+"[error] The partial \`posts/card\` requires the \`title:\` local to be passed. Rails raises an \`ActionView::StrictLocalsError\` when a required local is missing, so add it to this \`render\` call. (actionview-no-strict-locals-error)
+
+app/views/posts/index.html.erb:4:13
+
+      2 │ 
+      3 │ <section class="list">
+  →   4 │   <%= render "posts/card" %>
+        │              ~~~~~~~~~~~~
+      5 │ </section>
+      6 │
+
+
+        declared at app/views/posts/_card.html.erb:1:0
+          →   1 │ <%# locals: (title:) %>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  actionview-no-strict-locals-error (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
+`;
+
+exports[`CLI call chain output > points an undeclared strict local at the declaration too 1`] = `
+"[error] The partial \`posts/card\` does not declare the \`extra:\` local. Rails raises an \`ActionView::StrictLocalsError\` when a caller passes an undeclared local, so remove it from this \`render\` call, or add it to the partial's \`<%# locals: () %>\` declaration. (actionview-no-strict-locals-error)
+
+app/views/posts/index.html.erb:1:38
+
+  →   1 │ <%= render "posts/card", title: "Hi", extra: true %>
+        │                                       ~~~~~~
+      2 │
+
+
+        declared at app/views/posts/_card.html.erb:1:0
+          →   1 │ <%# locals: (title:) %>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  actionview-no-strict-locals-error (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
+`;
+
+exports[`CLI call chain output > prints no call chain for an offense the file explains on its own 1`] = `
+"[error] Element \`<style>\` must be placed inside the \`<head>\` tag. (html-head-only-elements)
+
+app/views/layouts/application.html.erb:3:4
+
+      1 │ <html>
+      2 │   <body>
+  →   3 │     <style>.x {}</style>
+        │     ~~~~~~~~~~~~~~~~~~~~
+      4 │   </body>
+      5 │ </html>
+
+
+
+ Rule offenses:
+  html-head-only-elements (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
+`;
+
+exports[`CLI call chain output > prints no frame for a partial without a strict locals declaration 1`] = `
+"Summary:
+  Checked      3 files
+  Files        3 clean (3 total)
+  Offenses     0 offenses
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ ✓ All files are clean!
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml."
+`;
+
+exports[`CLI call chain output > prints the call chain under a cross-file offense 1`] = `
+"[error] Element \`<style>\` must be placed inside the \`<head>\` tag. (html-head-only-elements)
+
+app/views/posts/_card.html.erb:2:2
+
+      1 │ <div class="card">
+  →   2 │   <style>.card { color: red }</style>
+        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      3 │ </div>
+      4 │
+
+
+        rendered from app/views/posts/index.html.erb:2:2  <section>
+          →   2 │   <%= render "posts/card" %>
+
+        rendered into app/views/layouts/application.html.erb:7:10  <html> › <body> › <main>
+          →   7 │     <main><%= yield %></main>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-head-only-elements (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
+`;
+
+exports[`CLI call chain output > reports a partial rendered into both the head and the body 1`] = `
+"[error] Element \`<style>\` must be placed inside the \`<head>\` tag. At least one call site renders this file inside the \`<body>\`. (html-head-only-elements)
+
+app/views/posts/_card.html.erb:2:2
+
+      1 │ <div class="card">
+  →   2 │   <style>.card { color: red }</style>
+        │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      3 │ </div>
+      4 │
+
+
+        rendered from app/views/posts/index.html.erb:3:2  <section>
+          →   3 │   <%= render "posts/card" %>
+
+        rendered into app/views/layouts/application.html.erb:8:10  <html> › <body> › <main>
+          →   8 │     <main><%= yield %></main>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-head-only-elements (1 offense in 1 file)
+
+
+ Summary:
+  Checked      3 files
+  Files        1 with offenses | 2 clean (3 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 3 files, linting..."
+`;
+
+exports[`CLI call chain output > reports the offending call site when only one call site nests the file 1`] = `
+"[error] Nested \`<a>\` elements are not allowed. At least one call site renders this file inside an \`<a>\` element. (html-no-nested-links)
+
+app/views/posts/_badge.html.erb:1:1
+
+  →   1 │ <a href="/inner">Inner</a>
+        │  ~
+      2 │
+
+
+        rendered from app/views/posts/show.html.erb:2:2  <a>
+          →   2 │   <%= render "posts/badge" %>
+
+        rendered into app/views/layouts/application.html.erb:7:10  <html> › <body> › <main>
+          →   7 │     <main><%= yield %></main>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/1] ⎯⎯⎯⎯
+
+
+
+ Rule offenses:
+  html-no-nested-links (1 offense in 1 file)
+
+
+ Summary:
+  Checked      4 files
+  Files        1 with offenses | 3 clean (4 total)
+  Offenses     1 error (1 offense across 1 file)
+  Fixable      0 offenses
+  Rules        1 enabled | filtered by --only
+
+ TIP: Run herb-lint --init to create a .herb.yml and lock the version.
+      This ensures upgrading Herb won't enable new rules until you update the version in .herb.yml.
+Found 4 files, linting..."
+`;

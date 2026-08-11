@@ -1,5 +1,5 @@
 import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
-import { LiteralNode, Location, Visitor } from "@herb-tools/core"
+import { LiteralNode, Visitor } from "@herb-tools/core"
 
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
 import { ASTRewriter } from "../ast-rewriter.js"
@@ -140,12 +140,7 @@ class ClassAttributeSorter extends Visitor {
   }
 
   private get spaceLiteral(): LiteralNode {
-    return new LiteralNode({
-      type: "AST_LITERAL_NODE",
-      content: " ",
-      errors: [],
-      location: Location.zero
-    })
+    return LiteralNode.build({ content: " " })
   }
 
   private isInterpolatedGroup(group: Node[]): boolean {
@@ -253,12 +248,7 @@ class ClassAttributeSorter extends Visitor {
     const parts: Node[] = []
 
     if (sortedContent) {
-      parts.push(new LiteralNode({
-        type: "AST_LITERAL_NODE",
-        content: sortedContent,
-        errors: [],
-        location: Location.zero
-      }))
+      parts.push(LiteralNode.build({ content: sortedContent }))
     }
 
     for (const group of interpolationGroups) {
@@ -297,12 +287,7 @@ class ClassAttributeSorter extends Visitor {
       const trimmed = first.content.trimStart()
 
       if (trimmed !== first.content) {
-        result[0] = new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: trimmed,
-          errors: [],
-          location: first.location
-        })
+        result[0] = LiteralNode.build({ content: trimmed, location: first.location })
       }
     }
 
@@ -313,12 +298,7 @@ class ClassAttributeSorter extends Visitor {
       const trimmed = last.content.trimEnd()
 
       if (trimmed !== last.content) {
-        result[lastIndex] = new LiteralNode({
-          type: "AST_LITERAL_NODE",
-          content: trimmed,
-          errors: [],
-          location: last.location
-        })
+        result[lastIndex] = LiteralNode.build({ content: trimmed, location: last.location })
       }
     }
 

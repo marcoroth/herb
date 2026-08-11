@@ -220,4 +220,60 @@ describe("erb-prefer-direct-output", () => {
       <% end %>
     `)
   })
+
+  test("passes for string literal containing `<`", () => {
+    expectNoOffenses('<p><%= "a <b> c" %></p>')
+  })
+
+  test("passes for string literal containing `&`", () => {
+    expectNoOffenses('<p><%= "a & b" %></p>')
+  })
+
+  test("passes for interpolated string containing `<`", () => {
+    expectNoOffenses('<p><%= "#{a} <request body> -- #{b}" %></p>')
+  })
+
+  test("passes for interpolated string containing `&`", () => {
+    expectNoOffenses('<p><%= "#{a} & #{b}" %></p>')
+  })
+
+  test("passes for string literal in an unquoted attribute value", () => {
+    expectNoOffenses('<div id=<%= "foo" %>>y</div>')
+  })
+
+  test("passes for interpolated string in an unquoted attribute value", () => {
+    expectNoOffenses('<div id=<%= "#{a}_#{b}" %>>y</div>')
+  })
+
+  test("passes for string literal containing the enclosing double quote", () => {
+    expectNoOffenses(`<div title="<%= "say \\"hi\\"" %>">y</div>`)
+  })
+
+  test("passes for string literal containing the enclosing single quote", () => {
+    expectNoOffenses(`<div title='<%= "it\\'s" %>'>y</div>`)
+  })
+
+  test("fails for string literal containing a quote the enclosing attribute does not use", () => {
+    expectError(
+      `Avoid outputting string literal \`"it's"\`. Write the text directly without wrapping it in an ERB output tag.`,
+    )
+
+    assertOffenses(`<div title="<%= "it's" %>">y</div>`)
+  })
+
+  test("fails for string literal containing `>`", () => {
+    expectError(
+      'Avoid outputting string literal `"a > b"`. Write the text directly without wrapping it in an ERB output tag.',
+    )
+
+    assertOffenses('<p><%= "a > b" %></p>')
+  })
+
+  test("fails for interpolated string in a quoted attribute value", () => {
+    expectError(
+      'Avoid outputting interpolated string `"#{a}_#{b}"`. Use separate `<%= %>` tags for each dynamic value instead.',
+    )
+
+    assertOffenses('<div id="<%= "#{a}_#{b}" %>">y</div>')
+  })
 })

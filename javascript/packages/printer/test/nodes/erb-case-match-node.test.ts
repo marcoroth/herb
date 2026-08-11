@@ -12,10 +12,8 @@ describe("ERBCaseNode Printing", () => {
   })
 
   test("can print from node", () => {
-    const node = ERBCaseMatchNode.from({
-      type: "AST_ERB_CASE_MATCH_NODE",
+    const node = ERBCaseMatchNode.build({
       location,
-      errors: [],
       tag_opening: createToken("TOKEN_ERB_START", "<%"),
       content: createToken("TOKEN_ERB_CONTENT", " case variable "),
       tag_closing: createToken("TOKEN_ERB_END", "%>"),
