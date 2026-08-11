@@ -17,7 +17,6 @@ require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"
 require_relative "engine/parser_error_overlay"
-require_relative "engine/validation_error_overlay"
 require_relative "engine/validators/security_validator"
 require_relative "engine/validators/nesting_validator"
 require_relative "engine/validators/accessibility_validator"
@@ -447,8 +446,36 @@ module Herb
 
       case @validation_mode
       when :raise then raise_for(diagnostics.select(&:error?), input)
-      when :overlay then add_validation_overlay(diagnostics, input)
+      when :overlay then emit_compile_diagnostics(diagnostics)
       end
+    end
+
+    #: (Array[Herb::Diagnostic]) -> void
+    def emit_compile_diagnostics(diagnostics)
+      entries = diagnostics.map { |diagnostic| compile_diagnostic_literal(diagnostic) }.join(", ")
+
+      @src << " ::Herb::Engine::Report::Session.record_compile_diagnostics(#{relative_file_path.inspect}, [#{entries}].freeze);"
+    end
+
+    #: (Herb::Diagnostic) -> String
+    def compile_diagnostic_literal(diagnostic)
+      parts = [
+        "message: #{diagnostic.message.inspect}",
+        "severity: #{diagnostic.severity.inspect}",
+        "code: #{diagnostic.code.inspect}",
+        "origin: #{diagnostic.origin.inspect}"
+      ]
+
+      parts << "suggestion: #{diagnostic.suggestion.inspect}" if diagnostic.suggestion
+
+      location = diagnostic.location
+
+      if location
+        parts << "line: #{location.start.line}" << "column: #{location.start.column}"
+        parts << "end_line: #{location.end.line}" << "end_column: #{location.end.column}"
+      end
+
+      "{ #{parts.join(", ")} }"
     end
 
     #: (Array[Herb::Diagnostic], String) -> void
@@ -470,52 +497,6 @@ module Herb
       formatter = ErrorFormatter.new(input, errors, filename: filename)
       message = formatter.format_all
       raise CompilationError, "\n#{message}"
-    end
-
-    def add_validation_overlay(errors, input = nil)
-      return unless errors.any?
-
-      templates = errors.map { |error|
-        location = error.location
-        line = location&.start&.line || 0
-        column = location&.start&.column || 0
-
-        source = input || @src
-        overlay_generator = ValidationErrorOverlay.new(source, error, filename: relative_file_path)
-        html_fragment = overlay_generator.generate_fragment
-
-        escaped_message = escape_attr(error.message)
-        escaped_suggestion = error.suggestion ? escape_attr(error.suggestion) : ""
-
-        <<~TEMPLATE
-          <template
-            data-herb-validation-error
-            data-severity="#{error.severity}"
-            data-source="#{error.data[:validator]}"
-            data-code="#{error.code}"
-            data-line="#{line}"
-            data-column="#{column}"
-            data-filename="#{escape_attr(relative_file_path)}"
-            data-message="#{escaped_message}"
-            #{"data-suggestion=\"#{escaped_suggestion}\"" if error.suggestion}
-            data-timestamp="#{Time.now.utc.iso8601}"
-          >#{html_fragment}</template>
-        TEMPLATE
-      }.join
-
-      @validation_error_template = "#{@validation_error_template}#{templates}"
-    end
-
-    def escape_attr(text)
-      text.to_s
-          .gsub("&", "&amp;")
-          .gsub('"', "&quot;")
-          .gsub("'", "&#39;")
-          .gsub("<", "&lt;")
-          .gsub(">", "&gt;")
-          .gsub("\n", "&#10;")
-          .gsub("\r", "&#13;")
-          .gsub("\t", "&#9;")
     end
 
     def add_parser_error_overlay(parser_errors, input)
