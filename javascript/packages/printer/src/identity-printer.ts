@@ -1,5 +1,5 @@
 import { Printer } from "./printer.js"
-import { getNodesBeforePosition, getNodesAfterPosition } from "@herb-tools/core"
+import { getNodesBeforePosition, getNodesAfterPosition, isWhitespaceNode } from "@herb-tools/core"
 
 import type * as Nodes from "@herb-tools/core"
 
@@ -49,19 +49,24 @@ export class IdentityPrinter extends Printer {
     // whitespace between attributes, so reconstructing children back-to-back
     // would merge them together (e.g. `<span class="x">` becoming
     // `<spanclass="x">`). Restore a single separating space wherever the
-    // previous node's end position doesn't line up with the next node's start
-    // (when whitespace tracking is on, the gap is already covered by an
-    // explicit WhitespaceNode, so no extra space is added in that case).
+    // previous node's end position doesn't line up with the next node's start.
+    //
+    // WhitespaceNode children already print their own whitespace (including
+    // synthetic ones inserted by autofixers, whose location doesn't line up
+    // with the surrounding nodes), so they're skipped here to avoid writing a
+    // duplicate separating space in addition to the whitespace they print.
     let previousEnd = node.tag_name?.location.end ?? node.tag_opening?.location.end
 
     node.children.forEach(child => {
-      if (previousEnd && !this.samePosition(previousEnd, child.location.start)) {
+      if (previousEnd && !isWhitespaceNode(child) && !this.samePosition(previousEnd, child.location.start)) {
         this.write(" ")
       }
 
       this.visit(child)
 
-      previousEnd = child.location.end
+      if (!isWhitespaceNode(child)) {
+        previousEnd = child.location.end
+      }
     })
 
     if (node.tag_closing) {
