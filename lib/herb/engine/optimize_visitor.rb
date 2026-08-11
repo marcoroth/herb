@@ -117,17 +117,12 @@ module Herb
       def check_node(node)
         checks = @sources.map { |source, location| check_for(source, location) }.join("; ")
 
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode",
-          node.location,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%"),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " #{checks} "),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          false,
-          true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{checks} "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true,
+          location: node.location
         )
       end
 

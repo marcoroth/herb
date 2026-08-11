@@ -208,17 +208,11 @@ module Herb
       end
 
       def current_node_erb
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode",
-          Herb::Location.zero,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%="),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Report::Session.current_node "),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          false,
-          true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " ::Herb::Engine::Report::Session.current_node "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
         )
       end
 

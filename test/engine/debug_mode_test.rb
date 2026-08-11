@@ -17,17 +17,11 @@ module Engine
       def visit_document_node(node)
         super
 
-        node.children << Herb::AST::ERBContentNode.new(
-          "ERBContentNode",
-          Herb::Location.zero,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", "<%="),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " generated "),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          false,
-          true,
-          nil
+        node.children << Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%="),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " generated "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true
         )
       end
 

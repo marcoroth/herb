@@ -195,17 +195,12 @@ module Herb
       end
 
       def erb_node(node, opening, code)
-        Herb::AST::ERBContentNode.new(
-          "ERBContentNode",
-          node.location,
-          [],
-          Herb::Token.from("TOKEN_ERB_START", opening),
-          Herb::Token.from("TOKEN_ERB_CONTENT", " #{code} "),
-          Herb::Token.from("TOKEN_ERB_END", "%>"),
-          nil,
-          false,
-          true,
-          nil
+        Herb::AST::ERBContentNode.build(
+          tag_opening: Herb::Token.from("TOKEN_ERB_START", opening),
+          content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{code} "),
+          tag_closing: Herb::Token.from("TOKEN_ERB_END", "%>"),
+          valid: true,
+          location: node.location
         )
       end
     end
