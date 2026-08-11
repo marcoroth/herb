@@ -2,6 +2,7 @@
 # typed: true
 
 require_relative "../report"
+require_relative "entry"
 
 module Herb
   class Engine
@@ -68,6 +69,30 @@ module Herb
           nil
         end
 
+        #: [T] (String?, Integer, Integer) { () -> T } -> T
+        def self.at(template, line, column)
+          enter(template, line, column)
+
+          yield
+        ensure
+          leave
+        end
+
+        #: (String?, Integer, Integer) -> void
+        def self.enter(template, line, column)
+          current.enter(template, line, column)
+        end
+
+        #: () -> void
+        def self.leave
+          current.leave
+        end
+
+        #: (Symbol, untyped) -> void
+        def self.observe(key, value)
+          current.observe(key, value)
+        end
+
         #: (String, String?) -> void
         def self.source(template, source)
           current.source(template, source)
@@ -87,6 +112,8 @@ module Herb
         def initialize(scoped: false, report: nil, previous: nil)
           @scoped = scoped
           @report = report || Report.new
+          @frames = [] #: Array[Array[untyped]]
+          @entries = {} #: Hash[Array[untyped], Herb::Engine::Report::Entry]
           @previous = previous
         end
 
@@ -112,7 +139,38 @@ module Herb
 
         #: () -> bool
         def empty?
-          report.empty?
+          report.empty? && entries.empty?
+        end
+
+        #: (String?, Integer, Integer) -> void
+        def enter(template, line, column)
+          @frames.push([template, line, column])
+
+          nil
+        end
+
+        #: () -> void
+        def leave
+          @frames.pop
+
+          nil
+        end
+
+        #: (Symbol, untyped) -> void
+        def observe(key, value)
+          frame = @frames.last
+
+          return unless frame
+
+          entry = (@entries[frame] ||= Entry.new(frame[0], frame[1], frame[2]))
+          entry.observe(key, value)
+
+          nil
+        end
+
+        #: () -> Array[Herb::Engine::Report::Entry]
+        def entries
+          @entries.values.sort_by { |entry| [entry.template.to_s, entry.line, entry.column] }
         end
       end
     end

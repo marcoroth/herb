@@ -131,5 +131,79 @@ module Engine
       assert_equal 0, other
       assert_equal 1, Herb::Engine::Report::Session.current.diagnostics.length
     end
+
+    describe "attributing what happens to the tag that caused it" do
+      def session_with_frames
+        Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 3, 7) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+          end
+
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 3")
+          end
+        end
+      end
+
+      test "keeps each position apart" do
+        entries = session_with_frames.entries
+
+        assert_equal([[1, 0], [3, 7]], entries.map { |entry| [entry.line, entry.column] })
+        assert_equal 1, entries.first[:queries].length
+        assert_equal 2, entries.last[:queries].length
+      end
+
+      test "orders them the way they appear in the template" do
+        assert_equal [1, 3], session_with_frames.entries.map(&:line)
+      end
+
+      test "drops what happens outside any tag" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+        end
+
+        assert_empty session.entries
+      end
+
+      test "attributes to the innermost tag" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.at("a.html.erb", 2, 4) do
+              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            end
+          end
+        end
+
+        assert_equal([[2, 4]], session.entries.map { |entry| [entry.line, entry.column] })
+      end
+
+      test "leaves the frame even when the tag raises" do
+        session = Herb::Engine::Report::Session.capture do
+          begin
+            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) { raise "boom" }
+          rescue RuntimeError
+            nil
+          end
+
+          Herb::Engine::Report::Session.observe(:queries, "after the failure")
+        end
+
+        assert_empty session.entries
+      end
+
+      test "collects the same position across renders into one entry" do
+        session = Herb::Engine::Report::Session.capture do
+          2.times do
+            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            end
+          end
+        end
+
+        assert_equal 1, session.entries.length
+        assert_equal 2, session.entries.first[:queries].length
+      end
+    end
   end
 end
