@@ -18,6 +18,20 @@ module Herb
         <%- end -%>
       end
 
+      #: (template: String, ?origin: String) -> Herb::Diagnostic
+      def to_diagnostic(template:, origin: "Herb Parser")
+        Herb::Diagnostic.new(
+          template: template,
+          message: message,
+          severity: :error,
+          origin: origin,
+          code: Herb::Diagnostic.code_for(type),
+          location: location,
+          phase: :compile,
+          data: { type: type }
+        )
+      end
+
       #: () -> serialized_error
       def to_hash
         {

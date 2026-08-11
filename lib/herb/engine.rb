@@ -23,8 +23,6 @@ require_relative "engine/validators"
 
 module Herb
   class Engine
-    PARSER_ORIGIN = "Herb Parser" #: String
-
     attr_reader :src, :context, :bufvar, :visitors
 
     #: () -> Pathname?
@@ -70,7 +68,6 @@ module Herb
       @parser_options = properties.fetch(:parser_options, default_parser_options).transform_keys(&:to_sym)
 
       @visitors = VisitorStack.build(properties.fetch(:visitors, VisitorStack.new))
-
       @parser_options = Herb::Visitor.parser_options_for(@visitors, @parser_options)
 
       @freeze = properties[:freeze]
@@ -80,7 +77,6 @@ module Herb
       bufval = properties[:bufval] || "::String.new"
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
-
       preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
 
       @src << "# frozen_string_literal: true\n" if @freeze
@@ -94,23 +90,22 @@ module Herb
       @src << preamble
 
       parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
-      ast = parse_result.value
       parser_errors = parse_result.errors
 
       if parser_errors.any?
-        handle_parser_errors(parser_errors, input, ast)
+        handle_parser_errors(parser_errors, input, parse_result.value)
       else
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
 
-          ast.accept(visitor)
+          parse_result.value.accept(visitor)
         end
 
         report(input)
 
         compiler = Compiler.new(self, properties)
 
-        ast.accept(compiler)
+        parse_result.value.accept(compiler)
 
         compiler.generate_output
       end
@@ -332,7 +327,7 @@ module Herb
       raise ParseError.new(
         "\n#{message}",
         diagnostics: parser_errors.map { |error|
-          Herb::Diagnostic.from(error, template: relative_file_path, origin: PARSER_ORIGIN)
+          error.to_diagnostic(template: relative_file_path)
         },
         source: input,
         filename: relative_file_path

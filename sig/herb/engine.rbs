@@ -2,8 +2,6 @@
 
 module Herb
   class Engine
-    PARSER_ORIGIN: String
-
     attr_reader src: untyped
 
     attr_reader context: untyped
