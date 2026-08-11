@@ -49,6 +49,7 @@ import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-condit
 import { ERBNoInstanceVariablesInPartialsRule } from "./rules/erb-no-instance-variables-in-partials.js"
 import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoJavascriptTagHelperRule } from "./rules/erb-no-javascript-tag-helper.js"
+import { ERBNoMethodDefinitionsRule } from "./rules/erb-no-method-definitions.js"
 import { ERBNoModuleDefinitionsRule } from "./rules/erb-no-module-definitions.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoOutputInAttributeNameRule } from "./rules/erb-no-output-in-attribute-name.js"
@@ -199,6 +200,7 @@ export const rules: RuleClass[] = [
   ERBNoInstanceVariablesInPartialsRule,
   ERBNoInterpolatedClassNamesRule,
   ERBNoJavascriptTagHelperRule,
+  ERBNoMethodDefinitionsRule,
   ERBNoModuleDefinitionsRule,
   ERBNoOutputControlFlowRule,
   ERBNoOutputInAttributeNameRule,
