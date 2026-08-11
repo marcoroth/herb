@@ -69,7 +69,7 @@ module Herb
 
         self.class.experimental_warning_issued = true
 
-        warn "[Herb] Instrumentation is experimental. It instruments every ERB tag and is not meant for production."
+        warn "[Herb] Instrumentation is experimental as it instruments every ERB tag."
       end
 
       def visit_document_node(node)

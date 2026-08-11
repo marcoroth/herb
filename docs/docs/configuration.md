@@ -340,48 +340,44 @@ The engine runs validators on templates during compilation. Each validator can b
 - **`nesting`**: Validates HTML nesting rules, such as block elements inside `<p>`, nested anchors, or interactive elements inside `<button>`. _(default: `true`)_
 - **`accessibility`**: Validates accessibility-related attributes. _(default: `true`)_
 
-When a validator is disabled (`false`), the engine skips it entirely during compilation. This applies regardless of the `validation_mode` used by the engine.
+A validator that is disabled (`false`) is not built into the stack that `Herb::Engine::Validators.all` returns, so it never runs.
 
-### Validation Mode
+### Whether a finding refuses to compile
 
-The `validation_mode` controls how the engine handles validation results. This is set programmatically when creating an `Herb::Engine` instance, not in `.herb.yml`:
+Each validator decides that for itself, through `fatal:`, which is set programmatically rather than in `.herb.yml`. A fatal validator aborts compilation when it reports an error. One that is not fatal reports the same thing and lets the template compile, so the page still renders and the finding reaches the browser instead.
 
-- **`:raise`** (default): Raises an exception when validation errors are found
-- **`:overlay`**: Renders validation errors as an in-browser overlay (used by [ReActionView](https://github.com/marcoroth/reactionview) in development)
-- **`:none`**: Skips validation entirely
-
-**Raises on validation errors (default)**
+**Refuses to compile (default)**
 ```ruby
-Herb::Engine.new(source, validation_mode: :raise)
+Herb::Engine.new(source, visitors: Herb::Engine::Validators.all)
 ```
 
-**Shows errors as in-browser overlay**
+**Reports and lets the template compile**
 ```ruby
-Herb::Engine.new(source, validation_mode: :overlay)
+Herb::Engine.new(source, visitors: Herb::Engine::Validators.all(fatal: false))
 ```
 
-**Skips all validation**
+**Runs no validators at all**
 ```ruby
-Herb::Engine.new(source, validation_mode: :none)
+Herb::Engine.new(source)
 ```
+
+The engine validates nothing on its own, so leaving the validators out is all it takes to skip them.
 
 ### Overriding Validators Programmatically
 
-Validator settings from `.herb.yml` can be overridden when creating an engine instance:
+Validator settings from `.herb.yml` can be overridden when asking for the set:
 
 **Disable security validator for this template only**
 ```ruby
-Herb::Engine.new(source, validators: { security: false })
+Herb::Engine.new(source, visitors: Herb::Engine::Validators.all(security: false))
 ```
 
-**Disable all validators**
+**Pick the validators directly, ignoring `.herb.yml`**
 ```ruby
-Herb::Engine.new(source, validators: {
-  security: false,
-  nesting: false,
-  accessibility: false,
-})
+Herb::Engine.new(source, visitors: [Herb::Engine::Validators::NestingValidator.new])
 ```
+
+See [`Herb::Engine` validators](/projects/engine#validators) for the full set and how to order them.
 
 ## Formatter Configuration
 
