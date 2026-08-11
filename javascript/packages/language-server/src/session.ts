@@ -20,6 +20,10 @@ import { CommentProvider } from "./comment_provider"
 import { DocumentSymbolProvider } from "./document_symbol_provider"
 import { Projects } from "./projects"
 
+import type { LinterWarning } from "./linter_service"
+
+const OPEN_CONFIG_ACTION = "Open .herb.yml"
+
 export class Session {
   connection: Connection
   capabilities: Capabilities
@@ -59,8 +63,8 @@ export class Session {
       capabilities: this.capabilities,
     })
 
-    this.diagnostics = new DiagnosticsPublisher(this.connection, this.documents, this.parserService, this.configService, this.workspaceFolders, this.projects)
-    this.saveOrchestrator = new SaveOrchestrator(this.connection, this.userSettings, this.projects)
+    this.diagnostics = new DiagnosticsPublisher(this.connection, this.documents, this.parserService, this.configService, this.workspaceFolders, this.projects, warning => this.showWarning(warning))
+    this.saveOrchestrator = new SaveOrchestrator(this.connection, this.projects)
     this.foldingRangeProvider = new FoldingRangeProvider(this.parserService)
     this.documentHighlightProvider = new DocumentHighlightProvider(this.parserService)
     this.hoverProvider = new HoverProvider(this.parserService)
@@ -68,14 +72,29 @@ export class Session {
     this.commentProvider = new CommentProvider(this.parserService)
     this.documentSymbolProvider = new DocumentSymbolProvider(this.parserService)
 
-    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, {
-      supportsCreateFile: this.capabilities.supportsResourceCreation,
-      supportsPromptCommand: this.capabilities.supportsExtractToPartialCommand,
-    })
+    this.extractCodeActionProvider = new ExtractCodeActionProvider(this.parserService, this.capabilities)
 
     if (params.initializationOptions) {
       this.userSettings.global = params.initializationOptions as PersonalHerbSettings
     }
+  }
+
+  /**
+   * Surfaces a linter warning, offering to open the config that caused it when
+   * the client can navigate there.
+   */
+  private showWarning(warning: LinterWarning) {
+    if (!this.capabilities.hasShowDocument) {
+      this.connection.window.showWarningMessage(warning.message)
+
+      return
+    }
+
+    this.connection.window.showWarningMessage(warning.message, { title: OPEN_CONFIG_ACTION }).then(action => {
+      if (action?.title === OPEN_CONFIG_ACTION) {
+        this.connection.window.showDocument({ uri: `file://${warning.configPath}`, takeFocus: true })
+      }
+    })
   }
 
   async init() {
@@ -85,6 +104,7 @@ export class Session {
 
     this.documents.onDidClose((change) => {
       this.userSettings.forget(change.document.uri)
+      this.saveOrchestrator.forget(change.document.uri)
       this.diagnostics.clear(change.document.uri)
     })
 

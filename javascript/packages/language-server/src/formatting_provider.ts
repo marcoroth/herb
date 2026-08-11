@@ -1,20 +1,20 @@
-import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
+import { Connection, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
 import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
+import { Documents } from "./documents"
 import { Project } from "./project"
 import { UserSettings } from "./user_settings"
 import { Capabilities } from "./capabilities"
 import { Config } from "@herb-tools/config"
 import { isConfigDocument } from "./utils"
-import { version } from "../package.json"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
 export class FormattingProvider {
   private connection: Connection
-  private documents: TextDocuments<TextDocument>
+  private documents: Documents
   private project: Project
   private userSettings: UserSettings
   private capabilities: Capabilities
@@ -23,7 +23,7 @@ export class FormattingProvider {
   private postRewriters: StringRewriter[] = []
   private failedRewriters: Map<string, string> = new Map()
 
-  constructor(connection: Connection, documents: TextDocuments<TextDocument>, project: Project, userSettings: UserSettings, capabilities: Capabilities) {
+  constructor(connection: Connection, documents: Documents, project: Project, userSettings: UserSettings, capabilities: Capabilities) {
     this.connection = connection
     this.documents = documents
     this.project = project
@@ -31,11 +31,9 @@ export class FormattingProvider {
     this.capabilities = capabilities
   }
 
-  async initialize() {
+  async initialize(config?: Config) {
     try {
-      this.config = await Config.loadForEditor(this.project.root, version)
-      this.connection.console.log(`[Formatting] Config loaded, formatter config: ${JSON.stringify(this.config?.formatter || 'none')}`)
-      await this.loadConfiguredRewriters()
+      await this.refreshConfig(config)
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
       this.connection.console.error(`Failed to initialize Herb formatter: ${error}`)
@@ -43,15 +41,9 @@ export class FormattingProvider {
   }
 
   async refreshConfig(config?: Config) {
-    if (config) {
-      this.config = config
-    } else {
-      try {
-        this.config = await Config.loadForEditor(this.project.root, version)
-      } catch (error) {
-        this.connection.console.error(`Failed to refresh Herb formatter config: ${error}`)
-      }
-    }
+    this.config = config
+
+    this.connection.console.log(`[Formatting] Config loaded, formatter config: ${JSON.stringify(this.config?.formatter || 'none')}`)
 
     await this.loadConfiguredRewriters()
   }
@@ -223,7 +215,7 @@ export class FormattingProvider {
   }
 
   private async getConfigWithSettings(uri: string): Promise<Config | undefined> {
-    const settings = await this.userSettings.getDocumentSettings(uri)
+    const settings = await this.project.settingsFor(uri)
 
     if (!this.config) return undefined
 
@@ -304,7 +296,7 @@ export class FormattingProvider {
       return []
     }
 
-    const settings = await this.userSettings.getDocumentSettings(params.textDocument.uri)
+    const settings = await this.project.settingsFor(params.textDocument.uri)
 
     if (settings?.formatter?.enabled === false) {
       return []
@@ -319,9 +311,6 @@ export class FormattingProvider {
     return this.performFormatting(params)
   }
 
-  async formatDocumentIgnoreConfig(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    return this.performFormatting(params)
-  }
 
   private async performRangeFormatting(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
     const document = this.documents.get(params.textDocument.uri)
@@ -420,7 +409,4 @@ export class FormattingProvider {
     return this.performRangeFormatting(params)
   }
 
-  async formatRangeIgnoreConfig(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
-    return this.performRangeFormatting(params)
-  }
 }

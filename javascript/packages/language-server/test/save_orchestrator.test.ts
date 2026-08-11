@@ -43,10 +43,10 @@ describe('SaveOrchestrator', () => {
     } as unknown as FormattingProvider
 
     const projects = {
-      ensure: async () => ({ autofixService, formattingProvider })
+      ensure: async () => ({ autofixService, formattingProvider, settingsFor: (uri: string) => userSettings.getDocumentSettings(uri) })
     } as unknown as Projects
 
-    saveOrchestrator = new SaveOrchestrator(connection, userSettings, projects)
+    saveOrchestrator = new SaveOrchestrator(connection, projects)
   })
 
   describe('applyFixesAndFormatting', () => {

@@ -21,10 +21,10 @@ describe("ExtractCodeActionProvider", () => {
     parserService = new ParserService()
   })
 
-  function createService(supportsPromptCommand = false) {
+  function createService(supportsExtractToPartialCommand = false) {
     return new ExtractCodeActionProvider(parserService, {
-      supportsCreateFile: true,
-      supportsPromptCommand
+      supportsResourceCreation: true,
+      supportsExtractToPartialCommand
     })
   }
 
@@ -115,7 +115,7 @@ describe("ExtractCodeActionProvider", () => {
     it("does not offer an action when the client can't create files", () => {
       const content = `<div>Hello</div>`
 
-      const service = new ExtractCodeActionProvider(parserService, { supportsCreateFile: false, supportsPromptCommand: false })
+      const service = new ExtractCodeActionProvider(parserService, { supportsResourceCreation: false, supportsExtractToPartialCommand: false })
 
       expect(service.getCodeActions(createDocument(content), selectionOf(content, content))).toHaveLength(0)
     })
