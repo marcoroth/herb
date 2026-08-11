@@ -3,6 +3,7 @@
 
 require_relative "../visitor"
 require_relative "context_aware"
+require_relative "instrumentation_visitor"
 
 module Herb
   class Engine
@@ -39,17 +40,11 @@ module Herb
         true
       end
 
-      # `instrument` gives the spliced partial its own instrumenting visitor, which needs
-      # `InstrumentationVisitor` in the same stack to be worth anything. A visitor cannot see what
-      # else the engine was given, so it is asked for rather than assumed:
+      # A spliced partial is instrumented when the template it lands in is, which is what the engine
+      # was already given enough to answer. Passing `instrument` decides it either way instead.
       #
-      #     Herb::Engine.new(source, visitors: [
-      #       Herb::Engine::InstrumentationVisitor.new,
-      #       Herb::Engine::InlineRenderVisitor.new(instrument: true)
-      #     ])
-      #
-      #: (?instrument: bool) -> void
-      def initialize(instrument: false)
+      #: (?instrument: bool?) -> void
+      def initialize(instrument: nil)
         super()
 
         @instrument = instrument
@@ -66,9 +61,9 @@ module Herb
 
       #: () -> String
       def inspect
-        return "#<#{self.class.name}>" unless @instrument
+        return "#<#{self.class.name}>" if @instrument.nil?
 
-        "#<#{self.class.name} instrument=true>"
+        "#<#{self.class.name} instrument=#{@instrument}>"
       end
 
       private
@@ -145,12 +140,17 @@ module Herb
         ::Herb.parse(source, **options, track_whitespace: true).value
       end
 
+      #: () -> bool
+      def instrument?
+        return @instrument unless @instrument.nil?
+
+        stack.any? { |visitor| visitor.is_a?(InstrumentationVisitor) }
+      end
+
       #: (untyped, untyped) -> void
       def instrument(partial, path)
-        return unless @instrument
+        return unless instrument?
         return unless partial
-
-        require_relative "instrumentation_visitor"
 
         instrumenter = InstrumentationVisitor.new
 
