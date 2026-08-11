@@ -4,7 +4,7 @@ require "prism"
 require "set"
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       class DependencyCollector < ::Herb::Visitor
         attr_reader :instance_variables, :constants, :locals_declared, :locals_received, :helper_calls, :unknown_calls, :render_calls

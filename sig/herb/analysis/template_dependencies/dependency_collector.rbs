@@ -1,7 +1,7 @@
-# Generated from lib/herb/action_view/template_dependencies/dependency_collector.rb with RBS::Inline
+# Generated from lib/herb/analysis/template_dependencies/dependency_collector.rb with RBS::Inline
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       class DependencyCollector < ::Herb::Visitor
         attr_reader instance_variables: untyped

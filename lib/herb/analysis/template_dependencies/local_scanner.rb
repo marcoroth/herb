@@ -4,7 +4,7 @@ require "prism"
 require "set"
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       class LocalScanner < ::Herb::Visitor
         attr_reader :locals

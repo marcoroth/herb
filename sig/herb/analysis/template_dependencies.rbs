@@ -1,7 +1,7 @@
-# Generated from lib/herb/action_view/template_dependencies.rb with RBS::Inline
+# Generated from lib/herb/analysis/template_dependencies.rb with RBS::Inline
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       class Result < Data
         attr_reader file(): untyped

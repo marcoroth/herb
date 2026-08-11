@@ -8,6 +8,7 @@ AllCops:
     - 'tmp/**/*'
     - 'node_modules/**/*'
     - 'lib/herb/action_view/**/*'
+    - 'lib/herb/analysis/**/*'
 
 Style/StringLiterals:
   Enabled: true

@@ -388,7 +388,7 @@ class Herb::CLI
 
     case subcommand
     when "check"
-      require_relative "action_view/render_analyzer"
+      require_relative "analysis/render_analyzer"
 
       path = File.expand_path(@file || ".")
 
@@ -397,12 +397,12 @@ class Herb::CLI
         exit(1)
       end
 
-      analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+      analyzer = Herb::Analysis::RenderAnalyzer.new(path)
       has_issues = analyzer.check!
 
       exit(has_issues ? 1 : 0)
     when "graph"
-      require_relative "action_view/render_analyzer"
+      require_relative "analysis/render_analyzer"
 
       path = @file || "."
 
@@ -413,7 +413,7 @@ class Herb::CLI
 
       path = File.expand_path(path)
       project_root = File.directory?(path) ? path : config.project_root&.to_s || File.dirname(path)
-      analyzer = Herb::ActionView::RenderAnalyzer.new(project_root)
+      analyzer = Herb::Analysis::RenderAnalyzer.new(project_root)
 
       if File.file?(path)
         analyzer.graph_file!(path)
@@ -423,14 +423,14 @@ class Herb::CLI
 
       exit(0)
     when "dependencies"
-      require_relative "action_view/template_dependencies"
+      require_relative "analysis/template_dependencies"
 
       path = @file || "."
       path = File.expand_path(path)
 
       if File.file?(path)
         project_root = config.project_root&.to_s || File.dirname(path)
-        dep_analyzer = Herb::ActionView::TemplateDependencies.new(project_root)
+        dep_analyzer = Herb::Analysis::TemplateDependencies.new(project_root)
         dep_analyzer.scan_helpers!
         result = dep_analyzer.analyze(path)
         relative = Pathname.new(path).relative_path_from(project_root).to_s
@@ -478,12 +478,12 @@ class Herb::CLI
           end
         end
       elsif File.directory?(path)
-        require_relative "action_view/render_analyzer"
+        require_relative "analysis/render_analyzer"
 
-        dep_analyzer = Herb::ActionView::TemplateDependencies.new(path)
+        dep_analyzer = Herb::Analysis::TemplateDependencies.new(path)
         dep_analyzer.scan_helpers!
 
-        render_analyzer = Herb::ActionView::RenderAnalyzer.new(path)
+        render_analyzer = Herb::Analysis::RenderAnalyzer.new(path)
         erb_files = render_analyzer.send(:find_erb_files)
 
         puts ""

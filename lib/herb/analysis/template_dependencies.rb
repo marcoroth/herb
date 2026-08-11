@@ -8,7 +8,7 @@ require_relative "template_dependencies/local_scanner"
 require_relative "template_dependencies/node_dependency_collector"
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       Result = Data.define(
         :file,
@@ -259,10 +259,10 @@ module Herb
       end
 
       def load_helper_registry
-        require_relative "helper_registry"
+        require_relative "../action_view/helper_registry"
         names = Set.new #: Set[String]
 
-        HelperRegistry.entries.each do |entry|
+        ActionView::HelperRegistry.entries.each do |entry|
           names.add(entry.name.to_s)
         end
 

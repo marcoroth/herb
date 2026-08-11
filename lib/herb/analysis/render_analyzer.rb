@@ -4,7 +4,7 @@
 require "pathname"
 
 module Herb
-  module ActionView
+  module Analysis
     class RenderAnalyzer
       include Colors
 

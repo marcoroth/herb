@@ -1,7 +1,7 @@
-# Generated from lib/herb/action_view/render_analyzer.rb with RBS::Inline
+# Generated from lib/herb/analysis/render_analyzer.rb with RBS::Inline
 
 module Herb
-  module ActionView
+  module Analysis
     class RenderAnalyzer
       include Colors
 

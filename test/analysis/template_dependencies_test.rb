@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../test_helper"
-require_relative "../../lib/herb/action_view/template_dependencies"
+require_relative "../../lib/herb/analysis/template_dependencies"
 
 require "tmpdir"
 require "fileutils"
@@ -21,7 +21,7 @@ class TemplateDependenciesTest < Minitest::Spec
   end
 
   def analyzer
-    Herb::ActionView::TemplateDependencies.new(@project_path)
+    Herb::Analysis::TemplateDependencies.new(@project_path)
   end
 
   def write_template(path, content)

@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 require "prism"
-require "set"
 
 module Herb
-  module ActionView
+  module Analysis
     class TemplateDependencies
       class NodeDependencyCollector < ::Herb::Visitor
         attr_reader :affected
