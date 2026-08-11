@@ -593,6 +593,55 @@ An observation is only filed under the innermost frame, so anything wanting the 
 Herb::Engine::Report::Session.observe(:queries, { sql: sql, stack: Herb::Engine::Report::Session.stack })
 ```
 
+### The render tree
+
+Every template the visitor compiled reports one render when it starts, and those become the payload's `renderTree`. A node is one *occurrence*, so a partial rendered twice is two nodes rather than one entry counted twice:
+
+```json
+[
+  { "id": "1", "template": "app/views/layouts/application.html.erb" },
+  { "id": "2", "template": "app/views/posts/index.html.erb", "parent": "1", "line": 2, "column": 3, "via": "partial" },
+  { "id": "3", "template": "app/views/posts/_card.html.erb", "parent": "2", "line": 2, "column": 3, "via": "collection" },
+  { "id": "4", "template": "app/views/posts/_card.html.erb", "parent": "2", "line": 2, "column": 3, "via": "collection" }
+]
+```
+
+`parent` is the render this one happened inside, and `line` and `column` are where in that parent it was called from, counted the way the rest of the payload counts. Walking `parent` from any node gives the whole chain that reached it, which is the same information `Session.stack` reports live, except that the tree keeps the occurrences apart. Two renders of one partial produce identical stacks and different nodes.
+
+`via` says what kind of render reached the template:
+
+| `via`        | Written as                                          |
+|--------------|-----------------------------------------------------|
+| `partial`    | `<%= render "posts/card" %>`                        |
+| `collection` | `<%= render partial: "card", collection: @posts %>` |
+| `layout`     | `<%= render layout: "box" do %>`                    |
+| `template`   | `<%= render template: "posts/show" %>`              |
+
+It comes from the tag that did the rendering, because the template being rendered has no idea how it was reached. `<%= render @post %>` is left without a `via` on purpose, since Rails decides whether that is one partial or a collection by asking the object at render time, and there is no honest answer for it at compile time.
+
+Reading `via` needs the `render_nodes` [parser option](/parser-options), which the visitor recommends and the engine therefore turns on. Passing `render_nodes: false` explicitly still works and only costs the `via` field.
+
+### Annotating a render
+
+Some things are facts about a render rather than faults in it. A render time exists for every template rather than the rare broken one, and belongs beside what it describes rather than in a list of things to fix. Sending those through `record` would spend the diagnostics budget on the ordinary case, so they go to `annotate` instead:
+
+```ruby
+Herb::Engine::Report::Session.annotate(:render_time, 1.5, origin: "reactionview")
+```
+
+They collect into the payload's `nodes`, keyed by the render they were made during:
+
+```json
+{
+  "3": { "reactionview": { "render_time": 1.5 } },
+  "4": { "reactionview": { "render_time": 1.5 } }
+}
+```
+
+Each producer gets its own namespace under `origin`, so two of them can annotate one render without knowing about each other or agreeing on key names. Herb never reads the keys, so what they are called is up to whoever writes them, with snake_case being the convention the rest of the payload follows.
+
+An annotation made outside any render is dropped rather than given a node of its own. `Session.current_node` reports which render is open, and `nil` when none is.
+
 Instrumentation is experimental as it instruments every ERB tag.
 
 ## ReActionView Integration
@@ -603,8 +652,7 @@ Validator settings from `.herb.yml` are respected automatically, with no ReActio
 
 ReActionView also lets you run transform visitors on every template it compiles, through `config.transform_visitors`:
 
-```ruby
-# config/initializers/reactionview.rb
+```ruby [config/initializers/reactionview.rb]
 require "herb/engine/auto_close_omitted_tags_visitor"
 
 ReActionView.configure do |config|
