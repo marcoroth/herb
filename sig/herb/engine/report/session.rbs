@@ -38,11 +38,11 @@ module Herb
 
         def self.record_compile_diagnostics: (untyped template, untyped entries) -> untyped
 
-        # : [T] (String?, Integer, Integer) { () -> T } -> T
-        def self.at: [T] (String?, Integer, Integer) { () -> T } -> T
+        # : [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+        def self.at: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
 
-        # : (String?, Integer, Integer) -> void
-        def self.enter: (String?, Integer, Integer) -> void
+        # : (String?, Integer, Integer, ?Symbol?) -> void
+        def self.enter: (String?, Integer, Integer, ?Symbol?) -> void
 
         # : () -> void
         def self.leave: () -> void
@@ -95,8 +95,8 @@ module Herb
         # : () -> bool
         def empty?: () -> bool
 
-        # : (String?, Integer, Integer) -> void
-        def enter: (String?, Integer, Integer) -> void
+        # : (String?, Integer, Integer, ?Symbol?) -> void
+        def enter: (String?, Integer, Integer, ?Symbol?) -> void
 
         # : () -> void
         def leave: () -> void
@@ -116,6 +116,11 @@ module Herb
         # : () -> Array[Array[untyped]]
         def stack: () -> Array[Array[untyped]]
 
+        # Filed under the render it happened in, not only the position it happened at.
+        #
+        # A partial rendered three times has one tag at one position, so keying on position alone
+        # merges all three into one entry reading "3 queries" at one place. That reads as one slow
+        # tag when the finding is a tag that runs once per item, which is the thing worth noticing.
         # : (Symbol, untyped) -> void
         def observe: (Symbol, untyped) -> void
 

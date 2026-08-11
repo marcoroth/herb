@@ -69,18 +69,18 @@ module Herb
           nil
         end
 
-        #: [T] (String?, Integer, Integer) { () -> T } -> T
-        def self.at(template, line, column)
-          enter(template, line, column)
+        #: [T] (String?, Integer, Integer, ?Symbol?) { () -> T } -> T
+        def self.at(template, line, column, via = nil)
+          enter(template, line, column, via)
 
           yield
         ensure
           leave
         end
 
-        #: (String?, Integer, Integer) -> void
-        def self.enter(template, line, column)
-          current.enter(template, line, column)
+        #: (String?, Integer, Integer, ?Symbol?) -> void
+        def self.enter(template, line, column, via = nil)
+          current.enter(template, line, column, via)
         end
 
         #: () -> void
@@ -178,9 +178,9 @@ module Herb
           report.empty? && entries.empty?
         end
 
-        #: (String?, Integer, Integer) -> void
-        def enter(template, line, column)
-          @frames.push([template, line, column])
+        #: (String?, Integer, Integer, ?Symbol?) -> void
+        def enter(template, line, column, via = nil)
+          @frames.push([template, line, column, via])
 
           nil
         end
@@ -206,16 +206,22 @@ module Herb
         # Taking it costs an array per observation, which is why it is offered rather than recorded.
         #: () -> Array[Array[untyped]]
         def stack
-          @frames.reverse.map(&:dup)
+          @frames.reverse.map { |frame| frame.first(3) }
         end
 
+        # Filed under the render it happened in, not only the position it happened at.
+        #
+        # A partial rendered three times has one tag at one position, so keying on position alone
+        # merges all three into one entry reading "3 queries" at one place. That reads as one slow
+        # tag when the finding is a tag that runs once per item, which is the thing worth noticing.
         #: (Symbol, untyped) -> void
         def observe(key, value)
           frame = @frames.last
 
           return unless frame
 
-          entry = (@entries[frame] ||= Entry.new(frame[0], frame[1], frame[2]))
+          entry = (@entries[[@renders.last, frame[0], frame[1], frame[2]]] ||= Entry.new(frame[0], frame[1], frame[2]))
+
           entry.observe(key, value)
 
           nil

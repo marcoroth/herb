@@ -65,6 +65,8 @@ module Herb
 
       def output?: (untyped node) -> untyped
 
+      def erb?: (untyped node) -> untyped
+
       def statement?: (untyped node) -> untyped
 
       def framed?: (untyped node) -> untyped
@@ -72,6 +74,8 @@ module Herb
       def assignment?: (untyped node) -> untyped
 
       def block?: (untyped node) -> untyped
+
+      def via: (untyped node) -> untyped
 
       def opening: (untyped node) -> untyped
 

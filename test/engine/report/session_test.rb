@@ -300,17 +300,52 @@ module Engine
         assert_equal ["a.html.erb", 1, 0], [entry.template, entry.line, entry.column]
       end
 
-      test "collects the same position across renders into one entry" do
+      test "collects a tag reached twice in one render into one entry" do
         session = Herb::Engine::Report::Session.capture do
-          2.times do
-            Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
-              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          Herb::Engine::Report::Session.render("a.html.erb") do
+            2.times do
+              Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+              end
             end
           end
         end
 
         assert_equal 1, session.entries.length
         assert_equal 2, session.entries.first[:queries].length
+      end
+
+      test "keeps two renders of the same partial apart" do
+        session = Herb::Engine::Report::Session.capture do
+          2.times do
+            Herb::Engine::Report::Session.render("_card.html.erb") do
+              Herb::Engine::Report::Session.at("_card.html.erb", 1, 5) do
+                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        assert_equal 2, session.entries.length
+        counts = session.entries.map { |entry| entry[:queries].length }
+
+        assert_equal [1, 1], counts
+      end
+
+      test "gives each of them its own metric rather than one summed one" do
+        session = Herb::Engine::Report::Session.capture do
+          2.times do
+            Herb::Engine::Report::Session.render("_card.html.erb") do
+              Herb::Engine::Report::Session.at("_card.html.erb", 1, 5) do
+                Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+              end
+            end
+          end
+        end
+
+        measured = session.measure(:queries, origin: "Herb Engine") { |queries| "#{queries.size} SQL queries" }
+
+        assert_equal ["1 SQL queries", "1 SQL queries"], measured.map(&:value)
       end
     end
 
@@ -330,8 +365,6 @@ module Engine
         assert_equal({ "Herb Engine" => { queries: 3 } }, session.report.nodes["2"])
       end
 
-      # `stack` cannot tell two renders of the same partial apart, and a tree without call sites
-      # cannot say where either came from. Carrying both is what makes one of them enough.
       test "says where in the parent each render was called from" do
         session = Herb::Engine::Report::Session.capture do
           Herb::Engine::Report::Session.render("index.html.erb") do
@@ -345,6 +378,38 @@ module Engine
           { id: "2", template: "_card.html.erb", parent: "1", line: 3, column: 5 },
           session.report.render_tree.last
         )
+      end
+
+      test "says what kind of render reached each template" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.render("index.html.erb") do
+            Herb::Engine::Report::Session.at("index.html.erb", 3, 4, :collection) do
+              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+            end
+          end
+        end
+
+        assert_equal :collection, session.report.render_tree.last[:via]
+      end
+
+      test "leaves out a kind the tag could not name" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.render("index.html.erb") do
+            Herb::Engine::Report::Session.at("index.html.erb", 3, 4) do
+              Herb::Engine::Report::Session.render("_card.html.erb") { nil }
+            end
+          end
+        end
+
+        refute_includes session.report.render_tree.last.keys, :via
+      end
+
+      test "keeps the kind out of the frames it hands back" do
+        Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0, :partial) do
+            assert_equal [["a.html.erb", 1, 0]], Herb::Engine::Report::Session.stack
+          end
+        end
       end
 
       test "leaves the call site off a render nothing was rendering" do
@@ -374,13 +439,13 @@ module Engine
       test "keeps two producers apart under one render" do
         session = Herb::Engine::Report::Session.capture do
           Herb::Engine::Report::Session.render("index.html.erb") do
-            Herb::Engine::Report::Session.annotate(:renderTime, 12.4, origin: "reactionview")
+            Herb::Engine::Report::Session.annotate(:render_time, 12.4, origin: "reactionview")
             Herb::Engine::Report::Session.annotate(:queries, 3, origin: "Herb Engine")
           end
         end
 
         assert_equal(
-          { "reactionview" => { renderTime: 12.4 }, "Herb Engine" => { queries: 3 } },
+          { "reactionview" => { render_time: 12.4 }, "Herb Engine" => { queries: 3 } },
           session.report.nodes["1"]
         )
       end
@@ -399,7 +464,7 @@ module Engine
 
       test "drops an annotation made outside any render rather than inventing a node" do
         session = Herb::Engine::Report::Session.capture do
-          Herb::Engine::Report::Session.annotate(:renderTime, 1.0, origin: "reactionview")
+          Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
         end
 
         assert_empty session.report.nodes
@@ -413,7 +478,7 @@ module Engine
             nil
           end
 
-          Herb::Engine::Report::Session.annotate(:renderTime, 1.0, origin: "reactionview")
+          Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
         end
 
         assert_empty session.report.nodes
@@ -422,7 +487,7 @@ module Engine
       test "counts as something worth delivering even with no diagnostics" do
         session = Herb::Engine::Report::Session.capture do
           Herb::Engine::Report::Session.render("a.html.erb") do
-            Herb::Engine::Report::Session.annotate(:renderTime, 1.0, origin: "reactionview")
+            Herb::Engine::Report::Session.annotate(:render_time, 1.0, origin: "reactionview")
           end
         end
 

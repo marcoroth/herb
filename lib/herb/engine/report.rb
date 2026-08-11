@@ -64,6 +64,7 @@ module Herb
 
           node[:line] = position[:line]
           node[:column] = position[:column]
+          node[:via] = called_from[3]
         end
 
         @render_tree << node.compact

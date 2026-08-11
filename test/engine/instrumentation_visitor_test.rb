@@ -9,6 +9,14 @@ module Engine
 
     FILENAME = "app/views/test.html.erb"
 
+    RENDERS = {
+      "a partial" => %(<%= render "posts/card" %>),
+      "a collection" => %(<%= render partial: "card", collection: @posts %>),
+      "a layout" => %(<%= render layout: "box" do %>inner<% end %>),
+      "a template" => %(<%= render template: "posts/show" %>),
+      "an object, which only Rails can classify" => %(<%= render @post %>),
+    }.freeze
+
     SOURCES = {
       "plain output" => "<div><%= 1 + 1 %></div>",
       "a block" => "<% [1, 2].each do |n| %><%= n %><% end %>",
@@ -156,17 +164,33 @@ module Engine
         object = Object.new
 
         object.define_singleton_method(:annotated) do
-          Herb::Engine::Report::Session.annotate(:renderTime, 2.5, origin: "reactionview")
+          Herb::Engine::Report::Session.annotate(:render_time, 2.5, origin: "reactionview")
           "x"
         end
 
         session = Herb::Engine::Report::Session.capture { object.instance_eval(compiled) }
 
-        assert_equal({ "1" => { "reactionview" => { renderTime: 2.5 } } }, session.report.nodes)
+        assert_equal({ "1" => { "reactionview" => { render_time: 2.5 } } }, session.report.nodes)
       end
 
       test "leaves the render open for locals the template assigns afterwards" do
         assert_equal render("<% total = 40 + 2 %><%= total %>", instrument: false), render("<% total = 40 + 2 %><%= total %>")
+      end
+    end
+
+    describe "what it says a render was reached by" do
+      RENDERS.each do |name, source|
+        test "frames #{name}" do
+          instrumented(source)
+        end
+      end
+
+      test "frames a render tag at all" do
+        assert_includes compile(%(<%= render "posts/card" %>)), "Session.at"
+      end
+
+      test "keeps the body of a render that takes a block" do
+        assert_includes compile(%(<%= render layout: "box" do %>inner<% end %>)), "inner"
       end
     end
   end
