@@ -4,8 +4,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DefinitionProvider } from "../src/definition_provider"
-import { ParserService } from "../src/parser_service"
-
+import { ParserService } from "@herb-tools/language-service"
 const VIEW_URI = "file:///project/app/views/events/show.html.erb"
 
 describe("DefinitionProvider", () => {
@@ -13,7 +12,7 @@ describe("DefinitionProvider", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
   function createService(...files: string[]) {

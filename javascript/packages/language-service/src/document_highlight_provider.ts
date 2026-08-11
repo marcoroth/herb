@@ -1,4 +1,4 @@
-import { DocumentHighlight, DocumentHighlightKind, Range, Position } from "vscode-languageserver/node"
+import { DocumentHighlight, DocumentHighlightKind, Range, Position } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor } from "@herb-tools/core"

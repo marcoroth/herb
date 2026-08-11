@@ -1,12 +1,12 @@
-import { Hover, Location, LocationLink, MarkupKind, Position, Range } from "vscode-languageserver/node"
+import { Hover, Location, LocationLink, MarkupKind, Position, Range } from "vscode-languageserver-types"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ParserService } from "./parser_service"
+import { isPositionInRange, lspRangeFromLocation } from "./range_utils"
+import { pathFromUri, uriFromPath } from "./uri"
 import { RenderCollector } from "./render_collector"
 
-import { existsSync, readFileSync } from "fs"
-import { posix as path } from "path"
-import { pathFromUri, uriFromPath } from "./utils"
-import { isPositionInRange, lspRangeFromLocation } from "./range_utils"
+import * as path from "./posix_path"
+
 import { getTagName, isERBStrictLocalsNode, isHTMLElementNode, isPureWhitespaceNode } from "@herb-tools/core"
 
 import type { TextDocument } from "vscode-languageserver-textdocument"
@@ -39,14 +39,8 @@ export class DefinitionProvider {
 
   constructor(
     parserService: ParserService,
-    exists: (filePath: string) => boolean = existsSync,
-    read: (filePath: string) => string | null = filePath => {
-      try {
-        return readFileSync(filePath, "utf-8")
-      } catch {
-        return null
-      }
-    }
+    exists: (filePath: string) => boolean,
+    read: (filePath: string) => string | null
   ) {
     this.parserService = parserService
     this.exists = exists

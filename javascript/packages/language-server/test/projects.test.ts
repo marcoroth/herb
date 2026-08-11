@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs"
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, dirname } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -11,8 +11,8 @@ import { Projects } from "../src/projects"
 import { WorkspaceFolders } from "../src/workspace_folders"
 import { UserSettings } from "../src/user_settings"
 import { Capabilities } from "../src/capabilities"
-import { ParserService } from "../src/parser_service"
-import { DefinitionProvider } from "../src/definition_provider"
+import { ParserService } from "@herb-tools/language-service"
+import { DefinitionProvider } from "@herb-tools/language-service"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
@@ -62,13 +62,13 @@ function foldersFor(folder: string): WorkspaceFolders {
 }
 
 function registryWith(_folder: string, workspaceFolders: WorkspaceFolders): Projects {
-  const parserService = new ParserService()
+  const parserService = new ParserService(Herb)
   const capabilities = new Capabilities({ capabilities: {} } as InitializeParams)
 
   return new Projects(connection, workspaceFolders, {
     documents: { documents: {}, get: () => undefined } as unknown as Documents,
     parserService,
-    definitionProvider: new DefinitionProvider(parserService),
+    definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
     userSettings: new UserSettings(connection, capabilities),
     capabilities,
   })

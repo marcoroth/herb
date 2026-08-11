@@ -12,7 +12,7 @@ describe("LineContextCollector", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
   function collect(content: string) {

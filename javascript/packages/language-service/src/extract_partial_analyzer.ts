@@ -1,4 +1,4 @@
-import { Range } from "vscode-languageserver/node"
+import { Range } from "vscode-languageserver-types"
 import { ParserService } from "./parser_service"
 import { StrictLocalsCollector } from "./strict_locals_collector"
 import { RootElementCollector } from "./root_element_collector"

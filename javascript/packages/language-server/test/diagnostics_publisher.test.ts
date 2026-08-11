@@ -5,7 +5,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { WorkspaceFolders } from "../src/workspace_folders"
 import { DiagnosticsPublisher } from "../src/diagnostics_publisher"
-import { ParserService } from "../src/parser_service"
+import { ParserService } from "@herb-tools/language-service"
 import { Projects } from "../src/projects"
 
 import type { Connection, InitializeParams, PublishDiagnosticsParams } from "vscode-languageserver/node"
@@ -25,7 +25,7 @@ describe("DiagnosticsPublisher", () => {
   beforeAll(async () => {
     await Herb.load()
 
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
   function diagnosticsFor(folders: string[] | null) {

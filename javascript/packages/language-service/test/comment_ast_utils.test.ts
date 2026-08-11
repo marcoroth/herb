@@ -19,7 +19,7 @@ describe("comment_ast_utils", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
   function parseAndCollect(content: string) {

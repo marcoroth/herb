@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest"
+import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { CompletionItemKind, InsertTextFormat, MarkupKind, Position, Range } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
@@ -9,18 +9,18 @@ import { pathToFileURL } from "node:url"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { CompletionProvider } from "../src/completion_provider"
-import { ParserService } from "../src/parser_service"
-import { PartialIndexService } from "../src/partial_index_service"
-import { Project } from "../src/project"
+import { ParserService } from "@herb-tools/language-service"
+import { buildPartialIndex } from "@herb-tools/linter/partial-index-builder"
+import { relative } from "node:path"
+import { fileURLToPath } from "node:url"
 
-import type { Connection } from "vscode-languageserver/node"
 
 describe("CompletionProvider", () => {
   let service: CompletionProvider
 
   beforeAll(async () => {
     await Herb.load()
-    const parserService = new ParserService()
+    const parserService = new ParserService(Herb)
     service = new CompletionProvider(parserService)
   })
 
@@ -603,10 +603,6 @@ describe("CompletionProvider", () => {
     let partialService: CompletionProvider
     let root: string
 
-    const connection = {
-      console: { log: vi.fn(), warn: vi.fn(), error: vi.fn() }
-    } as unknown as Connection
-
     const FILES = {
       "app/views/posts/_card.html.erb": `<%# locals: (post:) %>\n`,
       "app/views/posts/_byline.html.erb": `<span></span>\n`,
@@ -628,12 +624,15 @@ describe("CompletionProvider", () => {
         writeFileSync(file, contents, "utf-8")
       }
 
-      const project = { root: root, herbBackend: Herb } as Project
-      const partials = new PartialIndexService(connection, project)
+      const partials = await buildPartialIndex(Herb, root)
 
-      await partials.initialize()
+      partialService = new CompletionProvider(new ParserService(Herb), partials, uri => {
+        if (!uri.startsWith("file://")) return null
 
-      partialService = new CompletionProvider(new ParserService(), partials)
+        const path = relative(root, fileURLToPath(uri))
+
+        return path.startsWith("..") ? null : path
+      })
     })
 
     afterAll(() => {

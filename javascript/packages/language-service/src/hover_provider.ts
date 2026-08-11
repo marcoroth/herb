@@ -1,7 +1,7 @@
-import { Hover, MarkupKind, Position, Range } from "vscode-languageserver/node"
+import { Hover, MarkupKind, Position, Range } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor } from "@herb-tools/node-wasm"
+import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter } from "@herb-tools/rewriter"
 import { isERBOpenTagNode, isHTMLElementNode, isERBContentNode, getNamedCharacterReference, HELPER_BY_SOURCE, HELPER_REGISTRY, CHARACTER_REFERENCE_PATTERN } from "@herb-tools/core"
@@ -125,8 +125,11 @@ function dedent(text: string): string {
 export class HoverProvider {
   private parserService: ParserService
 
-  constructor(parserService: ParserService) {
+  private readonly baseDir: string
+
+  constructor(parserService: ParserService, baseDir: string = ".") {
     this.parserService = parserService
+    this.baseDir = baseDir
   }
 
   getHover(textDocument: TextDocument, position: Position): Hover | null {
@@ -182,7 +185,7 @@ export class HoverProvider {
 
     if (isLeaf) {
       const rewriter = new ActionViewTagHelperToHTMLRewriter()
-      const rewrittenNode = rewriter.rewrite(bestElement.node, { baseDir: process.cwd(), shallow: true })
+      const rewrittenNode = rewriter.rewrite(bestElement.node, { baseDir: this.baseDir, shallow: true })
       const htmlOutput = IdentityPrinter.print(rewrittenNode)
 
       parts.push(`**HTML equivalent**\n\`\`\`erb\n${dedent(htmlOutput.trim())}\n\`\`\``)
@@ -276,7 +279,7 @@ export class HoverProvider {
     if (!match) return ""
 
     const rewrittenNode = rewriter.rewrite(match.node, {
-      baseDir: process.cwd(),
+      baseDir: this.baseDir,
       shallow: true,
       includeBody: options.includeBody,
     })

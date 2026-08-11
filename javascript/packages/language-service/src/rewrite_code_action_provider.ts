@@ -1,7 +1,7 @@
-import { CodeAction, CodeActionKind, TextEdit, WorkspaceEdit, Range } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, TextEdit, WorkspaceEdit, Range } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Visitor, Herb } from "@herb-tools/node-wasm"
+import { Visitor } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { ActionViewTagHelperToHTMLRewriter, HTMLToActionViewTagHelperRewriter } from "@herb-tools/rewriter"
 import { isERBOpenTagNode, isHTMLOpenTagNode, HELPER_BY_SOURCE, findPreferredHelperForTag } from "@herb-tools/core"
@@ -42,8 +42,11 @@ class ElementCollector extends Visitor {
 export class RewriteCodeActionProvider {
   private parserService: ParserService
 
-  constructor(parserService: ParserService) {
+  private readonly baseDir: string
+
+  constructor(parserService: ParserService, baseDir: string = ".") {
     this.parserService = parserService
+    this.baseDir = baseDir
   }
 
   getCodeActions(document: TextDocument, requestedRange: Range): CodeAction[] {
@@ -91,7 +94,7 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new ActionViewTagHelperToHTMLRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd() })
+    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
 
     const rewrittenText = IdentityPrinter.print(parseResult.value)
 
@@ -127,7 +130,7 @@ export class RewriteCodeActionProvider {
     if (parseResult.failed) return null
 
     const rewriter = new HTMLToActionViewTagHelperRewriter()
-    rewriter.rewrite(parseResult.value as Node, { baseDir: process.cwd() })
+    rewriter.rewrite(parseResult.value as Node, { baseDir: this.baseDir })
 
     const rewrittenText = IdentityPrinter.print(parseResult.value)
 

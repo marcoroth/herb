@@ -1,6 +1,6 @@
 import { beforeAll, afterEach, describe, expect, test, vi } from "vitest"
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs"
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, dirname, relative } from "node:path"
 import { pathToFileURL, fileURLToPath } from "node:url"
@@ -11,8 +11,8 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Project } from "../src/project"
 import { Documents } from "../src/documents"
 import { ReferencesProvider } from "../src/references_provider"
-import { DefinitionProvider } from "../src/definition_provider"
-import { ParserService } from "../src/parser_service"
+import { DefinitionProvider } from "@herb-tools/language-service"
+import { ParserService } from "@herb-tools/language-service"
 import { PartialIndexService } from "../src/partial_index_service"
 import { PartialCallerIndexService } from "../src/partial_caller_index_service"
 
@@ -76,7 +76,7 @@ async function serviceFor(files: Record<string, string>, buffers: Record<string,
     get: (uri: string) => open.get(uri)
   } as unknown as Documents
 
-  const service = new ReferencesProvider(created, new DefinitionProvider(parserService), partials, callers, documents)
+  const service = new ReferencesProvider(created, new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }), partials, callers, documents)
 
   return { service, callers, project: created, buffers }
 }
@@ -110,7 +110,7 @@ function describeAll(services: Services, locations: Location[]): string[] {
 beforeAll(async () => {
   await Herb.load()
 
-  parserService = new ParserService()
+  parserService = new ParserService(Herb)
 })
 
 afterEach(() => {

@@ -9,8 +9,7 @@ import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 
-import { getFullDocumentRange, lspRangeFromLocation } from "./range_utils"
-
+import { getFullDocumentRange, lspRangeFromLocation } from "@herb-tools/language-service"
 import type { Framework, HerbConfigOptions } from "@herb-tools/config"
 import type { LintOffense } from "@herb-tools/linter"
 
@@ -163,7 +162,6 @@ export class CodeActionProvider {
 
     return codeActions
   }
-
 
   private createDisableLineAction(uri: string, diagnostic: Diagnostic, ruleName: string, documentText: string): CodeAction | null {
     const line = diagnostic.range.start.line

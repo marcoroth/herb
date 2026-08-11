@@ -1,5 +1,4 @@
 import { dirname } from "node:path"
-import { pathFromUri } from "./utils"
 
 import { Config } from "@herb-tools/config"
 import { Project } from "./project"
@@ -7,6 +6,7 @@ import { Project } from "./project"
 import type { Connection } from "vscode-languageserver/node"
 import type { WorkspaceFolders } from "./workspace_folders"
 import type { SharedServices } from "./project"
+import { pathFromUri } from "@herb-tools/language-service"
 
 const FILE_SCHEME = "file://"
 

@@ -11,7 +11,7 @@ describe("StrictLocalsCollector", () => {
 
   beforeAll(async () => {
     await Herb.load()
-    parserService = new ParserService()
+    parserService = new ParserService(Herb)
   })
 
   function collect(source: string): StrictLocalsCollector {

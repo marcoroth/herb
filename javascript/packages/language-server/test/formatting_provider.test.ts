@@ -2,7 +2,7 @@ import dedent from 'dedent'
 
 import { describe, it, expect, beforeEach, beforeAll, vi } from 'vitest'
 
-import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, Range, Position } from 'vscode-languageserver/node'
+import { Connection, DocumentFormattingParams, DocumentRangeFormattingParams, Range, Position } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 
 import { FormattingProvider } from '../src/formatting_provider'

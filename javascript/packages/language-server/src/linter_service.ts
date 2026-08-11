@@ -21,9 +21,7 @@ const FRAME_VERBS: Record<string, string> = {
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
 import { isConfigDocument, lintToDiagnosticSeverity, lintToDiagnosticTags } from "./utils"
-import { lspRangeFromLocation } from "./range_utils"
-
-
+import { lspRangeFromLocation } from "@herb-tools/language-service"
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
   warnings: LinterWarning[]

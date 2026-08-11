@@ -8,15 +8,14 @@ import {
   Position,
   Range,
   TextEdit,
-} from "vscode-languageserver/node"
+} from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor, RubyReferenceCollector, isERBContentNode, isERBOutputNode, isHTMLOpenTagNode, isHTMLTextNode, isValidLocalName, getHelperEntries, partialNameForFile, strictLocalsDeclaration, templateNameForFile, HELPER_REGISTRY, HTML_NAMED_CHARACTER_REFERENCES, HTML_ELEMENTS } from "@herb-tools/core"
 import { ParserService } from "./parser_service"
-import { PartialIndexService } from "./partial_index_service"
 import { nodeToRange, isPositionInRange, rangeSize, lspPosition } from "./range_utils"
 
-import type { Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, PartialDeclaration, RubyReference } from "@herb-tools/core"
+import type { PartialIndex, Node, ERBContentNode, HTMLOpenTagNode, HTMLTextNode, HelperEntry, HelperOption, PartialDeclaration, RubyReference } from "@herb-tools/core"
 
 const HTML_OPEN_TAG_PATTERN = /<(\w*)$/
 const CHARACTER_REFERENCE_PATTERN = /&([a-zA-Z]*)$/
@@ -146,11 +145,17 @@ class NodeAtPositionCollector extends Visitor {
 
 export class CompletionProvider {
   private parserService: ParserService
-  private partialIndexService?: PartialIndexService
+  private partials?: PartialIndex
+  private relativePathFor: (uri: string) => string | null
 
-  constructor(parserService: ParserService, partialIndexService?: PartialIndexService) {
+  constructor(
+    parserService: ParserService,
+    partials?: PartialIndex,
+    relativePathFor: (uri: string) => string | null = () => null
+  ) {
     this.parserService = parserService
-    this.partialIndexService = partialIndexService
+    this.partials = partials
+    this.relativePathFor = relativePathFor
   }
 
   getCompletions(document: TextDocument, position: Position): CompletionList | null {
@@ -442,12 +447,11 @@ export class CompletionProvider {
   }
 
   private getPartialNameCompletions(prefix: string, call: RenderCall, position: Position, document: TextDocument): CompletionList | null {
-    const service = this.partialIndexService
-    const partials = service?.index
+    const partials = this.partials
 
-    if (!service || !partials) return null
+    if (!partials) return null
 
-    const file = service.relativePathFor(document.uri)
+    const file = this.relativePathFor(document.uri)
     const directory = file === null ? null : this.directoryOf(file, partials.viewRoot)
     const lowercasePrefix = prefix.toLowerCase()
 
@@ -602,11 +606,11 @@ export class CompletionProvider {
   }
 
   private getStrictLocalCompletions(argument: RenderArgument, position: Position, document: TextDocument): CompletionList | null {
-    const partials = this.partialIndexService?.index
+    const partials = this.partials
 
     if (!partials || !argument.partial) return null
 
-    const file = this.partialIndexService!.relativePathFor(document.uri)
+    const file = this.relativePathFor(document.uri)
     const declaration = partials.lookup(argument.partial, file ?? undefined)
 
     if (!declaration?.hasDeclaration) return null

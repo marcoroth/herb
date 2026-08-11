@@ -1,4 +1,4 @@
-import { FoldingRange, FoldingRangeKind } from "vscode-languageserver/node"
+import { FoldingRange, FoldingRangeKind } from "vscode-languageserver-types"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Visitor } from "@herb-tools/core"

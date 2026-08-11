@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, beforeEach, afterEach, vi } from "vitest"
-import { mkdirSync, writeFileSync, rmSync, mkdtempSync } from "fs"
+import { mkdirSync, writeFileSync, rmSync, mkdtempSync, existsSync, readFileSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
@@ -8,8 +8,8 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Project } from "../src/project"
 import { Capabilities } from "../src/capabilities"
 import { UserSettings } from "../src/user_settings"
-import { ParserService } from "../src/parser_service"
-import { DefinitionProvider } from "../src/definition_provider"
+import { ParserService } from "@herb-tools/language-service"
+import { DefinitionProvider } from "@herb-tools/language-service"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 import type { Documents } from "../src/documents"
@@ -43,12 +43,12 @@ describe("Project", () => {
   })
 
   function projectFor(userSettings?: UserSettings, capabilities = new Capabilities(params)): Project {
-    const parserService = new ParserService()
+    const parserService = new ParserService(Herb)
 
     const shared: SharedServices = {
       documents: { documents: {}, get: () => undefined } as unknown as Documents,
       parserService,
-      definitionProvider: new DefinitionProvider(parserService),
+      definitionProvider: new DefinitionProvider(parserService, existsSync, (filePath: string) => { try { return readFileSync(filePath, "utf-8") } catch { return null } }),
       userSettings: userSettings ?? new UserSettings(connection, capabilities),
       capabilities,
     }

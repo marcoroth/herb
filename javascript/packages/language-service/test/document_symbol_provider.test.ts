@@ -6,8 +6,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { DocumentSymbolProvider } from "../src/document_symbol_provider"
-import { ParserService } from "../src/parser_service"
-
+import { ParserService } from "@herb-tools/language-service"
 import type { DocumentSymbol } from "vscode-languageserver/node"
 
 describe("DocumentSymbolProvider", () => {
@@ -16,7 +15,7 @@ describe("DocumentSymbolProvider", () => {
   beforeAll(async () => {
     await Herb.load()
 
-    service = new DocumentSymbolProvider(new ParserService())
+    service = new DocumentSymbolProvider(new ParserService(Herb))
   })
 
   function symbols(content: string): DocumentSymbol[] {

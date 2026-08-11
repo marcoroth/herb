@@ -5,6 +5,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "vscode-html-languageservice",
 ]
 
 // Enable sourcemaps for local builds and release builds
