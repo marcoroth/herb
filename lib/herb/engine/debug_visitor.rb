@@ -329,10 +329,6 @@ module Herb
         false
       end
 
-      def erb_output?(opening)
-        opening.include?("=") && !opening.include?("#")
-      end
-
       # TODO: Rewrite using Prism Nodes once available
       def complex_rails_helper?(code)
         cleaned_code = code.strip.gsub(/\s+/, " ")

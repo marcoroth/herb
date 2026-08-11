@@ -67,8 +67,6 @@ module Herb
 
       def in_excluded_context?: () -> untyped
 
-      def erb_output?: (untyped opening) -> untyped
-
       # TODO: Rewrite using Prism Nodes once available
       def complex_rails_helper?: (untyped code) -> untyped
 

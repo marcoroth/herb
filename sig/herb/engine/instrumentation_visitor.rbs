@@ -63,12 +63,6 @@ module Herb
 
       def rewrite: (untyped nodes) -> untyped
 
-      def output?: (untyped node) -> untyped
-
-      def erb?: (untyped node) -> untyped
-
-      def statement?: (untyped node) -> untyped
-
       def framed?: (untyped node) -> untyped
 
       def assignment?: (untyped node) -> untyped
@@ -76,8 +70,6 @@ module Herb
       def block?: (untyped node) -> untyped
 
       def via: (untyped node) -> untyped
-
-      def opening: (untyped node) -> untyped
 
       def wrapped_output: (untyped node) -> untyped
 
