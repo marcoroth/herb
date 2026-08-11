@@ -3,7 +3,7 @@ import { PARTIAL_EXTENSIONS, partialNameForFile, resolvePartial } from "./partia
 
 import type { DocumentNode } from "@herb-tools/core"
 import type { PartialPaths } from "./partial-resolution"
-import type { CallSiteLocation } from "./partial-callers"
+import type { CallSiteLocation } from "./render-graph-utils"
 
 const KEYWORD_KIND = "keyword"
 const KEYWORD_REST_KIND = "keyword_rest"

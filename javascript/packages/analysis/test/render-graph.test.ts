@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest"
 
-import { PartialCallerIndex } from "../src/partial-callers"
+import { RenderGraph } from "../src/render-graph"
 
-import type { PartialCallSite } from "../src/partial-callers"
+import type { PartialCallSite } from "../src/render-graph-utils"
 
 const CARD = "app/views/posts/_card.html.erb"
 const BADGE = "app/views/posts/_badge.html.erb"
@@ -13,14 +13,14 @@ function callSite(caller: string, ancestors: string[] = []): PartialCallSite {
   return { caller, locals: [], ancestors, via: "render" }
 }
 
-function index(callSites: Record<string, PartialCallSite[]>, documentRoots: string[] = []): PartialCallerIndex {
-  return new PartialCallerIndex(new Map(Object.entries(callSites)), new Set(documentRoots), new Map(), new Set())
+function index(callSites: Record<string, PartialCallSite[]>, documentRoots: string[] = []): RenderGraph {
+  return new RenderGraph(new Map(Object.entries(callSites)), new Map(), new Set(documentRoots), new Map(), new Set())
 }
 
-describe("PartialCallerIndex", () => {
+describe("RenderGraph", () => {
   describe("replaceCallsFrom", () => {
     test("clears the unresolved renders the caller previously contributed", () => {
-      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
+      const callers = new RenderGraph(new Map(), new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
 
       expect(callers.isComplete).toBe(false)
       expect(callers.unresolvedRenderCount).toBe(2)
@@ -32,7 +32,7 @@ describe("PartialCallerIndex", () => {
     })
 
     test("replaces the unresolved count rather than adding to it", () => {
-      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
+      const callers = new RenderGraph(new Map(), new Map(), new Set(), new Map([[INDEX, 2]]), new Set())
 
       callers.replaceCallsFrom(INDEX, new Map(), 1)
 
@@ -40,7 +40,7 @@ describe("PartialCallerIndex", () => {
     })
 
     test("leaves the unresolved renders of other callers alone", () => {
-      const callers = new PartialCallerIndex(new Map(), new Set(), new Map([[INDEX, 2], [SHOW, 3]]), new Set())
+      const callers = new RenderGraph(new Map(), new Map(), new Set(), new Map([[INDEX, 2], [SHOW, 3]]), new Set())
 
       callers.replaceCallsFrom(INDEX, new Map())
 
@@ -150,7 +150,7 @@ describe("PartialCallerIndex", () => {
         }],
       }, [INDEX])
 
-      const restored = PartialCallerIndex.from(structuredClone(callers.toJSON()))
+      const restored = RenderGraph.from(structuredClone(callers.toJSON()))
       const [chain] = restored.contextOf(CARD).chains
 
       expect(chain.tags).toEqual(["main", "div"])

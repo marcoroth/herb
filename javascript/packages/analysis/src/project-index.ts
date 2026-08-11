@@ -4,11 +4,12 @@ import { fileURLToPath } from "node:url"
 
 import { isPartialPath, isTemplatePath } from "./partial-resolution"
 import { buildPartialIndex, declarationFromFile, declarationFromSource } from "./partial-index-builder"
-import { buildPartialCallerIndex, collectCallSites } from "./partial-caller-builder"
+import { buildRenderGraph, collectCallSites } from "./render-graph-builder"
 
 import type { HerbBackend } from "@herb-tools/core"
 import type { PartialIndex } from "./partial-index"
-import type { PartialCallerIndex, PartialCallSite } from "./partial-callers"
+import type { RenderGraph } from "./render-graph"
+import type { PartialCallSite } from "./render-graph-utils"
 
 const FILE_SCHEME = "file://"
 
@@ -40,7 +41,7 @@ export class ProjectIndex {
   private readonly logger?: AnalysisLogger
 
   private partialIndex?: PartialIndex
-  private callerIndex?: PartialCallerIndex
+  private callerIndex?: RenderGraph
 
   constructor({ root, backend, resolveLayouts = false, logger }: ProjectIndexOptions) {
     this.root = root
@@ -53,7 +54,7 @@ export class ProjectIndex {
     return this.partialIndex
   }
 
-  get callers(): PartialCallerIndex | undefined {
+  get callers(): RenderGraph | undefined {
     return this.callerIndex
   }
 
@@ -84,7 +85,7 @@ export class ProjectIndex {
     }
 
     try {
-      this.callerIndex = await buildPartialCallerIndex(this.backend, this.root, this.partialIndex, {
+      this.callerIndex = await buildRenderGraph(this.backend, this.root, this.partialIndex, {
         resolveLayouts: this.resolveLayouts,
       })
 

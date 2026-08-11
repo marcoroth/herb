@@ -7,7 +7,7 @@ import { UserSettings } from "../src/user_settings"
 import { Capabilities } from "../src/capabilities"
 import { Project } from "../src/project"
 import { ProjectIndex } from "@herb-tools/analysis/node"
-import { PartialCallerIndex } from "@herb-tools/analysis"
+import { RenderGraph } from "@herb-tools/analysis"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
@@ -341,7 +341,7 @@ describe("LinterService", () => {
   describe("cross-file rules", () => {
     const PARTIAL = "app/views/shared/_meta.html.erb"
 
-    function callerServiceFor(callers: PartialCallerIndex): ProjectIndex {
+    function callerServiceFor(callers: RenderGraph): ProjectIndex {
       const service = index
 
       vi.spyOn(service, "callers", "get").mockReturnValue(callers)
@@ -363,7 +363,7 @@ describe("LinterService", () => {
     }
 
     test("reports an offense that only the call sites can justify", async () => {
-      const callers = new PartialCallerIndex(
+      const callers = new RenderGraph(
         new Map([[PARTIAL, [{ caller: "app/views/layouts/application.html.erb", locals: [], ancestors: ["html", "body"] }]]]),
         new Set(["app/views/layouts/application.html.erb"]),
         new Map(),
@@ -383,7 +383,7 @@ describe("LinterService", () => {
     })
 
     test("stays silent for the same partial when no call site is known", async () => {
-      const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
+      const empty = new RenderGraph(new Map(), new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
       const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
 
@@ -396,7 +396,7 @@ describe("LinterService", () => {
     })
 
     test("points at the call site that renders the file inside the element", async () => {
-      const callers = new PartialCallerIndex(
+      const callers = new RenderGraph(
         new Map([[PARTIAL, [{
           caller: "app/views/posts/index.html.erb",
           locals: [],
@@ -429,7 +429,7 @@ describe("LinterService", () => {
     })
 
     test("omits related information when nothing rendered the file", async () => {
-      const empty = new PartialCallerIndex(new Map(), new Set(), new Map(), new Set())
+      const empty = new RenderGraph(new Map(), new Map(), new Set(), new Map(), new Set())
       const client = clientWith()
       const service = new LinterService(mockConnection, client.userSettings, client.capabilities, projectFor(client.userSettings), index, callerServiceFor(empty))
 
@@ -442,7 +442,7 @@ describe("LinterService", () => {
     })
 
     test("names the call site in the message when the client cannot show related information", async () => {
-      const callers = new PartialCallerIndex(
+      const callers = new RenderGraph(
         new Map([[PARTIAL, [{
           caller: "app/views/posts/index.html.erb",
           locals: [],
