@@ -9,6 +9,11 @@ module Herb
     class DebugVisitor < Herb::Visitor
       include ContextAware
 
+      #: () -> bool
+      def self.reads_erb_source?
+        true
+      end
+
       # `node` adds the render occurrence to every marker, which needs `InstrumentationVisitor` in the
       # same stack to have anything to report. Without it the value is empty on every tag, so it is
       # asked for rather than assumed.

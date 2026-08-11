@@ -41,6 +41,11 @@ module Herb
 
       recommended_parser_option render_nodes: true
 
+      #: () -> bool
+      def self.rewrites_erb_source?
+        true
+      end
+
       SESSION = "::Herb::Engine::Report::Session"
 
       ASSIGNMENT_NODES = [
