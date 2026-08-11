@@ -93,6 +93,11 @@ module Herb
           current.observe(key, value)
         end
 
+        #: () -> Array[Array[untyped]]
+        def self.stack
+          current.stack
+        end
+
         #: (String, String?) -> void
         def self.source(template, source)
           current.source(template, source)
@@ -154,6 +159,23 @@ module Herb
           @frames.pop
 
           nil
+        end
+
+        # Every tag still rendering, innermost first, the way `caller` reads.
+        #
+        # A tag that renders a partial is still open while the partial renders, so once more than one
+        # template is instrumented this is a render stack across all of them and not just within one.
+        # Only the innermost frame is what an observation is filed under, so anything wanting the rest
+        # has to take it while it still exists:
+        #
+        #     ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+        #       Herb::Engine::Report::Session.observe(:queries, { sql: payload[:sql], stack: Herb::Engine::Report::Session.stack })
+        #     end
+        #
+        # Taking it costs an array per observation, which is why it is offered rather than recorded.
+        #: () -> Array[Array[untyped]]
+        def stack
+          @frames.reverse.map(&:dup)
         end
 
         #: (Symbol, untyped) -> void
