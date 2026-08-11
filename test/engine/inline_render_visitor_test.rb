@@ -9,7 +9,7 @@ require_relative "../../lib/herb/engine/component_visitor"
 require_relative "../../lib/herb/engine/validators"
 
 module Engine
-  class RenderInlinerTest < Minitest::Spec
+  class InlineRenderVisitorTest < Minitest::Spec
     include SnapshotUtils
 
     PROJECT_PATH = "test/fixtures/render_inliner"

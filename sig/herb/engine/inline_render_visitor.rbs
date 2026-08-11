@@ -2,21 +2,29 @@
 
 module Herb
   class Engine
-    # Asks the compiler to replace a `render` of a static partial with the partial itself, so the
-    # rendered page costs no partial lookup at run time.
-    #
-    # It rewrites nothing on its own. The splice happens in the compiler, which is the only place
-    # that can compile one template's tree into the middle of another, and this says the template
-    # wants it done:
+    # Replaces a `render` of a static partial with the partial itself, so the rendered page costs
+    # no partial lookup at run time.
     #
     #     require "herb/engine/inline_render_visitor"
     #
     #     Herb::Engine.new(source, visitors: [Herb::Engine::InlineRenderVisitor.new])
     #
-    # A partial is inlined only when the compiler can be sure which file it means and that inlining
-    # it changes nothing: a literal path, no block, no `content_for`, no `yield`, no
-    # `local_assigns`, and not one already being inlined further up. Anything else is left as the
-    # `render` call it was written as.
+    # It has to run first, and the engine refuses a stack that puts it anywhere else. Everything
+    # after it sees the partial's markup as part of the template it landed in, which is what holds
+    # a partial to whatever the template around it is held to: a validator that refuses markup in a
+    # template refuses it in a partial, and a transform that rewrites a tag rewrites it wherever it
+    # was written. Were it to run last, moving markup into a partial would be a way of turning
+    # those off.
+    #
+    # What it moves is recorded on `Herb::Engine::Origin`, because a tree alone cannot say that a
+    # node was written somewhere else or that nobody wrote it at all. That is what lets a position
+    # reported from inside an inlined partial name the partial rather than the template it landed
+    # in, and leaves the wrapper written here attributed to nobody.
+    #
+    # A partial is inlined only when the file it names is knowable and inlining it changes nothing:
+    # a literal path, no block, no `content_for`, no `yield`, no `local_assigns`, and not one
+    # already being inlined further up. Anything else is left as the `render` call it was written
+    # as.
     class InlineRenderVisitor < Herb::Visitor
       include ContextAware
 

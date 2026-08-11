@@ -1,5 +1,5 @@
 ---
-source: "Engine::RenderInlinerTest#test_0008_inlines collection renders"
+source: "Engine::InlineRenderVisitorTest#test_0008_inlines collection renders"
 input: "{source: \"<%= render partial: \\\"posts/post\\\", collection: @posts %>\", options: {filename: \"app/views/posts/index.html.erb\", project_path: \"test/fixtures/render_inliner\", visitors: [#<Herb::Engine::InlineRenderVisitor>], escape: false}}"
 ---
 _buf = ::String.new; begin; (@posts).each_with_index do |post, post_counter|; 
