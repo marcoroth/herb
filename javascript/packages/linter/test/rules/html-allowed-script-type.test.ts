@@ -3,6 +3,9 @@ import { HTMLAllowedScriptTypeRule } from "../../src/rules/html-allowed-script-t
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAllowedScriptTypeRule)
+const customOptions = createLinterTest(HTMLAllowedScriptTypeRule, {
+  allowedTypes: ["application/json"]
+})
 
 describe("html-allowed-script-type", () => {
   test("passes when type attribute is blank", () => {
@@ -53,5 +56,16 @@ describe("html-allowed-script-type", () => {
 
   test("ignores non-script tags", () => {
     expectNoOffenses('<input type="text">')
+  })
+
+  describe("custom options", () => {
+    test("uses the configured allowed types", () => {
+      customOptions.expectNoOffenses('<script type="application/json"></script>')
+    })
+
+    test("replaces the default allowed types", () => {
+      customOptions.expectError("Avoid using `text/javascript` as the `type` attribute for the `<script>` tag. Must be one of: `application/json` or blank.")
+      customOptions.assertOffenses('<script type="text/javascript"></script>')
+    })
   })
 })
