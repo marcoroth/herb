@@ -1,3 +1,4 @@
+import { join } from "node:path"
 import { existsSync, readFileSync } from "node:fs"
 import { Connection, InitializeParams } from "vscode-languageserver/node"
 
@@ -57,7 +58,8 @@ export class Session {
         } catch {
           return null
         }
-      }
+      },
+      documentPath => this.viewRootFor(documentPath),
     )
 
     this.projects = new Projects(this.connection, this.workspaceFolders, {
@@ -100,6 +102,15 @@ export class Session {
         this.connection.window.showDocument({ uri: `file://${warning.configPath}`, takeFocus: true })
       }
     })
+  }
+
+  private viewRootFor(documentPath: string): string | null {
+    const project = this.projects.containing(documentPath)
+    const viewRoot = project?.partialIndexService.index?.viewRoot
+
+    if (!project || viewRoot === undefined) return null
+
+    return viewRoot === "." ? project.root : join(project.root, viewRoot)
   }
 
   async init() {
