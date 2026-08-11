@@ -44,6 +44,54 @@ module Engine
       buffer
     end
 
+    describe "handing the session back" do
+      test "leaves the session it used in the env" do
+        env = {}
+
+        Herb::Engine::Report::Middleware.new(app { Herb::Engine::Report::Session.record(diagnostic) }).call(env)
+
+        session = env[Herb::Engine::Report::Middleware::ENV_KEY]
+
+        assert_instance_of Herb::Engine::Report::Session, session
+        assert_equal ["Something is wrong."], session.diagnostics.map(&:message)
+      end
+
+      test "collects into a session that was already open rather than one nobody can reach" do
+        session = Herb::Engine::Report::Session.capture do
+          call(app {
+            Herb::Engine::Report::Session.at("app/views/a.html.erb", 3, 4) do
+              Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            end
+          })
+        end
+
+        assert_equal 1, session.entries.length
+        assert_equal ["SELECT 1"], session.entries.first[:queries]
+      end
+
+      test "leaves a borrowed session open for whoever opened it" do
+        Herb::Engine::Report::Session.capture do
+          call(app { Herb::Engine::Report::Session.record(diagnostic) })
+
+          assert_predicate Herb::Engine::Report::Session, :scoped?
+        end
+      end
+
+      test "still opens its own session when nobody else has one" do
+        call(app { Herb::Engine::Report::Session.record(diagnostic) })
+
+        refute_predicate Herb::Engine::Report::Session, :scoped?
+      end
+
+      test "survives an env that cannot be written to" do
+        response = Herb::Engine::Report::Middleware.new(
+          app { Herb::Engine::Report::Session.record(diagnostic) }
+        ).call(nil)
+
+        assert_includes body_of(response), "data-herb-diagnostics"
+      end
+    end
+
     test "injects the payload before the closing body tag" do
       response = call(app { Herb::Engine::Report::Session.record(diagnostic) })
       body = body_of(response)
