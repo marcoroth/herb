@@ -141,5 +141,33 @@ module Engine
         assert_equal [1, 2, 3], seen[:seen]
       end
     end
+
+    describe "what it attributes a render to" do
+      test "frames the whole template as one render" do
+        compiled = compile("<div><%= 1 + 1 %></div>")
+
+        session = Herb::Engine::Report::Session.capture { Object.new.instance_eval(compiled) }
+
+        assert_equal [{ id: "1", template: FILENAME }], session.report.render_tree
+      end
+
+      test "gives an annotation made while it renders that render's node" do
+        compiled = compile("<%= annotated %>")
+        object = Object.new
+
+        object.define_singleton_method(:annotated) do
+          Herb::Engine::Report::Session.annotate(:renderTime, 2.5, origin: "reactionview")
+          "x"
+        end
+
+        session = Herb::Engine::Report::Session.capture { object.instance_eval(compiled) }
+
+        assert_equal({ "1" => { "reactionview" => { renderTime: 2.5 } } }, session.report.nodes)
+      end
+
+      test "leaves the render open for locals the template assigns afterwards" do
+        assert_equal render("<% total = 40 + 2 %><%= total %>", instrument: false), render("<% total = 40 + 2 %><%= total %>")
+      end
+    end
   end
 end

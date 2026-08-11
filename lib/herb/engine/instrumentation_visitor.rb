@@ -76,6 +76,8 @@ module Herb
         super
 
         instrument(node)
+
+        frame_render(node)
       end
 
       def inspect
@@ -83,6 +85,15 @@ module Herb
       end
 
       private
+
+      def frame_render(node)
+        template = context.relative_file_path.dump
+
+        node.children.unshift(erb_node(node, "<%", "#{SESSION}.enter_render(#{template}); begin"))
+        node.children.push(erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end"))
+
+        nil
+      end
 
       def instrument(node)
         ARRAY_PROPERTIES.each do |property|

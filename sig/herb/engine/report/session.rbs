@@ -47,6 +47,21 @@ module Herb
         # : () -> void
         def self.leave: () -> void
 
+        # : [T] (String?) { () -> T } -> T
+        def self.render: [T] (String?) { () -> T } -> T
+
+        # : (String?) -> String
+        def self.enter_render: (String?) -> String
+
+        # : () -> void
+        def self.leave_render: () -> void
+
+        # : () -> String?
+        def self.current_node: () -> String?
+
+        # : (Symbol, untyped, origin: String) -> void
+        def self.annotate: (Symbol, untyped, origin: String) -> void
+
         # : (Symbol, untyped) -> void
         def self.observe: (Symbol, untyped) -> void
 
@@ -103,6 +118,27 @@ module Herb
 
         # : (Symbol, untyped) -> void
         def observe: (Symbol, untyped) -> void
+
+        # One render of one template, which is what a node in the payload is.
+        #
+        # A template rendered three times is three nodes, because what gets said about it is said
+        # about an occurrence and not about the file. The id is minted here so there is exactly one
+        # of them per occurrence, rather than one per producer that wants to name it.
+        #
+        # The tag that is open when a render starts is the tag that started it, so the call site
+        # comes for free. Without it the tree would say a partial rendered twice under one parent but
+        # not from where, which `stack` can say and a payload built from the tree alone could not.
+        # : (String?) -> String
+        def enter_render: (String?) -> String
+
+        # : () -> void
+        def leave_render: () -> void
+
+        # : () -> String?
+        def current_node: () -> String?
+
+        # : (Symbol, untyped, origin: String) -> void
+        def annotate: (Symbol, untyped, origin: String) -> void
 
         # : () -> Array[Herb::Engine::Report::Entry]
         def entries: () -> Array[Herb::Engine::Report::Entry]

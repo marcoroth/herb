@@ -88,6 +88,35 @@ module Herb
           current.leave
         end
 
+        #: [T] (String?) { () -> T } -> T
+        def self.render(template)
+          enter_render(template)
+
+          yield
+        ensure
+          leave_render
+        end
+
+        #: (String?) -> String
+        def self.enter_render(template)
+          current.enter_render(template)
+        end
+
+        #: () -> void
+        def self.leave_render
+          current.leave_render
+        end
+
+        #: () -> String?
+        def self.current_node
+          current.current_node
+        end
+
+        #: (Symbol, untyped, origin: String) -> void
+        def self.annotate(key, value, origin:)
+          current.annotate(key, value, origin: origin)
+        end
+
         #: (Symbol, untyped) -> void
         def self.observe(key, value)
           current.observe(key, value)
@@ -119,6 +148,8 @@ module Herb
           @report = report || Report.new
           @frames = [] #: Array[Array[untyped]]
           @entries = {} #: Hash[Array[untyped], Herb::Engine::Report::Entry]
+          @renders = [] #: Array[String]
+          @minted = 0 #: Integer
           @previous = previous
         end
 
@@ -186,6 +217,48 @@ module Herb
 
           entry = (@entries[frame] ||= Entry.new(frame[0], frame[1], frame[2]))
           entry.observe(key, value)
+
+          nil
+        end
+
+        # One render of one template, which is what a node in the payload is.
+        #
+        # A template rendered three times is three nodes, because what gets said about it is said
+        # about an occurrence and not about the file. The id is minted here so there is exactly one
+        # of them per occurrence, rather than one per producer that wants to name it.
+        #
+        # The tag that is open when a render starts is the tag that started it, so the call site
+        # comes for free. Without it the tree would say a partial rendered twice under one parent but
+        # not from where, which `stack` can say and a payload built from the tree alone could not.
+        #: (String?) -> String
+        def enter_render(template)
+          id = (@minted += 1).to_s
+
+          report.render(id, template, @renders.last, called_from: @frames.last)
+          @renders.push(id)
+
+          id
+        end
+
+        #: () -> void
+        def leave_render
+          @renders.pop
+
+          nil
+        end
+
+        #: () -> String?
+        def current_node
+          @renders.last
+        end
+
+        #: (Symbol, untyped, origin: String) -> void
+        def annotate(key, value, origin:)
+          node = current_node
+
+          return unless node
+
+          report.annotate(node, key, value, origin: origin)
 
           nil
         end

@@ -57,6 +57,8 @@ module Herb
 
       private
 
+      def frame_render: (untyped node) -> untyped
+
       def instrument: (untyped node) -> untyped
 
       def rewrite: (untyped nodes) -> untyped

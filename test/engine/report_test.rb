@@ -20,7 +20,7 @@ module Engine
 
     test "is empty until something is reported" do
       assert_predicate report, :empty?
-      assert_equal({ version: 1, diagnostics: [], sources: {} }, report.to_h)
+      assert_equal({ version: 1, diagnostics: [], renderTree: [], nodes: {}, sources: {} }, report.to_h)
     end
 
     test "carries the version the reader checks" do

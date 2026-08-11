@@ -22,12 +22,16 @@ module Herb
       ATTRIBUTE = "data-herb-diagnostics" #: String
 
       attr_reader :sources #: Hash[String, String]
+      attr_reader :nodes #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
+      attr_reader :render_tree #: Array[Hash[Symbol, untyped]]
 
       #: (?max_diagnostics: Integer) -> void
       def initialize(max_diagnostics: MAX_DIAGNOSTICS)
         @max_diagnostics = max_diagnostics
         @diagnostics = {} #: Hash[Array[untyped], Herb::Diagnostic]
         @sources = {} #: Hash[String, String]
+        @nodes = {} #: Hash[String, Hash[String, Hash[Symbol, untyped]]]
+        @render_tree = [] #: Array[Hash[Symbol, untyped]]
       end
 
       #: (Herb::Diagnostic) -> Herb::Diagnostic
@@ -51,6 +55,34 @@ module Herb
         @sources[template] = source if source
       end
 
+      #: (String, String?, String?, ?called_from: Array[untyped]?) -> void
+      def render(id, template, parent, called_from: nil)
+        node = { id: id, template: template, parent: parent } #: Hash[Symbol, untyped]
+
+        if called_from
+          position = Herb::Position.new(called_from[1], called_from[2]).to_one_based
+
+          node[:line] = position[:line]
+          node[:column] = position[:column]
+        end
+
+        @render_tree << node.compact
+
+        nil
+      end
+
+      #: (String, Symbol, untyped, origin: String) -> void
+      def annotate(id, key, value, origin:)
+        node = @nodes[id] || {} #: Hash[String, Hash[Symbol, untyped]]
+        annotations = node[origin] || {} #: Hash[Symbol, untyped]
+
+        annotations[key] = value
+        node[origin] = annotations
+        @nodes[id] = node
+
+        nil
+      end
+
       #: () -> Array[Herb::Diagnostic]
       def diagnostics
         @diagnostics.values
@@ -58,7 +90,7 @@ module Herb
 
       #: () -> bool
       def empty?
-        @diagnostics.empty?
+        @diagnostics.empty? && @nodes.empty?
       end
 
       #: () -> Hash[Symbol, untyped]
@@ -66,6 +98,8 @@ module Herb
         {
           version: VERSION,
           diagnostics: diagnostics.map(&:to_h),
+          renderTree: @render_tree,
+          nodes: @nodes,
           sources: sources,
         }
       end
