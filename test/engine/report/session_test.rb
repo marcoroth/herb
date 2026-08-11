@@ -192,6 +192,56 @@ module Engine
         assert_empty session.entries
       end
 
+      test "turns what one tag observed into a metric carrying a badge and no severity" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 7, 8) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 2")
+          end
+        end
+
+        diagnostic = session.measure(:queries, origin: "Herb Engine", code: "sql-queries") { |queries|
+          "#{queries.size} SQL queries"
+        }.first
+
+        assert_equal "2 SQL queries", diagnostic.value
+        assert_equal :metric, diagnostic.kind
+        assert_nil diagnostic.severity
+        assert_equal "a.html.erb", diagnostic.template
+        assert_equal 7, diagnostic.location.start.line
+        assert_equal ["SELECT 1", "SELECT 2"], diagnostic.data[:queries]
+      end
+
+      test "measures only the tags that observed something" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:renders, "partial")
+          end
+
+          Herb::Engine::Report::Session.at("a.html.erb", 2, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        measured = session.measure(:queries, origin: "Herb Engine") { |queries| queries.size.to_s }
+
+        assert_equal [2], measured.map { |diagnostic| diagnostic.location.start.line }.sort
+      end
+
+      test "puts what it measured into the payload" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        session.measure(:queries, origin: "Herb Engine", code: "sql-queries") { |queries|
+          "#{queries.size} SQL query"
+        }
+
+        assert_includes session.report.to_json, %("value":"1 SQL query")
+      end
+
       test "collects the same position across renders into one entry" do
         session = Herb::Engine::Report::Session.capture do
           2.times do
