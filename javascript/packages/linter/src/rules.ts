@@ -35,6 +35,7 @@ import { ActionViewStrictLocalsPartialOnlyRule } from "./rules/actionview-strict
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js"
 import { ERBNoByteOrderMarkRule } from "./rules/erb-no-byte-order-mark.js"
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoClassDefinitionsRule } from "./rules/erb-no-class-definitions.js"
 import { ERBNoCommentedOutOutputTagsRule } from "./rules/erb-no-commented-out-output-tags.js"
 import { ERBNoDebugOutputRule } from "./rules/erb-no-debug-output.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
@@ -182,6 +183,7 @@ export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoByteOrderMarkRule,
   ERBNoCaseNodeChildrenRule,
+  ERBNoClassDefinitionsRule,
   ERBNoCommentedOutOutputTagsRule,
   ERBNoDebugOutputRule,
   ERBNoEmptyControlFlowRule,
