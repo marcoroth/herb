@@ -84,22 +84,23 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
+      parse_result = ::Herb.parse(input, **@parser_options, track_whitespace: true)
+      parser_errors = parse_result.errors
 
-      if result.errors.any?
-        handle_parser_errors(result.errors, input, result.value)
+      if parser_errors.any?
+        handle_parser_errors(parser_errors, input, parse_result.value)
       else
         @visitors.each do |visitor|
           visitor.inherit_context(@context) if visitor.is_a?(ContextAware)
 
-          result.value.accept(visitor)
+          parse_result.value.accept(visitor)
         end
 
         report(input)
 
         compiler = Compiler.new(self, properties)
 
-        result.value.accept(compiler)
+        parse_result.value.accept(compiler)
 
         compiler.generate_output
       end

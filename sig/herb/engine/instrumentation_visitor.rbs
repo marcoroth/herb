@@ -66,8 +66,17 @@ module Herb
 
       def rewrite: (untyped nodes) -> untyped
 
-      # : (Herb::Engine::Origin::Entry?, Array[Herb::AST::Node]) -> Array[Herb::AST::Node]
-      def rewrite_chunk: (Herb::Engine::Origin::Entry?, Array[Herb::AST::Node]) -> Array[Herb::AST::Node]
+      # A node holding content written in another file is a render, whoever put it there.
+      #
+      # Nothing else has to agree on how that happened. A partial spliced in at compile time and a
+      # partial rendered at run time both arrive as content from somewhere else, so both are framed
+      # the same way, and the page describes itself the same either way.
+      #
+      # The frames go inside the node rather than around it, so a partial spliced into a loop is
+      # framed once per turn of it and a collection reports one render per item. The node itself is
+      # nobody's, so what frames it is the tag that brought it here.
+      # : (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+      def rewrite_import: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
 
       # : (Herb::AST::Node) -> Array[Herb::AST::Node]
       def rewrite_node: (Herb::AST::Node) -> Array[Herb::AST::Node]

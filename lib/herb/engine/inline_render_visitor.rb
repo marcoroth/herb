@@ -106,21 +106,15 @@ module Herb
 
         @inlining.pop
 
-        record(body, node, path)
-
-        [block(node, body)]
+        [block(node, body, path)]
       end
 
-      #: (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
-      def record(body, node, path)
-        file = VisitorContext.derive_relative_file_path(
+      #: (Pathname) -> String
+      def relative(path)
+        VisitorContext.derive_relative_file_path(
           Pathname.new(File.expand_path(path.to_s)),
           Pathname.new(File.expand_path(context.project_path))
         )
-
-        body.each { |child| origin.authored(child, file, from: node) }
-
-        nil
       end
 
       #: (Array[Herb::AST::Node]) -> void
@@ -151,8 +145,14 @@ module Herb
         "begin; (#{inliner.collection_expression(node)}).each_with_index do |#{item}, #{item}_counter|; #{locals.join(" ")}"
       end
 
-      #: (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
-      def block(node, body)
+      # The partial goes in as one block rather than as a flat run of nodes, and the block is what
+      # carries where its contents came from.
+      #
+      # Both are the same point: what was moved is the partial, not each node of it. A flat run
+      # would be split by anything spliced into the middle of it, which is what a partial rendering
+      # a partial is, and each half would then report as a render of its own.
+      #: (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
+      def block(node, body, path)
         Herb::AST::ERBBlockNode.build(
           tag_opening: Herb::Token.from("TOKEN_ERB_START", "<%"),
           content: Herb::Token.from("TOKEN_ERB_CONTENT", " #{opening_for(node)} "),
@@ -160,7 +160,7 @@ module Herb
           body: body,
           end_node: closing_for(node),
           location: node.location
-        ).tap { |generated| origin.generated(generated) }
+        ).tap { |block| origin.authored(block, relative(path), from: node) }
       end
 
       #: (Herb::AST::Node) -> Herb::AST::ERBEndNode

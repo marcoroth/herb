@@ -178,6 +178,28 @@ module Engine
                      tree.drop(1).map { |node| node[:template] })
         assert_equal([tree[0][:id], tree[1][:id]], tree.drop(1).map { |node| node[:parent] })
       end
+
+      # The inner partial is spliced into the middle of the outer one, between two of its nodes.
+      # Attributing the nodes rather than what holds them split the outer partial in two, and it
+      # reported as two renders with the inner one beside it rather than inside it.
+      test "keeps a partial whole when another is rendered from the middle of it" do
+        source = %(<%= render "shared/around" %>)
+        compiled = Herb::Engine.new(
+          source,
+          filename: "app/views/posts/index.html.erb",
+          project_path: PROJECT_PATH, escape: false,
+          visitors: [
+            Herb::Engine::InlineRenderVisitor.new,
+            Herb::Engine::InstrumentationVisitor.new
+          ]
+        ).src
+
+        tree = SESSION.capture { view.instance_eval(compiled) }.report.render_tree
+
+        assert_equal(["app/views/shared/_around.html.erb", "app/views/shared/_inner.html.erb"],
+                     tree.drop(1).map { |node| node[:template] })
+        assert_equal([tree[0][:id], tree[1][:id]], tree.drop(1).map { |node| node[:parent] })
+      end
     end
 
     describe "what the rest of the stack sees" do

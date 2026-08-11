@@ -120,32 +120,41 @@ module Herb
       end
 
       def rewrite(nodes)
-        runs = nodes.chunk_while { |before, after| origin.of(before) == origin.of(after) }
-
-        nodes.replace(runs.flat_map { |group| rewrite_chunk(origin.of(group.first), group) })
+        nodes.replace(nodes.flat_map { |node| rewrite_node(node) })
       end
 
-      #: (Herb::Engine::Origin::Entry?, Array[Herb::AST::Node]) -> Array[Herb::AST::Node]
-      def rewrite_chunk(entry, group)
-        return group.each { |node| instrument(node) } if entry&.generated?
-        return group.flat_map { |node| rewrite_node(node) } unless entry
-
+      # A node holding content written in another file is a render, whoever put it there.
+      #
+      # Nothing else has to agree on how that happened. A partial spliced in at compile time and a
+      # partial rendered at run time both arrive as content from somewhere else, so both are framed
+      # the same way, and the page describes itself the same either way.
+      #
+      # The frames go inside the node rather than around it, so a partial spliced into a loop is
+      # framed once per turn of it and a collection reports one render per item. The node itself is
+      # nobody's, so what frames it is the tag that brought it here.
+      #: (Herb::AST::Node, Herb::Engine::Origin::Entry) -> Array[Herb::AST::Node]
+      def rewrite_import(node, entry)
         outer = @file
         @file = entry.file
-        rewritten = group.flat_map { |node| rewrite_node(node) }
+
+        instrument(node)
+
         @file = outer
 
-        [
-          enter_node(entry.from),
-          enter_render_node(entry.from, entry.file),
-          *rewritten,
-          leave_render_node(entry.from),
-          leave_node(entry.from)
-        ]
+        body = node.send(:body) #: Array[Herb::AST::Node]
+
+        body.unshift(enter_render_node(entry.from, entry.file))
+        body.push(leave_render_node(entry.from))
+
+        [enter_node(entry.from), node, leave_node(entry.from)]
       end
 
       #: (Herb::AST::Node) -> Array[Herb::AST::Node]
       def rewrite_node(node)
+        entry = origin.of(node)
+
+        return rewrite_import(node, entry) if entry
+
         instrument(node)
 
         if framed?(node)

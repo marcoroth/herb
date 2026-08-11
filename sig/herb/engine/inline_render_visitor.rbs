@@ -55,8 +55,8 @@ module Herb
       # : (Herb::AST::Node) -> Array[Herb::AST::Node]
       def spliced: (Herb::AST::Node) -> Array[Herb::AST::Node]
 
-      # : (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
-      def record: (Array[Herb::AST::Node], Herb::AST::Node, Pathname) -> void
+      # : (Pathname) -> String
+      def relative: (Pathname) -> String
 
       # : (Array[Herb::AST::Node]) -> void
       def inline_nested: (Array[Herb::AST::Node]) -> void
@@ -67,8 +67,14 @@ module Herb
       # : (Herb::AST::Node) -> String
       def opening_for: (Herb::AST::Node) -> String
 
-      # : (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
-      def block: (Herb::AST::Node, Array[Herb::AST::Node]) -> Herb::AST::ERBBlockNode
+      # The partial goes in as one block rather than as a flat run of nodes, and the block is what
+      # carries where its contents came from.
+      #
+      # Both are the same point: what was moved is the partial, not each node of it. A flat run
+      # would be split by anything spliced into the middle of it, which is what a partial rendering
+      # a partial is, and each half would then report as a render of its own.
+      # : (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
+      def block: (Herb::AST::Node, Array[Herb::AST::Node], Pathname) -> Herb::AST::ERBBlockNode
 
       # : (Herb::AST::Node) -> Herb::AST::ERBEndNode
       def closing_for: (Herb::AST::Node) -> Herb::AST::ERBEndNode

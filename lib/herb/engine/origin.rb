@@ -3,33 +3,30 @@
 
 module Herb
   class Engine
-    # Where each node in the tree came from, for the nodes that did not come from the file being
-    # compiled.
+    # Which nodes hold content that was written somewhere other than the file being compiled.
     #
-    # A visitor that splices one template's nodes into another leaves a tree that no longer answers
-    # "where was this written" by itself, and a visitor that generates nodes leaves a tree holding
-    # positions nobody wrote. Both matter to anything reporting a position back to a developer, and
-    # neither is visible from the node alone.
+    # A visitor that splices one template into another leaves a tree that no longer answers "where
+    # was this written" by itself, and the node it wraps the splice in is one nobody wrote at all.
+    # Both matter to anything reporting a position back to a developer, and neither is visible from
+    # the node alone.
     #
-    #     origin.authored(node, "app/views/posts/_card.html.erb", from: render_node)
-    #     origin.generated(wrapper)
+    #     origin.authored(wrapper, "app/views/posts/_card.html.erb", from: render_node)
     #
-    #     origin.of(node).file #=> "app/views/posts/_card.html.erb"
+    #     origin.of(wrapper).file #=> "app/views/posts/_card.html.erb"
+    #     origin.of(wrapper).from #=> the `render` tag it replaced
     #
-    # Only nodes that are not from the file being compiled are recorded, so an untouched tree costs
-    # nothing. This lives on the compile rather than on a visitor, because the visitor that needs
-    # the answer is never the one that knows it.
+    # What is recorded is the node holding the content rather than each node of it, because what
+    # was moved is the partial and not each node of the partial. Recording the nodes themselves
+    # would leave nothing saying which of them belong together, and a partial spliced into the
+    # middle of another would split the one around it in two.
+    #
+    # Only nodes that hold content from elsewhere are recorded, so an untouched tree costs nothing.
+    # This lives on the compile rather than on a visitor, because the visitor that needs the answer
+    # is never the one that knows it.
     class Origin
+      # Two questions with one answer: which file the content was written in, and which node
+      # brought it here.
       Entry = Data.define(:file, :from)
-
-      class Entry
-        #: () -> bool
-        def generated?
-          file.nil?
-        end
-      end
-
-      GENERATED = Entry.new(nil, nil) #: Entry
 
       #: () -> void
       def initialize
@@ -38,28 +35,18 @@ module Herb
         @entries = entries.compare_by_identity
       end
 
+      # The first claim on a node wins, so a partial spliced into a partial keeps the file it was
+      # really written in rather than the one it was spliced through.
       #: (Herb::AST::Node, String, ?from: Herb::AST::Node?) -> void
       def authored(node, file, from: nil)
-        record(node, Entry.new(file, from))
-      end
+        @entries[node] = Entry.new(file, from) unless @entries.key?(node)
 
-      #: (Herb::AST::Node) -> void
-      def generated(node)
-        record(node, GENERATED)
+        nil
       end
 
       #: (Herb::AST::Node) -> Entry?
       def of(node)
         @entries[node]
-      end
-
-      private
-
-      #: (Herb::AST::Node, Entry) -> void
-      def record(node, entry)
-        @entries[node] = entry unless @entries.key?(node)
-
-        nil
       end
     end
   end
