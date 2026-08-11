@@ -15,7 +15,7 @@ export class Diagnostics {
   private readonly configService: ConfigService
   private readonly settings: Settings
   private readonly workspaces: Workspaces
-  private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
+  private readonly published: Set<string> = new Set()
 
   constructor(
     connection: Connection,
@@ -34,7 +34,19 @@ export class Diagnostics {
   }
 
   clear(uri: string) {
-    this.connection.sendDiagnostics({ uri, diagnostics: [] })
+    this.publish(uri, [])
+  }
+
+  clearWhere(matches: (uri: string) => boolean) {
+    const stale: string[] = []
+
+    for (const uri of this.published) {
+      if (matches(uri)) stale.push(uri)
+    }
+
+    for (const uri of stale) {
+      this.clear(uri)
+    }
   }
 
   async validate(textDocument: TextDocument) {
@@ -59,8 +71,7 @@ export class Diagnostics {
       ]
     }
 
-    this.diagnostics.set(textDocument, allDiagnostics)
-    this.sendDiagnosticsFor(textDocument)
+    this.publish(textDocument.uri, allDiagnostics)
   }
 
   async refreshDocument(document: TextDocument) {
@@ -72,14 +83,13 @@ export class Diagnostics {
     await Promise.all(documents.map(document => this.refreshDocument(document)))
   }
 
-  private sendDiagnosticsFor(textDocument: TextDocument) {
-    const diagnostics = this.diagnostics.get(textDocument) || []
+  private publish(uri: string, diagnostics: Diagnostic[]) {
+    this.connection.sendDiagnostics({ uri, diagnostics })
 
-    this.connection.sendDiagnostics({
-      uri: textDocument.uri,
-      diagnostics,
-    })
-
-    this.diagnostics.delete(textDocument)
+    if (diagnostics.length > 0) {
+      this.published.add(uri)
+    } else {
+      this.published.delete(uri)
+    }
   }
 }

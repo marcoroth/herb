@@ -19,7 +19,7 @@ const FRAME_VERBS: Record<string, string> = {
 }
 import { PartialIndexService } from "./partial_index_service"
 import { PartialCallerIndexService } from "./partial_caller_index_service"
-import { isConfigDocument, lintToDignosticSeverity, lintToDignosticTags } from "./utils"
+import { isConfigDocument, lintToDiagnosticSeverity, lintToDiagnosticTags } from "./utils"
 import { lspRangeFromLocation } from "./range_utils"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
@@ -248,7 +248,7 @@ export class LinterService {
 
       const diagnostic: Diagnostic = {
         source: this.source,
-        severity: lintToDignosticSeverity(offense.severity),
+        severity: lintToDiagnosticSeverity(offense.severity),
         range,
         message: this.messageFor(offense),
         code: offense.rule,
@@ -256,7 +256,7 @@ export class LinterService {
         codeDescription
       }
 
-      const tags = lintToDignosticTags(offense.tags)
+      const tags = lintToDiagnosticTags(offense.tags)
 
       if (tags.length > 0) {
         diagnostic.tags = tags
