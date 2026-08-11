@@ -242,6 +242,44 @@ module Engine
         assert_includes session.report.to_json, %("value":"1 SQL query")
       end
 
+      test "reports every tag still rendering, innermost first" do
+        stack = nil
+
+        Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("layouts/application.html.erb", 2, 2) do
+            Herb::Engine::Report::Session.at("posts/index.html.erb", 4, 4) do
+              Herb::Engine::Report::Session.at("posts/_card.html.erb", 1, 2) do
+                stack = Herb::Engine::Report::Session.stack
+              end
+            end
+          end
+        end
+
+        assert_equal [
+          ["posts/_card.html.erb", 1, 2],
+          ["posts/index.html.erb", 4, 4],
+          ["layouts/application.html.erb", 2, 2]
+        ], stack
+      end
+
+      test "reports an empty stack outside of any tag" do
+        assert_empty Herb::Engine::Report::Session.capture { nil }.stack
+      end
+
+      test "hands out a stack that cannot be used to corrupt the live one" do
+        session = Herb::Engine::Report::Session.capture do
+          Herb::Engine::Report::Session.at("a.html.erb", 1, 0) do
+            Herb::Engine::Report::Session.stack.each(&:clear)
+
+            Herb::Engine::Report::Session.observe(:queries, "SELECT 1")
+          end
+        end
+
+        entry = session.entries.first
+
+        assert_equal ["a.html.erb", 1, 0], [entry.template, entry.line, entry.column]
+      end
+
       test "collects the same position across renders into one entry" do
         session = Herb::Engine::Report::Session.capture do
           2.times do
