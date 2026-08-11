@@ -2,6 +2,7 @@
 source: "Engine::InstrumentationVisitorTest::what it emits#test_0003_frames an assignment rather than wrapping it"
 input: "{source: \"<%= total = 1 %>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::InstrumentationVisitor>]}}"
 ---
-_buf = ::String.new; ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0) 
- _buf << (total = 1).to_s; ::Herb::Engine::Report::Session.leave;
+_buf = ::String.new; ::Herb::Engine::Report::Session.enter_render("app/views/test.html.erb"); begin 
+ ::Herb::Engine::Report::Session.enter("app/views/test.html.erb", 1, 0) 
+ _buf << (total = 1).to_s; ::Herb::Engine::Report::Session.leave; ensure; ::Herb::Engine::Report::Session.leave_render; end;
 _buf.to_s

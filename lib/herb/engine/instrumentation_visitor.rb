@@ -39,6 +39,8 @@ module Herb
     class InstrumentationVisitor < Herb::Visitor
       include ContextAware
 
+      recommended_parser_option render_nodes: true
+
       SESSION = "::Herb::Engine::Report::Session"
 
       ASSIGNMENT_NODES = [
@@ -76,6 +78,8 @@ module Herb
         super
 
         instrument(node)
+
+        frame_render(node)
       end
 
       def inspect
@@ -83,6 +87,15 @@ module Herb
       end
 
       private
+
+      def frame_render(node)
+        template = context.relative_file_path.dump
+
+        node.children.unshift(erb_node(node, "<%", "#{SESSION}.enter_render(#{template}); begin"))
+        node.children.push(erb_node(node, "<%", "ensure; #{SESSION}.leave_render; end"))
+
+        nil
+      end
 
       def instrument(node)
         ARRAY_PROPERTIES.each do |property|
@@ -117,11 +130,17 @@ module Herb
       end
 
       def output?(node)
-        node.is_a?(Herb::AST::ERBContentNode) && opening(node).start_with?("<%=")
+        return false unless erb?(node)
+
+        opening(node).start_with?("<%=")
+      end
+
+      def erb?(node)
+        node.is_a?(Herb::AST::ERBContentNode) || node.is_a?(Herb::AST::ERBRenderNode)
       end
 
       def statement?(node)
-        return false unless node.is_a?(Herb::AST::ERBContentNode)
+        return false unless erb?(node)
 
         opening = opening(node)
 
@@ -146,10 +165,19 @@ module Herb
       end
 
       def block?(node)
-        return false if node.is_a?(Herb::AST::ERBRenderNode)
         return false unless node.respond_to?(:end_node)
 
         !node.end_node.nil?
+      end
+
+      def via(node)
+        return nil unless node.is_a?(Herb::AST::ERBRenderNode)
+        return :layout if node.layout_name
+        return :template if node.template_name
+        return :collection if node.keywords&.collection
+        return nil if node.keywords&.object
+
+        :partial
       end
 
       def opening(node)
@@ -176,8 +204,12 @@ module Herb
 
       def position(node)
         location = node.location
+        parts = [context.relative_file_path.dump, location.start.line, location.start.column]
+        kind = via(node)
 
-        [context.relative_file_path.dump, location.start.line, location.start.column].join(", ")
+        parts << kind.inspect if kind
+
+        parts.join(", ")
       end
 
       def code(node)

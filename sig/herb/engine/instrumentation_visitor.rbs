@@ -57,11 +57,15 @@ module Herb
 
       private
 
+      def frame_render: (untyped node) -> untyped
+
       def instrument: (untyped node) -> untyped
 
       def rewrite: (untyped nodes) -> untyped
 
       def output?: (untyped node) -> untyped
+
+      def erb?: (untyped node) -> untyped
 
       def statement?: (untyped node) -> untyped
 
@@ -70,6 +74,8 @@ module Herb
       def assignment?: (untyped node) -> untyped
 
       def block?: (untyped node) -> untyped
+
+      def via: (untyped node) -> untyped
 
       def opening: (untyped node) -> untyped
 
