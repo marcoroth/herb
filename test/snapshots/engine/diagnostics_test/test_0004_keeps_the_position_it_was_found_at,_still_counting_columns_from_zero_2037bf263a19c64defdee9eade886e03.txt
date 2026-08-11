@@ -1,6 +1,0 @@
----
-source: "Engine::DiagnosticsTest#test_0004_keeps the position it was found at, still counting columns from zero"
-input: "{source: \"<p><div>x</div></p>\", options: {filename: \"app/views/test.html.erb\", validation_mode: :overlay}}"
----
-_buf = ::String.new; ::Herb::Engine::Report::Session.record_compile_diagnostics("app/views/test.html.erb", [{ message: "Block element <div> cannot be nested inside <p> at line 1", severity: :error, code: "invalid-nesting", origin: "Herb Compiler", line: 1, column: 3, end_line: 1, end_column: 15 }].freeze); _buf << '<p><div>x</div></p>'.freeze;
-_buf.to_s

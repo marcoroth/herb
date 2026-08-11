@@ -14,7 +14,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "HTML+ERB Compilation Errors"
@@ -34,7 +34,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "MissingClosingTag"
@@ -50,7 +50,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "MissingOpeningTag"
@@ -66,7 +66,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "VoidElementClosingTag"
@@ -83,7 +83,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "Compilation Errors"
@@ -98,7 +98,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "Compilation Errors"
@@ -114,7 +114,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_instance_of String, error.message
@@ -130,7 +130,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_instance_of String, error.message
@@ -162,7 +162,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "Total errors:"
@@ -179,7 +179,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, ":"
@@ -197,7 +197,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "HTML+ERB Compilation Errors:"
@@ -221,7 +221,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_instance_of String, error.message
@@ -290,7 +290,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_instance_of String, error.message
@@ -364,7 +364,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERBControlFlowScope"
@@ -385,7 +385,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERBControlFlowScope"
@@ -404,7 +404,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERBControlFlowScope"
@@ -424,7 +424,7 @@ module Engine
       ERB
 
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
+        Herb::Engine.new(template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERBControlFlowScope"

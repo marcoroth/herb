@@ -1,29 +1,17 @@
 # frozen_string_literal: true
 # typed: false
 
+require_relative "../visitor"
+require_relative "context_aware"
+
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
-      def initialize(file_path: nil, project_path: nil)
-        super()
+      include ContextAware
 
-        @filename = case file_path
-                    when ::Pathname
-                      file_path
-                    when String
-                      file_path.empty? ? nil : ::Pathname.new(file_path)
-                    end
+      def initialize
+        super
 
-        @project_path = case project_path
-                        when ::Pathname
-                          project_path
-                        when String
-                          ::Pathname.new(project_path)
-                        else
-                          ::Pathname.new(Dir.pwd)
-                        end
-
-        @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
         @erb_block_stack = [] #: Array[(Herb::AST::ERBBlockNode | Herb::AST::ERBIterationBlockNode)]
@@ -98,18 +86,18 @@ module Herb
         @erb_block_stack.pop
       end
 
+      def inspect
+        "#<#{self.class.name}>"
+      end
+
       private
 
-      def calculate_relative_path
-        return "unknown" unless @filename
+      def filename
+        context.file_path
+      end
 
-        if @filename.absolute?
-          @filename.relative_path_from(@project_path).to_s
-        else
-          @filename.to_s
-        end
-      rescue ArgumentError
-        @filename.to_s
+      def relative_file_path
+        context.relative_file_path
       end
 
       def wrap_all_erb_nodes(node)
@@ -173,8 +161,8 @@ module Herb
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", view_type),
           create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown")
+          create_debug_attribute("data-herb-debug-file-relative-path", relative_file_path),
+          create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown")
         ]
 
         if @top_level_elements.length > 1
@@ -227,8 +215,8 @@ module Herb
           create_debug_attribute("data-herb-debug-outline-type", outline_type),
           create_debug_attribute("data-herb-debug-erb", escaped_erb),
           create_debug_attribute("data-herb-debug-file-name", component_display_name),
-          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
-          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-relative-path", relative_file_path),
+          create_debug_attribute("data-herb-debug-file-full-path", filename&.to_s || "unknown"),
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
 
@@ -274,30 +262,30 @@ module Herb
       end
 
       def partial?
-        return false unless @filename
+        return false unless filename
 
-        basename = @filename.basename.to_s
+        basename = filename.basename.to_s
         basename.start_with?("_")
       end
 
       def component?
-        return false unless @filename
+        return false unless filename
 
-        @filename.to_s.match?(%r{(^|/)app/components/})
+        filename.to_s.match?(%r{(^|/)app/components/})
       end
 
       def sidecar_component?
         return false unless component?
-        return false unless @filename
+        return false unless filename
 
-        @filename.basename.to_s.match?(/\Acomponent\.(html\.erb|html\.herb|erb|herb)\z/)
+        filename.basename.to_s.match?(/\Acomponent\.(html\.erb|html\.herb|erb|herb)\z/)
       end
 
       def component_display_name
-        return @filename&.basename&.to_s || "unknown" unless @filename
+        return filename&.basename&.to_s || "unknown" unless filename
 
-        basename = @filename.basename.to_s
-        path = @filename.to_s
+        basename = filename.basename.to_s
+        path = filename.to_s
 
         if sidecar_component? && (match = path.match(%r{/components/(.+)/component\.[^/]+\z}))
           return match[1].split("/").map { |s| classify(s) }.join("::")

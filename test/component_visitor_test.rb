@@ -100,10 +100,7 @@ module Engine
       html = '<TestComponent name="test" />'
 
       component_visitor = Herb::Engine::ComponentVisitor.new
-      debug_visitor = Herb::Engine::DebugVisitor.new(
-        file_path: "test.html.erb",
-        project_path: "/project"
-      )
+      debug_visitor = Herb::Engine::DebugVisitor.new
 
       visitors = [component_visitor, debug_visitor]
 

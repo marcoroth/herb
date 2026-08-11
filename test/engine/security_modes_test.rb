@@ -15,7 +15,7 @@ module Engine
 
     test "security validator raises SecurityError by default" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template)
+        Herb::Engine.new(@security_violation_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "ERB output tags"
@@ -24,7 +24,7 @@ module Engine
     end
 
     test "security validator can be disabled" do
-      engine = Herb::Engine.new(@security_violation_template, validators: { security: false })
+      engine = Herb::Engine.new(@security_violation_template, visitors: Herb::Engine::Validators.all(security: false))
 
       assert_kind_of String, engine.src
       refute_empty engine.src
@@ -32,21 +32,21 @@ module Engine
 
     test "nesting validator raises CompilationError by default" do
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(@invalid_nesting_template)
+        Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all)
       end
 
       assert_includes error.message, "invalid-nesting"
     end
 
     test "nesting validator can be disabled" do
-      engine = Herb::Engine.new(@invalid_nesting_template, validators: { nesting: false })
+      engine = Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all(nesting: false))
 
       assert_kind_of String, engine.src
     end
 
     test "disabling security does not disable nesting" do
       error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(@invalid_nesting_template, validators: { security: false })
+        Herb::Engine.new(@invalid_nesting_template, visitors: Herb::Engine::Validators.all(security: false))
       end
 
       assert_includes error.message, "invalid-nesting"
@@ -54,7 +54,7 @@ module Engine
 
     test "disabling nesting does not disable security" do
       error = assert_raises(Herb::Engine::SecurityError) do
-        Herb::Engine.new(@security_violation_template, validators: { nesting: false })
+        Herb::Engine.new(@security_violation_template, visitors: Herb::Engine::Validators.all(nesting: false))
       end
 
       assert_includes error.message, "ERB output tags"
@@ -63,43 +63,45 @@ module Engine
     test "multiple validators can be disabled" do
       template = "<p><div <%= @attr %>>Content</div></p>"
 
-      engine = Herb::Engine.new(template, validators: {
-        security: false,
-        nesting: false,
-      })
+      engine = Herb::Engine.new(template, visitors: Herb::Engine::Validators.all(security: false, nesting: false))
 
       assert_kind_of String, engine.src
     end
 
-    test "disabled validators work with validation_mode: :overlay" do
-      engine = Herb::Engine.new(@security_violation_template,
-                                validators: { security: false },
-                                validation_mode: :overlay)
+    test "a switched-off validator stays off when the rest are not fatal" do
+      engine = Herb::Engine.new(
+        @security_violation_template,
+        visitors: Herb::Engine::Validators.all(security: false, fatal: false)
+      )
 
       assert_kind_of String, engine.src
     end
 
-    test "validators do not run when validation_mode: :none" do
-      engine = Herb::Engine.new(@security_violation_template,
-                                validation_mode: :none)
+    test "validators do not run when visitors: []" do
+      engine = Herb::Engine.new(@security_violation_template, visitors: [])
 
       assert_kind_of String, engine.src
     end
 
-    test "enabled_validators returns resolved config" do
-      engine = Herb::Engine.new(@valid_template, validators: { security: false })
+    test "leaves out a validator that configuration switches off" do
+      stack = Herb::Engine::Validators.all(security: false)
 
-      assert_equal false, engine.enabled_validators[:security]
-      assert_equal true, engine.enabled_validators[:nesting]
-      assert_equal true, engine.enabled_validators[:accessibility]
+      refute stack.include_visitor?(Herb::Engine::Validators::SecurityValidator)
+      assert stack.include_visitor?(Herb::Engine::Validators::NestingValidator)
+      assert stack.include_visitor?(Herb::Engine::Validators::AccessibilityValidator)
     end
 
-    test "all validators enabled by default" do
-      engine = Herb::Engine.new(@valid_template)
+    test "builds every validator that configuration leaves on" do
+      stack = Herb::Engine::Validators.all
 
-      assert_equal true, engine.enabled_validators[:security]
-      assert_equal true, engine.enabled_validators[:nesting]
-      assert_equal true, engine.enabled_validators[:accessibility]
+      assert stack.include_visitor?(Herb::Engine::Validators::SecurityValidator)
+      assert stack.include_visitor?(Herb::Engine::Validators::NestingValidator)
+      assert stack.include_visitor?(Herb::Engine::Validators::AccessibilityValidator)
+    end
+
+    test "builds the render validator only when asked" do
+      refute Herb::Engine::Validators.all.include_visitor?(Herb::Engine::Validators::RenderValidator)
+      assert Herb::Engine::Validators.all(render: true).include_visitor?(Herb::Engine::Validators::RenderValidator)
     end
   end
 end

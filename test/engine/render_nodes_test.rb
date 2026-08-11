@@ -38,10 +38,13 @@ module Engine
     def render_diagnostics(template, **_options)
       result = Herb.parse(template, render_nodes: true)
 
-      validator = Herb::Engine::Validators::RenderValidator.new(
-        enabled: true,
-        filename: Pathname.new("app/views/posts/show.html.erb"),
-        project_path: Pathname.new(@project_path)
+      validator = Herb::Engine::Validators::RenderValidator.new
+
+      validator.inherit_context(
+        Herb::Engine::VisitorContext.new(
+          file_path: "app/views/posts/show.html.erb",
+          project_path: @project_path
+        )
       )
 
       result.value.accept(validator)
@@ -105,11 +108,9 @@ module Engine
     test "no validation when filename is not provided" do
       result = Herb.parse('<%= render "nonexistent" %>', render_nodes: true)
 
-      validator = Herb::Engine::Validators::RenderValidator.new(
-        enabled: true,
-        filename: nil,
-        project_path: Pathname.new(@project_path)
-      )
+      validator = Herb::Engine::Validators::RenderValidator.new
+
+      validator.inherit_context(Herb::Engine::VisitorContext.new(project_path: @project_path))
 
       result.value.accept(validator)
 

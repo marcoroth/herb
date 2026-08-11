@@ -1,6 +1,0 @@
----
-source: "Engine::DiagnosticsTest#test_0002_the rewrite reaches the compiled output"
-input: "{source: \"<marquee>Hello</marquee>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Engine::DiagnosticsTest::RewritingReporter>], validation_mode: :none}}"
----
-_buf = ::String.new; _buf << '<div>Hello</div>'.freeze;
-_buf.to_s

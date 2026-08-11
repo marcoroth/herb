@@ -89,7 +89,7 @@ module Herb
         end
 
         def add_security_error(location, message, suggestion)
-          error(message, location, code: "SecurityViolation", suggestion: suggestion)
+          error(message, location, code: "SecurityViolation", suggestion: suggestion, error_class: SecurityError)
         end
       end
     end

@@ -1,0 +1,6 @@
+---
+source: "Engine::DiagnosticsTest#test_0007_emits nothing for a template with nothing to say"
+input: "{source: \"<div>Hello</div>\", options: {filename: \"app/views/test.html.erb\", visitors: [#<Herb::Engine::Validators::SecurityValidator fatal=false>, #<Herb::Engine::Validators::NestingValidator fatal=false>, #<Herb::Engine::Validators::AccessibilityValidator fatal=false>, #<Engine::DiagnosticsTest::RewritingReporter>]}}"
+---
+_buf = ::String.new; _buf << '<div>Hello</div>'.freeze;
+_buf.to_s

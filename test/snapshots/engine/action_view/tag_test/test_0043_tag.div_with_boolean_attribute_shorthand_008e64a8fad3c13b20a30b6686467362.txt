@@ -1,6 +1,0 @@
----
-source: "Engine::ActionView::TagTest#test_0043_tag.div with boolean attribute shorthand"
-input: "{source: \"<%= tag.div(hidden:) %>\", options: {optimize: true}}"
----
-_buf = ::String.new; _buf << '<div'.freeze; if (hidden); _buf << ' hidden'.freeze; end; _buf << '></div>'.freeze;
-_buf.to_s

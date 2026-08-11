@@ -97,42 +97,60 @@ module Engine
         Herb::Engine.new("<div>Hello</div>", filename: "app/views/test.html.erb", **)
       end
 
-      test "runs the validators first" do
+      test "runs nothing unless the caller asks for something" do
+        assert_empty compile.visitors
+      end
+
+      test "builds the validators in a settled order" do
         visitors = [
           Herb::Engine::Validators::SecurityValidator,
           Herb::Engine::Validators::NestingValidator,
           Herb::Engine::Validators::AccessibilityValidator
         ]
 
-        assert_equal(visitors, classes(compile.visitors))
+        assert_equal(visitors, classes(Herb::Engine::Validators.all))
       end
 
-      test "keeps the validators when the caller passes its own visitors" do
+      test "hands the whole stack over when the caller names its own" do
         engine = compile(visitors: [ThirdVisitor.new])
+
+        assert_equal [ThirdVisitor], classes(engine.visitors)
+      end
+
+      test "lets a caller build on the defaults rather than instead of them" do
+        engine = compile(visitors: Herb::Engine::Validators.all.use(ThirdVisitor.new))
 
         assert_equal(3, engine.visitors.count { |visitor| visitor.is_a?(Herb::Engine::Validator) })
         assert_equal ThirdVisitor, classes(engine.visitors).last
       end
 
-      test "drops the validators when there is nothing to report to" do
-        assert_empty compile(validation_mode: :none).visitors
+      test "runs nothing when the caller asks for nothing" do
+        assert_empty compile(visitors: []).visitors
+      end
+
+      test "makes its validators fatal by default" do
+        assert(compile.visitors.all?(&:fatal?))
+      end
+
+      test "builds them non-fatal when asked" do
+        refute(Herb::Engine::Validators.all(fatal: false).any?(&:fatal?))
       end
 
       test "honours a validator turned off in configuration" do
-        engine = compile(validators: { security: false })
+        engine = compile(visitors: Herb::Engine::Validators.all(security: false))
 
         refute engine.visitors.include_visitor?(Herb::Engine::Validators::SecurityValidator)
         assert engine.visitors.include_visitor?(Herb::Engine::Validators::NestingValidator)
       end
 
       test "runs the debug visitor last, so it annotates the finished tree" do
-        engine = compile(visitors: [ThirdVisitor.new], debug: true)
+        engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert_equal Herb::Engine::DebugVisitor, classes(engine.visitors).last
       end
 
       test "adds the debug visitor even when the caller passed its own" do
-        engine = compile(visitors: [ThirdVisitor.new], debug: true)
+        engine = compile(visitors: [ThirdVisitor.new, Herb::Engine::DebugVisitor.new])
 
         assert engine.visitors.include_visitor?(Herb::Engine::DebugVisitor)
       end

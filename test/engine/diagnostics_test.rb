@@ -34,6 +34,10 @@ module Engine
       Herb::Engine.new(source, filename: FILENAME, **)
     end
 
+    def reporting_stack(visitor)
+      Herb::Engine::Validators.all(fatal: false).use(visitor)
+    end
+
     def compile_snapshot(source, **)
       assert_compiled_snapshot(source, filename: FILENAME, **)
     end
@@ -45,7 +49,7 @@ module Engine
     test "a visitor that rewrites the tree can also report" do
       visitor = RewritingReporter.new
 
-      compile("<marquee>Hello</marquee>", visitors: [visitor], validation_mode: :none)
+      compile("<marquee>Hello</marquee>", visitors: [visitor])
 
       assert_equal 1, visitor.diagnostics.length
 
@@ -58,13 +62,13 @@ module Engine
     end
 
     test "the rewrite reaches the compiled output" do
-      engine = compile_snapshot("<marquee>Hello</marquee>", visitors: [RewritingReporter.new], validation_mode: :none)
+      engine = compile_snapshot("<marquee>Hello</marquee>", visitors: [RewritingReporter.new])
 
-      refute_includes engine.src, "marquee"
+      assert_includes engine.src, "'<div>Hello</div>'"
     end
 
     test "the engine hands what a visitor reported to whatever session renders it" do
-      engine = compile_snapshot("<marquee>Hello</marquee>", visitors: [RewritingReporter.new], validation_mode: :overlay)
+      engine = compile_snapshot("<marquee>Hello</marquee>", visitors: reporting_stack(RewritingReporter.new))
 
       diagnostic = render_into_session(engine).diagnostics.first
 
@@ -76,7 +80,7 @@ module Engine
     end
 
     test "keeps the position it was found at, still counting columns from zero" do
-      engine = compile_snapshot("<p><div>x</div></p>", validation_mode: :overlay)
+      engine = compile_snapshot("<p><div>x</div></p>", visitors: Herb::Engine::Validators.all(fatal: false))
 
       location = render_into_session(engine).diagnostics.first.location
 
@@ -85,7 +89,7 @@ module Engine
     end
 
     test "a reporting visitor and a validator both reach the session" do
-      engine = compile_snapshot("<p><div><marquee>x</marquee></div></p>", visitors: [RewritingReporter.new], validation_mode: :overlay)
+      engine = compile_snapshot("<p><div><marquee>x</marquee></div></p>", visitors: reporting_stack(RewritingReporter.new))
 
       codes = render_into_session(engine).diagnostics.map(&:code)
 
@@ -95,28 +99,47 @@ module Engine
 
     test "carries a message intact whatever it contains" do
       visitor = AwkwardReporter.new
-      engine = compile_snapshot("<div>x</div>", visitors: [visitor], validation_mode: :overlay)
+      engine = compile_snapshot("<div>x</div>", visitors: reporting_stack(visitor))
 
       assert_equal AwkwardReporter::MESSAGE, render_into_session(engine).diagnostics.first.message
     end
 
     test "emits nothing for a template with nothing to say" do
-      engine = compile_snapshot("<div>Hello</div>", visitors: [RewritingReporter.new], validation_mode: :overlay)
+      engine = compile_snapshot("<div>Hello</div>", visitors: reporting_stack(RewritingReporter.new))
 
       refute_includes engine.src, "record_compile_diagnostics"
-      assert_nil engine.validation_error_template
     end
 
     test "a visitor without the mixin is left alone" do
-      engine = compile_snapshot("<div>Hello</div>", validation_mode: :overlay)
+      engine = compile_snapshot("<div>Hello</div>", visitors: Herb::Engine::Validators.all(fatal: false))
 
       refute_includes engine.src, "record_compile_diagnostics"
     end
 
-    test "a visitor reporting an error raises in raise mode" do
-      assert_raises(Herb::Engine::CompilationError) do
-        compile("<marquee>Hello</marquee>", visitors: [FailingReporter.new], validation_mode: :raise)
+    test "a fatal visitor raises the exception it named" do
+      assert_raises(NotAllowedError) do
+        compile("<marquee>Hello</marquee>", visitors: [NamedErrorReporter.new])
       end
+    end
+
+    test "a visitor that calls itself fatal aborts compilation" do
+      assert_raises(Herb::Engine::CompilationError) do
+        compile("<marquee>Hello</marquee>", visitors: [FailingReporter.new])
+      end
+    end
+
+    test "a visitor that reports an error without being fatal still compiles" do
+      reporter = RewritingReporter.new
+
+      reporter.define_singleton_method(:visit_html_element_node) do |node|
+        error("Not allowed.", node.location, code: "NotAllowed")
+
+        Herb::Visitor.instance_method(:visit_html_element_node).bind_call(self, node)
+      end
+
+      engine = compile("<marquee>Hello</marquee>", visitors: [reporter])
+
+      assert_includes engine.src, "record_compile_diagnostics"
     end
 
     describe "the mixin on its own" do
@@ -162,7 +185,32 @@ module Engine
       end
     end
 
+    class NotAllowedError < Herb::Engine::CompilationError
+      def initialize(message, line: nil, column: nil, filename: nil, suggestion: nil)
+        super([filename, line, column, message, suggestion].compact.join(":"))
+      end
+    end
+
+    # Any visitor can name the exception its findings raise; the engine never has to know which.
+    class NamedErrorReporter < RewritingReporter
+      def fatal?
+        true
+      end
+
+      def visit_html_element_node(node)
+        if node.open_tag&.tag_name&.value == "marquee"
+          error("Not allowed.", node.location, code: "NotAllowed", error_class: NotAllowedError)
+        end
+
+        Herb::Visitor.instance_method(:visit_html_element_node).bind_call(self, node)
+      end
+    end
+
     class FailingReporter < RewritingReporter
+      def fatal?
+        true
+      end
+
       def visit_html_element_node(node)
         error("Not allowed.", node.location, code: "NotAllowed") if node.open_tag&.tag_name&.value == "marquee"
 
