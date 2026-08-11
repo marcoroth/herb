@@ -48,9 +48,9 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
 - [`erb-no-class-definitions`](./erb-no-class-definitions.md) - Disallow class definitions in ERB templates
 - [`erb-no-commented-out-output-tags`](./erb-no-commented-out-output-tags.md) - Disallow commented-out ERB output tags (`<%#=`, `<%# =`)
-- [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-conditional-html-element`](./erb-no-conditional-html-element.md) - Disallow conditional HTML elements
 - [`erb-no-conditional-open-tag`](./erb-no-conditional-open-tag.md) - Disallow conditional HTML open tags
+- [`erb-no-debug-output`](./erb-no-debug-output.md) - Disallow debug output methods (`p`, `pp`, `puts`, `print`, `debug`) in ERB templates
 - [`erb-no-duplicate-branch-elements`](./erb-no-duplicate-branch-elements.md) - Disallow duplicate elements across conditional branches
 - [`erb-no-empty-control-flow`](./erb-no-empty-control-flow.md) - Disallow empty ERB control flow blocks
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
@@ -60,6 +60,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-instance-variables-in-partials`](./erb-no-instance-variables-in-partials.md) - Disallow instance variables in partials
 - [`erb-no-interpolated-class-names`](./erb-no-interpolated-class-names.md) - Disallow ERB interpolation inside CSS class names
 - [`erb-no-javascript-tag-helper`](./erb-no-javascript-tag-helper.md) - Disallow `javascript_tag` helper
+- [`erb-no-module-definitions`](./erb-no-module-definitions.md) - Disallow module definitions in ERB templates
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-output-in-attribute-name`](./erb-no-output-in-attribute-name.md) - Disallow ERB output in attribute names
 - [`erb-no-output-in-attribute-position`](./erb-no-output-in-attribute-position.md) - Disallow ERB output in attribute position
