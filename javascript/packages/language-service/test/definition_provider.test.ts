@@ -667,4 +667,46 @@ describe("DefinitionProvider", () => {
       expect(definitions(service, content, `"card"`, "file:///project/lib/templates/mailer.html.erb")).toEqual([])
     })
   })
+
+  describe("view root from the index", () => {
+    const TEMPLATES_URI = "file:///project/templates/events/show.html.erb"
+
+    function serviceRootedAt(viewRoot: string | null, ...files: string[]) {
+      const existing = new Set(files)
+
+      return new DefinitionProvider(
+        parserService,
+        filePath => existing.has(filePath),
+        () => "",
+        () => viewRoot,
+      )
+    }
+
+    it("resolves a qualified partial against the root the index reports", () => {
+      const service = serviceRootedAt("/project/templates", "/project/templates/shared/_header.html.erb")
+
+      expect(uris(service, `<%= render "shared/header" %>`, "shared/header", TEMPLATES_URI))
+        .toContain("file:///project/templates/shared/_header.html.erb")
+    })
+
+    it("finds nothing under a conventional layout the project does not use", () => {
+      const service = createService("/project/templates/shared/_header.html.erb")
+
+      expect(uris(service, `<%= render "shared/header" %>`, "shared/header", TEMPLATES_URI)).toEqual([])
+    })
+
+    it("treats a project root view root as the project root itself", () => {
+      const service = serviceRootedAt("/project", "/project/shared/_header.html.erb")
+
+      expect(uris(service, `<%= render "shared/header" %>`, "shared/header", "file:///project/events/show.html.erb"))
+        .toContain("file:///project/shared/_header.html.erb")
+    })
+
+    it("falls back to the conventional layout when nothing is indexed", () => {
+      const service = serviceRootedAt(null, "/project/app/views/shared/_header.html.erb")
+
+      expect(uris(service, `<%= render "shared/header" %>`, "shared/header"))
+        .toContain("file:///project/app/views/shared/_header.html.erb")
+    })
+  })
 })

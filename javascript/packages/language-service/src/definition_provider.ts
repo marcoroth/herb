@@ -36,15 +36,18 @@ export class DefinitionProvider {
   private parserService: ParserService
   private exists: (filePath: string) => boolean
   private read: (filePath: string) => string | null
+  private viewRootFor: (documentPath: string) => string | null
 
   constructor(
     parserService: ParserService,
     exists: (filePath: string) => boolean,
-    read: (filePath: string) => string | null
+    read: (filePath: string) => string | null,
+    viewRootFor: (documentPath: string) => string | null = () => null
   ) {
     this.parserService = parserService
     this.exists = exists
     this.read = read
+    this.viewRootFor = viewRootFor
   }
 
   getDefinition(document: TextDocument, position: Position): LocationLink[] {
@@ -374,8 +377,10 @@ export class DefinitionProvider {
   }
 
   private viewsRoot(documentPath: string): string | null {
-    const index = documentPath.lastIndexOf(VIEWS_DIRECTORY)
+    const indexed = this.viewRootFor(documentPath)
+    if (indexed !== null) return indexed
 
+    const index = documentPath.lastIndexOf(VIEWS_DIRECTORY)
     if (index === -1) return null
 
     return documentPath.slice(0, index + VIEWS_DIRECTORY.length - 1)
